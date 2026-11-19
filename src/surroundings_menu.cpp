@@ -113,15 +113,15 @@ static void center_selection( const tripoint_rel_ms &active_item_position, int u
         } else {
             point_rel_ms pos( active_item_position.xy() + point( POSX, POSY ) );
 
-            // item/monster list UI is on the right, so get the difference between its width
-            // and the width of the sidebar on the right (if any)
+
+
             int sidebar_right_adjusted = ui_width - panel_manager::get_manager().get_width_right();
-            // if and only if that difference is greater than zero, use that as offset
+
             int right_offset = sidebar_right_adjusted > 0 ? sidebar_right_adjusted : 0;
 
-            // Convert offset to tile counts, calculate adjusted terrain window width
-            // This lets us account for possible differences in terrain width between
-            // the normal sidebar and the list-all-whatever display.
+
+
+
             to_map_font_dim_width( right_offset );
             int terrain_width = TERRAIN_WINDOW_WIDTH - right_offset;
 
@@ -160,7 +160,7 @@ static void move_selection( T &data, const int amount )
     auto it = std::find( data.filtered_list.begin(), data.filtered_list.end(), data.selected_entry );
 
     // NOLINTBEGIN (bugprone-branch-clone)
-    // order of conditions is important
+
     if( amount > 0 && it == data.filtered_list.end() - 1 ) {
         data.selected_entry = *data.filtered_list.begin();
     } else if( ( amount < 0 && it == data.filtered_list.begin() ) || ( amount > 0 &&
@@ -195,7 +195,7 @@ tab_data::tab_data( const std::string &title ) : title( title )
     ctxt.register_action( "SORT" );
     ctxt.register_action( "TRAVEL_TO" );
 
-    // arbitrary timeout to fix imgui input weirdness
+
     ctxt.set_timeout( 10 );
 }
 
@@ -295,7 +295,7 @@ void item_tab_data::find_nearby_items( const Character &you, map &m )
     }
 
     for( const std::string &elem : item_order ) {
-        // todo: remove this extra sorting when closest_points_first supports circular distances
+
         std::sort( items[elem].entities.begin(), items[elem].entities.end(),
         []( const auto & lhs, const auto & rhs ) {
             return rl_dist( tripoint_rel_ms(), lhs.pos ) < rl_dist( tripoint_rel_ms(), rhs.pos );
@@ -303,7 +303,7 @@ void item_tab_data::find_nearby_items( const Character &you, map &m )
         item_list.push_back( &items[elem] );
     }
 
-    // todo: remove this extra sorting when closest_points_first supports circular distances
+
     std::sort( item_list.begin(), item_list.end(), []( const map_entity_stack<item> *lhs,
     const map_entity_stack<item> *rhs ) {
         return lhs->compare( *rhs );
@@ -329,19 +329,19 @@ void item_tab_data::apply_filter()
 
     auto filter_function = item_filter_from_string( uistate.list_item_filter );
 
-    // first apply regular filter
+
     std::copy_if( item_list.begin(), item_list.end(),
     std::back_inserter( filtered_list ), [filter_function]( const map_entity_stack<item> *item_stack ) {
         return filter_function( *item_stack->get_selected_entity() );
     } );
 
-    // then apply regular sorting
+
     std::sort( filtered_list.begin(), filtered_list.end(),
     [&]( const map_entity_stack<item> *lhs, const map_entity_stack<item> *rhs ) {
         return lhs->compare( *rhs, sort_flags );
     } );
 
-    // then apply priorities
+
     priority_plus_end = list_filter_high_priority( filtered_list, uistate.list_item_priority );
     priority_minus_start = list_filter_low_priority( filtered_list, priority_plus_end + 1,
                            uistate.list_item_downvote );
@@ -458,7 +458,7 @@ void monster_tab_data::find_nearby_monsters( const Character &you )
         monsters.push_back( mstack );
     }
     for( map_entity_stack<Creature> &mon : monsters ) {
-        // no stack internal sorting because monsters currently don't stack
+
         monster_list.push_back( &mon );
     }
 
@@ -484,13 +484,13 @@ void monster_tab_data::apply_filter()
 
     auto filter_function = creature_filter_from_string( uistate.monster_filter );
 
-    // first apply regular filter
+
     std::copy_if( monster_list.begin(), monster_list.end(), std::back_inserter( filtered_list ),
     [filter_function]( const map_entity_stack<Creature> *monster_stack ) {
         return filter_function( *monster_stack->get_selected_entity() );
     } );
 
-    // then apply regular sorting
+
     std::sort( filtered_list.begin(), filtered_list.end(),
     [&]( const map_entity_stack<Creature> *lhs, const map_entity_stack<Creature> *rhs ) {
         return lhs->compare( *rhs, sort_flags );
@@ -580,7 +580,7 @@ terfurn_tab_data::terfurn_tab_data( const std::string &title ) :
     filter_description = _( "Type part of a terrain's or furniture's name to filter it." );
     filter_identifier = "terfurn_filter";
 
-    // only kept as a single group because of the low number
+
     hotkey_groups = {
         { "FILTER", "RESET_FILTER", "TRAVEL_TO" }
     };
@@ -639,7 +639,7 @@ void terfurn_tab_data::find_nearby_terfurn( const Character &you, map &m )
     }
 
     for( const std::string &elem : item_order ) {
-        // todo: remove this extra sorting when closest_points_first supports circular distances
+
         std::sort( terfurns[elem].entities.begin(), terfurns[elem].entities.end(),
         []( const auto & lhs, const auto & rhs ) {
             return rl_dist( tripoint_rel_ms(), lhs.pos ) < rl_dist( tripoint_rel_ms(), rhs.pos );
@@ -647,7 +647,7 @@ void terfurn_tab_data::find_nearby_terfurn( const Character &you, map &m )
         terfurn_list.push_back( &terfurns[elem] );
     }
 
-    // todo: remove this extra sorting when closest_points_first supports circular distances
+
     std::sort( terfurn_list.begin(),
                terfurn_list.end(), []( const map_entity_stack<map_data_common_t> *lhs,
     const map_entity_stack<map_data_common_t> *rhs ) {
@@ -671,13 +671,13 @@ void terfurn_tab_data::apply_filter()
 
     auto filter_function = terfurn_filter_from_string( uistate.terfurn_filter );
 
-    // first apply regular filter
+
     std::copy_if( terfurn_list.begin(), terfurn_list.end(), std::back_inserter( filtered_list ),
     [filter_function]( const map_entity_stack<map_data_common_t> *terfurn_stack ) {
         return filter_function( *terfurn_stack->get_selected_entity() );
     } );
 
-    // then apply regular sorting
+
     std::sort( filtered_list.begin(), filtered_list.end(),
                [&]( const map_entity_stack<map_data_common_t> *lhs,
     const map_entity_stack<map_data_common_t> *rhs ) {
@@ -742,8 +742,8 @@ surroundings_menu::surroundings_menu( avatar &you, map &m, std::optional<tripoin
     min_width( min_width )
 {
 #if defined(__ANDROID__)
-    // The accessible list scans its own 20-tile square. The visual tab
-    // scanners still use their original 60-tile radius when a11y is off.
+
+
     if( !a11y::enabled() ) {
 #endif
         item_data.init( you, m );
@@ -762,12 +762,12 @@ surroundings_menu::surroundings_menu( avatar &you, map &m, std::optional<tripoin
 
 cataimgui::bounds surroundings_menu::get_bounds()
 {
-    // todo: calculate correct creature text width
+
     int wanted_width = dist_width + std::max( { item_data.get_max_entity_width(),
                        monster_data.get_max_entity_width(),
                        terfurn_data.get_max_entity_width() } );
     width = clamp( wanted_width, min_width, TERMX / 3 );
-    // hide info panel on small displays
+
     info_height = TERMY > 30 ? std::min( 25, TERMY / 2 ) : 0;
     return {
         static_cast<float>( ImGui::GetMainViewport()->Size.x - str_width_to_pixels( width ) ),
@@ -788,7 +788,7 @@ void surroundings_menu::draw_controls()
     }
 }
 
-// todo: get ImGui::SeparatorText to draw on the entire row of a table
+
 void surroundings_menu::draw_category_separator( const std::string &category,
         std::string &last_category, int target_col )
 {
@@ -804,7 +804,7 @@ void surroundings_menu::draw_category_separator( const std::string &category,
     ImGui::TableNextRow();
 }
 
-// return content_newness based on if item is known and nested items are known
+
 static content_newness check_items_newness( const item *itm )
 {
     if( !uistate.read_items.count( itm->typeId() ) ) {
@@ -813,7 +813,7 @@ static content_newness check_items_newness( const item *itm )
     return itm->get_contents().get_content_newness( uistate.read_items );
 }
 
-// add item and all visible nested items inside to known items
+
 static void mark_items_read_rec( const item *itm )
 {
     uistate.read_items.insert( itm->typeId() );
@@ -845,7 +845,7 @@ void surroundings_menu::draw_item_tab()
     if( ImGui::BeginTabItem( title.c_str(), nullptr, flags ) ) {
         selected_tab = surroundings_menu_tab_enum::items;
 
-        // list of nearby items
+
         float list_height = ImGui::GetContentRegionAvail().y - str_height_to_pixels( info_height ) -
                             get_hotkey_buttons_height( &item_data ) - total_menu_padding( info_height > 0 );
         const int num_cols = 2;
@@ -888,8 +888,8 @@ void surroundings_menu::draw_item_tab()
                                        ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, ImVec2( 0, 0 ) );
                     if( is_selected ) {
                         if( auto_scroll || item_data.selected_entry != it ) {
-                            // auto_scroll marks keyboard selected items
-                            // the other condition marks mouse selected items
+
+
                             mark_items_read_rec( itm );
                         }
                         if( auto_scroll ) {
@@ -919,7 +919,7 @@ void surroundings_menu::draw_item_tab()
                         }
                     }
 
-                    // FIXME: these width calculations somehow work for variable-width but not for fixed-width fonts
+
                     ImFont *font = ImGui::GetFont();
                     float newness_str_width = font->CalcTextSizeA( ImGui::GetFontSize(), FLT_MAX, 0.f,
                                               newness_str.c_str() ).x + ImGui::GetStyle().ItemSpacing.x;
@@ -949,12 +949,12 @@ void surroundings_menu::draw_item_tab()
             if( ImGui::BeginChild( "info", ImVec2( 0.0f, str_height_to_pixels( info_height ) ) ) ) {
                 if( item_data.selected_entry ) {
                     const item *selected_it = item_data.selected_entry->get_selected_entity();
-                    // using table so we get a (pre-styled) header
+
                     if( ImGui::BeginTable( "iteminfo", 1, ImGuiTableFlags_None, ImVec2( 0.0f, 0.0f ) ) ) {
                         ImGui::TableSetupColumn( remove_color_tags( selected_it->display_name() ).c_str() );
                         ImGui::TableHeadersRow();
                         ImGui::TableNextColumn();
-                        // embedded info for selected item
+
                         std::vector<iteminfo> selected_info;
                         std::vector<iteminfo> dummy_info;
                         selected_it->info( true, selected_info );
@@ -987,7 +987,7 @@ void surroundings_menu::draw_monster_tab()
     if( ImGui::BeginTabItem( title.c_str(), nullptr, flags ) ) {
         selected_tab = surroundings_menu_tab_enum::monsters;
 
-        // list of nearby monsters
+
         float list_height = ImGui::GetContentRegionAvail().y - str_height_to_pixels( info_height ) -
                             get_hotkey_buttons_height( &monster_data ) - total_menu_padding( info_height > 0 );
         const int num_cols = 5;
@@ -1092,7 +1092,7 @@ void surroundings_menu::draw_monster_tab()
 
         draw_hotkey_buttons( &monster_data );
 
-        // embedded info for selected monster
+
         if( info_height > 0 ) {
             if( ImGui::BeginChild( "info", ImVec2( 0.0f, str_height_to_pixels( info_height ) ) ) ) {
                 if( monster_data.selected_entry ) {
@@ -1171,7 +1171,7 @@ void surroundings_menu::draw_terfurn_tab()
 
         draw_hotkey_buttons( &terfurn_data );
 
-        // embedded info for selected terrain/furniture
+
         if( info_height > 0 ) {
             if( ImGui::BeginChild( "info", ImVec2( 0.0f, str_height_to_pixels( info_height ) ) ) ) {
                 if( terfurn_data.selected_entry ) {
@@ -1214,9 +1214,9 @@ void surroundings_menu::draw_examine_info()
 }
 
 #if defined(__ANDROID__)
-// Include only terrain/furniture that changes navigation, is a hazard,
-// or has a useful interaction. Ordinary floors, walls, grass, roads, and
-// decorative furniture must not fill the spoken nearby list.
+
+
+
 static bool noteworthy_nearby_feature( const map_data_common_t &type,
                                        const tripoint_bub_ms &position )
 {
@@ -1239,10 +1239,10 @@ static bool noteworthy_nearby_feature( const map_data_common_t &type,
 
 void surroundings_menu::execute_accessible()
 {
-    // A 20-tile *half-width* in BOTH axes, not 20 total entries or a
-    // circular radius. All 41 x 41 offsets are visited exactly once.
-    // Expanding square rings naturally read nearest to farthest without
-    // ranking creatures over items, doors, or other useful objects.
+
+
+
+
     constexpr int scan_half_width = 20;
     enum class nearby_kind { unclassified, creature, environment, item };
     struct nearby_row {
@@ -1257,8 +1257,8 @@ void surroundings_menu::execute_accessible()
     const tripoint_bub_ms origin = you.pos_bub();
     map &here = get_map();
     std::set<const vehicle *> seen_vehicles;
-    const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
-                              int stop_distance, nearby_kind kind ) {
+    const auto add_row = [&]( const std::string & name, const tripoint_rel_ms & relative,
+    int stop_distance, nearby_kind kind ) {
         if( !name.empty() ) {
             nearby.push_back( { kind, name, origin + relative, relative,
                                 std::max( std::abs( relative.x() ), std::abs( relative.y() ) ),
@@ -1277,9 +1277,9 @@ void surroundings_menu::execute_accessible()
                 if( !here.inbounds( position ) ) {
                     continue;
                 }
-                // Preserve heard markers, but inspect raw map objects
-                // exactly like the 16-tile assisted scan. Do not include
-                // ordinary empty floors, grass or roads in this list.
+
+
+
                 const a11y::tile_observation observed = a11y::observe_tile( position );
                 const a11y::unrestricted_tile tile = a11y::scan_unrestricted_tile( position );
                 if( tile.creatures.empty() ) {
@@ -1300,8 +1300,8 @@ void surroundings_menu::execute_accessible()
                 for( const std::string &hazard : tile.traps ) {
                     add_row( hazard, relative, 1, nearby_kind::environment );
                 }
-                // Only dangerous active fields are useful in a flat
-                // surrounding list; ordinary blood and residue stay out.
+
+
                 for( const auto &entry : here.field_at( position ) ) {
                     if( entry.second.is_field_alive() && entry.second.is_dangerous() ) {
                         add_row( remove_color_tags( entry.second.name() ), relative, 1,
@@ -1318,8 +1318,8 @@ void surroundings_menu::execute_accessible()
                     add_row( tile.terrain, relative, tile.impassable ? 1 : 0,
                              nearby_kind::environment );
                 }
-                // Ordinary furniture is still a meaningful object. A locker
-                // must not vanish simply because it has no special flags.
+
+
                 if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
                     add_row( tile.furniture, relative, tile.impassable ? 1 : 0,
                              nearby_kind::environment );
@@ -1327,16 +1327,16 @@ void surroundings_menu::execute_accessible()
             }
         }
     }
-    // Rings already provide nearest-first order. Stable ties preserve the
-    // scan order; never impose a category or threat priority.
+
+
     std::stable_sort( nearby.begin(), nearby.end(),
-    []( const nearby_row &lhs, const nearby_row &rhs ) {
+    []( const nearby_row & lhs, const nearby_row & rhs ) {
         return lhs.distance < rhs.distance;
     } );
     constexpr std::size_t page_size = 80;
-    // 0 All, 1 creatures/NPCs, 2 places/environment, 3 items.
-    // The original nearby list is immutable and remains nearest-first;
-    // switching a category only changes its filtered index, never a route.
+
+
+
     int selected_category = 0;
     std::size_t page = 0;
     bool focus_last_on_page = false;
@@ -1355,13 +1355,17 @@ void surroundings_menu::execute_accessible()
     };
     const auto category_label = [&]() {
         switch( selected_category ) {
-            case 1: return std::string( _( "Creatures and NPCs" ) );
-            case 2: return std::string( _( "Places and environment" ) );
-            case 3: return std::string( _( "Items" ) );
-            default: return std::string( _( "All" ) );
+            case 1:
+                return std::string( _( "Creatures and NPCs" ) );
+            case 2:
+                return std::string( _( "Places and environment" ) );
+            case 3:
+                return std::string( _( "Items" ) );
+            default:
+                return std::string( _( "All" ) );
         }
     };
-    const auto relative_words = []( const tripoint_rel_ms &relative ) {
+    const auto relative_words = []( const tripoint_rel_ms & relative ) {
         if( relative == tripoint_rel_ms() ) {
             return std::string( _( "Current tile" ) );
         }
@@ -1369,7 +1373,7 @@ void surroundings_menu::execute_accessible()
         const int y = relative.y();
         std::string words;
         if( x != 0 && y != 0 && std::abs( x ) == std::abs( y ) ) {
-            // A diagonal is a single direction and a single tile count.
+
             const direction dir = y < 0 ?
                                   ( x < 0 ? direction::NORTHWEST : direction::NORTHEAST ) :
                                   ( x < 0 ? direction::SOUTHWEST : direction::SOUTHEAST );
@@ -1384,7 +1388,7 @@ void surroundings_menu::execute_accessible()
                                    direction_name( x < 0 ? direction::WEST : direction::EAST ),
                                    std::abs( x ) );
         } else if( x != 0 && y != 0 ) {
-            // Unequal offsets are not diagonal tile counts: keep both axes.
+
             words = string_format( _( "%1$s %2$d tiles, %3$s %4$d tiles" ),
                                    direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
                                    std::abs( y ),
@@ -1406,14 +1410,17 @@ void surroundings_menu::execute_accessible()
     ctxt.register_action( "HELP_KEYBINDINGS" );
     a11y::screen_scope reader( &ctxt, "surroundings",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             return std::string( "TIMEOUT" );
         }
-        if( intent.action != "activate" && intent.action != "read_detail" ) {
+        if( intent.action != "activate" && intent.action != "read_detail" )
+        {
             return std::nullopt;
         }
         if( intent.node == "nearby:filter:next" ||
-            intent.node == "nearby:filter:previous" ) {
+            intent.node == "nearby:filter:previous" )
+        {
             selected_category = ( selected_category +
                                   ( intent.node == "nearby:filter:next" ? 1 : 3 ) ) % 4;
             page = 0;
@@ -1421,34 +1428,37 @@ void surroundings_menu::execute_accessible()
             return std::string( "TIMEOUT" );
         }
         const std::vector<std::size_t> filtered = filtered_indices();
-        // When there are multiple pages, left/right navigation wraps
-        // across the *entire* filtered list, not inside the last page.
+
+
         const std::size_t page_count = ( filtered.size() + page_size - 1 ) / page_size;
-        if( intent.node == "nearby:page:next" && page_count > 1 ) {
+        if( intent.node == "nearby:page:next" && page_count > 1 )
+        {
             page = ( page + 1 ) % page_count;
             focus_last_on_page = false;
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "nearby:page:previous" && page_count > 1 ) {
+        if( intent.node == "nearby:page:previous" && page_count > 1 )
+        {
             page = ( page + page_count - 1 ) % page_count;
             focus_last_on_page = true;
             return std::string( "TIMEOUT" );
         }
-        const std::size_t start = page * page_size;
+        const std::size_t start = page *page_size;
         const std::size_t end = std::min( start + page_size, filtered.size() );
-        for( std::size_t i = start; i < end; ++i ) {
+        for( std::size_t i = start; i < end; ++i )
+        {
             const std::size_t row_index = filtered[i];
             if( intent.node != "nearby:target:" + std::to_string( row_index ) ) {
                 continue;
             }
             const nearby_row &target = nearby[row_index];
             if( intent.action == "read_detail" && target.kind == nearby_kind::creature ) {
-                // Re-observe this precise tile before reading, like the
-                // item branch below: a row is a name label, not a
-                // creature pointer, and must never resolve to a different
-                // creature after a world update. HP is already published
-                // for visible hostiles by the world's "Visible hostile
-                // creatures" document, in the same wording reused here.
+
+
+
+
+
+
                 const Creature *creature = get_creature_tracker().creature_at( target.target, true );
                 if( creature == nullptr ||
                     remove_color_tags( creature->disp_name() ) != target.label ||
@@ -1456,15 +1466,15 @@ void surroundings_menu::execute_accessible()
                     return std::string( "TIMEOUT" );
                 }
                 a11y::announce_full_detail_text( string_format(
-                    _( "%1$s, %2$s, %3$d HP remaining." ),
-                    creature->disp_name(), relative_words( target.relative ),
-                    std::max( 0, creature->get_hp() ) ) );
+                                                     _( "%1$s, %2$s, %3$d HP remaining." ),
+                                                     creature->disp_name(), relative_words( target.relative ),
+                                                     std::max( 0, creature->get_hp() ) ) );
                 return std::string( "TIMEOUT" );
             }
             if( intent.action == "read_detail" && target.kind == nearby_kind::item ) {
-                // Re-observe this precise tile before reading. A nearby row
-                // is a stack label, not an item pointer, and must never
-                // resolve to a different stack after a world update.
+
+
+
                 const a11y::unrestricted_tile visible = a11y::scan_unrestricted_tile( target.target );
                 if( std::find( visible.items.begin(), visible.items.end(),
                                target.label ) == visible.items.end() ||
@@ -1489,10 +1499,10 @@ void surroundings_menu::execute_accessible()
                     if( !spoken_descriptions.insert( description ).second ) {
                         continue;
                     }
-                    // One request may represent a stack with multiple
-                    // distinct states. Assemble one long document, not a
-                    // burst of independent TTS messages that can evict
-                    // earlier paragraphs from the queue.
+
+
+
+
                     if( !full.empty() ) {
                         full += "\n\n";
                     }
@@ -1502,11 +1512,11 @@ void surroundings_menu::execute_accessible()
                 a11y::announce_full_detail_text( full );
                 return std::string( "TIMEOUT" );
             }
-            // Find a real hazard-aware route even when the selected nearby
-            // object is behind a wall or outside current line of sight.
-            // Creatures and obstacles are still approached one tile away.
+
+
+
             const std::optional<std::vector<tripoint_bub_ms>> route =
-            g->safe_route_to( you, target.target, target.stop_distance,
+                        g->safe_route_to( you, target.target, target.stop_distance,
             []( const std::string & reason ) {
                 add_msg( m_info, "%s", reason );
             }, false );
@@ -1532,9 +1542,9 @@ void surroundings_menu::execute_accessible()
                            string_format( _( "%s. No entries." ), category_label() ) :
                            string_format( _( "%1$s. %2$d entries." ), category_label(),
                                           static_cast<int>( filtered.size() ) );
-        // Gesture-only controls are commands, never ordinary list items.
-        // One-finger vertical swipes trigger these through the Android
-        // reader; horizontal swipes visit actual objects and may change page.
+
+
+
         a11y::semantic_node previous_category;
         previous_category.id = "nearby:filter:previous";
         previous_category.role = "command";
@@ -1573,7 +1583,7 @@ void surroundings_menu::execute_accessible()
                 if( entry.kind == nearby_kind::item || entry.kind == nearby_kind::creature ) {
                     node.actions.push_back( "read_detail" );
                 }
-                // Direction already includes tile count.
+
                 node.value = relative_words( entry.relative );
                 snapshot.nodes.push_back( std::move( node ) );
             }
@@ -1648,7 +1658,7 @@ void surroundings_menu::execute()
             if( !you.sees( get_map(), *path_end ) ) {
                 add_msg( _( "You can't see that destination." ) );
             }
-            // try finding route to the tile, or one tile away from it
+
             const std::optional<std::vector<tripoint_bub_ms>> try_route =
             g->safe_route_to( you, *path_end, 1, []( const std::string & msg ) {
                 popup( msg );
@@ -1690,7 +1700,7 @@ void surroundings_menu::get_filter()
     tab_data *data = get_selected_data();
     data->filter_popup();
     data->apply_filter();
-    // FIXME: hack to prevent tab switching after filtering
+
     switch_tab = selected_tab;
 }
 
@@ -1699,7 +1709,7 @@ void surroundings_menu::reset_filter()
     tab_data *data = get_selected_data();
     data->reset_filter();
     data->apply_filter();
-    // FIXME: hack to prevent tab switching after filtering
+
     switch_tab = selected_tab;
 }
 
@@ -1713,7 +1723,7 @@ void surroundings_menu::get_filter_priority( bool high )
             break;
         }
         default:
-            //priority only implemented for items
+
             break;
     }
 }
@@ -1855,7 +1865,7 @@ void surroundings_menu::change_selected_tab_sorting()
     data->apply_filter();
 }
 
-// todo: better solution for this
+
 std::vector<std::unordered_set<std::string>> surroundings_menu::get_shown_hotkeys(
             const tab_data *tab )
 {

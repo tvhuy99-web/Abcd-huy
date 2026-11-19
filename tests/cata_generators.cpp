@@ -59,7 +59,7 @@ class RandomTripointGenerator final :
         tripoint current_point;
 };
 
-} // namespace
+}
 
 Catch::Generators::GeneratorWrapper<point> random_points( int low, int high )
 {

@@ -7,13 +7,13 @@
 #include "json.h"
 #include "math_parser_jmath.h"
 
-// LOADING
-// magic_type
+
+
 
 namespace
 {
 generic_factory<magic_type> magic_type_factory( "magic_type" );
-} // namespace
+}
 
 template<>
 const magic_type &string_id<magic_type>::obj() const

@@ -36,10 +36,10 @@ static const ter_str_id ter_t_stairs_down( "t_stairs_down" );
 static const ter_str_id ter_t_stairs_up( "t_stairs_up" );
 static const ter_str_id ter_t_wall( "t_wall" );
 
-// Build a 3x3 tower with walls, a stair/ladder in the center, and a roof.
-//   z=0: walls + floor + up_ter in center
-//   z=1: walls + floor + down_ter in center (second floor)
-//   z=2: walls + floor everywhere (solid roof)
+
+
+
+
 static void build_tower( map &here, const point_bub_ms &origin,
                          const ter_str_id &up_ter, const ter_str_id &down_ter )
 {
@@ -60,20 +60,20 @@ static void build_tower( map &here, const point_bub_ms &origin,
                 here.ter_set( p0, ter_t_floor.id() );
                 here.ter_set( p1, ter_t_floor.id() );
             }
-            // Solid roof on z=2
+
             here.ter_set( p2, ter_t_floor.id() );
         }
     }
 }
 
-// Monster spawns on the stair tile with a destination one z-level away.
-// Exercises the on-stair climb-check exemption only; not pathing or wandering.
+
+
 static std::set<int> run_creature_in_tower( map &here, const point_bub_ms &tower_origin,
         const mtype_id &mon_type, int start_z, int dest_z, int turns )
 {
-    // Spawn in the center (on the stair/ladder tile)
+
     const tripoint_bub_ms spawn_pos( tower_origin.x() + 1, tower_origin.y() + 1, start_z );
-    // Destination: also center but on the target z-level
+
     const tripoint_bub_ms dest( tower_origin.x() + 1, tower_origin.y() + 1, dest_z );
 
     monster &mon = spawn_test_monster( mon_type.str(), spawn_pos, false );
@@ -85,9 +85,9 @@ static std::set<int> run_creature_in_tower( map &here, const point_bub_ms &tower
     visited_z.insert( mon.posz() );
 
     for( int turn = 0; turn < turns; ++turn ) {
-        // Inline move_monster_turn so we sample posz after every internal mon.move().
-        // A fast monster can climb to dest and stumble back within one turn, so a
-        // per-turn snapshot would miss the moment it stood on the destination z.
+
+
+
         mon.mod_moves( mon.get_speed() );
         while( mon.get_moves() > 0 ) {
             mon.move();
@@ -113,8 +113,8 @@ static void setup_towers( map &here, const ter_str_id &up_ter, const ter_str_id 
     }
 }
 
-// All these creatures have no FLIES, no CLIMBS, no climb move_skill.
-// They should be able to use regular stairs but not ladders.
+
+
 static const std::vector<std::pair<mtype_id, std::string>> ground_creatures = {
     { mon_test_zombie, "zombie" },
     { mon_dog, "dog" },
@@ -130,7 +130,7 @@ static const std::vector<std::pair<mtype_id, std::string>> ground_creatures = {
     { mon_bear, "bear" },
 };
 
-// Opossum has climb:8, so it can use ladders too.
+
 static const std::vector<std::pair<mtype_id, std::string>> climbing_creatures = {
     { mon_opossum, "opossum" },
 };
@@ -237,9 +237,9 @@ TEST_CASE( "climbing_creatures_use_ladders", "[monster][z-level]" )
     }
 }
 
-// Three-story tower, walls everywhere except two adjacent stair columns:
-//   column A (1,1): stairs_up on z=0, stairs_down on z=1
-//   column B (2,1): stairs_up on z=1, stairs_down on z=2
+
+
+
 static void build_two_stair_tower( map &here, const point_bub_ms &origin )
 {
     for( int dx = 0; dx < 4; ++dx ) {
@@ -266,9 +266,9 @@ static void build_two_stair_tower( map &here, const point_bub_ms &origin )
     }
 }
 
-// Wandering neutral creature on the middle floor must visit all three floors
-// via voluntary stumble alone. Budget is generous enough that stumble's 1-in-10
-// gate dominates realistic seed variance.
+
+
+
 TEST_CASE( "wandering_creature_traverses_three_story_tower", "[monster][z-level][stumble]" )
 {
     clear_map( -2, 2 );

@@ -177,10 +177,10 @@ static const std::string caravan_commune_center_job_active_parameter = "Active";
 namespace
 {
 struct miss_data {
-    std::string serialize_id;  // Serialized string for enum
-    translation action;        // Optional extended UI description of task for return.
+    std::string serialize_id;
+    translation action;
 };
-} // namespace
+}
 namespace io
 {
 
@@ -188,57 +188,95 @@ template<>
 std::string enum_to_string<mission_kind>( mission_kind data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case mission_kind::No_Mission: return "No_Mission";
-        case mission_kind::Scavenging_Patrol_Job: return "Scavenging_Patrol_Job";
-        case mission_kind::Scavenging_Raid_Job: return "Scavenging_Raid_Job";
-        case mission_kind::Hospital_Raid_Job: return "Hospital_Raid_Job";
-        case mission_kind::Menial_Job: return "Menial_Job";
-        case mission_kind::Carpentry_Job: return "Carpentry_Job";
-        case mission_kind::Forage_Job: return "Forage_Job";
-        case mission_kind::Caravan_Commune_Center_Job: return "Caravan_Commune_Center_Job";
-        case mission_kind::Camp_Distribute_Food: return "Camp_Distribute_Food";
-		case mission_kind::Camp_Determine_Leadership: return "Camp_Determine_Leadership";
-		case mission_kind::Camp_Have_Meal: return "Camp_Have_Meal";
-        case mission_kind::Camp_Hide_Mission: return "Camp_Hide_Mission";
-        case mission_kind::Camp_Reveal_Mission: return "Camp_Reveal_Mission";
-        case mission_kind::Camp_Assign_Jobs: return "Camp_Assign_Jobs";
-        case mission_kind::Camp_Assign_Workers: return "Camp_Assign_Workers";
-        case mission_kind::Camp_Abandon: return "Camp_Abandon";
-        case mission_kind::Camp_Upgrade: return "Camp_Upgrade";
-        case mission_kind::Camp_Emergency_Recall: return "Camp_Emergency_Recall";
-        case mission_kind::Camp_Crafting: return "Camp_Crafting";
-        case mission_kind::Camp_Gather_Materials: return "Camp_Gather_Materials";
-        case mission_kind::Camp_Collect_Firewood: return "Camp_Collect_Firewood";
-        case mission_kind::Camp_Menial: return "Camp_Menial";
-        case mission_kind::Camp_Survey_Field: return "Camp_Survey_Field";
-        case mission_kind::Camp_Survey_Expansion: return "Camp_Survey_Expansion";
-        case mission_kind::Camp_Cut_Logs: return "Camp_Cut_Logs";
-        case mission_kind::Camp_Clearcut: return "Camp_Clearcut";
-        case mission_kind::Camp_Setup_Hide_Site: return "Camp_Setup_Hide_Site";
-        case mission_kind::Camp_Relay_Hide_Site: return "Camp_Relay_Hide_Site";
-        case mission_kind::Camp_Foraging: return "Camp_Foraging";
-        case mission_kind::Camp_Trapping: return "Camp_Trapping";
-        case mission_kind::Camp_Hunting: return "Camp_Hunting";
-        case mission_kind::Camp_OM_Fortifications: return "Camp_OM_Fortifications";
-        case mission_kind::Camp_Recruiting: return "Camp_Recruiting";
-        case mission_kind::Camp_Scouting: return "Camp_Scouting";
-        case mission_kind::Camp_Combat_Patrol: return "Camp_Combat_Patrol";
-        case mission_kind::Camp_Plow: return "Camp_Plow";
-        case mission_kind::Camp_Plant: return "Camp_Plant";
-        case mission_kind::Camp_Harvest: return "Camp_Harvest";
-        // *INDENT-ON*
+
+        case mission_kind::No_Mission:
+            return "No_Mission";
+        case mission_kind::Scavenging_Patrol_Job:
+            return "Scavenging_Patrol_Job";
+        case mission_kind::Scavenging_Raid_Job:
+            return "Scavenging_Raid_Job";
+        case mission_kind::Hospital_Raid_Job:
+            return "Hospital_Raid_Job";
+        case mission_kind::Menial_Job:
+            return "Menial_Job";
+        case mission_kind::Carpentry_Job:
+            return "Carpentry_Job";
+        case mission_kind::Forage_Job:
+            return "Forage_Job";
+        case mission_kind::Caravan_Commune_Center_Job:
+            return "Caravan_Commune_Center_Job";
+        case mission_kind::Camp_Distribute_Food:
+            return "Camp_Distribute_Food";
+        case mission_kind::Camp_Determine_Leadership:
+            return "Camp_Determine_Leadership";
+        case mission_kind::Camp_Have_Meal:
+            return "Camp_Have_Meal";
+        case mission_kind::Camp_Hide_Mission:
+            return "Camp_Hide_Mission";
+        case mission_kind::Camp_Reveal_Mission:
+            return "Camp_Reveal_Mission";
+        case mission_kind::Camp_Assign_Jobs:
+            return "Camp_Assign_Jobs";
+        case mission_kind::Camp_Assign_Workers:
+            return "Camp_Assign_Workers";
+        case mission_kind::Camp_Abandon:
+            return "Camp_Abandon";
+        case mission_kind::Camp_Upgrade:
+            return "Camp_Upgrade";
+        case mission_kind::Camp_Emergency_Recall:
+            return "Camp_Emergency_Recall";
+        case mission_kind::Camp_Crafting:
+            return "Camp_Crafting";
+        case mission_kind::Camp_Gather_Materials:
+            return "Camp_Gather_Materials";
+        case mission_kind::Camp_Collect_Firewood:
+            return "Camp_Collect_Firewood";
+        case mission_kind::Camp_Menial:
+            return "Camp_Menial";
+        case mission_kind::Camp_Survey_Field:
+            return "Camp_Survey_Field";
+        case mission_kind::Camp_Survey_Expansion:
+            return "Camp_Survey_Expansion";
+        case mission_kind::Camp_Cut_Logs:
+            return "Camp_Cut_Logs";
+        case mission_kind::Camp_Clearcut:
+            return "Camp_Clearcut";
+        case mission_kind::Camp_Setup_Hide_Site:
+            return "Camp_Setup_Hide_Site";
+        case mission_kind::Camp_Relay_Hide_Site:
+            return "Camp_Relay_Hide_Site";
+        case mission_kind::Camp_Foraging:
+            return "Camp_Foraging";
+        case mission_kind::Camp_Trapping:
+            return "Camp_Trapping";
+        case mission_kind::Camp_Hunting:
+            return "Camp_Hunting";
+        case mission_kind::Camp_OM_Fortifications:
+            return "Camp_OM_Fortifications";
+        case mission_kind::Camp_Recruiting:
+            return "Camp_Recruiting";
+        case mission_kind::Camp_Scouting:
+            return "Camp_Scouting";
+        case mission_kind::Camp_Combat_Patrol:
+            return "Camp_Combat_Patrol";
+        case mission_kind::Camp_Plow:
+            return "Camp_Plow";
+        case mission_kind::Camp_Plant:
+            return "Camp_Plant";
+        case mission_kind::Camp_Harvest:
+            return "Camp_Harvest";
+
         case mission_kind::last_mission_kind:
             break;
     }
     cata_fatal( "Invalid event_type" );
 }
 
-} // namespace io
+}
 
 static const std::array < miss_data, Camp_Harvest + 1 > miss_info = { {
         {
-            //  No_Mission
+
             "",
             no_translation( "" )
         },
@@ -270,7 +308,7 @@ static const std::array < miss_data, Camp_Harvest + 1 > miss_info = { {
             "Caravan_Commune_Center_Job",
             no_translation( "" )
         },
-        //  Faction camp missions
+
         {
             "Camp_Distribute_Food",
             no_translation( "" )
@@ -304,7 +342,7 @@ static const std::array < miss_data, Camp_Harvest + 1 > miss_info = { {
             no_translation( "" )
         },
         {
-            "Camp_Upgrade ",  //  Want to add the blueprint after the space
+            "Camp_Upgrade ",
             to_translation( "Working to expand your camp!\n" )
         },
         {
@@ -312,7 +350,7 @@ static const std::array < miss_data, Camp_Harvest + 1 > miss_info = { {
             to_translation( "Lost in the ether!\n" )
         },
         {
-            "Camp_Crafting ",  //  Want to add the recipe after the space
+            "Camp_Crafting ",
             to_translation( "Busy crafting!\n" )
         },
         {
@@ -466,7 +504,7 @@ static void commune_carpentry( mission_data &mission_key, npc &p );
 static void commune_forage( mission_data &mission_key, npc &p );
 static void commune_refuge_caravan( mission_data &mission_key, npc &p );
 static bool handle_outpost_mission( const mission_entry &cur_key, npc &p );
-} // namespace talk_function
+}
 
 void talk_function::companion_mission( npc &p )
 {
@@ -751,7 +789,7 @@ void talk_function::commune_refuge_caravan( mission_data &mission_key, npc &p )
         }
     }
 
-    // Legacy compatibility. Changed during 0.F.
+
     miss_id.parameters.clear();
     npc_list = companion_list( p, miss_id );
 
@@ -794,7 +832,7 @@ bool talk_function::display_and_choose_opts(
 
     size_t sel = 0;
 
-    // The following are for managing the right pane scrollbar.
+
     size_t info_offset = 0;
     nc_color col = c_white;
     std::vector<std::string> name_text;
@@ -837,24 +875,24 @@ bool talk_function::display_and_choose_opts(
         return false;
     }
 
-    // Set whenever cur_key_list is rebuilt (tab switch by reader intent or
-    // by key) so the next reader update forces a new revision: entry node
-    // IDs are positional in cur_key_list, and a rebuilt list can publish
-    // identical text for a different logical mission (same precedents as
-    // uilist::update_reader). A content-only revision would leave an
-    // intent minted against the old list valid against the new one.
+
+
+
+
+
+
     bool reader_list_changed = false;
 
     const auto make_reader_snapshot = [&]() {
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
-        // Name the point this list belongs to, not just the tab/title:
-        // for a camp that is the camp name plus the expansion tab, for an
-        // outpost the title plus the NPC offering the missions. Without
-        // this the listener cannot tell two mission points apart (several
-        // outposts publish similarly named missions, and every camp tab
-        // is headed only by its expansion name).
+
+
+
+
+
+
         std::string summary = remove_color_tags( name_mission_tabs( omt_pos, role_id, title,
-                               tab_mode ) );
+                              tab_mode ) );
         if( role_id == role_id_faction_camp ) {
             const std::optional<basecamp *> camp = overmap_buffer.find_camp( omt_pos.xy() );
             if( camp ) {
@@ -877,7 +915,7 @@ bool talk_function::display_and_choose_opts(
                     continue;
                 }
                 const auto direction = std::find_if( base_camps::all_directions.begin(),
-                base_camps::all_directions.end(), [&]( const auto &entry ) {
+                base_camps::all_directions.end(), [&]( const auto & entry ) {
                     return entry.second.tab_order == tab_index;
                 } );
                 if( direction == base_camps::all_directions.end() ) {
@@ -911,13 +949,13 @@ bool talk_function::display_and_choose_opts(
             if( !entry.possible ) {
                 node.disabled_reason = remove_color_tags( entry.text );
                 if( entry.id.ret ) {
-                    // A return entry's possible flag has exactly one
-                    // meaning in every builder (outpost rosters here,
-                    // update_time_left/update_time_fixed and crafting
-                    // returns in faction_camp): somebody on the mission
-                    // is ready to come back. The roster text below shows
-                    // each worker's elapsed/remaining time but never says
-                    // that in words, so state it before the roster.
+
+
+
+
+
+
+
                     node.disabled_reason =
                         std::string( _( "No companion on this mission is ready to return yet." ) )
                         + "\n" + node.disabled_reason;
@@ -935,7 +973,7 @@ bool talk_function::display_and_choose_opts(
         }
         if( sel < cur_key_list.size() && !cur_key_list[sel].possible ) {
             snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
-            []( const a11y::semantic_node &node ) {
+            []( const a11y::semantic_node & node ) {
                 return node.id == "CONFIRM";
             } ), snapshot.nodes.end() );
         }
@@ -994,7 +1032,7 @@ bool talk_function::display_and_choose_opts(
 
         int name_offset = 0;
         size_t sel_pos = 0;
-        // Translate from entry index to line index
+
         for( size_t i = 0; i < sel; i++ ) {
             sel_pos += folded_names[i].size();
         }
@@ -1002,12 +1040,12 @@ bool talk_function::display_and_choose_opts(
         calcStartPos( name_offset, sel_pos, info_height, folded_names_lines );
 
         int name_index = 0;
-        // Are we so far down the list that we bump into the end?
+
         bool last_section = folded_names_lines < info_height ||
                             folded_names_lines - info_height <= static_cast<size_t>( name_offset );
 
-        // Translate back from desired line index to the corresponding entry, making sure to round up
-        // near the end to ensure the last line gets included.
+
+
         if( name_offset > 0 ) {
             for( size_t i = 0; i < cur_key_list.size(); i++ ) {
                 name_offset -= folded_names[i].size();
@@ -1025,14 +1063,14 @@ bool talk_function::display_and_choose_opts(
         for( size_t current = name_index; list_line < info_height + 2 &&
              current < cur_key_list.size(); current++ ) {
             nc_color col = current == sel ? h_white : c_white;
-            //highlight important missions
+
             for( const mission_entry &k : mission_key.entries[0] ) {
                 if( is_equal( cur_key_list[current].id, k.id ) ) {
                     col = ( current == sel ? h_white : c_yellow );
                     break;
                 }
             }
-            //dull uncraftable items
+
             for( const mission_entry &k : mission_key.entries[10] ) {
                 if( is_equal( cur_key_list[current].id, k.id ) ) {
                     col = ( current == sel ? h_white : c_dark_gray );
@@ -1041,7 +1079,7 @@ bool talk_function::display_and_choose_opts(
             }
             std::vector<std::string> &name_text = folded_names[current];
             if( list_line + name_text.size() > info_height + 2 ) {
-                break;  //  Skip last entry that would spill over into the bar.
+                break;
             }
             for( size_t name_line = 0; name_line < name_text.size(); name_line++ ) {
                 print_colored_text( w_list, point( name_line ? 5 : 1, list_line ),
@@ -1062,7 +1100,7 @@ bool talk_function::display_and_choose_opts(
         wnoutrefresh( w_list );
         werase( w_info );
 
-        // Fold mission text, store it for scrolling
+
         mission_text = foldstring( mission_key.cur_key.text, info_width - 2, ' ' );
         if( info_height >= mission_text.size() ) {
             info_offset = 0;
@@ -1080,7 +1118,7 @@ bool talk_function::display_and_choose_opts(
         }
         const size_t end_line = std::min( info_height, mission_text.size() - info_offset );
 
-        // Display the current subset of the mission text.
+
         for( size_t start_line = 0; start_line < end_line; start_line++ ) {
             print_colored_text( w_info, point( 0, start_line ), col, col,
                                 mission_text[start_line + info_offset] );
@@ -1096,8 +1134,9 @@ bool talk_function::display_and_choose_opts(
     } );
 
     a11y::screen_scope reader( &ctxt, "companion_missions",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.action == "activate" && role_id == role_id_faction_camp ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" && role_id == role_id_faction_camp )
+        {
             for( int tab_index = base_camps::TAB_MAIN;
                  tab_index <= base_camps::TAB_NW; ++tab_index ) {
                 if( intent.node != "companion:tab:" + std::to_string( tab_index ) ) {
@@ -1118,8 +1157,8 @@ bool talk_function::display_and_choose_opts(
                     cur_key_list = mission_key.entries[entries_index];
                 }
                 if( cur_key_list.empty() ) {
-                    // tab_available above should make this unreachable;
-                    // never index an empty list on an external intent.
+
+
                     return std::nullopt;
                 }
                 sel = 0;
@@ -1129,21 +1168,22 @@ bool talk_function::display_and_choose_opts(
                 return "TIMEOUT";
             }
         }
-        if( intent.action == "focus" || intent.action == "activate" ) {
+        if( intent.action == "focus" || intent.action == "activate" )
+        {
             for( size_t i = 0; i < cur_key_list.size(); ++i ) {
                 if( intent.node == "companion:entry:" + std::to_string( i ) ) {
-                    // Entry IDs are positional in the current cur_key_list.
-                    // An activate only confirms the entry that is already
-                    // selected (the one the published snapshot marks
-                    // selected and focuses): it sets cur_key itself and
-                    // returns CONFIRM in the same intent, like
-                    // uilist::create_reader_scope. An activate naming any
-                    // other entry merely selects it, so an intent minted
-                    // against an older list (or a focus that has since
-                    // moved) can never execute a different mission than
-                    // the one the listener last heard selected; the
-                    // separate CONFIRM command likewise only ever acts
-                    // on the current selection.
+
+
+
+
+
+
+
+
+
+
+
+
                     const bool already_selected = i == sel;
                     sel = i;
                     info_offset = 0;
@@ -1363,12 +1403,12 @@ npc_ptr talk_function::individual_mission( const tripoint_abs_omt &omt_pos,
     if( comp == nullptr ) {
         return comp;
     }
-    // make sure, for now, that NPCs dismount their horse before going on a mission.
+
     if( comp->has_effect( effect_riding ) ) {
         comp->npc_dismount();
     }
 
-    //Ensure we have someone to give equipment to before we lose it
+
     for( item *i : equipment ) {
         comp->companion_mission_inv.insert( *i );
         if( item::count_by_charges( i->typeId() ) ) {
@@ -1405,18 +1445,18 @@ void talk_function::caravan_depart( npc &p, const std::string &dest, const missi
                       "The caravan departs with an estimated total travel time of %d hours…", hours ), hours );
 
     const double uncertainty_multiplier = rng_float( 0.9, 1.1 );
-    //  The caravan's duration has an uncertainty, but all members are part of the same caravan...
+
 
     for( auto &elem : npc_list ) {
         if( elem->companion_mission_time == calendar::before_time_starts ) {
-            //Adds a 10% error in estimated travel time
+
             elem->set_companion_mission( p, id );
             elem->companion_mission_time = calendar::turn + time * uncertainty_multiplier;
         }
     }
 }
 
-//Could be expanded to actually path to the site, just returns the distance
+
 int talk_function::caravan_dist( const std::string &dest )
 {
     Character &player_character = get_player_character();
@@ -1429,7 +1469,7 @@ int talk_function::caravan_dist( const std::string &dest )
 void talk_function::caravan_return( npc &p, const std::string &dest, const mission_id &id )
 {
     npc_ptr comp = companion_choose_return( p, id, calendar::turn,
-                                            true );  //  ignore_parameters = true due to backwards compatibility, changed during 0.F
+                                            true );
     if( comp == nullptr ) {
         return;
     }
@@ -1438,13 +1478,13 @@ void talk_function::caravan_return( npc &p, const std::string &dest, const missi
         companion_return( *comp );
         return;
     }
-    //So we have chosen to return an individual or party who went on the mission
-    //Everyone who was on the mission will have the same companion_mission_time
-    //and will simulate the mission and return together
+
+
+
     std::vector<npc_ptr> caravan_party;
     std::vector<npc_ptr> bandit_party;
     std::vector<npc_ptr> npc_list = companion_list( p, id,
-                                    true );  //  contains = true due to backwards compatibility, changed during 0.F
+                                    true );
     const int rand_caravan_size = rng( 1, 3 );
     caravan_party.reserve( npc_list.size() + rand_caravan_size );
     for( int i = 0; i < rand_caravan_size; i++ ) {
@@ -1482,7 +1522,7 @@ void talk_function::caravan_return( npc &p, const std::string &dest, const missi
 
     int merch_amount = 0;
     for( const auto &elem : caravan_party ) {
-        //Scrub temporary party members and the dead
+
         if( elem->get_part_hp_cur( bodypart_id( "torso" ) ) == 0 && elem->has_companion_mission() ) {
             overmap_buffer.remove_npc( elem->getID() );
             merch_amount += ( time / 600 ) * 4;
@@ -1503,7 +1543,7 @@ void talk_function::caravan_return( npc &p, const std::string &dest, const missi
     }
 }
 
-//A random NPC on one team attacks a random monster on the opposite
+
 void talk_function::attack_random( const std::vector<npc_ptr> &attacker,
                                    const std::vector< monster * > &group )
 {
@@ -1518,7 +1558,7 @@ void talk_function::attack_random( const std::vector<npc_ptr> &attacker,
     }
 }
 
-//A random monster on one side attacks a random NPC on the other
+
 void talk_function::attack_random( const std::vector< monster * > &group,
                                    const std::vector<npc_ptr> &defender )
 {
@@ -1528,13 +1568,13 @@ void talk_function::attack_random( const std::vector< monster * > &group,
     monster *att = random_entry( group );
     const auto def = random_entry( defender );
     att->melee_attack( *def );
-    //monster mon;
+
     if( def->get_part_hp_cur( bodypart_id( "torso" ) ) <= 0 || def->is_dead() ) {
         popup( _( "%s is wasted by %s!" ), def->get_name(), att->type->nname() );
     }
 }
 
-//A random NPC on one team attacks a random NPC on the opposite
+
 void talk_function::attack_random( const std::vector<npc_ptr> &attacker,
                                    const std::vector<npc_ptr> &defender )
 {
@@ -1548,7 +1588,7 @@ void talk_function::attack_random( const std::vector<npc_ptr> &attacker,
     if( best ) {
         best_score = att->get_skill_level( best );
     }
-    ///\EFFECT_DODGE_NPC increases avoidance of random attacks
+
     if( rng( -1, best_score ) >= rng( 0, def->get_skill_level( skill_dodge ) ) ) {
         def->set_part_hp_cur( bodypart_id( "torso" ), 0 );
         popup( _( "%s is wasted by %s!" ), def->get_name(), att->get_name() );
@@ -1557,8 +1597,8 @@ void talk_function::attack_random( const std::vector<npc_ptr> &attacker,
     }
 }
 
-//Used to determine when to retreat, might want to add in a random factor so that engagements aren't
-//drawn out wars of attrition
+
+
 int talk_function::combat_score( const std::vector<npc_ptr> &group )
 {
     int score = 0;
@@ -1618,9 +1658,9 @@ void talk_function::field_plant( npc &p, const std::string &place )
             seed_names.push_back( seed->tname() );
         }
     }
-    // Choose seed if applicable
+
     const int seed_index = uilist( _( "Which seeds do you wish to have planted?" ), seed_names );
-    // Did we cancel?
+
     if( seed_index < 0 || static_cast<size_t>( seed_index ) >= seed_types.size() ) {
         popup( _( "You saved your seeds for later." ) );
         return;
@@ -1638,12 +1678,12 @@ void talk_function::field_plant( npc &p, const std::string &place )
         free_seeds = player_character.amount_of( seed_id );
     }
 
-    //Now we need to find how many free plots we have to plant in...
+
     const tripoint_abs_omt site = overmap_buffer.find_closest(
                                       player_character.pos_abs_omt(), place, 20, false );
     tinymap bay;
     bay.load( site, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
 
     swap_map swap( *bay.cast_to_map() );
     for( const tripoint_omt_ms &plot : bay.points_on_zlevel() ) {
@@ -1685,7 +1725,7 @@ void talk_function::field_plant( npc &p, const std::string &place )
 
     player_character.use_amount( itype_FMCNote, limiting_number );
 
-    //Plant the actual seeds
+
     for( const tripoint_omt_ms &plot : bay.points_on_zlevel() ) {
         if( bay.ter( plot ) == ter_t_dirtmound && limiting_number > 0 ) {
             std::list<item> used_seed;
@@ -1709,7 +1749,7 @@ void talk_function::field_plant( npc &p, const std::string &place )
 void talk_function::field_harvest( npc &p, const std::string &place )
 {
     Character &player_character = get_player_character();
-    //First we need a list of plants that can be harvested...
+
     const tripoint_abs_omt site = overmap_buffer.find_closest(
                                       player_character.pos_abs_omt(), place, 20, false );
     tinymap bay;
@@ -1718,13 +1758,13 @@ void talk_function::field_harvest( npc &p, const std::string &place )
     std::vector<itype_id> plant_types;
     std::vector<std::string> plant_names;
     bay.load( site, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
     swap_map swap( *bay.cast_to_map() );
 
     for( const tripoint_omt_ms &plot : bay.points_on_zlevel() ) {
         map_stack items = bay.i_at( plot );
         if( bay.furn( plot ) == furn_f_plant_harvest && !items.empty() ) {
-            // Can't use item_stack::only_item() since there might be fertilizer
+
             map_stack::iterator seed = std::find_if( items.begin(), items.end(), []( const item & it ) {
                 return it.is_seed();
             } );
@@ -1750,10 +1790,10 @@ void talk_function::field_harvest( npc &p, const std::string &place )
         popup( _( "There aren't any plants that are ready to harvest…" ) );
         return;
     }
-    // Choose the crop to harvest
+
     const int plant_index = uilist( _( "Which plants do you want to have harvested?" ),
                                     plant_names );
-    // Did we cancel?
+
     if( plant_index < 0 || static_cast<size_t>( plant_index ) >= plant_types.size() ) {
         popup( _( "You decided to hold off for now…" ) );
         return;
@@ -1770,7 +1810,7 @@ void talk_function::field_harvest( npc &p, const std::string &place )
 
     for( const tripoint_omt_ms &plot : bay.points_on_zlevel() ) {
         if( bay.furn( plot ) == furn_f_plant_harvest ) {
-            // Can't use item_stack::only_item() since there might be fertilizer
+
             map_stack items = bay.i_at( plot );
             map_stack::iterator seed = std::find_if( items.begin(), items.end(), []( const item & it ) {
                 return it.is_seed();
@@ -1786,8 +1826,8 @@ void talk_function::field_harvest( npc &p, const std::string &place )
                     plant_count *= bay.furn( plot )->plant->harvest_multiplier;
                     plant_count = std::min( std::max( plant_count, 1 ), 12 );
 
-                    // Multiply by the plant's and seed's base charges to mimic creating
-                    // items similar to iexamine::harvest_plant
+
+
                     number_plants += plant_count * tmp.charges;
                     number_seeds += std::max( 1, rng( plant_count / 4, plant_count / 2 ) ) * item_seed.charges;
 
@@ -1812,7 +1852,7 @@ void talk_function::field_harvest( npc &p, const std::string &place )
                               number_plants, plant_names[plant_index], merch_amount );
     }
 
-    //Add fruit
+
     if( liquidate ) {
         add_msg( _( "The %s are sold for %d merch…" ), plant_names[plant_index], merch_amount );
         item merch = item( itype_FMCNote );
@@ -1837,15 +1877,15 @@ void talk_function::field_harvest( npc &p, const std::string &place )
 
 static int scavenging_combat_skill( npc &p, int bonus, bool guns )
 {
-    // the following doxygen aliases do not yet exist. this is marked for future reference
-    ///\EFFECT_MELEE_NPC affects scavenging_patrol results
-    ///\EFFECT_SURVIVAL_NPC affects scavenging_patrol results
-    ///\EFFECT_BASHING_NPC affects scavenging_patrol results
-    ///\EFFECT_CUTTING_NPC affects scavenging_patrol results
-    ///\EFFECT_GUN_NPC affects scavenging_patrol results
-    ///\EFFECT_STABBING_NPC affects scavenging_patrol results
-    ///\EFFECT_UNARMED_NPC affects scavenging_patrol results
-    ///\EFFECT_DODGE_NPC affects scavenging_patrol results
+
+
+
+
+
+
+
+
+
     return bonus + p.get_skill_level( skill_melee ) + .5 * p.get_skill_level( skill_survival ) +
            p.get_skill_level( skill_bashing ) + p.get_skill_level( skill_cutting ) +
            ( guns ? p.get_skill_level( skill_gun ) : 0 ) + p.get_skill_level( skill_stabbing ) +
@@ -1938,12 +1978,12 @@ bool talk_function::scavenging_raid_return( npc &p )
     for( int i = 0; i < rng( 2, 3 ); i++ ) {
         tripoint_abs_omt site = overmap_buffer.find_closest(
                                     loot_location, "house", 0, false, ot_match_type::prefix );
-        // Search the entire height of the house, including the basement and roof
+
         for( int z = -1; z <= OVERMAP_HEIGHT; z++ ) {
             site.z() = z;
 
             const oter_id &omt_ref = overmap_buffer.ter( site );
-            // We're past the roof, so we can stop
+
             if( omt_ref == oter_open_air ) {
                 break;
             }
@@ -1991,7 +2031,7 @@ bool talk_function::scavenging_raid_return( npc &p )
 
     std::list<item> to_distribute;
     for( item i : all_returned_items ) {
-        // Scavengers get most items and put them up for sale, player gets the scraps
+
         if( one_in( 8 ) ) {
             player_character.i_drop_at( i );
         } else {
@@ -2033,7 +2073,7 @@ bool talk_function::hospital_raid_return( npc &p )
                 popup( _( "Unfortunately they were overpowered by the undead…  I'm sorry." ) );
                 overmap_buffer.remove_npc( comp->getID() );
 
-                // Let the player retry if everybody dies
+
                 get_player_character().set_value( var_SCAVENGER_HOSPITAL_RAID_STARTED, "no" );
                 return false;
             }
@@ -2048,12 +2088,12 @@ bool talk_function::hospital_raid_return( npc &p )
         if( site.is_invalid() ) {
             debugmsg( "No hospitals found." );
         } else {
-            // Search the entire height of the hospital, including the roof
+
             for( int z = 0; z <= OVERMAP_HEIGHT; z++ ) {
                 site.z() = z;
 
                 const oter_id &omt_ref = overmap_buffer.ter( site );
-                // We're past the roof, so we can stop
+
                 if( omt_ref == oter_open_air ) {
                     break;
                 }
@@ -2089,7 +2129,7 @@ bool talk_function::hospital_raid_return( npc &p )
 
     std::list<item> to_distribute;
     for( item i : all_returned_items ) {
-        // One time mission, so the loot gets split evenly
+
         if( one_in( 2 ) ) {
             player_character.i_drop_at( i );
         } else {
@@ -2146,13 +2186,13 @@ bool talk_function::carpenter_return( npc &p )
     }
 
     if( one_in( 20 ) ) {
-        // the following doxygen aliases do not yet exist. this is marked for future reference
 
-        ///\EFFECT_FABRICATION_NPC affects carpenter mission results
 
-        ///\EFFECT_DODGE_NPC affects carpenter mission results
 
-        ///\EFFECT_SURVIVAL_NPC affects carpenter mission results
+
+
+
+
         int skill_1 = comp->get_greater_skill_or_knowledge_level( skill_fabrication );
         int skill_2 = comp->get_skill_level( skill_dodge );
         int skill_3 = comp->get_skill_level( skill_survival );
@@ -2202,11 +2242,11 @@ bool talk_function::forage_return( npc &p )
 
     if( one_in( 10 ) ) {
         popup( _( "While foraging, a beast began to stalk %s…" ), comp->get_name() );
-        // the following doxygen aliases do not yet exist. this is marked for future reference
 
-        ///\EFFECT_SURVIVAL_NPC affects forage mission results
 
-        ///\EFFECT_DODGE_NPC affects forage mission results
+
+
+
         int skill_1 = comp->get_skill_level( skill_survival );
         int skill_2 = comp->get_skill_level( skill_dodge );
         if( skill_1 > rng( -2, 8 ) ) {
@@ -2254,9 +2294,9 @@ bool talk_function::forage_return( npc &p )
 
     item merch = item( itype_FMCNote );
     player_character.i_add_or_drop( merch, merch_amount );
-    // the following doxygen aliases do not yet exist. this is marked for future reference
 
-    ///\EFFECT_SURVIVAL_NPC affects forage mission results
+
+
     float skill = comp->get_skill_level( skill_survival );
     if( skill > rng_float( -.5, 8 ) ) {
         item_group_id itemlist = Item_spawn_data_farming_seeds;
@@ -2297,8 +2337,8 @@ bool talk_function::companion_om_combat_check( const std::vector<npc_ptr> &group
         const tripoint_abs_omt &om_tgt, bool try_engage )
 {
     if( overmap_buffer.is_safe( om_tgt ) ) {
-        //Should work but is_safe is always returning true regardless of what is there.
-        //return true;
+
+
     }
 
     tinymap target_bay;
@@ -2311,11 +2351,11 @@ bool talk_function::companion_om_combat_check( const std::vector<npc_ptr> &group
             std::tie( omp, local_omt ) = project_remain<coords::om>( om_tgt );
             overmap &omi = overmap_buffer.get( omp );
 
-            // TODO: Interact with dormant horde monsters as well?
+
             for( std::unordered_map<tripoint_abs_ms, horde_entity> *bucket :
                  omi.hordes.entity_group_at( local_omt ) ) {
                 for( std::pair<const tripoint_abs_ms, horde_entity> &monster_entry : *bucket ) {
-                    // TODO: figure out hwat to do if this involves lightweight horde entities?
+
                     if( monster_entry.second.monster_data ) {
                         monster &this_monster = *monster_entry.second.monster_data;
                         monsters_around.push_back( &this_monster );
@@ -2374,7 +2414,7 @@ bool talk_function::force_on_force( const std::vector<npc_ptr> &defender,
     }
     Character &player_character = get_player_character();
     faction *yours = player_character.get_faction();
-    //Find out why your followers don't have your faction...
+
     popup( _( "Engagement between %d members of %s %s and %d %s%s!" ), defender.size(),
            yours->get_name(), def_desc, monsters_fighting.size(), att_desc, adv );
     int defense = 0;
@@ -2401,10 +2441,10 @@ bool talk_function::force_on_force( const std::vector<npc_ptr> &defender,
         if( attack > defense * 3 ) {
             attack_random( remaining_mon, remaining_def );
             if( defense == 0 || ( remaining_def.size() == 1 && remaining_def[0]->is_dead() ) ) {
-                //Here too...
+
                 popup( _( "%s forces are destroyed!" ), yours->get_name() );
             } else {
-                //Again, no faction for your followers
+
                 popup( _( "%s forces retreat from combat!" ), yours->get_name() );
             }
             return false;
@@ -2494,7 +2534,7 @@ void talk_function::force_on_force( const std::vector<npc_ptr> &defender,
     }
 }
 
-// skill training support functions
+
 void talk_function::companion_skill_trainer( npc &comp, const std::string &skill_tested,
         time_duration time_worked, int difficulty )
 {
@@ -2545,7 +2585,7 @@ void talk_function::companion_return( npc &comp )
     }
     comp.companion_mission_inv.clear();
     comp.companion_mission_points.clear();
-    // npc *may* be active, or not if outside the reality bubble
+
     g->reload_npcs();
 }
 
@@ -2686,7 +2726,7 @@ npc_ptr talk_function::companion_choose( const std::map<skill_id, int> &required
             continue;
         }
         npc_companion_mission c_mission = guy->get_companion_mission();
-        // get non-assigned visible followers
+
         if( player_character.posz() == guy->posz() && !guy->has_companion_mission() &&
             !guy->is_travelling() &&
             ( rl_dist( player_character.pos_abs(), guy->pos_abs() ) <= SEEX * 2 ) &&
@@ -2705,7 +2745,7 @@ npc_ptr talk_function::companion_choose( const std::map<skill_id, int> &required
             const tripoint_abs_omt guy_omt_pos = guy->pos_abs_omt();
             std::optional<basecamp *> guy_camp = overmap_buffer.find_camp( guy_omt_pos.xy() );
             if( guy_camp ) {
-                // get NPCs assigned to guard a remote base
+
                 basecamp *temp_camp = *guy_camp;
                 std::vector<npc_ptr> assigned_npcs = temp_camp->get_npcs_assigned();
                 if( std::any_of( assigned_npcs.begin(), assigned_npcs.end(),
@@ -2783,12 +2823,12 @@ npc_ptr talk_function::companion_choose( const std::map<skill_id, int> &required
         }
         uilist_entry npc_entry = uilist_entry( x, can_do, -1, npc_desc );
         if( !can_do ) {
-            // The shared uilist reader (R04.1) otherwise gives a generic
-            // disabled reason for this entry. Name the actual unmet
-            // requirements, from the same required_skills data the label
-            // above prints as "skill have/need", so the listener hears
-            // why this companion cannot be sent instead of only that
-            // they cannot.
+
+
+
+
+
+
             std::string unmet;
             for( const std::pair<const skill_id, int> &skill_tested : required_skills ) {
                 if( skill_tested.second == 0 ||
@@ -2890,19 +2930,19 @@ npc_ptr talk_function::companion_choose_return( comp_list &npc_list )
     return nullptr;
 }
 
-//Smash stuff, steal valuables, and change map marker
+
 std::set<item> talk_function::loot_building( const tripoint_abs_omt &site,
         const oter_str_id &looted_replacement )
 {
     tinymap bay;
     bay.load( site, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
     swap_map swap( *bay.cast_to_map() );
     creature_tracker &creatures = get_creature_tracker();
     std::set<item> return_items;
     for( const tripoint_omt_ms &p : bay.points_on_zlevel() ) {
         const ter_id &t = bay.ter( p );
-        //Open all the doors, doesn't need to be exhaustive
+
         const std::unordered_set<ter_str_id> openable_doors = {ter_t_door_c, ter_t_door_c_peep, ter_t_door_b, ter_t_door_boarded, ter_t_door_boarded_damaged, ter_t_rdoor_boarded, ter_t_rdoor_boarded_damaged, ter_t_door_boarded_peep, ter_t_door_boarded_damaged_peep };
         if( openable_doors.find( t.id() ) != openable_doors.end() ) {
             bay.ter_set( p, ter_t_door_o );
@@ -2911,7 +2951,7 @@ std::set<item> talk_function::loot_building( const tripoint_abs_omt &site,
             if( bash ) {
                 bay.ter_set( p, bash->ter_set );
             }
-            // Bash doors twice
+
             const std::optional <map_ter_bash_info> &bash_again = bay.ter( p ).obj().bash;
             if( bash_again ) {
                 bay.ter_set( p, bash_again->ter_set );
@@ -2931,7 +2971,7 @@ std::set<item> talk_function::loot_building( const tripoint_abs_omt &site,
                 bay.collapse_at( p, false );
             }
         }
-        //Smash easily breakable stuff
+
         else if( const std::unordered_set<ter_str_id> weak_window_ters = {ter_t_window, ter_t_window_taped, ter_t_window_domestic, ter_t_window_boarded_noglass, ter_t_window_domestic_taped, ter_t_window_alarm_taped, ter_t_window_boarded, ter_t_curtains, ter_t_window_alarm, ter_t_window_no_curtains, ter_t_window_no_curtains_taped };
                  weak_window_ters.find( t.id() ) != weak_window_ters.end() && one_in( 4 ) ) {
             const std::optional<map_ter_bash_info> &bash = bay.ter( p ).obj().bash;
@@ -2953,12 +2993,12 @@ std::set<item> talk_function::loot_building( const tripoint_abs_omt &site,
                 bay.spawn_items( p, item_group::items_from( bash->drop_group, calendar::turn ) );
             }
         }
-        //Kill zombies!  Only works against pre-spawned enemies at the moment...
+
         Creature *critter = creatures.creature_at( rebase_bub( p ) );
         if( critter != nullptr ) {
             critter->die( bay.cast_to_map(), nullptr );
         }
-        //Hoover up tasty items!
+
         map_stack items = bay.i_at( p );
         for( map_stack::iterator it = items.begin(); it != items.end(); ) {
             if( !it->made_of( phase_id::LIQUID ) &&
@@ -3000,7 +3040,7 @@ void mission_data::add( const ui_mission_id &id, const std::string &name_display
 
     mission_entry miss;
     miss.id = id;
-    if( name_display.empty() ) {  //  Poorly designed if this is the case. Do it properly...
+    if( name_display.empty() ) {
         miss.name_display = miss_info[id.id.id].serialize_id;
     } else {
         miss.name_display = name_display;

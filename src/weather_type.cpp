@@ -8,7 +8,7 @@
 namespace
 {
 generic_factory<weather_type> weather_type_factory( "weather_type" );
-} // namespace
+}
 
 namespace io
 {
@@ -64,7 +64,7 @@ std::string enum_to_string<weather_sound_category>( weather_sound_category data 
     cata_fatal( "Invalid weather sound category." );
 }
 
-} // namespace io
+}
 
 template<>
 const weather_type &weather_type_id::obj() const
@@ -72,7 +72,7 @@ const weather_type &weather_type_id::obj() const
     return weather_type_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<weather_type>::is_valid() const
 {
@@ -103,7 +103,7 @@ void weather_type::load( const JsonObject &jo, std::string_view )
 
     mandatory( jo, was_loaded, "sym", symbol, unicode_codepoint_from_symbol_reader );
     optional( jo, was_loaded, "sun_sym", sun_symbol, unicode_codepoint_from_symbol_reader,
-              static_cast<uint32_t>( 0x263C ) ); // ☼
+              static_cast<uint32_t>( 0x263C ) );
 
     mandatory( jo, was_loaded, "ranged_penalty", ranged_penalty );
     mandatory( jo, was_loaded, "sight_penalty", sight_penalty );
@@ -144,7 +144,7 @@ void weather_type::load( const JsonObject &jo, std::string_view )
 
     optional( jo, was_loaded, "weather_animation", weather_animation );
     optional( jo, was_loaded, "required_weathers", required_weathers );
-    // FIXME: generic factory reader for condition
+
     read_condition( jo, "condition", condition, true );
 }
 

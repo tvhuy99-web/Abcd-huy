@@ -67,22 +67,22 @@ translation translation::no_translation( const std::string &str )
 void translation::make_plural()
 {
     if( needs_translation ) {
-        // if plural form has not been enabled yet
+
         if( !raw_pl ) {
-            // copy the singular string without appending "s" to preserve the original behavior
+
             raw_pl = cata::make_value<std::string>( raw );
         }
     } else if( !raw_pl ) {
-        // just mark plural form as enabled
+
         raw_pl = cata::make_value<std::string>();
     }
-    // reset the cache
+
     cached_language_version = INVALID_LANGUAGE_VERSION;
     cached_translation = nullptr;
 }
 
-// return { true, suggested plural } if no irregular form is detected,
-// { false, suggested plural } otherwise. do have false positive/negatives.
+
+
 static std::pair<bool, std::string> possible_plural_of( const std::string &raw )
 {
     const std::string plural = raw + "s";
@@ -92,22 +92,22 @@ static std::pair<bool, std::string> possible_plural_of( const std::string &raw )
     }
 
     static const std::regex certainly_irregular_regex(
-        // Not ending with an alphabet or number
+
         "(" R"([^a-zA-Z0-9]$)"
-        // Some ending letters suggest irregular form with high certainty
+
         "|" R"((s|sh|x|tch|[rtpsdfgklzxcvnm]y|quy|[a-z]by)$)"
-        // Magiclysm enchantment names (e.g. `cestus +1`)
+
         "|" R"(\+[0-9]+$)"
-        // Some patterns suggest irregular form with high certainty
+
         "|" R"(([ -]with[ -]|[ -]for[ -]))"
         ")" );
 
     static const std::regex possibly_irregular_regex(
-        // Not ending with an alphabet
+
         "(" R"([^a-zA-Z]$)"
-        // Some ending letters suggest possible irregular form
+
         "|" R"((ch|f|fe|o)$)"
-        // Some patterns suggest possible irregular form
+
         "|" R"(([ -]of[ -]|[,:]))"
         ")" );
 
@@ -124,7 +124,7 @@ static std::pair<bool, std::string> possible_plural_of( const std::string &raw )
 void translation::deserialize( const JsonValue &jsin )
 {
     if( jsin.test_string() ) {
-        // reset the cache
+
         cached_language_version = INVALID_LANGUAGE_VERSION;
         cached_num = 0;
         cached_translation = nullptr;
@@ -136,15 +136,15 @@ void translation::deserialize( const JsonValue &jsin )
         const bool check_style = false;
 #endif
         if( raw_pl || !check_style ) {
-            // strings with plural forms are currently only simple names, and
-            // need no text style check.
+
+
             raw = jsin.get_string();
         } else {
-            // We know it's a string, we need to save the offset after the string.
+
             raw = text_style_check_reader( text_style_check_reader::allow_object::no )
                   .get_next( jsin );
         }
-        // if plural form is enabled
+
         if( raw_pl ) {
             const std::pair<bool, std::string> suggested_pl = possible_plural_of( raw );
             raw_pl = cata::make_value<std::string>( suggested_pl.second );
@@ -166,8 +166,8 @@ void translation::deserialize( const JsonValue &jsin )
         deserialize( jsin.get_object() );
     }
 
-    // Reset the underlying jsonin stream because errors leave it in an undefined state.
-    // This will be removed once everything is migrated off JsonIn.
+
+
     if( jsin.test_string() ) {
         jsin.get_string();
 
@@ -178,14 +178,14 @@ void translation::deserialize( const JsonValue &jsin )
 
 void translation::deserialize( const JsonObject &jsobj )
 {
-    // reset the cache
+
     cached_language_version = INVALID_LANGUAGE_VERSION;
     cached_num = 0;
     cached_translation = nullptr;
 
     if( std::optional<JsonValue> comments = jsobj.get_member_opt( "//~" );
         comments.has_value() && !comments->test_string() ) {
-        // Ensure we have a string and mark the member as visited in the process
+
         try {
             jsobj.throw_error_at( "//~", "\"//~\" should be a string that contains comments for translators." );
         } catch( const JsonError &e ) {
@@ -203,11 +203,11 @@ void translation::deserialize( const JsonObject &jsobj )
     const bool check_style = false;
 #endif
     if( jsobj.has_member( "str_sp" ) ) {
-        // same singular and plural forms
-        // strings with plural forms are currently only simple names, and
-        // need no text style check.
+
+
+
         raw = jsobj.get_string( "str_sp" );
-        // if plural form is enabled
+
         if( raw_pl ) {
             raw_pl = cata::make_value<std::string>( raw );
 #ifndef CATA_IN_TOOL
@@ -234,14 +234,14 @@ void translation::deserialize( const JsonObject &jsobj )
         }
     } else {
         if( raw_pl || !check_style ) {
-            // strings with plural forms are currently only simple names, and
-            // need no text style check.
+
+
             raw = jsobj.get_string( "str" );
         } else {
             raw = text_style_check_reader( text_style_check_reader::allow_object::no )
                   .get_next( jsobj.get_member( "str" ) );
         }
-        // if plural form is enabled
+
         if( raw_pl ) {
             if( jsobj.has_member( "str_pl" ) ) {
                 raw_pl = cata::make_value<std::string>( jsobj.get_string( "str_pl" ) );
@@ -298,10 +298,10 @@ const std::string &translation::translated( const int num ) const
     if( !needs_translation || raw.empty() ) {
         return raw;
     }
-    // Note1: `raw`, `raw_pl` and `ctxt` are effectively immutable for caching purposes:
-    // in the places where they are changed, cache is explicitly invalidated
-    // Note2: if `raw_pl` is defined, `num` becomes part of the "cache key"
-    // otherwise `num` is ignored (for both translation and cache)
+
+
+
+
     if( cached_language_version != detail::get_current_language_version() ||
         ( raw_pl && cached_num != num ) || !cached_translation ) {
         cached_language_version = detail::get_current_language_version();
@@ -414,8 +414,8 @@ std::optional<int> translation::legacy_hash() const
     if( needs_translation && !ctxt && !raw_pl ) {
         return djb2_hash( reinterpret_cast<const unsigned char *>( raw.c_str() ) );
     }
-    // Otherwise the translation must have been added after snippets were changed
-    // to use string ids only, so the translation doesn't have a legacy hash value.
+
+
     return std::nullopt;
 }
 

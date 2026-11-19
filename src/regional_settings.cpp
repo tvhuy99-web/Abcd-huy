@@ -30,7 +30,7 @@ static const weighted_string_id_reader<overmap_special_id, int> building_bin_rea
 static const weighted_string_id_reader<furn_id, int> furn_reader( 1 );
 static const weighted_string_id_reader<ter_id, int> ter_reader( 1 );
 
-/** SETTING FACTORY */
+
 namespace
 {
 generic_factory<region_settings_river> region_settings_river_factory( "region_settings_river" );
@@ -55,9 +55,9 @@ generic_factory<forest_biome_component> forest_biome_feature_factory( "forest_bi
 generic_factory<forest_biome_mapgen> forest_biome_mapgen_factory( "forest_biome_mapgen" );
 generic_factory<map_extra_collection> map_extra_collection_factory( "map_extra_collection" );
 generic_factory<region_settings> region_settings_factory( "region_settings_new" );
-} // namespace
+}
 
-/** OBJ */
+
 template<>
 const region_settings_river &string_id<region_settings_river>::obj() const
 {
@@ -139,7 +139,7 @@ const map_extra_collection &string_id<map_extra_collection>::obj() const
     return map_extra_collection_factory.obj( *this );
 }
 
-/** IS_VALID */
+
 template<>
 bool string_id<region_settings_river>::is_valid() const
 {
@@ -221,7 +221,7 @@ bool string_id<region_settings>::is_valid() const
     return region_settings_factory.is_valid( *this );
 }
 
-/** INIT LOAD */
+
 void region_settings_river::load_region_settings_river( const JsonObject &jo,
         const std::string &src )
 {
@@ -303,7 +303,7 @@ void region_settings::load_region_settings( const JsonObject &jo,
     region_settings_factory.load( jo, src );
 }
 
-/** UNLOAD (RESET) */
+
 void region_settings_river::reset()
 {
     region_settings_river_factory.reset();
@@ -643,7 +643,7 @@ void region_settings::load( const JsonObject &jo, std::string_view )
 
 void region_settings::finalize()
 {
-    // So the data definition goes from z = OVERMAP_HEIGHT to z = OVERMAP_DEPTH
+
     std::reverse( default_oter.begin(), default_oter.end() );
 }
 
@@ -674,7 +674,7 @@ void region_settings::finalize_all()
     }
 }
 
-void groundcover_extra::finalize()   // FIXME: return bool for failure
+void groundcover_extra::finalize()
 {
     default_ter = ter_id( default_ter_str );
 
@@ -756,10 +756,10 @@ ter_furn_id groundcover_extra::pick( bool boosted ) const
 
 ter_furn_id forest_biome_mapgen::pick() const
 {
-    // Iterate through the biome components (which have already been put into sequence), roll for the
-    // one_in chance that component contributes a feature, and if so pick that feature and return it.
-    // If a given component does not roll as success, proceed to the next feature in sequence until
-    // a feature is picked or none are picked, in which case an empty feature is returned.
+
+
+
+
     const ter_furn_id *result = nullptr;
     for( const forest_biome_component_id &pr : biome_components ) {
         if( one_in( pr->chance ) ) {
@@ -813,7 +813,7 @@ void region_settings_city::finalize()
     parks.finalize();
 }
 
-//these could be defined in the future
+
 void forest_biome_component::finalize() {}
 void forest_biome_terrain_dependent_furniture_new::finalize() {}
 void region_settings_river::finalize() {}
@@ -826,7 +826,7 @@ void region_terrain_furniture::finalize() {}
 
 void region_settings_highway::finalize()
 {
-    //finds longest special in a building collection
+
     auto find_longest_special = []( const building_bin & b ) {
         int longest_length = 0;
         for( const auto &weighted_pair : b.get_all_buildings() ) {
@@ -861,7 +861,7 @@ map_extra_collection map_extra_collection::filtered_by( const mapgendata &dat ) 
         }
     }
     if( !values.empty() && result.values.empty() ) {
-        // OMT is too tall / too deep for all map extras. Skip map extra generation.
+
         result.chance = 0;
     }
     return result;
@@ -941,7 +941,7 @@ void building_bin::finalize()
     for( const std::pair<const overmap_special_id, int> pr : buildings ) {
         overmap_special_id current_id = pr.first;
         if( !current_id.is_valid() ) {
-            // First, try to convert oter to special
+
             string_id<oter_type_t> converted_id( pr.first.str() );
             if( !converted_id.is_valid() ) {
                 debugmsg( "Tried to add city building %s, but it is neither a special nor a terrain type",

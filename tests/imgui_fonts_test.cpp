@@ -135,7 +135,7 @@ TEST_CASE( "imgui_font_reload_crosses_a_frame", "[imgui_fonts]" )
         ImGui::DestroyContext( ctx );
     } );
     ImGuiIO &io = ImGui::GetIO();
-    // as the SDL renderer backend does: the atlas may change between frames
+
     io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
     io.DisplaySize = ImVec2( 1080.0f, 1920.0f );
     io.DeltaTime = 1.0f / 60.0f;
@@ -147,7 +147,7 @@ TEST_CASE( "imgui_font_reload_crosses_a_frame", "[imgui_fonts]" )
     ImGui::NewFrame();
     const float old_size = ImGui::GetFontSize();
     const float old_width = ImGui::CalcTextSize( "MMMMMMMMMM" ).x;
-    // a size change lands while this frame is open
+
     fontheight = 24;
     reload.request( gui, mono );
     CHECK( ImGui::GetFontSize() == old_size );

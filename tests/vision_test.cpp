@@ -190,7 +190,7 @@ struct vision_test_flags {
     bool moncam = false;
     bool myopic = false;
 };
-} // namespace
+}
 
 namespace
 {
@@ -212,13 +212,13 @@ struct vision_test_case {
     void test_all() const {
         Character &player_character = get_player_character();
         g->place_player( { 60, 60, 0 } );
-        player_character.clear_worn(); // Remove any light-emitting clothing
+        player_character.clear_worn();
         player_character.clear_effects();
         player_character.clear_bionics();
-        player_character.clear_mutations(); // remove mutations that potentially affect vision
+        player_character.clear_mutations();
         player_character.clear_moncams();
         clear_map_without_vision( -2,
-                                  OVERMAP_HEIGHT ); // without_vision just skips updating map memory which we don't test here.
+                                  OVERMAP_HEIGHT );
         g->reset_light_level();
         scoped_weather_override weather_clear( WEATHER_CLEAR );
 
@@ -263,21 +263,21 @@ struct vision_test_case {
         section_name << section_prefix;
         section_name << t.generate_transform_combinations();
 
-        // Sanity check on player placement in relation to `t`
-        // must be invoked after transformations are applied to `t`
+
+
         t.validate_anchor_point( player_character.pos_bub() );
 
         SECTION( section_name.str() ) {
             t.for_each_tile( set_up_tiles );
             int zlev = t.get_origin().z();
             map &here = get_map();
-            // We have to run the whole thing twice, because the first time through the
-            // player's vision_threshold is based on the previous lighting level (so
-            // they might, for example, have poor nightvision due to having just been
-            // in daylight)
+
+
+
+
             here.invalidate_visibility_cache();
             here.update_visibility_cache( zlev );
-            // make sure floor caches are valid on all zlevels above
+
             for( int z = -2; z <= OVERMAP_HEIGHT; z++ ) {
                 here.invalidate_map_cache( z );
             }
@@ -295,7 +295,7 @@ struct vision_test_case {
         }
     }
 };
-} // namespace
+}
 
 static std::optional<units::angle> testcase_veh_dir( point const &def, vision_test_case const &t,
         map_test_case::tile &tile )
@@ -314,14 +314,14 @@ static std::optional<units::angle> testcase_veh_dir( point const &def, vision_te
     return dir;
 }
 
-// The following characters are used in these setups:
-// ' ' - empty, outdoors
-// '-' - empty, indoors
-// 'U' - player, outdoors
-// 'u' - player, indoors
-// 'L' - light, indoors
-// '#' - wall
-// '=' - window frame
+
+
+
+
+
+
+
+
 
 TEST_CASE( "vision_daylight", "[shadowcasting][vision]" )
 {
@@ -509,7 +509,7 @@ TEST_CASE( "vision_translucent_blocks_vision_but_not_light", "[shadowcasting][vi
 TEST_CASE( "vision_see_wall_in_moonlight", "[shadowcasting][vision]" )
 {
     const time_point full_moon = calendar::turn_zero + calendar::season_length() / 6;
-    // Verify that I've picked the full_moon time correctly.
+
     CHECK( get_moon_phase( full_moon ) == MOON_FULL );
 
     vision_test_case t {
@@ -527,7 +527,7 @@ TEST_CASE( "vision_see_wall_in_moonlight", "[shadowcasting][vision]" )
             "111",
             "111",
         },
-        // Want a night time
+
         full_moon - time_past_midnight( full_moon )
     };
 
@@ -536,11 +536,11 @@ TEST_CASE( "vision_see_wall_in_moonlight", "[shadowcasting][vision]" )
 
 TEST_CASE( "vision_player_opaque_neighbors_still_visible_night", "[shadowcasting][vision]" )
 {
-    /**
-     *  Even when stating inside the opaque wall and surrounded by opaque walls,
-     *  you should see yourself and immediate surrounding.
-     *  (walls here simulate the behavior of the fully opaque fields, e.g. thick smoke)
-     */
+
+
+
+
+
     vision_test_case t {
         {
             "#####",
@@ -560,16 +560,16 @@ TEST_CASE( "vision_player_opaque_neighbors_still_visible_night", "[shadowcasting
     };
 
     if( GENERATE( false, true ) ) {
-        // first scenario: player is surrounded by walls
-        // overriding 'u' to set up brick wall and roof at player's position
+
+
         t.set_up_tiles =
             ifchar( 'u', ter_set( ter_t_brick_wall ) + ter_set_flat_roof_above ) ||
             t.set_up_tiles;
 
         t.section_prefix = "walls_";
     } else {
-        // second scenario: player is surrounded by thick smoke
-        // overriding 'u' to set thick smoke everywhere
+
+
         t.set_up_tiles = [&]( map_test_case::tile t ) {
             get_map().add_field( t.p, field_fd_smoke );
             return true;
@@ -582,9 +582,9 @@ TEST_CASE( "vision_player_opaque_neighbors_still_visible_night", "[shadowcasting
 
 TEST_CASE( "vision_single_tile_skylight", "[shadowcasting][vision]" )
 {
-    /**
-     * Light shines through the single-tile hole in the roof. Apparent light should be symmetrical.
-     */
+
+
+
     vision_test_case t {
         {
             "---------",
@@ -701,7 +701,7 @@ TEST_CASE( "vision_blindfold_reciprocity", "[vision][reciprocity]" )
     t.test_all();
 
     REQUIRE( !get_avatar().sees( here,  *zombie ) );
-    // don't "optimize" lightcasting with player sight range
+
     REQUIRE( zombie->sees( here, get_avatar() ) );
 }
 
@@ -840,7 +840,7 @@ TEST_CASE( "vision_moncam_otherz", "[shadowcasting][vision][moncam]" )
     };
     t.section_prefix = string_format( "%i_", disp.z );
     t.flags.moncam = true;
-    t.flags.blindfold = true; // FIXME: remove once 3dfov takes LOS into account
+    t.flags.blindfold = true;
     t.set_up_tiles =
         ifchar( 'c', spawn_moncam_disp ) ||
         t.set_up_tiles;
@@ -1066,7 +1066,7 @@ TEST_CASE( "vision_moncam_invalidation", "[shadowcasting][vision][moncam]" )
     };
 
     auto wiggle_slime = [&]() {
-        // vehicle camera should still work even if only the moncam moved
+
         slime->Creature::move_to( slime->pos_abs() + tripoint::east );
         get_map().build_map_cache( slime->posz() );
         slime->Creature::move_to( slime->pos_abs() - tripoint::east );
@@ -1121,19 +1121,19 @@ TEST_CASE( "vision_inside_meth_lab", "[shadowcasting][vision][moncam]" )
 
     vision_test_case t {
         {
-            "  MCM  ", // left M is origin location of meth lab (driver's seat); camera can see side mirrors
+            "  MCM  ",
             "       ",
             "       ",
             "   U   ",
             "       ",
             "       ",
-            "   D   ", // D mark door to be opened
+            "   D   ",
             "       "
         },
         door_open ?
         !moncam ?
         std::vector<std::string> {
-            // when door is open, light shines inside, forming a cone
+
             "6666666",
             "6444446",
             "6444446",
@@ -1156,7 +1156,7 @@ TEST_CASE( "vision_inside_meth_lab", "[shadowcasting][vision][moncam]" )
 
         moncam ?
         std::vector<std::string> {
-            // active moncam can see through mirrors
+
             "4444444",
             "4444444",
             "4411144",
@@ -1167,7 +1167,7 @@ TEST_CASE( "vision_inside_meth_lab", "[shadowcasting][vision][moncam]" )
             "6666666"
 } :
         std::vector<std::string> {
-            // when door is closed, everything is dark
+
             "6666666",
             "6111116",
             "6111116",
@@ -1183,14 +1183,14 @@ TEST_CASE( "vision_inside_meth_lab", "[shadowcasting][vision][moncam]" )
     vehicle *v = nullptr;
     std::optional<tripoint_bub_ms> door = std::nullopt;
 
-    // opens or closes a specific door (marked as 'D')
-    // this is called twice: after either vehicle or door is set
-    // and it executed a single time when both vehicle and door position are available
+
+
+
     auto open_door = [&]() {
         if( !door_open || !v || !door ) {
             return;
         }
-        // open door at `door` location
+
         for( const vehicle_part *vp : v->get_parts_at( &here, *door, "OPENABLE", part_status_flag::any ) ) {
             v -> open( here, v->index_of_part( vp ) );
         }
@@ -1242,15 +1242,15 @@ static void set_up_transition_scene( const tripoint_bub_ms &origin )
     you.recoil = MAX_RECOIL;
     clear_map_without_vision( -2, OVERMAP_HEIGHT );
     g->place_player( origin );
-    // placing the avatar can load submaps with their own monsters, and safe
-    // mode would stop these tests' moves
+
+
     clear_creatures();
     g->set_safe_mode( SAFE_MODE_OFF );
     calendar::turn = day_time;
     g->reset_light_level();
 }
 
-// brick wall ring under a roof around a floor tile at origin
+
 static void build_transition_room( const tripoint_bub_ms &origin )
 {
     map &here = get_map();
@@ -1271,7 +1271,7 @@ static void rebuild_vision_caches()
     here.update_visibility_cache( 0 );
 }
 
-// twice, as vision_test_case does: second pass sees lighting the first built
+
 static void settle_vision_caches()
 {
     rebuild_vision_caches();
@@ -1294,8 +1294,8 @@ TEST_CASE( "vision_own_tile_override_follows_avatar", "[vision]" )
         steps = 1;
     }
     SECTION( "across_a_submap_edge_then_one_more_step" ) {
-        // 71 is east column of center submap: first step shifts the map, second
-        // lands next to shift's landing tile
+
+
         start = { 71, 64, 0 };
         steps = 2;
     }
@@ -1385,7 +1385,7 @@ TEST_CASE( "vision_posture_change_recasts_fov", "[vision]" )
 
 TEST_CASE( "vision_translucent_tile_blocks_again_after_avatar_leaves", "[vision]" )
 {
-    // inside center submap, so leaving the tile doesn't shift the map
+
     const tripoint_bub_ms window{ 64, 64, 0 };
     set_up_transition_scene( window );
     map &here = get_map();
@@ -1401,7 +1401,7 @@ TEST_CASE( "vision_translucent_tile_blocks_again_after_avatar_leaves", "[vision]
 
 TEST_CASE( "vision_cache_transitions_match_rebuild", "[vision]" )
 {
-    // inside center submap, so one step doesn't shift the map
+
     const tripoint_bub_ms origin{ 64, 64, 0 };
     set_up_transition_scene( origin );
     map &here = get_map();
@@ -1416,7 +1416,7 @@ TEST_CASE( "vision_cache_transitions_match_rebuild", "[vision]" )
         REQUIRE( avatar_action::move( you, here, tripoint_rel_ms::east ) );
     }
     SECTION( "cross_a_submap_edge_then_one_more_step" ) {
-        // 71 is east column of center submap
+
         g->place_player( { 71, 64, 0 } );
         here.rebuild_vision_caches_from_scratch( 0 );
         oracle.prime();
@@ -1451,8 +1451,8 @@ TEST_CASE( "vision_cache_scene_transitions_match_rebuild", "[vision]" )
     const vision_cache_oracle oracle( los_pairs_around( origin, 6 ) );
 
     SECTION( "unrelated_opening" ) {
-        // blocker and opening are in different submaps, so opening the door
-        // rebuilds only the door's submap
+
+
         build_transition_room( origin );
         const tripoint_bub_ms blocker = origin + tripoint::south;
         const tripoint_bub_ms opening = origin + tripoint::north;
@@ -1502,7 +1502,7 @@ TEST_CASE( "vision_cache_observer_transitions_match_rebuild", "[vision]" )
     const vision_cache_oracle oracle( los_pairs_around( origin, 6 ) );
 
     SECTION( "under_a_ledge" ) {
-        // rooftop the avatar looks down from; its edge hides the ground below
+
         const tripoint_bub_ms roof = origin + tripoint::above;
         for( const tripoint_bub_ms &p : here.points_in_radius( roof, 2 ) ) {
             here.ter_set( p, ter_t_flat_roof );
@@ -1530,8 +1530,8 @@ TEST_CASE( "vision_cache_observer_transitions_match_rebuild", "[vision]" )
         here.rebuild_vision_caches_from_scratch( 0 );
         oracle.prime();
         v->discharge_battery( here, 1000000 );
-        // a turn's camera draw can round down to nothing, so run turns until
-        // the empty battery shuts the camera off
+
+
         for( int turn = 0; turn < 1000 && v->camera_on; ++turn ) {
             v->power_parts( here );
         }
@@ -1542,7 +1542,7 @@ TEST_CASE( "vision_cache_observer_transitions_match_rebuild", "[vision]" )
     }
 }
 
-// cellar the avatar looks down into through a hole beside it
+
 static void build_transition_cellar( const tripoint_bub_ms &origin )
 {
     map &here = get_map();
@@ -1629,7 +1629,7 @@ TEST_CASE( "vision_cache_final_visibility_transitions_match_rebuild", "[vision]"
         }
     }
     SECTION( "aim" ) {
-        // far beyond the always-seen radius, and off the aim line east
+
         const tripoint_bub_ms south = origin + tripoint_rel_ms{ 0, 20, 0 };
         const auto aim_at = [&]( const tripoint_bub_ms & t ) {
             you.last_target_pos = here.get_abs( t );
@@ -1687,8 +1687,8 @@ TEST_CASE( "vision_cache_other_level_request_matches_rebuild", "[vision]" )
     g->reset_light_level();
     build_transition_cellar( origin );
     here.rebuild_vision_caches_from_scratch( 0 );
-    // light below, then a request for the level below alone, as looking around
-    // one level down makes
+
+
     here.ter_set( origin + tripoint_rel_ms{ 2, 1, -1 }, ter_t_utility_light );
     here.build_map_cache( -1 );
     here.update_visibility_cache( -1 );
@@ -1733,7 +1733,7 @@ TEST_CASE( "vision_clairvoyant_field_shows_on_a_level_no_cast_reaches", "[vision
                 here.clear_fields( below );
             }
             build_vision_caches_incrementally();
-            // its tile is hidden again, as a rebuild has it
+
             const lit_level incremental = here.access_cache( -1 ).visibility_cache[below.xy()];
             here.rebuild_vision_caches_from_scratch( 0 );
             CHECK( incremental == here.access_cache( -1 ).visibility_cache[below.xy()] );
@@ -1775,7 +1775,7 @@ TEST_CASE( "vision_avatar_view_does_not_depend_on_the_level_built_first", "[visi
     const vision_cache_oracle oracle( los_pairs_around( origin, 6 ) );
     here.rebuild_vision_caches_from_scratch( 0 );
     oracle.prime();
-    // look around one level down asks for that level first
+
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
         here.invalidate_map_cache( z );
     }
@@ -1791,7 +1791,7 @@ TEST_CASE( "vision_unseen_level_matches_tile_by_tile_classification", "[vision]"
     map &here = get_map();
     here.rebuild_vision_caches_from_scratch( 0 );
     const visibility_variables &vars = here.get_visibility_variables_cache();
-    // solid rock two levels down: nothing reaches it, so it takes the shortcut
+
     const int z = -2;
     int mismatches = 0;
     for( int x = 0; x < MAPSIZE_X; ++x ) {
@@ -1909,7 +1909,7 @@ TEST_CASE( "vision_light_of_a_level_no_cast_reaches_drops_its_sources", "[vision
     calendar::turn = midnight;
     g->reset_light_level();
     build_transition_cellar( origin );
-    // same submap as origin, so moving there shifts no map
+
     const tripoint_bub_ms hideout = origin + tripoint_rel_ms{ 10, 0, 0 };
     build_transition_room( hideout );
     const tripoint_bub_ms lamp = origin + tripoint_rel_ms{ 2, 1, -1 };
@@ -1933,7 +1933,7 @@ TEST_CASE( "vision_light_of_a_level_no_cast_reaches_drops_its_sources", "[vision
     }
 }
 
-// a lone frame carrying one enabled light part
+
 static vehicle &spawn_transition_lamp( const tripoint_bub_ms &p, const vpart_id &light )
 {
     map &here = get_map();
@@ -2000,14 +2000,14 @@ TEST_CASE( "vision_light_follows_sources_between_turns", "[vision]" )
     clear_vehicles();
 }
 
-// what do_turn does around the caches: the per-turn light hook, then a build
+
 static void pass_a_turn()
 {
     get_map().mark_turn_light_dirty();
     build_vision_caches_incrementally();
 }
 
-// processes items until a lit item holding a single charge has burned it
+
 static void burn_out_items()
 {
     map &here = get_map();
@@ -2035,8 +2035,8 @@ static bool lit_item_at( const tripoint_bub_ms &p )
     return false;
 }
 
-// settles the caches around a lit item with one charge left, burns it out
-// and passes a turn: its light is gone, as a rebuild has it
+
+
 static void check_light_after_burn_out( const vision_cache_oracle &oracle,
                                         const tripoint_bub_ms &spot )
 {
@@ -2047,7 +2047,7 @@ static void check_light_after_burn_out( const vision_cache_oracle &oracle,
     REQUIRE_FALSE( lit_item_at( spot ) );
     pass_a_turn();
     oracle.check_matches_rebuild( vision_layers::light );
-    // with nothing left to burn down, a quiet turn keeps the light
+
     const uint64_t lit = get_map().access_cache( spot.z() ).lightmap_generation;
     pass_a_turn();
     CHECK( get_map().access_cache( spot.z() ).lightmap_generation == lit );
@@ -2067,7 +2067,7 @@ TEST_CASE( "vision_light_follows_sources_that_change_without_notice", "[vision]"
         here.rebuild_vision_caches_from_scratch( 0 );
         oracle.prime();
         WHEN( "cart finds no power for it" ) {
-            // a small draw rounds to a whole kJ only now and then
+
             for( int i = 0; i < 1000 && !cart.lights().empty(); ++i ) {
                 cart.power_parts( here );
             }
@@ -2178,7 +2178,7 @@ TEST_CASE( "vision_cache_camera_transitions_match_rebuild", "[vision]" )
     avatar &you = get_avatar();
     you.add_moncam( { mon_test_camera, 60 } );
     const vision_cache_oracle oracle( los_pairs_around( origin, 6 ) );
-    // on the ground, or on a rooftop one level up
+
     const int camera_z = GENERATE( 0, 1 );
     CAPTURE( camera_z );
     const tripoint_bub_ms camera_pos = origin + tripoint_rel_ms{ 4, 0, camera_z };
@@ -2247,7 +2247,7 @@ TEST_CASE( "vision_avatar_cover_hides_nothing_from_other_observers", "[vision]" 
 
 TEST_CASE( "vision_cameras_merge_without_erasing_each_other", "[vision]" )
 {
-    // camera on a rooftop whose ledge hides ground the other camera sees
+
     const tripoint_bub_ms origin{ 60, 60, 0 };
     set_up_transition_scene( origin );
     map &here = get_map();
@@ -2326,7 +2326,7 @@ TEST_CASE( "vision_vehicle_door_opening_refreshes_reachable_zones", "[vision]" )
     const tripoint_bub_ms origin{ 60, 60, 0 };
     set_up_transition_scene( origin );
     map &here = get_map();
-    // corridor west to east through origin, walled and roofed
+
     for( const tripoint_bub_ms &p : here.points_in_radius( origin, 2 ) ) {
         const bool corridor = p.y() == origin.y() && std::abs( p.x() - origin.x() ) <= 1;
         here.ter_set( p, corridor ? ter_t_floor : ter_t_brick_wall );
@@ -2361,8 +2361,8 @@ TEST_CASE( "vision_vehicle_door_opening_refreshes_reachable_zones", "[vision]" )
     clear_vehicles();
 }
 
-// three frames in a row facing east, so the pivot sits in the middle and not
-// under the part at the front
+
+
 static vehicle &spawn_three_frame_cart( const tripoint_bub_ms &middle )
 {
     map &here = get_map();
@@ -2375,14 +2375,14 @@ static vehicle &spawn_three_frame_cart( const tripoint_bub_ms &middle )
     return *v;
 }
 
-// rolls the cart one tile east with its front onto a ramp up, which carries the
-// front parts to the level above and leaves the rest where they were
+
+
 static void roll_front_up_a_ramp( vehicle &cart )
 {
     map &here = get_map();
     here.ter_set( cart.pos_bub( here ) + tripoint_rel_ms{ 2, 0, 0 }, ter_t_ramp_up_high );
     here.rebuild_vehicle_level_caches();
-    // as a move does before displacing
+
     cart.precalc_mounts( 1, cart.face.dir(), cart.pivot_point( here ) );
     REQUIRE( here.displace_vehicle( cart, tripoint_rel_ms::east ) );
     REQUIRE( cart.pos_bub( here ).z() == 0 );
@@ -2499,8 +2499,8 @@ TEST_CASE( "vision_light_of_a_vehicle_split_by_a_ramp", "[vision]" )
     calendar::turn = midnight;
     g->reset_light_level();
     const vision_cache_oracle oracle( los_pairs_around( origin, 6 ) );
-    // up on a lone roof tile, so the level above the ground is the avatar's own
-    // and the ground below is in view
+
+
     const tripoint_bub_ms perch = origin + tripoint::above;
     here.ter_set( perch, ter_t_flat_roof );
     g->place_player( perch );
@@ -2549,7 +2549,7 @@ TEST_CASE( "vision_optical_los_respects_translucent_terrain", "[vision]" )
     CHECK_FALSE( observer.sees( here, target ) );
     CHECK_FALSE( here.sees( origin, target, 10 ) );
     CHECK( here.sees( origin, target, 10, true, los_trace::physical ) );
-    // projectiles keep the physical trace, so a shot still lines up through it
+
     const std::vector<tripoint_bub_ms> path = here.find_clear_path( origin, target, true );
     REQUIRE_FALSE( path.empty() );
     CHECK( path.back() == target );
@@ -2560,7 +2560,7 @@ TEST_CASE( "vision_heat_radiation_passes_translucent_partitions", "[vision]" )
     const tripoint_bub_ms origin{ 60, 60, 0 };
     set_up_transition_scene( origin );
     map &here = get_map();
-    // away from the avatar, whose own heat check walks the line
+
     const tripoint_bub_ms location = origin + tripoint_rel_ms{ 4, 0, 0 };
     const tripoint_bub_ms partition = location + tripoint::east;
     const tripoint_bub_ms fire = partition + tripoint::east;
@@ -2608,8 +2608,8 @@ TEST_CASE( "vision_pairwise_los_follows_offscreen_doors", "[vision]" )
         CHECK( here.sees( from, to, 10 ) != initially_open );
     }
     SECTION( "before_any_build" ) {
-        // NPC opening door is followed by NPCs looking through it in the same
-        // turn, with no cache build between them
+
+
         CHECK( here.sees( from, to, 10 ) != initially_open );
     }
 }
@@ -2625,7 +2625,7 @@ TEST_CASE( "vision_potential_los_allows_a_pending_field_change", "[vision]" )
     here.build_map_cache( 0 );
     REQUIRE_FALSE( here.sees( origin, target, 5 ) );
     here.remove_field( smoke, field_fd_smoke );
-    // no cache build between the change and the query
+
     CHECK( here.has_potential_los( origin, target ) );
     CHECK( here.sees( origin, target, 5 ) );
 }
@@ -2636,7 +2636,7 @@ TEST_CASE( "vision_clear_path_search_leaves_default_los_alone", "[vision]" )
     const tripoint_bub_ms destination{ 64, 61, 0 };
     set_up_transition_scene( source );
     map &here = get_map();
-    // wall on the default line that another line can pass
+
     bool found = false;
     for( const tripoint_bub_ms &p : line_to( source, destination, 0, 0 ) ) {
         if( p == destination ) {
@@ -2660,7 +2660,7 @@ TEST_CASE( "vision_clear_path_search_leaves_default_los_alone", "[vision]" )
 TEST_CASE( "vision_scene_caches_place_vehicles_on_the_map_being_built", "[vision]" )
 {
     set_up_transition_scene( { 60, 60, 0 } );
-    // map far outside the reality bubble, made current the way mapgen does
+
     smallmap far_map;
     far_map.load( project_to<coords::omt>( get_avatar().pos_abs() ) + point_rel_omt( 20, 20 ), false );
     swap_map swap( *far_map.cast_to_map() );
@@ -2677,7 +2677,7 @@ TEST_CASE( "vision_scene_caches_place_vehicles_on_the_map_being_built", "[vision
     for( const vpart_reference &vp : v->get_avail_parts( "OPENABLE" ) ) {
         v->close( here, vp.part_index() );
     }
-    // sight query builds this map's scene caches first
+
     here.sees( spot, spot + tripoint::east, 5 );
     int walls = 0;
     for( const vpart_reference &vp : v->get_avail_parts( "OPAQUE" ) ) {
@@ -2807,11 +2807,11 @@ TEST_CASE( "pl_sees-oob-nocrash", "[vision]" )
 {
     const map &here = get_map();
 
-    // oob crash from game::place_player_overmap() or game::start_game(), simplified
+
     clear_avatar();
     get_map().load( project_to<coords::sm>( get_avatar().pos_abs() ) + point::south_east, false,
                     false );
-    get_avatar().sees( here, tripoint_bub_ms::zero ); // CRASH?
+    get_avatar().sees( here, tripoint_bub_ms::zero );
 
     clear_avatar();
 }

@@ -80,8 +80,8 @@ void scent_map::draw( const catacurses::window &win, const int div,
 
 void scent_map::shift( const point_rel_ms &sm_shift )
 {
-    // Set up iteration such that we ensure data has been moved before
-    // it's overwritten.
+
+
     const int x_start = sm_shift.x() >= 0 ? 0 : MAPSIZE_X - 1;
     const int x_stop = sm_shift.x() >= 0 ? MAPSIZE_X : -1;
     const int x_step = sm_shift.x() >= 0 ? 1 : -1;
@@ -142,9 +142,9 @@ bool scent_map::inbounds( const tripoint_bub_ms &p ) const
 {
     map &here = get_map();
 
-    // HACK: This weird long check here is a hack around the fact that scentmap is 2D
-    // A z-level can access scentmap if it is within SCENT_MAP_Z_REACH flying z-level move from player's z-level
-    // That is, if a flying critter could move directly up or down (or stand still) and be on same z-level as player
+
+
+
     const int levz = here.get_abs_sub().z();
     const bool scent_map_z_level_inbounds = ( p.z() == levz ) ||
                                             ( std::abs( p.z() - levz ) == SCENT_MAP_Z_REACH &&
@@ -168,8 +168,8 @@ bool scent_map::inbounds( const point_bub_ms &p ) const
 
 void scent_map::update( const tripoint_bub_ms &center, map &m )
 {
-    // Stop updating scent after X turns of the player not moving.
-    // Once wind is added, need to reset this on wind shifts as well.
+
+
     if( !player_last_position || center != *player_last_position ) {
         player_last_position = center;
         player_last_moved = calendar::turn;
@@ -177,46 +177,46 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
         return;
     }
 
-    // note: the next four intermediate matrices need to be at least
-    // [2*SCENT_RADIUS+3][2*SCENT_RADIUS+1] in size to hold enough data
-    // The code I'm modifying used [MAPSIZE_X]. I'm staying with that to avoid new bugs.
 
-    // These two matrices are transposed so that x addresses are contiguous in memory
+
+
+
+
     scent_array<int> sum_3_scent_y;
     scent_array<int> squares_used_y;
 
-    // these are for caching flag lookups
-    scent_array<bool> blocks_scent; // currently only ter_furn_flag::TFLAG_NO_SCENT blocks scent
+
+    scent_array<bool> blocks_scent;
     scent_array<bool> reduces_scent;
 
-    // for loop constants
+
     const int scentmap_minx = center.x() - SCENT_RADIUS;
     const int scentmap_maxx = center.x() + SCENT_RADIUS;
     const int scentmap_miny = center.y() - SCENT_RADIUS;
     const int scentmap_maxy = center.y() + SCENT_RADIUS;
 
-    // decrease this to reduce gas spread. Keep it under 125 for
-    // stability. This is essentially a decimal number * 1000.
+
+
     const int diffusivity = 100;
 
-    // The new scent flag searching function. Should be wayyy faster than the old one.
+
     m.scent_blockers( blocks_scent, reduces_scent, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
                       point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
-    // Sum neighbors in the y direction.  This way, each square gets called 3 times instead of 9
-    // times. This cost us an extra loop here, but it also eliminated a loop at the end, so there
-    // is a net performance improvement over the old code. Could probably still be better.
-    // note: this method needs an array that is one square larger on each side in the x direction
-    // than the final scent matrix. I think this is fine since SCENT_RADIUS is less than
-    // MAPSIZE_X, but if that changes, this may need tweaking.
+
+
+
+
+
+
     for( int x = scentmap_minx - 1; x <= scentmap_maxx + 1; ++x ) {
         for( int y = scentmap_miny; y <= scentmap_maxy; ++y ) {
-            // remember the sum of the scent val for the 3 neighboring squares that can defuse into
+
             sum_3_scent_y[y][x] = 0;
             squares_used_y[y][x] = 0;
             for( int i = y - 1; i <= y + 1; ++i ) {
                 if( !blocks_scent[x][i] ) {
                     if( reduces_scent[x][i] ) {
-                        // only 20% of scent can diffuse on REDUCE_SCENT squares
+
                         sum_3_scent_y[y][x] += 2 * grscent[x][i];
                         squares_used_y[y][x] += 2;
                     } else {
@@ -228,13 +228,13 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
         }
     }
 
-    // Rest of the scent map
+
     for( int x = scentmap_minx; x <= scentmap_maxx; ++x ) {
         for( int y = scentmap_miny; y <= scentmap_maxy; ++y ) {
             int &scent_here = grscent[x][y];
             if( !blocks_scent[x][y] ) {
-                // to how many neighboring squares do we diffuse out? (include our own square
-                // since we also include our own square when diffusing in)
+
+
                 const int squares_used = squares_used_y[y][x - 1]
                                          + squares_used_y[y][x]
                                          + squares_used_y[y][x + 1];
@@ -243,15 +243,15 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
                 if( !reduces_scent[x][y] ) {
                     this_diffusivity = diffusivity;
                 } else {
-                    this_diffusivity = diffusivity / 5; //less air movement for REDUCE_SCENT square
+                    this_diffusivity = diffusivity / 5;
                 }
-                // take the old scent and subtract what diffuses out
+
                 int temp_scent = scent_here * ( 10 * 1000 - squares_used * this_diffusivity );
-                // neighboring REDUCE_SCENT squares absorb some scent
+
                 temp_scent -= scent_here * this_diffusivity * ( 90 - squares_used ) / 5;
-                // we've already summed neighboring scent values in the y direction in the previous
-                // loop. Now we do it for the x direction, multiply by diffusion, and this is what
-                // diffuses into our current square.
+
+
+
                 scent_here =
                     ( temp_scent
                       + this_diffusivity * ( sum_3_scent_y[y][x - 1]
@@ -259,7 +259,7 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
                                              + sum_3_scent_y[y][x + 1] )
                     ) / ( 1000 * 10 );
             } else {
-                // this cell blocks scent via NO_SCENT (in json)
+
                 scent_here = 0;
             }
         }
@@ -269,7 +269,7 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
 namespace
 {
 generic_factory<scent_type> scent_factory( "scent_type" );
-} // namespace
+}
 
 template<>
 const scent_type &string_id<scent_type>::obj() const

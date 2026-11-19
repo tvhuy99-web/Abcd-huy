@@ -40,20 +40,20 @@ namespace catacurses
 class window;
 
 using chtype = int;
-} // namespace catacurses
+}
 
-//      LINE_NESW  - X for on, O for off
-#define LINE_XOXO 4194424 // '|'   Vertical line. ncurses: ACS_VLINE; Unicode: U+2502
-#define LINE_OXOX 4194417 // '-'   Horizontal line. ncurses: ACS_HLINE; Unicode: U+2500
-#define LINE_XXOO 4194413 // '|_'  Lower left corner. ncurses: ACS_LLCORNER; Unicode: U+2514
-#define LINE_OXXO 4194412 // '|^'  Upper left corner. ncurses: ACS_ULCORNER; Unicode: U+250C
-#define LINE_OOXX 4194411 // '^|'  Upper right corner. ncurses: ACS_URCORNER; Unicode: U+2510
-#define LINE_XOOX 4194410 // '_|'  Lower right corner. ncurses: ACS_LRCORNER; Unicode: U+2518
-#define LINE_XXXO 4194420 // '|-'  Tee pointing right. ncurses: ACS_LTEE; Unicode: U+251C
-#define LINE_XXOX 4194422 // '_|_' Tee pointing up. ncurses: ACS_BTEE; Unicode: U+2534
-#define LINE_XOXX 4194421 // '-|'  Tee pointing left. ncurses: ACS_RTEE; Unicode: U+2524
-#define LINE_OXXX 4194423 // '^|^' Tee pointing down. ncurses: ACS_TTEE; Unicode: U+252C
-#define LINE_XXXX 4194414 // '-|-' Large Plus or cross over. ncurses: ACS_PLUS; Unicode: U+253C
+
+#define LINE_XOXO 4194424
+#define LINE_OXOX 4194417
+#define LINE_XXOO 4194413
+#define LINE_OXXO 4194412
+#define LINE_OOXX 4194411
+#define LINE_XOOX 4194410
+#define LINE_XXXO 4194420
+#define LINE_XXOX 4194422
+#define LINE_XOXX 4194421
+#define LINE_OXXX 4194423
+#define LINE_XXXX 4194414
 
 #define LINE_XOXO_C 0xa0
 #define LINE_OXOX_C 0xa1
@@ -67,17 +67,17 @@ using chtype = int;
 #define LINE_OXXX_C 0xa9
 #define LINE_XXXX_C 0xaa
 
-#define LINE_XOXO_S "│" // '|'   Vertical line. ncurses: ACS_VLINE; Unicode: U+2502
-#define LINE_OXOX_S "─" // '-'   Horizontal line. ncurses: ACS_HLINE; Unicode: U+2500
-#define LINE_XXOO_S "└" // '|_'  Lower left corner. ncurses: ACS_LLCORNER; Unicode: U+2514
-#define LINE_OXXO_S "┌" // '|^'  Upper left corner. ncurses: ACS_ULCORNER; Unicode: U+250C
-#define LINE_OOXX_S "┐" // '^|'  Upper right corner. ncurses: ACS_URCORNER; Unicode: U+2510
-#define LINE_XOOX_S "┘" // '_|'  Lower right corner. ncurses: ACS_LRCORNER; Unicode: U+2518
-#define LINE_XXXO_S "├" // '|-'  Tee pointing right. ncurses: ACS_LTEE; Unicode: U+251C
-#define LINE_XXOX_S "┴" // '_|_' Tee pointing up. ncurses: ACS_BTEE; Unicode: U+2534
-#define LINE_XOXX_S "┤" // '-|'  Tee pointing left. ncurses: ACS_RTEE; Unicode: U+2524
-#define LINE_OXXX_S "┬" // '^|^' Tee pointing down. ncurses: ACS_TTEE; Unicode: U+252C
-#define LINE_XXXX_S "┼" // '-|-' Large Plus or cross over. ncurses: ACS_PLUS; Unicode: U+253C
+#define LINE_XOXO_S "│"
+#define LINE_OXOX_S "─"
+#define LINE_XXOO_S "└"
+#define LINE_OXXO_S "┌"
+#define LINE_OOXX_S "┐"
+#define LINE_XOOX_S "┘"
+#define LINE_XXXO_S "├"
+#define LINE_XXOX_S "┴"
+#define LINE_XOXX_S "┤"
+#define LINE_OXXX_S "┬"
+#define LINE_XXXX_S "┼"
 
 #define LINE_XOXO_UNICODE 0x2502
 #define LINE_OXOX_UNICODE 0x2500
@@ -116,159 +116,159 @@ using chtype = int;
 #define LINE_OXXX LINE_OXXX_UNICODE
 #define LINE_XXXX LINE_XXXX_UNICODE
 #endif
-// Supports line drawing
+
 std::string string_from_int( catacurses::chtype ch );
 
-// Some consistent colors
+
 #define BORDER_COLOR c_light_gray
 #define ACTIVE_HOTKEY_COLOR c_yellow
 
-// Display data
-extern int TERMX; // width available for display
-extern int TERMY; // height available for display
-extern int POSX; // X position of '@' inside terrain window
-extern int POSY; // Y position of '@' inside terrain window
-extern int TERRAIN_WINDOW_WIDTH; // width of terrain window
-extern int TERRAIN_WINDOW_HEIGHT; // height of terrain window
-extern int TERRAIN_WINDOW_TERM_WIDTH; // width of terrain window in terminal characters
-extern int TERRAIN_WINDOW_TERM_HEIGHT; // same for height
-// Width of "full screen" popups. `FULL_SCREEN` is a misnomer from legacy code.
+
+extern int TERMX;
+extern int TERMY;
+extern int POSX;
+extern int POSY;
+extern int TERRAIN_WINDOW_WIDTH;
+extern int TERRAIN_WINDOW_HEIGHT;
+extern int TERRAIN_WINDOW_TERM_WIDTH;
+extern int TERRAIN_WINDOW_TERM_HEIGHT;
+
 extern int FULL_SCREEN_WIDTH;
-// Height of "full screen" popups. `FULL_SCREEN` is a misnomer from legacy code.
+
 extern int FULL_SCREEN_HEIGHT;
-extern int OVERMAP_WINDOW_WIDTH; // width of overmap window
-extern int OVERMAP_WINDOW_HEIGHT; // height of overmap window
-extern int OVERMAP_WINDOW_TERM_WIDTH; // width of the overmap window in terminal characters
-extern int OVERMAP_WINDOW_TERM_HEIGHT; // same for height
-extern int OVERMAP_LEGEND_WIDTH; // width of overmap window legend
+extern int OVERMAP_WINDOW_WIDTH;
+extern int OVERMAP_WINDOW_HEIGHT;
+extern int OVERMAP_WINDOW_TERM_WIDTH;
+extern int OVERMAP_WINDOW_TERM_HEIGHT;
+extern int OVERMAP_LEGEND_WIDTH;
 
 nc_color msgtype_to_color( game_message_type type, bool bOldMsg = false );
 
-/**
- * @anchor color_tags
- * @name color tags
- *
- * Most print function have only one color parameter (or none at all), therefore they would
- * print the whole text in one color. To print some parts of a text in a different color,
- * one would have to write separate calls to the print functions.
- *
- * Color tags allow embedding coloring instructions directly into the text, which allows
- * a single call to the print function with the full text. The color tags are removed
- * (not printed), but the text inside the tags is printed with a specific color.
- *
- * Example: Print "You need a tool to do this." in white and the word "tool" in red.
- * \code
- *    wprintz( w, c_white, "You need a " );
- *    wprintz( w, c_red, "tool" );
- *    wprintz( w, c_white, " to do this." );
- * \endcode
- * Same code with color tags:
- * \code
- *    print_colored_text( w, c_white, "You need a <color_red>tool</color> to do this." );
- * \endcode
- *
- * Color tags must appear in pairs, first `<color_XXX>`, followed by text, followed by `</color>`.
- * The text in between is colored according to the color `XXX`. `XXX` must be a valid color name,
- * see @ref color_from_string. Color tags do *not* stack, the text inside the color tags should
- * not contain any other color tags.
- *
- * Functions that handle color tags should contain a note about this in their documentation. If
- * they have no such note, they probably don't handle color tags (which means they just print the
- * string as is).
- *
- * Note: use @ref colorize to add color tags to a string.
- * \code
- *    nc_color color = ...;
- *    text = colorize( "some text", color );
- * \endcode
- *
- * One can use @ref utf8_width with the second parameter set to `true` to determine the printed
- * length of a string containing color tags. The parameter instructs `utf8_width` to ignore the
- * color tags. For example `utf8_width("<color_red>text</color>")` would return 23, but
- * `utf8_width("<color_red>text</color>", true)` returns 4 (the length of "text").
- */
-/*@{*/
 
-/**
- * Removes the prefix starting at the first occurrence of c1 until the first occurrence of c2
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 std::string rm_prefix( std::string str, char c1 = '<', char c2 = '>' );
 
-/**
- * Adds the color represented by the next color tag found in the string to the top of the stack.
- * If color_error == report_color_error::yes a debugmsg will be shown when the tag is not valid.
- */
+
+
+
+
 color_tag_parse_result::tag_type update_color_stack(
     std::stack<nc_color> &color_stack, std::string_view seg,
     report_color_error color_error = report_color_error::yes );
 
-/**
- * Removes the color tags from the input string. This might be required when the string is to
- * be used for functions that don't handle color tags.
- */
-std::string remove_color_tags( std::string_view s );
-/*@}*/
 
-/**
- * Split the input text into separate lines and wrap long lines. Each resulting line is at most
- * `width` console cells long.
- * The functions handles @ref color_tags. Color tags are added to the resulting lines so each
- * line can be independently printed.
- * @return A vector of lines, it may contain empty strings. Each entry is at most `width`
- * console cells width.
- */
+
+
+
+std::string remove_color_tags( std::string_view s );
+
+
+
+
+
+
+
+
+
+
 std::vector<std::string> foldstring( const std::string &str, int width, char split = ' ' );
 
-/**
- * Print text with embedded @ref color_tags, x, y are in curses system.
- * The text is not word wrapped, but may automatically be wrapped on new line characters or
- * when it reaches the border of the window (both is done by the curses system).
- * If the text contains no color tags, it's equivalent to a simple mvwprintz.
- *
- * @param w Window we are drawing in
- * @param p Curses-style coordinates to print text at.
- * @param text The text to print.
- * @param cur_color The current color (could have been set by a previously encountered color tag),
- * change to a color according to the color tags that are in the text.
- * @param base_color Base color that is used outside of any color tag.
- **/
+
+
+
+
+
+
+
+
+
+
+
+
+
 void print_colored_text( const catacurses::window &w, const point &p, nc_color &color,
                          const nc_color &base_color, std::string_view text,
                          report_color_error color_error = report_color_error::yes );
-/**
- * Print word wrapped text (with @ref color_tags) into the window.
- *
- * @param w Window we are printing in
- * @param begin_line Line in the word wrapped text that is printed first (lines before that are not printed at all).
- * @param text Text to print
- * @param base_color Color used outside of any color tags.
- * @param scroll_msg Optional, can be empty. If not empty and the text does not fit the window, the string is printed
- * on the last line (in light green), it should show how to scroll the text.
- * @return The maximal scrollable offset ([number of lines to be printed] - [lines available in the window]).
- * This allows the caller to restrict the begin_line number on future calls / when modified by the user.
- */
+
+
+
+
+
+
+
+
+
+
+
+
 int print_scrollable( const catacurses::window &w, int begin_line, const std::string &text,
                       const nc_color &base_color, const std::string &scroll_msg );
-/**
- * Fold and print text in the given window. The function handles @ref color_tags and
- * uses them while printing.
- *
- * @param w Window we are printing in
- * @param begin The (row, column) index on which to start.
- * @param width The width used to fold the text (see @ref foldstring). `width + begin_y` should be
- * less than the window width, otherwise the lines will be wrapped by the curses system, which
- * defeats the purpose of using `foldstring`.
- * @param base_color The initially used color. This can be overridden using color tags.
- * @param text Actual message to print
- * @param split Character after string is folded
- * @return The number of lines of the formatted text (after folding). This may be larger than
- * the height of the window.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int fold_and_print( const catacurses::window &w, const point &begin, int width,
                     const nc_color &base_color, const std::string &text, char split = ' ' );
-/**
- * Same as other @ref fold_and_print, but does string formatting via @ref string_format.
- */
+
+
+
 template<typename ...Args>
 inline int fold_and_print( const catacurses::window &w, const point &begin,
                            const int width, const nc_color &base_color,
@@ -277,28 +277,28 @@ inline int fold_and_print( const catacurses::window &w, const point &begin,
     return fold_and_print( w, begin, width, base_color, string_format( mes,
                            std::forward<Args>( args )... ) );
 }
-/**
- * Like @ref fold_and_print, but starts the output with the N-th line of the folded string.
- * This can be used for scrolling large texts. Parameters have the same meaning as for
- * @ref fold_and_print, the function therefore handles @ref color_tags correctly.
- *
- * @param w Window we are printing in
- * @param begin The (row,column) index on which to start.
- * @param width The width used to fold the text (see @ref foldstring). `width + begin_y` should be
- * @param begin_line The index of the first line (of the folded string) that is to be printed.
- * The function basically removes all lines before this one and prints the remaining lines
- * with `fold_and_print`.
- * @param base_color The initially used color. This can be overridden using color tags.
- * @param text Actual message to print
- * @return Same as `fold_and_print`: the number of lines of the text (after folding). This is
- * always the same value, regardless of `begin_line`, it can be used to determine the maximal
- * value for `begin_line`.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int fold_and_print_from( const catacurses::window &w, const point &begin, int width,
                          int begin_line, const nc_color &base_color, const std::string &text );
-/**
- * Same as other @ref fold_and_print_from, but does formatting via @ref string_format.
- */
+
+
+
 template<typename ...Args>
 inline int fold_and_print_from( const catacurses::window &w, const point &begin,
                                 const int width, const int begin_line, const nc_color &base_color,
@@ -307,17 +307,17 @@ inline int fold_and_print_from( const catacurses::window &w, const point &begin,
     return fold_and_print_from( w, begin, width, begin_line, base_color,
                                 string_format( mes, std::forward<Args>( args )... ) );
 }
-/**
- * Prints a single line of text. The text is automatically trimmed to fit into the given
- * width. The function handles @ref color_tags correctly.  It does not handle any other
- * tags, and does not handle line breaks.
- *
- * @param w Window we are printing in
- * @param begin The coordinates of line start (curses coordinates)
- * @param width Maximal width of the printed line, if the text is longer, it is cut off.
- * @param base_color The initially used color. This can be overridden using color tags.
- * @param text Actual message to print
- */
+
+
+
+
+
+
+
+
+
+
+
 void trim_and_print( const catacurses::window &w, const point &begin, int width,
                      const nc_color &base_color, const std::string &text,
                      report_color_error color_error = report_color_error::yes );
@@ -361,24 +361,24 @@ std::string trimmed_name_and_value( const std::string &name, const std::string &
                                     int field_width );
 
 void wputch( const catacurses::window &w, const nc_color &FG, int ch );
-// Using int ch is deprecated, use an UTF-8 encoded string instead
+
 void mvwputch( const catacurses::window &w, const point &p, const nc_color &FG, int ch );
 void mvwputch( const catacurses::window &w, const point &p, const nc_color &FG,
                const std::string &ch );
-// Using int ch is deprecated, use an UTF-8 encoded string instead
+
 void mvwputch_inv( const catacurses::window &w, const point &p, const nc_color &FG, int ch );
 void mvwputch_inv( const catacurses::window &w, const point &p, const nc_color &FG,
                    const std::string &ch );
-// Using int ch is deprecated, use an UTF-8 encoded string instead
+
 void mvwputch_hi( const catacurses::window &w, const point &p, const nc_color &FG, int ch );
 void mvwputch_hi( const catacurses::window &w, const point &p, const nc_color &FG,
                   const std::string &ch );
-// draws a colored line of characters
+
 void mvwhline( const catacurses::window &win, const point &p, const nc_color &color, int ch,
                int n );
 void mvwvline( const catacurses::window &win, const point &p, const nc_color &color, int ch,
                int n );
-// draws a filled rectangle starting at p
+
 void mvwrectf( const catacurses::window &win, const point &p, int ch, int w, int h );
 void mvwrectf( const catacurses::window &win, const point &p, const nc_color &color, int ch, int w,
                int h );
@@ -419,7 +419,7 @@ class border_helper
             public:
                 void set( const point &pos, const point &size );
 
-                // Prevent accidentally copying the return value from border_helper::add_border
+
                 border_info( const border_info & ) = delete;
                 border_info( border_info && ) = default;
                 border_info &operator=( const border_info & ) = delete;
@@ -473,7 +473,7 @@ inline query_ynq_result query_ynq( const char *const msg, Args &&... args )
     return query_ynq( string_format( msg, std::forward<Args>( args )... ) );
 }
 
-//text query for getting integer input
+
 bool query_int( int &result, bool show_default, const std::string &text );
 template<typename ...Args>
 inline bool query_int( int &result, bool show_default, const char *const msg, Args &&... args )
@@ -483,30 +483,30 @@ inline bool query_int( int &result, bool show_default, const char *const msg, Ar
 
 std::vector<std::string> get_hotkeys( std::string_view s );
 
-/**
- * @name Popup windows
- *
- * Each function displays a popup (above all other windows) with the given (formatted)
- * text. The popup function with the flags parameters does all the work, the other functions
- * call it with specific flags. The function can be called with a bitwise combination of flags.
- *
- * The functions return the key (taken from @ref getch) that was entered by the user.
- *
- * The message is a printf-like string. It may contain @ref color_tags, which are used while printing.
- *
- * - PF_GET_KEY cancels the popup on *any* user input.
- *   Without the flag the popup is only canceled when the user enters new-line, Space and Escape.
- *   This flag is passed by @ref popup_getkey.
- * - PF_ON_TOP makes the window appear on the top of the screen (at the upper most row). Without
- *   this flag, the popup is centered on the screen.
- *   The flag is passed by @ref popup_top.
- * - PF_FULLSCREEN makes the window have a size of `FULL_SCREEN_WIDTH` and `FULL_SCREEN_HEIGHT`.
- *   The `FULL_SCREEN` part is a misnomer from legacy code as the popup is not actually full-screen.
- *   This flag is passed by @ref full_screen_popup.
- * - PF_NONE is a placeholder for none of the above flags.
- *
- */
-/*@{*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 enum PopupFlags {
     PF_NONE        = 0,
     PF_GET_KEY     = 1 << 0,
@@ -537,8 +537,8 @@ inline void popup( const char *mes, Args &&... args )
     popup( string_format( mes, std::forward<Args>( args )... ), PF_NONE );
 }
 int popup( const std::string &text, PopupFlags flags = PF_NONE );
-// Ask for a keyboard letter directly for sighted/keyboard use. When the
-// in-game reader is active, expose the permitted choices as a semantic list.
+
+
 int choose_key_from_user( const std::string &message, const std::string &allowed_keys,
                           int clear_key = -1 );
 template<typename ...Args>
@@ -547,13 +547,13 @@ inline void full_screen_popup( const char *mes, Args &&... args )
     popup( string_format( mes, std::forward<Args>( args )... ), PF_FULLSCREEN );
 }
 
-/*@}*/
+
 std::string format_item_info( const std::vector<iteminfo> &vItemDisplay,
                               const std::vector<iteminfo> &vItemCompare );
 void display_item_info( const std::vector<iteminfo> &vItemDisplay,
                         const std::vector<iteminfo> &vItemCompare );
 
-// the extra data that item_info needs to draw
+
 struct item_info_data {
     private:
         std::string sItemName;
@@ -610,44 +610,44 @@ input_event draw_item_info( const std::function<catacurses::window()> &init_wind
                             item_info_data &data );
 
 enum class item_filter_type : int {
-    FIRST = 1, // used for indexing into tables
+    FIRST = 1,
     FILTER = 1,
     LOW_PRIORITY = 2,
     HIGH_PRIORITY = 3
 };
-/**
- * Write some tips (such as precede items with - to exclude them) onto the window.
- *
- * @param win Window we are drawing in
- * @param starty Where to start relative to the top of the window.
- * @param height Every row from starty to starty + height - 1 will be cleared before printing the rules.
- * @param type Filter to use when drawing
-*/
+
+
+
+
+
+
+
+
 void draw_item_filter_rules( const catacurses::window &win, int starty, int height,
                              item_filter_type type );
-/**
- * Get the tips printed by `draw_item_filter_rules` as a string.
- * @param type Filter to use when drawing
- */
+
+
+
+
 std::string item_filter_rule_string( item_filter_type type );
 
 char rand_char();
 
-// Remove spaces from the start and the end of a string.
+
 std::string trim( std::string_view s );
-// Remove spaces from the end of a string.
+
 std::string rtrim( std::string_view s );
-// Removes trailing periods and exclamation marks.
+
 std::string trim_trailing_punctuations( std::string_view s );
-// Removes all punctuation except underscore.
+
 std::string remove_punctuations( std::string_view s );
-// Converts the string to upper case.
+
 std::string to_upper_case( std::string_view s );
-// Converts the string to lower case.
+
 std::string to_lower_case( std::string_view s );
 
-// TODO: move these elsewhere
-// string manipulations.
+
+
 void replace_city_tag( std::string &input, const std::string &name );
 
 void replace_substring( std::string &input, const std::string &substring,
@@ -663,13 +663,13 @@ size_t shortcut_print( const catacurses::window &w, nc_color text_color, nc_colo
                        const std::string &fmt );
 std::string shortcut_text( nc_color shortcut_color, const std::string &fmt );
 
-/**
- * @return Pair of a string containing the bar, and its color
- * @param cur Current value being formatted
- * @param max Maximum possible value, e.g. a full bar
- * @param extra_resolution Double the resolution of displayed values with \ symbols.
- * @param colors A vector containing N colors with which to color the bar at different values
- */
+
+
+
+
+
+
+
 std::pair<std::string, nc_color> get_bar( float cur, float max, int width = 5,
         bool extra_resolution = true,
         const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
@@ -689,11 +689,11 @@ enum class enumeration_conjunction : int {
     arrow
 };
 
-/**
- * @return String containing enumerated elements in format: "a, b, c, ..., and z". Uses the Oxford comma.
- * @param values A vector of strings
- * @param conj Choose how to separate the last elements.
- */
+
+
+
+
+
 template<typename Container>
 std::string enumerate_as_string( const Container &values,
                                  enumeration_conjunction conj = enumeration_conjunction::and_ )
@@ -736,16 +736,16 @@ std::string enumerate_as_string( const Container &values,
     return res;
 }
 
-/**
- * @return String containing enumerated elements in format: "a, b, c, ..., and z". Uses the Oxford comma.
- * @param first Iterator pointing to the first element.
- * @param last Iterator pointing to the last element.
- * @param string_for Function that accepts an element and returns a representing string.
- * May return an empty string to omit the element.
- * @param conj Choose how to separate the last elements.
- */
+
+
+
+
+
+
+
+
 template<typename FIter, typename F>
-// Iterator pair by value is idiomatic for STL-style templates.
+
 // NOLINTNEXTLINE(performance-unnecessary-value-param)
 std::string enumerate_as_string( FIter first, FIter last, F &&string_for,
                                  enumeration_conjunction conj = enumeration_conjunction::and_ )
@@ -768,54 +768,54 @@ std::string enumerate_as_string( const Container &cont, F &&string_for,
     return enumerate_as_string( cont.begin(), cont.end(), std::forward<F>( string_for ), conj );
 }
 
-/**
- * @return A formatted string including the hotkey, color-tagged to stand out, and standardized
- * surrounding text to highlight that this is a hotkey to anyone using a screen reader
- * @param hotkey The hotkey to be formatted, without any color tags or other formatting
- * @param text_color The color of the surrounding text, so that only the hoteky stands out
- */
+
+
+
+
+
+
 std::string formatted_hotkey( const std::string &hotkey, nc_color text_color );
 
-/**
- * @return String containing the bar. Example: "Label [****--...    ]".
- * @param val Value to display. Can be unclipped.
- * @param width Width of the entire string.
- * @param label Label before the bar. Can be empty.
- * @param begin Iterator over pairs <double p, char c> (see below).
- * @param end Iterator over pairs <double p, char c> (see below).
- * Where:
- *    p - percentage of the entire bar which can be filled with c.
- *    c - character to fill the segment of the bar with
- */
+
+
+
+
+
+
+
+
+
+
+
 template<typename BarIterator>
 std::string get_labeled_bar( double val, int width, const std::string &label,
                              BarIterator begin, BarIterator end );
 
-/**
- * @return String containing the bar. Example: "Label [****--...    ]".
- * @param val Value to display. Can be unclipped.
- * @param width Width of the entire string.
- * @param label Label before the bar. Can be empty.
- * @param begin Iterator over collections with at least first two members [double p, char c] (see below).
- * @param end Iterator over collections with at least first two members [double p, char c] (see below).
- * Where:
- *    p - percentage of the entire bar which can be filled with c.
- *    c - character to fill the segment of the bar with
- *    and the collection may have additional elements used by the following function parameter
- * @param printer Function that takes Iterator described above and number of copies of the character to repeat.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename BarIterator>
 std::string get_labeled_bar( double val, int width, const std::string &label,
                              BarIterator begin, BarIterator end,
                              const std::function<std::string( BarIterator, int )> &printer );
 
-/**
- * @return String containing the bar. Example: "Label [************]".
- * @param val Value to display. Can be unclipped.
- * @param width Width of the entire string.
- * @param label Label before the bar. Can be empty.
- * @param c Character to fill the bar with.
- */
+
+
+
+
+
+
+
 std::string get_labeled_bar( double val, int width, const std::string &label, char c );
 
 void draw_tab( const catacurses::window &w, int iOffsetX, std::string_view sText,
@@ -824,29 +824,29 @@ inclusive_rectangle<point> draw_subtab( const catacurses::window &w, int iOffset
                                         const std::string &sText, bool bSelected,
                                         bool bDecorate = true, bool bDisabled = false );
 
-// Draws multiple tabs, with the titles specified in tab_texts.
-// Also draws the line beneath the tabs and corners at the ends.
-// The selected tab (specified by current_tab) is drawn differently.
-// In total, something like the following:
-//   ┌──────┐ ┌──────┐
-//   │ TAB1 │ │ TAB2 │
-// ┌─┴──────┴─┘      └───────────┐
+
+
+
+
+
+
+
 std::map<size_t, inclusive_rectangle<point>> draw_tabs( const catacurses::window &,
         const std::vector<std::string> &tab_texts, size_t current_tab, size_t offset = 0 );
-// As above, but specify current tab by its label rather than position
+
 std::map<std::string, inclusive_rectangle<point>> draw_tabs( const catacurses::window &,
         const std::vector<std::string> &tab_texts, const std::string &current_tab );
 
-// This overload of draw_tabs is intended for use when you track the current
-// tab via some other value (like an enum) linked to each tab.  Expected use
-// looks something like this:
-//
-// tab_mode current_tab = ...;
-// const std::vector<std::pair<tab_mode, std::string>> tabs = {
-//      { tab_mode::first_tab, _( "FIRST_TAB" ) },
-//      { tab_mode::second_tab, _( "SECOND_TAB" ) },
-// };
-// draw_tabs( w, tabs, current_tab );
+
+
+
+
+
+
+
+
+
+
 template<typename TabList, typename CurrentTab, typename = std::enable_if_t<
              std::is_same_v<CurrentTab,
                             std::remove_const_t<typename TabList::value_type::first_type>>>>
@@ -877,8 +877,8 @@ template<typename TabList, typename CurrentTab, typename = std::enable_if_t<
     return ret_map;
 }
 
-// Similar to the above, but where the order of tabs is specified separately
-// TabList is expected to be a map type.
+
+
 template<typename TabList, typename TabKeys, typename CurrentTab, typename = std::enable_if_t<
              std::is_same_v<CurrentTab,
                             std::remove_const_t<typename TabList::value_type::first_type>>>>
@@ -894,22 +894,22 @@ template<typename TabList, typename TabKeys, typename CurrentTab, typename = std
     return draw_tabs( w, ordered_tab_list, current_tab );
 }
 
-/**
- * Produces the largest subset of a list of tabs (for draw_tabs or draw_subtab) that can be displayed within max_width
- *
- * Set up for display of crafting recipe categories and subcategories.  Provided with
- * a list of tabs and the translated names, checks to see if they fit within max_width.
- * If they don't, finds the largest sequential collection of tabs that fit within
- * max_width and contain current_tab.  Since the function is already handling translated
- * tab names, the translated strings can be returned instead of the generic identifiers.
- * @param max_width The maximum width available for display of the tabs.  Currently assumes
- * that this value includes a border.
- * @param current_tab The index of the currently selected tab
- * @param original_tab_list a list of the translated tab names to display
- * @return Return 1: A vector of tab identifiers or names that will fit within max_width and contain
- * current_tab.
- * @return Return 2: The offset of the displayed tabs to be passed into draw_tabs
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 std::pair<std::vector<std::string>, size_t> fit_tabs_to_width( size_t max_width,
         int current_tab,
         const std::vector<std::string> &original_tab_list );
@@ -918,22 +918,22 @@ struct best_fit {
     int start;
     int length;
 };
-/**
- * Algorith for finding the largest subset of varied-length items that fit in allowed_size
- *
- * @param size_of_items_to_fit: how much space the entries take up.  In a vertical list, height.  In a horizontal list, width.
- * @param selected: the index of the currently selected item.  This index will be included in the 'best-fitting' subset
- * @param allowed_size: the total height/width in which the entries need to fit
- * @param spacer_size: the size, if any, of the spacers between entries.  In a tabbed list, tab_step or equivalent.
- * @param continuation_marker_size: If a continuation marker will be added to the beginning or end
- * (e.g. "<" or ">" in a horizontal list, the length of that marker.
- * @return best_fit.start: start index in size_of_items_to_fit for the 'best-fitting' subset
- * @return best_fit.length: number of entries in size_of_items_to_fit in the 'best-fitting' subset
- */
+
+
+
+
+
+
+
+
+
+
+
+
 best_fit find_best_fit_in_size( const std::vector<int> &size_of_items_to_fit, const int &selected,
                                 const int &allowed_size, const int &spacer_size = 0, const int &continuation_marker_size = 0 );
 
-// Legacy function, use class scrollbar instead!
+
 void draw_scrollbar( const catacurses::window &window, int iCurrentLine,
                      int iContentHeight, int iNumLines, const point &offset = point::zero,
                      nc_color bar_color = c_white, bool bDoNotScrollToEnd = false );
@@ -944,30 +944,30 @@ class scrollbar
 {
     public:
         scrollbar();
-        // relative position of the scrollbar to the window
+
         scrollbar &offset_x( int offx );
         scrollbar &offset_y( int offy );
-        // total number of lines
+
         scrollbar &content_size( int csize );
-        // index of the beginning line
+
         scrollbar &viewport_pos( int vpos );
-        // number of lines shown
+
         scrollbar &viewport_size( int vsize );
-        // window border color
+
         scrollbar &border_color( nc_color border_c );
-        // scrollbar arrow color
+
         scrollbar &arrow_color( nc_color arrow_c );
-        // scrollbar slot color
+
         scrollbar &slot_color( nc_color slot_c );
-        // scrollbar bar color
+
         scrollbar &bar_color( nc_color bar_c );
-        // can viewport_pos go beyond (content_size - viewport_size)?
+
         scrollbar &scroll_to_last( bool scr2last );
-        // Sets up ability for the scrollbar to be dragged with the mouse
+
         scrollbar &set_draggable( input_context &ctxt );
-        // draw the scrollbar to the window
+
         void apply( const catacurses::window &window, bool draw_unneeded = false );
-        // Checks if the user is dragging the scrollbar with the mouse (set_draggable first)
+
         bool handle_dragging( const std::string &action, const std::optional<point> &coord,
                               int &position );
     private:
@@ -979,21 +979,21 @@ class scrollbar
         inclusive_rectangle<point> scrollbar_area;
 };
 
-/** A simple scrolling view onto some text.  Given a window, it will use the
- * leftmost column for the scrollbar and fill the rest with text.  When the
- * scrollbar is not needed it prints a vertical border in place of it, so the
- * expectation is that the given window will overlap the left edge of a
- * bordered window if one exists.
- * (Options to e.g. not print the border would be easy to add if needed).
- * Update the text with set_text (it will be wrapped for you).
- * scroll_up and scroll_down are expected to be called from handlers for the
- * keys used for that purpose.
- * Call draw when drawing related UI stuff.  draw calls werase/wnoutrefresh for its
- * window internally.
- * Has some built-in default navigation options, including mousewheel scrolling
- * when the mouse is over the window (tiles only) and a click-and-drag scrollbar
- * (technically works in curses, but is smoother in tiles).
- **/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 enum scrolling_key_scheme : int {
     no_scheme,
     angle_bracket_scroll,
@@ -1120,85 +1120,85 @@ inline std::string format_money( int cents )
     return string_format( _( "$%.2f" ), cents / 100.0 );
 }
 
-/** Get the width in font glyphs of the drawing screen.
- *
- *  May differ from OPTIONS["TERMINAL_X"], for instance in
- *  SDL FULLSCREEN mode, the user setting is overridden.
- */
+
+
+
+
+
 int get_terminal_width();
 
-/** Get the height in font glyphs of the drawing screen.
- *
- *  May differ from OPTIONS["TERMINAL_Y"], for instance in
- *  SDL FULLSCREEN mode, the user setting is overridden.
- */
+
+
+
+
+
 int get_terminal_height();
 
-/**
- * Check whether we're in tile drawing mode. The most important
- * effect of this is that we don't need to draw to the ASCII
- * window.
- *
- * Ideally, of course, we'd have a unified tile drawing and ASCII
- * drawing API and use polymorphy, but for the time being there will
- * be a lot of switching around in the map drawing code.
- */
+
+
+
+
+
+
+
+
+
 bool is_draw_tiles_mode();
 
 int get_window_width();
 int get_window_height();
 
-/**
- * Make changes made to the display visible to the user immediately.
- *
- * In curses mode, this is a no-op. In SDL mode, this refreshes
- * the real display from the backing buffer immediately, rather than
- * delaying the update until the next time we are waiting for user input.
- */
+
+
+
+
+
+
+
 void refresh_display();
 
-/**
- * Service pending renderer-resource recovery at an outer loop boundary. No-op in
- * curses; in SDL drains the coordinator so a target reset, device loss, or mobile
- * foreground rebuilds before the next draw.
- */
+
+
+
+
+
 void drain_renderer_recovery();
 
-/**
- * Pump SDL events on the main thread until the renderer leaves the paused
- * lifecycle state (a foreground event has landed). Used by the tileset-load
- * retry loop after a background interrupt; android-only in practice. No-op in
- * curses or when not paused.
- */
+
+
+
+
+
+
 void pump_until_renderer_foreground();
 
 enum class atlas_upload_interrupt;
 class atlas_replay_quarantine;
-/**
- * Service renderer recovery for an interrupted standalone tileset-load upload and
- * dispose the quarantined candidate against the resulting renderer: destroy on a
- * healthy same-instance renderer, otherwise abandon without SDL_DestroyTexture.
- * instance_before is the instance generation sampled when the candidate textures
- * were created. Returns true if the renderer came back healthy so the caller may
- * retry, false to stop and keep the previous tileset bound.
- */
+
+
+
+
+
+
+
+
 bool service_mode2_upload_interrupt( atlas_upload_interrupt interrupt,
                                      atlas_replay_quarantine &quarantine,
                                      uint64_t instance_before );
 
-/**
- * Sync OS cursor and ImGui cursor-handling flags with the current
- * ENABLE_MOUSE and HIDE_CURSOR option values. No-op in curses builds.
- */
+
+
+
+
 void refresh_mouse_config();
 
-/**
- * Assigns a custom color to each symbol.
- *
- * @param str String to colorize symbols in
- * @param color_of Function that accepts symbols (std::string::value_type) and returns colors.
- * @return Colorized string.
- */
+
+
+
+
+
+
+
 template<typename F>
 std::string colorize_symbols( const std::string_view str, F color_of )
 {
@@ -1228,7 +1228,7 @@ std::string colorize_symbols( const std::string_view str, F color_of )
     return res;
 }
 
-// More specialized list_circularizer (see cata_utility.h) to allow jumping to a specific tab
+
 class tab_list
 {
     private:
@@ -1270,4 +1270,4 @@ class tab_list
         }
 };
 
-#endif // CATA_SRC_OUTPUT_H
+#endif

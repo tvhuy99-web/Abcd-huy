@@ -23,7 +23,7 @@ class color_loader
 
         std::map<std::string, ColorType> consolecolors;
 
-        // color names as read from the json file
+
         static const std::array<std::string, COLOR_NAMES_COUNT> &main_color_names() {
             static const std::array<std::string, COLOR_NAMES_COUNT> names{ { "BLACK", "RED", "GREEN",
                     "BROWN", "BLUE", "MAGENTA", "CYAN", "GRAY", "DGRAY", "LRED", "LGREEN", "YELLOW",
@@ -49,14 +49,14 @@ class color_loader
         void load_colorfile( const cata_path &path ) {
             JsonValue jsin = json_loader::from_path( path );
             for( JsonObject jo : jsin.get_array() ) {
-                // This isn't actually read (here), so just ignore it
+
                 jo.get_string( "type" );
                 load_colors( jo );
             }
         }
 
     public:
-        /// @throws std::exception upon any kind of error.
+
         void load( std::array<ColorType, COLOR_NAMES_COUNT> &windowsPalette ) {
             const cata_path default_path = PATH_INFO::colors();
             const cata_path custom_path = PATH_INFO::base_colors();
@@ -71,7 +71,7 @@ class color_loader
             } catch( const JsonError &err ) {
                 debugmsg( "Failed to load color data from \"%s\": %s", custom_path.generic_u8string(), err.what() );
 
-                // this should succeed, otherwise the installation is botched
+
                 load_colorfile( default_path );
             }
 
@@ -81,4 +81,4 @@ class color_loader
         }
 };
 
-#endif // CATA_SRC_COLOR_LOADER_H
+#endif

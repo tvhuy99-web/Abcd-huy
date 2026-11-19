@@ -33,22 +33,22 @@ class event_capture_sub : public event_subscriber
         void notify( const cata::event &e ) override;
 };
 
-// Escape a string into a complete JSON string literal, including the
-// surrounding double quotes. natural_utf8=false so control characters and
-// non-ASCII bytes become \uXXXX (valid JSON) rather than being emitted raw.
+
+
+
 std::string json_quoted( std::string_view s )
 {
     std::string out;
     flatbuffers::EscapeString( s.data(), s.size(), &out,
-                               /*allow_non_utf8=*/true, /*natural_utf8=*/false );
+                               true, false );
     return out;
 }
-} // namespace
+}
 
 std::string capture_json_escape( std::string_view s )
 {
-    // Same escaping as json_quoted, minus the surrounding quotes it always
-    // adds; callers that need a bare body supply their own quoting.
+
+
     const std::string quoted = json_quoted( s );
     return quoted.substr( 1, quoted.size() - 2 );
 }
@@ -70,7 +70,7 @@ struct debug_capture::impl {
     std::vector<monitor_entry> monitors;
     int next_monitor_id = 1;
 
-    // See debug_capture::feed_generation().
+
     uint64_t feed_gen = 0;
 
     void trim_to_max();
@@ -115,8 +115,8 @@ void debug_capture::impl::ensure_trace_file_open()
     }
     trace_file_stream.open( settings.trace_file.path, std::ios::app | std::ios::out );
     if( trace_file_stream.is_open() ) {
-        // Rebase byte counter to existing file size so rotation triggers
-        // correctly when appending to a prior session's log.
+
+
         trace_file_stream.seekp( 0, std::ios::end );
         const auto pos = trace_file_stream.tellp();
         trace_file_bytes = pos > 0 ? static_cast<size_t>( pos ) : 0;
@@ -139,10 +139,10 @@ void debug_capture::impl::rotate_trace_file_if_needed()
     const std::string r1 = base + ".1";
     const std::string r2 = base + ".2";
     const std::string r2_tmp = r2 + ".tmp";
-    // Errors here are recoverable (rotation just skipped this turn); we still
-    // reopen the base file fresh. Move the stale .2 aside with a rename rather
-    // than deleting it before the .1 -> .2 rename: on Windows a delete can
-    // leave the file briefly locked, which would make that rename fail.
+
+
+
+
     const int rn0_rc = std::rename( r2.c_str(), r2_tmp.c_str() );
     const int rn1_rc = std::rename( r1.c_str(), r2.c_str() );
     const int rn2_rc = std::rename( base.c_str(), r1.c_str() );
@@ -202,12 +202,12 @@ void debug_capture::flush_trace_file()
 
 debug_capture &debug_capture::instance()
 {
-    // Deliberately leaked, process-lifetime singleton. A function-local static
-    // would run its destructor during the atexit chain, racing ~game and other
-    // static destructors that may still touch capture (e.g. a log from another
-    // static dtor). Leaking sidesteps the teardown-order hazard entirely; the
-    // OS reclaims at exit, and buffered output is flushed by on_game_shutdown()
-    // and the auto-flush batch.
+
+
+
+
+
+
     static debug_capture *const inst = new debug_capture();
     return *inst;
 }
@@ -222,8 +222,8 @@ debug_capture::debug_capture() : p( std::make_unique<impl>() )
     g_initialized.store( true, std::memory_order_release );
 }
 
-// Defined out-of-line so unique_ptr<impl> sees a complete impl. The instance()
-// singleton is leaked, so this is never invoked at runtime.
+
+
 debug_capture::~debug_capture() = default;
 
 capture_settings &debug_capture::settings()
@@ -246,7 +246,7 @@ void debug_capture::on_game_load( event_bus &bus )
 
 void debug_capture::on_game_shutdown()
 {
-    // event_subscriber dtor auto-unsubscribes from its bus when bus still exists.
+
     p->event_sub_attached = false;
     if( p->trace_file_stream.is_open() ) {
         p->trace_file_stream.flush();
@@ -282,7 +282,7 @@ void debug_capture::push_event( const cata::event &e )
     }
     const bool ring_on = p->settings.event_bus_capture;
     const bool file_on = p->settings.trace_file.wants( "events" );
-    // Skip building the field string when no sink will consume it.
+
     if( !ring_on && !file_on ) {
         return;
     }
@@ -368,8 +368,8 @@ void debug_capture::resize_log_ring( size_t n )
     const size_t before = p->log_ring.size();
     p->settings.log_ring_size = n;
     p->trim_to_max();
-    // Only bump the feed generation when entries were actually dropped; a grow
-    // or no-op resize leaves content unchanged.
+
+
     if( p->log_ring.size() != before ) {
         ++p->feed_gen;
     }
@@ -472,8 +472,8 @@ void debug_capture::tick_if_active()
     if( !g_initialized.load( std::memory_order_acquire ) ) {
         return;
     }
-    // Skip the per-turn scan when nothing watches it. Eliminates work for
-    // sessions that never add a monitor (the common case).
+
+
     debug_capture &inst = instance();
     if( inst.p->monitors.empty() ) {
         return;
@@ -491,8 +491,8 @@ bool debug_capture::is_eoc_tracing()
 
 void log_debug_msg( debugmode::debug_filter type, const std::string &msg )
 {
-    // Skip after the singleton destructor ran (process exit) so we never
-    // touch a destroyed instance via the macro hook in messages.h.
+
+
     if( !debug_capture::is_initialized() ) {
         return;
     }
@@ -517,8 +517,8 @@ void debug_capture::save_settings( JsonOut &jo ) const
     jo.member( "log_ring_size", cs.log_ring_size );
     jo.member( "event_ring_size", cs.event_ring_size );
     jo.member( "eoc_trace_ring_size", cs.eoc_trace_ring_size );
-    // On-disk key is "jsonl" (not trace_file) for back-compat with existing
-    // config files.
+
+
     jo.member( "jsonl" );
     jo.start_object();
     jo.member( "enabled", cs.trace_file.enabled );
@@ -552,7 +552,7 @@ void debug_capture::load_settings( const JsonObject &jo )
     if( jo.read( "eoc_trace_ring_size", ring ) ) {
         resize_eoc_trace_ring( static_cast<size_t>( ring ) );
     }
-    // On-disk key is "jsonl" for back-compat (see save_settings).
+
     if( jo.has_object( "jsonl" ) ) {
         const JsonObject jl = jo.get_object( "jsonl" );
         jl.allow_omitted_members();
@@ -576,4 +576,4 @@ void debug_capture::load_settings( const JsonObject &jo )
     }
 }
 
-} // namespace debug_menu
+}

@@ -9,9 +9,9 @@
 
 class zone_data;
 
-/*
- * Talker wrapper class for zone.
- */
+
+
+
 class talker_zone_const : public const_talker_cloner<talker_zone_const>
 {
     public:
@@ -44,7 +44,7 @@ class talker_zone : public talker_zone_const, public talker_cloner<talker_zone>
         talker_zone &operator=( talker_zone && ) = delete;
         ~talker_zone() override = default;
 
-        // underlying element accessor functions
+
         zone_data *get_zone() override {
             return me_zone;
         }
@@ -52,5 +52,5 @@ class talker_zone : public talker_zone_const, public talker_cloner<talker_zone>
         zone_data *me_zone{};
 };
 
-#endif // CATA_SRC_TALKER_ZONE_H
+#endif
 #pragma once

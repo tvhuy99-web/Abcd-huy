@@ -12,37 +12,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-/** Main-looper policy above AndroidSpeech: bounded, expiring and context-owned. */
+
 public final class ReaderSpeechQueue implements AutoCloseable {
     public static final int LONG_TEXT = 0;
     public static final int INFORMATION = 1;
     public static final int FOCUS = 2;
-    // Normal game events remain FIFO. Urgent player warnings take the next
-    // available speech turn ahead of older nonurgent messages, but do not
-    // cut off speech that is already playing. Focus remains independent.
+
+
+
     public static final int GAME_EVENT = FOCUS;
     public static final int URGENT = 3;
 
     public interface Listener {
         void onHealth(AndroidSpeech.State state);
 
-        /**
-         * The confirmed voice selection no longer exists on this device
-         * and the queue fell back to the system default voice (R06.2).
-         * The stale selection has already been cleared from preferences;
-         * the user can pick a new voice in the TTS settings screen.
-         */
+
+
+
+
+
+
         default void onVoiceRecovered() { }
     }
 
-    /**
-     * Completion/interruption notice for one speech key (R04.4). The
-     * document reader uses it to know whether its current paragraph
-     * finished or was cut off by higher-priority speech, so it can resume
-     * at the paragraph instead of restarting the whole document. The
-     * listener must only record state; it must not speak from inside the
-     * callback (the queue is mid-transition).
-     */
+
+
+
+
+
+
+
+
     public interface CompletionListener {
         void onFinished(String key);
         void onInterrupted(String key);
@@ -50,9 +50,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
 
     private static final int MAX_PENDING = 8;
     private static final String GAME_EVENT_CONTEXT = "__reader_game_event__";
-    // Game messages survive automatic screen changes and retain order
-    // *within* their own urgency level. New passive events never cut off
-    // active speech. An explicit user gesture is a separate hard boundary.
+
+
+
     private final ArrayDeque<Request> orderedGameEvents = new ArrayDeque<>();
     private final ArrayDeque<Request> urgentGameEvents = new ArrayDeque<>();
 
@@ -60,13 +60,13 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         return request != null && GAME_EVENT_CONTEXT.equals(request.context);
     }
 
-    // Only identical in-flight informational messages are coalesced.
-    // A focus gesture must always announce its newly selected item, even if
-    // the same text was spoken moments ago.
+
+
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ArrayDeque<Request> pending = new ArrayDeque<>();
-    // Bounded counters for the diagnostics report (R21.4). Counts only —
-    // never utterance text.
+
+
     private long statSpoken;
     private long statInterrupted;
     private long statDroppedDuplicate;
@@ -83,18 +83,18 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     private String activeChunk;
     private long sequence;
     private int chunkIndex;
-    // Chunk of the last utterance where speech stopped. Updated
-    // whenever an utterance is cut off, so resume() can continue a long
-    // document from the interrupted chunk instead of restarting it.
+
+
+
     private int lastChunkIndex;
     private Runnable completionTimeout;
     private boolean closed;
     private boolean healthy;
     private CompletionListener completionListener;
 
-    // Bounded TTS recovery (R06.2). Initialization parameters are kept so a
-    // failed engine can be retried a limited number of times and a removed
-    // voice can fall back once to the system default; recovery never loops.
+
+
+
     private static final int MAX_INIT_RETRIES = 2;
     private static final long INIT_RETRY_BASE_MS = 1000;
     private ReaderPreferences initPreferences;
@@ -115,7 +115,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
 
     private void fireFinished(String key) {
         if (key != null && key.equals(lastKey)) {
-            // The utterance ran to the end; a later resume starts over.
+
             lastChunkIndex = 0;
         }
         if (completionListener != null && key != null) {
@@ -124,13 +124,13 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     private void fireInterrupted(String key) {
-        // Every path that cuts a request off (preemption, stop, lifecycle
-        // clear, engine error, stale context) funnels through here, so
-        // this is the single honest place to count interruptions (R21.4).
+
+
+
         statInterrupted++;
         if (key != null && key.equals(lastKey)) {
-            // chunkIndex is the chunk being spoken when the cut happened;
-            // resume() replays that chunk.
+
+
             lastChunkIndex = chunkIndex;
         }
         if (completionListener != null && key != null) {
@@ -146,9 +146,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         final long created;
         final long expires;
         final List<String> chunks;
-        // Chunk to start speaking from. Normally 0; resume()
-        // sets it to the interrupted chunk so a long document continues
-        // instead of restarting.
+
+
+
         final int startChunk;
 
         Request(String context, String key, String text, int priority) {
@@ -172,7 +172,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         }
     }
 
-    /** Counters and latency marks for the diagnostics report (R21.4). */
+
     public static final class Stats {
         public final long spoken;
         public final long interrupted;
@@ -223,10 +223,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                 if (closed) {
                     return;
                 }
-                // A confirmed voice that was uninstalled (or whose engine
-                // was replaced) falls back once to the system default
-                // voice; the stale selection is cleared so the TTS settings
-                // screen offers a fresh choice instead of failing on every launch.
+
+
+
+
                 if (state == AndroidSpeech.State.MISSING_VOICE && initVoiceName != null
                         && !voiceRecoveryUsed && initPreferences != null) {
                     voiceRecoveryUsed = true;
@@ -237,8 +237,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                     initializeSpeechEngine();
                     return;
                 }
-                // Bounded retry for transient engine/binder failures:
-                // attempts at +1s and +3s, then the failure is reported.
+
+
                 if (state == AndroidSpeech.State.FAILED && initPreferences != null
                         && initRetries < MAX_INIT_RETRIES) {
                     initRetries++;
@@ -262,10 +262,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                     return;
                 }
                 if (event == AndroidSpeech.Event.STARTED) {
-                    // Latency mark for the diagnostics report (R21.4):
-                    // time from enqueue to the engine actually starting
-                    // this utterance. Recorded, never compared against a
-                    // threshold here — no latency claim is made from it.
+
+
+
+
                     if (active != null) {
                         long latency = SystemClock.elapsedRealtime() - active.created;
                         statLastStartLatencyMs = latency;
@@ -295,9 +295,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                         advance();
                     }
                 } else {
-                    // An unexpected voice-engine cancellation must not erase
-                    // *other* game messages. Only explicit Stop or lifecycle
-                    // clearing deliberately empties the FIFO.
+
+
+
                     Request interrupted = active;
                     active = null;
                     for (Request dropped : pending) {
@@ -351,9 +351,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public void setContext(String key) {
         if (!contextKey.equals(key)) {
             contextKey = key;
-            // Only UI focus belongs to a screen. An ongoing game event
-            // survives transient aiming/activity screens and keeps talking
-            // until complete, never getting erased by another snapshot.
+
+
+
             pending.clear();
             if (active != null && !isOrderedGameEvent(active)) {
                 Request interrupted = active;
@@ -371,9 +371,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     public void focus(String key, String text) {
-        // Do not debounce a deliberate swipe. say() preempts the previous
-        // focus utterance and replaces pending focus speech, so when swipes
-        // come in quick succession only the final selection remains active.
+
+
+
         say(key, text, FOCUS);
     }
 
@@ -385,12 +385,12 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         say(key, text, priority, ttlMs, 0);
     }
 
-    /**
-     * Enqueue with an explicit time-to-live. Game messages use a shorter
-     * life than screen speech (R21.1): a burst of turn messages must not
-     * still be talking about an old turn many seconds later, while an
-     * urgent warning keeps the standard life.
-     */
+
+
+
+
+
+
     public void say(String key, String text, int priority, long ttlMs, int startChunk) {
         if (!isReady() || text == null || text.trim().isEmpty()) {
             return;
@@ -398,16 +398,16 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         text = ReaderSpokenText.clean(text);
         if (text.trim().isEmpty()) { return; }
         if (key != null && key.startsWith("game-message:")) {
-            // Urgent warnings must reach the player before older, nonurgent
-            // chatter. Preserve FIFO within each severity; never interrupt
-            // an active message. Keep normal damage reports even when equal.
+
+
+
             Request request = new Request(GAME_EVENT_CONTEXT, key, text,
                     priority >= URGENT ? URGENT : GAME_EVENT,
                     365L * 24 * 60 * 60 * 1000, startChunk);
             if (request.priority >= URGENT) {
-                // A persistent status can fire several times in one turn.
-                // Only coalesce identical urgent messages that are already
-                // being spoken or waiting; distinct threat changes survive.
+
+
+
                 if (active != null && isOrderedGameEvent(active)
                         && active.priority >= URGENT && active.text.equals(text)) {
                     statDroppedDuplicate++;
@@ -426,9 +426,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             advance();
             return;
         }
-        // Focus is user-directed, even when it repeats the same label.
-        // For other speech, suppress only duplicate requests still active
-        // or waiting in this context; never suppress based on elapsed time.
+
+
+
         if (priority != FOCUS) {
             if (active != null && active.context.equals(contextKey)
                     && active.text.equals(text)) {
@@ -463,9 +463,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             speech.cancel();
             fireInterrupted(preempted.key);
         }
-        // Drop expired work before applying the limit.  When full, preserve
-        // higher-priority requests; if the new request ties the lowest
-        // priority, replace its oldest item so recent state wins.
+
+
+
         long now = SystemClock.elapsedRealtime();
         for (Iterator<Request> iterator = pending.iterator(); iterator.hasNext();) {
             Request queued = iterator.next();
@@ -501,8 +501,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             return;
         }
         if (!urgentGameEvents.isEmpty() || !orderedGameEvents.isEmpty()) {
-            // An urgent health warning outranks queued nonurgent chatter.
-            // Already-playing game speech is allowed to finish first.
+
+
             active = !urgentGameEvents.isEmpty()
                     ? urgentGameEvents.removeFirst() : orderedGameEvents.removeFirst();
             chunkIndex = startChunkOf(active);
@@ -564,21 +564,21 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         String text = lastText;
         String key = lastKey;
         stop();
-        // Repeat means "from the start": forget the interruption point so
-        // a later resume() does not jump back mid-document.
+
+
         lastChunkIndex = 0;
         say("repeat:" + key, text, FOCUS);
     }
 
-    /**
-     * Continue the last utterance from the chunk where it was cut off:
-     * a long document (MOTD/Credits) interrupted by a focus
-     * move, Stop or an engine error resumes mid-text instead of
-     * restarting from chunk 0. Falls back to {@link #repeat()} when
-     * nothing was interrupted mid-utterance. Stops whatever is speaking
-     * now. Wiring a gesture or command to this is the controller's job
-     * (GameReaderController); this class only provides the mechanism.
-     */
+
+
+
+
+
+
+
+
+
     public void resume() {
         String text = lastText;
         String key = lastKey;
@@ -595,9 +595,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         say("resume:" + key, text, FOCUS, 2000, start);
     }
 
-    // The native vehicle may stop after the trip-start announcement has
-    // already entered the long-lived game-event FIFO. Discard ONLY that stale
-    // progress message, preserving genuine warnings and other game speech.
+
+
+
     static boolean isAutodriveProgressText(String text) {
         return text != null && (text.contains("Driving to a reachable area near the selected place.")
                 || text.contains("Đang lái đến một khu vực xe có thể tiếp cận gần địa điểm đã chọn.")
@@ -631,16 +631,16 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         speech.cancel();
     }
 
-    /**
-     * One recognized navigation/action gesture starts a new interaction.
-     * Cancel the actual Android TTS utterance immediately, discard BOTH
-     * game-message FIFO lanes and pending focus/document chunks, and forget
-     * the old item's repeat position. Do not call this on idle snapshots or
-     * passive game events: they must still finish and play in FIFO order.
-     *
-     * A single tap's explicit Stop/Resume uses stop() instead, so that
-     * gesture can still resume the interrupted document on the next tap.
-     */
+
+
+
+
+
+
+
+
+
+
     public void interruptForUserAction() {
         if (closed) { return; }
         clearRequests();
@@ -650,20 +650,20 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         lastChunkIndex = 0;
     }
 
-    /**
-     * Lifecycle boundary (R20.3): the screen lost the foreground or the
-     * window focus, so nothing from before the boundary may be spoken
-     * after it. {@link #stop()} alone is not enough for this: it keeps
-     * {@code lastText}, so a Repeat control pressed after a resume could
-     * replay an utterance from the previous foreground session, and it
-     * keeps the context key, so a same-context snapshot after the resume
-     * would not clear that text either ({@link #setContext} only clears
-     * on a context change). A pending bounded TTS retry is also dropped:
-     * the engine must not revive in the background, the owner's resume
-     * path re-initializes the queue if it is not ready. Explicit Stop
-     * inside one foreground session keeps using {@link #stop()}, where
-     * Repeat remains available by design.
-     */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public void clearForLifecycle() {
         cancelInitRetry();
         clearRequests();
@@ -672,9 +672,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         lastText = "";
         lastKey = "";
         lastChunkIndex = 0;
-        // The duplicate window must not reach across a lifecycle
-        // boundary either: what was said before a pause says nothing
-        // about what the fresh foreground session needs to hear.
+
+
+
     }
 
     private void clearRequests() {

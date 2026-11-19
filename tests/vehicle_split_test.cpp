@@ -40,10 +40,10 @@ TEST_CASE( "vehicle_split_section", "[vehicle]" )
         veh_ptr->part_removal_cleanup( here );
         REQUIRE( veh_ptr->get_parts_at( &here, vehicle_origin, "", part_status_flag::available ).empty() );
         vehs = here.get_vehicles();
-        // destroying the center frame results in 4 new vehicles
+
         CHECK( vehs.size() == 4 );
         if( vehs.size() == 4 ) {
-            // correct number of parts
+
             CHECK( vehs[0].v->part_count() == 12 );
             CHECK( vehs[1].v->part_count() == 12 );
             CHECK( vehs[2].v->part_count() == 2 );
@@ -55,11 +55,11 @@ TEST_CASE( "vehicle_split_section", "[vehicle]" )
             }
             for( int i = 0; i < 4; i++ ) {
                 std::set<tripoint_abs_ms> &veh_points = all_points[i];
-                // every point in the new vehicle was in the old vehicle
+
                 for( const tripoint_abs_ms &vpos : veh_points ) {
                     CHECK( original_points.find( vpos ) != original_points.end() );
                 }
-                // no point in any new vehicle is in any other new vehicle
+
                 for( int j = i + 1; j < 4; j++ ) {
                     std::set<tripoint_abs_ms> &other_points = all_points[j];
                     for( const tripoint_abs_ms &vpos : veh_points ) {
@@ -119,7 +119,7 @@ TEST_CASE( "split_vehicle_during_mapgen", "[vehicle]" )
     REQUIRE( here.get_vehicles().empty() );
 
     tinymap tm;
-    // Wherever the main map is, create this tinymap outside its bounds.
+
     tm.load( tripoint_abs_omt( project_to<coords::omt>( here.get_abs_sub().xy() ), 0 )
              + tripoint_rel_omt( 10, 10, 0 ), false );
     wipe_map_terrain( tm.cast_to_map() );

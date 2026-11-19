@@ -93,14 +93,14 @@ class temp_crafting_inventory;
 
 TEST_CASE( "verify_copy_from_gets_damage_reduction", "[vehicle]" )
 {
-    // Picking halfboard_horizontal as a vpart which is likely to remain
-    // defined via copy-from, and which should have non-zero damage reduction.
+
+
     CHECK( vpart_halfboard->damage_reduction.at( damage_bash ) != 0.f );
 }
 
 TEST_CASE( "vehicle_parts_seats_and_beds_have_beltable_flags", "[vehicle][vehicle_parts]" )
 {
-    // this checks all seats and beds either BELTABLE or NONBELTABLE but not both
+
 
     for( const vpart_info &vpi : vehicles::parts::get_all() ) {
         if( !vpi.has_flag( "BED" ) && !vpi.has_flag( "SEAT" ) ) {
@@ -113,7 +113,7 @@ TEST_CASE( "vehicle_parts_seats_and_beds_have_beltable_flags", "[vehicle][vehicl
 
 TEST_CASE( "vehicle_parts_boardable_openable_parts_have_door_flag", "[vehicle][vehicle_parts]" )
 {
-    // this checks all BOARDABLE and OPENABLE parts have DOOR flag
+
 
     for( const vpart_info &vpi : vehicles::parts::get_all() ) {
         if( !vpi.has_flag( "BOARDABLE" ) || !vpi.has_flag( "OPENABLE" ) ) {
@@ -126,7 +126,7 @@ TEST_CASE( "vehicle_parts_boardable_openable_parts_have_door_flag", "[vehicle][v
 
 TEST_CASE( "vehicle_parts_have_at_least_one_category", "[vehicle][vehicle_parts]" )
 {
-    // check parts have at least one category
+
     const std::vector<vpart_category> &categories = vpart_category::all();
     std::set<std::string> all_cat_ids;
     for( const vpart_category &cat : categories ) {
@@ -168,8 +168,8 @@ static void test_craft_via_rig( const std::vector<item> &items, int give_battery
     for( const item &i : items ) {
         character.i_add( i );
     }
-    // Shift skill levels by one to ensure successful crafting
-    // after the change in https://github.com/CleverRaven/Cataclysm-DDA/pull/61985
+
+
     character.set_skill_level( recipe.skill_used, recipe.difficulty + 1 );
     for( const std::pair<const skill_id, int> &req : recipe.required_skills ) {
         character.set_skill_level( req.first, req.second + 1 );
@@ -194,7 +194,7 @@ static void test_craft_via_rig( const std::vector<item> &items, int give_battery
         if( p.has_feature( "DOOR" ) ) {
             veh.open( here, p.part_index() );
         }
-        // seems it's not needed but just in case
+
         if( p.has_feature( "SOLAR_PANEL" ) ) {
             veh.set_hp( p.part(), 0, true );
         }
@@ -264,10 +264,10 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
     }
 
     SECTION( "MAGAZINE_WELL non-battery pocket synthesizes magazine from vehicle tank fluid" ) {
-        // Vehicle tank holds gasoline; tool's fuel pocket is MAGAZINE_WELL
-        // accepting a fluid magazine. Prep must synthesize the magazine and
-        // fill it from the tank, recording a TANK binding so drain_back
-        // bills the same vpart.
+
+
+
+
         item tool( itype_test_multimag_well_fluid );
         const std::map<std::string, multimag_pocket_state> bindings =
             vehicle::prepare_multimag_pockets( *veh, here, tool );
@@ -279,14 +279,14 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
         const int tank_before = veh->part( tank_idx ).ammo_remaining();
         REQUIRE( tool.consume_tool_uses( 1, here, test_origin, nullptr ) == 1 );
         vehicle::drain_back_multimag( *veh, here, tool, bindings );
-        // per_use=3 -> tank drained by exactly 3.
+
         CHECK( veh->part( tank_idx ).ammo_remaining() == tank_before - 3 );
     }
 
     SECTION( "two same-fuel tanks bind each pocket to its own vpart" ) {
-        // Install a second gasoline tank, partially fill both, give the tool
-        // two same-fuel tank pockets. Each pocket must bind to one specific
-        // tank: prep claims per-vpart, drain-back bills per-vpart.
+
+
+
         REQUIRE( veh->install_part( here, point_rel_ms( 1, 1 ), vpart_frame ) != -1 );
         const int tank2_idx = veh->install_part( here, point_rel_ms( 1, 1 ), vpart_tank_test );
         REQUIRE( tank2_idx != -1 );
@@ -299,9 +299,9 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
             vehicle::prepare_multimag_pockets( *veh, here, tool );
         REQUIRE( bindings.count( "left" ) );
         REQUIRE( bindings.count( "right" ) );
-        // Each pocket must be backed by a distinct vpart_index.
+
         CHECK( bindings.at( "left" ).vpart_index != bindings.at( "right" ).vpart_index );
-        // Each pocket gets the per-tank total, not double the global pool.
+
         CHECK( bindings.at( "left" ).initial_qty == 6 );
         CHECK( bindings.at( "right" ).initial_qty == 6 );
 
@@ -309,15 +309,15 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
         const int tank_b_before = veh->part( tank2_idx ).ammo_remaining();
         REQUIRE( tool.consume_tool_uses( 1, here, test_origin, nullptr ) == 1 );
         vehicle::drain_back_multimag( *veh, here, tool, bindings );
-        // Drain bills each pocket's bound tank exactly per_use=2.
+
         CHECK( veh->part( tank_idx ).ammo_remaining() == tank_a_before - 2 );
         CHECK( veh->part( tank2_idx ).ammo_remaining() == tank_b_before - 2 );
     }
 
     SECTION( "two battery pockets share one network without double-claim" ) {
-        // Two battery wells share one vehicle battery network. Per-use cost
-        // sums to 10, vehicle has 8: load must split, not double-claim, so
-        // feasibility is 0 and pocket totals stay within the network budget.
+
+
+
         item tool( itype_test_multimag_two_battery );
         veh->discharge_battery( here, 100000 );
         veh->charge_battery( here, 8 );
@@ -328,12 +328,12 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
         const int left = bindings.count( "left" ) ? bindings.at( "left" ).initial_qty : 0;
         const int right = bindings.count( "right" ) ? bindings.at( "right" ).initial_qty : 0;
         CHECK( left + right <= 8 );
-        CHECK( tool.feasible_tool_uses( /*external_pool=*/0 ) == 0 );
+        CHECK( tool.feasible_tool_uses( 0 ) == 0 );
     }
 
     SECTION( "direct MAGAZINE battery pocket caps at pocket capacity, not vehicle pool" ) {
-        // Vehicle pool (1000) >> pocket capacity (40). Prep must cap at the
-        // pocket's own ammo_restriction limit; an uncapped insert would fail.
+
+
         item tool( itype_test_multimag_direct_battery );
         veh->discharge_battery( here, 100000 );
         veh->charge_battery( here, 1000 );
@@ -354,9 +354,9 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
     }
 
     SECTION( "mixed MAGAZINE_WELL + direct MAGAZINE battery pockets account claims correctly" ) {
-        // Vehicle has 350 battery. Well caps at heavy_battery_cell capacity
-        // (259); direct caps at its own 40 ammo_restriction. Sum (299) fits;
-        // direct must NOT be underfilled by a double-subtract bug.
+
+
+
         item tool( itype_test_multimag_mixed_battery );
         veh->discharge_battery( here, 100000 );
         veh->charge_battery( here, 350 );
@@ -373,8 +373,8 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
     }
 
     SECTION( "use_vehicle_tool precheck rejects multimag with no feasible use" ) {
-        // Empty every source: feasible_tool_uses must report 0 and
-        // use_vehicle_tool must refuse without invoking the tool.
+
+
         veh->discharge_battery( here, 100000 );
         for( const vpart_reference &tvp :
              veh->get_avail_parts( vpart_bitflags::VPFLAG_FLUIDTANK ) ) {
@@ -383,7 +383,7 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
         REQUIRE( veh->battery_left( here ) == 0 );
 
         const bool ok = vehicle::use_vehicle_tool( *veh, &here, test_origin,
-                        itype_test_multimag_vehicle_combo, /*no_invoke=*/true );
+                        itype_test_multimag_vehicle_combo, true );
         CHECK_FALSE( ok );
     }
 
@@ -399,11 +399,11 @@ TEST_CASE( "vehicle_prepare_tool_multimag", "[vehicle][multimag]" )
         REQUIRE( batt_before > 0 );
         REQUIRE( gas_before > 0 );
 
-        // No carrier and no cable, so consume_tool_uses pulls from local pockets only.
+
         REQUIRE( welder.consume_tool_uses( 1, here, test_origin, nullptr ) == 1 );
         vehicle::drain_back_multimag( *veh, here, welder, bindings );
 
-        // Per-use cost: power=5, fluid=2.
+
         CHECK( static_cast<int>( veh->battery_left( here ) ) == batt_before - 5 );
         CHECK( static_cast<int>( veh->fuel_left( here, itype_gasoline ) ) == gas_before - 2 );
     }
@@ -518,10 +518,10 @@ TEST_CASE( "faucet_offers_cold_water", "[vehicle][vehicle_parts]" )
         } );
         REQUIRE( veh.fuel_left( here, itype_water_clean ) == ( water_charges - i ) );
         REQUIRE( drink_item_it != items.end() );
-        REQUIRE( drink_item_it->_enabled == !stomach_should_be_full ); // stomach should be full
-        REQUIRE( character.get_morale_level() == ( i != 0 ? 1 : 0 ) ); // bonus morale from cold water
+        REQUIRE( drink_item_it->_enabled == !stomach_should_be_full );
+        REQUIRE( character.get_morale_level() == ( i != 0 ? 1 : 0 ) );
         if( stomach_should_be_full ) {
-            clear_avatar(); // clear stomach
+            clear_avatar();
         }
         drink_item_it->_on_submit();
         character.clear_morale();
@@ -586,8 +586,8 @@ TEST_CASE( "check_capacity_fueltype_handling", "[vehicle]" )
         THEN( "ammo_current ammotype is always null" ) {
             CHECK( vp.ammo_current().is_null() );
             CHECK( !item::find_type( vp.ammo_current() )->ammo );
-            // Segmentation fault:
-            //vp.ammo_capacity( item::find_type( vp.ammo_current() )->ammo->type );
+
+
         }
         THEN( "using explicit ammotype for ammo_capacity returns expected value" ) {
             CHECK( vp.ammo_capacity( ammo_test_liquid ) == 60000 );
@@ -755,12 +755,12 @@ TEST_CASE( "consume_inventory_finds_nearby_vehicle_tanks", "[inventory][vehicle]
         add_test_vehicle( origin + tripoint::east, true );
         inventory_selector selector( character );
         selector.add_vehicle_tank_items();
-        // The adjacent faucet must not expose the tank under the character.
+
         CHECK( selector.item_entry_count() == 1 );
     }
 }
 
-// "none" vehicle with a frame on each of the first `frames` mounts in a row
+
 static vehicle *spawn_frames( map &here, int frames )
 {
     const tripoint_bub_ms origin( 60, 60, 0 );

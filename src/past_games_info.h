@@ -29,7 +29,7 @@ class past_game_info
             return avatar_name_;
         }
 
-        // See past_games_info::legacy_achievement
+
         bool is_legacy_achievements() const {
             return legacy_achievements;
         }
@@ -47,8 +47,8 @@ struct achievement_completion_info {
     std::vector<const past_game_info *> games_completed;
 };
 
-// This class is intended to provide information about past games loaded from
-// memorial files.
+
+
 class past_games_info
 {
     public:
@@ -56,13 +56,13 @@ class past_games_info
 
         void ensure_loaded( bool show_popup = true );
         void clear();
-        // Only used for checking legacy memorial achievements. Achievements from
-        // past games are now handled by class past_achievements_info
+
+
         const achievement_completion_info *legacy_achievement( const achievement_id & ) const;
     private:
 
         bool loaded_ = false;
-        // See legacy_achievement
+
         std::unordered_map<achievement_id, achievement_completion_info> legacy_achievements_;
         std::vector<past_game_info> info_;
 };
@@ -70,4 +70,4 @@ class past_games_info
 const past_games_info &get_past_games( bool show_popup = true );
 void clear_past_games();
 
-#endif // CATA_SRC_PAST_GAMES_INFO_H
+#endif

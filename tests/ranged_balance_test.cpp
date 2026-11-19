@@ -113,7 +113,7 @@ class Threshold
         double _chance;
 };
 
-} // namespace
+}
 
 template < class T >
 static std::ostream &operator <<( std::ostream &os, const std::vector<T> &v )
@@ -148,11 +148,11 @@ static firing_statistics firing_test( const dispersion_sources &dispersion,
     do {
         // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
         dispersion_sources local_dispersion = dispersion;
-        // On each trip through the loop, grab a sample attack roll and add its results to
-        // the stat object.  Keep sampling until our calculated confidence interval doesn't overlap
-        // any thresholds we care about.  This is a mechanism to limit the number of samples
-        // we have to accumulate before we declare that the true average is
-        // either above or below the threshold.
+
+
+
+
+
         const projectile_attack_aim aim = projectile_attack_roll( local_dispersion, range, 0.5 );
         threshold_within_confidence_interval = false;
         firing_stats.add( aim.missed_by < threshold.accuracy() );
@@ -186,7 +186,7 @@ static dispersion_sources get_dispersion( npc &shooter, const int aim_time, int 
 
     shooter.set_moves( aim_time );
     shooter.recoil = MAX_RECOIL;
-    // Aim as well as possible within the provided time.
+
     shooter.aim( Target_attributes( range, 0.5, 0.0f, true ) );
     if( aim_time > 0 ) {
         REQUIRE( shooter.recoil < MAX_RECOIL );
@@ -297,20 +297,20 @@ static void assert_encumbrance( npc &shooter, int encumbrance )
 
 static constexpr tripoint_bub_ms shooter_pos( 60, 60, 0 );
 
-// Test the aiming speed and accuracy of the weapon in the first shot
 
-// When encountering an enemy suddenly, the pistol can fire the first shot quickly, but the pistol does not perform well at a long distance.
-// There is no essential difference in the aiming speed of the first shot of submachine guns, shotguns, rifles, and crossbows.
-// It is only related to the size of the gun.
-// SMGs are not designed to fire semi-automatically, so in this test, they will not perform well.
-// The advantage of shotguns can cause extremely high damage to unarmored targets in close-range shooting, even without precise aiming, so their performance in this test will not be very good.
-// The crossbows are only alternative weapons, and their performance is worse than that of guns.
-// Sniper rifles and carbines are tested separately.
-// Sniper rifles have slow aiming speed but good accuracy, while carbine performance is close to SMGs.
-// The aiming speed of the bowand arrow is very relevant to the skill, and an excellent archer can aim quickly
 
-// To simulate the player who just started the game.
-// The gun used for the test is the easiest for players to find.
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "unskilled_shooter_accuracy", "[ranged] [balance] [slow]" )
 {
     clear_map_without_vision();
@@ -352,7 +352,7 @@ TEST_CASE( "unskilled_shooter_accuracy", "[ranged] [balance] [slow]" )
     }
 }
 
-// To simulate players who already have sufficient proficiency and equipment
+
 TEST_CASE( "competent_shooter_accuracy", "[ranged] [balance]" )
 {
     clear_map_without_vision();
@@ -398,7 +398,7 @@ TEST_CASE( "competent_shooter_accuracy", "[ranged] [balance]" )
     }
 }
 
-// To simulate hero
+
 TEST_CASE( "expert_shooter_accuracy", "[ranged] [balance]" )
 {
     clear_map_without_vision();
@@ -447,14 +447,14 @@ TEST_CASE( "expert_shooter_accuracy", "[ranged] [balance]" )
 static void range_test( const Threshold &test_threshold, bool write_data = false )
 {
     std::vector <int> data;
-    // Start at an absurdly high dispersion and count down.
+
     int prev_dispersion = 6000;
     for( int r = 1; r <= 60; ++r ) {
         int found_dispersion = -1;
-        // We carry forward prev_dispersion because we never expet the next tier of range to hit the target accuracy level with a lower dispersion.
+
         for( int d = prev_dispersion; d >= 0; --d ) {
             firing_statistics stats = firing_test( dispersion_sources( d ), r, test_threshold );
-            // Switch this from INFO to WARN to debug the scanning process itself.
+
             INFO( "Samples: " << stats.n() << " Range: " << r << " Dispersion: " << d <<
                   " avg hit rate: " << stats.avg() );
             if( stats.avg() > test_threshold.chance() ) {
@@ -462,8 +462,8 @@ static void range_test( const Threshold &test_threshold, bool write_data = false
                 prev_dispersion = d;
                 break;
             }
-            // The intent here is to skip over dispersion values proportionally to how far from converging we are.
-            // As long as we check several adjacent dispersion values before a hit, we're good.
+
+
             d -= static_cast<int>( ( 1 - ( stats.avg() / test_threshold.chance() ) ) * 15 ) * 5;
         }
         if( found_dispersion == -1 ) {
@@ -499,8 +499,8 @@ static void range_test( const Threshold &test_threshold, bool write_data = false
     }
 }
 
-// I added this to find inflection points where accuracy at a particular range crosses a threshold.
-// I don't see any assertions we can make about these thresholds offhand.
+
+
 TEST_CASE( "synthetic_range_test", "[.]" )
 {
     SECTION( "quickdraw thresholds" ) {
@@ -543,7 +543,7 @@ static void shoot_monster( const itype_id &gun_type, const std::vector<itype_id>
             break;
         }
         mon.die( &here, nullptr );
-    } while( damage.n() < 1000 ); // In fact, stable results can only be obtained when n reaches 10000
+    } while( damage.n() < 1000 );
     const double avg = damage.avg();
     CAPTURE( damage.n() );
     CAPTURE( gun_type );
@@ -561,55 +561,55 @@ static void shoot_monster( const itype_id &gun_type, const std::vector<itype_id>
 TEST_CASE( "shot_features", "[gun]" "[slow]" )
 {
     clear_map_without_vision();
-    // BIRDSHOT
-    // Unarmored target
-    // Minor damage at range.
-    // More serious damage at close range.
+
+
+
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 5, 20, "mon_test_shotgun_0_bullet" );
-    // Grevious damage at point blank.
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 1, 73, "mon_test_shotgun_0_bullet" );
 
-    // Triviallly armored target (armor_bullet: 1)
-    // Can rarely if ever inflict damage at range.
-    // shoot_monster( itype_shot_bird, 10, 0, 5, "mon_zombie_tough" );
-    // Can barely hurt at close range.
-    // Can seriously injure trivially armored enemy at point blank,
+
+
+
+
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 1, 72, "mon_test_shotgun_1_bullet" );
 
-    // Armored target (armor_bullet: 5)
-    // Can't hurt at range
-    // Can't hurt at close range.
-    // Serioualy injure at point blank.
+
+
+
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 1, 65, "mon_test_shotgun_5_bullet" );
-    // TODO: can't harm heavily armored enemies at point blank
 
-    // Heavily Armored target (armor_bullet: 30)
-    // Can't hurt at range,
+
+
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 12, 0, "mon_test_shotgun_30_bullet" );
-    // Can't hurt at close range.
-    shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 5, 0, "mon_test_shotgun_30_bullet" );
-    // Barely injure at point blank.
-    shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 1, 30, "mon_test_shotgun_30_bullet" );
-    // TODO: can't harm heavily armored enemies even at point blank.
 
-    // BUCKSHOT
-    // Unarmored target
+    shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 5, 0, "mon_test_shotgun_30_bullet" );
+
+    shoot_monster( itype_shotgun_s, {}, itype_shot_bird, 1, 30, "mon_test_shotgun_30_bullet" );
+
+
+
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 18, 75, "mon_test_shotgun_0_bullet" );
-    // Heavy damage at range.
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 12, 115, "mon_test_shotgun_0_bullet" );
-    // More damage at close range.
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 5, 171, "mon_test_shotgun_0_bullet" );
-    // Extreme damage at point blank range.
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 1, 86, "mon_test_shotgun_0_bullet" );
 
-    // Lightly armored target (armor_bullet: 5)
-    // Outcomes for lightly armored enemies are very similar.
+
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 18, 45, "mon_test_shotgun_5_bullet" );
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 12, 77, "mon_test_shotgun_5_bullet" );
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 5, 113, "mon_test_shotgun_5_bullet" );
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 1, 81, "mon_test_shotgun_5_bullet" );
 
-    // Armored target (armor_bullet: 10)
+
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 18, 22, "mon_test_shotgun_10_bullet" );
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 12, 35, "mon_test_shotgun_10_bullet" );
     shoot_monster( itype_shotgun_s, {}, itype_shot_00, 5, 55, "mon_test_shotgun_10_bullet" );
@@ -619,27 +619,27 @@ TEST_CASE( "shot_features", "[gun]" "[slow]" )
 TEST_CASE( "shot_features_with_choke", "[gun]" "[slow]" )
 {
     clear_map_and_put_player_underground();
-    // Unarmored target
-    // This test result is difficult to converge
-    // After more attempts, the average value is about 7
-    // shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_bird, 18, 7, "mon_test_shotgun_0_bullet" );
+
+
+
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_bird, 12, 13,
                    "mon_test_shotgun_0_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_bird, 5, 20,
                    "mon_test_shotgun_0_bullet" );
-    // All the results of tests at point blank are abonormal
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_bird, 1, 75,
                    "mon_test_shotgun_0_bullet" );
 
-    // Triviallly armored target (armor_bullet: 1)
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_bird, 1, 74,
                    "mon_test_shotgun_1_bullet" );
 
-    // Armored target (armor_bullet: 5)
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_bird, 1, 67,
                    "mon_test_shotgun_5_bullet" );
 
-    // Unarmored target
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 18, 95,
                    "mon_test_shotgun_0_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 12, 145,
@@ -648,7 +648,7 @@ TEST_CASE( "shot_features_with_choke", "[gun]" "[slow]" )
                    "mon_test_shotgun_0_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 1, 87,
                    "mon_test_shotgun_0_bullet" );
-    // Triviallly armored target (armor_bullet: 1)
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 18, 94,
                    "mon_test_shotgun_1_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 12, 135,
@@ -657,7 +657,7 @@ TEST_CASE( "shot_features_with_choke", "[gun]" "[slow]" )
                    "mon_test_shotgun_1_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 1, 87,
                    "mon_test_shotgun_1_bullet" );
-    // Armored target (armor_bullet: 5)
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 18, 62,
                    "mon_test_shotgun_5_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 12, 95,
@@ -666,7 +666,7 @@ TEST_CASE( "shot_features_with_choke", "[gun]" "[slow]" )
                    "mon_test_shotgun_5_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 1, 80,
                    "mon_test_shotgun_5_bullet" );
-    // Armored target (armor_bullet: 10)
+
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 18, 30,
                    "mon_test_shotgun_10_bullet" );
     shoot_monster( itype_shotgun_s, { itype_choke }, itype_shot_00, 12, 44,
@@ -684,8 +684,8 @@ TEST_CASE( "shot_custom_damage_type", "[gun]" "[slow]" )
         return src.get_value( "general_dmg_type_test_test_fire" ) == "source" &&
                tgt.get_value( "general_dmg_type_test_test_fire" ) == "target";
     };
-    // Check that ballistics damage processes weird damage types and on-hit EOCs
-    // note: shotguns can miss one-shot critical hit rarely
+
+
     shoot_monster( itype_shotgun_s, {}, itype_test_shot_00_fire_damage, 1, 80,
                    "mon_test_zombie", check_eocs );
     shoot_monster( itype_shotgun_s, {}, itype_test_shot_00_fire_damage, 1, 80,
@@ -696,7 +696,7 @@ TEST_CASE( "shot_custom_damage_type", "[gun]" "[slow]" )
                    "mon_test_fire_immune", check_eocs );
 }
 
-// Targeting graph tests
+
 static constexpr float fudge_factor = 0.025;
 
 template<typename T, typename W>
@@ -723,15 +723,15 @@ static std::map<T, float> hit_distribution( const targeting_graph<T, W> &graph,
 
 TEST_CASE( "targeting_graph_linear_distribution", "[targeting_graph][random]" )
 {
-    // Represents a typical circle target with  N+1 equally spaced rings
-    // The center circle is twice as wide as any ring
-    // All chances assume hit selection is totally random
-    // As a line:
-    // 00->1->2->3->..->N
-    // For N = 1:
-    // 66% chance to hit center (0), 33% to hit 1
-    // For N = 2:
-    // 50% to hit center (0), 25% to hit 1, 25% to hit 2
+
+
+
+
+
+
+
+
+
     struct circle_target {
         static int connection( const int &i ) {
             if( i == 0 ) {
@@ -756,7 +756,7 @@ TEST_CASE( "targeting_graph_linear_distribution", "[targeting_graph][random]" )
     SECTION( "With random hits, hit probability is evenly split between rings (with center counting as double" ) {
         hits = hit_distribution( graph );
 
-        // Check that we're within 2.5% of the expected distribution for simple targets
+
         CHECK( hits[0] == Approx( 0.5 ).margin( fudge_factor ) );
         CHECK( hits[1] == Approx( 0.25 ).margin( fudge_factor ) );
         CHECK( hits[2] == Approx( 0.25 ).margin( fudge_factor ) );
@@ -786,14 +786,14 @@ TEST_CASE( "targeting_graph_linear_distribution", "[targeting_graph][random]" )
 
 TEST_CASE( "targeting_graph_simple_limb_distribution", "[targeting_graph][random]" )
 {
-    // A target with a center and N equally sized limbs connecting to it
-    // All chances assume hit selection is totally random
-    // Hit chance:
-    // 0 -> 1 || 2 || .. || N
-    // For N = 1:
-    // 50% to hit center (0), 50% to hit 1
-    // For N = 2:
-    // 50% to hit center (0), 25% to hit 1, 25% to hit 2
+
+
+
+
+
+
+
+
     struct center_target {
         static int connection( const int & ) {
             return 0;
@@ -811,10 +811,10 @@ TEST_CASE( "targeting_graph_simple_limb_distribution", "[targeting_graph][random
 
         std::map<int, float> hits = hit_distribution( graph, std::optional<float>( 0.9f ) );
 
-        // Check that we're within 2.5% of the expected distribution for simple targets
-        // Nothing should hit the center, the hit is too inaccurate for that
+
+
         REQUIRE( hits[0] == 0.0f );
-        // And as these two are of equal weight, hits between them should be equally likely
+
         CHECK( hits[1] == Approx( 0.50 ).margin( fudge_factor ) );
         CHECK( hits[2] == Approx( 0.50 ).margin( fudge_factor ) );
     }
@@ -839,10 +839,10 @@ TEST_CASE( "targeting_graph_simple_limb_distribution", "[targeting_graph][random
 
 TEST_CASE( "targeting_graph_complex_linear_distribution", "[targeting_graph][random]" )
 {
-    // A target with a center and N limbs connecting to it
-    // N cannot be more than 9
-    // For 9 limbs, with random hits the percent chance of each limb being hit is the weight
-    // if the center is not hit.
+
+
+
+
     struct linear_target {
         static int connection( const int &i ) {
             if( i == 0 ) {
@@ -853,18 +853,28 @@ TEST_CASE( "targeting_graph_complex_linear_distribution", "[targeting_graph][ran
 
         static double weight( const int &i ) {
             switch( i ) {
-                // *INDENT-OFF*
-                case 0: return 10;
-                case 1: return 40;
-                case 2: return 8;
-                case 3: return 9;
-                case 4: return 2;
-                case 6: return 10;
-                case 5: return 1;
-                case 7: return 10;
-                case 8: return 4;
-                case 9: return 6;
-                // *INDENT-ON*
+
+                case 0:
+                    return 10;
+                case 1:
+                    return 40;
+                case 2:
+                    return 8;
+                case 3:
+                    return 9;
+                case 4:
+                    return 2;
+                case 6:
+                    return 10;
+                case 5:
+                    return 1;
+                case 7:
+                    return 10;
+                case 8:
+                    return 4;
+                case 9:
+                    return 6;
+
             }
             return 0;
         }
@@ -877,11 +887,11 @@ TEST_CASE( "targeting_graph_complex_linear_distribution", "[targeting_graph][ran
 
         std::map<int, float> hits = hit_distribution( graph );
 
-        // 10 / 58
+
         CHECK( hits[0] == Approx( 10.0f / 58.0f ).margin( fudge_factor ) );
-        // 40 / 58
+
         CHECK( hits[1] == Approx( 40.0f / 58.0f ).margin( fudge_factor ) );
-        // 8 / 58
+
         CHECK( hits[2] == Approx( 8.0f / 58.0f ).margin( fudge_factor ) );
     }
 
@@ -906,10 +916,10 @@ TEST_CASE( "targeting_graph_complex_linear_distribution", "[targeting_graph][ran
 
 TEST_CASE( "targeting_graph_complex_limb_distribution", "[targeting_graph][random]" )
 {
-    // A target with a center and N limbs connecting to it
-    // N cannot be more than 9
-    // For 9 limbs, with random hits the percent chance of each limb being hit is the weight
-    // if the center is not hit.
+
+
+
+
     struct center_target {
         static int connection( const int & ) {
             return 0;
@@ -917,18 +927,28 @@ TEST_CASE( "targeting_graph_complex_limb_distribution", "[targeting_graph][rando
 
         static double weight( const int &i ) {
             switch( i ) {
-                // *INDENT-OFF*
-                case 0: return 10;
-                case 1: return 40;
-                case 2: return 8;
-                case 3: return 9;
-                case 4: return 7;
-                case 7: return 10;
-                case 5: return 3;
-                case 6: return 10;
-                case 8: return 8;
-                case 9: return 5;
-                // *INDENT-ON*
+
+                case 0:
+                    return 10;
+                case 1:
+                    return 40;
+                case 2:
+                    return 8;
+                case 3:
+                    return 9;
+                case 4:
+                    return 7;
+                case 7:
+                    return 10;
+                case 5:
+                    return 3;
+                case 6:
+                    return 10;
+                case 8:
+                    return 8;
+                case 9:
+                    return 5;
+
             }
             return 0;
         }
@@ -941,11 +961,11 @@ TEST_CASE( "targeting_graph_complex_limb_distribution", "[targeting_graph][rando
 
         std::map<int, float> hits = hit_distribution( graph, std::optional<float>( 0.9f ) );
 
-        // Nothing should hit the center, the hit is too inaccurate for that
+
         REQUIRE( hits[0] == 0.0f );
-        // Weight 40 / 48
+
         CHECK( hits[1] == Approx( 5.0f / 6.0f ).margin( fudge_factor ) );
-        // Weight 8 / 48
+
         CHECK( hits[2] == Approx( 1.0f / 6.0f ).margin( fudge_factor ) );
     }
 
@@ -968,35 +988,35 @@ TEST_CASE( "targeting_graph_complex_limb_distribution", "[targeting_graph][rando
     }
 
     SECTION( "With random hits, hits are split by weight among limbs and weight down branches" ) {
-        // Weights 10, 40, 7, 3
+
         std::vector<int> parts = { 0, 1, 4, 5 };
         targeting_graph<int, center_target> graph;
         graph.generate( 0, parts );
         std::map<int, float> hits = hit_distribution( graph );
 
-        /* Hit distribution expectations:
-         * 80% of the time, the path chosen includes 1 -> 40 / 50
-         * 14% of the time, the path chosen includes 4 ->  7 / 50
-         *  6% of the time, the path chosen includes 5 ->  3 / 50
-         *
-         * When the path includes 1:
-         * 20% of the time, 0 will be hit -> 10 / 50
-         * 80% of the time, 1 will be hit -> 40 / 50
-         *
-         * When the path includes 4:
-         * 59% of the time, 0 will be hit -> 10 / 17
-         * 41% of the time, 4 will be hit ->  7 / 17
-         *
-         * When the path includes 5:
-         * 77% of the time, 0 will be hit -> 10 / 13
-         * 23% of the time, 5 will be hit ->  3 / 13
-         *
-         * In total:
-         * 1 will be hit 80% * 80% = 64% of the time
-         * 4 will be hit 41% * 14% = 5.7% of the time
-         * 5 will be hit 23% * 6%  = 1.4% of the time
-         * 0 will be hit 100% - 64% - 5.7% - 1.4% = 28.9% of the time
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         CHECK( hits[0] == Approx( 0.289 ).margin( fudge_factor ) );
         CHECK( hits[1] == Approx( 0.640 ).margin( fudge_factor ) );
         CHECK( hits[4] == Approx( 0.057 ).margin( fudge_factor ) );
@@ -1032,23 +1052,23 @@ TEST_CASE( "targeting_graph_complex_target", "[targeting_graph][random]" )
         }
     };
 
-    /* Test complex construction and hit distribution
-     * Here's the complex graph being represented, all connections are one-way and down
-     * if an element has no connections, it connects to itself.
-     *
-     * 1   2    3
-     *  \ /    |
-     *   4     |
-     *    \   /
-     *      5
-     * 6 7  |
-     *  \|  |
-     *   8  |  9
-     *    \ | /
-     *      0
-     *
-     * 5 is the biggest node
-     */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     std::map<int, int> connections = {
         {1, 4},
         {2, 4},
@@ -1088,70 +1108,70 @@ TEST_CASE( "targeting_graph_complex_target", "[targeting_graph][random]" )
             hits.emplace( entry.first.val, entry.second );
         }
 
-        /* Hit chances:
-         * 5 connects to 0, 4, 3
-         * 0 connects to 8, 9
-         * 8 connects to 6, 7
-         * 4 connects to 1, 2
-         *
-         * Potential paths:
-         * 5 0 8 6
-         * 5 0 8 7
-         * 5 0 9
-         * 5 4 1
-         * 5 4 2
-         * 5 3
-         *
-         * 1/3 of hits go down the 0 path:
-         * 0 8 6
-         * 0 8 7
-         * 0 9
-         * of those, 1/2 go down the 8 path:
-         * 8 6
-         * 8 7
-         * and 1/2 of those go down the 6, 1/2 down the 7
-         *
-         * of those, 1/2 go down the 9 path
-         *
-         * 1/3 of hits go down the 4 path:
-         * 4 1
-         * 4 2
-         * of those, 1/2 go down the 1 path, 1/2 go down the 2 path
-         *
-         * 1/3 of hits go down the 3 path:
-         * 3
-         *
-         * So, we have these paths, with these probabilities of being selected
-         * (1/12) 5 0 8 6
-         * (1/12) 5 0 8 7
-         * (1/ 6) 5 0 9
-         * (1/ 6) 5 4 1
-         * (1/ 6) 5 4 2
-         * (1/ 3) 5 3
-         *
-         * Each individual element in a path has a 1/(length) chance of being selected
-         * So, at the edges:
-         * 6 has a 1/4 * 1/12 = 1/48 chance of being selected
-         * 7 has a 1/4 * 1/12 = 1/48 chance of being selected
-         * 9 has a 1/3 * 1/ 6 = 1/18 chance of being selected
-         * 1 has a 1/3 * 1/ 6 = 1/18 chance of being selected
-         * 2 has a 1/3 * 1/ 6 = 1/18 chance of being selected
-         * 3 has a 1/2 * 1/ 3 = 1/ 6 chance of being selected
-         *
-         * 8 has a 2 * 1/4 * 1/12 = 1/24 chance of being selected
-         * 4 has a 2 * 1/3 * 1/ 6 = 1/ 9 chance of being selected
-         *
-         * 0 has a 2 * 1/12 * 1/4
-         *       + 1 * 1/ 6 * 1/3
-         *       = 1/24 + 1/18
-         *       = 7/72 chance of being selected
-         *
-         * 5 has a 2 * 1/12 * 1/4
-         *       + 3 * 1/ 6 * 1/3
-         *       + 1 * 1/ 3 * 1/2
-         *       = 1/24 + 1/6 + 1/6
-         *       = 3/8 chance of being selected
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         CHECK( hits[6] == Approx( 1.0f / 48.0f ).margin( fudge_factor ) );
         CHECK( hits[7] == Approx( 1.0f / 48.0f ).margin( fudge_factor ) );
         CHECK( hits[9] == Approx( 1.0f / 18.0f ).margin( fudge_factor ) );
@@ -1193,71 +1213,71 @@ TEST_CASE( "targeting_graph_complex_target", "[targeting_graph][random]" )
             hits.emplace( entry.first.val, entry.second );
         }
 
-        /* Hit chances:
-         * 5 connects to 0, 4, 3
-         * 0 connects to 8, 9
-         * 8 connects to 6, 7
-         * 4 connects to 1, 2
-         *
-         * Potential paths:
-         * 5 0 8 6
-         * 5 0 8 7
-         * 5 0 9
-         * 5 4 1
-         * 5 4 2
-         * 5 3
-         *
-         * 12/32 = 3/8 of hits go down the 0 path:
-         * 0 8 6
-         * 0 8 7
-         * 0 9
-         * of those 4/5 go down the 8 path:
-         * 8 6
-         * 8 7
-         * then 1/2 of that goes to 6, and the other 1/2 to 7
-         * so 1/5 go to 9
-         *
-         * 12/32 = 3/8 of hits go down the 4 path:
-         * 4 1
-         * 4 2
-         * then 2/6 = 1/3 of that go to 1
-         * and  4/6 = 2/3 of that go to 2
-         *
-         * 8/32 = 1/4 of hits go down the 3 path:
-         * 3
-         *
-         * So, we have these paths, with these probabilities of being selected
-         * (3/20) 5 0 8 6 [16 + 12 + 4 + 1 = 33]
-         * (3/20) 5 0 8 7 [16 + 12 + 4 + 1 = 33]
-         * (3/40) 5 0 9   [16 + 12 + 1     = 29]
-         * (1/ 8) 5 4 1   [16 + 12 + 2     = 30]
-         * (1/ 4) 5 4 2   [16 + 12 + 4     = 32]
-         * (1/ 4) 5 3     [16 +  8         = 24]
-         *
-         * Each individual element in a path has a weight/(sum of weights) chance of being selected
-         * So, at the edges:
-         * 6 has a 3/20 * 1/33 = 1/ 220 chance of being selected
-         * 7 has a 3/20 * 1/33 = 1/ 220 chance of being selected
-         * 9 has a 3/40 * 1/29 = 1/1160 chance of being selected
-         * 1 has a 1/ 8 * 2/30 = 1/ 120 chance of being selected
-         * 2 has a 1/ 4 * 4/32 = 1/  32 chance of being selected
-         * 3 has a 1/ 4 * 8/24 = 1/  12 chance of being selected
-         *
-         * 8 has a 2 * 3/20 *  4/33 = 2 / 55 chance of being selected
-         * 4 has a 1 * 1/ 8 * 12/30
-         *       + 1 * 1/ 4 * 12/32 = 23/160 chance of being selected
-         *
-         * 0 has a 2 * 3/20 * 12/33
-         *       + 1 * 3/40 * 12/29
-         *       = 447 / 3190 chance of being selected
-         *
-         * 5 has a 2 * 3/20 * 16/33
-         *       + 1 * 3/40 * 16/29
-         *       + 1 * 1/ 8 * 16/30
-         *       + 1 * 1/ 4 * 16/32
-         *       + 1 * 1/ 4 * 16/24
-         *       = 20869/38280 chance of being selected
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         CHECK( hits[6] == Approx( 1.0f /  220.0f ).margin( fudge_factor ) );
         CHECK( hits[7] == Approx( 1.0f /  220.0f ).margin( fudge_factor ) );
         CHECK( hits[9] == Approx( 1.0f / 1160.0f ).margin( fudge_factor ) );
@@ -1274,13 +1294,13 @@ TEST_CASE( "targeting_graph_complex_target", "[targeting_graph][random]" )
     }
 }
 
-// Mostly just a targeting graph test, but under a layer of indirection
+
 TEST_CASE( "Default_anatomy_body_part_hit_chances", "[targeting_graph][anatomy][random]" )
 {
     anatomy_id tested( "human_anatomy" );
     std::map<bodypart_id, float> hits;
-    // This is the fewest number of iterations to get values that are relatively close to expected
-    // But it does make this test a little slow (few seconds)
+
+
     const int total_hits = 1000000;
     for( int i = 0; i < total_hits; ++i ) {
         auto it = hits.emplace( tested->select_body_part_projectile_attack( 0, 1, rng_float( 0, 1 ) ),
@@ -1292,59 +1312,59 @@ TEST_CASE( "Default_anatomy_body_part_hit_chances", "[targeting_graph][anatomy][
         hit.second /= total_hits;
     }
 
-    /* The body is:
-     *
-     * h   H     f   F
-     * |   |     |   |
-     * a   A     l   L
-     * \   \     /   /
-     *  \   \   /   /
-     *   \--- t ---/
-     *        |
-     *        d
-     *       / \
-     *      m   e
-     *
-     * Where
-     * h,H = hand_l,r at HS  1.5
-     * a,A = arm_l,r  at HS 13
-     * f,F = foot_l,r at HS  2
-     * l,L = leg_l,r  at HS 13
-     * t   = torso    at HS 36
-     * d   = head     at HS  4
-     * m   = mouth    at HS  0.5
-     * e   = eyes     at HS  0.5
-     *
-     * Number crunching:
-     * (13/56) t a h [36 + 13 + 1.5 = 50.5]
-     * (13/56) t A H [36 + 13 + 1.5 = 50.5]
-     * (13/56) t l f [36 + 13 + 2   = 51  ]
-     * (13/56) t L F [36 + 13 + 2   = 51  ]
-     * ( 1/28) t d m [36 +  4 + 0.5 = 40.5]
-     * ( 1/28) t d e [36 +  4 + 0.5 = 40.5]
-     *
-     * h,H = 13/56 *  1.5/50.5 =  39/5656
-     * f,F = 13/56 *  2  /51   =  13/1428
-     * a,A = 13/56 * 13  /50.5 = 169/2828
-     * l,L = 13/56 * 13  /51   = 169/2856
-     * m   =  1/28 *  0.5/40.5 =   1/2268
-     * e   =  1/28 *  0.5/40.5 =   1/2268
-     * d   =  1/14 *  4  /40.5 =   4/ 567
-     * t   = 2 * 13/56 * 36/50.5
-     *     + 2 * 13/56 * 36/51
-     *     + 2 *  1/28 * 36/40.5
-     *     =                     78121/108171
-     *
-     * For:
-     * hands:  0.69%
-     * feet :  0.91%
-     * arms :  5.98%
-     * legs :  5.92%
-     * mouth:  0.04%
-     * eyes :  0.04%
-     * head :  0.71%
-     * torso: 72.22%
-     */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     CHECK( hits.at( body_part_eyes ) == Approx( 1.0f / 2268.0f ).margin( fudge_factor / 10 ) );
     CHECK( hits.at( body_part_head ) == Approx( 4.0f / 567.0f ).margin( fudge_factor / 10 ) );
@@ -1359,4 +1379,3 @@ TEST_CASE( "Default_anatomy_body_part_hit_chances", "[targeting_graph][anatomy][
     CHECK( hits.at( body_part_foot_l ) == Approx( 13.0f / 1428.0f ).margin( fudge_factor / 10 ) );
     CHECK( hits.at( body_part_foot_r ) == Approx( 13.0f / 1428.0f ).margin( fudge_factor / 10 ) );
 }
-

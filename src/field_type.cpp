@@ -70,18 +70,28 @@ template<>
 std::string enum_to_string<game_message_type>( game_message_type data )
 {
     switch( data ) {
-            // *INDENT-OFF*
-        case game_message_type::m_good: return "good";
-        case game_message_type::m_bad: return "bad";
-        case game_message_type::m_mixed: return "mixed";
-        case game_message_type::m_warning: return "warning";
-        case game_message_type::m_info: return "info";
-        case game_message_type::m_neutral: return "neutral";
-        case game_message_type::m_debug: return "debug";
-        case game_message_type::m_headshot: return "headshot";
-        case game_message_type::m_critical: return "critical";
-        case game_message_type::m_grazing: return "grazing";
-            // *INDENT-ON*
+
+        case game_message_type::m_good:
+            return "good";
+        case game_message_type::m_bad:
+            return "bad";
+        case game_message_type::m_mixed:
+            return "mixed";
+        case game_message_type::m_warning:
+            return "warning";
+        case game_message_type::m_info:
+            return "info";
+        case game_message_type::m_neutral:
+            return "neutral";
+        case game_message_type::m_debug:
+            return "debug";
+        case game_message_type::m_headshot:
+            return "headshot";
+        case game_message_type::m_critical:
+            return "critical";
+        case game_message_type::m_grazing:
+            return "grazing";
+
         case game_message_type::num_game_message_type:
             break;
     }
@@ -92,13 +102,18 @@ template<>
 std::string enum_to_string<description_affix>( description_affix data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case description_affix::DESCRIPTION_AFFIX_IN: return "in";
-        case description_affix::DESCRIPTION_AFFIX_COVERED_IN: return "covered_in";
-        case description_affix::DESCRIPTION_AFFIX_ON: return "on";
-        case description_affix::DESCRIPTION_AFFIX_UNDER: return "under";
-        case description_affix::DESCRIPTION_AFFIX_ILLUMINATED_BY: return "illuminated_by";
-        // *INDENT-ON*
+
+        case description_affix::DESCRIPTION_AFFIX_IN:
+            return "in";
+        case description_affix::DESCRIPTION_AFFIX_COVERED_IN:
+            return "covered_in";
+        case description_affix::DESCRIPTION_AFFIX_ON:
+            return "on";
+        case description_affix::DESCRIPTION_AFFIX_UNDER:
+            return "under";
+        case description_affix::DESCRIPTION_AFFIX_ILLUMINATED_BY:
+            return "illuminated_by";
+
         case description_affix::DESCRIPTION_AFFIX_NUM:
             break;
     }
@@ -106,7 +121,7 @@ std::string enum_to_string<description_affix>( description_affix data )
     return "invalid";
 }
 
-} // namespace io
+}
 
 generic_factory<field_type> &get_all_field_types()
 {
@@ -114,35 +129,35 @@ generic_factory<field_type> &get_all_field_types()
     return all_field_types;
 }
 
-/** @relates int_id */
+
 template<>
 bool int_id<field_type>::is_valid() const
 {
     return get_all_field_types().is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const field_type &int_id<field_type>::obj() const
 {
     return get_all_field_types().obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<field_type> &int_id<field_type>::id() const
 {
     return get_all_field_types().convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<field_type>::is_valid() const
 {
     return get_all_field_types().is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const field_type &string_id<field_type>::obj() const
 {
@@ -158,14 +173,14 @@ int_id<field_type> string_id<field_type>::id_or( const int_id<field_type> &fallb
     return fallback;
 }
 
-/** @relates string_id */
+
 template<>
 int_id<field_type> string_id<field_type>::id() const
 {
     return get_all_field_types().convert( *this, fd_null.id_or( int_id<field_type>() ) );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<field_type>::int_id( const string_id<field_type> &id ) : _id( id.id() )
 {
@@ -174,7 +189,7 @@ int_id<field_type>::int_id( const string_id<field_type> &id ) : _id( id.id() )
 const field_intensity_level &field_type::get_intensity_level( int level ) const
 {
     if( level < 0 || static_cast<size_t>( level ) >= intensity_levels.size() ) {
-        // level + 1 for the original intensity number
+
         debugmsg( "Unknown intensity level %d for field type %s.", level + 1, id.str() );
         return intensity_levels.back();
     }
@@ -268,7 +283,7 @@ void field_type::load( const JsonObject &jo, std::string_view )
                 intensity_level.field_effects.emplace_back( fe );
             }
         } else {
-            // Use effects from previous intensity level
+
             intensity_level.field_effects = fallback_intensity_level.field_effects;
         }
         optional( jao, was_loaded, "scent_neutralization", intensity_level.scent_neutralization,
@@ -369,7 +384,7 @@ void field_type::finalize()
         }
     }
 
-    // should be the last operation for the type
+
     processors = map_field_processing::processors_for_type( *this );
 }
 

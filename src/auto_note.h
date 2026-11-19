@@ -60,9 +60,9 @@ class custom_symbol
         };
 };
 
-/**
- * Class implementing the user interface for the auto note configuration.
- */
+
+
+
 class auto_note_manager_gui
 {
     public:
@@ -76,17 +76,17 @@ class auto_note_manager_gui
                                        bool bCharacter );
 
     private:
-        /// The map extra type cache. This is initialized with all known map extra types
-        /// and their auto note status with every call of initialize(). All changes to this
-        /// will be applied to the per-character or global auto notes settings object after the user
-        /// closes the GUI.
+
+
+
+
         std::unordered_map<map_extra_id, std::pair<const map_extra, bool>> char_mapExtraCache;
         std::unordered_map<map_extra_id, std::pair<const map_extra, bool>> global_mapExtraCache;
 
-        /// All map extra types for the character that will be displayed in the GUI.
+
         std::vector<map_extra_id> char_displayCache;
 
-        /// All map extra types for global types that will be displayed in the GUI.
+
         std::vector<map_extra_id> global_displayCache;
 
         std::unordered_map<map_extra_id, custom_symbol> char_custom_symbol_cache;
@@ -98,16 +98,16 @@ class auto_note_manager_gui
         bool globalwasChanged{false};
 };
 
-/**
- * A class storing auto note settings for all map features for a given player.
- * Since auto note is something that is very dependent on in which stage of the game
- * a player is (f.e., dead college kids are useful in the early game, but not so much
- * in the late game), the settings are only available tied to a specific game save, meaning
- * there is no global setting like with the auto-pickup manager.
- */
+
+
+
+
+
+
+
 class auto_note_settings
 {
-        // Allow private member access to the auto note manager GUI
+
         friend class auto_note_manager_gui;
 
     public:
@@ -134,32 +134,32 @@ class auto_note_settings
 
         void show_gui();
 
-        /// Perform default initialization. This will use the auto note property of
-        /// registered map extras in order to determine their enable status.
+
+
         void default_initialize();
 
     private:
-        /// Build string containing path to the auto notes save file for the active player.
+
         cata_path build_save_path() const;
 
-        /// This set contains the ID strings of all map extras that have auto note enabled for a character.
+
         std::unordered_set<map_extra_id> character_autoNoteEnabled;
 
-        /// This set contains the ID strings of all map extras that have auto note disabled globally.
+
         std::unordered_set<map_extra_id> global_autoNoteDisabled;
 
-        /// This set contains the ID strings of all map extras that were already encountered by the player.
-        /// This is used in order to avoid spoilers in the GUI.
+
+
         std::unordered_set<map_extra_id> discovered;
 
-        /// User-defined symbols and colors for the auto notes for this character.
+
         std::unordered_map<map_extra_id, custom_symbol> character_custom_symbols;
 
-        /// User-defined symbols and colors for the auto notes globably.
+
         std::unordered_map<map_extra_id, custom_symbol> global_custom_symbols;
 };
-} // namespace auto_notes
+}
 
 auto_notes::auto_note_settings &get_auto_notes_settings();
 
-#endif // CATA_SRC_AUTO_NOTE_H
+#endif

@@ -63,11 +63,14 @@ template<>
 std::string enum_to_string<side>( side data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case side::LEFT: return "left";
-        case side::RIGHT: return "right";
-        case side::BOTH: return "both";
-        // *INDENT-ON*
+
+        case side::LEFT:
+            return "left";
+        case side::RIGHT:
+            return "right";
+        case side::BOTH:
+            return "both";
+
         case side::num_sides:
             break;
     }
@@ -78,26 +81,37 @@ template<>
 std::string enum_to_string<bp_type>( bp_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case bp_type::arm: return "arm";
-        case bp_type::other: return "other";
-        case bp_type::foot: return "foot";
-        case bp_type::hand: return "hand";
-        case bp_type::head: return "head";
-        case bp_type::leg: return "leg";
-        case bp_type::mouth: return "mouth";
-        case bp_type::sensor: return "sensor";
-        case bp_type::tail: return "tail";
-        case bp_type::torso: return "torso";
-        case bp_type::wing: return "wing";
-            // *INDENT-ON*
+
+        case bp_type::arm:
+            return "arm";
+        case bp_type::other:
+            return "other";
+        case bp_type::foot:
+            return "foot";
+        case bp_type::hand:
+            return "hand";
+        case bp_type::head:
+            return "head";
+        case bp_type::leg:
+            return "leg";
+        case bp_type::mouth:
+            return "mouth";
+        case bp_type::sensor:
+            return "sensor";
+        case bp_type::tail:
+            return "tail";
+        case bp_type::torso:
+            return "torso";
+        case bp_type::wing:
+            return "wing";
+
         case bp_type::num_types:
             break;
     }
     cata_fatal( "Invalid body part type." );
 }
 
-} // namespace io
+}
 
 namespace
 {
@@ -105,10 +119,10 @@ namespace
 generic_factory<body_part_type> body_part_factory( "body part" );
 generic_factory<limb_score> limb_score_factory( "limb score" );
 
-// groups all the bodypart into a shared bucket
+
 std::unordered_map<bodypart_str_id, std::vector<bodypart_str_id>> combined_similar_bodyparts;
 
-} // namespace
+}
 
 static body_part legacy_id_to_enum( const std::string &legacy_id )
 {
@@ -136,14 +150,14 @@ static body_part legacy_id_to_enum( const std::string &legacy_id )
     return iter->second;
 }
 
-/** @relates string_id */
+
 template<>
 const limb_score &string_id<limb_score>::obj() const
 {
     return limb_score_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<limb_score>::is_valid() const
 {
@@ -178,49 +192,49 @@ void limb_score::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "affected_by_encumb", encumb_affect, true );
 }
 
-/**@relates string_id*/
+
 template<>
 bool string_id<body_part_type>::is_valid() const
 {
     return body_part_factory.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 bool int_id<body_part_type>::is_valid() const
 {
     return body_part_factory.is_valid( *this );
 }
 
-/**@relates string_id*/
+
 template<>
 const body_part_type &string_id<body_part_type>::obj() const
 {
     return body_part_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const body_part_type &int_id<body_part_type>::obj() const
 {
     return body_part_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const bodypart_str_id &int_id<body_part_type>::id() const
 {
     return body_part_factory.convert( *this );
 }
 
-/**@relates string_id*/
+
 template<>
 bodypart_id string_id<body_part_type>::id() const
 {
     return body_part_factory.convert( *this, bodypart_id( 0 ) );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<body_part_type>::int_id( const string_id<body_part_type> &id ) : _id( id.id() ) {}
 
@@ -273,14 +287,14 @@ sub_bodypart_id body_part_type::random_sub_part( bool secondary ) const
 {
     int total_weight = 0;
     for( const sub_bodypart_str_id &bp : sub_parts ) {
-        // filter for secondary sub locations
+
         if( secondary == bp->secondary ) {
             total_weight += bp->max_coverage;
         }
     }
     int roll = rng( 1, total_weight );
     for( const sub_bodypart_str_id &bp : sub_parts ) {
-        // filter for secondary sub locations
+
         if( secondary == bp->secondary ) {
             if( roll <= bp->max_coverage ) {
                 return bp.id();
@@ -288,7 +302,7 @@ sub_bodypart_id body_part_type::random_sub_part( bool secondary ) const
             roll = roll - bp->max_coverage;
         }
     }
-    // should never get here
+
     return sub_bodypart_id();
 }
 
@@ -314,10 +328,10 @@ class encumbrance_per_weight_reader : public generic_typed_reader<encumbrance_pe
         }
 };
 
-// similar to weighted_string_id_reader, but different enough to not really work
+
 struct limb_type_reader : generic_typed_reader<limb_type_reader> {
-    bp_type &primary; // there's a separate variable tracking the "primary" limb type
-    mutable std::pair<bp_type, float> max = { bp_type::num_types, 0.f }; // track max to set primary
+    bp_type &primary;
+    mutable std::pair<bp_type, float> max = { bp_type::num_types, 0.f };
     float default_weight;
 
     limb_type_reader( bp_type &primary_, const float def ) : primary( primary_ ),
@@ -325,16 +339,16 @@ struct limb_type_reader : generic_typed_reader<limb_type_reader> {
 
     std::pair<bp_type, float> get_next( const JsonValue &jv ) const {
         std::pair<bp_type, float> ret{ bp_type::num_types, default_weight };
-        if( jv.test_array() ) { // [ [ "head", 0.5 ], [ "arm", 0.3 ] ]
+        if( jv.test_array() ) {
             JsonArray ja = jv.get_array();
             ja.read( 0, ret.first );
             ja.read( 1, ret.second );
-        } else if( jv.test_string() ) { // "head" or [ "head", "arm" ]
+        } else if( jv.test_string() ) {
             jv.read( ret.first );
         } else {
             jv.throw_error( "Invalid format for limb type" );
         }
-        // update primary to the highest weight
+
         if( max.first == bp_type::num_types || max.second < ret.second ) {
             max = ret;
             primary = ret.first;
@@ -342,26 +356,26 @@ struct limb_type_reader : generic_typed_reader<limb_type_reader> {
         return ret;
     }
 };
-} // namespace
+}
 
 void body_part_type::load( const JsonObject &jo, std::string_view )
 {
     mandatory( jo, was_loaded, "id", id );
 
     mandatory( jo, was_loaded, "name", name );
-    // This is NOT the plural of `name`; it's a name referring to the pair of
-    // bodyparts which this bodypart belongs to, and thus should not be implemented
-    // using "n_gettext" or "translation::make_plural". Otherwise, in languages
-    // without plural forms, translation of this string would indicate it
-    // to be a left or right part, while it is not.
+
+
+
+
+
     optional( jo, was_loaded, "name_multiple", name_multiple );
 
     mandatory( jo, was_loaded, "accusative", accusative );
-    // same as the above comment
+
     optional( jo, was_loaded, "accusative_multiple", accusative_multiple );
 
     mandatory( jo, was_loaded, "heading", name_as_heading );
-    // Same as the above comment
+
     mandatory( jo, was_loaded, "heading_multiple", name_as_heading_multiple );
     optional( jo, was_loaded, "hp_bar_ui_text", hp_bar_ui_text );
     mandatory( jo, was_loaded, "encumbrance_text", encumb_text );
@@ -387,14 +401,14 @@ void body_part_type::load( const JsonObject &jo, std::string_view )
 
     mandatory( jo, was_loaded, "limb_types", limbtypes, limb_type_reader{ _primary_limb_type, 1.0f } );
 
-    // tokens are actually legacy code that should be on their way out.
+
     if( !was_loaded ) {
         optional( jo, was_loaded, "legacy_id", legacy_id, "BP_NULL" );
         if( legacy_id != "BP_NULL" ) {
             token = legacy_id_to_enum( legacy_id );
         }
     } else {
-        // we need to clear this because any bodypart using copy-from will not be a legacy part.
+
         legacy_id = "BP_NULL";
         token = body_part::num_bp;
     }
@@ -412,7 +426,7 @@ void body_part_type::load( const JsonObject &jo, std::string_view )
         connected_to = main_part;
     }
 
-    // turn off blindly copying-from to prevent accidental inconsistent opposites
+
     if( jo.has_string( "opposite_part" ) ) {
         mandatory( jo, was_loaded, "opposite_part", opposite_part );
     } else {
@@ -550,11 +564,11 @@ void body_part_type::finalize()
 
     finalize_damage_map( armor.resist_vals );
 
-    // populate combined_similar_bodyparts
+
     if( similar_bodypart.has_value() ) {
-        // `head` is similar to `head_dragonfly`
+
         combined_similar_bodyparts[similar_bodypart.value()].emplace_back( id );
-        // `head_dragonfly` is similar to `head`
+
         combined_similar_bodyparts[id].emplace_back( similar_bodypart.value() );
     }
 
@@ -620,8 +634,8 @@ void body_part_type::check() const
         }
     }
 
-    // Check that connected_to leads eventually to the root bodypart (currently always head),
-    // without any loops
+
+
     std::unordered_set<bodypart_str_id> visited = { id };
     bodypart_str_id next = connected_to;
     while( !visited.count( next ) ) {
@@ -694,18 +708,18 @@ std::set<translation, localized_comparator> body_part_type::consolidate(
     std::set<translation, localized_comparator> to_return;
     std::vector<bodypart_id> full_bps;
 
-    //first try to compress sets of sub body parts together into a full limb
+
     for( size_t i = 0; i < covered.size(); i++ ) {
         const sub_bodypart_id &sbp = covered[i];
         if( sbp == sub_bodypart_str_id::NULL_ID() ) {
-            // if we have already covered this continue
+
             continue;
         }
 
-        // try to find all matching sublimbs from the parent
+
         bool found_all = true;
         for( const sub_bodypart_str_id &searching : sbp->parent->sub_parts ) {
-            //skip secondary locations for this
+
             if( !searching->secondary &&
                 std::find( covered.begin(), covered.end(), searching.id() ) == covered.end() ) {
                 found_all = false;
@@ -713,11 +727,11 @@ std::set<translation, localized_comparator> body_part_type::consolidate(
             }
         }
 
-        // if found all consolidate all the limb bits together
-        // TODO: shouldn't need so many loops to do this
+
+
         if( found_all ) {
             full_bps.emplace_back( sbp->parent );
-            // set the initial to a skipped value
+
             for( const sub_bodypart_str_id &searching : sbp->parent->sub_parts ) {
                 if( !searching->secondary ) {
                     auto sbp_it = std::find( covered.begin(), covered.end(), searching.id() );
@@ -727,23 +741,23 @@ std::set<translation, localized_comparator> body_part_type::consolidate(
         }
     }
 
-    // now try and compress together matching limbs
+
     for( size_t i = 0; i < full_bps.size(); i++ ) {
         const bodypart_id &bp = full_bps[i];
 
         if( bp == bodypart_str_id::NULL_ID().id() ) {
-            //its already been covered
+
             continue;
         }
-        // bodyparts with no opposite are their own opposite
+
         if( bp->opposite_part.id() == bp ) {
-            // if no opposite don't look for one
+
             to_return.insert( bp->name_as_heading );
             continue;
         }
         auto bp_itt = std::find( full_bps.begin(), full_bps.end(), bp->opposite_part );
         if( bp_itt == full_bps.end() ) {
-            // if we didn't find the match just add the limb we were just looking at
+
             to_return.insert( bp->name_as_heading );
             continue;
         }
@@ -756,32 +770,32 @@ std::set<translation, localized_comparator> body_part_type::consolidate(
     for( size_t i = 0; i < covered.size(); i++ ) {
         const sub_bodypart_id &sbp = covered[i];
         if( sbp == sub_bodypart_str_id::NULL_ID() ) {
-            // if we have already covered this value as a pair continue
+
             continue;
         }
         sub_bodypart_id temp;
-        // if our sub part has an opposite
+
         if( sbp->opposite != sub_bodypart_str_id::NULL_ID() && sbp->opposite != sbp.id() ) {
             temp = sbp->opposite;
         } else {
-            // if it doesn't have an opposite add it to the return vector alone and continue
+
             to_return.insert( sbp->name );
             continue;
         }
 
         bool found = false;
         for( sub_bodypart_id &sbp_it : covered ) {
-            // go through each body part and test if its partner is there as well
+
             if( temp == sbp_it ) {
-                // add the multiple name not the single
+
                 to_return.insert( sbp->name_multiple );
                 found = true;
-                // set the found part to a null value
+
                 sbp_it = sub_bodypart_str_id::NULL_ID();
                 break;
             }
         }
-        // if we didn't find its pair print it normally
+
         if( !found ) {
             to_return.insert( sbp->name );
         }
@@ -795,23 +809,23 @@ std::set<translation, localized_comparator> body_part_type::consolidate(
 {
     std::set<translation, localized_comparator> to_return;
 
-    // now try and compress together matching limbs
+
     for( size_t i = 0; i < covered.size(); i++ ) {
         const bodypart_id &bp = covered[i];
 
         if( bp == bodypart_str_id::NULL_ID().id() ) {
-            //its already been covered
+
             continue;
         }
-        // bodyparts with no opposite are their own opposite
+
         if( bp->opposite_part.id() == bp ) {
-            // if no opposite don't look for one
+
             to_return.insert( bp->name_as_heading );
             continue;
         }
         auto bp_itt = std::find( covered.begin(), covered.end(), bp->opposite_part );
         if( bp_itt == covered.end() ) {
-            // if we didn't find the match just add the limb we were just looking at
+
             to_return.insert( bp->name_as_heading );
             continue;
         }
@@ -839,12 +853,12 @@ bool encumbrance_data::add_sub_location(
 {
     for( const sub_bodypart_id &layer_sbp : layer_penalty_details[static_cast<size_t>
             ( level )].covered_sub_parts ) {
-        // if we find a location return true since we should add penalty
+
         if( sbp == layer_sbp ) {
             return true;
         }
     }
-    // otherwise we should add it to the list
+
     layer_penalty_details[static_cast<size_t>( level )].covered_sub_parts.push_back( sbp );
 
     return false;
@@ -855,12 +869,12 @@ bool encumbrance_data::add_sub_location(
 {
     for( const sub_bodypart_id &layer_sbp : layer_penalty_details[static_cast<size_t>
             ( level )].covered_sub_parts ) {
-        // if we find a location return true since we should add penalty
+
         if( sbp.id() == layer_sbp ) {
             return true;
         }
     }
-    // otherwise we should add it to the list
+
     layer_penalty_details[static_cast<size_t>( level )].covered_sub_parts.push_back( sbp.id() );
 
     return false;
@@ -868,22 +882,22 @@ bool encumbrance_data::add_sub_location(
 
 std::string body_part_name( const bodypart_id &bp, int number )
 {
-    // See comments in `body_part_type::load` about why these two strings are
-    // not a single translation object with plural enabled.
+
+
     return number > 1 ? bp->name_multiple.translated() : bp->name.translated();
 }
 
 std::string body_part_name_accusative( const bodypart_id &bp, int number )
 {
-    // See comments in `body_part_type::load` about why these two strings are
-    // not a single translation object with plural enabled.
+
+
     return number > 1 ? bp->accusative_multiple.translated() : bp->accusative.translated();
 }
 
 std::string body_part_name_as_heading( const bodypart_id &bp, int number )
 {
-    // See comments in `body_part_type::load` about why these two strings are
-    // not a single translation object with plural enabled.
+
+
     return number > 1 ? bp->name_as_heading_multiple.translated() : bp->name_as_heading.translated();
 }
 
@@ -1057,14 +1071,14 @@ float bodypart::wound_adjusted_limb_value( const float val, const limb_score_id 
 float bodypart::encumb_adjusted_limb_value( const Creature &mon, const float val ) const
 {
     int enc = get_final_encumbrance( mon );
-    // Check if we're over our encumbrance limit, return 0 if so
+
     if( is_limb_overencumbered( mon ) ) {
         return 0;
     }
-    // Reduce encumbrance by the limb's encumbrance threshold, limiting to 0
+
     enc = std::max( 0, ( enc - get_encumbrance_threshold() ) );
-    // This is designed to get a 5% adjustment for an increase of 3 encumbrance, with further
-    // adjustments decreasing to avoid a multiplier of 0 (or infinity if reciprocal).
+
+
     return val * 19.0f / ( 19.0f + enc / 3.0f );
 }
 
@@ -1121,8 +1135,8 @@ void bodypart::add_or_worsen_wound( const wound &wd )
 {
     const std::vector<wound_progress> &wound_progression = wd.type->wound_progression;
 
-    // todo: move one_in( 2 ) to something more reasonable
-    // maybe checking hit_size of a limb against some new wound size property?
+
+
     if( has_wound( wd.type ) && !wound_progression.empty() && one_in( 2 ) ) {
         for( const wound_progress &wdp : wound_progression ) {
             if( x_in_y( wdp.chance, 100 ) ) {
@@ -1188,7 +1202,7 @@ bool bodypart::has_wound( const wound_type_id wd ) const
 
 wound *bodypart::get_wound( const wound_type_id wd_id )
 {
-    // picks the first one; maybe not desired?
+
     auto it = std::find_if( wounds.begin(), wounds.end(), [wd_id]( wound wd ) {
         return wd.type == wd_id;
     } );
@@ -1235,7 +1249,7 @@ void bodypart::update_wounds( const Character &who, time_duration time_passed )
 
         switch( ret ) {
             case wound_update_ret::ADVANCE:
-                // todo: carry over the time difference into a new wound, when time_passed will vary
+
                 who.add_msg_if_player( m_bad, it->type->get_progress_timer_message() );
                 new_wounds.emplace_back( it->wound_progress_timer.value().first );
                 it = wounds.erase( it );

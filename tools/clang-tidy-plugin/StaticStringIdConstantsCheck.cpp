@@ -56,7 +56,7 @@ static std::string GetPrefixFor( const CXXRecordDecl *Type, StaticStringIdConsta
     Policy.adjustForCPlusPlus();
     std::string TypeName = ArgType.getAsString( Policy );
 
-    //TODO: These want updating
+
     static const std::unordered_map<std::string, std::string> HardcodedPrefixes = {
         { "activity_type", "" },
         { "add_type", "addiction_" },
@@ -113,7 +113,7 @@ static std::string GetCanonicalName( const CXXRecordDecl *Type, const StringRef 
         Result.erase( Result.begin(), Result.begin() + anon_prefix.size() );
     }
 
-    // Remove double underscores since they are reserved identifiers
+
     while( true ) {
         size_t double_underscores = Result.find( "__" );
         if( double_underscores == std::string::npos ) {
@@ -149,7 +149,7 @@ void StaticStringIdConstantsCheck::CheckConstructor( const MatchFinder::MatchRes
 
     const SourceManager &SM = *Result.SourceManager;
 
-    // Ignore cases in header files for now
+
     if( !SM.isInMainFile( ConstructorCall->getBeginLoc() ) ) {
         return;
     }
@@ -166,8 +166,8 @@ void StaticStringIdConstantsCheck::CheckConstructor( const MatchFinder::MatchRes
         bool PreviousDeclIsExtern =
             PreviousDecl ? PreviousDecl->getStorageClass() == SC_Extern : false;
 
-        // This is already a global-scope declaration.  Verify that it's const
-        // and static.
+
+
         if( !VarDeclParent->getType().isConstQualified() ) {
             diag(
                 ConstructorCall->getBeginLoc(),
@@ -206,8 +206,8 @@ void StaticStringIdConstantsCheck::CheckConstructor( const MatchFinder::MatchRes
         return;
     }
 
-    // At this point we are looking at a construction call which is not a
-    // VarDecl at translation unit scope
+
+
 
     unsigned offset = SM.getFileOffset( ConstructorCall->getBeginLoc() );
     if( !CanonicalName.empty() && promotable_set_.insert( offset ).second ) {
@@ -247,13 +247,13 @@ static CompareDecls compare_decls;
 void StaticStringIdConstantsCheck::onEndOfTranslationUnit()
 {
     if( any_wrong_names_ ) {
-        // Can't safely perform these checks if anything else was corrected
+
         return;
     }
 
-    // In certain corner cases the AST can visit the declarations in a
-    // different order than they appear in the source file.  Thus, we need to
-    // sort them by source file order before doing any further analysis.
+
+
+
     auto compare_text_positions = []( const FoundDecl & l, const FoundDecl & r ) {
         return l.text.data() < r.text.data();
     };
@@ -277,8 +277,8 @@ void StaticStringIdConstantsCheck::onEndOfTranslationUnit()
         return compare_decls( r, l );
     };
 
-    // Check first that all the decls in the contiguous chunk are in sorted
-    // order
+
+
 
     auto out_of_order_it = std::adjacent_find( begin, first_after_gap, out_of_order );
     if( out_of_order_it != first_after_gap ) {
@@ -310,8 +310,8 @@ void StaticStringIdConstantsCheck::onEndOfTranslationUnit()
         return;
     }
 
-    // Now we're in the case where the initial segment of declarations is
-    // sorted, and we need to add any later ones in amongst them.
+
+
     if( first_after_gap != found_decls_.end() ) {
         std::unordered_map<ptrdiff_t, std::vector<const FoundDecl *>> to_insert;
         std::vector<FixItHint> fixits;
@@ -376,22 +376,22 @@ void StaticStringIdConstantsCheck::onEndOfTranslationUnit()
         return;
     }
 
-    // If we reached here then we know that all the static declarations are in
-    // a single group and are sorted properly.  So it's safe to start promoting
-    // temporaries to statics
+
+
+
     std::unordered_map<ptrdiff_t, std::vector<const PromotableCall *>> to_insert;
     for( const PromotableCall &prom : promotable_ ) {
         if( prom.decl ) {
-            // Doing this automatically for local variable declarations is
-            // hard, so don't try; just report a warning.
+
+
             if( prom.decl->getType().isConstQualified() ) {
                 diag( prom.construction->getBeginLoc(),
                       "Local const string_id instances with fixed content should be promoted to a "
                       "static instance at global scope." );
             }
         } else if( found_decls_.empty() ) {
-            // If no existing decls then we can't know where to put them, so
-            // just report a warning.
+
+
             diag(
                 prom.construction->getBeginLoc(),
                 "Temporary string_id instances with fixed content should be promoted to a static "
@@ -438,9 +438,9 @@ void StaticStringIdConstantsCheck::onEndOfTranslationUnit()
             last_canonical_name = last_decl->getName();
         }
         if( last_type == calls.front()->construction->getType() ) {
-            // When the type is the same as the one we're inserting after we
-            // whouls switch to inserting at the end of the previous rather
-            // than the beginning of the next
+
+
+
             insert_at = found_decls_[insert_at_pos - 1].range.getEnd();
             inserting_at_end = true;
         }
@@ -502,7 +502,7 @@ static void CheckDeclRef( StaticStringIdConstantsCheck &Check,
 
     const SourceManager &SM = *Result.SourceManager;
 
-    // Ignore cases in header files for now
+
     if( !SM.isInMainFile( VarDeclParent->getBeginLoc() ) ) {
         return;
     }
@@ -527,4 +527,4 @@ void StaticStringIdConstantsCheck::check( const MatchFinder::MatchResult &Result
     CheckDeclRef( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

@@ -20,7 +20,7 @@
 namespace cata::event_detail
 {
 template <event_type Type> struct event_spec;
-}  // namespace cata::event_detail
+}
 
 event_subscriber::~event_subscriber()
 {
@@ -78,8 +78,8 @@ void event_bus::unsubscribe( event_subscriber *s )
 
 void event_bus::send( const cata::event &e ) const
 {
-    // don't accept malformed events (ex: wrong number of arguments)
-    // from event::make_dyn()
+
+
     if( e.type() == event_type::num_event_types ) {
         debugmsg( "Null event sent to bus.  REJECTED!" );
         return;
@@ -143,7 +143,7 @@ cata::event _make_dyn( std::vector<std::string> &args )
         debugmsg(
             R"(Wrong number of arguments passed to event type "%s".  Expected %d, got %d)",
             io::enum_to_string( Type ), Spec::fields.size(), args.size() );
-        return {}; // event_bus::send() can reject a null event
+        return {};
     }
 
     return make_dyn_helper <
@@ -162,7 +162,7 @@ using make_dyn_ptr_t = cata::event( * )( std::vector<std::string> & );
 
 template<size_t... I>
 constexpr make_dyn_ptr_t _make_dyn_impl_2( event_type type,
-        std::index_sequence<I...>  /* IS */ )
+        std::index_sequence<I...> )
 {
     constexpr size_t num_types = static_cast<size_t>( event_type::num_event_types );
     constexpr std::array<make_dyn_ptr_t, num_types> _make_dyn_ptrs = {{
@@ -171,11 +171,10 @@ constexpr make_dyn_ptr_t _make_dyn_impl_2( event_type type,
     };
     return _make_dyn_ptrs[static_cast<size_t>( type )];
 }
-} // namespace
+}
 
 cata::event cata::event::make_dyn( event_type type, std::vector<std::string> &args )
 {
     constexpr size_t num_types = static_cast<size_t>( event_type::num_event_types );
     return _make_dyn_impl_2( type, std::make_index_sequence<num_types> {} )( args );
 }
-

@@ -35,9 +35,9 @@ static std::array<std::array<float, 12>, 2> expected_weights_max = { {
         { { 3600, 1004.75, 99.77, 99.77, 1032.63, 1032.63, 237.74, 237.74, 820.24, 820.24, 79.62, 79.62 } }
     }
 };
-// Torso   head   eyes   mouth   arm   arm   hand   hand   leg   leg   foot   foot
-//   36     4U    0.5U   0.5U    13    13    1.5   1.5     13L   13L   2L     2L
-//   1      1.2   1.15   1.15   0.95  0.95    1.1   1.1    0.9   0.9   0.8    0.8
+
+
+
 
 static void calculate_bodypart_distribution( const bool can_attack_high,
         const int hit_roll, const std::array<float, 12> &expected )

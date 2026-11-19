@@ -41,13 +41,13 @@ static std::ostream &operator<<( std::ostream &s, const std::vector<trait_id> &v
 
 static std::vector<trait_id> next_subset( const std::vector<trait_id> &set )
 {
-    // Doing it this way conveniently returns a vector containing solely set[foo] before
-    // it returns any other vectors with set[foo] in it
+
+
     static unsigned bitset = 0;
     std::vector<trait_id> ret;
 
     ++bitset;
-    // Check each bit position for a match
+
     for( size_t idx = 0; idx < set.size(); idx++ ) {
         if( bitset & ( 1 << idx ) ) {
             ret.push_back( set[idx] );
@@ -60,7 +60,7 @@ static bool try_set_traits( const std::vector<trait_id> &traits )
 {
     avatar &player_character = get_avatar();
     player_character.clear_mutations();
-    player_character.add_traits(); // mandatory prof/scen traits
+    player_character.add_traits();
     std::vector<trait_id> oked_traits;
     for( const trait_id &tr : traits ) {
         if( player_character.has_conflicting_trait( tr ) ||
@@ -93,7 +93,7 @@ struct failure {
     std::string reason;
 };
 
-} // namespace
+}
 
 namespace std
 {
@@ -103,39 +103,39 @@ struct less<failure> {
         return lhs.prof < rhs.prof;
     }
 };
-} // namespace std
+}
 
-// TODO: According to profiling (interrupt, backtrace, wait a few seconds, repeat) with a sample
-// size of 20, 70% of the time is due to the call to Character::set_mutation in try_set_traits.
-// When the mutation stuff isn't commented out, the test takes 110 minutes (not a typo)!
 
-/**
- * Disabled temporarily because 3169 profession combinations do not work and need to be fixed in json
- */
+
+
+
+
+
+
 TEST_CASE( "starting_items", "[slow]" )
 {
-    // Every starting trait that interferes with food/clothing
+
     const std::vector<trait_id> mutations = {
         trait_ALBINO,
         trait_ANTIFRUIT,
         trait_ANTIJUNK,
         trait_ANTIWHEAT,
-        //trait_id( "ARM_TENTACLES" ),
-        //trait_id( "BEAK" ),
-        //trait_id( "CARNIVORE" ),
-        //trait_id( "HERBIVORE" ),
-        //trait_id( "HOOVES" ),
+
+
+
+
+
         trait_LACTOSE,
-        //trait_id( "LEG_TENTACLES" ),
+
         trait_MEATARIAN,
         trait_ASTHMA,
-        //trait_id( "RAP_TALONS" ),
-        //trait_id( "TAIL_FLUFFY" ),
-        //trait_id( "TAIL_LONG" ),
+
+
+
         trait_VEGETARIAN,
         trait_WOOLALLERGY
     };
-    // Prof/scen combinations that need to be checked.
+
     std::vector<std::pair<const scenario *, std::vector<string_id<profession>>>> scen_prof_combos;
     scen_prof_combos.emplace_back( scenario::generic(), std::vector<string_id<profession>> {} );
     for( const auto &id : scenario::generic()->permitted_professions() ) {
@@ -156,7 +156,7 @@ TEST_CASE( "starting_items", "[slow]" )
                 CAPTURE( prof );
                 player_character.prof = &prof.obj();
                 if( !try_set_traits( traits ) ) {
-                    continue; // Trait conflict: this prof/scen/trait combo is impossible to attain
+                    continue;
                 }
                 for( int i = 0; i < 2; i++ ) {
                     player_character.clear_worn();
@@ -188,9 +188,9 @@ TEST_CASE( "starting_items", "[slow]" )
                     }
                     CAPTURE( player_character.prof->ident().c_str() );
                     CHECK( num_items_pre_migration == num_items_post_migration );
-                } // all genders
-            } // all profs
-        } // all scens
+                }
+            }
+        }
     }
     std::stringstream failure_messages;
     for( const failure &f : failures ) {

@@ -24,16 +24,16 @@ static const achievement_id achievement_achievement_arcade_mode( "achievement_ar
 namespace
 {
 generic_factory<scenario> all_scenarios( "scenario" );
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const scenario &string_id<scenario>::obj() const
 {
     return all_scenarios.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<scenario>::is_valid() const
 {
@@ -58,17 +58,17 @@ void scenario::load_scenario( const JsonObject &jo, const std::string &src )
 
 void scenario::load( const JsonObject &jo, std::string_view )
 {
-    // TODO: pretty much the same as in profession::load, but different contexts for pgettext.
-    // TODO: maybe combine somehow?
+
+
     if( !was_loaded || jo.has_string( "name" ) ) {
-        // These may differ depending on the language settings!
+
         const std::string name = jo.get_string( "name" );
         _name_female = to_translation( "scenario_female", name );
         _name_male = to_translation( "scenario_male", name );
     }
 
     if( !was_loaded || jo.has_string( "description" ) ) {
-        // These also may differ depending on the language settings!
+
         std::string desc;
         mandatory( jo, false, "description", desc, text_style_check_reader() );
         _description_male = to_translation( "scen_desc_male", desc );
@@ -76,7 +76,7 @@ void scenario::load( const JsonObject &jo, std::string_view )
     }
 
     if( !was_loaded || jo.has_string( "start_name" ) ) {
-        // Specifying translation context here and above to avoid adding unnecessary json code for every scenario
+
         // NOLINTNEXTLINE(cata-json-translation-input)
         _start_name = to_translation( "start_name", jo.get_string( "start_name" ) );
     }
@@ -120,7 +120,7 @@ void scenario::load( const JsonObject &jo, std::string_view )
     if( !was_loaded ) {
 
         int _start_of_cataclysm_hour = 0;
-        // The cataclysm started 5 days before game start
+
         int _start_of_cataclysm_day = ( 1 + get_option<int>( "SEASON_LENGTH" ) / 3 * 2 ) - 5;
         season_type _start_of_cataclysm_season = SPRING;
         int _start_of_cataclysm_year = 1;
@@ -184,18 +184,18 @@ const scenario *scenario::generic()
     if( find_if( all.begin(), all.end(), []( const scenario * s ) {
     return s->ident() == generic_scenario_id;
     } ) != all.end() ) {
-        // if the default scenario exists return it
+
         return &generic_scenario_id.obj();
     }
 
-    // if generic doesn't exist just return to the first scenario
+
     return *all.begin();
 
 }
 
-// Strategy: a third of the time, return the generic scenario.  Otherwise, return a scenario,
-// weighting 0 cost scenario more likely--the weight of a scenario with cost n is 2/(|n|+2),
-// e.g., cost 1 is 2/3rds as likely, cost -2 is 1/2 as likely.
+
+
+
 const scenario *scenario::weighted_random()
 {
     if( one_in( 3 ) ) {
@@ -209,7 +209,7 @@ const scenario *scenario::weighted_random()
         if( x_in_y( 2, std::abs( scen.point_cost() ) + 2 ) ) {
             return &scen;
         }
-        // else reroll in the while loop.
+
     }
 }
 
@@ -278,7 +278,7 @@ void scenario::check() const
         if( professions.empty() ) {
             debugmsg( "Scenario %s: Use an empty whitelist to whitelist everything.", id.c_str() );
         } else {
-            permitted_professions(); // Debug msg if every profession is blacklisted
+            permitted_professions();
         }
     }
 
@@ -511,9 +511,9 @@ bool scenario::scenario_traits_conflict_with_profession_traits( const profession
         }
     }
 
-    //  check if:
-    //  locked traits for scenario prevent taking locked traits for professions
-    //  locked traits for professions prevent taking locked traits for scenario
+
+
+
     for( const trait_id &st : get_locked_traits() ) {
         for( trait_and_var &pt : p.get_locked_traits() ) {
             if( are_conflicting_traits( st, pt.trait ) || are_conflicting_traits( pt.trait, st ) ) {
@@ -531,8 +531,8 @@ bool scenario::has_hard_requirement() const
 
 const profession *scenario::weighted_random_profession( bool is_npc ) const
 {
-    // Strategy: 1/3 of the time, return the generic profession (if it's permitted).
-    // Otherwise, the weight of each permitted profession is 2 / ( |point cost| + 2 )
+
+
     const auto choices = permitted_professions( is_npc );
     if( one_in( 3 ) && choices.front() == profession::generic()->ident() ) {
         return profession::generic();
@@ -544,7 +544,7 @@ const profession *scenario::weighted_random_profession( bool is_npc ) const
             return &candidate.obj();
         }
     }
-    return profession::generic(); // Suppress warnings
+    return profession::generic();
 }
 
 std::string scenario::prof_count_str() const
@@ -592,7 +592,7 @@ int scenario::get_distance_initial_visibility() const
 void scenario::normalize_calendar() const
 {
     scenario *hack = const_cast<scenario *>( this );
-    // We don't currently allow to start game before cataclysm
+
     if( hack->_default_start_of_game < hack->_default_start_of_cataclysm ) {
         hack->_default_start_of_game = hack->_default_start_of_cataclysm;
     }
@@ -683,7 +683,7 @@ ret_val<void> scenario::can_afford( const scenario &current_scenario, const int 
 ret_val<void> scenario::can_pick() const
 {
     const bool meta_progression = get_option<bool>( "META_PROGRESS" );
-    // if meta progression is disabled then skip this
+
     if( get_past_achievements().is_completed( achievement_achievement_arcade_mode ) ||
         ( !meta_progression && !has_hard_requirement() ) ) {
         return ret_val<void>::make_success();
@@ -709,7 +709,7 @@ ret_val<void> scenario::can_pick() const
 bool scenario_sorter::operator()( const scenario *a, const scenario *b ) const
 {
     if( cities_enabled ) {
-        // The generic ("Unemployed") profession should be listed first.
+
         const scenario *gen = scenario::generic();
         if( b == gen ) {
             return false;
@@ -760,4 +760,3 @@ const std::vector<std::pair<mongroup_id, float>> &scenario::surround_groups() co
 {
     return _surround_groups;
 }
-// vim:ts=4:sw=4:et:tw=0:fdm=marker:

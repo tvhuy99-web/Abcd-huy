@@ -81,9 +81,9 @@ namespace
 struct all_stats {
     statistics<int> calories;
 };
-} // namespace
+}
 
-// given a list of components, adds all the calories together
+
 static int comp_calories( const std::vector<item_comp> &components )
 {
     int calories = 0;
@@ -99,7 +99,7 @@ static int comp_calories( const std::vector<item_comp> &components )
     return calories;
 }
 
-// puts one permutation of item components into a vector
+
 static std::vector<item_comp> item_comp_vector_create(
     const std::vector<std::vector<item_comp>> &vv, const std::vector<int> &ndx )
 {
@@ -119,16 +119,16 @@ static all_stats recipe_permutations(
     int total_mul = 1;
     int sz = vv.size();
 
-    // Collect multipliers and sizes
+
     for( const std::vector<item_comp> &iv : vv ) {
         muls.push_back( total_mul );
         szs.push_back( iv.size() );
         total_mul *= iv.size();
     }
 
-    // total_mul is number of [ v.pick(1) : vv] there are
-    // iterate over each
-    // container to hold the indices:
+
+
+
     std::vector<int> ndx;
     ndx.resize( sz );
     all_stats mystats;
@@ -138,7 +138,7 @@ static all_stats recipe_permutations(
         }
 
         const std::vector<item_comp> permut( item_comp_vector_create( vv, ndx ) );
-        // Accumulate the stats.
+
         mystats.calories.add( comp_calories( permut ) - byproduct_calories );
     }
     return mystats;
@@ -168,7 +168,7 @@ static bool has_mutagen_vit( const islot_comestible &comest )
     return false;
 }
 
-// Test that every comestible heathy is <=0 and >=-1
+
 TEST_CASE( "comestible_health_bounds", "[comestible]" )
 {
     for( const itype *it : item_controller->all() ) {
@@ -209,35 +209,35 @@ static int get_default_calories_recursive( item &it )
 
 TEST_CASE( "recipe_permutations", "[recipe]" )
 {
-    // Are these tests failing? Here's how to fix that:
-    // If the average is over the upper bound, you need to increase the calories for the item
-    // that is causing the test to fail (or decrease the total calories of the ingredients)
-    // If the average is under the lower bound, you need to decrease the calories for the item
-    // that is causing the test to fail (or increase the total calories of the ingredients)
-    // If it doesn't make sense for your component and resultant calories to match, you probably
-    // want to add the NUTRIENT_OVERRIDE flag to the resultant item.
+
+
+
+
+
+
+
     for( const auto &recipe_pair : recipe_dict ) {
-        // the resulting item
+
         const recipe &recipe_obj = recipe_pair.first.obj();
         item temp( recipe_obj.result() );
         const bool is_food = temp.is_food();
         const bool should_make_sense = temp.made_of_any_food_components();
         const bool has_override = temp.has_flag( json_flag_NUTRIENT_OVERRIDE );
         if( is_food && should_make_sense && !has_override ) {
-            // Collection of kcal values of all ingredient permutations
+
             all_stats mystats = recipe_permutations( recipe_obj.simple_requirements().get_components(),
                                 byproduct_calories( recipe_obj ) );
             if( mystats.calories.n() < 2 ) {
                 continue;
             }
 
-            // The calories of the result
+
             int default_calories = 0;
             for( item &it : recipe_obj.create_results() ) {
                 default_calories += get_default_calories_recursive( it );
             }
 
-            // Make the range of acceptable average calories of permutations, using result's calories
+
             const float lower_bound = std::min( default_calories - mystats.calories.stddev() * 2,
                                                 default_calories * 0.75 );
             const float upper_bound = std::max( default_calories + mystats.calories.stddev() * 2,
@@ -259,8 +259,8 @@ TEST_CASE( "recipe_permutations", "[recipe]" )
 
 TEST_CASE( "cooked_veggies_get_correct_calorie_prediction", "[recipe]" )
 {
-    // This test verifies that predicted calorie ranges properly take into
-    // account the "RAW"/"COOKED" flags.
+
+
     const item veggy_wild_cooked( itype_veggy_wild_cooked );
 
     const Character &u = get_player_character();
@@ -274,26 +274,26 @@ TEST_CASE( "cooked_veggies_get_correct_calorie_prediction", "[recipe]" )
     CHECK( default_nutrition.kcal() == predicted_nutrition.second.kcal() );
 }
 
-// The Character::compute_effective_food_volume_ratio function returns a floating-point ratio
-// used as a multiplier for the food volume when it is eaten, based on the energy density
-// (kcal/gram) of the food, as follows:
-//
-// - low-energy food     (0.0 < kcal/gram < 1.0)  returns 1.0
-// - medium-energy food  (1.0 < kcal/gram < 3.0)  returns (kcal/gram)
-// - high-energy food    (3.0 < kcal/gram)        returns sqrt( 3 * kcal/gram )
-//
-// The Character::compute_calories_per_effective_volume function returns a dimensionless integer
-// representing the "satiety" of the food, with higher numbers being more calorie-dense, and lower
-// numbers being less so. Water in food can be digested more quickly, but for a character with a
-// bigger stomach, the difference will be smaller.
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "effective_food_volume_and_satiety", "[character][food][satiety]" )
 {
     Character &u = get_player_character();
     u.unset_all_mutations();
     double expect_ratio;
 
-    // Apple: 95 kcal / 200 g (1 serving)
+
     const item apple( itype_test_apple );
     const nutrients apple_nutr = u.compute_effective_nutrients( apple );
     REQUIRE( apple.count() == 1 );
@@ -301,12 +301,12 @@ TEST_CASE( "effective_food_volume_and_satiety", "[character][food][satiety]" )
     REQUIRE( apple.volume() == 250_ml );
     REQUIRE( apple_nutr.kcal() == 95 );
     REQUIRE( apple.get_comestible()->quench == 3 );
-    // If kcal per gram < 1.0, return 1.0
+
     CHECK( u.compute_effective_food_volume_ratio( apple ) == Approx( 1.0f ).margin( 0.01f ) );
     CHECK( u.compute_calories_per_effective_volume( apple ) == 502 );
     CHECK( satiety_bar( 502 ) == "<color_c_yellow>||\\</color>.." );
 
-    // Egg: 80 kcal / 40 g (1 serving)
+
     const item egg( itype_test_egg );
     const nutrients egg_nutr = u.compute_effective_nutrients( egg );
     REQUIRE( egg.count() == 1 );
@@ -314,31 +314,31 @@ TEST_CASE( "effective_food_volume_and_satiety", "[character][food][satiety]" )
     REQUIRE( egg.volume() == 50_ml );
     REQUIRE( egg_nutr.kcal() == 80 );
     REQUIRE( egg.get_comestible()->quench == 4 );
-    // If kcal per gram > 1.0 but less than 3.0, return ( kcal / gram )
+
     CHECK( u.compute_effective_food_volume_ratio( egg ) == Approx( 2.0f ).margin( 0.01f ) );
     CHECK( u.compute_calories_per_effective_volume( egg ) == 1777 );
     CHECK( satiety_bar( 1777 ) == "<color_c_green>||||\\</color>" );
 
-    // Pine nuts: 202 kcal / 30 g (4 servings)
+
     const item nuts( itype_test_pine_nuts );
     const nutrients nuts_nutr = u.compute_effective_nutrients( nuts );
-    // If food count > 1, total weight is divided by count before computing kcal/gram
+
     REQUIRE( nuts.count() == 4 );
     REQUIRE( nuts.weight() == 120_gram );
     REQUIRE( nuts.volume() == 250_ml );
     REQUIRE( nuts_nutr.kcal() == 202 );
     REQUIRE( nuts.get_comestible()->quench == -2 );
-    // If kcal per gram > 3.0, return sqrt( 3 * kcal / gram )
+
     expect_ratio = std::sqrt( 3.0f * 202 / 30 );
     CHECK( u.compute_effective_food_volume_ratio( nuts ) == Approx( expect_ratio ).margin( 0.01f ) );
     CHECK( u.compute_calories_per_effective_volume( nuts ) == 1141 );
     CHECK( satiety_bar( 1507 ) == "<color_c_light_green>||||</color>." );
     REQUIRE( u.mutate_towards( trait_GOURMAND ) );
-    // stomach size affects food with water...
+
     CHECK( u.compute_effective_food_volume_ratio( egg ) == Approx( 2.0f ).margin( 0.01f ) );
     CHECK( u.compute_calories_per_effective_volume( egg ) == 1568 );
     CHECK( satiety_bar( 1568 ) == "<color_c_green>||||</color>." );
-    // but not food without water.
+
     CHECK( u.compute_effective_food_volume_ratio( nuts ) == Approx( expect_ratio ).margin( 0.01f ) );
     CHECK( u.compute_calories_per_effective_volume( nuts ) == 1160 );
     CHECK( satiety_bar( 1507 ) == "<color_c_light_green>||||</color>." );
@@ -347,11 +347,11 @@ TEST_CASE( "effective_food_volume_and_satiety", "[character][food][satiety]" )
 TEST_CASE( "calorie_density_sanity_check", "[item]" )
 {
     Character &u = get_player_character();
-    const double maximum_ratio = 5.20140; // Corresponds to ~9.02cal/g based off of tallow
+    const double maximum_ratio = 5.20140;
 
     std::vector<const itype *> all_items = item_controller->all();
 
-    // only allow so many failures before stopping
+
     int number_of_failures = 0;
 
     for( const itype *type : all_items ) {
@@ -373,7 +373,7 @@ TEST_CASE( "calorie_density_sanity_check", "[item]" )
 TEST_CASE( "calorie_density_blacklist_is_pruned", "[item]" )
 {
     Character &u = get_player_character();
-    const double maximum_ratio = 5.20140; // Corresponds to ~9.02cal/g based off of tallow
+    const double maximum_ratio = 5.20140;
     for( const itype_id &bad : test_data::known_bad_calorie ) {
         if( !bad.is_valid() ) {
             continue;
@@ -387,9 +387,9 @@ TEST_CASE( "calorie_density_blacklist_is_pruned", "[item]" )
     }
 }
 
-// satiety_bar returns a colorized string indicating a satiety level, similar to hit point bars
-// where "....." is minimum (~ 0) and "|||||" is maximum (~ 1500)
-//
+
+
+
 TEST_CASE( "food_satiety_bar", "[character][food][satiety]" )
 {
     // NOLINTNEXTLINE(cata-text-style): verbatim ellipses necessary for validation

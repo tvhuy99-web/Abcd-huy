@@ -49,16 +49,16 @@ inline void lru_cache<Key, Value>::insert( int limit, const Key &pos, const Valu
 {
     auto found = map.find( pos );
     if( found == map.end() ) {
-        // Need new entry in map.  Make the new list entry and point to it.
+
         ordered_list.emplace_back( pos, t );
         map.emplace( pos, std::prev( ordered_list.end() ) );
         trim( limit );
     } else {
-        // Splice existing entry to the back.  Does not invalidate the
-        // iterator, so no need to change the map.
+
+
         auto list_iterator = found->second;
         touch( list_iterator );
-        // Update the moved item
+
         list_iterator->second = t;
     }
 }
@@ -85,4 +85,4 @@ inline void lru_cache<Key, Value>::clear()
     ordered_list.clear();
 }
 
-#endif // CATA_SRC_LRU_CACHE_H
+#endif

@@ -171,28 +171,28 @@ void avatar::control_npc( npc &np, const bool debug )
     };
     overmap_buffer.foreach_npc( update_npc );
     mission().update_world_missions_character( get_avatar().getID(), new_character );
-    // move avatar character data into shadow npc
+
     swap_character( get_shadow_npc() );
-    // swap target npc with shadow npc
+
     std::swap( get_shadow_npc(), np );
-    // move shadow npc character data into avatar
+
     swap_character( get_shadow_npc() );
-    // the avatar character is no longer a follower NPC
+
     g->remove_npc_follower( getID() );
-    // the previous avatar character is now a follower
+
     g->add_npc_follower( np.getID() );
     np.set_fac( faction_your_followers );
-    // perception and mutations may have changed, so reset light level caches
+
     g->reset_light_level();
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         get_map().set_lightmap_cache_dirty( z );
     }
-    // center the map on the new avatar character
+
     const bool z_level_changed = g->vertical_shift( posz() );
     g->update_map( *this, z_level_changed );
     character_mood_face( true );
 
-    get_event_bus().send<event_type::game_avatar_new>( /*is_new_game=*/false, debug, getID(), name,
+    get_event_bus().send<event_type::game_avatar_new>( false, debug, getID(), name,
             custom_profession );
 }
 
@@ -226,7 +226,7 @@ void avatar::longpull( const std::string &name )
     target_handler::trajectory traj = target_handler::mode_throw( *this, wtmp, false );
     g->reenter_fullscreen();
     if( traj.empty() ) {
-        return; // cancel
+        return;
     }
 
     Creature::longpull( name, traj.back() );
@@ -349,7 +349,7 @@ tripoint_abs_omt avatar::get_active_mission_target() const
     if( active_mission != nullptr ) {
         return active_mission->get_target();
     } else {
-        // It's tripoint_abs_invalid if not active.
+
         return active_point_of_interest.pos;
     }
 }
@@ -369,7 +369,7 @@ void avatar::set_active_mission( mission &cur_mission )
 void avatar::set_active_point_of_interest( const point_of_interest &active_point_of_interest )
 {
     for( const point_of_interest &iter : points_of_interest ) {
-        // It's really sufficient to only check the position as used...
+
         if( iter.pos == active_point_of_interest.pos &&
             iter.text == active_point_of_interest.text ) {
             this->active_point_of_interest = active_point_of_interest;
@@ -506,15 +506,15 @@ bool avatar::read( item_location &book, item_location ereader )
     std::vector<std::string> fail_messages;
     const Character *reader = get_book_reader( *book, fail_messages );
     if( reader == nullptr ) {
-        // We can't read, and neither can our followers
+
         for( const std::string &reason : fail_messages ) {
             add_msg( m_bad, reason );
         }
         return false;
     }
 
-    // spells are handled in a different place
-    // src/iuse_actor.cpp -> learn_spell_actor::use
+
+
     if( book->get_use( "learn_spell" ) ) {
         if( has_flag( json_flag_CANNOT_READ_SPELLBOOKS ) ) {
             return false;
@@ -528,7 +528,7 @@ bool avatar::read( item_location &book, item_location ereader )
     add_msg_debug( debugmode::DF_ACT_READ, "avatar::read time_taken = %s",
                    to_string_writable( time_taken ) );
 
-    // If the player hasn't read this book before, skim it to get an idea of what's in it.
+
     if( !has_identified( book->typeId() ) ) {
         if( reader != this ) {
             add_msg( m_info, fail_messages[0] );
@@ -540,7 +540,7 @@ bool avatar::read( item_location &book, item_location ereader )
     }
 
     if( book->typeId() == itype_guidebook ) {
-        // special guidebook effect: print a misc. hint when read
+
         if( reader != this ) {
             add_msg( m_info, fail_messages[0] );
             dynamic_cast<const npc &>( *reader ).say( get_hint() );
@@ -556,18 +556,18 @@ bool avatar::read( item_location &book, item_location ereader )
     const skill_id &skill = type->skill;
     const std::string skill_name = skill ? skill.obj().name() : "";
 
-    // Find NPCs to join the study session:
+
     std::map<Character *, std::string> learners;
-    //reading only for fun
+
     std::map<Character *, std::string> fun_learners;
     std::map<Character *, std::string> nonlearners;
     for( Character *elem : get_crafting_helpers() ) {
         const book_mastery mastery = elem->get_book_mastery( *book );
         const bool morale_req = elem->fun_to_read( *book ) || elem->has_morale_to_read();
 
-        // Note that the reader cannot be a nonlearner
-        // since a reader should always have enough morale to read
-        // and at the very least be able to understand the book
+
+
+
 
         if( elem->is_deaf() && elem != reader ) {
             nonlearners.insert( { elem, _( " (deaf)" ) } );
@@ -597,11 +597,11 @@ bool avatar::read( item_location &book, item_location ereader )
     int learner_id = -1;
     const bool is_martialarts = book->type->use_methods.count( "MA_MANUAL" );
 
-    //only show the menu if there's useful information or multiple options
+
     if( ( skill || !nonlearners.empty() || !fun_learners.empty() ) && !is_martialarts ) {
         uilist menu;
 
-        // Some helpers to reduce repetition:
+
         auto length = []( const std::pair<Character *, std::string> &elem ) {
             return utf8_width( elem.first->disp_name() ) + utf8_width( elem.second );
         };
@@ -642,7 +642,7 @@ bool avatar::read( item_location &book, item_location ereader )
         menu.addentry( 2 + getID().get_value(), lvl < type->level, '1',
                        string_format( _( "Read until you gain a level | current level: %d" ), lvl ) );
 
-        // select until player gets level by default
+
         if( lvl < type->level ) {
             menu.selected = 1;
         }
@@ -697,7 +697,7 @@ bool avatar::read( item_location &book, item_location ereader )
             return false;
         } else if( menu.ret == 1 ) {
             continuous = false;
-        } else {    // menu.ret == 2
+        } else {
             continuous = true;
         }
     }
@@ -705,7 +705,7 @@ bool avatar::read( item_location &book, item_location ereader )
     add_msg( m_info, _( "Now reading %s, %s to stop early." ),
              book->type_name(), press_x( ACTION_PAUSE ) );
 
-    // Print some informational messages
+
     if( reader != this ) {
         add_msg( m_info, fail_messages[0] );
         add_msg( m_info, _( "%s reads aloud…" ), reader->disp_name() );
@@ -723,7 +723,7 @@ bool avatar::read( item_location &book, item_location ereader )
         add_msg( m_info, _( "%s study with you." ), them );
     }
 
-    // Don't include the reader as it would be too redundant.
+
     std::set<std::string> readers;
     for( const std::pair<Character *const, std::string> &elem : fun_learners ) {
         if( elem.first != reader ) {
@@ -754,7 +754,7 @@ bool avatar::read( item_location &book, item_location ereader )
                  complex_player->disp_name() );
     }
 
-    // push an identifier of martial art book to the action handling
+
     if( is_martialarts &&
         get_stamina() < get_stamina_max() / 10 )  {
         add_msg( m_info, _( "You are too exhausted to train martial arts." ) );
@@ -775,7 +775,7 @@ void avatar::grab( object_type grab_type_new, const tripoint_rel_ms &grab_point_
             if( const optional_vpart_position ovp = m.veh_at( pos_bub() + gpoint ) ) {
                 for( const tripoint_abs_ms &target : ovp->vehicle().get_points() ) {
                     if( erase ) {
-                        memorize_clear_decoration( target, /* prefix = */ "vp_" );
+                        memorize_clear_decoration( target, "vp_" );
                     }
                     m.memory_cache_dec_set_dirty( m.get_bub( target ), true );
                 }
@@ -787,15 +787,15 @@ void avatar::grab( object_type grab_type_new, const tripoint_rel_ms &grab_point_
             m.memory_cache_dec_set_dirty( pos_bub() + gpoint, true );
         }
     };
-    // Mark the area covered by the previous vehicle/furniture/etc for re-memorizing.
-    update_memory( grab_type, grab_point, /* erase = */ false );
+
+    update_memory( grab_type, grab_point, false );
 
     grab_type = grab_type_new;
     grab_point = grab_point_new;
 
-    // Clear the map memory for the area covered by the vehicle/furniture/etc to
-    // eliminate ghost vehicles/furnitures/etc.
-    update_memory( grab_type, grab_point, /* erase = */ true );
+
+
+    update_memory( grab_type, grab_point, true );
 
     path_settings->avoid_rough_terrain = grab_type != object_type::NONE;
 }
@@ -820,7 +820,7 @@ void avatar::identify( const item &item )
         return;
     }
 
-    const ::item &book = item; // alias
+    const ::item &book = item;
     cata_assert( !has_identified( item.typeId() ) );
     items_identified.insert( item.typeId() );
     cata_assert( has_identified( item.typeId() ) );
@@ -841,7 +841,7 @@ void avatar::identify( const item &item )
     if( reading->intel != 0 ) {
         add_msg( m_info, _( "Requires intelligence of %d to easily read." ), reading->intel );
     }
-    //It feels wrong to use a pointer to *this, but I can't find any other player pointers in this method.
+
     if( book_fun_for( book, *this ) != 0 ) {
         add_msg( m_info, _( "Reading this book affects your morale by %d." ), book_fun_for( book, *this ) );
     }
@@ -863,7 +863,7 @@ void avatar::identify( const item &item )
     std::vector<std::string> crafting_recipes;
     std::vector<std::string> practice_recipes;
     for( const islot_book::recipe_with_description_t &elem : reading->recipes ) {
-        // If the player knows it, they recognize it even if it's not clearly stated.
+
         if( elem.is_hidden() && !knows_recipe( elem.recipe ) ) {
             continue;
         }
@@ -903,10 +903,10 @@ void avatar::wake_up()
 {
     const bool was_asleep = has_effect( effect_sleep );
     if( was_asleep ) {
-        // alarm was set and player hasn't slept through the alarm.
+
         if( has_effect( effect_alarm_clock ) && !has_effect( effect_slept_through_alarm ) ) {
             add_msg( _( "It looks like you woke up before your alarm." ) );
-            // effects will be removed in Character::wake_up.
+
         } else if( has_effect( effect_slept_through_alarm ) ) {
             if( has_flag( json_flag_ALARMCLOCK ) ) {
                 add_msg( m_warning, _( "It looks like you've slept through your internal alarm…" ) );
@@ -948,12 +948,12 @@ const std::set<snippet_id> &avatar::get_snippets()
 void avatar::vomit()
 {
     if( stomach.contains() != 0_ml ) {
-        // Remove all joy from previously eaten food and apply the penalty
+
         rem_morale( morale_food_good );
         rem_morale( morale_food_hot );
-        // bears must suffer too
+
         rem_morale( morale_honey );
-        // 1.5 times longer
+
         add_morale( morale_vomited, -2 * units::to_milliliter( stomach.contains() / 50 ), -40, 90_minutes,
                     45_minutes, false );
 
@@ -1032,7 +1032,7 @@ void avatar::reset_stats()
 {
     const int current_stim = get_stim();
 
-    // Trait / mutation buffs
+
     if( has_trait( trait_THICK_SCALES ) ) {
         add_miss_reason( _( "Your thick scales get in the way." ), 2 );
     }
@@ -1076,10 +1076,10 @@ void avatar::reset_stats()
             remove_effect( type );
         }
     };
-    // Painkiller
+
     set_fake_effect_dur( effect_pkill, 1_turns * get_painkiller() );
 
-    // Pain
+
     if( get_perceived_pain() > 0 ) {
         const stat_mod ppen = get_pain_penalty();
         ppen_str = ppen.strength;
@@ -1096,14 +1096,14 @@ void avatar::reset_stats()
         }
     }
 
-    // Radiation
+
     set_fake_effect_dur( effect_irradiated, 1_turns * get_rad() );
-    // Morale
+
     const int morale = get_morale_level();
     set_fake_effect_dur( effect_happy, 1_turns * morale );
     set_fake_effect_dur( effect_sad, 1_turns * -morale );
 
-    // Stimulants
+
     set_fake_effect_dur( effect_stim, 1_turns * current_stim );
     set_fake_effect_dur( effect_depressants, 1_turns * -current_stim );
     if( has_trait( trait_STIMBOOST ) ) {
@@ -1111,7 +1111,7 @@ void avatar::reset_stats()
     } else {
         set_fake_effect_dur( effect_stim_overdose, 1_turns * ( current_stim - 30 ) );
     }
-    // Starvation
+
     const float bmi = get_bmi_fat();
     if( bmi < character_weight_category::normal ) {
         const stat_mod wpen = get_weight_penalty();
@@ -1121,9 +1121,9 @@ void avatar::reset_stats()
         mod_dex_bonus( -wpen.dexterity );
         mod_int_bonus( -wpen.intelligence );
     }
-    // Thirst
+
     if( get_thirst() >= 200 ) {
-        // We die at 1200
+
         const int dex_mod = -get_thirst() / 200;
         add_miss_reason( _( "You're weak from thirst." ), static_cast<unsigned>( -dex_mod ) );
         mod_str_bonus( -get_thirst() / 200 );
@@ -1137,21 +1137,21 @@ void avatar::reset_stats()
         remove_effect( effect_sleep_deprived );
     }
 
-    // Dodge-related effects
+
     mod_dodge_bonus( mabuff_dodge_bonus() );
-    // Whiskers don't work so well if they're covered
+
     if( has_trait( trait_WHISKERS ) && !natural_attack_restricted_on( bodypart_id( "mouth" ) ) ) {
         mod_dodge_bonus( 1 );
     }
     if( has_trait( trait_WHISKERS_RAT ) && !natural_attack_restricted_on( bodypart_id( "mouth" ) ) ) {
         mod_dodge_bonus( 2 );
     }
-    // depending on mounts size, attacks will hit the mount and use their dodge rating.
-    // if they hit the player, the player cannot dodge as effectively.
+
+
     if( is_mounted() ) {
         mod_dodge_bonus( -4 );
     }
-    // Spider hair is basically a full-body set of whiskers, once you get the brain for it
+
     if( has_trait( trait_CHITIN_FUR3 ) ) {
         static const std::array<bodypart_str_id, 5> parts {
             body_part_head, body_part_arm_r, body_part_arm_l,
@@ -1162,16 +1162,16 @@ void avatar::reset_stats()
                 mod_dodge_bonus( +1 );
             }
         }
-        // Torso handled separately, bigger bonus
+
         if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
             mod_dodge_bonus( 4 );
         }
     }
 
-    // Apply static martial arts buffs
+
     martial_arts_data->ma_static_effects( *this );
 
-    // Effects
+
     for( const auto &maps : *effects ) {
         for( const auto &i : maps.second ) {
             const effect &it = i.second;
@@ -1215,7 +1215,7 @@ bool avatar::is_obeying( const Character &p ) const
 bool avatar::cant_see( const tripoint_bub_ms &p ) const
 {
 
-    // calc based on recoil
+
     if( !last_target_pos.has_value() ) {
         return false;
     }
@@ -1238,7 +1238,7 @@ void avatar::rebuild_aim_cache() const
     map &here = get_map();
 
     aim_cache_dirty =
-        false; // Can trigger recursive death spiral if still set when calc_steadiness is called.
+        false;
 
     double pi = 2 * acos( 0.0 );
 
@@ -1248,21 +1248,21 @@ void avatar::rebuild_aim_cache() const
     float base_angle = atan2f( local_last_target.y() - pos.y(),
                                local_last_target.x() - pos.x() );
 
-    // move from -pi to pi, to 0 to 2pi for angles
+
     if( base_angle < 0 ) {
         base_angle = base_angle + 2 * pi;
     }
 
-    // todo: this is not the correct weapon when aiming with fake items
+
     item *weapon = get_wielded_item() ? &*get_wielded_item() : &null_item_reference();
-    // calc steadiness with player recoil (like they are taking a regular shot not careful etc.
+
     float range = 3.0f - 2.8f * calc_steadiness( *this, *weapon, local_last_target, recoil );
 
-    // pin between pi and negative pi
+
     float upper_bound = base_angle + range;
     float lower_bound = base_angle - range;
 
-    // cap each within 0 - 2pi
+
     if( upper_bound > 2 * pi ) {
         upper_bound = upper_bound - 2 * pi;
     }
@@ -1276,12 +1276,12 @@ void avatar::rebuild_aim_cache() const
 
             float current_angle = atan2f( smy - pos.y(), smx - pos.x() );
 
-            // move from -pi to pi, to 0 to 2pi for angles
+
             if( current_angle < 0 ) {
                 current_angle = current_angle + 2 * pi;
             }
 
-            // some basic angle inclusion math, but also everything with 15 is still seen
+
             if( rl_dist( tripoint_bub_ms( smx, smy, posz() ), pos ) < 15 ) {
                 aim_cache[smx][smy] = false;
             } else if( lower_bound > upper_bound ) {
@@ -1294,7 +1294,7 @@ void avatar::rebuild_aim_cache() const
         }
     }
 
-    // set cache as no longer dirty
+
 }
 
 void avatar::set_movement_mode( const move_mode_id &new_mode )
@@ -1311,7 +1311,7 @@ void avatar::set_movement_mode( const move_mode_id &new_mode )
             a11y::record_action_outcome( a11y::action_outcome_kind::stance_changed,
                                          new_mode->name() );
         }
-        // Enchantments based on move modes can stack inappropriately without a recalc here
+
         recalculate_enchantment_cache();
         recoil = MAX_RECOIL;
     } else {
@@ -1501,7 +1501,7 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt, int pre_obtain_
     umenu.query();
 
     int choice = umenu.ret;
-    // Use the relic
+
     if( choice == num_methods ) {
         return used->use_relic( *this, pt );
     }
@@ -1535,11 +1535,11 @@ bool avatar::invoke_item( item *used, const std::string &method )
 
 void avatar::update_cardio_acc()
 {
-    // This function should be called once every 24 hours,
-    // before the front of the calorie diary is reset for the next day.
 
-    // Cardio goal is 1000 times the ratio of kcals spent versus bmr,
-    // giving a default of 1000 for no extra activity.
+
+
+
+
     const int bmr = get_bmr();
     if( bmr == 0 ) {
         set_cardio_acc( clamp( get_cardio_acc(), get_cardio_acc_base(), get_cardio_acc_base() * 3 ) );
@@ -1549,8 +1549,8 @@ void avatar::update_cardio_acc()
 
     const int cardio_goal = ( last_24h_kcal * get_cardio_acc_base() ) / bmr;
 
-    // If cardio accumulator is below cardio goal, gain some cardio.
-    // Or, if cardio accumulator is above cardio goal, lose some cardio.
+
+
     const int cardio_accum = get_cardio_acc();
     int adjustment = 0;
     if( cardio_accum > cardio_goal ) {
@@ -1559,9 +1559,9 @@ void avatar::update_cardio_acc()
         adjustment = std::sqrt( cardio_goal - cardio_accum );
     }
 
-    // Set a large sane upper limit to cardio fitness. This could be done
-    // asymptotically instead of as a sharp cutoff, but the gradual growth
-    // rate of cardio_acc should accomplish that naturally.
+
+
+
     set_cardio_acc( clamp( cardio_accum + adjustment, get_cardio_acc_base(),
                            get_cardio_acc_base() * 3 ) );
 }
@@ -1703,7 +1703,7 @@ void avatar::daily_calories::read_activity( const JsonObject &data )
         }
         return;
     }
-    // Fallback to legacy format for backward compatibility
+
     JsonObject jo = data.get_object( "activity" );
     for( const std::pair<const std::string, float> &member : activity_levels_map ) {
         int times;
@@ -1733,12 +1733,12 @@ std::string avatar::total_daily_calories_string() const
 
     std::string ret = header_string;
 
-    // Start with today in the first row, day number from start of the Cataclysm
+
     int today = day_of_season<int>( calendar::turn ) + 1;
     int day_offset = 0;
     for( const daily_calories &day : calorie_diary ) {
-        // Yes, this is clunky.
-        // Perhaps it should be done in log_activity_level? But that's called a lot more often.
+
+
         int sleep_exercise = 0;
         int no_exercise = 0;
         int light_exercise = 0;
@@ -1774,14 +1774,14 @@ std::string avatar::total_daily_calories_string() const
                                               5 * active_exercise,
                                               5 * extra_exercise,
                                               day.gained, day.spent );
-        // Alternate gray and white text for row data
+
         if( day_offset % 2 == 0 ) {
             ret += colorize( row_data, c_white );
         } else {
             ret += colorize( row_data, c_light_gray );
         }
 
-        // Color-code each day's net calories
+
         std::string total_kcals = string_format( " %6d", day.total() );
         if( day.total() > 4000 ) {
             ret += colorize( total_kcals, c_light_cyan );
@@ -1824,7 +1824,7 @@ std::unique_ptr<talker> get_talker_for( avatar *me )
 
 void avatar::reassign_item_cache( item &it, char invlet, bool remove_old )
 {
-    if( it.invlet == invlet ) { // no change needed
+    if( it.invlet == invlet ) {
         return;
     }
     if( remove_old && it.invlet ) {
@@ -1897,7 +1897,7 @@ void avatar::add_pain_msg( int val, const bodypart_id &bp ) const
 
 bool avatar::wield_contents( item &container, item *internal_item, bool penalties, int base_cost )
 {
-    // if index not specified and container has multiple items then ask the player to choose one
+
     if( internal_item == nullptr ) {
         std::vector<std::string> opts;
         std::list<item *> container_contents = container.all_items_top();
@@ -1977,11 +1977,11 @@ char avatar::find_usable_cached_invlet( const itype_id &item_type )
 {
 
     for( char invlet : invlet_cache.invlets_for( item_type ) ) {
-        // Don't overwrite user assignments.
+
         if( assigned_invlet.count( invlet ) ) {
             continue;
         }
-        // Check if anything is using this invlet.
+
         if( invlet_to_item( invlet ).valid() ) {
             continue;
         }
@@ -1993,12 +1993,12 @@ char avatar::find_usable_cached_invlet( const itype_id &item_type )
 
 void avatar::update_cache_with_item( item &newit )
 {
-    // This function does two things:
-    // 1. It adds newit's invlet to the list of favorite letters for newit's item type.
-    // 2. It removes newit's invlet from the list of favorite letters for all other item types.
 
-    // no invlet item, just return.
-    // TODO: Should we instead remember that the invlet was cleared?
+
+
+
+
+
     if( newit.invlet == 0 ) {
         return;
     }
@@ -2020,19 +2020,19 @@ void avatar::add_invlet_to_new_item( item &newit )
 void avatar::update_invlet( item &newit, const item *ignore_invlet_collision_with )
 {
     if( newit.invlet ) {
-        // Avoid letters that have been manually assigned to other things.
+
         if( assigned_invlet.find( newit.invlet ) != assigned_invlet.end() ) {
             if( assigned_invlet[newit.invlet] != newit.typeId() ) {
                 newit.invlet = '\0';
             }
 
-            // Remove letters that are not in the favorites cache
+
         } else if( !invlet_cache.contains( newit.invlet, newit.typeId() ) ) {
             newit.invlet = '\0';
         }
     }
 
-    // Remove letters that have been assigned to other items in the inventory
+
     if( newit.invlet ) {
         char tmp_invlet = newit.invlet;
         newit.invlet = '\0';
@@ -2043,12 +2043,12 @@ void avatar::update_invlet( item &newit, const item *ignore_invlet_collision_wit
         }
     }
 
-    // Assign a cached letter to the item
+
     if( !newit.invlet ) {
         newit.invlet = find_usable_cached_invlet( newit.typeId() );
     }
 
-    // Give the item an invlet if it has none
+
     if( !newit.invlet ) {
         assign_empty_invlet( newit );
     }
@@ -2089,17 +2089,17 @@ void avatar::assign_empty_invlet( item &it, const bool force )
     }
     const invlets_bitset cur_inv = allocated_invlets();
     if( cur_inv.count() < inv_chars.size() ) {
-        // XXX YUCK I don't know how else to get the keybindings
-        // FIXME: Find a better way to get bound keys
+
+
         inventory_selector selector( *this );
 
         for( const char &inv_char : inv_chars ) {
             if( assigned_invlet.count( inv_char ) ) {
-                // don't overwrite assigned keys
+
                 continue;
             }
             if( selector.action_bound_to_key( inv_char ) != "ERROR" ) {
-                // don't auto-assign bound keys
+
                 continue;
             }
             if( !cur_inv[inv_char] ) {
@@ -2113,7 +2113,7 @@ void avatar::assign_empty_invlet( item &it, const bool force )
         return;
     }
     bool found = false;
-    // No free hotkey exist, re-use some of the existing ones
+
     visit_items(
     [&it, &found]( item_location node ) {
         if( node->invlet != 0 ) {

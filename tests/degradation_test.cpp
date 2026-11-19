@@ -104,7 +104,7 @@ TEST_CASE( "Damage_indicator_thresholds", "[item][damage_level]" )
 
 TEST_CASE( "only_degrade_items_with_defined_degradation", "[item][degradation]" )
 {
-    // can be removed once all items degrade
+
     item no_degradation_item( itype_tailors_kit );
     CHECK( no_degradation_item.degradation() == 0 );
     no_degradation_item.set_degradation( 1000 );
@@ -150,7 +150,7 @@ TEST_CASE( "Degradation_on_spawned_items", "[item][degradation]" )
         float doub = get_avg_degradation( itype_test_baseball_x2_degradation, max_iters, 3000 );
         CHECK( norm == Approx( 1500.0 ).epsilon( 0.1 ) );
         CHECK( half == Approx( 750.0 ).epsilon( 0.1 ) );
-        // not 3000.0 as expected - as degradation calculation gets clamped to max 4000
+
         CHECK( doub == Approx( 2750.0 ).epsilon( 0.1 ) );
     }
 }
@@ -252,32 +252,32 @@ static item_location setup_tailorkit( Character &u )
 
 static void setup_repair( item &fix, player_activity &act, Character &u )
 {
-    // Setup character
+
     clear_character( u, true );
     u.set_skill_level( skill_tailor, 10 );
     u.wield( fix );
     REQUIRE( u.get_wielded_item()->typeId() == fix.typeId() );
 
-    // Setup tool
+
     item_location tailorloc = setup_tailorkit( u );
 
-    // Setup materials
+
     item leather( itype_leather );
     leather.charges = 10;
     u.i_add_or_drop( leather, 10 );
 
-    // Setup activity
+
     item_location fixloc( u, &fix );
-    act.values.emplace_back( /* repeat_type::FULL */ 3 );
+    act.values.emplace_back( 3 );
     act.str_values.emplace_back( "repair_fabric" );
     act.targets.emplace_back( tailorloc );
     act.targets.emplace_back( fixloc );
 }
 
-// Testing activity_handlers::repair_item_finish / repair_item_actor::repair
+
 TEST_CASE( "Repairing_degraded_items", "[item][degradation]" )
 {
-    // Setup map
+
     clear_map_without_vision();
     set_time_to_day();
     REQUIRE( static_cast<int>( get_map().light_at( spawn_pos ) ) > 2 );
@@ -432,7 +432,7 @@ TEST_CASE( "Repairing_degraded_items", "[item][degradation]" )
     }
 }
 
-// Testing activity_handlers::repair_item_finish / repair_item_actor::repair
+
 TEST_CASE( "Repairing_items_with_specific_requirements", "[item][degradation]" )
 {
     Character &u = get_player_character();
@@ -450,12 +450,12 @@ TEST_CASE( "Repairing_items_with_specific_requirements", "[item][degradation]" )
             ::repair_item_finish( &act, &u, true );
         }
 
-        // shouldn't repair since the sewing kit can't repair steel ball
+
         CHECK( fix.damage() == 1000 );
     }
 }
 
-// Testing iuse::gun_repair
+
 TEST_CASE( "Gun_repair_with_degradation", "[item][degradation]" )
 {
     GIVEN( "Gun with normal degradation" ) {
@@ -654,7 +654,7 @@ TEST_CASE( "Gun_repair_with_degradation", "[item][degradation]" )
 static player_activity setup_repair_activity( item_location &tailorloc, item_location &fixloc )
 {
     player_activity act( ACT_REPAIR_ITEM );
-    act.values.emplace_back( /* repeat_type::FULL */ 3 );
+    act.values.emplace_back( 3 );
     act.str_values.emplace_back( "repair_fabric" );
     act.targets.emplace_back( tailorloc );
     act.targets.emplace_back( fixloc );
@@ -669,7 +669,7 @@ static item_location put_in_container( item_location &container, const itype_id 
     return item_location( container, inserted.value() );
 }
 
-// Reproduce previous segfault from https://github.com/CleverRaven/Cataclysm-DDA/issues/74254
+
 TEST_CASE( "refit_item_inside_spillable_container", "[item][repair][container]" )
 {
     clear_avatar();
@@ -680,20 +680,20 @@ TEST_CASE( "refit_item_inside_spillable_container", "[item][repair][container]" 
     Character &u = get_player_character();
     u.set_skill_level( skill_tailor, 10 );
 
-    // Setup starting equipment
+
     item_location tailorkit = setup_tailorkit( u );
     REQUIRE( u.wear_item( item( itype_backpack ) ) );
     item_location backpack = u.top_items_loc().front();
     item canvas_patch( itype_canvas_patch );
     u.i_add_or_drop( canvas_patch, 100 );
 
-    // Starting inventory looks like:
-    //   backpack >
-    //     100 canvas patch
-    //     aluminum can >
-    //       work t-shirt (poor fit)
-    // It's a bit odd that we can put the shirt into the aluminum can, since it
-    // would normally reject that with a message stating that it would spill.
+
+
+
+
+
+
+
     GIVEN( "backpack > aluminum can > work t-shirt (poor fit)" ) {
         item_location aluminum_can = put_in_container( backpack, itype_can_drink );
         item_location fix_tshirt = put_in_container( aluminum_can, itype_technician_shirt_gray );

@@ -110,7 +110,7 @@ static npc &create_test_talker( bool shopkeep = false )
     model_npc->set_thirst( 0 );
     model_npc->set_sleepiness( 0 );
     model_npc->remove_effect( effect_sleep );
-    // An ugly hack to prevent NPC falling asleep during testing due to massive sleepiness
+
     model_npc->set_mutation( trait_WEB_WEAVER );
 
     return *model_npc;
@@ -679,7 +679,7 @@ TEST_CASE( "npc_talk_items", "[npc_talk]" )
     player_character.worn.wear_item( player_character, item( itype_backpack ), false, false );
     d.add_topic( "TALK_TEST_EFFECTS" );
     gen_response_lines( d, 19 );
-    // add and remove effect
+
     REQUIRE_FALSE( player_character.has_effect( effect_infection ) );
     talk_effect_t &effects = d.responses[1].success;
     effects.apply( d );
@@ -696,7 +696,7 @@ TEST_CASE( "npc_talk_items", "[npc_talk]" )
     effects = d.responses[4].success;
     effects.apply( d );
     CHECK_FALSE( talker_npc.has_effect( effect_infection ) );
-    // add and remove trait
+
     REQUIRE_FALSE( player_character.has_trait( trait_PROF_FED ) );
     effects = d.responses[5].success;
     effects.apply( d );
@@ -711,7 +711,7 @@ TEST_CASE( "npc_talk_items", "[npc_talk]" )
     effects = d.responses[8].success;
     effects.apply( d );
     CHECK_FALSE( talker_npc.has_trait( trait_PROF_FED ) );
-    // buying and spending
+
     talker_npc.op_of_u.owed = 1000;
     REQUIRE_FALSE( has_beer_bottle( player_character, 2 ) );
     REQUIRE( talker_npc.op_of_u.owed == 1000 );
@@ -728,7 +728,7 @@ TEST_CASE( "npc_talk_items", "[npc_talk]" )
     effects.apply( d );
     CHECK( talker_npc.op_of_u.owed == 0 );
     talker_npc.op_of_u.owed = 1000;
-    // effect chains
+
     REQUIRE_FALSE( player_character.has_effect( effect_infected ) );
     REQUIRE_FALSE( talker_npc.has_effect( effect_infected ) );
     REQUIRE_FALSE( player_character.has_trait( trait_PROF_SWAT ) );
@@ -743,7 +743,7 @@ TEST_CASE( "npc_talk_items", "[npc_talk]" )
     CHECK( talker_npc.has_trait( trait_PROF_SWAT ) );
     CHECK( talker_npc.op_of_u.owed == 0 );
     CHECK( talker_npc.get_attitude() == NPCATT_KILL );
-    // opinion changes
+
     talker_npc.op_of_u = npc_opinion();
     REQUIRE_FALSE( talker_npc.op_of_u.trust );
     REQUIRE_FALSE( talker_npc.op_of_u.fear );
@@ -800,7 +800,7 @@ TEST_CASE( "npc_talk_items", "[npc_talk]" )
            "This is a u_has_wielded_with_weapon_category KNIVES test response." );
     player_character.i_rem( &*player_character.get_wielded_item() );
 
-    // test sell and consume
+
     d.add_topic( "TALK_TEST_EFFECTS" );
     gen_response_lines( d, 19 );
     REQUIRE( has_item( player_character, itype_bottle_plastic, 1 ) );
@@ -941,7 +941,7 @@ TEST_CASE( "npc_talk_effects", "[npc_talk]" )
     npc &talker_npc = prep_test( d );
     Character &player_character = get_avatar();
 
-    // speaker effects just use are owed because I don't want to do anything complicated
+
     player_character.cash = 1000;
     talker_npc.op_of_u.owed = 2000;
     CHECK( talker_npc.op_of_u.owed == 2000 );
@@ -993,7 +993,7 @@ TEST_CASE( "npc_talk_effects", "[npc_talk]" )
     d.apply_speaker_effects( d.topic_stack.back() );
     REQUIRE( talker_npc.op_of_u.owed == 1500 );
 
-    // test change class
+
     talker_npc.myclass = NC_TEST_CLASS;
     d.add_topic( "TALK_TEST_EFFECTS" );
     gen_response_lines( d, 19 );
@@ -1142,13 +1142,13 @@ TEST_CASE( "npc_compare_int", "[npc_talk]" )
     time_point then = calendar::turn;
     calendar::turn = calendar::turn + time_duration( 4_days );
     REQUIRE( then < calendar::turn );
-    // Increment the u var by 1, so that it has a value of 1.
+
     talk_effect_t &effects = d.responses[ 0 ].success;
     effects.apply( d );
-    // Increment the npc var by 2, so that it has a value of 2.
+
     effects = d.responses[ 1 ].success;
     effects.apply( d );
-    // Create a u time variable.
+
     effects = d.responses[ 2 ].success;
     effects.apply( d );
     talk_function::follow( beta );
@@ -1179,16 +1179,16 @@ TEST_CASE( "npc_compare_int", "[npc_talk]" )
     get_event_bus().send_with_talker( get_player_character().as_character(), dummy_monster.as_monster(),
                                       e );
     player_character.magic->learn_spell( spell_test_spell_json, player_character, false );
-    player_character.set_mutation( trait_test_trait ); // Give the player the spell scool test_trait
+    player_character.set_mutation( trait_test_trait );
     player_character.magic->set_spell_level( spell_test_spell_json, 1, &player_character );
     player_character.magic->learn_spell( spell_test_spell_pew, player_character, true );
     player_character.magic->set_spell_level( spell_test_spell_pew, 4, &player_character );
     player_character.magic->learn_spell( spell_test_spell_lava, player_character, true );
     player_character.magic->set_spell_level( spell_test_spell_lava, 12, &player_character );
     player_character.set_proficiency_practice( proficiency_prof_test, 12_hours );
-    // Set focus after killing monster, since the character
-    // gains weakpoint proficiency practice which lowers focus
-    // (see kill_tracker::notify() -> weakpoint_families::practice_kill())
+
+
+
     player_character.set_focus( 24 );
     player_character.set_str_bonus( 0 );
     player_character.set_dex_bonus( 0 );
@@ -1200,8 +1200,8 @@ TEST_CASE( "npc_compare_int", "[npc_talk]" )
     player_character.set_per_base( 8 );
     player_character.magic->set_mana( 25 );
 
-    // Each response is separated out into a single line for easier browsing.
-    // TODO: Reliably test the random number generator.
+
+
     std::vector<std::string> expected_responses = {
         "This is a math test response that increments by 1.",
         "This is a math test response that increments by 2.",
@@ -1217,7 +1217,7 @@ TEST_CASE( "npc_compare_int", "[npc_talk]" )
         "NPC Custom var is two.",
         "This is a u_var time test response for > 3_days.",
         "time_since_cataclysm > 3_days.",
-        "time_since_cataclysm in days > 3", //NOTE: Extra conditional response inserted after this for next part of test, ctrl+f "insert" if reordering/removing this element!
+        "time_since_cataclysm in days > 3",
         "Allies equals 1",
         "Cash equals 13",
         "Owed amount equals 14",
@@ -1258,13 +1258,13 @@ TEST_CASE( "npc_compare_int", "[npc_talk]" )
     expected_answers = expected_responses.size();
     gen_response_lines( d, expected_answers );
     for( int i = 0; i < expected_answers; i++ ) {
-        // Offset by one here for human ease-of-use. Vectors count from 0, people don't.
+
         const std::string TEST_INFO = string_format( "Response # %d of %d", i + 1, expected_answers );
         CAPTURE( TEST_INFO );
         CHECK( d.responses[ i ].text == expected_responses[i] );
     }
 
-    // This activates a new response, so we add it to the container and check again.
+
     calendar::turn = calendar::turn + time_duration( 4_days );
     const std::string extra_test_response = "This is a time since u_var test response for > 3_days.";
 
@@ -1276,7 +1276,7 @@ TEST_CASE( "npc_compare_int", "[npc_talk]" )
     gen_response_lines( d, expected_answers );
     CHECK( d.responses[ extra_response_pos ].text == expected_responses[extra_response_pos] );
 
-    // Teardown
+
     player_character.remove_value( "test_var_time_test_test" );
 }
 
@@ -1291,19 +1291,19 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
     d.add_topic( "TALK_TEST_ARITHMETIC" );
     gen_response_lines( d, 31 );
 
-    // make sure tested scenarios haven't messed with our start time
+
     calendar::start_of_cataclysm = calendar::turn_zero;
     calendar::start_of_game = calendar::turn_zero;
     calendar::turn = calendar::turn_zero;
     REQUIRE( calendar::turn == time_point( 0 ) );
-    // "Sets time since cataclysm to 1."
+
     talk_effect_t &effects = d.responses[ 0 ].success;
     effects.apply( d );
     CHECK( calendar::turn == time_point( 1 ) );
 
     get_weather().weather_precise->temperature = units::from_fahrenheit( 20 );
     get_weather().clear_temp_cache();
-    // "Sets temperature to 2."
+
     effects = d.responses[ 1 ].success;
     effects.apply( d );
     CHECK( units::to_fahrenheit( get_weather().weather_precise->temperature ) == Approx( 2 ).margin(
@@ -1311,86 +1311,86 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
 
     get_weather().weather_precise->windpower = 20;
     get_weather().clear_temp_cache();
-    // "Sets windpower to 3."
+
     effects = d.responses[ 2 ].success;
     effects.apply( d );
     CHECK( get_weather().weather_precise->windpower == 3 );
 
     get_weather().weather_precise->humidity = 20;
     get_weather().clear_temp_cache();
-    // "Sets humidity to 4."
+
     effects = d.responses[ 3 ].success;
     effects.apply( d );
     CHECK( get_weather().weather_precise->humidity == 4 );
 
     get_weather().weather_precise->pressure = 20;
     get_weather().clear_temp_cache();
-    // "Sets pressure to 5."
+
     effects = d.responses[ 4 ].success;
     effects.apply( d );
     CHECK( get_weather().weather_precise->pressure == 5 );
 
     player_character.set_str_base( 10 );
-    // "Sets base strength to 6."
+
     effects = d.responses[ 5 ].success;
     effects.apply( d );
     CHECK( player_character.get_str_base() == 6 );
 
     player_character.set_dex_base( 10 );
-    // "Sets base dexterity to 7."
+
     effects = d.responses[ 6 ].success;
     effects.apply( d );
     CHECK( player_character.get_dex_base() == 7 );
 
     player_character.set_int_base( 10 );
-    // "Sets base intelligence to 8."
+
     effects = d.responses[ 7 ].success;
     effects.apply( d );
     CHECK( player_character.get_int_base() == 8 );
 
     player_character.set_per_base( 10 );
-    // "Sets base perception to 9."
+
     effects = d.responses[ 8 ].success;
     effects.apply( d );
     CHECK( player_character.get_per_base() == 9 );
 
     std::string var_name = "test_var_time_test_test";
     player_character.set_value( var_name, 1 );
-    // "Sets custom var to 10."
+
     effects = d.responses[ 9 ].success;
     effects.apply( d );
     CHECK( player_character.get_value( var_name ) == 10 );
 
     beta.op_of_u.owed = 0;
-    // "Sets owed to 12."
+
     effects = d.responses[ 10 ].success;
     effects.apply( d );
     CHECK( beta.op_of_u.owed == 12 );
 
     const skill_id skill = skill_driving;
-    // "Sets skill level in driving to 10."
+
     effects = d.responses[ 11 ].success;
     effects.apply( d );
     CHECK( static_cast<int>( player_character.get_skill_level( skill ) ) == 10 );
 
-    // "Move character position one tile west."
+
     pos = player_character.pos_abs();
     effects = d.responses[ 12 ].success;
     effects.apply( d );
     CHECK( player_character.pos_abs().x() == pos.x() - 1 );
 
-    // "Move character position two tiles north."
+
     pos = player_character.pos_abs();
     effects = d.responses[ 13 ].success;
     effects.apply( d );
     CHECK( player_character.pos_abs().y() == pos.y() + 2 );
 
-    // "Sets character z level to -3."
+
     effects = d.responses[ 14 ].success;
     effects.apply( d );
     CHECK( player_character.posz() == -3 );
 
-    // "Sets pain to 17."
+
     effects = d.responses[ 15 ].success;
     effects.apply( d );
     CHECK( player_character.get_pain() == 17 );
@@ -1398,76 +1398,76 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
     player_character.add_bionic( bio_power_storage );
     player_character.set_power_level( 10_mJ );
     player_character.set_max_power_level( 44_mJ );
-    // "Sets power to 18."
+
     effects = d.responses[ 16 ].success;
     effects.apply( d );
     CHECK( player_character.get_power_level().value() == 18 );
 
-    // "Sets power to 20%."
+
     effects = d.responses[ 17 ].success;
     effects.apply( d );
     CHECK( player_character.get_power_level().value() == 8 );
 
-    // "Sets focus to 19."
+
     effects = d.responses[ 18 ].success;
     effects.apply( d );
     CHECK( player_character.get_focus() == 19 );
 
-    // "Sets mana to 21."
+
     effects = d.responses[ 19 ].success;
     effects.apply( d );
     CHECK( player_character.magic->available_mana() == 21 );
 
-    // "Sets mana to 25%."
+
     effects = d.responses[ 20 ].success;
     effects.apply( d );
     CHECK( player_character.magic->available_mana() == ( player_character.magic->max_mana(
                 player_character ) * 25 ) / 100 );
 
-    // "Sets thirst to 22."
+
     effects = d.responses[ 21 ].success;
     effects.apply( d );
     CHECK( player_character.get_thirst() == 22 );
 
-    // "Sets stored_kcal to 23."
+
     effects = d.responses[ 22 ].success;
     effects.apply( d );
     CHECK( player_character.get_stored_kcal() == 23 );
 
-    // Spell tests setup
+
     if( player_character.magic->knows_spell( spell_test_spell_pew ) ) {
         player_character.magic->forget_spell( spell_test_spell_pew );
     }
     CHECK( player_character.magic->knows_spell( spell_test_spell_pew ) == false );
 
-    // "Sets pew pew's level to -1."
+
     effects = d.responses[23].success;
     effects.apply( d );
     CHECK( player_character.magic->knows_spell( spell_test_spell_pew ) == false );
 
-    // "Sets pew pew's level to 4."
+
     effects = d.responses[24].success;
     effects.apply( d );
     CHECK( player_character.magic->knows_spell( spell_test_spell_pew ) == true );
     CHECK( player_character.magic->get_spell( spell_test_spell_pew ).get_level() == 4 );
 
-    // "Sets pew pew's level to -1."
+
     effects = d.responses[23].success;
     effects.apply( d );
     CHECK( player_character.magic->knows_spell( spell_test_spell_pew ) == false );
 
-    // "Sets pew pew's exp to 11006."
+
     effects = d.responses[26].success;
     effects.apply( d );
     CHECK( player_character.magic->knows_spell( spell_test_spell_pew ) == true );
     CHECK( player_character.magic->get_spell( spell_test_spell_pew ).get_level() == 4 );
 
-    // "Sets pew pew's exp to -1."
+
     effects = d.responses[25].success;
     effects.apply( d );
     CHECK( player_character.magic->knows_spell( spell_test_spell_pew ) == false );
 
-    // Setup proficiency tests
+
     if( player_character.has_proficiency( proficiency_prof_test ) ) {
         player_character.lose_proficiency( proficiency_prof_test, true );
     }
@@ -1478,7 +1478,7 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
         player_character.set_proficiency_practiced_time( proficiency_prof_test, -1 );
     }
 
-    // "Sets Test Proficiency learning done to -1."
+
     effects = d.responses[28].success;
     effects.apply( d );
     CHECK( player_character.has_proficiency( proficiency_prof_test ) == false );
@@ -1487,7 +1487,7 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
                        proficiencies_vector.end(),
                        proficiency_prof_test ) == 0 );
 
-    // "Sets Test Proficiency learning done to 24h."
+
     effects = d.responses[29].success;
     effects.apply( d );
     add_msg( m_bad, "%s: %g", proficiency_prof_test.str(),
@@ -1498,7 +1498,7 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
                        proficiencies_vector.end(),
                        proficiency_prof_test ) == 0 );
 
-    // "Sets Test Proficiency learning done to 12 hours total."
+
     effects = d.responses[27].success;
     effects.apply( d );
     CHECK( player_character.has_proficiency( proficiency_prof_test ) == false );
@@ -1507,7 +1507,7 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
                        proficiencies_vector.end(),
                        proficiency_prof_test ) != 0 );
 
-    // "Sets Test Proficiency learning done to -1."
+
     effects = d.responses[28].success;
     effects.apply( d );
     CHECK( player_character.has_proficiency( proficiency_prof_test ) == false );
@@ -1517,17 +1517,17 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
                        proficiency_prof_test ) == 0 );
 
 
-    // Proficency learning without 'direct': true is impacted by focus
+
     const auto prof_xp = [&player_character]() {
         return to_seconds<int>( player_character.get_proficiency_practiced_time( proficiency_prof_test ) );
     };
 
-    // For 100 focus
+
     player_character.set_focus( 100 );
-    // No starting XP
+
     REQUIRE( prof_xp() == 0 );
 
-    // "Learns Test Proficiency for 1h"
+
     effects = d.responses[30].success;
     effects.apply( d );
 
@@ -1540,14 +1540,14 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
                        proficiencies_vector.end(),
                        proficiency_prof_test ) == 1 );
 
-    // Reset progress
+
     player_character.set_proficiency_practice( proficiency_prof_test, 0_seconds );
     REQUIRE( prof_xp() == 0 );
 
-    // For 5 focus
+
     player_character.set_focus( 5 );
 
-    // "Learns Test Proficiency for 1h"
+
     effects = d.responses[30].success;
     effects.apply( d );
 
@@ -1560,11 +1560,11 @@ TEST_CASE( "npc_arithmetic", "[npc_talk]" )
                        proficiencies_vector.end(),
                        proficiency_prof_test ) == 1 );
 
-    // Simply check that they're less, don't need to get any fancier
+
     CHECK( amt_5 < amt_100 );
 
 
-    // Teardown
+
     player_character.remove_value( var_name );
 }
 

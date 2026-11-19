@@ -44,16 +44,16 @@ static const vproto_id vehicle_prototype_vehicle_camera_test( "vehicle_camera_te
 static const weather_type_id weather_clear( "clear" );
 static const weather_type_id weather_fog( "fog" );
 
-// Builds against the map API from before and after the vision cache rework, so
-// the same file measures the baseline and the result.
 
-// what do_turn invalidates each turn: the per-turn light hook where the map
-// has one, else every level's light and all final visibility
+
+
+
+
 namespace
 {
 struct turn_fallback {};
 struct turn_preferred : turn_fallback {};
-} // namespace
+}
 
 template<typename Map>
 static auto start_turn( Map &here, turn_preferred ) -> decltype( here.mark_turn_light_dirty(),
@@ -90,15 +90,15 @@ static void rebuild_vision_from_scratch()
     here.update_visibility_cache( 0 );
 }
 
-// a field with a lit house, a roof light one level up, a moncam and a door
-// far out of sight
+
+
 static void set_up_open_scene( const tripoint_bub_ms &origin )
 {
     clear_avatar();
     clear_map_without_vision( -2, OVERMAP_HEIGHT );
     clear_vehicles();
     g->place_player( origin );
-    // placing the avatar can load monsters, and safe mode would stop the moves
+
     clear_creatures();
     g->set_safe_mode( SAFE_MODE_OFF );
     calendar::turn = calendar::turn_zero + 21_hours;
@@ -151,17 +151,17 @@ TEST_CASE( "vision_cache_benchmark", "[.][vision][benchmark]" )
         }
     }
 
-    // step case measures movement only if moves happen
+
     REQUIRE( avatar_action::move( you, here, tripoint_rel_ms::east ) );
     REQUIRE( you.pos_bub() == origin + tripoint::east );
     REQUIRE( avatar_action::move( you, here, tripoint_rel_ms::west ) );
     REQUIRE( you.pos_bub() == origin );
     build_vision();
 
-    // offscreen case measures a door no cast reaches only if none does
+
     REQUIRE( here.access_cache( 0 ).seen_cache[far_door.x()][far_door.y()] <= 0.0f );
     REQUIRE( here.access_cache( 0 ).camera_cache[far_door.x()][far_door.y()] <= 0.0f );
-    // the weather case measures a change only if fog and clear differ here
+
     const tripoint_bub_ms open_ground = origin + tripoint_rel_ms{ -3, 3, 0 };
     float clear_transparency = 0.0f;
     {
@@ -199,8 +199,8 @@ TEST_CASE( "vision_cache_benchmark", "[.][vision][benchmark]" )
         here.close_door( near_door, true, false );
         build_vision();
     };
-    // the same transitions with the refresh master needs to show them; on
-    // master the plain cases skip that work and leave stale caches
+
+
     BENCHMARK( "crouch_then_stand_with_refresh" ) {
         you.set_movement_mode( move_mode_crouch );
         here.invalidate_visibility_cache();
@@ -243,8 +243,8 @@ TEST_CASE( "vision_cache_benchmark", "[.][vision][benchmark]" )
     };
 }
 
-// creatures on three floors: the cache upkeep of a turn in which nothing changes,
-// and their sight checks after light and visibility were all marked dirty
+
+
 TEST_CASE( "vision_cache_creature_sight_benchmark", "[.][vision][benchmark]" )
 {
     const tripoint_bub_ms origin{ 64, 64, 0 };
@@ -317,7 +317,7 @@ TEST_CASE( "vision_cache_vehicle_camera_benchmark", "[.][vision][benchmark]" )
         v->camera_on = true;
         build_vision();
     };
-    // what vehicle menu does after a toggle
+
     BENCHMARK( "camera_off_then_on_with_refresh" ) {
         v->camera_on = false;
         here.invalidate_map_cache( 0 );

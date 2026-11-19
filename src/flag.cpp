@@ -393,21 +393,21 @@ const flag_id flag_wooled( "wooled" );
 const flag_id json_flag_HIDDEN_ITEM( "HIDDEN_ITEM" );
 static const flag_id json_flag_null( "null" );
 
-const flag_id flag_NULL = json_flag_null; // intentionally invalid flag
+const flag_id flag_NULL = json_flag_null;
 
 namespace
 {
 generic_factory<json_flag> json_flags_all( "json_flags" );
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 bool flag_id::is_valid() const
 {
     return json_flags_all.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const json_flag &flag_id::obj() const
 {
@@ -428,7 +428,7 @@ const json_flag &json_flag::get( const std::string &id )
 
 void json_flag::load( const JsonObject &jo, std::string_view )
 {
-    // TODO: mark fields as mandatory where appropriate
+
     optional( jo, was_loaded, "info", info_ );
     optional( jo, was_loaded, "conflicts", conflicts_ );
     optional( jo, was_loaded, "inherit", inherit_, true );

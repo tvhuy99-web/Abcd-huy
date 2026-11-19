@@ -37,9 +37,7 @@ def portionize(jo):
 
 def gen_new(path):
     change = False
-    # Having troubles with this script halting?
-    # Uncomment below to find the file it's halting on
-    #print(path)
+
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)
@@ -69,8 +67,6 @@ def gen_new(path):
                     change = True
                 continue
 
-            # I don't know python - assiging to jo is not necessary here
-            # but is necessary for "armor_data" above
             new_jo = portionize(jo)
             if new_jo is not None:
                 change = True

@@ -18,16 +18,16 @@ namespace
 
 generic_factory<vpart_location> vehicle_part_location_factory( "vehicle_part_location" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const vpart_location &string_id<vpart_location>::obj() const
 {
     return vehicle_part_location_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<vpart_location>::is_valid() const
 {

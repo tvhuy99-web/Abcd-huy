@@ -35,7 +35,7 @@ static const ter_str_id ter_t_stairs_up( "t_stairs_up" );
 static const ter_str_id ter_t_wall_glass( "t_wall_glass" );
 static const ter_str_id ter_t_water_sh( "t_water_sh" );
 
-// follower with every need settled, so only following drives it
+
 static npc &spawn_settled_follower( const tripoint_bub_ms &pos )
 {
     map &here = get_map();
@@ -75,7 +75,7 @@ TEST_CASE( "npc_turn_helper_drives_a_follower_like_the_game", "[npc]" )
     CHECK( close_enough( guy ) );
 }
 
-// non-ally NPC far from the player, so following and obligations stay out of it
+
 static npc &spawn_loner( const tripoint_bub_ms &pos )
 {
     map &here = get_map();
@@ -125,7 +125,7 @@ TEST_CASE( "trip_to_disconnected_floor_is_not_walked", "[npc][movement]" )
             }
             prev = step;
         }
-        // square_dist is 3D: the tile right below source counts as in range
+
         for( int turn = 0; turn < 20 && ( guy.posz() != 1 || square_dist( guy.pos_bub(), source ) > 1 );
              ++turn ) {
             calendar::turn += 1_turns;
@@ -154,7 +154,7 @@ TEST_CASE( "trip_to_disconnected_floor_is_not_walked", "[npc][movement]" )
     }
 }
 
-// one step a turn; true once in range of spec.source
+
 static bool walk_trip( npc &guy, const npc_trip_spec &spec, const int turns )
 {
     for( int turn = 0; turn < turns; ++turn ) {
@@ -256,7 +256,7 @@ TEST_CASE( "within_range_trip_ends_beside_unreachable_source", "[npc][movement]"
     clear_avatar();
     map &here = get_map();
     npc &guy = spawn_loner( tripoint_bub_ms( 50, 50, 0 ) );
-    // nearest passable neighbor of the source is walled in; the far side is open
+
     const tripoint_bub_ms source( 55, 50, 0 );
     const tripoint_bub_ms pocket( 54, 50, 0 );
     here.ter_set( source, ter_t_wall_glass );
@@ -369,7 +369,7 @@ TEST_CASE( "self_care_walk_respects_door_rules", "[npc][movement]" )
     map &here = get_map();
     npc &guy = spawn_loner( tripoint_bub_ms( 50, 50, 0 ) );
     guy.rules.set_flag( ally_rule::avoid_doors );
-    // water in a closet whose only way in is door
+
     const tripoint_bub_ms water( 55, 50, 0 );
     const tripoint_bub_ms door( 53, 50, 0 );
     here.ter_set( water, ter_t_water_sh );
@@ -419,9 +419,9 @@ TEST_CASE( "self_care_walk_opens_doors_and_climbs", "[npc][movement]" )
     map &here = get_map();
     npc &guy = spawn_loner( tripoint_bub_ms( 50, 50, 0 ) );
     guy.rules.clear_flag( ally_rule::avoid_doors );
-    // dexterity 20 slips on a climb 1/20
+
     guy.set_dex_base( 20 );
-    // water in a closet whose only way in is way_in
+
     const tripoint_bub_ms water( 55, 50, 0 );
     const tripoint_bub_ms way_in( 53, 50, 0 );
     here.ter_set( water, ter_t_water_sh );

@@ -33,4 +33,4 @@ struct jmath_func {
     mutable math_exp _exp;
 };
 
-#endif // CATA_SRC_MATH_PARSER_JMATH_H
+#endif

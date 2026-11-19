@@ -12,7 +12,7 @@
 
 unsigned int rng_bits()
 {
-    // Whole uint range.
+
     static std::uniform_int_distribution<unsigned int> rng_uint_dist;
     return rng_uint_dist( rng_get_engine() );
 }
@@ -44,29 +44,29 @@ units::angle random_direction()
     return rng_float( 0_pi_radians, 2_pi_radians );
 }
 
-// Returns the area under a curve with provided standard deviation and center
-// from difficulty to positive infinity. That is, the chance that a normal roll on
-// said curve will return a value of difficulty or greater.
+
+
+
 float normal_roll_chance( float center, float stddev, float difficulty )
 {
     cata_assert( stddev >= 0.f );
-    // We're going to be using them a lot, so let's name our variables.
-    // M = the given "center" of the curve
-    // S = the given standard deviation of the curve
-    // A = the difficulty
-    // So, the equation of the normal curve is...
-    // y = (1.f/(S*std::sqrt(2 * M_PI))) * exp(-(std::pow(x - M, 2))/(2 * std::pow(S, 2)))
-    // Thanks to wolfram alpha, we know the integral of that from A to B to be
-    // 0.5 * (erf((M-A)/(std::sqrt(2) * S)) - erf((M-B)/(std::sqrt(2) * S)))
-    // And since we know B to be infinity, we can simplify that to
-    // 0.5 * (erfc((A-m)/(std::sqrt(2)* S))+sgn(S)-1) (as long as S != 0)
-    // Wait a second, what are erf, erfc and sgn?
-    // Oh, those are the error function, complementary error function, and sign function
-    // Luckily, erf() is provided to us in math.h, and erfc is just 1 - erf
-    // Sign is pretty obvious x > 0 ? x == 0 ? 0 : 1 : -1;
-    // Since we know S will always be > 0, that term vanishes.
 
-    // With no standard deviation, we will always return center
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     if( stddev == 0.f ) {
         return ( center > difficulty ) ? 1.f : 0.f;
     }
@@ -80,8 +80,8 @@ float normal_roll_chance( float center, float stddev, float difficulty )
 double normal_roll( double mean, double stddev )
 {
     static std::normal_distribution<double> rng_normal_dist;
-    // Clear cached state -- some implementations (Box-Muller) generate pairs
-    // and cache the spare, which survives engine re-seeding.
+
+
     rng_normal_dist.reset();
     return rng_normal_dist( rng_get_engine(), std::normal_distribution<>::param_type( mean, stddev ) );
 }
@@ -97,7 +97,7 @@ double exponential_roll( double lambda )
 double chi_squared_roll( double trial_num )
 {
     static std::chi_squared_distribution<double> rng_chi_squared_dist;
-    // chi_squared internally uses gamma_distribution which may cache state.
+
     rng_chi_squared_dist.reset();
     return rng_chi_squared_dist( rng_get_engine(),
                                  std::chi_squared_distribution<>::param_type( trial_num ) );
@@ -109,7 +109,7 @@ double rng_exponential( double min, double mean )
     if( adjusted_mean <= 0.0 ) {
         return 0.0;
     }
-    // lambda = 1 / mean
+
     return min + exponential_roll( 1.0 / adjusted_mean );
 }
 
@@ -137,8 +137,8 @@ int dice( int number, int sides )
     return ret;
 }
 
-// probabilistically round a double to an int
-// 1.3 has a 70% chance of rounding to 1, 30% chance to 2.
+
+
 int roll_remainder( double value )
 {
     double integ;
@@ -152,14 +152,14 @@ int roll_remainder( double value )
     return integ;
 }
 
-// http://www.cse.yorku.ca/~oz/hash.html
-// for world seeding.
+
+
 int djb2_hash( const unsigned char *input )
 {
     unsigned int hash = 5381;
     unsigned char c = *input++;
     while( c != '\0' ) {
-        hash = ( ( hash << 5 ) + hash ) + c; /* hash * 33 + c */
+        hash = ( ( hash << 5 ) + hash ) + c;
         c = *input++;
     }
     return hash;

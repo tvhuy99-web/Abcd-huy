@@ -3,7 +3,7 @@ package com.cleverraven.cataclysmdda;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/** Reader configuration is separate from game saves and the existing SDL input settings. */
+
 public final class ReaderPreferences {
     public static final int GESTURE_ACTION_NAVIGATE = 0;
 
@@ -11,8 +11,8 @@ public final class ReaderPreferences {
 
     public ReaderPreferences(Context context) {
         values = context.getApplicationContext().getSharedPreferences("internal_reader", Context.MODE_PRIVATE);
-        // New accessibility builds start the reader automatically. Migrate old
-        // trial preferences exactly once, without overriding a later opt-out.
+
+
         if (BuildConfig.FLAVOR.equals("accessibility")
                 && !values.getBoolean("auto_reader_default_20261107", false)) {
             values.edit().putBoolean("auto_reader_default_20261107", true)
@@ -33,36 +33,36 @@ public final class ReaderPreferences {
         return values.getBoolean("network_voice_consent", false);
     }
 
-    // Confirmed speech selection (R06.1). Only an explicit confirmation in
-    // the TTS settings screen writes these keys; trying a voice works on draft
-    // values held by the TTS settings Activity and never reaches this storage.
-    // Engine/voice are stored as stable names and re-resolved against the
-    // live engine on every initialize, so a removed voice is detected
-    // (MISSING_VOICE) instead of silently replaced.
+
+
+
+
+
+
     private static final String SPEECH_ENGINE = "speech_engine";
     private static final String SPEECH_VOICE = "speech_voice";
     private static final String SPEECH_LANGUAGE = "speech_language";
     public static final String DEFAULT_SPEECH_LANGUAGE = "vi-VN";
 
-    /** Null when the user has never confirmed an engine: use the system default. */
+
     public String getSpeechEngineName() {
         String engine = values.getString(SPEECH_ENGINE, null);
         return engine == null || engine.isEmpty() ? null : engine;
     }
 
-    /** Null when no specific voice was confirmed: use the engine default voice. */
+
     public String getSpeechVoiceName() {
         String voice = values.getString(SPEECH_VOICE, null);
         return voice == null || voice.isEmpty() ? null : voice;
     }
 
-    /** BCP-47 tag of the confirmed reading language; Vietnamese by default. */
+
     public String getSpeechLanguageTag() {
         String tag = values.getString(SPEECH_LANGUAGE, DEFAULT_SPEECH_LANGUAGE);
         return tag == null || tag.isEmpty() ? DEFAULT_SPEECH_LANGUAGE : tag;
     }
 
-    /** Drop a confirmed selection that no longer exists on this device. */
+
     public void clearSpeechSelection() {
         values.edit().remove(SPEECH_ENGINE).remove(SPEECH_VOICE).remove(SPEECH_LANGUAGE).apply();
     }
@@ -79,7 +79,7 @@ public final class ReaderPreferences {
         return Math.max(0.0f, Math.min(1.0f, values.getFloat("tts_volume", 1.0f)));
     }
 
-    /** Commit every TTS setting together. A preview never changes gameplay. */
+
     public void saveTtsSettings(boolean enabled, String engineName, String voiceName,
                                 String languageTag, boolean allowNetwork, float rate,
                                 float pitch, float volume) {
@@ -99,8 +99,8 @@ public final class ReaderPreferences {
         editor.apply();
     }
 
-    // The packaged accessibility cues remain optional. The downloaded
-    // gameplay soundpack is a separate native-game audio system.
+
+
     public boolean areSoundCuesEnabled() {
         return values.getBoolean("sound_cues", false);
     }
@@ -117,9 +117,9 @@ public final class ReaderPreferences {
         values.edit().putBoolean("haptic_cues", enabled).apply();
     }
 
-    // The two sounds already exist independently. Preserve the old single
-    // sonar setting as the default for both channels when upgrading an APK,
-    // until the user explicitly chooses each new switch.
+
+
+
     private static final String SONAR_CREATURES = "sonar_creatures";
     private static final String SONAR_ITEMS = "sonar_items";
 
@@ -141,12 +141,12 @@ public final class ReaderPreferences {
         values.edit().putBoolean(SONAR_ITEMS, enabled).apply();
     }
 
-    /** Native sensing is needed when either category is enabled. */
+
     public boolean isDirectionalSonarEnabled() {
         return isCreatureSonarEnabled() || isItemSonarEnabled();
     }
 
-    /** Compatibility for older code and settings: change both channels. */
+
     public void setDirectionalSonarEnabled(boolean enabled) {
         values.edit().putBoolean("directional_sonar", enabled)
                 .putBoolean(SONAR_CREATURES, enabled)
@@ -157,7 +157,7 @@ public final class ReaderPreferences {
         values.edit().putBoolean("enabled", false).apply();
     }
 
-    /** Spoken-only mode is the default in the dedicated accessibility APK. */
+
     public boolean isSpokenOnlyWorldEnabled() {
         return values.getBoolean("spoken_only_world", BuildConfig.FLAVOR.equals("accessibility"));
     }
@@ -166,7 +166,7 @@ public final class ReaderPreferences {
         values.edit().putBoolean("spoken_only_world", enabled).apply();
     }
 
-    /** Minimum swipe distance in dp: short, standard, long. */
+
     public int getSwipeDistanceDp() {
         switch (values.getInt("swipe_distance_level", 1)) {
             case 0: return 32;
@@ -183,7 +183,7 @@ public final class ReaderPreferences {
         values.edit().putInt("swipe_distance_level", Math.max(0, Math.min(2, level))).apply();
     }
 
-    /** Maximum swipe duration in ms: quick, standard, deliberate. */
+
     public int getSwipeDurationLimitMs() {
         switch (values.getInt("swipe_duration_level", 1)) {
             case 0: return 450;

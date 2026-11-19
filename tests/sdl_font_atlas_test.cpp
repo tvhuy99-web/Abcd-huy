@@ -26,7 +26,7 @@ Uint32 rgb_of( const SDL_Color &c )
     return ( static_cast<Uint32>( c.r ) << 16 ) | ( static_cast<Uint32>( c.g ) << 8 ) | c.b;
 }
 
-} // namespace
+}
 
 TEST_CASE( "software_renderer_draws_text_without_the_atlas", "[tiles][sdl_font]" )
 {
@@ -145,4 +145,4 @@ TEST_CASE( "ttf_atlas_retries_a_page_that_failed_to_create", "[tiles][sdl_font]"
     }
 }
 
-#endif // TILES
+#endif

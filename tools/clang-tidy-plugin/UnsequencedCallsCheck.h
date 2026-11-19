@@ -43,9 +43,9 @@ struct CallWithASTContext {
     }
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
 namespace std
 {
@@ -55,7 +55,7 @@ struct hash<clang::tidy::cata::CallContext> {
         return clang::tidy::cata::HashCombine( c.stmt, c.on );
     }
 };
-} // namespace std
+}
 
 namespace clang
 {
@@ -77,8 +77,8 @@ class UnsequencedCallsCheck : public ClangTidyCheck
         std::unordered_map<CallContext, std::vector<CallWithASTContext>> calls_;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_UNSEQUENCEDCALLSCHECK_H
+#endif

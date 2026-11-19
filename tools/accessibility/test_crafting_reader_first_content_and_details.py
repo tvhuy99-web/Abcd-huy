@@ -28,8 +28,7 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
         self.assertIn('node.id = "recipe:"', body)
 
     def test_no_visual_panel_required_for_recipe_description(self):
-        # Descriptions are now resolved from the selected recipe through
-        # one shared helper, independent of whether ImGui rendered a panel.
+
         self.assertIn("static std::string accessible_recipe_description(", self.crafting)
         self.assertIn("return rec.get_description( crafter );", self.crafting)
         self.assertIn("accessible_recipe_description( rec, *crafter )", self.crafting)
@@ -53,8 +52,7 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
         )[0]
         self.assertIn('prefix = "craft:";', linked)
         self.assertIn('prefix = "construction:";', linked)
-        # Two fingers still read every native section, but no longer
-        # hijack list swipes with an implicit paragraph-reader screen.
+
         self.assertIn("speakInlineDetail(full.toString());", linked)
         self.assertNotIn("documentReader.open(", linked)
         self.assertIn("speakInlineDetail(information);", self.controller)

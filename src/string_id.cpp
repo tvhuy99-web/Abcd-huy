@@ -6,7 +6,7 @@ namespace
 {
 using InternMapType = std::unordered_map<std::string, int>;
 using ReverseLookupVecType = std::vector<const std::string *>;
-} // namespace
+}
 
 static InternMapType &get_intern_map()
 {
@@ -25,7 +25,7 @@ static int universal_string_id_intern( S &&s )
 {
     int next_id = get_reverse_lookup_vec().size();
     const auto &pair = get_intern_map().emplace( std::forward<S>( s ), next_id );
-    if( pair.second ) { // inserted
+    if( pair.second ) {
         get_reverse_lookup_vec().push_back( &pair.first->first );
     }
     return pair.first->second;

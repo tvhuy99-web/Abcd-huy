@@ -30,17 +30,17 @@ class weather_generator
     public:
         weather_generator_id id = weather_generator_id::NULL_ID();
 
-        // Average temperature
+
         double base_temperature = 0;
-        // Average humidity
+
         double base_humidity = 0;
-        // Average atmospheric pressure
+
         double base_pressure = 0;
-        //Average yearly windspeed
+
         double base_wind = 0;
-        //How much the wind peaks above average
+
         int base_wind_distrib_peaks = 0;
-        // TODO: Store as arrays?
+
         int summer_temp_manual_mod = 0;
         int spring_temp_manual_mod = 0;
         int autumn_temp_manual_mod = 0;
@@ -49,21 +49,21 @@ class weather_generator
         int summer_humidity_manual_mod = 0;
         int autumn_humidity_manual_mod = 0;
         int winter_humidity_manual_mod = 0;
-        //How much the wind follows seasonal variation ( lower means more change )
+
         int base_wind_season_variation = 0;
         static int current_winddir;
-        // TODO: Use std::vector<weather_type_id> and finalise in region settings instead?
+
         std::vector<std::string> weather_black_list;
         std::vector<std::string> weather_white_list;
-        /** All the current weather types based on white or black list and sorted by load order */
+
         std::vector<weather_type_id> sorted_weather;
         weather_generator();
 
-        /**
-         * Input should be an absolute position in the map square system (the one used
-         * by the @ref map). You can use @ref map::getabs to get an absolute position from a
-         * relative position (relative to the map you called getabs on).
-         */
+
+
+
+
+
         w_point get_weather( const tripoint_abs_ms &, const time_point &, unsigned ) const;
         weather_type_id get_weather_conditions( const tripoint_abs_ms &, const time_point &,
                                                 unsigned seed ) const;
@@ -84,4 +84,4 @@ class weather_generator
         static void finalize_all();
 };
 
-#endif // CATA_SRC_WEATHER_GEN_H
+#endif

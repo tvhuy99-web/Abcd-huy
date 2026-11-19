@@ -90,7 +90,7 @@ player_activity::player_activity( const activity_actor &actor ) : type( actor.ge
 void player_activity::set_to_null()
 {
     type = activity_id::NULL_ID();
-    sfx::end_activity_sounds(); // kill activity sounds when activity is nullified
+    sfx::end_activity_sounds();
 }
 
 void player_activity::synchronize_type_with_actor()
@@ -197,23 +197,23 @@ void player_activity::start_or_resume( Character &who, bool resuming )
     if( !type.is_null() && rooted() ) {
         who.rooted_message();
     }
-    // last, as start function may have changed the type
+
     synchronize_type_with_actor();
     get_event_bus().send<event_type::character_starts_activity>( who.getID(), type, resuming );
 }
 
 void player_activity::do_turn( Character &you )
 {
-    // Specifically call the do turn function for the cancellation activity early
-    // This is because the game can get stuck trying to fuel a fire when it's not...
+
+
     if( type == ACT_MIGRATION_CANCEL ) {
         actor->do_turn( *this, you );
         activity_handlers::clean_may_activity_occupancy_items_var_if_is_avatar_and_no_activity_now( you );
         return;
     }
-    // first to ensure sync with actor
+
     synchronize_type_with_actor();
-    // Should happen before activity or it may fail due to 0 moves
+
     if( *this && type->will_refuel_fires() && have_fire ) {
         have_fire = try_fuel_fire( you );
     }
@@ -221,8 +221,8 @@ void player_activity::do_turn( Character &you )
         no_food_nearby_for_auto_consume = false;
         no_drink_nearby_for_auto_consume = false;
     }
-    // Only do once every two minutes to loosely simulate consume times,
-    // the exact amount of time is added correctly below, here we just want to prevent eating something every second
+
+
     if( calendar::once_every( 2_minutes ) && *this && !you.is_npc() ) {
         if( type->valid_auto_needs() && !you.has_effect( effect_nausea ) ) {
             if( you.stomach.contains() <= you.stomach.capacity( you ) / 4 && you.get_kcal_percent() < 0.95f &&
@@ -264,9 +264,9 @@ void player_activity::do_turn( Character &you )
     }
     int previous_stamina = you.get_stamina();
     if( you.is_npc() && you.check_outbounds_activity( *this ) ) {
-        // npc might be operating at the edge of the reality bubble.
-        // or just now reloaded back into it, and their activity target might
-        // be still unloaded, can cause infinite loops.
+
+
+
         set_to_null();
         you.drop_invalid_inventory();
         return;
@@ -275,37 +275,37 @@ void player_activity::do_turn( Character &you )
     you.set_activity_level( exertion_level() );
 
     if( !type->do_turn_EOC.is_null() ) {
-        // if we have an EOC defined in json do that
+
         dialogue d( get_talker_for( you ), nullptr );
         type->do_turn_EOC->activate_activation_only( d, "player activities" );
-        // We may have canceled this via a message interrupt.
+
         if( type.is_null() ) {
             activity_handlers::clean_may_activity_occupancy_items_var_if_is_avatar_and_no_activity_now( you );
             return;
         }
     }
 
-    // This might finish the activity (set it to null)
+
     if( actor ) {
         const activity_id prior_act_id = id();
         actor->do_turn( *this, you );
 
-        // if an activity was assigned during this activity, stop processing immediately
+
         if( *this && prior_act_id != id() ) {
             return;
         }
     } else {
-        // Use the legacy turn function
+
         type->call_do_turn( this, &you );
     }
 
-    // Activities should never excessively drain stamina.
-    // adjusted stamina because
-    // autotravel doesn't reduce stamina after do_turn()
-    // it just sets a destination, clears the activity, then moves afterwards
-    // so set stamina -1 if that is the case
-    // to simulate that the next step will surely use up some stamina anyway
-    // this is to ensure that resting will occur when traveling overburdened
+
+
+
+
+
+
+
     const int adjusted_stamina = travel_activity ? you.get_stamina() - 1 : you.get_stamina();
     activity_id act_id = actor ? actor->get_type() : type;
     bool excluded = act_id == ACT_WORKOUT_HARD ||
@@ -352,23 +352,23 @@ void player_activity::do_turn( Character &you )
     }
 
     if( *this && moves_left <= 0 ) {
-        // Reader completion cues (R21.2): fired at the same point the
-        // engine treats the activity as finished, for the avatar only.
-        // The cue duplicates what the finish path itself announces in
-        // the message log; it carries no extra information.
+
+
+
+
         if( you.is_avatar() ) {
             if( type == ACT_PICKUP ) {
                 a11y::android::cue( "pickup" );
             } else if( moves_total >= 1000 ) {
-                // A long activity (at least ten turns of moves): short
-                // finishes are already covered by their own messages.
+
+
                 a11y::android::cue( "activity_done" );
             }
         }
-        // Note: For some activities "finish" is a misnomer; that's why we explicitly check if the
-        // type is ACT_NULL below.
+
+
         if( !type->completion_EOC.is_null() ) {
-            // if we have an EOC defined in json do that
+
             dialogue d( get_talker_for( you ), nullptr );
             type->completion_EOC->activate_activation_only( d, "player activities" );
         }
@@ -380,29 +380,29 @@ void player_activity::do_turn( Character &you )
             actor->finish( *this, you );
         } else {
             if( !type->call_finish( this, &you ) ) {
-                // "Finish" is never a misnomer for any activity without a finish function
+
                 set_to_null();
             }
         }
     }
     if( !*this ) {
-        // Make sure data of previous activity is cleared
+
         you.activity = player_activity();
-        // Don't resume backlog while auto-moving to a destination --
-        // the destination_activity will restore the right activity on
-        // arrival. Resuming now would re-trigger the same fetch/route
-        // cycle within the same frame.
+
+
+
+
         if( !you.has_destination() ) {
             you.resume_backlog_activity();
         }
-        // If whatever activity we were doing forced us to pick something up to
-        // handle it, drop any overflow that may have caused
+
+
         you.drop_invalid_inventory();
     }
-    // According to the existing code, if 'you' is an NPC, the outer layer may try to resume activity from the
-    // backlog  (in npc::do_player_activity()), which results is (!you.activity) && (!you.get_destination_activity())
-    // is true here not meaning that mult_activity ends, so npc's activity_var cannot be handled here.
-    // only avatar's activity_var is erased in player_activity::do_turn.
+
+
+
+
     activity_handlers::clean_may_activity_occupancy_items_var_if_is_avatar_and_no_activity_now( you );
 }
 
@@ -411,10 +411,10 @@ void player_activity::canceled( Character &who )
     if( *this && actor ) {
         actor->canceled( *this, who );
     }
-    // fix_wound_activity_actor has no canceled() override (its header is
-    // outside this fix's scope), so wound treatment would otherwise end
-    // silently when interrupted: the wound was not treated. Reader-only,
-    // like wait_activity_actor::canceled.
+
+
+
+
     if( *this && type == ACT_TREAT_WOUND && who.is_avatar() && a11y::enabled() ) {
         who.add_msg_if_player( m_warning, _( "You stop treating the wound." ) );
     }
@@ -443,8 +443,8 @@ static bool containers_equal( const T &left, const T &right )
 
 bool player_activity::can_resume_with( const player_activity &other, const Character &who ) const
 {
-    // Should be used for relative positions
-    // And to forbid resuming now-invalid crafting
+
+
 
     if( !*this || !other || !type->can_resume() ) {
         return false;
@@ -454,8 +454,8 @@ bool player_activity::can_resume_with( const player_activity &other, const Chara
         return false;
     }
 
-    // if actor XOR other.actor then id() != other.id() so
-    // we will correctly return false based on final return statement
+
+
     if( actor && other.actor ) {
         return actor->can_resume_with( *other.actor, who );
     }
@@ -558,7 +558,7 @@ std::map<distraction_type, std::string> player_activity::get_distractions() cons
     }
     avatar &u = get_avatar();
     if( uistate.distraction_hunger && !is_distraction_ignored( distraction_type::hunger ) ) {
-        // Starvation value of 5300 equates to about 5kCal.
+
         if( calendar::once_every( 2_hours ) &&
             u.get_hunger() >= 300 &&
             u.get_starvation() > 5300 ) {

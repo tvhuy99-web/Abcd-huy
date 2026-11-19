@@ -143,10 +143,10 @@ enum class join_type {
     last
 };
 
-/** Direction on the overmap. */
+
 namespace om_direction
 {
-/** Basic enum for directions. */
+
 enum class type : int {
     invalid = -1,
     none,
@@ -162,17 +162,17 @@ inline auto format_as( type t )
     return static_cast<std::underlying_type_t<type>>( t );
 }
 
-/** For the purposes of iteration. */
+
 const std::array<type, 4> all = {{ type::north, type::east, type::south, type::west }};
 const size_t size = all.size();
 
-/** Number of bits needed to store directions. */
+
 constexpr size_t bits = static_cast<size_t>( -1 ) >> ( CHAR_BIT *sizeof( size_t ) - size );
 
-/** Get Human readable name of a direction */
+
 std::string name( type dir );
 
-/** Various rotations. */
+
 point rotate( const point &p, type dir );
 tripoint rotate( const tripoint &p, type dir );
 template<typename Point, coords::scale Scale>
@@ -183,40 +183,40 @@ auto rotate( const coords::coord_point_ob<Point, coords::origin::relative, Scale
 }
 uint32_t rotate_symbol( uint32_t sym, type dir );
 
-/** Returns point(0, 0) displaced in specified direction by a specified distance
- * @param dir Direction of displacement
- * @param dist Distance of displacement
- */
+
+
+
+
 point_rel_omt displace( type dir, int dist = 1 );
 
-/** Returns a sum of two numbers
- *  @param dir1 first number
- *  @param dir2 second number */
+
+
+
 type add( type dir1, type dir2 );
 
-/** Turn by 90 degrees to the left, to the right, or randomly (either left or right). */
+
 type turn_left( type dir );
 type turn_right( type dir );
 type turn_random( type dir );
 
-/** Returns an opposite direction. */
+
 type opposite( type dir );
 
-/** Returns a random direction. */
+
 type random();
 
-/** Whether these directions are parallel. */
+
 bool are_parallel( type dir1, type dir2 );
 
 type from_cube( cube_direction, const std::string &error_msg );
 
-} // namespace om_direction
+}
 
 namespace io
 {
 template<>
 std::string enum_to_string<om_vision_level>( om_vision_level );
-} // namespace io
+}
 
 template<>
 struct enum_traits<om_direction::type> {
@@ -237,7 +237,7 @@ class overmap_land_use_code
 
         std::string get_symbol() const;
 
-        // Used by generic_factory
+
         bool was_loaded = false;
         void load( const JsonObject &jo, std::string_view src );
         void finalize();
@@ -275,11 +275,11 @@ struct overmap_static_spawns : public overmap_spawns {
     }
 };
 
-//terrain flags enum! this is for tracking the indices of each flag.
+
 enum class oter_flags : int {
     known_down = 0,
     known_up,
-    no_rotate,    // this tile doesn't have four rotated versions (north, east, south, west)
+    no_rotate,
     should_not_spawn,
     water,
     river_tile,
@@ -290,7 +290,7 @@ enum class oter_flags : int {
     highway_special,
     bridge,
     ignore_rotation_for_adjacency,
-    line_drawing, // does this tile have 8 versions, including straights, bends, tees, and a fourway?
+    line_drawing,
     subway_connection,
     requires_predecessor,
     lake,
@@ -422,26 +422,26 @@ struct oter_type_t {
         string_id<map_data_summary> default_map_data;
         std::vector<std::string> looks_like;
         enum class see_costs : uint8_t {
-            all_clear, // no vertical or horizontal obstacles
-            none, // no horizontal obstacles
-            low, // low horizontal obstacles or few higher ones
-            medium, // medium horizontal obstacles
-            spaced_high, //
-            high, // 0.9
-            full_high, // 0.99
-            opaque, // cannot see through
+            all_clear,
+            none,
+            low,
+            medium,
+            spaced_high,
+            high,
+            full_high,
+            opaque,
             last
         };
         static double see_cost_value( see_costs cost );
 
-        see_costs see_cost = see_costs::none;     // Affects how far the player can see in the overmap
+        see_costs see_cost = see_costs::none;
         oter_travel_cost_type travel_cost_type =
-            oter_travel_cost_type::other;  // Affects the pathfinding and travel times
+            oter_travel_cost_type::other;
         std::string extras = "none";
         int mondensity = 0;
         effect_on_condition_id entry_EOC;
         effect_on_condition_id exit_EOC;
-        // Spawns are added to the submaps *once* upon mapgen of the submaps
+
         overmap_static_spawns static_spawns;
         bool was_loaded = false;
         std::optional<ter_str_id> uniform_terrain;
@@ -497,7 +497,7 @@ struct oter_type_t {
     private:
         enum_bitset<oter_flags> flags;
         std::vector<oter_id> directional_peers;
-        std::string connect_group; // Group for connection when rendering overmap tiles
+        std::string connect_group;
 
         void register_terrain( const oter_t &peer, size_t n, size_t max_n );
 };
@@ -511,14 +511,14 @@ namespace io
 {
 template<>
 std::string enum_to_string<oter_type_t::see_costs>( oter_type_t::see_costs );
-} // namespace io
+}
 
 struct oter_t {
     private:
         const oter_type_t *type;
 
     public:
-        oter_str_id id;         // definitive identifier.
+        oter_str_id id;
         std::vector < std::pair < oter_str_id, mod_id>> src;
 
         oter_t();
@@ -542,9 +542,9 @@ struct oter_t {
 
         std::string get_tileset_id( om_vision_level vision ) const;
 
-        // dir is only meaningful for rotatable, non-linear terrain.  If you
-        // need an answer that also works for linear terrain, call
-        // get_rotation() instead.
+
+
+
         om_direction::type get_dir() const {
             return dir;
         }
@@ -676,20 +676,20 @@ struct oter_t {
         om_direction::type dir = om_direction::type::none;
         uint32_t symbol;
         uint32_t symbol_alt;
-        size_t line = 0;         // Index of line. Only valid in case of line drawing.
+        size_t line = 0;
 };
 
-// LINE_**** corresponds to the ACS_**** macros in ncurses, and are patterned
-// the same way; LINE_NESW, where X indicates a line and O indicates no line
-// (thus, LINE_OXXX looks like 'T'). LINE_ is defined in output.h.  The ACS_
-// macros can't be used here, since ncurses hasn't been initialized yet.
 
-// Overmap specials--these are "special encounters," dungeons, nests, etc.
-// This specifies how often and where they may be placed.
 
-// OMSPEC_FREQ determines the length of the side of the square in which each
-// overmap special will be placed.  At OMSPEC_FREQ 6, the overmap is divided
-// into 900 squares; lots of space for interesting stuff!
+
+
+
+
+
+
+
+
+
 constexpr int OMSPEC_FREQ = 15;
 
 struct overmap_special_spawns : public overmap_spawns {
@@ -706,16 +706,16 @@ struct overmap_special_spawns : public overmap_spawns {
     }
 };
 
-// This is the information needed to know whether you can place a particular
-// piece of an overmap_special at a particular location
+
+
 struct overmap_special_locations {
     tripoint_rel_omt p;
     cata::flat_set<string_id<overmap_location>> locations;
 
-    /**
-     * Returns whether this terrain of the special can be placed on the specified terrain.
-     * It's true if oter meets any of locations.
-     */
+
+
+
+
     bool can_be_placed_on( const oter_id &oter ) const;
     void deserialize( const JsonArray &ja );
 };
@@ -737,7 +737,7 @@ struct overmap_special_connection {
     tripoint_rel_omt p;
     std::optional<tripoint_rel_omt> from;
     cube_direction initial_dir = cube_direction::last; // NOLINT(cata-serialize)
-    // TODO: Remove it.
+
     string_id<oter_type_t> terrain;
     string_id<overmap_connection> connection;
     bool existing = false;
@@ -786,11 +786,11 @@ class overmap_special
             return eoc;
         }
         bool can_spawn( int city_size ) const;
-        /** Returns terrain at the given point. */
+
         const overmap_special_terrain &get_terrain_at( const tripoint_rel_omt &p ) const;
-        /** @returns true if this special requires a city */
+
         bool requires_city() const;
-        /** @returns whether the special at specified tripoint can belong to the specified city. */
+
         bool can_belong_to_city( const tripoint_om_omt &p, const city &cit, const overmap &omap ) const;
         const cata::flat_set<std::string> &get_flags() const {
             return flags_;
@@ -800,7 +800,7 @@ class overmap_special
             return priority_;
         }
         int longest_side() const;
-        //NOTE: only useful for fixed overmap special
+
         std::vector<overmap_special_terrain> get_terrains() const;
         std::vector<overmap_special_terrain> preview_terrains() const;
         std::vector<oter_type_id> get_terrain_type_ids() const;
@@ -822,13 +822,13 @@ class overmap_special
         mapgen_arguments get_args( const mapgendata & ) const;
 
         overmap_special_id id;
-        // TODO: fix how this works with fake specials
-        // Due to fake specials being created after data loading, if any mod has a region settings
-        // which has a fake special defined in DDA, it will count as from the same src, and thus
-        // a duplicate.
-        //std::vector<std::pair<overmap_special_id, mod_id>> src;
 
-        // Used by generic_factory
+
+
+
+
+
+
         bool was_loaded = false;
         void load( const JsonObject &jo, std::string_view src );
         void finalize();
@@ -845,7 +845,7 @@ class overmap_special
         cata::flat_set<std::string> flags_;
         int priority_ = 0;
 
-        // These locations are the default values if ones are not specified for the individual OMTs.
+
         cata::flat_set<string_id<overmap_location>> default_locations_;
         mapgen_parameters mapgen_params_;
 };
@@ -857,10 +857,10 @@ struct overmap_special_migration {
         static void reset();
         void load( const JsonObject &jo, std::string_view src );
         static void check();
-        // Check if the given overmap special should be migrated
+
         static bool migrated( const overmap_special_id &os_id );
-        // Get the migrated id. Returns null id if the special was removed,
-        // or the same id if no migration is necessary
+
+
         static overmap_special_id migrate( const overmap_special_id &old_id );
 
     private:
@@ -882,7 +882,7 @@ void reset();
 
 const std::vector<oter_t> &get_all();
 
-} // namespace overmap_terrains
+}
 
 namespace overmap_land_use_codes
 {
@@ -894,7 +894,7 @@ void reset();
 
 const std::vector<overmap_land_use_code> &get_all();
 
-} // namespace overmap_land_use_codes
+}
 
 namespace overmap_specials
 {
@@ -908,19 +908,19 @@ void reset();
 const std::vector<overmap_special> &get_all();
 
 overmap_special_batch get_default_batch( const point_abs_om &origin, int city_size );
-/**
- * Generates a simple special from a building id.
- */
+
+
+
 overmap_special_id create_building_from( const string_id<oter_type_t> &base );
 
-} // namespace overmap_specials
+}
 
 namespace city_buildings
 {
 
 void load( const JsonObject &jo, const std::string &src );
 
-} // namespace city_buildings
+}
 
 struct overmap_special_data {
     virtual ~overmap_special_data() = default;
@@ -948,7 +948,7 @@ struct fixed_overmap_special_data : overmap_special_data {
     }
 
     void finalize(
-        const std::string &/*context*/,
+        const std::string &,
         const cata::flat_set<string_id<overmap_location>> &default_locations ) override;
     void finalize_mapgen_parameters( mapgen_parameters &params,
                                      const std::string &context ) const override;
@@ -1100,9 +1100,9 @@ struct special_placement_result {
     std::vector<std::pair<om_pos_dir, std::string>> joins_used;
 };
 
-// When building a mutable overmap special we maintain a collection of
-// unresolved joins.  We need to be able to index that collection in
-// various ways, so it gets its own struct to maintain the relevant invariants.
+
+
+
 class joins_tracker
 {
     public:
@@ -1140,11 +1140,11 @@ class joins_tracker
         void consistency_check() const;
 
         enum class join_status {
-            disallowed, // Conflicts with existing join, and at least one was mandatory
-            matched_available, // Matches an existing non-mandatory join
-            matched_non_available, // Matches an existing mandatory join
-            mismatched_available, // Points at an incompatible join, but both are non-mandatory
-            free, // Doesn't point at another join at all
+            disallowed,
+            matched_available,
+            matched_non_available,
+            mismatched_available,
+            free,
         };
 
         join_status allows( const om_pos_dir &this_side,
@@ -1255,10 +1255,10 @@ struct mutable_overmap_phase_remainder {
         om_direction::type dir;
         mutable_overmap_placement_rule_remainder *rule;
         std::vector<om_pos_dir> suppressed_joins;
-        // For debugging purposes it's really handy to have a record of exactly
-        // what happened during placement of a mutable special when it fails,
-        // so to aid that we provide a human-readable description here which is
-        // only used in the event of a placement error.
+
+
+
+
         std::string description;
 
         explicit satisfy_result( const tripoint_om_omt origin, const om_direction::type dir,
@@ -1348,9 +1348,9 @@ struct mutable_overmap_special_data : overmap_special_data {
     int score_rotation_at( const overmap &, const tripoint_om_omt &,
                            om_direction::type ) const override;
     special_placement_result place(
-        overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool /*blob*/,
+        overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool,
         const city &cit, bool must_be_unexplored ) const override;
     void load( const JsonObject &jo, bool was_loaded );
 };
 
-#endif // CATA_SRC_OMDATA_H
+#endif

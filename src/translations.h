@@ -2,8 +2,8 @@
 #ifndef CATA_SRC_TRANSLATIONS_H
 #define CATA_SRC_TRANSLATIONS_H
 
-// on some systems <locale> pulls in libintl.h anyway,
-// so preemptively include it before the gettext overrides.
+
+
 #include <locale> // IWYU pragma: keep
 
 // pragma export needed because IWYU gets confused about FMT_STRING
@@ -13,20 +13,20 @@
 #include "translation.h"
 
 #if !defined(translate_marker)
-/**
- * Marks a string literal to be extracted for translation. This is only for running `xgettext` via
- * "lang/update_pot.sh". Use `_` to extract *and* translate at run time. The macro itself does not
- * do anything, the argument is passed through it without any changes.
- * That means, this does NOT return a translated string. Calling translate_marker on an English string in any UI code is likely a mistake! Use `_` or to_translation etc.
- */
+
+
+
+
+
+
 #define translate_marker(x) x
 #endif
 #if !defined(translate_marker_context)
-/**
- * Same as @ref translate_marker, but also provides a context (string literal). This is similar
- * to @ref pgettext, but it does not translate at run time. Like @ref translate_marker it just
- * passes the *second* argument through.
- */
+
+
+
+
+
 #define translate_marker_context(c, x) x
 #endif
 
@@ -42,10 +42,10 @@
 
 std::string select_language();
 
-// For code analysis purposes in our clang-tidy plugin we need to be able to
-// detect when something is the argument to a translation function.  The _
-// macro makes this really tricky, so we add an otherwise unnecessary call to
-// this no-op function just so that there's something to detect.
+
+
+
+
 template<typename T>
 inline const T &translation_argument_identity( const T &t )
 {
@@ -53,10 +53,10 @@ inline const T &translation_argument_identity( const T &t )
     return t;
 }
 
-// Note: in case of std::string argument, the result is copied, this is intended (for safety)
-// Note that _ triggers reserved identifier warnings, but we suppress all
-// three because it's a common use of _ and thus not likely to be a problem in
-// practice.
+
+
+
+
 // NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _( msg ) \
     ( ( []( const auto & arg ) { \
@@ -90,7 +90,7 @@ inline const char *npgettext( const char *const context, const char *const msgid
             n );
 }
 
-#else // !LOCALIZE
+#else
 
 #define _(STRING) (STRING)
 
@@ -98,11 +98,11 @@ inline const char *npgettext( const char *const context, const char *const msgid
 #define pgettext(STRING1, STRING2) _(STRING2)
 #define npgettext(STRING0, STRING1, STRING2, COUNT) n_gettext(STRING1, STRING2, COUNT)
 
-#endif // LOCALIZE
+#endif
 
-// Always statically typecheck format strings even if not using localization.
-// type_pack<...>::apply<T> instantiates T<...>
-// We use this trick to instantiate the fmtlib typechecking type in a macro context.
+
+
+
 template<typename ...Ts>
 struct type_pack {
     template<template<typename ...> typename T> using apply = T<Ts...>;
@@ -124,8 +124,8 @@ inline std::string _fmt_inner( std::string_view translation, Args &&...args )
 #define _fmt( msg, ... ) \
     (decltype(make_type_pack(__VA_ARGS__))::apply<fmt::format_string>{ FMT_STRING(msg) }, _fmt_inner( _(msg), __VA_ARGS__ ))
 
-// Avoid using these functions from libintl.h which won't work because we have
-// our own implementations with different names.
+
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wredundant-decls"
@@ -142,4 +142,4 @@ std::string locale_dir();
 void set_language_from_options();
 void set_language( const std::string &lang );
 
-#endif // CATA_SRC_TRANSLATIONS_H
+#endif

@@ -24,7 +24,7 @@ static const faction_id faction_no_faction( "no_faction" );
 namespace npc_factions
 {
 static std::vector<faction_template> all_templates;
-} // namespace npc_factions
+}
 
 faction_template::faction_template()
 {
@@ -39,13 +39,13 @@ faction_template::faction_template()
     lone_wolf_faction = false;
     limited_area_claim = false;
     currency = itype_id::NULL_ID();
-    steal_persist = std::nullopt; // Default ask
+    steal_persist = std::nullopt;
 }
 
 faction::faction( const faction_template &templ )
 {
     id = templ.id;
-    // first init *all* members, than copy those from the template
+
     static_cast<faction_template &>( *this ) = templ;
 }
 
@@ -210,8 +210,8 @@ void faction::remove_member( const character_id &guy_id )
     }
     if( members.empty() ) {
         for( const faction_template &elem : npc_factions::all_templates ) {
-            // This is a templated base faction - don't delete it, just leave it as zero members for now.
-            // Only want to delete dynamically created factions.
+
+
             if( elem.id == id ) {
                 return;
             }
@@ -220,7 +220,7 @@ void faction::remove_member( const character_id &guy_id )
     }
 }
 
-// Used in game.cpp
+
 std::string fac_ranking_text( int val )
 {
     if( val <= -100 ) {
@@ -269,10 +269,10 @@ std::string fac_ranking_text( int val )
     return _( "Neutral" );
 }
 
-// Used in game.cpp
+
 std::string fac_respect_text( int val )
 {
-    // Respected, feared, etc.
+
     if( val >= 100 ) {
         return pgettext( "Faction respect", "Legendary" );
     }
@@ -292,7 +292,7 @@ std::string fac_respect_text( int val )
         return pgettext( "Faction respect", "Spoken Of" );
     }
 
-    // Disrespected, laughed at, etc.
+
     if( val <= -100 ) {
         return pgettext( "Faction respect", "Worthless Scum" );
     }
@@ -317,7 +317,7 @@ std::string fac_respect_text( int val )
 
 std::string fac_wealth_text( int val, int size )
 {
-    //Wealth per person
+
     val = val / size;
     if( val >= 1000000 ) {
         return pgettext( "Faction wealth", "Filthy rich" );
@@ -348,7 +348,7 @@ std::string fac_wealth_text( int val, int size )
 
 std::string faction::food_supply_text() const
 {
-    //Convert to how many days you can support the population
+
     int val = food_supply().kcal() / ( size * 288 );
     if( val >= 30 ) {
         return pgettext( "Faction food", "Overflowing" );
@@ -391,7 +391,7 @@ std::pair<nc_color, std::string> faction::vitamin_stores( vitamin_type vit_type 
     bool is_toxin = vit_type == vitamin_type::TOXIN;
     const double days_of_food = food_supply().kcal() / 3000.0;
     std::map<vitamin_id, int> stored_vits = food_supply().vitamins();
-    // First, pare down our search to only the relevant type
+
     for( auto it = stored_vits.cbegin(); it != stored_vits.cend(); ) {
         if( it->first->type() != vit_type ) {
             it = stored_vits.erase( it );
@@ -403,18 +403,18 @@ std::pair<nc_color, std::string> faction::vitamin_stores( vitamin_type vit_type 
         return std::pair<nc_color, std::string>( !is_toxin ? c_red : c_green, _( "None present (NONE)" ) );
     }
     std::vector<std::pair<vitamin_id, double>> vitamins;
-    // Iterate the map's content into a sortable container...
+
     for( auto &vit : stored_vits ) {
         int units_per_day = vit.first.obj().units_absorption_per_day();
         double relative_intake = static_cast<double>( vit.second ) / static_cast<double>
                                  ( units_per_day ) / days_of_food;
-        // We use the inverse value for toxins, since they are bad.
+
         if( is_toxin ) {
             relative_intake = 1 / relative_intake;
         }
         vitamins.emplace_back( vit.first, relative_intake );
     }
-    // Sort to find the worst-case scenario, lowest relative_intake is first
+
     std::sort( vitamins.begin(), vitamins.end(), []( const auto & x, const auto & y ) {
         return x.second > y.second;
     } );
@@ -567,7 +567,7 @@ faction *faction_manager::get( const faction_id &id, const bool complain )
         }
     }
     for( const faction_template &elem : npc_factions::all_templates ) {
-        // id isn't already in factions map, so load in the template.
+
         if( elem.id == id ) {
             factions[elem.id] = faction( elem );
             if( !factions.empty() ) {
@@ -576,7 +576,7 @@ faction *faction_manager::get( const faction_id &id, const bool complain )
             return &factions[elem.id];
         }
     }
-    // Sometimes we add new IDs to the map, sometimes we want to check if its already there.
+
     if( complain ) {
         debugmsg( "Requested non-existing faction '%s'", id.str() );
     }

@@ -36,16 +36,16 @@ namespace
 
 generic_factory<add_type> add_type_factory( "addiction" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const add_type &string_id<add_type>::obj() const
 {
     return add_type_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<add_type>::is_valid() const
 {
@@ -169,7 +169,7 @@ static bool crack_coke_add( Character &u, int in, int stim, bool is_crack )
     return ret;
 }
 
-/************** Builtin effects **************/
+
 
 static bool nicotine_effect( Character &u, addiction &add )
 {
@@ -217,10 +217,10 @@ static bool opiate_effect( Character &u, addiction &add )
     const int in = std::min( 20, add.intensity );
     if( calendar::once_every( time_duration::from_turns( 100 - in * 4 ) ) &&
         u.get_painkiller() > 20 - in ) {
-        // Tolerance increases!
+
         u.mod_painkiller( -1 );
     }
-    // No further effects if we're doped up.
+
     if( u.get_painkiller() >= add.intensity ) {
         add.sated = 0_turns;
         u.remove_effect( effect_shakes );
@@ -333,7 +333,7 @@ static bool crack_effect( Character &u, addiction &add )
     return crack_coke_add( u, in, current_stim, true );
 }
 
-/*********************************************/
+
 
 static const std::map<std::string, std::function<bool( Character &, addiction & )>> builtin_map {
     {"nicotine_effect",    ::nicotine_effect},

@@ -36,7 +36,7 @@ std::string mod_ui::get_information( const MOD_INFORMATION *mod )
 
     if( !mod->maintainers.empty() ) {
         info += colorize( n_gettext( "Maintainer", "Maintainers", mod->maintainers.size() ),
-                          c_light_blue ) + u8":\u00a0"/*non-breaking space*/ + enumerate_as_string( mod->maintainers ) + "\n";
+                          c_light_blue ) + u8":\u00a0" + enumerate_as_string( mod->maintainers ) + "\n";
     }
 
     if( !mod->dependencies.empty() ) {
@@ -95,7 +95,7 @@ void mod_ui::try_add( const mod_id &mod_to_add,
                       std::vector<mod_id> &active_list )
 {
     if( std::find( active_list.begin(), active_list.end(), mod_to_add ) != active_list.end() ) {
-        // The same mod can not be added twice. That makes no sense.
+
         return;
     }
     if( !mod_to_add.is_valid() ) {
@@ -122,30 +122,30 @@ void mod_ui::try_add( const mod_id &mod_to_add,
     }
 
     if( errs ) {
-        // cannot add, something wrong!
+
         return;
     }
-    // get dependencies of selection in the order that they would appear from the top of the active list
+
     std::vector<mod_id> dependencies = mm_tree.get_dependencies_of_X_as_strings( mod.ident );
 
-    // check to see if mod is a core, and if so check to see if there is already a core in the mod list
+
     if( mod.core ) {
-        //  (more than 0 active elements) && (active[0] is a CORE) && active[0] is not the add candidate
+
         if( !active_list.empty() && active_list[0]->core && active_list[0] != mod_to_add ) {
-            // remove existing core
+
             const std::string old_core_name = active_list[0]->name();
             try_rem( 0, active_list );
             if( a11y::enabled() ) {
-                // try_rem only reports dependents; the replaced core
-                // itself would otherwise go unmentioned.
+
+
                 popup( _( "Removed the previous core mod: %s." ), old_core_name );
             }
         }
 
-        // add to start of active_list if it doesn't already exist in it
+
         active_list.insert( active_list.begin(), mod_to_add );
     } else {
-        // now check dependencies and add them as necessary
+
         std::vector<mod_id> mods_to_add;
         bool new_core = false;
         for( auto &i : dependencies ) {
@@ -160,9 +160,9 @@ void mod_ui::try_add( const mod_id &mod_to_add,
         }
 
         if( new_core && !active_list.empty() ) {
-            // The new core replaces whatever core is currently first.
-            // try_rem below also drops that core's dependents; report the
-            // core itself here, the dependents are reported there.
+
+
+
             const bool had_core = active_list[0].is_valid() && active_list[0]->core;
             const std::string old_core_name = had_core ? active_list[0]->name() : std::string();
             try_rem( 0, active_list );
@@ -172,20 +172,20 @@ void mod_ui::try_add( const mod_id &mod_to_add,
             active_list.insert( active_list.begin(), mods_to_add[0] );
             mods_to_add.erase( mods_to_add.begin() );
         }
-        // now add the rest of the dependencies serially to the end
+
         for( auto &i : mods_to_add ) {
             active_list.push_back( i );
         }
-        // and finally add the one we are trying to add!
+
         active_list.push_back( mod.ident );
     }
 }
 
 void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
 {
-    // first make sure that what we are looking for exists in the list
+
     if( selection >= active_list.size() ) {
-        // trying to access an out of bounds value! quit early
+
         return;
     }
     const mod_id sel_string = active_list[selection];
@@ -194,7 +194,7 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
 
     std::vector<mod_id> dependents = mm_tree.get_dependents_of_X_as_strings( mod.ident );
 
-    // search through the rest of the active list for mods that depend on this one
+
     std::vector<std::string> removed_dependents;
     for( auto &i : dependents ) {
         auto rem = std::find( active_list.begin(), active_list.end(), i );
@@ -209,10 +209,10 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
         active_list.erase( rem );
     }
     if( a11y::enabled() && !removed_dependents.empty() ) {
-        // Removing one mod silently drops every mod that depends on it;
-        // the refreshed list alone never says what went away.
-        // The removed mod itself needs no announcement: the player just
-        // activated its removal and the list re-reads without it.
+
+
+
+
         popup( _( "Also removed from the load order: %s." ),
                enumerate_as_string( removed_dependents ) );
     }
@@ -220,25 +220,25 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
 
 void mod_ui::try_shift( char direction, size_t &selection, std::vector<mod_id> &active_list )
 {
-    // error catch for out of bounds
+
     if( selection >= active_list.size() ) {
         return;
     }
 
-    // eliminates 'uninitialized variable' warning
+
     size_t newsel = 0;
     size_t oldsel = 0;
     int selshift = 0;
 
-    // shift up (towards 0)
+
     if( direction == '-' && can_shift_up( selection, active_list ) ) {
-        // see if the mod at selection-1 is a) a core, or b) is depended on by this mod
+
         newsel = selection - 1;
         oldsel = selection;
 
         selshift = -1;
     }
-    // shift down (towards active_list.size()-1)
+
     else if( direction == '+' && can_shift_down( selection, active_list ) ) {
         newsel = selection;
         oldsel = selection + 1;
@@ -251,8 +251,8 @@ void mod_ui::try_shift( char direction, size_t &selection, std::vector<mod_id> &
     mod_id modstring = active_list[newsel];
     mod_id selstring = active_list[oldsel];
 
-    // we can shift!
-    // switch values!
+
+
     active_list[newsel] = selstring;
     active_list[oldsel] = modstring;
 
@@ -261,20 +261,20 @@ void mod_ui::try_shift( char direction, size_t &selection, std::vector<mod_id> &
 
 bool mod_ui::can_shift_up( size_t selection, const std::vector<mod_id> &active_list )
 {
-    // error catch for out of bounds
+
     if( selection >= active_list.size() ) {
         return false;
     }
-    // dependencies of this active element
+
     std::vector<mod_id> dependencies = mm_tree.get_dependencies_of_X_as_strings(
                                            active_list[selection] );
 
-    // figure out if we can move up!
+
     if( selection == 0 ) {
-        // can't move up, don't bother trying
+
         return false;
     }
-    // see if the mod at selection-1 is a) a core, or b) is depended on by this mod
+
     int newsel = selection - 1;
 
     mod_id newsel_id = active_list[newsel];
@@ -286,16 +286,16 @@ bool mod_ui::can_shift_up( size_t selection, const std::vector<mod_id> &active_l
 
 bool mod_ui::can_shift_down( size_t selection, const std::vector<mod_id> &active_list )
 {
-    // error catch for out of bounds
+
     if( selection >= active_list.size() ) {
         return false;
     }
     std::vector<mod_id> dependents = mm_tree.get_dependents_of_X_as_strings(
                                          active_list[selection] );
 
-    // figure out if we can move down!
+
     if( selection == active_list.size() - 1 ) {
-        // can't move down, don't bother trying
+
         return false;
     }
     int newsel = selection;

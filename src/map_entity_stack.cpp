@@ -383,7 +383,7 @@ bool map_entity_stack<map_data_common_t>::compare( const map_entity_stack<map_da
     return rhs_cat;
 }
 
-//returns the last priority item index.
+
 template<typename T>
 int list_filter_high_priority( std::vector<map_entity_stack<T>*> &stack,
                                const std::string &priorities )
@@ -411,8 +411,8 @@ template<typename T>
 int list_filter_low_priority( std::vector<map_entity_stack<T>*> &stack, const int start,
                               const std::string &priorities )
 {
-    // todo: actually use it and specialization (only used for items)
-    // TODO:optimize if necessary
+
+
     std::vector<map_entity_stack<T>*> tempstack;
     const auto filter_fn = item_filter_from_string( priorities );
     for( auto it = stack.begin() + start; it != stack.end(); ) {
@@ -432,7 +432,7 @@ int list_filter_low_priority( std::vector<map_entity_stack<T>*> &stack, const in
     return id;
 }
 
-// explicit template instantiation
+
 template class map_entity_stack<item>;
 template class map_entity_stack<Creature>;
 template class map_entity_stack<map_data_common_t>;

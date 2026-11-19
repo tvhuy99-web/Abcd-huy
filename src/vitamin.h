@@ -55,65 +55,65 @@ class vitamin
             return flags_.count( flag ) > 0;
         }
 
-        /** Disease effect with increasing intensity proportional to vitamin deficiency */
+
         const efftype_id &deficiency() const {
             return deficiency_;
         }
 
-        /** Disease effect with increasing intensity proportional to vitamin excess */
+
         const efftype_id &excess() const {
             return excess_;
         }
 
-        /** Lower bound for deficiency of this vitamin */
+
         int min() const {
             return min_;
         }
 
-        /** Upper bound for any accumulation of this vitamin */
+
         int max() const {
             return max_;
         }
 
-        /**
-         * Usage rate of vitamin (time to consume unit)
-         * Lower bound is zero whereby vitamin is not required (but may still accumulate)
-         */
+
+
+
+
         time_duration rate() const {
             return rate_;
         }
 
-        /** An array of the other vitamins that this vitamin decays into, and their proportions */
+
         std::vector<std::pair<vitamin_id, int>> decays_into() const {
             return decays_into_;
         }
 
-        /** Get intensity of deficiency or zero if not deficient for specified qty */
+
         int severity( int qty ) const;
 
-        /** Load vitamin from JSON definition */
+
         static void load_vitamin( const JsonObject &jo );
 
-        /** Get all currently loaded vitamins */
+
         static const std::map<vitamin_id, vitamin> &all();
 
-        /** Check consistency of all loaded vitamins */
+
         static void check_consistency();
 
-        /** Clear all loaded vitamins (invalidating any pointers) */
+
         static void reset();
 
-        /**
-         * Convert standard RDA to units a character can ingest
-         * This is the default RDA for an average human, before any modifiers
-         */
+
+
+
+
         float RDA_to_default( int percent ) const;
 
-        /** Returns how many of this vitamin (in units) can be absorbed in one day */
+
         int units_absorption_per_day() const;
 
         int units_from_mass( vitamin_units::mass val ) const;
-        // First is value, second is units (g, mg, etc)
+
         std::pair<std::string, std::string> mass_str_from_units( int units ) const;
 
     private:
@@ -132,4 +132,4 @@ class vitamin
         std::set<std::string> flags_;
 };
 
-#endif // CATA_SRC_VITAMIN_H
+#endif

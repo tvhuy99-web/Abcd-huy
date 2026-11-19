@@ -9,10 +9,10 @@ class JsonOut;
 
 enum npc_favor_type {
     FAVOR_NULL,
-    FAVOR_GENERAL, // We owe you... a favor?
-    FAVOR_CASH, // We owe cash (or goods of equivalent value)
-    FAVOR_ITEM, // We owe a specific item
-    FAVOR_TRAINING,// We owe skill or style training
+    FAVOR_GENERAL,
+    FAVOR_CASH,
+    FAVOR_ITEM,
+    FAVOR_TRAINING,
     NUM_FAVOR_TYPES
 };
 
@@ -33,4 +33,4 @@ struct npc_favor {
     void deserialize( const JsonObject &jo );
 };
 
-#endif // CATA_SRC_NPC_FAVOR_H
+#endif

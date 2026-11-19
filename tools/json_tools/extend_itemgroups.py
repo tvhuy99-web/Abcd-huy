@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# Usage 'extend_itemgroups.py dir file'
-# Will convert all itemgroups within dir that have an id listed in 'file'
-# to "copy-from" an itemgroup with the same id and use "extend" for all entries
 
 import argparse
 import json
@@ -17,10 +14,10 @@ args.add_argument("converted", action="store",
                   "this file will be converted")
 args_dict = vars(args.parse_args())
 
-# The ids of itemgroups we convert
+
 converted_ids = set()
 
-# The keys we are moving to extend
+
 transferred_keys = [
     "items",
     "entries",
@@ -69,7 +66,7 @@ for root, directories, filenames in os.walk(args_dict["dir"]):
 
 with open(args_dict["converted"]) as file:
     for line in file:
-        # Remove the newline
+
         line = line[:-1]
         converted_ids.add(line)
 

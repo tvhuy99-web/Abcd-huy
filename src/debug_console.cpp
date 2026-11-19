@@ -105,7 +105,7 @@ namespace debug_menu
 
 namespace
 {
-// Vehicle at the avatar's tile, or nullopt.
+
 struct current_vehicle_ref {
     vehicle *v;
     map *m;
@@ -121,7 +121,7 @@ std::optional<current_vehicle_ref> current_vehicle_for_avatar()
     return current_vehicle_ref{ v, &m };
 }
 
-// Discrete play-speed positions in turns-per-second.
+
 struct play_speed {
     float per_sec;
     const char *label;
@@ -135,10 +135,10 @@ constexpr std::array<play_speed, 5> speeds = { {
     }
 };
 
-// One row in the canonical tab table. Its order defines tab-bar order,
-// persistence id, Ctrl+1..0 mapping, NEXT/PREV ring, and category routing.
-// id_string is the stable on-disk key for selected_tab and the per-tab
-// nested object; changing it invalidates saved console state.
+
+
+
+
 struct tab_descriptor {
     std::string_view id_string;
     std::function<std::unique_ptr<console_tab_view>()> factory;
@@ -165,7 +165,7 @@ const std::vector<tab_descriptor> &tab_registry()
     return reg;
 }
 
-// Linear lookup by stable id string. Returns nullopt for unknown ids.
+
 std::optional<std::size_t> tab_idx_for_id( std::string_view id )
 {
     const std::vector<tab_descriptor> &reg = tab_registry();
@@ -177,9 +177,9 @@ std::optional<std::size_t> tab_idx_for_id( std::string_view id )
     return std::nullopt;
 }
 
-// Linear lookup by debug_action_entry category. Returns the index of the
-// owning tab, or the "game" tab as defensive fallback for null/unknown
-// input. Steady-state coverage is enforced by tab_registry_invariants.
+
+
+
 std::size_t tab_idx_for_category( const char *cat )
 {
     const std::vector<tab_descriptor> &reg = tab_registry();
@@ -195,9 +195,9 @@ std::size_t tab_idx_for_category( const char *cat )
     return tab_idx_for_id( "game" ).value_or( 0 );
 }
 
-// Dimmed-label + plain-value row inside an already-open 2-column table.
-// Caller is responsible for ImGui::BeginTable / EndTable around batches of
-// calls; this routine only advances the row and writes the two cells.
+
+
+
 void kv_row( const char *k, const std::string &v )
 {
     ImGui::TableNextRow();
@@ -207,9 +207,9 @@ void kv_row( const char *k, const std::string &v )
     ImGui::TextUnformatted( v.c_str() );
 }
 
-// Opens a 2-column key/value panel: a 160-px-wide dimmed label column and
-// a stretching value column. Body runs only when BeginTable succeeded;
-// EndTable is paired automatically.
+
+
+
 void kv_panel( const char *id, const std::function<void()> &body )
 {
     if( ImGui::BeginTable( id, 2, ImGuiTableFlags_SizingStretchProp ) ) {
@@ -220,27 +220,27 @@ void kv_panel( const char *id, const std::function<void()> &body )
     }
 }
 
-// Per-column sizing policy for the managed (clipped) tables. Widths are
-// measured by us, not by ImGui, so a row clipper can never starve the
-// measurement and column widths stay stable frame to frame.
+
+
+
 enum class colw { fit, widget, stretch };
 
 template<typename Row>
 struct colspec {
     const char *header;
     colw policy = colw::fit;
-    // fit: produces the display string measured per row.
+
     std::function<std::string( const Row & )> text = {};
-    float px = 0.0f;          // widget: width; fit: minimum floor
-    float weight = 1.0f;      // stretch: weight
-    float max_frac = 0.0f;    // fit: cap as fraction of table width (0 = none)
+    float px = 0.0f;
+    float weight = 1.0f;
+    float max_frac = 0.0f;
     ImGuiTableColumnFlags flags = 0;
 };
 
 struct colw_cache {
     uint64_t key = 0;
     bool valid = false;
-    std::vector<float> widths;   // natural (uncapped, unfloored) measured widths
+    std::vector<float> widths;
 };
 
 std::unordered_map<std::string, colw_cache> &colw_caches()
@@ -249,8 +249,8 @@ std::unordered_map<std::string, colw_cache> &colw_caches()
     return m;
 }
 
-// Natural width of one fit column over rows [first,last): header (plus a sort
-// arrow allowance for sortable, non-NoSort columns) and the widest cell, padded.
+
+
 template<typename Row>
 float measure_fit( const colspec<Row> &s, const std::vector<Row> &rows,
                    size_t first, size_t last, bool sortable )
@@ -267,14 +267,14 @@ float measure_fit( const colspec<Row> &s, const std::vector<Row> &rows,
     return w + ImGui::GetStyle().CellPadding.x * 2.0f + 6.0f;
 }
 
-// Emit TableSetupColumn for every column with an explicit width. fit columns
-// cache a natural width measured against `key` (recomputed only when the
-// row-set key changes, so widths do not drift or jitter on scroll), then
-// grow_columns sticky-grows it for visible values. The px floor and max_frac
-// cap are applied here each frame so a window resize re-caps without a rebuild.
-// All managed columns are NoResize so the width passed each frame is honored
-// (ImGui treats init width as init-only for resizable columns). Call right
-// after BeginTable, before headers and rows.
+
+
+
+
+
+
+
+
 template<typename Row>
 void setup_columns( const char *cache_id, uint64_t key,
                     const std::vector<colspec<Row>> &specs,
@@ -283,8 +283,8 @@ void setup_columns( const char *cache_id, uint64_t key,
     colw_cache &c = colw_caches()[cache_id];
     if( !c.valid || c.key != key ) {
         c.widths.assign( specs.size(), 0.0f );
-        // Bounded initial measure; rows past the cap are picked up by
-        // grow_columns once scrolled into view.
+
+
         const size_t n = std::min<size_t>( rows.size(), 4096 );
         for( size_t i = 0; i < specs.size(); i++ ) {
             if( specs[i].policy == colw::fit ) {
@@ -311,8 +311,8 @@ void setup_columns( const char *cache_id, uint64_t key,
     }
 }
 
-// Sticky-grow visible fit columns. Call inside the clipper loop with the
-// visible [first,last) range; cached widths only grow and apply next frame.
+
+
 template<typename Row>
 void grow_columns( const char *cache_id, const std::vector<colspec<Row>> &specs,
                    const std::vector<Row> &rows, int first, int last, bool sortable = false )
@@ -331,7 +331,7 @@ void grow_columns( const char *cache_id, const std::vector<colspec<Row>> &specs,
     }
 }
 
-// Cheap combiner for building a table layout key from row-set identity.
+
 uint64_t lk_mix( uint64_t h, uint64_t v )
 {
     return h ^ ( v + 0x9e3779b97f4a7c15ULL + ( h << 6 ) + ( h >> 2 ) );
@@ -341,9 +341,9 @@ uint64_t lk_str( uint64_t h, const std::string &s )
     return lk_mix( h, std::hash<std::string> {}( s ) );
 }
 
-// Show `full` as a hover tooltip when it is too wide for `cell_w` (the column
-// content width, captured right after TableNextColumn). Call immediately after
-// submitting the cell's text widget so IsItemHovered refers to it.
+
+
+
 void clip_tooltip( const std::string &full, float cell_w )
 {
     if( ImGui::IsItemHovered() && ImGui::CalcTextSize( full.c_str() ).x > cell_w ) {
@@ -351,11 +351,11 @@ void clip_tooltip( const std::string &full, float cell_w )
     }
 }
 
-// Column spec for export_rows. `header` is the markdown column heading;
-// `json_key` is the matching JSON property name (kept independent so the
-// JSON schema stays stable when display headers are tweaked). Each row
-// produces one markdown cell and one already-encoded JSON value (callers
-// supply quoted strings and bare numbers themselves).
+
+
+
+
+
 template<typename Row>
 struct export_column {
     const char *header;
@@ -364,10 +364,10 @@ struct export_column {
     std::function<std::string( const Row & )> json_value;
 };
 
-// Drives an export_bar with a uniform markdown table + json array built
-// from `rows` and `cols`. `name` is the export_bar label; `md_title` is
-// the H2 line in the markdown body (pass the same string when no extra
-// caption is needed). Builders run only on Copy click.
+
+
+
+
 template<typename Row>
 void export_rows( debug_console &host, const char *name,
                   const std::string &md_title,
@@ -427,17 +427,17 @@ void export_rows( debug_console &host, const char *name,
     } );
 }
 
-// Typed selection keys for the creatures + items tabs. Encoded as
-// "npc:<id>" or "mon:<type>[@<pos>]"; to_string() and parse() round-trip
-// the on-disk format byte-for-byte. For monsters, an absent "@pos"
-// matches the first monster of the given type.
+
+
+
+
 struct creature_ref {
     enum class kind { npc, monster };
 
     kind k = kind::npc;
-    int npc_id = 0;                          // when k == npc
-    std::string mon_type;                    // when k == monster
-    std::optional<std::string> mon_pos_str;  // when k == monster; nullopt = wildcard
+    int npc_id = 0;
+    std::string mon_type;
+    std::optional<std::string> mon_pos_str;
 
     std::string to_string() const {
         if( k == kind::npc ) {
@@ -519,13 +519,13 @@ struct item_source_ref {
         return std::nullopt;
     }
 };
-} // namespace
+}
 
 debug_console::debug_console() : cataimgui::window( "Debug console" )
 {
-    // cataimgui::window::draw() calls BringWindowToDisplayFront each frame
-    // when is_on_top, which sorts combo popups behind the console and
-    // makes dropdowns unclickable. force_to_back lets popups render above.
+
+
+
     force_to_back = true;
     ctxt = input_context( "DEBUG_CONSOLE", keyboard_mode::keychar );
     ctxt.register_action( "QUIT" );
@@ -538,16 +538,16 @@ debug_console::debug_console() : cataimgui::window( "Debug console" )
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
 
-    // Tab views are instantiated from tab_registry() so the vector stays
-    // index-aligned with the registry. Default to the registry's first
-    // entry as the active tab.
+
+
+
     const std::vector<tab_descriptor> &reg = tab_registry();
     tab_views.reserve( reg.size() );
     for( const tab_descriptor &d : reg ) {
         tab_views.emplace_back( d.factory() );
     }
-    // Cache the items_view pointer so cross-tab show_items_for_* verbs can
-    // write through without walking the tab_views vector.
+
+
     if( auto idx = tab_idx_for_id( "items" ); idx.has_value() ) {
         items_view_ = dynamic_cast<tab_items_view *>( tab_views[*idx].get() );
     }
@@ -583,9 +583,9 @@ cataimgui::bounds debug_console::get_bounds()
     return { persisted_x, persisted_y, persisted_w, persisted_h };
 }
 
-// Step / play / fast-forward state machine. Owns the footer UI and the
-// per-frame turn-drain logic; host calls tick() once per outer-loop frame
-// and draw_footer() once per ImGui frame.
+
+
+
 class step_controller
 {
     public:
@@ -626,9 +626,9 @@ step_controller::outcome step_controller::tick( input_context &ctxt )
     if( !playing ) {
         pending_steps--;
     }
-    // do_turn() blocks for player input when the avatar has moves and no
-    // activity; drain moves to skip that. With an activity queued, let it
-    // consume them normally.
+
+
+
     avatar &av = get_avatar();
     if( !av.activity ) {
         av.set_moves( 0 );
@@ -654,8 +654,8 @@ void step_controller::request_step()
 {
     ff_hp_baseline = get_avatar().get_hp();
     pending_steps = 1;
-    // Sentinel: force the next tick() to fire immediately regardless of
-    // the speed throttle.
+
+
     last_step_at = {};
 }
 
@@ -673,8 +673,8 @@ void step_controller::save( JsonOut &jo ) const
     jo.member( "ff_stop_on_dmg", ff_stop_on_dmg );
 }
 
-// Fuzzy-search omnibox state. Owns the input/cache plus the post-select
-// highlight pulse fed back to debug_button / highlight_checkbox.
+
+
 class omnibox_state
 {
     public:
@@ -687,10 +687,10 @@ class omnibox_state
 
     private:
         std::string query;
-        // '/' poll sets; draw consumes via SetKeyboardFocusHere.
+
         bool focus_request = false;
 
-        // Query-result cache.
+
         std::string cached_query;
         std::vector<std::pair<int, const debug_action_entry *>> cached_hits;
         bool activate_on_select = true;
@@ -745,8 +745,8 @@ void debug_console::execute()
         save_persisted_state();
     } };
 
-    // Suspend ImGui keyboard nav while the console is open so TAB drives only
-    // the input_context tab switch instead of also cycling widget focus.
+
+
     ImGuiIO &io = ImGui::GetIO();
     const bool had_kbd_nav = io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
@@ -758,17 +758,17 @@ void debug_console::execute()
     } };
 
     while( is_open ) {
-        // Force a full viewport repaint each frame: otherwise ImGui tooltips
-        // smear the tiles layer and play/step state never updates live.
+
+
         g->invalidate_main_ui_adaptor();
         ui_manager::redraw();
 
-        // Drain one deferred op per frame (must run outside ImGui frame).
-        // FIFO interleaves actions and EOC fires by enqueue order.
+
+
         if( !pending.empty() ) {
             deferred_op op = pending.front();
             pending.pop();
-            // Action/EOC may open a blocking sub-UI; hide the console behind it.
+
             suspend_draw_ = true;
             on_out_of_scope restore_draw{ [this]()
             {
@@ -795,7 +795,7 @@ void debug_console::execute()
         if( eval_pending ) {
             eval_pending = false;
             pending_eval_ok = true;
-            // eval can raise a debugmsg popup; hide the console behind it.
+
             suspend_draw_ = true;
             on_out_of_scope restore_draw{ [this]()
             {
@@ -812,9 +812,9 @@ void debug_console::execute()
                     pending_eval_ok = false;
                 }
             } catch( const std::exception &e ) {
-                // math_exp::error() frames the message with a leading newline
-                // plus a caret diagram on later lines; trim the outer blank
-                // lines but keep the body so the error stays visible.
+
+
+
                 std::string what = e.what();
                 const size_t start = what.find_first_not_of( '\n' );
                 const size_t end = what.find_last_not_of( '\n' );
@@ -846,8 +846,8 @@ void debug_console::execute()
             action = ctxt.handle_input( 5 );
         }
 
-        // Only swallow keybinds while typing / dragging / in a popup, so plain
-        // TAB still reaches the input_context tab switch.
+
+
         const bool imgui_owns_keys = io.WantTextInput || ImGui::IsAnyItemActive() ||
                                      ImGui::IsPopupOpen( nullptr,
                                              ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel );
@@ -858,8 +858,8 @@ void debug_console::execute()
         if( action == "QUIT" ) {
             break;
         } else if( action == "WAIT" ) {
-            // Route through pending_steps so '.' and the Step button share
-            // one path; avoids racing with the polled step handler.
+
+
             stepper_->request_step();
         } else if( action == "NEXT_TAB" ) {
             const std::size_t n = tab_views.size();
@@ -877,9 +877,9 @@ void debug_console::execute()
 
 void debug_console::defer_action( debug_menu_index action )
 {
-    // Bound the queue: an unbounded depth lets rapid clicks pile up arbitrary
-    // work that the user can't see or cancel. 256 leaves room for legitimate
-    // batches (e.g. "click 50 spawn buttons") without runaway growth.
+
+
+
     if( pending.size() >= 256 ) {
         return;
     }
@@ -930,8 +930,8 @@ bool debug_console::eoc_trace_visible() const
 
 void debug_console::draw_tab_views()
 {
-    // tab_views is built index-aligned with tab_registry() so iteration here
-    // gives the canonical order without a second lookup pass.
+
+
     for( std::size_t i = 0; i < tab_views.size(); i++ ) {
         console_tab_view &view = *tab_views[i];
         const bool sel = switch_tab_idx_.has_value() && *switch_tab_idx_ == i;
@@ -948,8 +948,8 @@ void debug_console::draw_tab_views()
 
 void debug_console::draw()
 {
-    // Skip the whole base draw() (not just draw_controls) so ImGui::Begin is
-    // never called and the window isn't drawn over a blocking sub-UI.
+
+
     if( suspend_draw_ ) {
         button_action.clear();
         return;
@@ -959,8 +959,8 @@ void debug_console::draw()
 
 void debug_console::draw_controls()
 {
-    // Ctrl+1..9 / Ctrl+0 jump directly to a tab. ImGui input must be queried
-    // inside a frame, so check here rather than in execute()'s outer loop.
+
+
     if( ImGui::GetIO().KeyCtrl ) {
         static constexpr ImGuiKey hotkeys[] = {
             ImGuiKey_1, ImGuiKey_2, ImGuiKey_3, ImGuiKey_4, ImGuiKey_5,
@@ -976,10 +976,10 @@ void debug_console::draw_controls()
         }
     }
 
-    // '/' focuses the omnibox; '.' steps one turn. Both via ImGui so
-    // they work without user keybinds; guarded against text/slider/
-    // popup focus. WAIT input_context path also handled in execute()
-    // for users who have it bound; both set pending_steps idempotently.
+
+
+
+
     const bool ui_busy = ImGui::GetIO().WantTextInput
                          || ImGui::IsAnyItemActive();
     if( !ui_busy ) {
@@ -991,8 +991,8 @@ void debug_console::draw_controls()
         }
     }
 
-    // Reserve vertical space for shared footer (two rows + separator).
-    // Zero when debug_mode is off (footer hidden).
+
+
     const float footer_h = debug_mode
                            ? ImGui::GetFrameHeightWithSpacing() * 2.0f
                            + ImGui::GetStyle().ItemSpacing.y
@@ -1001,8 +1001,8 @@ void debug_console::draw_controls()
 
     ImGui::BeginChild( "console_body", ImVec2( 0, -footer_h ), 0 );
     if( !debug_mode ) {
-        // Picked once per off-state visit so it doesn't reroll every frame.
-        // Reset to -1 by the Enable button so the next off-visit rerolls.
+
+
         static const char *const flavors[] = {
             translate_marker( "Turn back.  This door was sealed for cause." ),
             translate_marker( "Beyond this threshold lies neither help nor "
@@ -1037,8 +1037,8 @@ void debug_console::draw_controls()
         ImGui::Dummy( ImVec2( 0.0f, ImGui::GetStyle().ItemSpacing.y ) );
         const std::string flavor = flavors[disclaimer_idx];
         const float wrap_w = avail.x * 0.7f;
-        // CalcTextSize with the wrap width returns the wrapped block size;
-        // using that to position centers the block as a whole.
+
+
         const ImVec2 flavor_sz = ImGui::CalcTextSize( flavor.c_str(), nullptr,
                                  false, wrap_w );
         ImGui::SetCursorPosX( ( avail.x - flavor_sz.x ) * 0.5f );
@@ -1056,7 +1056,7 @@ void debug_console::draw_controls()
             disclaimer_idx = -1;
         }
     } else {
-        // Right-aligned debug-mode toggle, kept away from the omnibox.
+
         omni_->draw( *this );
         ImGui::SameLine();
         const char *off_btn = "Debug: ON";
@@ -1080,16 +1080,16 @@ void debug_console::draw_controls()
     }
     ImGui::EndChild();
 
-    // Shared footer: step / fast-forward / pause indicator. Anchored at
-    // window bottom; hidden when debug_mode is off.
+
+
     if( debug_mode ) {
         ImGui::Separator();
         stepper_->draw_footer();
     }
 
-    // Capture pos/size each frame for save_persisted_state. cata_imgui's
-    // Cond_Always SetNextWindowPos defeats ImGui's own .ini round-trip,
-    // so track here. Size normalized to viewport fraction.
+
+
+
     const ImVec2 wpos = ImGui::GetWindowPos();
     const ImVec2 wsz = ImGui::GetWindowSize();
     const ImVec2 vp = ImGui::GetMainViewport()->Size;
@@ -1101,8 +1101,8 @@ void debug_console::draw_controls()
     }
 }
 
-// Shared transport row: Step / Play-Pause / speed slider, plus
-// safety stops on a second row.
+
+
 void step_controller::draw_footer()
 {
     avatar &you = get_avatar();
@@ -1111,7 +1111,7 @@ void step_controller::draw_footer()
     if( ImGui::Button( "Step" ) ) {
         ff_hp_baseline = you.get_hp();
         pending_steps = 1;
-        // Force immediate tick on next loop iteration regardless of slider.
+
         last_step_at = {};
     }
     if( ImGui::IsItemHovered() ) {
@@ -1189,7 +1189,7 @@ void omnibox_state::draw( debug_console &host )
         cached_hits.clear();
         return;
     }
-    // Recompute fuzzy scores only when the query string changes.
+
     if( query != cached_query ) {
         cached_hits.clear();
         for( const debug_action_entry &e : all_actions() ) {
@@ -1220,9 +1220,9 @@ void omnibox_state::draw( debug_console &host )
                 highlight_action = e.id;
                 focus_action = e.id;
                 highlight_until_frame = ImGui::GetFrameCount() + 180;
-                // jump_only actions immediately open a uilist and have no
-                // inline control to pulse. Surface that explicitly so the
-                // user isn't waiting for a highlight that will never appear.
+
+
+
                 if( e.jump_only ) {
                     jump_only_label = e.label;
                 } else {
@@ -1239,8 +1239,8 @@ void omnibox_state::draw( debug_console &host )
     if( total_hits > limit ) {
         ImGui::TextDisabled( "(%d more matches)", total_hits - limit );
     }
-    // jump_only follow-up message stays visible for the same window as the
-    // highlight pulse. After the window expires, clear it.
+
+
     if( !jump_only_label.empty() ) {
         if( ImGui::GetFrameCount() < highlight_until_frame ) {
             ImGui::TextColored( ImVec4( 0.95f, 0.85f, 0.45f, 1.0f ), "%s",
@@ -1391,8 +1391,8 @@ static cata_path persist_imgui_path()
 
 void debug_console::load_persisted_state()
 {
-    // ImGui ini blob applied first: must precede any window creation, else
-    // cata_imgui's first SetNextWindowPos fights the restored entries.
+
+
     const cata_path ini_path = persist_imgui_path();
     if( file_exist( ini_path ) ) {
         const std::string blob = read_entire_file( ini_path.get_unrelative_path() );
@@ -1405,15 +1405,15 @@ void debug_console::load_persisted_state()
         const JsonObject jo = jv.get_object();
         jo.allow_omitted_members();
 
-        // Window bounds
+
         jo.read( "win_x", persisted_x );
         jo.read( "win_y", persisted_y );
         jo.read( "win_w", persisted_w );
         jo.read( "win_h", persisted_h );
 
-        // Selected tab. Persisted as the registry's id_string so saved state
-        // survives reordering or removal of unrelated tabs. Unknown ids fall
-        // through to the default (index 0).
+
+
+
         std::string tab_str;
         if( jo.read( "selected_tab", tab_str ) ) {
             std::optional<std::size_t> idx = tab_idx_for_id( tab_str );
@@ -1423,12 +1423,12 @@ void debug_console::load_persisted_state()
             }
         }
 
-        // Cross-tab toggle: trace tab reads, EOC tab writes via the
-        // visibility verb pair.
+
+
         jo.read( "trace_show_eoc", trace_show_eoc );
         omni_->load( jo );
 
-        // Per-tab nested state.
+
         JsonObject tabs_obj = jo.has_object( "tabs" )
                               ? jo.get_object( "tabs" )
                               : JsonObject();
@@ -1469,8 +1469,8 @@ void debug_console::save_persisted_state() const
         jo.member( "selected_tab",
                    std::string( tab_registry()[selected_tab_idx_].id_string ) );
 
-        // Cross-tab visibility flag. Trace/eval state is written under
-        // "tabs":{...} by per-tab save_state.
+
+
         jo.member( "trace_show_eoc", trace_show_eoc );
         omni_->save( jo );
 
@@ -1497,8 +1497,8 @@ void debug_console::save_persisted_state() const
         jo.end_object();
     }, "debug console state" );
 
-    // ImGui ini blob: column widths/sort, splitter sizes, popup positions,
-    // per-window pos/size for non-console surfaces. Plain text.
+
+
     size_t ini_size = 0;
     const char *ini_data = ImGui::SaveIniSettingsToMemory( &ini_size );
     if( ini_data != nullptr && ini_size > 0 ) {
@@ -1647,7 +1647,7 @@ void tab_map_view::draw_body( debug_console &host )
                 }
             };
             int cur_dir = weather.wind_direction_override.value_or( -1 );
-            int combo_idx = 8; // "Auto" by default
+            int combo_idx = 8;
             for( int i = 0; i < 8; i++ ) {
                 if( cur_dir == dirs[i].deg ) {
                     combo_idx = i;
@@ -1742,10 +1742,10 @@ void tab_map_view::draw_body( debug_console &host )
         ImGui::TextDisabled( "%s",
                              "Mutually exclusive: enabling one disables the others." );
         game &g_ref = *g;
-        // pulse_idx maps each ACTION_DISPLAY_* overlay to its matching
-        // debug_menu_index, so an omnibox jump to e.g. "Scent type" can
-        // pulse the checkbox here rather than landing on a tab with no
-        // visible cue.
+
+
+
+
         auto overlay_checkbox = [&]( const char *label, action_id act,
         debug_menu_index pulse_idx ) {
             bool active = g_ref.display_overlay_state( act );
@@ -1839,9 +1839,9 @@ void tab_vehicle_view::draw_body( debug_console &host )
         vehicle *v = cv->v;
         map &m = *cv->m;
 
-        // get_all_parts() iterates real (non-fake, non-removed) parts only.
-        // part_index() is stable across a session and disambiguates duplicate
-        // names (wheels, doors, mirrors) better than the part type id alone.
+
+
+
         const vehicle_part_range parts = v->get_all_parts();
         const int visible = static_cast<int>( v->part_count_real_cached() );
         if( ImGui::BeginTable( "v_parts_table", 7,
@@ -1941,7 +1941,7 @@ void tab_tiles_view::draw_body( debug_console &host )
     tripoint_bub_ms target = you.pos_bub( here );
     bool parse_error = false;
     if( !tile_coord_input.empty() ) {
-        // Parse "x,y,z" comma-separated triplet. Tolerate spaces around commas.
+
         std::string_view sv( tile_coord_input );
         std::array<int, 3> parts = { 0, 0, 0 };
         int parsed = 0;
@@ -1997,7 +1997,7 @@ void tab_tiles_view::draw_body( debug_console &host )
     map_stack tile_items = here.i_at( target );
     Creature *creature_here = get_creature_tracker().creature_at( target );
 
-    // Per-item summary (name x count) -- small, no clipper needed.
+
     std::vector<std::pair<std::string, int>> item_summary;
     for( const item &it : tile_items ) {
         const std::string nm = remove_color_tags( it.tname() );
@@ -2014,7 +2014,7 @@ void tab_tiles_view::draw_body( debug_console &host )
         }
     }
 
-    // Terrain + furniture flag dumps. These come from the type's flag_set.
+
     std::vector<std::string> ter_flags;
     for( const std::string &f : ter->get_flags() ) {
         ter_flags.push_back( f );
@@ -2026,7 +2026,7 @@ void tab_tiles_view::draw_body( debug_console &host )
         }
     }
 
-    // Field stack: each field entry with its current intensity.
+
     std::vector<std::pair<std::string, int>> field_rows;
     for( const auto &fe : fld ) {
         field_rows.emplace_back( fe.second.get_field_type().id().str(),
@@ -2137,7 +2137,7 @@ void tab_tiles_view::draw_body( debug_console &host )
 
     host.export_bar( "tile", build_md, build_json );
 
-    // Inline summary: compact label / value rows.
+
     framed_section( "tile_basic", "Basics", [&]() {
         label_value( "Position", "%s", target.to_string().c_str() );
         ImGui::SameLine( 0, 20.0f );
@@ -2325,8 +2325,8 @@ void render_char_skills( Character &ch, character_edit_state &st )
                            ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
                            ImGuiTableFlags_SizingStretchProp ) ) {
         ImGui::TableSetupColumn( "Skill", ImGuiTableColumnFlags_WidthStretch );
-        // Slider cells have no intrinsic width; pin a fixed column so they
-        // don't collapse to the header.
+
+
         ImGui::TableSetupColumn( "Theory", ImGuiTableColumnFlags_WidthFixed, 200.0f );
         ImGui::TableSetupColumn( "Practice", ImGuiTableColumnFlags_WidthFixed, 200.0f );
         fit_col( "+M" );
@@ -2548,7 +2548,7 @@ void tab_creatures_view::draw_body( debug_console &host )
     const tripoint_bub_ms apos = you.pos_bub( here );
 
     struct row_data {
-        // type of creature (npc, mon, you (ie avatar))
+
         std::string kind;
         std::string name;
         std::string type_id;
@@ -2771,8 +2771,8 @@ void tab_creatures_view::draw_body( debug_console &host )
     Creature *sel = nullptr;
     monster *sel_mon = nullptr;
     npc *sel_npc = nullptr;
-    // Set for the avatar and NPCs (any Character); drives the shared editable
-    // sections. Stays null for monsters.
+
+
     Character *sel_char = nullptr;
     if( creature_selected_id == "avatar:player" ) {
         sel = &you;
@@ -2836,8 +2836,8 @@ void tab_creatures_view::draw_body( debug_console &host )
         }
     } );
 
-    // Heal/Kill/Teleport act on a non-avatar target. The avatar uses the
-    // Player tab's Health controls and must not be Kill-able from here.
+
+
     if( sel_mon || sel_npc ) {
         if( ImGui::Button( "Heal##cr" ) ) {
             if( sel_mon ) {
@@ -2944,8 +2944,8 @@ void tab_creatures_view::draw_body( debug_console &host )
         }
     }
 
-    // Avatar and NPCs share the editable Character sections; monsters are not
-    // Character and keep only their monster-specific panels.
+
+
     if( sel_char ) {
         render_char_stats( *sel_char );
         render_char_vitals( *sel_char );
@@ -3032,7 +3032,7 @@ void tab_items_view::draw_body( debug_console &host )
     map &here = get_map();
     const tripoint_bub_ms apos = you.pos_bub( here );
 
-    // Source registry rebuilt each frame so creature movement / death is reflected.
+
     struct source_opt {
         std::string key;
         std::string label;
@@ -3084,9 +3084,9 @@ void tab_items_view::draw_body( debug_console &host )
         }
     }
     if( cur_src_idx < 0 ) {
-        // Persisted source is gone (NPC moved out of bubble, monster died,
-        // etc.). Snap to Avatar and remember the old key for the sticky
-        // warning until the user picks a fresh source.
+
+
+
         reverted_from_source = items_source;
         items_source = sources[0].key;
         selected.reset();
@@ -3110,7 +3110,7 @@ void tab_items_view::draw_body( debug_console &host )
                                sources[cur_src_idx].label.c_str() ) ) {
             for( int i = 0; i < static_cast<int>( sources.size() ); i++ ) {
                 const bool sel = i == cur_src_idx;
-                // Same-named sources (e.g. two NPCs) would collide; scope by index.
+
                 ImGui::PushID( i );
                 if( ImGui::Selectable( sources[i].label.c_str(), sel ) ) {
                     items_source = sources[i].key;
@@ -3127,22 +3127,22 @@ void tab_items_view::draw_body( debug_console &host )
                                   "name / type id / category", &item_filter );
     } );
 
-    // Snapshot rows up front: keeps the table renderer iterating a stable
-    // vector and lets the export builders share the same filtered data.
+
+
     struct item_row {
-        std::string name;        // colored tname
-        std::string plain;       // tname without color tags (for filter)
+        std::string name;
+        std::string plain;
         std::string type_id;
         std::string category;
         std::string material;
-        std::string location;    // "tile" or pocket / parent context
+        std::string location;
         int count;
-        int charges;             // -1 if not a charged item
+        int charges;
         int damage;
         int weight_g;
         int volume_ml;
-        // Ordinal among rows sharing the same (type_id, location). Drives
-        // stable selection identity across filter changes.
+
+
         int instance_rank = 0;
         std::vector<std::string> flags;
     };
@@ -3178,8 +3178,8 @@ void tab_items_view::draw_body( debug_console &host )
     };
 
     std::vector<item_row> rows;
-    // Rank is assigned over the unfiltered visit order so duplicates keep
-    // a stable identity regardless of which filter terms are active.
+
+
     std::unordered_map<std::string, int> rank_counter;
     auto add = [&]( const item & it, const std::string & where ) {
         item_row r = build_row( it, where );
@@ -3319,9 +3319,9 @@ void tab_items_view::draw_body( debug_console &host )
 
     label_value( "Items", "%d", static_cast<int>( rows.size() ) );
 
-    // Resolve the typed selection to a row index for this frame. Stays -1
-    // when the pick exists but no matching row is currently visible (filtered
-    // out or source switched); we keep `selected` so unfiltering recovers it.
+
+
+
     int selected_row_idx = -1;
     if( selected.has_value() && selected->source_key == items_source ) {
         for( int i = 0; i < static_cast<int>( rows.size() ); i++ ) {
@@ -3670,9 +3670,9 @@ void tab_eoc_view::draw_eval_panel( debug_console &host )
     const bool auto_fire = eval_auto && !eval_expr.empty() &&
                            now_turn != eval_last_turn;
     if( ( entered || clicked || auto_fire ) && !eval_expr.empty() ) {
-        // eval() can call debugmsg from the dialogue layer (e.g. when
-        // const_actor is null), which opens a popup mid-ImGui-frame and
-        // corrupts state. Defer the actual eval to the outer execute() loop.
+
+
+
         host.request_eval( eval_expr );
         eval_last_turn = now_turn;
     }
@@ -3689,7 +3689,7 @@ void tab_eoc_view::draw_eoc_browser( debug_console &host )
     ImGui::SeparatorText( "Browser" );
     const std::vector<effect_on_condition> &all_eocs = effect_on_conditions::get_all();
 
-    // Filters
+
     ImGui::SetNextItemWidth( 200 );
     ImGui::InputText( "Filter##eocs", &eoc_filter );
     ImGui::SameLine();
@@ -3711,8 +3711,8 @@ void tab_eoc_view::draw_eoc_browser( debug_console &host )
         }
         ImGui::EndCombo();
     }
-    // Merge global (game) + character-scoped queued/inactive EOC IDs.
-    // Without merge, player-bound recurring EOCs misreport as "loaded".
+
+
     std::unordered_set<std::string> queued_ids;
     std::unordered_map<std::string, time_point> queued_times;
     auto collect_queued = [&]( const queued_eocs & q ) {
@@ -3763,8 +3763,8 @@ void tab_eoc_view::draw_eoc_browser( debug_console &host )
     ImGui::TextDisabled( "%d / %d", static_cast<int>( filtered.size() ),
                          static_cast<int>( all_eocs.size() ) );
 
-    // Reserve a fixed strip for the per-EOC details panel so the table fills
-    // the remaining height. ~9 lines + spacing covers the field list below.
+
+
     const float details_h = ImGui::GetFrameHeightWithSpacing() * 9.0f;
     const float avail_y = ImGui::GetContentRegionAvail().y;
     const float table_h = avail_y - details_h - ImGui::GetStyle().ItemSpacing.y;
@@ -3776,7 +3776,7 @@ void tab_eoc_view::draw_eoc_browser( debug_console &host )
                          monitor_mode::on_change );
         cap.push_debug_log( debugmode::DF_MONITOR,
                             "added monitor " + label );
-        // EOC monitors need fire trace capture; mute raw EOC feed as redundant.
+
         cap.settings().eoc_trace_capture = true;
         host.set_eoc_trace_visible( false );
     };
@@ -4033,7 +4033,7 @@ struct var_table_writer {
     std::function<void( const std::string & )> erase;
 };
 
-// Colored relation int -> green/red/dim grey.
+
 ImVec4 relation_color( int v )
 {
     if( v > 0 ) {
@@ -4094,13 +4094,13 @@ const char *timed_event_type_name( timed_event_type t )
     return "?";
 }
 
-// Empty diag_value on parse failure, so callers can reject bad input.
+
 diag_value parse_value( const std::string &value, dv_types type )
 {
     switch( type ) {
         case dv_types::DOUBLE: {
-            // Classic locale plus a whole-string check rejects a partial parse
-            // ("1,2,3") instead of keeping just the leading number.
+
+
             std::istringstream is( value );
             is.imbue( std::locale::classic() );
             double d = 0.0;
@@ -4112,8 +4112,8 @@ diag_value parse_value( const std::string &value, dv_types type )
         case dv_types::STRING:
             return diag_value{ value };
         case dv_types::TRIPOINT: {
-            // operator>>( tripoint ) leaves failbit unset on bad delimiters, so
-            // read the punctuation explicitly and require the whole string.
+
+
             std::istringstream is( value );
             is.imbue( std::locale::classic() );
             tripoint result;
@@ -4169,11 +4169,11 @@ void draw_edit_val( std::string &val, dv_types &type )
     ImGui::InputTextWithHint( "##var_edit_value", hint.c_str(), &val );
 }
 
-} // namespace
+}
 
-// Reusable var-key/value table. table_id discriminates the trailing
-// var_edit_popup so multiple var_tables in one frame don't fight over a
-// single popup.
+
+
+
 static void draw_var_table( const char *table_id,
                             const global_variables::impl_t &vars,
                             float height,
@@ -4191,8 +4191,8 @@ static void draw_var_table( const char *table_id,
     std::string &edit_key = state.edit_key;
     std::string &edit_buf = state.edit_buf;
 
-    // Drawn before the empty-list check so a var can be added to an empty
-    // scope. PushID keeps widget IDs distinct between tables in one frame.
+
+
     if( can_edit ) {
         ImGui::PushID( table_id );
         ImGui::SetNextItemWidth( 160.0f );
@@ -4355,17 +4355,17 @@ static void draw_var_table( const char *table_id,
                         state.edit_type = val.is_dbl() ? dv_types::DOUBLE
                                           : val.is_tripoint() ? dv_types::TRIPOINT
                                           : dv_types::STRING;
-                        // OpenPopup must run from this function's ID stack,
-                        // not the context menu popup's, or BeginPopupModal
-                        // never matches it.
+
+
+
                         editpopup = true;
                     }
                 }
                 if( can_delete ) {
                     ImGui::Separator();
                     if( ImGui::MenuItem( "Delete" ) ) {
-                        // Defer erase: key and val alias the map node that
-                        // erase would free while this row still renders.
+
+
                         to_erase = key;
                         do_erase = true;
                     }
@@ -4587,7 +4587,7 @@ void tab_data_view::draw_game_state_panel()
     }
 }
 
-void tab_data_view::draw_var_browser( debug_console &/*host*/ )
+void tab_data_view::draw_var_browser( debug_console & )
 {
     if( !ImGui::CollapsingHeader( "Variables" ) ) {
         return;
@@ -5309,7 +5309,7 @@ void tab_trace_view::draw_body( debug_console &host )
     debug_capture &cap = debug_capture::instance();
     capture_settings &s = cap.settings();
 
-    // Collapsed by default so the entries feed below gets most of the height.
+
     if( ImGui::CollapsingHeader( "Capture##trace" ) ) {
         ImGui::PushID( "trace_capture" );
         ImGui::Indent();
@@ -5750,14 +5750,14 @@ void tab_trace_view::draw_monitors_body()
 
     ImGui::SeparatorText( "Add monitor" );
 
-    // Table-driven dispatch: each entry carries the combo label, input
-    // hint, optional validator, and snap-closure factory.
+
+
     const std::vector<monitor_target_entry> &targets = all_monitor_targets();
     const int n_targets = static_cast<int>( targets.size() );
     monitor_target_type = std::clamp( monitor_target_type, 0, n_targets - 1 );
 
-    // ImGui::Combo wants a raw const char ** of options. Build a per-frame
-    // label vector from the table; the table itself is rebuilt only once.
+
+
     std::vector<const char *> combo_labels;
     combo_labels.reserve( targets.size() );
     for( const monitor_target_entry &e : targets ) {
@@ -5902,8 +5902,8 @@ float fit_table_height( int n_rows, float cap_h )
 
 void fit_col( const char *label, ImGuiTableColumnFlags extra_flags )
 {
-    // init width 0 => ImGui auto-sizes the fixed column to the wider of its
-    // header and its submitted (visible, under a clipper) cells.
+
+
     ImGui::TableSetupColumn( label, ImGuiTableColumnFlags_WidthFixed | extra_flags, 0.0f );
 }
 
@@ -5913,7 +5913,7 @@ void scalar_slider_table( const char *id, const std::vector<slider_row> &rows,
     if( rows.empty() || pairs_per_row < 1 ) {
         return;
     }
-    // Shared label-column width so all slider tracks start at the same x.
+
     float label_w = 0.0f;
     for( const slider_row &r : rows ) {
         label_w = std::max( label_w, ImGui::CalcTextSize( r.label.c_str() ).x );
@@ -6019,4 +6019,4 @@ int fuzzy_score( std::string_view haystack, std::string_view needle )
     return score;
 }
 
-} // namespace debug_menu
+}

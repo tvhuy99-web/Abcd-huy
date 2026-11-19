@@ -164,7 +164,7 @@ std::shared_ptr<math_exp> &defer_math( JsonObject const &jo, std::string_view st
     return get_deferred_math().back().exp;
 }
 
-}  // namespace
+}
 
 std::string get_talk_varname( const JsonObject &jo, std::string_view member )
 {
@@ -207,7 +207,7 @@ value_or_var_pair<retT, funcT> get_value_or_var_pair( const JsonObject &jo,
     return ret_val;
 }
 
-} // namespace
+}
 
 dbl_or_var get_dbl_or_var( const JsonObject &jo, std::string_view member, bool required,
                            double default_val )
@@ -222,8 +222,8 @@ duration_or_var get_duration_or_var( const JsonObject &jo, std::string_view memb
     return get_value_or_var_pair<time_duration, eoc_math>( jo, member, required, default_val );
 }
 
-str_or_var get_str_or_var( const JsonValue &jv, std::string_view /* member */, bool /* required */,
-                           std::string_view /* default_val */ )
+str_or_var get_str_or_var( const JsonValue &jv, std::string_view, bool,
+                           std::string_view )
 {
 
     str_or_var ret;
@@ -232,8 +232,8 @@ str_or_var get_str_or_var( const JsonValue &jv, std::string_view /* member */, b
 
 }
 
-translation_or_var get_translation_or_var( const JsonValue &jv, std::string_view /* member */,
-        bool /* required */, const translation &/* default_val */ )
+translation_or_var get_translation_or_var( const JsonValue &jv, std::string_view,
+        bool, const translation & )
 {
     translation_or_var ret;
     ret.deserialize( jv );
@@ -268,7 +268,7 @@ void var_info::_deserialize( JsonObject const &jo )
     }
 
     if( jo.has_member( "default" ) ) {
-        // loaded in value_or_var
+
         static_cast<void>( jo.get_member( "default" ) );
     }
 }
@@ -322,7 +322,7 @@ void _write_var_value( var_type type, const std::string &name, dialogue *d,
     }
 }
 
-} // namespace
+}
 
 void write_var_value( var_type type, const std::string &name, dialogue *d,
                       std::string const &value )
@@ -596,7 +596,7 @@ conditional_t::func f_u_monsters_in_direction( const JsonObject &jo,
 {
     str_or_var dir = get_str_or_var( jo.get_member( member ), member, true );
     return [dir]( const_dialogue const & d ) {
-        //This string_to_enum function is defined in widget.h. Should it be moved?
+
         const int card_dir = static_cast<int>( io::string_to_enum<cardinal_direction>( dir.evaluate(
                 d ) ) );
         int monster_count = get_avatar().get_mon_visible().unique_mons[card_dir].size();
@@ -608,7 +608,7 @@ conditional_t::func f_u_safe_mode_trigger( const JsonObject &jo, std::string_vie
 {
     str_or_var dir = get_str_or_var( jo.get_member( member ), member, true );
     return [dir]( const_dialogue const & d ) {
-        //This string_to_enum function is defined in widget.h. Should it be moved?
+
         const int card_dir = static_cast<int>( io::string_to_enum<cardinal_direction>( dir.evaluate(
                 d ) ) );
         return get_avatar().get_mon_visible().dangerous[card_dir];
@@ -745,7 +745,7 @@ conditional_t::func f_has_items_sum( const JsonObject &jo, std::string_view memb
         temp_crafting_inventory inventory_and_around = you->crafting_inventory( you->pos_bub(),
                 PICKUP_RANGE );
 
-        // Also add vehicles...
+
         map &here = get_map();
         std::set<vehicle *> vehicles_found;
         for( const wrapped_vehicle &wv : here.get_vehicles() ) {
@@ -919,7 +919,7 @@ conditional_t::func f_at_om_location( const JsonObject &jo, std::string_view mem
             if( bcp ) {
                 return true;
             }
-            // TODO: legacy check to be removed once primitive field camp OMTs have been purged
+
             return omt_str.find( "faction_base_camp" ) != std::string::npos;
         } else if( location_value == "FACTION_CAMP_START" ) {
             const std::optional<mapgen_arguments> *maybe_args = overmap_buffer.mapgen_args( omt_pos );
@@ -972,7 +972,7 @@ conditional_t::func f_near_om_location( const JsonObject &jo, std::string_view m
                 if( bcp ) {
                     return true;
                 }
-                // TODO: legacy check to be removed once primitive field camp OMTs have been purged
+
                 if( omt_str.find( "faction_base_camp" ) != std::string::npos ) {
                     return true;
                 }
@@ -985,7 +985,7 @@ conditional_t::func f_near_om_location( const JsonObject &jo, std::string_view m
                 }
             }
         }
-        // should never get here this is for safety
+
         return false;
     };
 }
@@ -1281,8 +1281,8 @@ conditional_t::func f_see_opposite_coordinates( bool is_npc )
             tripoint_bub_ms alpha_pos = d.const_actor( is_npc )->get_const_creature()->pos_bub();
             tripoint_bub_ms beta_pos = d.const_actor( !is_npc )->get_const_creature()->pos_bub();
 
-            // function is made specifically to bypass light level, and the only way to pick the creature vision distance is affected by light level
-            // hence MAX_VIEW_DISTANCE
+
+
             return get_map().sees( alpha_pos, beta_pos, MAX_VIEW_DISTANCE );
 
         } else {
@@ -1597,7 +1597,7 @@ conditional_t::func f_is_driving( bool is_npc )
     };
 }
 
-conditional_t::func f_has_stolen_item( bool /*is_npc*/ )
+conditional_t::func f_has_stolen_item( bool )
 {
     return []( const_dialogue const & d ) {
         return d.const_actor( false )->has_stolen_item( *d.const_actor( true ) );
@@ -1763,7 +1763,7 @@ conditional_t::func f_map_in_city( const JsonObject &jo, std::string_view member
     return [target]( const_dialogue const & d ) {
         tripoint_abs_omt target_pos = project_to<coords::omt>( read_var_value( target, d ).tripoint() );
 
-        // TODO: Remove this in favour of a separate condition for location z-level that can be used in conjunction with this map_in_city as needed
+
         if( target_pos.z() < -1 ) {
             return false;
         }
@@ -1781,7 +1781,7 @@ conditional_t::func f_map_is_outside( const JsonObject &jo, std::string_view mem
         if( here.inbounds( loc ) ) {
             return !here.is_outside( loc );
         }
-        //TODO: Make work outside of reality bubble?
+
         return false;
     };
 }
@@ -1810,7 +1810,7 @@ conditional_t::func f_has_faction_trust( const JsonObject &jo, std::string_view 
 
 conditional_t::func f_compare_string( const JsonObject &jo, std::string_view member )
 {
-    // return true if at least two strings match, OR
+
 
     std::vector<str_or_var> values;
     for( JsonValue jv : jo.get_array( member ) ) {
@@ -1832,7 +1832,7 @@ conditional_t::func f_compare_string( const JsonObject &jo, std::string_view mem
 
 conditional_t::func f_compare_string_match_all( const JsonObject &jo, std::string_view member )
 {
-    // return true if all strings match, AND
+
     std::vector<str_or_var> values;
     for( JsonValue jv : jo.get_array( member ) ) {
         values.emplace_back( get_str_or_var( jv, member ) );
@@ -1955,7 +1955,7 @@ conditional_t::func f_u_know_recipe( const JsonObject &jo, std::string_view memb
     str_or_var known_recipe_id = get_str_or_var( jo.get_member( member ), member, true );
     return [known_recipe_id]( const_dialogue const & d ) {
         const recipe &rep = recipe_id( known_recipe_id.evaluate( d ) ).obj();
-        // should be a talker function but recipes aren't in Character:: yet
+
         return get_player_character().knows_recipe( &rep );
     };
 }
@@ -2007,8 +2007,8 @@ conditional_t::func f_has_wielded_with_weapon_category( const JsonObject &jo,
 conditional_t::func f_has_wielded_with_skill( const JsonObject &jo, std::string_view member,
         bool is_npc )
 {
-    // ideally all this "u wield with X" should be moved to some mutator
-    // and a single effect should check mutator applied to the item in your hands
+
+
     str_or_var w_skill = get_str_or_var( jo.get_member( member ), member, true );
     return [w_skill, is_npc]( const_dialogue const & d ) {
 
@@ -2143,8 +2143,8 @@ conditional_t::func f_is_rotten()
     };
 }
 
-} // namespace
-} // namespace conditional_fun
+}
+}
 
 template<class T>
 static std::function<T( const_dialogue const & )> get_get_str_( const JsonObject &jo,
@@ -2199,11 +2199,11 @@ template<class T>
 static std::function<T( const_dialogue const & )> get_get_translation_( const JsonObject &jo,
         const std::function<T( const translation & )> &ret_func )
 {
-    // straight translation - used by diag_value_or_var
+
     if( jo.get_bool( "i18n", false ) && jo.has_string( "str" ) ) {
         translation tr;
         tr.deserialize( jo.get_member( "str" ) );
-        return [tr, ret_func]( const_dialogue const &/* d */ ) {
+        return [tr, ret_func]( const_dialogue const & ) {
             return ret_func( tr );
         };
     }
@@ -2272,9 +2272,9 @@ void string_mutator<std::string>::deserialize( JsonValue const &jsin )
 
 namespace
 {
-// *******
-// Stop adding garbage to this list and write specific math functions instead
-// *******
+
+
+
 std::unordered_map<std::string_view, int ( const_talker::* )() const> const f_get_vals = {
     { "activity_level", &const_talker::get_activity_level },
     { "age", &const_talker::get_age },
@@ -2325,11 +2325,11 @@ std::unordered_map<std::string_view, int ( const_talker::* )() const> const f_ge
     { "friendly_passenger_count", &const_talker::get_friendly_passenger_count },
     { "hostile_passenger_count", &const_talker::get_hostile_passenger_count }
 };
-} // namespace
+}
 
-// *******
-// Stop adding garbage to this function and write specific math functions instead
-// *******
+
+
+
 double  conditional_t::get_legacy_dbl( const_dialogue const &d, std::string_view checked_value,
                                        char scope )
 {
@@ -2346,16 +2346,16 @@ double  conditional_t::get_legacy_dbl( const_dialogue const &d, std::string_view
     } else if( checked_value == "dodge" ) {
         return d.const_actor( is_npc )->get_const_character()->get_dodge();
     } else if( checked_value == "power_percentage" ) {
-        // Energy in milijoule
+
         units::energy::value_type power_max = d.const_actor( is_npc )->power_max().value();
         if( power_max == 0 ) {
-            return 0.0; //Default value if character does not have power, avoids division with 0.
+            return 0.0;
         }
         return static_cast<double>( d.const_actor( is_npc )->power_cur().value() * 100.0L / power_max );
     } else if( checked_value == "mana_percentage" ) {
         int mana_max = d.const_actor( is_npc )->mana_max();
         if( mana_max == 0 ) {
-            return 0.0; //Default value if character does not have mana, avoids division with 0.
+            return 0.0;
         }
         return d.const_actor( is_npc )->mana_cur() * 100.0 / mana_max;
     } else if( checked_value == "body_temp" ) {
@@ -2363,10 +2363,10 @@ double  conditional_t::get_legacy_dbl( const_dialogue const &d, std::string_view
     } else if( checked_value == "body_temp_delta" ) {
         return units::to_legacy_bodypart_temp_delta( d.const_actor( is_npc )->get_body_temp_delta() );
     } else if( checked_value == "power" ) {
-        // Energy in milijoule
+
         return static_cast<double>( d.const_actor( is_npc )->power_cur().value() );
     } else if( checked_value == "power_max" ) {
-        // Energy in milijoule
+
         return static_cast<double>( d.const_actor( is_npc )->power_max().value() );
     } else if( checked_value == "pos_x" ) {
         return static_cast<double>( d.const_actor( is_npc )->pos_abs().x() );
@@ -2378,9 +2378,9 @@ double  conditional_t::get_legacy_dbl( const_dialogue const &d, std::string_view
 
 namespace
 {
-// *******
-// Stop adding garbage to this list and write specific math functions instead
-// *******
+
+
+
 std::unordered_map<std::string_view, void ( talker::* )( int )> const f_set_vals = {
     { "age", &talker::set_age },
     { "anger", &talker::set_anger },
@@ -2406,11 +2406,11 @@ std::unordered_map<std::string_view, void ( talker::* )( int )> const f_set_vals
     { "strength_bonus", &talker::set_str_bonus },
     { "thirst", &talker::set_thirst },
 };
-} // namespace
+}
 
-// *******
-// Stop adding garbage to this function and write specific math functions instead
-// *******
+
+
+
 void conditional_t::set_legacy_dbl( dialogue &d, double input, std::string_view checked_value,
                                     char scope )
 {
@@ -2433,10 +2433,10 @@ void conditional_t::set_legacy_dbl( dialogue &d, double input, std::string_view 
         tripoint_abs_ms const tr = d.actor( is_npc )->pos_abs();
         d.actor( is_npc )->set_pos( tripoint_abs_ms( tr.xy(), static_cast<int>( input ) ) );
     } else if( checked_value == "power" ) {
-        // Energy in milijoule
+
         d.actor( is_npc )->set_power_cur( 1_mJ * input );
     } else if( checked_value == "power_percentage" ) {
-        // Energy in milijoule
+
         d.actor( is_npc )->set_power_cur( ( d.actor( is_npc )->power_max() * input ) / 100 );
     } else if( checked_value == "focus" ) {
         d.actor( is_npc )->mod_focus( input - d.actor( is_npc )->focus_cur() );
@@ -2586,9 +2586,9 @@ parsers = {
     {"u_has_part_flag", "npc_has_part_flag", jarg::string, &conditional_fun::f_has_part_flag },
 };
 
-// When updating this, please also update `dynamic_line_string_keys` in
-// `lang/string_extractor/parsers/talk_topic.py` so the lines are properly
-// extracted for translation
+
+
+
 static const
 std::vector<condition_parser>
 parsers_simple = {
@@ -2672,7 +2672,7 @@ parsers_simple = {
 
 conditional_t::conditional_t( const JsonObject &jo )
 {
-    // improve the clarity of NPC setter functions
+
     bool found_sub_member = false;
     const auto parse_array = []( const JsonObject & jo, std::string_view type ) {
         std::vector<conditional_t> conditionals;

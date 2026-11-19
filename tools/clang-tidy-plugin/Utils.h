@@ -87,8 +87,8 @@ static const FunctionDecl *getContainingFunction(
 inline bool isInHeader( const SourceLocation &loc, const SourceManager &SM )
 {
     StringRef Filename = SM.getFilename( loc );
-    // The .h.tmp.cpp catches the test case; that's the style of filename used
-    // by lit.
+
+
     return !SM.isInMainFile( loc ) || Filename.ends_with( ".h.tmp.cpp" );
 }
 
@@ -121,8 +121,8 @@ inline auto isPointConstructor()
     return cxxConstructorDecl( ofClass( isPointType() ) );
 }
 
-// This returns a matcher that always matches, but binds "temp" if the
-// constructor call is constructing a temporary object.
+
+
 inline auto testWhetherConstructingTemporary()
 {
     using namespace clang::ast_matchers;
@@ -179,8 +179,8 @@ inline auto isYParam()
 
 bool isPointMethod( const FunctionDecl *d );
 
-// Struct to help identify and construct names of associated points and
-// coordinates
+
+
 class NameConvention
 {
     public:
@@ -224,14 +224,14 @@ template<typename T0, typename... T>
 std::string StrCat( T0 &&a0, T &&...a )
 {
     std::string result( std::forward<T0>( a0 ) );
-    // Using initializer list as a poor man's fold expression until C++17.
+
     static_cast<void>(
         std::array<bool, sizeof...( T )> { ( result.append( std::forward<T>( a ) ), false )... } );
     return result;
 }
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_UTILS_H
+#endif

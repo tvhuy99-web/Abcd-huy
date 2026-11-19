@@ -44,9 +44,9 @@ int talker_avatar_const::parse_mod( const std::string &attribute, const int fact
     if( attribute == "U_INTIMIDATE" ) {
         modifier = me_chr->intimidation();
     } else if( attribute.find( "u_has_trait" ) != std::string::npos ) {
-        // shim/hack, reusing the syntax from EOCs
 
-        // Nasty string handling.
+
+
         const std::string after = "u_has_trait: ";
         trait_id checked_trait = trait_id( attribute.substr( after.size() ) );
         modifier = me_chr->has_trait( checked_trait ) ? 1 : 0;
@@ -94,7 +94,7 @@ bool talker_avatar::buy_monster( talker &seller, const mtype_id &mtype, int cost
             break;
         }
         monster &tmp = *mon_ptr;
-        // Our monster is always a pet.
+
         tmp.friendly = -1;
         tmp.add_effect( effect_pet, 1_turns, true );
 

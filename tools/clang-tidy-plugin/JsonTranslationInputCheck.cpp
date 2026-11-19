@@ -14,15 +14,15 @@ namespace clang::tidy::cata
 
 void JsonTranslationInputCheck::registerMatchers( MatchFinder *Finder )
 {
-    // <translation function>( ... <json input object>.<method>(...) ... )
+
     Finder->addMatcher(
         callExpr(
-            // <json input object>.<method>
+
             callee( cxxMethodDecl(
-                        // <json input object>
+
                         ofClass( hasAnyName( "JsonIn", "JsonArray", "JsonObject" ) )
                     ) ),
-            // <translation function>( ... )
+
             hasAncestor(
                 callExpr(
                     callee(
@@ -37,8 +37,8 @@ void JsonTranslationInputCheck::registerMatchers( MatchFinder *Finder )
                                 functionDecl(
                                     hasAnyName( "to_translation", "pl_translation" )
                                 )
-                                // no_translation is ok, it's used to load generated names such as
-                                // artifact names
+
+
                             )
                         )
                     )
@@ -81,4 +81,4 @@ void JsonTranslationInputCheck::check( const MatchFinder::MatchResult &Result )
     }
 }
 
-} // namespace clang::tidy::cata
+}

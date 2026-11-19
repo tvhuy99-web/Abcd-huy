@@ -81,7 +81,7 @@ static const ter_str_id ter_t_wood_stairs_up( "t_wood_stairs_up" );
 namespace
 {
 
-// Scan a 24x24 OMT area on a map and collect terrain/field statistics.
+
 struct pp_scan_result {
     int wall_wood_count = 0;
     int wall_burnt_count = 0;
@@ -94,7 +94,7 @@ struct pp_scan_result {
     int furniture_count = 0;
 };
 
-} // namespace
+}
 
 static pp_scan_result scan_omt( map &m, int z_level )
 {
@@ -132,13 +132,13 @@ static pp_scan_result scan_omt( map &m, int z_level )
 
 static void clear_map_and_reset_player()
 {
-    // The ordering here is very specific.
-    // clear_avatar() moves the player to the center of the bubble.
-    // clear_overmaps will regenerate everything from the origin to the player's current position.
-    // So first we move the avatar to the origin
-    // then clear overmaps to minimize excess regeneration
-    // then reset the avatar to the middle of the bubble which is conveniently around them.
-    // Some tests leave the avatar off in the sticks which makes clear_overmaps take astoundingly long
+
+
+
+
+
+
+
     get_avatar().move_to( tripoint_abs_ms::zero );
     get_avatar().in_vehicle = false;
     get_avatar().controlling_vehicle = false;
@@ -147,17 +147,17 @@ static void clear_map_and_reset_player()
     clear_avatar();
 }
 
-// Smoke tests: exercise post-process generators through the full map::generate() pipeline
-// using a controlled test OMT with trivial mapgen (seeded RNG gives deterministic output).
-//
-// Aftershock ruin not tested here -- its terrain IDs are mod-only, not loaded in tests.
+
+
+
+
 
 TEST_CASE( "post_process_riot_damage_seeded_smoke", "[mapgen][post_process]" )
 {
     clear_map_and_reset_player();
     const tripoint_abs_omt pos( 50, 50, 0 );
     overmap_buffer.ter_set( pos, oter_test_pp_riot_building.id() );
-    // Set surrounding tiles to field to avoid neighbor-dependent behavior
+
     for( int dx = -1; dx <= 1; dx++ ) {
         for( int dy = -1; dy <= 1; dy++ ) {
             if( dx == 0 && dy == 0 ) {
@@ -168,9 +168,9 @@ TEST_CASE( "post_process_riot_damage_seeded_smoke", "[mapgen][post_process]" )
     }
 
     SECTION( "riot damage dispatch sanity at day 7" ) {
-        // Verifies that PP_GENERATE_RIOT_DAMAGE flag triggers post-processing
-        // through the full map::generate() pipeline. Not a detailed behavioral
-        // test -- the direct orchestrator tests below cover sub-generator behavior.
+
+
+
         calendar::turn = calendar::start_of_cataclysm + 7_days;
         rng_set_engine_seed( 42424242 );
         MAPBUFFER.clear_outside_reality_bubble();
@@ -180,10 +180,10 @@ TEST_CASE( "post_process_riot_damage_seeded_smoke", "[mapgen][post_process]" )
 
         pp_scan_result result = scan_omt( *tm.cast_to_map(), 0 );
 
-        // Blood proves PP dispatch ran
+
         CHECK( result.blood_field_count > 0 );
 
-        // Stairs survive regardless of whether pre_burn fired
+
         CHECK( result.stairs_up_count == 1 );
 
         tm.delete_unmerged_submaps();
@@ -199,12 +199,12 @@ TEST_CASE( "post_process_riot_damage_seeded_smoke", "[mapgen][post_process]" )
 
         pp_scan_result result = scan_omt( *tm.cast_to_map(), 0 );
 
-        // Pre_burn doesn't fire before day 3.
+
         CHECK( result.wall_burnt_count == 0 );
         CHECK( result.floor_burnt_count == 0 );
         CHECK( result.dirt_count == 0 );
 
-        // But bash/blood still runs. Blood proves PP executed.
+
         CHECK( result.blood_field_count > 0 );
 
         tm.delete_unmerged_submaps();
@@ -214,7 +214,7 @@ TEST_CASE( "post_process_riot_damage_seeded_smoke", "[mapgen][post_process]" )
 namespace
 {
 
-// Capture full tile-by-tile snapshot of a 24x24 OMT for exact comparison.
+
 struct tile_state {
     ter_id ter;
     furn_id furn;
@@ -222,7 +222,7 @@ struct tile_state {
     int fire_intensity;
 };
 
-} // namespace
+}
 
 static std::vector<tile_state> snapshot_omt( map &m, int z_level )
 {
@@ -262,21 +262,21 @@ TEST_CASE( "post_process_non_rerun_guard", "[mapgen][post_process]" )
     rng_set_engine_seed( 42424242 );
     MAPBUFFER.clear_outside_reality_bubble();
 
-    // First generation: save_results=true so submaps persist in MAPBUFFER.
-    // any_missing=true (submaps don't exist yet), PP runs.
+
+
     smallmap tm;
     tm.generate( pos, calendar::turn, true, true );
 
     std::vector<tile_state> first_snap = snapshot_omt( *tm.cast_to_map(), 0 );
 
-    // Second generation: save_results=true, submaps already in MAPBUFFER.
-    // any_missing=false, !save_results=false, guard blocks PP.
+
+
     smallmap tm2;
     tm2.generate( pos, calendar::turn, true, true );
 
     std::vector<tile_state> second_snap = snapshot_omt( *tm2.cast_to_map(), 0 );
 
-    // Tile-by-tile comparison. Map must be identical - PP did not re-run.
+
     REQUIRE( first_snap.size() == second_snap.size() );
     int mismatches = 0;
     for( size_t i = 0; i < first_snap.size(); i++ ) {
@@ -290,18 +290,18 @@ TEST_CASE( "post_process_non_rerun_guard", "[mapgen][post_process]" )
     CAPTURE( mismatches );
     CHECK( mismatches == 0 );
 
-    // Clean up persisted overmap/submap state from save_results=true calls.
+
     clear_overmaps();
 }
 
-// Characterization tests via direct orchestrator calls.
-// GENERATOR_riot_damage and GENERATOR_aftershock_ruin are callable from tests.
-// Sub-generators remain file-internal -- these tests characterize end-to-end
-// orchestrator behavior on controlled inputs, not sub-generator units.
 
-// Build a controlled 24x24 test area on the given map:
-// perimeter = t_wall_wood, interior = t_floor, stairs at (12,12), tables at (5,5) and (5,18).
-// Optionally place t_rock_wall at corners for NATURAL_UNDERGROUND testing.
+
+
+
+
+
+
+
 static void build_pp_test_layout( map &m, int z_level, bool with_underground_tiles )
 {
     for( int x = 0; x < SEEX * 2; x++ ) {
@@ -309,7 +309,7 @@ static void build_pp_test_layout( map &m, int z_level, bool with_underground_til
             tripoint_bub_ms p( x, y, z_level );
             m.furn_set( p, furn_str_id::NULL_ID() );
             m.i_clear( p );
-            // Clear fields
+
             m.clear_fields( p );
             if( x == 0 || x == SEEX * 2 - 1 || y == 0 || y == SEEY * 2 - 1 ) {
                 m.ter_set( p, ter_t_wall_wood );
@@ -320,21 +320,21 @@ static void build_pp_test_layout( map &m, int z_level, bool with_underground_til
             }
         }
     }
-    // Place furniture
+
     m.furn_set( tripoint_bub_ms( 5, 5, z_level ), furn_f_table );
     m.furn_set( tripoint_bub_ms( 5, 18, z_level ), furn_f_table );
 
-    // Place loose items on a few floor tiles (for item-move testing)
+
     m.add_item( tripoint_bub_ms( 3, 3, z_level ), item( itype_rock ) );
     m.add_item( tripoint_bub_ms( 10, 10, z_level ), item( itype_rock ) );
     m.add_item( tripoint_bub_ms( 15, 15, z_level ), item( itype_rock ) );
 
-    // Planter with a seed -- move_items must not displace it
+
     m.furn_set( tripoint_bub_ms( 8, 8, z_level ), furn_f_planter_seedling );
     m.add_item( tripoint_bub_ms( 8, 8, z_level ), item( itype_seed_rose ) );
 
     if( with_underground_tiles ) {
-        // Place rock walls at interior corners for NATURAL_UNDERGROUND skip test
+
         m.ter_set( tripoint_bub_ms( 1, 1, z_level ), ter_t_rock_wall );
         m.ter_set( tripoint_bub_ms( 1, 22, z_level ), ter_t_rock_wall );
         m.ter_set( tripoint_bub_ms( 22, 1, z_level ), ter_t_rock_wall );
@@ -344,14 +344,14 @@ static void build_pp_test_layout( map &m, int z_level, bool with_underground_til
 
 TEST_CASE( "post_process_riot_road_vs_building", "[mapgen][post_process][characterization]" )
 {
-    // Road mode (is_a_road=true) skips pre_burn.
-    // Building mode (is_a_road=false) runs pre_burn.
-    // Use a seed + day count where pre_burn fires for building mode.
+
+
+
     clear_map_and_reset_player();
     map &here = get_map();
     const tripoint_abs_omt pos = project_to<coords::omt>( here.get_abs_sub() );
 
-    // Try seeds until we find one where pre_burn fires.
+
     bool found_burn_seed = false;
     unsigned int burn_seed = 0;
     calendar::turn = calendar::start_of_cataclysm + 14_days;
@@ -368,7 +368,7 @@ TEST_CASE( "post_process_riot_road_vs_building", "[mapgen][post_process][charact
     }
     REQUIRE( found_burn_seed );
 
-    // Now run with that seed in building mode: pre_burn fires
+
     build_pp_test_layout( here, 0, false );
     rng_set_engine_seed( burn_seed );
     pp_generator_riot_damage.obj().execute( here, pos );
@@ -376,7 +376,7 @@ TEST_CASE( "post_process_riot_road_vs_building", "[mapgen][post_process][charact
     CHECK( building_result.wall_burnt_count > 0 );
     CHECK( building_result.floor_burnt_count > 0 );
 
-    // Same seed in road mode: pre_burn skipped
+
     build_pp_test_layout( here, 0, false );
     rng_set_engine_seed( burn_seed );
     pp_generator_riot_damage_road.obj().execute( here, pos );
@@ -385,7 +385,7 @@ TEST_CASE( "post_process_riot_road_vs_building", "[mapgen][post_process][charact
     CHECK( road_result.floor_burnt_count == 0 );
     CHECK( road_result.dirt_count == 0 );
 
-    // Road mode still has blood (PP ran, just no pre_burn)
+
     CHECK( road_result.blood_field_count > 0 );
 
     clear_overmaps();
@@ -402,7 +402,7 @@ TEST_CASE( "post_process_natural_underground_skip", "[mapgen][post_process][char
     rng_set_engine_seed( 42424242 );
     pp_generator_riot_damage.obj().execute( here, pos );
 
-    // Rock wall tiles (NATURAL_UNDERGROUND) must be unchanged
+
     CHECK( here.ter( tripoint_bub_ms( 1, 1, 0 ) ) == ter_t_rock_wall.id() );
     CHECK( here.ter( tripoint_bub_ms( 1, 22, 0 ) ) == ter_t_rock_wall.id() );
     CHECK( here.ter( tripoint_bub_ms( 22, 1, 0 ) ) == ter_t_rock_wall.id() );
@@ -413,14 +413,14 @@ TEST_CASE( "post_process_natural_underground_skip", "[mapgen][post_process][char
 
 TEST_CASE( "post_process_stair_preservation", "[mapgen][post_process][characterization]" )
 {
-    // When pre_burn fires, stairs (GOES_UP/GOES_DOWN) must survive.
+
     clear_map_and_reset_player();
     map &here = get_map();
     const tripoint_abs_omt pos = project_to<coords::omt>( here.get_abs_sub() );
 
     calendar::turn = calendar::start_of_cataclysm + 14_days;
 
-    // Find seed where pre_burn fires
+
     bool found = false;
     unsigned int burn_seed = 0;
     for( unsigned int seed = 100; seed < 200; seed++ ) {
@@ -436,15 +436,15 @@ TEST_CASE( "post_process_stair_preservation", "[mapgen][post_process][characteri
     }
     REQUIRE( found );
 
-    // Run with burn seed, verify stairs survive
+
     build_pp_test_layout( here, 0, false );
     rng_set_engine_seed( burn_seed );
     pp_generator_riot_damage.obj().execute( here, pos );
 
     CHECK( here.ter( tripoint_bub_ms( 12, 12, 0 ) ) == ter_t_wood_stairs_up.id() );
 
-    // Flammable furniture destroyed by pre_burn, non-flammable survives.
-    // Layout has 2x f_table (FLAMMABLE) + 1x f_planter_seedling (not flammable).
+
+
     pp_scan_result result = scan_omt( here, 0 );
     CHECK( result.furniture_count == 1 );
 
@@ -457,7 +457,7 @@ TEST_CASE( "post_process_fire_decay", "[mapgen][post_process][characterization]"
     map &here = get_map();
     const tripoint_abs_omt pos = project_to<coords::omt>( here.get_abs_sub() );
 
-    // Fire stops spawning well before day 30.
+
     build_pp_test_layout( here, 0, false );
     calendar::turn = calendar::start_of_cataclysm + 30_days;
     rng_set_engine_seed( 42424242 );
@@ -472,7 +472,7 @@ TEST_CASE( "post_process_fire_decay", "[mapgen][post_process][characterization]"
 TEST_CASE( "post_process_item_move_planter_preservation",
            "[mapgen][post_process][characterization]" )
 {
-    // Seeds in SEALED+CONTAINER+PLANT furniture must not be moved by GENERATOR_move_items.
+
     clear_map_and_reset_player();
     map &here = get_map();
     const tripoint_abs_omt pos = project_to<coords::omt>( here.get_abs_sub() );
@@ -480,7 +480,7 @@ TEST_CASE( "post_process_item_move_planter_preservation",
     build_pp_test_layout( here, 0, false );
     calendar::turn = calendar::start_of_cataclysm + 7_days;
 
-    // Verify setup: seed is in the planter tile
+
     const tripoint_bub_ms planter_pos( 8, 8, 0 );
     REQUIRE( here.furn( planter_pos ) == furn_f_planter_seedling.id() );
     bool has_seed_before = false;
@@ -492,15 +492,15 @@ TEST_CASE( "post_process_item_move_planter_preservation",
     }
     REQUIRE( has_seed_before );
 
-    // Road mode skips pre_burn (which would destroy everything).
-    // Bash can still destroy the planter, so only check seed when planter survived.
+
+
     int planter_survived_count = 0;
     for( unsigned int seed = 1000; seed < 1020; seed++ ) {
         build_pp_test_layout( here, 0, false );
         rng_set_engine_seed( seed );
         pp_generator_riot_damage_road.obj().execute( here, pos );
 
-        // Only check seed if planter furniture survived bash
+
         if( here.furn( planter_pos ) == furn_f_planter_seedling.id() ) {
             planter_survived_count++;
             bool has_seed_after = false;
@@ -514,15 +514,15 @@ TEST_CASE( "post_process_item_move_planter_preservation",
             CHECK( has_seed_after );
         }
     }
-    // Ensure we actually tested the invariant on at least some seeds
+
     CHECK( planter_survived_count > 0 );
 
     clear_overmaps();
 }
 
-// Build a layout specifically for pre_burn material immunity testing.
-// Places a grid of different terrain types, doors, and furniture to verify
-// that pre_burn only affects flammable materials.
+
+
+
 static void build_pre_burn_immunity_layout( map &m, int z_level )
 {
     for( int x = 0; x < SEEX * 2; x++ ) {
@@ -531,44 +531,44 @@ static void build_pre_burn_immunity_layout( map &m, int z_level )
             m.furn_set( p, furn_str_id::NULL_ID() );
             m.i_clear( p );
             m.clear_fields( p );
-            // Default to wood floor (flammable, should burn)
+
             m.ter_set( p, ter_t_floor );
         }
     }
 
-    // Row 1 (y=1): walls -- wood vs concrete vs metal
-    m.ter_set( tripoint_bub_ms( 1, 1, z_level ), ter_t_wall );          // flammable
-    m.ter_set( tripoint_bub_ms( 3, 1, z_level ), ter_t_wall_wood );     // flammable
-    m.ter_set( tripoint_bub_ms( 5, 1, z_level ), ter_t_concrete_wall ); // immune
-    m.ter_set( tripoint_bub_ms( 7, 1, z_level ), ter_t_wall_metal );    // immune
 
-    // Row 2 (y=3): closed doors -- wood vs metal
-    m.ter_set( tripoint_bub_ms( 1, 3, z_level ), ter_t_door_c );        // flammable (DOOR flag)
-    m.ter_set( tripoint_bub_ms( 3, 3, z_level ), ter_t_door_metal_c );  // immune (DOOR flag)
+    m.ter_set( tripoint_bub_ms( 1, 1, z_level ), ter_t_wall );
+    m.ter_set( tripoint_bub_ms( 3, 1, z_level ), ter_t_wall_wood );
+    m.ter_set( tripoint_bub_ms( 5, 1, z_level ), ter_t_concrete_wall );
+    m.ter_set( tripoint_bub_ms( 7, 1, z_level ), ter_t_wall_metal );
 
-    // Row 3 (y=5): open/locked doors -- no DOOR flag, falls to outdoor branch
-    m.ter_set( tripoint_bub_ms( 1, 5, z_level ), ter_t_door_o );        // flammable outdoor
-    m.ter_set( tripoint_bub_ms( 3, 5, z_level ), ter_t_door_metal_o );  // immune outdoor
-    m.ter_set( tripoint_bub_ms( 5, 5, z_level ), ter_t_door_locked );   // flammable outdoor
-    m.ter_set( tripoint_bub_ms( 7, 5, z_level ), ter_t_door_frame );    // flammable outdoor
 
-    // Row 4 (y=7): floors -- wood vs concrete
-    m.ter_set( tripoint_bub_ms( 1, 7, z_level ), ter_t_floor );         // flammable
-    m.ter_set( tripoint_bub_ms( 3, 7, z_level ), ter_t_thconc_floor );  // immune
+    m.ter_set( tripoint_bub_ms( 1, 3, z_level ), ter_t_door_c );
+    m.ter_set( tripoint_bub_ms( 3, 3, z_level ), ter_t_door_metal_c );
 
-    // Row 5 (y=9): outdoor ground -- grass vs pavement vs water
-    m.ter_set( tripoint_bub_ms( 1, 9, z_level ), ter_t_grass );         // diggable -> dirt
-    m.ter_set( tripoint_bub_ms( 3, 9, z_level ), ter_t_pavement );      // immune
-    m.ter_set( tripoint_bub_ms( 5, 9, z_level ), ter_t_water_dp );      // immune
 
-    // Furniture on concrete floor: metal locker (immune) + wood table (flammable)
+    m.ter_set( tripoint_bub_ms( 1, 5, z_level ), ter_t_door_o );
+    m.ter_set( tripoint_bub_ms( 3, 5, z_level ), ter_t_door_metal_o );
+    m.ter_set( tripoint_bub_ms( 5, 5, z_level ), ter_t_door_locked );
+    m.ter_set( tripoint_bub_ms( 7, 5, z_level ), ter_t_door_frame );
+
+
+    m.ter_set( tripoint_bub_ms( 1, 7, z_level ), ter_t_floor );
+    m.ter_set( tripoint_bub_ms( 3, 7, z_level ), ter_t_thconc_floor );
+
+
+    m.ter_set( tripoint_bub_ms( 1, 9, z_level ), ter_t_grass );
+    m.ter_set( tripoint_bub_ms( 3, 9, z_level ), ter_t_pavement );
+    m.ter_set( tripoint_bub_ms( 5, 9, z_level ), ter_t_water_dp );
+
+
     m.ter_set( tripoint_bub_ms( 1, 11, z_level ), ter_t_thconc_floor );
-    m.furn_set( tripoint_bub_ms( 1, 11, z_level ), furn_f_locker );     // immune furn
+    m.furn_set( tripoint_bub_ms( 1, 11, z_level ), furn_f_locker );
     m.ter_set( tripoint_bub_ms( 3, 11, z_level ), ter_t_thconc_floor );
     m.furn_set( tripoint_bub_ms( 3, 11, z_level ),
-                furn_f_table );      // flammable furn on immune terrain
+                furn_f_table );
 
-    // Items on immune terrain vs water
+
     m.ter_set( tripoint_bub_ms( 1, 13, z_level ), ter_t_thconc_floor );
     m.add_item( tripoint_bub_ms( 1, 13, z_level ), item( itype_rock ) );
     m.ter_set( tripoint_bub_ms( 3, 13, z_level ), ter_t_water_dp );
@@ -581,7 +581,7 @@ TEST_CASE( "post_process_pre_burn_material_immunity", "[mapgen][post_process]" )
     map &here = get_map();
     const tripoint_abs_omt pos = project_to<coords::omt>( here.get_abs_sub() );
 
-    // Day 14, well past scaling_days_end=1 so pre_burn fires at 100%
+
     calendar::turn = calendar::start_of_cataclysm + 14_days;
 
     build_pre_burn_immunity_layout( here, 0 );
@@ -590,31 +590,31 @@ TEST_CASE( "post_process_pre_burn_material_immunity", "[mapgen][post_process]" )
 
     {
         INFO( "walls: flammable burn, non-flammable survive" );
-        // Wood walls -> t_wall_burnt
+
         CHECK( here.ter( tripoint_bub_ms( 1, 1, 0 ) ) == ter_t_wall_burnt.id() );
         CHECK( here.ter( tripoint_bub_ms( 3, 1, 0 ) ) == ter_t_wall_burnt.id() );
-        // Concrete and metal walls unchanged
+
         CHECK( here.ter( tripoint_bub_ms( 5, 1, 0 ) ) == ter_t_concrete_wall.id() );
         CHECK( here.ter( tripoint_bub_ms( 7, 1, 0 ) ) == ter_t_wall_metal.id() );
     }
 
     {
         INFO( "closed doors: flammable burn, non-flammable survive" );
-        // Wood door -> t_floor_burnt (has DOOR flag + FLAMMABLE)
+
         CHECK( here.ter( tripoint_bub_ms( 1, 3, 0 ) ) == ter_t_floor_burnt.id() );
-        // Metal door unchanged (has DOOR flag, no FLAMMABLE)
+
         CHECK( here.ter( tripoint_bub_ms( 3, 3, 0 ) ) == ter_t_door_metal_c.id() );
     }
 
     {
         INFO( "open/locked doors: flammable burn to dirt, non-flammable survive" );
-        // Open wood door -> t_dirt (no DOOR flag, flammable outdoor)
+
         CHECK( here.ter( tripoint_bub_ms( 1, 5, 0 ) ) == ter_t_dirt.id() );
-        // Open metal door unchanged (no DOOR flag, not flammable)
+
         CHECK( here.ter( tripoint_bub_ms( 3, 5, 0 ) ) == ter_t_door_metal_o.id() );
-        // Locked wood door -> t_dirt
+
         CHECK( here.ter( tripoint_bub_ms( 5, 5, 0 ) ) == ter_t_dirt.id() );
-        // Wood door frame -> t_dirt
+
         CHECK( here.ter( tripoint_bub_ms( 7, 5, 0 ) ) == ter_t_dirt.id() );
     }
 
@@ -633,17 +633,17 @@ TEST_CASE( "post_process_pre_burn_material_immunity", "[mapgen][post_process]" )
 
     {
         INFO( "furniture: flammable destroyed, non-flammable survives" );
-        // Metal locker on concrete floor: locker survives
+
         CHECK( here.furn( tripoint_bub_ms( 1, 11, 0 ) ) == furn_f_locker.id() );
-        // Wood table on concrete floor: table destroyed (terrain immunity != furniture immunity)
+
         CHECK( here.furn( tripoint_bub_ms( 3, 11, 0 ) ) == furn_str_id::NULL_ID().id() );
     }
 
     {
         INFO( "items: cleared on non-water tiles, preserved in water" );
-        // Items on concrete floor: cleared (fire chaos destroys contents)
+
         CHECK( here.i_at( tripoint_bub_ms( 1, 13, 0 ) ).empty() );
-        // Items in water: preserved
+
         CHECK_FALSE( here.i_at( tripoint_bub_ms( 3, 13, 0 ) ).empty() );
     }
 
@@ -652,7 +652,7 @@ TEST_CASE( "post_process_pre_burn_material_immunity", "[mapgen][post_process]" )
 
 TEST_CASE( "post_process_json_load_roundtrip", "[mapgen][post_process]" )
 {
-    // Uses test data ids (test_pp_*) to avoid coupling to real game JSON.
+
     SECTION( "test_pp_riot has 5 sub-generators with expected params" ) {
         const pp_generator &riot = pp_generator_test_pp_riot.obj();
         REQUIRE( riot.sub_generators().size() == 5 );
@@ -692,12 +692,12 @@ TEST_CASE( "post_process_json_load_roundtrip", "[mapgen][post_process]" )
     }
 }
 
-// Tests for post_process_generators field on oter_type_t.
+
 
 TEST_CASE( "post_process_oter_field_dispatch", "[mapgen][post_process]" )
 {
-    // test_pp_field_building has post_process_generators: ["test_pp_riot"], no flag.
-    // Field-based dispatch should execute the generator.
+
+
     clear_map_and_reset_player();
     const tripoint_abs_omt pos( 50, 50, 0 );
     overmap_buffer.ter_set( pos, oter_test_pp_field_building.id() );
@@ -719,7 +719,7 @@ TEST_CASE( "post_process_oter_field_dispatch", "[mapgen][post_process]" )
 
     pp_scan_result result = scan_omt( *tm.cast_to_map(), 0 );
 
-    // Blood proves PP dispatch ran via the field path (no flag on this OMT)
+
     CHECK( result.blood_field_count > 0 );
     CHECK( result.stairs_up_count == 1 );
 
@@ -729,20 +729,20 @@ TEST_CASE( "post_process_oter_field_dispatch", "[mapgen][post_process]" )
 
 TEST_CASE( "post_process_field_over_flag", "[mapgen][post_process]" )
 {
-    // test_pp_field_and_flag_building has:
-    //   post_process_generators: ["test_pp_road"]  (no pre_burn)
-    //   flags: PP_GENERATE_RIOT_DAMAGE             (has pre_burn)
-    // Field should take precedence -- no pre_burn should fire.
-    //
-    // Both test OMTs share the same mapgen definition, so the RNG path
-    // through map::generate() is identical for the same seed.
+
+
+
+
+
+
+
     clear_map_and_reset_player();
 
     const tripoint_abs_omt pos( 50, 50, 0 );
     calendar::turn = calendar::start_of_cataclysm + 14_days;
 
-    // Find a seed where pre_burn fires on test_pp_riot_building (flag-dispatched).
-    // Uses the full pipeline so RNG consumption matches the assertion below.
+
+
     unsigned int burn_seed = 0;
     bool found = false;
     for( unsigned int seed = 100; seed < 200; seed++ ) {
@@ -769,8 +769,8 @@ TEST_CASE( "post_process_field_over_flag", "[mapgen][post_process]" )
     }
     REQUIRE( found );
 
-    // Same seed, same mapgen, but field+flag OMT. If field dispatch wins,
-    // test_pp_road runs (no pre_burn). If flag wrongly wins, this seed burns.
+
+
     overmap_buffer.ter_set( pos, oter_test_pp_field_and_flag_building.id() );
     for( int dx = -1; dx <= 1; dx++ ) {
         for( int dy = -1; dy <= 1; dy++ ) {
@@ -799,20 +799,20 @@ TEST_CASE( "post_process_field_over_flag", "[mapgen][post_process]" )
 
 TEST_CASE( "post_process_oter_field_inherit_delete", "[mapgen][post_process]" )
 {
-    // test_pp_field_inherit_child copies from test_pp_field_base and deletes test_pp_custom.
-    // Base has: ["test_pp_riot", "test_pp_custom"]
-    // Child should have: ["test_pp_riot"]
+
+
+
     const oter_type_t &child = oter_type_test_pp_field_inherit_child.obj();
     REQUIRE( child.post_process_generators.size() == 1 );
     CHECK( child.post_process_generators[0] == pp_generator_test_pp_riot );
 }
 
-// Real-core smoke tests verifying the JSON migration didn't break inheritance.
+
 
 TEST_CASE( "post_process_real_core_inherited_riot", "[mapgen][post_process]" )
 {
-    // s_pharm inherits riot_damage from generic_city_building -> generic_city_building_no_sidewalk.
-    // After migration, the abstract has post_process_generators: ["riot_damage"].
+
+
     clear_map_and_reset_player();
     const tripoint_abs_omt pos( 50, 50, 0 );
     overmap_buffer.ter_set( pos, oter_s_pharm_north.id() );
@@ -834,7 +834,7 @@ TEST_CASE( "post_process_real_core_inherited_riot", "[mapgen][post_process]" )
 
     pp_scan_result result = scan_omt( *tm.cast_to_map(), 0 );
 
-    // Riot damage ran: blood proves PP dispatch hit the field path
+
     CHECK( result.blood_field_count > 0 );
 
     tm.delete_unmerged_submaps();
@@ -843,8 +843,8 @@ TEST_CASE( "post_process_real_core_inherited_riot", "[mapgen][post_process]" )
 
 TEST_CASE( "post_process_real_core_exempt", "[mapgen][post_process]" )
 {
-    // s_gas_rural explicitly deletes riot_damage via post_process_generators.
-    // No PP should run on this OMT.
+
+
     clear_map_and_reset_player();
     const tripoint_abs_omt pos( 50, 50, 0 );
     overmap_buffer.ter_set( pos, oter_s_gas_rural_north.id() );
@@ -866,7 +866,7 @@ TEST_CASE( "post_process_real_core_exempt", "[mapgen][post_process]" )
 
     pp_scan_result result = scan_omt( *tm.cast_to_map(), 0 );
 
-    // No PP ran: no blood, no burn, no fire
+
     CHECK( result.blood_field_count == 0 );
     CHECK( result.wall_burnt_count == 0 );
     CHECK( result.fire_field_count == 0 );
@@ -879,7 +879,7 @@ TEST_CASE( "post_process_scope_field_loading", "[mapgen][post_process]" )
 {
     const pp_generator &riot = pp_generator_test_pp_riot.obj();
     SECTION( "sub-generators without scope default to omt" ) {
-        // Only pre_burn is annotated; other sub-generators retain default scope.
+
         for( const pp_sub_generator &sg : riot.sub_generators() ) {
             if( sg.type != sub_generator_type::pre_burn ) {
                 CHECK( sg.scope == pp_sub_generator_scope::omt );
@@ -941,8 +941,8 @@ TEST_CASE( "post_process_sub_decision_roundtrip", "[mapgen][post_process]" )
         CHECK( b.seed == a.seed );
     }
     SECTION( "applied + seed above INT_MAX (upper half of uint32_t range)" ) {
-        // FNV-1a over typical inputs can produce seeds in [INT_MAX+1, UINT_MAX].
-        // Naive next_int() deserialization would fail or truncate these.
+
+
         pp_sub_decision a;
         a.type = sub_generator_type::pre_burn;
         a.ordinal = 0;
@@ -973,7 +973,7 @@ TEST_CASE( "post_process_sub_decision_roundtrip", "[mapgen][post_process]" )
         CHECK( b.seed == a.seed );
     }
     SECTION( "unknown status value clamps to not_evaluated" ) {
-        // Hand-crafted JSON with an out-of-range status int (future enum value).
+
         const std::string json_str = "[\"pre_burn\", 0, 99, 42]";
         pp_sub_decision b = deserialize_sub_decision( json_str );
         CHECK( b.st == pp_sub_decision::status::not_evaluated );
@@ -1019,7 +1019,7 @@ TEST_CASE( "post_process_resolved_generator_empty_sub_decisions", "[mapgen][post
 {
     pp_resolved_generator a;
     a.generator = pp_generator_test_pp_riot;
-    // sub_decisions intentionally empty
+
 
     std::ostringstream os;
     JsonOut jsout( os );
@@ -1032,8 +1032,8 @@ TEST_CASE( "post_process_resolved_generator_empty_sub_decisions", "[mapgen][post
     CHECK( b.sub_decisions.empty() );
 }
 
-// execute() with decisions=nullptr must fall back to the gated probability roll,
-// not silently noop or unconditionally apply.
+
+
 TEST_CASE( "post_process_null_decisions_falls_back_to_fresh_roll", "[mapgen][post_process]" )
 {
     clear_map_and_reset_player();
@@ -1058,8 +1058,8 @@ TEST_CASE( "post_process_null_decisions_falls_back_to_fresh_roll", "[mapgen][pos
     clear_overmaps();
 }
 
-// skipped pre_burn must be per-type: no burn here, but sibling sub-generators
-// (blood, bash, fire) in the same generator must still run.
+
+
 TEST_CASE( "post_process_pre_burn_skipped_is_noop_and_preserves_others",
            "[mapgen][post_process]" )
 {
@@ -1072,7 +1072,7 @@ TEST_CASE( "post_process_pre_burn_skipped_is_noop_and_preserves_others",
     build_pp_test_layout( here, 0, false );
     rng_set_engine_seed( 4242 );
 
-    // Construct a decision vector marking pre_burn as skipped.
+
     std::vector<pp_sub_decision> decisions;
     pp_sub_decision dec;
     dec.type = sub_generator_type::pre_burn;
@@ -1084,18 +1084,18 @@ TEST_CASE( "post_process_pre_burn_skipped_is_noop_and_preserves_others",
     pp_generator_riot_damage.obj().execute( here, pos, &decisions );
     pp_scan_result r = scan_omt( here, 0 );
 
-    // Skipped pre_burn: no burnt terrain, no dirt from outdoor burn.
+
     CHECK( r.wall_burnt_count == 0 );
     CHECK( r.floor_burnt_count == 0 );
     CHECK( r.dirt_count == 0 );
-    // Other sub-generators still run: blood proves they did.
+
     CHECK( r.blood_field_count > 0 );
 
     clear_overmaps();
 }
 
-// Guard: an applied overmap_special-scope pre_burn decision always burns,
-// regardless of time gate.
+
+
 TEST_CASE( "post_process_pre_burn_applied_runs_unconditionally",
            "[mapgen][post_process]" )
 {
@@ -1103,8 +1103,8 @@ TEST_CASE( "post_process_pre_burn_applied_runs_unconditionally",
     map &here = get_map();
     const tripoint_abs_omt pos = project_to<coords::omt>( here.get_abs_sub() );
 
-    // Before scaling_days_start: normal path would skip pre_burn entirely.
-    // Applied decision should still burn.
+
+
     calendar::turn = calendar::start_of_cataclysm + 0_turns;
 
     build_pp_test_layout( here, 0, false );
@@ -1121,21 +1121,21 @@ TEST_CASE( "post_process_pre_burn_applied_runs_unconditionally",
     pp_generator_riot_damage.obj().execute( here, pos, &decisions );
     pp_scan_result r = scan_omt( here, 0 );
 
-    // Applied: wood walls -> burnt, wood floor -> burnt.
+
     CHECK( r.wall_burnt_count > 0 );
     CHECK( r.floor_burnt_count > 0 );
 
     clear_overmaps();
 }
 
-// All OMTs of a multi-z special must index to the same decision slot so the
-// first-to-mapgen OMT resolves the decision for every other z-level.
+
+
 TEST_CASE( "post_process_multi_z_special_shares_decisions", "[mapgen][post_process]" )
 {
     const overmap_special &special = *overmap_special_test_pp_multi_z_special;
     const city cit;
 
-    // Fresh overmap off the global grid keeps the test isolated from real state.
+
     std::unique_ptr<overmap> om = std::make_unique<overmap>( point_abs_om::zero );
 
     std::vector<tripoint_om_omt> placed;
@@ -1191,5 +1191,3 @@ TEST_CASE( "post_process_multi_z_special_shares_decisions", "[mapgen][post_proce
     CHECK( found_riot );
     CHECK( found_pre_burn );
 }
-
-

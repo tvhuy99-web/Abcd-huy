@@ -307,7 +307,7 @@ void set_marloss_context( dialogue &d, const std::string &color, const std::stri
     d.set_value( "marloss_other_addiction_2", other_addiction_2 );
 }
 
-} // namespace
+}
 
 TEST_CASE( "marloss_and_mycus_consumption_eocs", "[eoc][marloss]" )
 {
@@ -316,7 +316,7 @@ TEST_CASE( "marloss_and_mycus_consumption_eocs", "[eoc][marloss]" )
     effect_on_conditions::clear( get_avatar() );
     on_out_of_scope reset_character( []() {
         effect_on_conditions::clear( get_avatar() );
-        // Clear sleep before resetting the character, which includes feeding them.
+
         get_avatar().clear_effects();
         clear_avatar();
     } );
@@ -348,7 +348,7 @@ TEST_CASE( "marloss_and_mycus_consumption_eocs", "[eoc][marloss]" )
         CHECK_FALSE( you.has_trait( trait_MARLOSS_YELLOW ) );
         CHECK( get_map().ter( you.pos_bub() ).id() == ter_t_marloss );
         CHECK_FALSE( you.has_effect( effect_sleep ) );
-        // Keep normal sleep processing from immediately waking the rested test avatar.
+
         you.add_effect( effect_narcosis, 1_turns );
         effect_on_conditions::process_effect_on_conditions( you );
         CHECK( you.get_effect_dur( effect_sleep ) == 40_minutes - you.get_int() * 30_seconds );
@@ -363,7 +363,7 @@ TEST_CASE( "marloss_and_mycus_consumption_eocs", "[eoc][marloss]" )
         CHECK_FALSE( you.has_trait( trait_MARLOSS ) );
         CHECK_FALSE( you.has_trait( trait_MARLOSS_BLUE ) );
         CHECK_FALSE( you.has_effect( effect_sleep ) );
-        // Keep normal sleep processing from immediately waking the rested test avatar.
+
         you.add_effect( effect_narcosis, 1_turns );
         effect_on_conditions::process_effect_on_conditions( you );
         CHECK( you.stomach.contains() == 0_ml );
@@ -407,14 +407,14 @@ TEST_CASE( "marloss_and_mycus_consumption_eocs", "[eoc][marloss]" )
         REQUIRE( you.can_eat( fruit ).success() );
         you.activity = player_activity( consume_activity_actor( fruit ) );
 
-        // Exercise the real actor: synchronous sleep used to destroy it inside
-        // consume(), before finish() could read reprompt_consume_menu.
+
+
         you.activity.actor->finish( you.activity, you );
         CHECK( you.activity.is_null() );
         CHECK( you.has_trait( trait_THRESH_MYCUS ) );
         CHECK_FALSE( you.has_effect( effect_sleep ) );
 
-        // Keep normal sleep processing from immediately waking the rested test avatar.
+
         you.add_effect( effect_narcosis, 1_turns );
         effect_on_conditions::process_effect_on_conditions( you );
         CHECK( you.get_effect_dur( effect_sleep ) == 5_hours - you.get_int() * 1_minutes );
@@ -447,13 +447,13 @@ TEST_CASE( "marloss_refusal_prevents_consumption", "[eoc][marloss][can_eat]" )
     const int charges = food.charges;
     const int calories = you.stomach.get_calories();
     const int morale = you.get_morale_level();
-    CHECK( you.consume( food, /*force=*/true ) == trinary::NONE );
+    CHECK( you.consume( food, true ) == trinary::NONE );
     CHECK( food.charges == charges );
     CHECK( you.stomach.get_calories() == calories );
     CHECK( you.get_morale_level() == morale );
     CHECK( you.addictions.empty() );
 
-    // The restriction is on Marloss, not Mycus food.
+
     CHECK( you.can_eat( item( itype_mycus_fruit ) ).success() );
     standard_npc other;
     CHECK_FALSE( other.can_eat( food ).success() );
@@ -581,7 +581,7 @@ TEST_CASE( "EOC_diag_with_vars", "[eoc][math_parser]" )
 
 TEST_CASE( "EOC_transform_radius", "[eoc][timed_event]" )
 {
-    // no introspection :(
+
     constexpr int eoc_range = 5;
     constexpr time_duration delay = 30_seconds;
     clear_avatar();
@@ -698,10 +698,10 @@ TEST_CASE( "EOC_context_test", "[eoc][math_parser]" )
     CHECK( effect_on_condition_EOC_math_test_context->activate( d ) );
     CHECK( globvars.get_global_value( "simple_global" ) == 12 );
     CHECK( globvars.get_global_value( "nested_simple_global" ) == 7 );
-    // shouldn't be passed back up
+
     CHECK( globvars.get_global_value( "non_nested_simple_global" ) == 0 );
 
-    // value shouldn't exist in the original dialogue
+
     CHECK( !d.maybe_get_value( "simple" ) );
 }
 
@@ -715,10 +715,10 @@ TEST_CASE( "EOC_option_test", "[eoc][math_parser]" )
 
     globvars.clear_global_values();
 
-    // Key1: Test getting option(string type) and setting into string var
-    // Key2: Test getting option from math-type assignment
-    // Key3: Test checking option as a condition
-    // Checked values should not default to 0/0.0 as undefined globals may return that value, and thus could "fail silently"
+
+
+
+
     REQUIRE( !globvars.maybe_get_global_value( "key1" ) );
     REQUIRE( !globvars.maybe_get_global_value( "key2" ) );
     REQUIRE( !globvars.maybe_get_global_value( "key3" ) );
@@ -886,26 +886,26 @@ TEST_CASE( "EOC_mutation_test", "[eoc][mutations]" )
 
     avatar &me = get_avatar();
 
-    // test activation
+
     globvars.clear_global_values();
     me.toggle_trait( trait_process_mutation_two );
     me.activate_mutation( trait_process_mutation_two );
     CHECK( globvars.get_global_value( "test_val" ) == 1 );
     CHECK( globvars.get_global_value( "context_test" ) == "process_mutation_two" );
 
-    // test process
+
     globvars.clear_global_values();
     me.suffer();
     CHECK( globvars.get_global_value( "test_val" ) == 1 );
     CHECK( globvars.get_global_value( "context_test" ) == "process_mutation_two" );
 
-    // test deactivate
+
     globvars.clear_global_values();
     me.deactivate_mutation( trait_process_mutation_two );
     CHECK( globvars.get_global_value( "test_val" ) == 1 );
     CHECK( globvars.get_global_value( "context_test" ) == "process_mutation_two" );
 
-    // more complex test
+
     globvars.clear_global_values();
     me.toggle_trait( trait_process_mutation );
     effect_on_condition_EOC_activate_mutation_to_start_test->activate( d );
@@ -919,23 +919,23 @@ TEST_CASE( "EOC_purifiability", "[eoc][mutations]" )
     clear_map_without_vision();
     avatar &me = get_avatar();
 
-    // Gain both traits
+
     me.toggle_trait( trait_purifiability_first );
     me.toggle_trait( trait_purifiability_second );
-    // Check assumptions
+
     REQUIRE( me.purifiable( trait_purifiability_first ) );
     REQUIRE( !me.purifiable( trait_purifiability_second ) );
 
     dialogue d( get_talker_for( get_avatar() ), std::make_unique<talker>() );
-    // Try to set both traits to non-purifiable
+
     REQUIRE( effect_on_condition_EOC_TEST_PURIFIABILITY_FALSE->activate( d ) );
-    // Neither are purifiable
+
     CHECK( !me.purifiable( trait_purifiability_first ) );
     CHECK( !me.purifiable( trait_purifiability_second ) );
 
-    // Try to set both traits purifiable
+
     REQUIRE( effect_on_condition_EOC_TEST_PURIFIABILITY_TRUE->activate( d ) );
-    // The by default non-purifiable trait stays non-purifiable, the other resets
+
     CHECK( me.purifiable( trait_purifiability_first ) );
     CHECK( !me.purifiable( trait_purifiability_second ) );
 }
@@ -986,7 +986,7 @@ TEST_CASE( "EOC_activity_ongoing", "[eoc][timed_event]" )
 
     complete_activity( get_avatar() );
 
-    // been going for 3 whole seconds should have incremented 3 times
+
     CHECK( get_avatar().get_value( "activitiy_incrementer" ) == 3 );
 }
 
@@ -1004,13 +1004,13 @@ TEST_CASE( "EOC_stored_condition_test", "[eoc]" )
 
     d.set_value( "context", 0 );
 
-    // running with a value of 0 will have the conditional evaluate to 0
+
     CHECK( effect_on_condition_EOC_stored_condition_test->activate( d ) );
     CHECK( globvars.get_global_value( "key1" ) == 0 );
     CHECK( globvars.get_global_value( "key2" ) == 0 );
     CHECK( d.get_value( "context" ) == 0 );
 
-    // try again with a different value
+
     globvars.clear_global_values();
 
     REQUIRE( !globvars.maybe_get_global_value( "key1" ) );
@@ -1018,7 +1018,7 @@ TEST_CASE( "EOC_stored_condition_test", "[eoc]" )
 
     d.set_value( "context", 10 );
 
-    // running with a value greater than 1 will have the conditional evaluate to 1
+
     CHECK( effect_on_condition_EOC_stored_condition_test->activate( d ) );
     CHECK( globvars.get_global_value( "key1" ) == 1 );
     CHECK( globvars.get_global_value( "key2" ) == 1 );
@@ -1190,7 +1190,7 @@ TEST_CASE( "EOC_run_with_test", "[eoc]" )
     CHECK( globvars.get_global_value( "key2" ) ==  2 );
     CHECK( globvars.get_global_value( "key3" ) ==  3 );
 
-    // value shouldn't exist in the original dialogue
+
     CHECK( !d.maybe_get_value( "key1" ) );
     CHECK( !d.maybe_get_value( "key2" ) );
     CHECK( !d.maybe_get_value( "key3" ) );
@@ -1261,7 +1261,7 @@ TEST_CASE( "EOC_run_with_test_queue", "[eoc]" )
     CHECK( globvars.get_global_value( "key2" ) == 2 );
     CHECK( globvars.get_global_value( "key3" ) == 3 );
 
-    // value shouldn't exist in the original dialogue
+
     CHECK( !d.maybe_get_value( "key" ) );
     CHECK( !d.maybe_get_value( "key2" ) );
     CHECK( !d.maybe_get_value( "key3" ) );
@@ -1284,7 +1284,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     REQUIRE( items_before.size() == 4 );
 
-    // All items
+
     CHECK( effect_on_condition_EOC_run_inv_test1->activate( d ) );
 
     std::vector<item *> items_after = get_avatar().items_with( []( const item & it ) {
@@ -1293,7 +1293,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.size() == 4 );
 
-    // Test search_data: id, worn_only
+
     CHECK( effect_on_condition_EOC_run_inv_test2->activate( d ) );
 
     items_after = get_avatar().items_with( []( const item & it ) {
@@ -1302,7 +1302,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.size() == 1 );
 
-    // Test search_data: material, wielded_only
+
     CHECK( effect_on_condition_EOC_run_inv_test3->activate( d ) );
 
     items_after = get_avatar().items_with( []( const item & it ) {
@@ -1323,7 +1323,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.size() == 1 );
 
-    // Test search_data: category, flags
+
     CHECK( effect_on_condition_EOC_run_inv_test4->activate( d ) );
 
     items_after = get_avatar().items_with( []( const item & it ) {
@@ -1332,7 +1332,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.size() == 1 );
 
-    // Test search_data: excluded flags
+
     CHECK( effect_on_condition_EOC_run_inv_test5->activate( d ) );
 
     items_after = get_avatar().items_with( []( const item & it ) {
@@ -1341,7 +1341,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.size() == 3 );
 
-    // Flag test for item
+
     CHECK( effect_on_condition_EOC_item_flag_test->activate( d ) );
 
     items_after = get_avatar().items_with( []( const item & it ) {
@@ -1356,7 +1356,7 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.empty() );
 
-    // Math function test for item
+
     items_before = get_avatar().items_with( []( const item & it ) {
         return it.damage() == 0;
     } );
@@ -1370,15 +1370,15 @@ TEST_CASE( "EOC_run_inv_test", "[eoc]" )
 
     CHECK( items_after.size() == 4 );
 
-    // Activate test for item
+
     CHECK( effect_on_condition_EOC_item_activate_test->activate( d ) );
     CHECK( get_map().furn( get_map().get_bub( pos_after ) ) == furn_f_cardboard_box );
 
-    // Teleport test for item
+
     CHECK( effect_on_condition_EOC_item_teleport_test->activate( d ) );
     CHECK( get_map().i_at( get_map().get_bub( pos_after ) ).size() == 3 );
 
-    // Math function test for armor
+
     CHECK( effect_on_condition_EOC_armor_math_test->activate( d ) );
 
     const item &check_item = get_avatar().worn.i_at( 0 );
@@ -1430,7 +1430,7 @@ TEST_CASE( "EOC_event_test", "[eoc]" )
     REQUIRE( !globvars.maybe_get_global_value( "key2" ) );
     REQUIRE( !globvars.maybe_get_global_value( "key3" ) );
 
-    // character_casts_spell
+
     spell temp_spell( spell_test_eoc_spell );
     temp_spell.set_level( get_avatar(), 5 );
     temp_spell.cast_all_effects( get_avatar(), tripoint_bub_ms() );
@@ -1442,7 +1442,7 @@ TEST_CASE( "EOC_event_test", "[eoc]" )
     CHECK( globvars.get_global_value( "key5" ) == 100 );
     CHECK( globvars.get_global_value( "key6" ) == 45 );
 
-    // character_starts_activity
+
     globvars.clear_global_values();
     get_avatar().assign_activity( ACT_GENERIC_EOC, 1 );
 
@@ -1450,14 +1450,14 @@ TEST_CASE( "EOC_event_test", "[eoc]" )
     CHECK( globvars.get_global_value( "key2" ) == 0 );
     CHECK( globvars.get_global_value( "key3" ) == "activity start" );
 
-    // character_finished_activity
+
     get_avatar().cancel_activity();
 
     CHECK( globvars.get_global_value( "key1" ) == "ACT_GENERIC_EOC" );
     CHECK( globvars.get_global_value( "key2" ) == 1 );
     CHECK( globvars.get_global_value( "key3" ) == "activity finished" );
 
-    // character_wields_item
+
     item weapon_item( itype_test_knife_combat );
     get_avatar().wield( weapon_item );
     item_location weapon = get_avatar().get_wielded_item();
@@ -1465,7 +1465,7 @@ TEST_CASE( "EOC_event_test", "[eoc]" )
     CHECK( get_avatar().get_value( "test_event_last_event" ) == "character_wields_item" );
     CHECK( weapon->get_var( "test_event_last_event" ) == "character_wields_item" );
 
-    // character_wears_item
+
     std::list<item>::iterator armor = *get_avatar().worn.wear_item( get_avatar(),
                                       item( itype_backpack ), false, true, true );
 
@@ -1484,7 +1484,7 @@ TEST_CASE( "EOC_combat_event_test", "[eoc]" )
     clear_npcs();
     clear_map_without_vision();
 
-    // character_melee_attacks_character
+
     npc &npc_dst_melee = spawn_npc( get_avatar().pos_bub().xy() + point::south, "thug" );
     item weapon_item( itype_test_knife_combat );
     get_avatar().wield( weapon_item );
@@ -1497,7 +1497,7 @@ TEST_CASE( "EOC_combat_event_test", "[eoc]" )
     CHECK( globvars.get_global_value( "weapon" ) == "test_knife_combat" );
     CHECK( globvars.get_global_value( "victim_name" ) == npc_dst_melee.get_name() );
 
-    // character_melee_attacks_monster
+
     clear_map_without_vision();
     monster &mon_dst_melee = spawn_test_monster( "mon_zombie",
                              get_avatar().pos_bub() + tripoint::east );
@@ -1510,7 +1510,7 @@ TEST_CASE( "EOC_combat_event_test", "[eoc]" )
     CHECK( globvars.get_global_value( "weapon" ) == "test_knife_combat" );
     CHECK( globvars.get_global_value( "victim_type" ) == "mon_zombie" );
 
-    // character_ranged_attacks_character
+
     const tripoint_bub_ms target_pos = get_avatar().pos_bub() + point::east;
     clear_map_without_vision();
     npc &npc_dst_ranged = spawn_npc( target_pos.xy(), "thug" );
@@ -1530,7 +1530,7 @@ TEST_CASE( "EOC_combat_event_test", "[eoc]" )
     CHECK( globvars.get_global_value( "weapon" ) == "shotgun_s" );
     CHECK( globvars.get_global_value( "victim_name" ) == npc_dst_ranged.get_name() );
 
-    // character_ranged_attacks_monster
+
     clear_map_without_vision();
     monster &mon_dst_ranged = spawn_test_monster( "mon_zombie", target_pos );
     for( loop = 0; loop < 1000; loop++ ) {
@@ -1549,7 +1549,7 @@ TEST_CASE( "EOC_combat_event_test", "[eoc]" )
     CHECK( globvars.get_global_value( "weapon" ) == "shotgun_s" );
     CHECK( globvars.get_global_value( "victim_type" ) == "mon_zombie" );
 
-    // character_kills_monster
+
     clear_map_without_vision();
     monster &victim = spawn_test_monster( "mon_zombie", target_pos );
     victim.die( &here, &get_avatar() );

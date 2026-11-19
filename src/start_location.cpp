@@ -58,23 +58,23 @@ static const zone_type_id zone_type_ZONE_START_POINT( "ZONE_START_POINT" );
 namespace
 {
 generic_factory<start_location> all_start_locations( "start locations" );
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const start_location &string_id<start_location>::obj() const
 {
     return all_start_locations.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<start_location> string_id<start_location>::id() const
 {
     return all_start_locations.convert( *this, int_id<start_location>( -1 ) );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<start_location>::is_valid() const
 {
@@ -184,24 +184,24 @@ void start_location::finalize()
 {
 }
 
-// check if tile at p should be boarded with some kind of furniture.
+
 static void add_boardable( const tinymap &m, const tripoint_omt_ms &p,
                            std::vector<tripoint_omt_ms> &vec )
 {
     if( m.has_furn( p ) ) {
-        // Don't need to board this up, is already occupied
+
         return;
     }
     if( m.ter( p ) != ter_t_floor ) {
-        // Other terrain (door, wall, ...), not boarded either
+
         return;
     }
     if( m.is_outside( p ) ) {
-        // Don't board up the outside
+
         return;
     }
     if( std::find( vec.begin(), vec.end(), p ) != vec.end() ) {
-        // Already registered to be boarded
+
         return;
     }
     vec.push_back( p );
@@ -216,22 +216,22 @@ static void board_up( tinymap &m, const tripoint_range<tripoint_omt_ms> &range )
         bool must_board_around = false;
         const ter_id &t = m.ter( p );
         if( t == ter_t_window_domestic || t == ter_t_window || t == ter_t_window_no_curtains ) {
-            // Windows are always to the outside and must be boarded
+
             must_board_around = true;
             m.ter_set( p, ter_t_window_boarded );
         } else if( t == ter_t_door_c || t == ter_t_door_locked || t == ter_t_door_c_peep ) {
-            // Only board up doors that lead to the outside
+
             if( m.is_outside( p + tripoint::north ) || m.is_outside( p + tripoint::south ) ||
                 m.is_outside( p + tripoint::east ) || m.is_outside( p + tripoint::west ) ) {
                 m.ter_set( p, ter_t_door_boarded );
                 must_board_around = true;
             } else {
-                // internal doors are opened instead
+
                 m.ter_set( p, ter_t_door_o );
             }
         }
         if( must_board_around ) {
-            // Board up the surroundings of the door/window
+
             for( const tripoint_omt_ms &neigh : points_in_radius( p, 1 ) ) {
                 if( neigh == p ) {
                     continue;
@@ -240,7 +240,7 @@ static void board_up( tinymap &m, const tripoint_range<tripoint_omt_ms> &range )
             }
         }
     }
-    // Find all furniture that can be used to board up some place
+
     for( const tripoint_omt_ms &p : range ) {
         if( std::find( boardables.begin(), boardables.end(), p ) != boardables.end() ) {
             continue;
@@ -248,14 +248,14 @@ static void board_up( tinymap &m, const tripoint_range<tripoint_omt_ms> &range )
         if( !m.has_furn( p ) ) {
             continue;
         }
-        // If the furniture is movable and the character can move it, use it to barricade
-        //  is workable here as NPCs by definition are not starting the game.  (Let's hope.)
-        ///\EFFECT_STR determines what furniture might be used as a starting area barricade
+
+
+
         const furn_t &fo = m.furn( p ).obj();
         if( fo.is_movable() &&
             fo.move_str_req < get_player_character().get_str() ) {
             if( fo.movecost == 0 ) {
-                // Obstacles are better, prefer them
+
                 furnitures1.push_back( p );
             } else {
                 furnitures2.push_back( p );
@@ -290,8 +290,8 @@ void start_location::prepare_map( tinymap &m ) const
 std::pair<tripoint_abs_omt, std::unordered_map<std::string, std::string>>
         start_location::find_player_initial_location( const point_abs_om &origin ) const
 {
-    // Spiral out from the world origin scanning for a compatible starting location,
-    // creating overmaps as necessary.
+
+
     const int radius = 3;
     const omt_types_parameters chosen_target = random_target();
     for( const point_abs_om &omp : closest_points_first( origin, radius ) ) {
@@ -302,7 +302,7 @@ std::pair<tripoint_abs_omt, std::unordered_map<std::string, std::string>>
             return std::make_pair( project_combine( omp, omtstart ), chosen_target.parameters );
         }
     }
-    // Should never happen, if it does we messed up.
+
     popup( _( "Unable to generate a valid starting location %s [%s] in a radius of %d overmaps, please report this failure." ),
            name(), id.str(), radius );
     return std::make_pair( tripoint_abs_omt::invalid, chosen_target.parameters );
@@ -335,7 +335,7 @@ std::pair<tripoint_abs_omt, std::unordered_map<std::string, std::string>>
     if( omtstart != tripoint_om_omt::min ) {
         return std::make_pair( project_combine( origin.pos_om, omtstart ), random_valid.second.parameters );
     }
-    // Should never happen, if it does we messed up.
+
     popup( _( "Unable to generate a valid starting location %s [%s] in a city [%s], please report this failure." ),
            name(), id.str(), origin.name );
     return std::make_pair( tripoint_abs_omt::invalid, random_valid.second.parameters );
@@ -394,23 +394,23 @@ void start_location::set_parameters( const tripoint_abs_omt &omtstart,
 
 void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
 {
-    // Now prepare the initial map (change terrain etc.)
+
     tinymap player_start;
     player_start.load( omtstart, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
     swap_map swap( *player_start.cast_to_map() );
     prepare_map( player_start );
     player_start.save();
 }
 
-/** Helper for place_player
- * Flood-fills the area from a given point, then returns the area it found.
- * Considers unpassable tiles passable if they can be bashed down or opened.
- * Will return INT_MAX if it reaches upstairs or map edge.
- * We can't really use map::route here, because it expects a destination
- * Maybe TODO: Allow "picking up" items or parts of bashable furniture
- *             and using them to help with bash attempts.
- */
+
+
+
+
+
+
+
+
 static int rate_location( map &m, const tripoint_bub_ms &p,
                           const bool must_be_inside, const bool accommodate_npc,
                           const int bash_str, const int attempt,
@@ -427,13 +427,13 @@ static int rate_location( map &m, const tripoint_bub_ms &p,
         return 0;
     }
 
-    // Vector that will be used as a stack
+
     std::vector<tripoint_bub_ms> st;
     st.reserve( MAPSIZE_X * MAPSIZE_Y );
     st.push_back( p );
 
-    // If not checked yet and either can be moved into, can be bashed down or opened,
-    // add it on the top of the stack.
+
+
     const auto maybe_add = [&]( const point_bub_ms & add_p, const tripoint_bub_ms & from ) {
         if( checked[add_p.x()][add_p.y()] >= attempt ) {
             return;
@@ -475,30 +475,30 @@ static int rate_location( map &m, const tripoint_bub_ms &p,
 
 void start_location::place_player( avatar &you, const tripoint_abs_omt &omtstart ) const
 {
-    // Need the "real" map with it's inside/outside cache and the like.
+
     map &here = get_map();
-    // Start us off somewhere in the center of the map
+
     you.set_pos_abs_only( midpoint( project_bounds<coords::ms>( omtstart ) ) );
     here.invalidate_map_cache( here.get_abs_sub().z() );
     here.build_map_cache( here.get_abs_sub().z() );
     const bool must_be_inside = flags().count( "ALLOW_OUTSIDE" ) == 0;
     const bool accommodate_npc = flags().count( "LONE_START" ) == 0;
-    ///\EFFECT_STR allows player to start behind less-bashable furniture and terrain
-    // TODO: Allow using items here
+
+
     const int bash = you.get_str();
 
-    // Remember biggest found location
-    // Sometimes it may be impossible to automatically found an ideal location
-    // but the player may be more creative than this algorithm and do away with just "good"
+
+
+
     int best_rate = 0;
     tripoint_bub_ms best_spot = you.pos_bub();
-    // In which attempt did this area get checked?
-    // We can overwrite earlier attempts, but not start in them
+
+
     cata::mdarray<int, point_bub_ms> checked = {};
 
     bool found_good_spot = false;
 
-    //Check if a start_point zone exists first
+
     const zone_manager &mgr = zone_manager::get_manager();
     for( const auto &i : mgr.get_zones() ) {
         const zone_data &zone = i.get();
@@ -511,7 +511,7 @@ void start_location::place_player( avatar &you, const tripoint_abs_omt &omtstart
         }
     }
 
-    // Otherwise, find a random starting spot
+
 
     int tries = 0;
     const auto check_spot = [&]( const tripoint_bub_ms & pt ) {
@@ -534,8 +534,8 @@ void start_location::place_player( avatar &you, const tripoint_abs_omt &omtstart
                                     you.posz() );
         found_good_spot = check_spot( rand_point );
     }
-    // If we haven't got a good location by now, screw it and brute force it
-    // This only happens in exotic locations (deep of a science lab), but it does happen
+
+
     if( !found_good_spot ) {
         tripoint_bub_ms tmp = you.pos_bub();
         int &x = tmp.x();
@@ -559,7 +559,7 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
 {
     tinymap m;
     m.load( omtstart, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
     swap_map swap( *m.cast_to_map() );
     m.build_outside_cache( m.get_abs_sub().z() );
     point_bub_ms player_pos = get_player_character().pos_bub().xy();
@@ -599,26 +599,26 @@ void start_location::handle_heli_crash( avatar &you ) const
 {
     for( const bodypart_id &bp : you.get_all_body_parts( get_body_part_flags::only_main ) ) {
         if( bp == bodypart_id( "head" ) || bp == bodypart_id( "torso" ) ) {
-            continue;// Skip head + torso for balance reasons.
+            continue;
         }
         const int roll = static_cast<int>( rng( 1, 8 ) );
         switch( roll ) {
-            // Damage + Bleed
+
             case 1:
             case 2:
                 you.add_effect( effect_bleed, 6_minutes, bp );
                 [[fallthrough]];
             case 3:
             case 4:
-            // Just damage
+
             case 5: {
                 const int maxHp = you.get_hp_max( bp );
-                // Body part health will range from 33% to 66% with occasional bleed
+
                 const int dmg = static_cast<int>( rng( maxHp / 3, maxHp * 2 / 3 ) );
                 you.apply_damage( nullptr, bp, dmg );
                 break;
             }
-            // No damage
+
             default:
                 break;
         }
@@ -630,7 +630,7 @@ static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &t
 {
     tinymap m;
     m.load( omtstart, false );
-    // map::place_spawns internally multiplies density by rng(10, 50)
+
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
     m.place_spawns( type, 1, point_omt_ms::zero, point_omt_ms( SEEX * 2 - 1, SEEY * 2 - 1 ),
                     omtstart.z(),

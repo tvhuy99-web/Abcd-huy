@@ -346,8 +346,8 @@ TEST_CASE( "available_recipes", "[recipes]" )
         WHEN( "the player read it and has an appropriate skill" ) {
             dummy.identify( *craftbook );
             dummy.set_knowledge_level( r->skill_used, 2 );
-            // Secondary skills are just set to be what the autolearn requires
-            // but the primary is not
+
+
             for( const std::pair<const skill_id, int> &skl : r->required_skills ) {
                 dummy.set_knowledge_level( skl.first, skl.second );
             }
@@ -407,7 +407,7 @@ TEST_CASE( "available_recipes", "[recipes]" )
     }
 }
 
-// This crashes subsequent testcases for some reason.
+
 TEST_CASE( "crafting_with_a_companion", "[.]" )
 {
     const recipe *r = &recipe_brew_mead.obj();
@@ -482,7 +482,7 @@ static void give_tools( const std::vector<item> &tools, const bool plug_in )
             boil.emplace_back( gear );
         }
     }
-    // add BOIL tools later so that they don't contain anything
+
     for( const item &gear : boil ) {
         REQUIRE( player_character.i_add( gear ) );
     }
@@ -496,12 +496,12 @@ static int apply_offset( int skill, int offset )
 
 static void grant_skills_to_character( Character &you, const recipe &r, int offset )
 {
-    // Ensure adequate skill for all "required" skills
+
     for( const std::pair<const skill_id, int> &skl : r.required_skills ) {
         you.set_skill_level( skl.first, apply_offset( skl.second, offset ) );
         you.set_knowledge_level( skl.first, apply_offset( skl.second, offset ) );
     }
-    // and just in case "used" skill difficulty is higher, set that too
+
     int value = apply_offset( std::max( r.difficulty,
                                         static_cast<int>( you.get_skill_level( r.skill_used ) ) ), offset );
     you.set_skill_level( r.skill_used, value );
@@ -558,14 +558,14 @@ static time_point midday = calendar::turn_zero + 12_hours;
 
 static void setup_test_craft( const recipe_id &rid )
 {
-    set_time( midday ); // Ensure light for crafting
+    set_time( midday );
     avatar &player_character = get_avatar();
     const recipe &rec = rid.obj();
     REQUIRE( player_character.morale_crafting_speed_multiplier( rec ) == 1.0 );
     REQUIRE( player_character.lighting_craft_speed_multiplier( rec ) == 1.0 );
     REQUIRE( !player_character.activity );
 
-    // This really shouldn't be needed, but for some reason the tests fail for mingw builds without it
+
     player_character.learn_recipe( &rec );
     REQUIRE( player_character.has_recipe( &rec ) );
     player_character.remove_weapon();
@@ -573,13 +573,13 @@ static void setup_test_craft( const recipe_id &rid )
     player_character.make_craft( rid, 1 );
     REQUIRE( player_character.activity );
     REQUIRE( player_character.activity.id() == ACT_CRAFT );
-    // Extra safety
+
     item_location wielded = player_character.get_wielded_item();
     REQUIRE( wielded );
 }
 
-// This tries to actually run the whole craft activity, which is more thorough,
-// but slow
+
+
 static int actually_test_craft( const recipe_id &rid, int interrupt_after_turns,
                                 int skill_level = -1 )
 {
@@ -591,7 +591,7 @@ static int actually_test_craft( const recipe_id &rid, int interrupt_after_turns,
         if( turns >= interrupt_after_turns ||
             ( skill_level >= 0 &&
               static_cast<int>( player_character.get_skill_level( rid->skill_used ) ) > skill_level ) ) {
-            set_time( midnight ); // Kill light to interrupt crafting
+            set_time( midnight );
         }
         ++turns;
         player_character.set_moves( 100 );
@@ -603,8 +603,8 @@ static int actually_test_craft( const recipe_id &rid, int interrupt_after_turns,
     return turns;
 }
 
-// Drive an active craft turn-by-turn until its current step reaches target_step
-// (or the activity ends).  Returns the current step when it stops (-1 if gone).
+
+
 static int craft_until_step( const recipe_id &rid, int target_step )
 {
     setup_test_craft( rid );
@@ -645,7 +645,7 @@ static int test_craft_for_prof( const recipe_id &rid, const proficiency_id &prof
     return turns;
 }
 
-// Test gaining proficiency by repeatedly crafting short recipe
+
 TEST_CASE( "proficiency_gain_short_crafts", "[crafting][proficiency]" )
 {
     std::vector<item> tools = { item( itype_2x4 ) };
@@ -653,7 +653,7 @@ TEST_CASE( "proficiency_gain_short_crafts", "[crafting][proficiency]" )
     const recipe_id &rec = recipe_cudgel_simple;
     prep_craft( rec, tools, true );
     avatar &ch = get_avatar();
-    // Set skill above requirement so that skill training doesn't steal any focus
+
     ch.set_skill_level( skill_fabrication, 1 );
     REQUIRE( rec->get_skill_cap() < static_cast<int>( ch.get_skill_level( rec->skill_used ) ) );
 
@@ -664,15 +664,15 @@ TEST_CASE( "proficiency_gain_short_crafts", "[crafting][proficiency]" )
 
     float time_malus = rec->proficiency_time_maluses( ch, ch.book_bonuses_nearby() );
 
-    // Proficiency progress is checked every 5% of craft progress, so up to 5% of one craft worth can be wasted depending on timing
-    // Rounding effects account for another tiny bit
+
+
     time_duration overrun = time_duration::from_turns( 466 );
 
     do {
         turns_taken += test_craft_for_prof( rec, proficiency_prof_carving, 1.0f );
         give_tools( tools, true );
 
-        // Escape door to avoid infinite loop if there is no progress
+
         REQUIRE( turns_taken < max_turns );
     } while( !ch.has_proficiency( proficiency_prof_carving ) );
 
@@ -680,14 +680,14 @@ TEST_CASE( "proficiency_gain_short_crafts", "[crafting][proficiency]" )
     CHECK( time_duration::from_turns( turns_taken ) == expected_time );
 }
 
-// Test gaining proficiency all at once after finishing 5% of a very long recipe
+
 TEST_CASE( "proficiency_gain_long_craft", "[crafting][proficiency]" )
 {
     std::vector<item> tools = { item( itype_2x4 ) };
     const recipe_id &rec = recipe_cudgel_slow;
     prep_craft( rec, tools, true );
     avatar &ch = get_avatar();
-    // Set skill above requirement so that skill training doesn't steal any focus
+
     ch.set_skill_level( skill_fabrication, 1 );
     REQUIRE( rec->get_skill_cap() < static_cast<int>( ch.get_skill_level( rec->skill_used ) ) );
     REQUIRE( ch.get_proficiency_practice( proficiency_prof_carving ) == 0.0f );
@@ -696,9 +696,9 @@ TEST_CASE( "proficiency_gain_long_craft", "[crafting][proficiency]" )
 
     const item_location &craft = ch.get_wielded_item();
 
-    // Check exactly one 5% tick has passed
-    // 500k counter = 5% progress
-    // If counter is 0, this means the craft finished before we gained the proficiency
+
+
+
     CHECK( craft->item_counter >= 500000 );
     CHECK( craft->item_counter < 501000 );
 }
@@ -760,12 +760,12 @@ TEST_CASE( "synthetic_recipe_fail_chances", "[.]" )
 static void test_fail_scenario( const std::string &scen, const recipe_id &rid, int offset,
                                 bool has_profs, float expected )
 {
-    // In each of these, we modify the avatar, so make sure they start in a known state.
+
     clear_avatar();
 
     const recipe &rec = *rid;
     Character &player_character = get_player_character();
-    // Grant the character skills and proficiencies as appropriate to the scenario
+
     grant_skills_to_character( player_character, rec, offset );
     if( has_profs ) {
         grant_profs_to_character( player_character, rec );
@@ -774,9 +774,9 @@ static void test_fail_scenario( const std::string &scen, const recipe_id &rid, i
     INFO( rid.str() );
     INFO( scen );
 
-    // If they have the trait that prevents crafting failures, this test would be a little pointless
+
     REQUIRE_FALSE( player_character.has_trait( trait_DEBUG_CNF ) );
-    // Ensure that they either have the profs we gave them, or no profs.
+
     if( has_profs ) {
         for( const recipe_proficiency &prof : rec.get_proficiencies() ) {
             REQUIRE( player_character.has_proficiency( prof.id ) );
@@ -784,18 +784,18 @@ static void test_fail_scenario( const std::string &scen, const recipe_id &rid, i
     } else {
         REQUIRE( player_character.known_proficiencies().empty() );
     }
-    // The skills that the character is expected to have are the skills the recipes uses + the offset
+
     std::map<skill_id, int> expected_skills = rec.required_skills;
     INFO( string_format( "primary_skill: %s",
                          remove_color_tags( rec.primary_skill_string( player_character ) ) ) );
     INFO( string_format( "required skills: %s",
                          remove_color_tags( rec.required_skills_string( player_character ) ) ) );
-    // In case the difficulty and required skills for the primary skill mismatch
+
     expected_skills[rec.skill_used] = std::max( rec.difficulty, expected_skills[rec.skill_used] );
     for( const std::pair<const skill_id, SkillLevel> &skill : player_character.get_all_skills() ) {
         INFO( string_format( "skill %s: prac %d know %d", skill.first.str(), skill.second.level(),
                              skill.second.knowledgeLevel() ) );
-        // Only apply to skills that we expect to have a value
+
         if( expected_skills.count( skill.first ) != 0 ) {
             expected_skills[skill.first] = clamp( expected_skills[skill.first] + offset, 0, MAX_SKILL );
         } else {
@@ -806,9 +806,9 @@ static void test_fail_scenario( const std::string &scen, const recipe_id &rid, i
         REQUIRE( skill.second.knowledgeLevel() == expected_skills[skill.first] );
     }
 
-    // The chance of failing the craft based on doing the craft roll many times
+
     float chance = craft_aggregate_fail_chance( rid );
-    // The chance of failing the craft as calculated by math
+
     float calculated = ( 1.f - player_character.recipe_success_chance( rec ) ) * 100;
     CHECK( chance == Approx( calculated ).margin( 1 ) );
     CHECK( chance == Approx( expected ).margin( 1 ) );
@@ -852,12 +852,12 @@ TEST_CASE( "crafting_failure_rates_match_calculated", "[crafting][random]" )
     // NOLINTNEXTLINE(cata-static-string_id-constants
     const recipe_id armor_qt_lightplate( "armor_qt_lightplate_test_no_tools" );
 
-    // Skill zero recipes
+
     test_chances_for( makeshift_crowbar, 50.f, 50.f, 50.f, 50.f, 21.19f, 21.19f, 2.28f );
     test_chances_for( meat_cooked, 50.f, 50.f, 50.f, 50.f, 21.19f, 21.19f, 2.28f );
     test_chances_for( club_wooden_large, 50.f, 50.f, 50.f, 50.f, 21.19f, 21.19f, 2.28f );
     test_chances_for( nailboard, 50.f, 50.f, 50.f, 50.f, 21.19f, 21.19f, 2.28f );
-    // Recipes requring various degrees of skill and proficiencies
+
     test_chances_for( cudgel, 82.5, 72.f, 50.f, 50.f, 21.f, 21.f, 2.25 );
     test_chances_for( pumpkin_muffins, 92.5, 82.f, 67.f, 50.f, 43.f, 21.f, 2.25 );
     test_chances_for( bp_40fmj, 94.5, 79.f, 62.f, 50.f, 36.f, 21.f, 2.25 );
@@ -931,14 +931,14 @@ TEST_CASE( "UPS_modded_tools", "[crafting][ups]" )
 
 TEST_CASE( "UPS_modded_tools_dedup_one_pool_across_two_tools", "[crafting][ups]" )
 {
-    // Legacy USE_UPS dedup: two UPS-modded tools sharing one UPS must not
-    // double-count the UPS pool. inventory::charges_of is a feasibility query,
-    // not a reservation API, so the shared external pool counts once.
+
+
+
     avatar dummy;
     clear_character( dummy );
     dummy.worn.wear_item( dummy, item( itype_backpack ), false, false );
 
-    // One UPS with N charges, carried.
+
     constexpr int ups_charges = 259;
     item_location ups_loc = dummy.i_add( item( itype_UPS_ON ) );
     item ups_mag( ups_loc->magazine_default() );
@@ -970,7 +970,7 @@ TEST_CASE( "UPS_modded_tools_dedup_one_pool_across_two_tools", "[crafting][ups]"
         WHEN( "querying charges_of via crafting_inventory" ) {
             const int reported = dummy.crafting_inventory().charges_of( itype_welder );
             THEN( "legacy returns raw charge count once, not per-tool sum" ) {
-                // Legacy must NOT divide by charges_per_use, must NOT add UPS per tool.
+
                 CHECK( reported == ups_charges );
                 CHECK( reported != ups_charges * 2 );
             }
@@ -984,16 +984,16 @@ TEST_CASE( "tools_use_charge_to_craft", "[crafting][charge]" )
 
     GIVEN( "recipe and required tools/materials" ) {
         recipe_id carver( "carver_off_test" );
-        // Uses fabrication skill
-        // Requires electronics 3
-        // Difficulty 4
-        // Learned from advanced_electronics or textbook_electronics
 
-        // Tools needed:
+
+
+
+
+
         tools.emplace_back( itype_screwdriver );
         tools.emplace_back( itype_vac_mold );
 
-        // Materials needed
+
         tools.insert( tools.end(), 10, item( itype_solder_wire ) );
         tools.insert( tools.end(), 6, item( itype_plastic_chunk ) );
         tools.insert( tools.end(), 2, item( itype_blade ) );
@@ -1004,9 +1004,9 @@ TEST_CASE( "tools_use_charge_to_craft", "[crafting][charge]" )
         tools.emplace_back( itype_power_supply );
         tools.emplace_back( itype_scrap );
 
-        // Charges needed to craft:
-        // - 10 charges of soldering iron
-        // - 20 charges of surface heat
+
+
+
 
         WHEN( "each tool has enough charges" ) {
             item popcan_stove = tool_with_ammo( itype_popcan_stove, 60 );
@@ -1056,11 +1056,11 @@ TEST_CASE( "tools_use_charge_to_craft", "[crafting][charge]" )
 
             THEN( "crafting succeeds, and uses charges from the UPS" ) {
                 prep_craft( recipe_carver_off_test, tools, true, 0, false, false );
-                // this recipe should be replaced with a test recipe that isn't impacted by changes in game recipes
+
                 actually_test_craft( recipe_carver_off_test, INT_MAX );
                 CHECK( get_remaining_charges( itype_hotplate ) == 0 );
                 CHECK( get_remaining_charges( itype_soldering_iron_portable ) == 0 );
-                // vacuum molding takes 4 charges
+
                 CHECK( get_remaining_charges( itype_UPS_off ) == 282 );
             }
         }
@@ -1109,8 +1109,8 @@ TEST_CASE( "craft_per_step_tool_consumption", "[crafting][charge][steps]" )
         WHEN( "the craft has only just entered the Solder step" ) {
             const int step = craft_until_step( recipe_cudgel_test_steps_charged, 1 );
 
-            // Entering a step debits its first 5% bucket (40 / 20 = 2 charges);
-            // the rest drains across the step.
+
+
             THEN( "only the step's entry bucket has been debited" ) {
                 CHECK( step == 1 );
                 CHECK( get_remaining_charges( itype_soldering_iron_portable ) == 48 );
@@ -1136,9 +1136,9 @@ TEST_CASE( "craft_per_step_tool_consumption", "[crafting][charge][steps]" )
 
 TEST_CASE( "craft_charged_step_caps_fast_turn_consumption", "[crafting][charge][steps]" )
 {
-    // A remainder-heavy charge count (30) crafted in one fast turn consumes
-    // exactly its total, with no per-bucket rounding overdraw.  This holds for
-    // both a per-step recipe and a stepless recipe metered as one implicit step.
+
+
+
     std::vector<item> tools;
     tools.emplace_back( itype_2x4 );
     tools.push_back( tool_with_ammo( itype_soldering_iron_portable, 50 ) );
@@ -1172,7 +1172,7 @@ TEST_CASE( "craft_continue_preserves_per_step_tool_buckets", "[crafting][charge]
         item &craft = *craft_loc;
         REQUIRE( craft.is_craft() );
 
-        // Mark the Solder step partly debited, then force a continuation rebuild.
+
         craft.set_current_step( 1 );
         std::vector<std::vector<step_tool_alloc>> allocs = craft.get_step_tool_allocs();
         REQUIRE( allocs.size() == 3 );
@@ -1199,8 +1199,8 @@ TEST_CASE( "craft_continue_preserves_per_step_tool_buckets", "[crafting][charge]
         item &craft = *craft_loc;
         REQUIRE( craft.is_craft() );
 
-        // Simulate a save whose allocations were scrubbed by load validation:
-        // resume must rebuild all steps, not just the current one.
+
+
         craft.set_current_step( 0 );
         craft.set_step_tool_allocs( {} );
         craft.set_tools_to_continue( false );
@@ -1209,7 +1209,7 @@ TEST_CASE( "craft_continue_preserves_per_step_tool_buckets", "[crafting][charge]
 
         const std::vector<std::vector<step_tool_alloc>> &rebuilt = craft.get_step_tool_allocs();
         REQUIRE( rebuilt.size() == 3 );
-        // The charged Solder step (1) is reallocated even though step 0 is current.
+
         CHECK_FALSE( rebuilt[1].empty() );
         CHECK( craft.has_tools_to_continue() );
     }
@@ -1235,7 +1235,7 @@ TEST_CASE( "craft_continue_preserves_per_step_tool_buckets", "[crafting][charge]
         const std::vector<std::vector<step_tool_alloc>> &rebuilt = craft.get_step_tool_allocs();
         REQUIRE( rebuilt.size() == 1 );
         REQUIRE_FALSE( rebuilt[0].empty() );
-        // Without carrying buckets, a stepless resume would re-debit from zero.
+
         CHECK( rebuilt[0][0].consumed_buckets == 7 );
         CHECK( craft.has_tools_to_continue() );
     }
@@ -1261,7 +1261,7 @@ TEST_CASE( "craft_continue_matches_duplicate_step_tool_allocs_positionally",
     REQUIRE( allocs[0].size() == 2 );
 
     SECTION( "same-type allocations keep their own depth" ) {
-        // Two same-type allocations debited to different depths.
+
         allocs[0][0].consumed_buckets = 5;
         allocs[0][1].consumed_buckets = 12;
         craft.set_step_tool_allocs( allocs );
@@ -1272,14 +1272,14 @@ TEST_CASE( "craft_continue_matches_duplicate_step_tool_allocs_positionally",
         const std::vector<std::vector<step_tool_alloc>> &rebuilt = craft.get_step_tool_allocs();
         REQUIRE( rebuilt.size() == 1 );
         REQUIRE( rebuilt[0].size() == 2 );
-        // Each allocation keeps its own depth instead of both inheriting the first's.
+
         CHECK( rebuilt[0][0].consumed_buckets == 5 );
         CHECK( rebuilt[0][1].consumed_buckets == 12 );
     }
 
     SECTION( "a drifted option carries its prior depth as a fail-safe" ) {
-        // Prior allocation at this position references a tool the recipe no
-        // longer selects, so positional pairing finds a type mismatch.
+
+
         allocs[0][0].sel.comp.type = itype_2x4;
         allocs[0][0].consumed_buckets = 5;
         allocs[0][1].consumed_buckets = 12;
@@ -1291,8 +1291,8 @@ TEST_CASE( "craft_continue_matches_duplicate_step_tool_allocs_positionally",
         const std::vector<std::vector<step_tool_alloc>> &rebuilt = craft.get_step_tool_allocs();
         REQUIRE( rebuilt.size() == 1 );
         REQUIRE( rebuilt[0].size() == 2 );
-        // The depth carries forward instead of resetting to zero, so the resume
-        // does not re-debit charges already paid at that position.
+
+
         CHECK( rebuilt[0][0].consumed_buckets == 5 );
         CHECK( rebuilt[0][1].consumed_buckets == 12 );
     }
@@ -1301,8 +1301,8 @@ TEST_CASE( "craft_continue_matches_duplicate_step_tool_allocs_positionally",
 TEST_CASE( "select_step_tool_allocs_resume_reselects_only_current_step",
            "[crafting][charge][steps]" )
 {
-    // recipe_cudgel_test_steps_charged has its charged tool on step 1 (Solder);
-    // steps 0 and 2 have no tools.
+
+
     clear_avatar();
     clear_map();
     avatar &u = get_avatar();
@@ -1333,8 +1333,8 @@ TEST_CASE( "select_step_tool_allocs_resume_reselects_only_current_step",
     }
 
     SECTION( "resuming step 0 ignores an absent future-step tool" ) {
-        // No soldering tool present; resuming step 0 must not cancel on step 1's
-        // missing tool.
+
+
         u.invalidate_crafting_inventory();
         const std::vector<std::vector<step_tool_alloc>> allocs =
                     select_step_tool_allocs( u, r, 1, map_inv, cancelled, 0 );
@@ -1355,7 +1355,7 @@ TEST_CASE( "craft_step_charge_shortfall_rewinds_turn_progress",
 
     avatar &u = get_avatar();
 
-    // Drive into the charged Solder step.
+
     int guard = 0;
     while( u.activity.id() == ACT_CRAFT ) {
         item_location craft = u.get_wielded_item();
@@ -1368,7 +1368,7 @@ TEST_CASE( "craft_step_charge_shortfall_rewinds_turn_progress",
     }
     REQUIRE( u.activity.id() == ACT_CRAFT );
 
-    // Empty the tool mid-step so the next turn cannot cover its charge debit.
+
     for( item *it : u.items_with( []( const item & i ) {
     return i.typeId() == itype_soldering_iron_portable;
     } ) ) {
@@ -1376,7 +1376,7 @@ TEST_CASE( "craft_step_charge_shortfall_rewinds_turn_progress",
     }
     u.invalidate_crafting_inventory();
 
-    // Drive on until a step bucket crossing tries to debit the now-empty tool.
+
     int counter_before_fail = -1;
     while( u.activity.id() == ACT_CRAFT ) {
         item_location craft = u.get_wielded_item();
@@ -1388,14 +1388,14 @@ TEST_CASE( "craft_step_charge_shortfall_rewinds_turn_progress",
         u.activity.do_turn( u );
     }
 
-    // The shortfall cancels the craft but leaves it resumable: progress is
-    // rewound to exactly where the failed turn began, not backed to a 5% mark.
+
+
     item_location craft = u.get_wielded_item();
     REQUIRE( craft );
     REQUIRE( craft->is_craft() );
     CHECK( craft->item_counter == counter_before_fail );
-    // The failed turn's moves are returned rather than spent, so the cancelled
-    // craft leaves the crafter free to act.
+
+
     CHECK( u.get_moves() == 100 );
 }
 
@@ -1411,8 +1411,8 @@ TEST_CASE( "craft_terminal_verifier_cancels_on_missing_noncharged_tool",
 
     avatar &u = get_avatar();
 
-    // Drive into the final 5% drift window so every bucket has already been
-    // credited with both tools present.
+
+
     int guard = 0;
     while( u.activity.id() == ACT_CRAFT ) {
         item_location craft = u.get_wielded_item();
@@ -1439,8 +1439,8 @@ TEST_CASE( "craft_terminal_verifier_cancels_on_missing_noncharged_tool",
         craft->set_tools_to_continue( true );
     }
 
-    // Remove the hammer in the drift window; the terminal sweep at completion
-    // must reject the craft even though every bucket has already been credited.
+
+
     for( item *it : u.items_with( []( const item & i ) {
     return i.typeId() == itype_hammer;
     } ) ) {
@@ -1472,10 +1472,10 @@ TEST_CASE( "craft_step_consume_requires_selected_noncharged_tool",
     item ingredient( itype_2x4, calendar::turn );
     item craft( &recipe_cudgel_test_steps_basic.obj(), 1, ingredient );
     REQUIRE( craft.is_craft() );
-    // Treat the craft as complete so every step trues up to its full target.
+
     craft.item_counter = 10000000;
 
-    // A pinned non-charged tool selection (count -1) on the first step.
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::player;
     alloc.sel.comp.type = itype_soldering_iron_portable;
@@ -1506,9 +1506,9 @@ TEST_CASE( "craft_step_consume_requires_selected_noncharged_tool",
     }
 
     GIVEN( "the tool's buckets are full but the craft is not done" ) {
-        // Buckets filled earlier with the tool present, then it was removed
-        // before completion; the step-completion verifier must catch the
-        // absence so the step does not finish on a missing tool.
+
+
+
         allocs[0][0].consumed_buckets = 20;
         craft.set_step_tool_allocs( allocs );
         craft.item_counter = 0;
@@ -1517,23 +1517,23 @@ TEST_CASE( "craft_step_consume_requires_selected_noncharged_tool",
 
         THEN( "the verifier fails and clears tools_to_continue" ) {
             CHECK_FALSE( u.verify_step_tools( craft, 0, u.pos_bub(), PICKUP_RANGE,
-                                              /*pin_to_map=*/false ) );
+                                              false ) );
             CHECK_FALSE( craft.has_tools_to_continue() );
         }
     }
 
     GIVEN( "the tool is removed within a bucket that has already been credited" ) {
-        // Presence is sampled on bucket boundaries (matching charge-debit
-        // semantics), so a tool removed mid-bucket is tolerated until the
-        // next bucket boundary aborts the step.
+
+
+
         const recipe &rec = craft.get_making();
         const double budget = rec.step_budget_moves( u, 0, 1, {} );
         REQUIRE( budget > 0.0 );
         allocs[0][0].consumed_buckets = 5;
         craft.set_step_tool_allocs( allocs );
         craft.set_current_step( 0 );
-        // Place progress comfortably inside bucket 5 (fraction ~0.22) so the
-        // step's target is also 5: no boundary to cross this turn.
+
+
         craft.set_step_progress( budget * 0.22 );
         craft.item_counter = 2200000;
         u.invalidate_crafting_inventory();
@@ -1551,7 +1551,7 @@ TEST_CASE( "craft_step_consume_requires_selected_noncharged_tool",
         allocs[0][0].consumed_buckets = 5;
         craft.set_step_tool_allocs( allocs );
         craft.set_current_step( 0 );
-        // Fraction ~0.30 puts the target at bucket 6, one past consumed_buckets.
+
         craft.set_step_progress( budget * 0.30 );
         craft.item_counter = 3000000;
         u.invalidate_crafting_inventory();
@@ -1574,7 +1574,7 @@ TEST_CASE( "tool_use", "[crafting][tool]" )
         tools.push_back( plastic_bottle );
         tools.emplace_back( itype_pot );
 
-        // Can't actually test crafting here since crafting a liquid currently causes a ui prompt
+
         prep_craft( recipe_water_clean, tools, true );
     }
     SECTION( "clean_water_in_loaded_oil_cooker" ) {
@@ -1587,7 +1587,7 @@ TEST_CASE( "tool_use", "[crafting][tool]" )
         tools.emplace_back( itype_pot );
         tools.push_back( tool_with_ammo( itype_oil_cooker, 500 ) );
 
-        // Can't actually test crafting here since crafting a liquid currently causes a ui prompt
+
         prep_craft( recipe_water_clean, tools, true );
     }
     SECTION( "clean_water_in_occupied_cooking_vessel" ) {
@@ -1598,7 +1598,7 @@ TEST_CASE( "tool_use", "[crafting][tool]" )
             item( itype_water, calendar::turn_zero, 2 ), pocket_type::CONTAINER );
         tools.push_back( plastic_bottle );
         item jar( itype_jar_glass_sealed );
-        // If it's not watertight the water will spill.
+
         REQUIRE( jar.is_watertight_container() );
         jar.put_in( item( itype_water, calendar::turn_zero, 2 ), pocket_type::CONTAINER );
         tools.push_back( jar );
@@ -1643,7 +1643,7 @@ TEST_CASE( "broken_component", "[crafting][component]" )
     }
 }
 
-// Resume the first in progress craft found in the player's inventory
+
 static int resume_craft()
 {
     avatar &player_character = get_avatar();
@@ -1652,7 +1652,7 @@ static int resume_craft()
     } );
     REQUIRE( crafts.size() == 1 );
     item *craft = crafts.front();
-    set_time( midday ); // Ensure light for crafting
+    set_time( midday );
     REQUIRE( player_character.crafting_speed_multiplier( *craft,
              std::optional<tripoint_bub_ms>( std::nullopt ) ) == 1.0 );
     REQUIRE( !player_character.activity );
@@ -1708,7 +1708,7 @@ TEST_CASE( "total_crafting_time_with_or_without_interruption", "[crafting][time]
         std::vector<item> tools;
         tools.emplace_back( itype_pockknife );
 
-        // Will interrupt after 2 turns, so craft needs to take at least that long
+
         REQUIRE( expected_turns_taken > 2 );
         int actual_turns_taken;
 
@@ -1780,7 +1780,7 @@ static void test_skill_progression( const recipe_id &test_recipe, int expected_t
     int actual_turns_taken = 0;
     const recipe &r = *test_recipe;
     const skill_id skill_used = r.skill_used;
-    // Do we need to check required skills too?
+
     const int starting_skill_level = r.difficulty;
     std::vector<item> tools;
     const requirement_data &req = r.simple_requirements();
@@ -1836,7 +1836,7 @@ static void test_skill_progression( const recipe_id &test_recipe, int expected_t
     CAPTURE( expected_turns_taken );
     CAPTURE( grant_optional_proficiencies );
     CHECK( static_cast<int>( you.get_skill_level( skill_used ) ) == starting_skill_level + 1 );
-    // since your knowledge and skill were the same to start, your theory should come out the same as skill in the end.
+
     CHECK( you.get_knowledge_level( skill_used ) == static_cast<int>( you.get_skill_level(
                 skill_used ) ) );
     CHECK( actual_turns_taken == expected_turns_taken );
@@ -2048,7 +2048,7 @@ TEST_CASE( "partial_proficiency_mitigation", "[crafting][proficiency]" )
 static void clear_and_setup( Character &c, map &m, item &tool )
 {
     clear_character( c );
-    c.get_learned_recipes(); // cache auto-learned recipes
+    c.get_learned_recipes();
     c.set_skill_level( skill_fabrication, 10 );
     c.wield( tool );
     m.i_clear( c.pos_bub() );
@@ -2508,11 +2508,11 @@ TEST_CASE( "Unloading_non-empty_components", "[crafting]" )
     REQUIRE( !cash_card.is_container_empty() );
     REQUIRE( !sewing_kit.is_container_empty() );
 
-    // candle -> candle wax: not ok
+
     CHECK( craft_command::safe_to_unload_comp( candle ) == false );
-    // cash card -> cents: not ok
+
     CHECK( craft_command::safe_to_unload_comp( cash_card ) == false );
-    // sewing kit -> thread: ok
+
     CHECK( craft_command::safe_to_unload_comp( sewing_kit ) == true );
 }
 
@@ -2651,7 +2651,7 @@ TEST_CASE( "recipe_byproducts_and_byproduct_groups", "[recipes][crafting]" )
     GIVEN( "recipe with byproducts, item group definition" ) {
         const recipe *r = &recipe_test_tallow2.obj();
         REQUIRE( r->has_byproducts() );
-        const int count_cracklins = 1; // defined "charges" doesn't produce full stack
+        const int count_cracklins = 1;
         const int count_gum = 10;
         const int lo = 2;
         const int hi = 3;
@@ -2718,7 +2718,7 @@ TEST_CASE( "tools_with_charges_as_components", "[crafting]" )
                 CHECK( !res.is_null() );
                 CHECK( res.is_craft() );
                 CHECK( res.components[itype_sheet_cotton].size() == cotton_sheets_in_recipe );
-                // when threads aren't count by charges anymore, see line above
+
                 CHECK( res.components[itype_thread].front().count() == threads_in_recipe );
                 int cotton_sheets = 0;
                 int threads = 0;
@@ -2755,7 +2755,7 @@ TEST_CASE( "tools_with_charges_as_components", "[crafting]" )
                 CHECK( !res.is_null() );
                 CHECK( res.is_craft() );
                 CHECK( res.components[itype_sheet_cotton].size() == cotton_sheets_in_recipe );
-                // when threads aren't count by charges anymore, see line above
+
                 CHECK( res.components[itype_thread].front().count() == threads_in_recipe );
                 int cotton_sheets = 0;
                 int threads = 0;
@@ -2777,11 +2777,11 @@ TEST_CASE( "tools_with_charges_as_components", "[crafting]" )
     }
 }
 
-// This test makes sure that rot is inherited properly when crafting. See the comments on
-// inherit_rot_from_components for a description of what "inheritied properly" means
-// using a default hotplate the macaroni uses 35x7 = 245 charges of hotplate, meat uses 35x20 = 700 charges of hotplate and 80x30 = 2400 charges of dehydrator
-// looks like tool_with_ammo cannot spawn a hotplate/dehydrator with more than 500 charges, so until the default battery is changed I'm giving player 10 of each
-// replaced hotplate with popcan_stove since hotplate got it's battery slot removed
+
+
+
+
+
 TEST_CASE( "recipes_inherit_rot_of_components_properly", "[crafting][rot]" )
 {
     Character &player_character = get_player_character();
@@ -2802,7 +2802,7 @@ TEST_CASE( "recipes_inherit_rot_of_components_properly", "[crafting][rot]" )
 
         tools.insert( tools.end(), 1, macaroni );
         tools.insert( tools.end(), 1, cheese );
-        item &bottle = tools.emplace_back( itype_bottle_plastic ); // water container
+        item &bottle = tools.emplace_back( itype_bottle_plastic );
         bottle.get_contents().insert_item( item( itype_water_clean ), pocket_type::CONTAINER );
 
         WHEN( "crafting the mac and cheese" ) {
@@ -2829,7 +2829,7 @@ TEST_CASE( "recipes_inherit_rot_of_components_properly", "[crafting][rot]" )
 
         tools.insert( tools.end(), 1, macaroni );
         tools.insert( tools.end(), 1, cheese );
-        item &bottle = tools.emplace_back( itype_bottle_plastic ); // water container
+        item &bottle = tools.emplace_back( itype_bottle_plastic );
         bottle.get_contents().insert_item( item( itype_water_clean ), pocket_type::CONTAINER );
 
         WHEN( "crafting the mac and cheese" ) {
@@ -2860,8 +2860,8 @@ TEST_CASE( "recipes_inherit_rot_of_components_properly", "[crafting][rot]" )
             THEN( "it should have 1 percent of its shelf life left" ) {
                 item_location dehydrated_meat = player_character.get_wielded_item();
 
-                // Dehydrating runs unattended, so the active loop parks the craft
-                // on wall-clock; resolve it past its deadline to finish it.
+
+
                 if( dehydrated_meat && dehydrated_meat->is_craft() ) {
                     const time_point ready = dehydrated_meat->get_ready_at();
                     REQUIRE( ready != calendar::before_time_starts );
@@ -3101,7 +3101,7 @@ TEST_CASE( "pseudo_tools_in_crafting_inventory", "[crafting][tools]" )
             const ter_id ter_concrete_wall( "t_concrete_wall" );
             const ter_id ter_concrete_floor( "t_thconc_floor" );
             const ter_id ter_flat_roof( "t_flat_roof" );
-            // Build a 5x5 walled room with floor inside and roof above
+
             for( const tripoint_bub_ms &pt : points_in_radius( furn1_pos, 2 ) ) {
                 if( square_dist( pt, furn1_pos ) == 2 ) {
                     REQUIRE( here.ter_set( pt, ter_concrete_wall ) );
@@ -3117,7 +3117,7 @@ TEST_CASE( "pseudo_tools_in_crafting_inventory", "[crafting][tools]" )
             for( const tripoint_bub_ms &pt : points_in_radius( furn1_pos + tripoint::above, 2 ) ) {
                 REQUIRE( here.ter_set( pt, ter_flat_roof ) );
             }
-            // Re-place the furniture on the floor
+
             REQUIRE( here.furn_set( furn1_pos, furn_f_solar_cooker ) );
             here.set_outside_cache_dirty( furn1_pos.z() );
             here.build_outside_cache( furn1_pos.z() );

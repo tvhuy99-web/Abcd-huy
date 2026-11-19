@@ -53,27 +53,38 @@ static const itype_id itype_water( "water" );
 
 namespace io
 {
-// *INDENT-OFF*
+
 template<>
 std::string enum_to_string<pocket_type>( pocket_type data )
 {
-    switch ( data ) {
-    case pocket_type::CONTAINER: return "CONTAINER";
-    case pocket_type::MAGAZINE: return "MAGAZINE";
-    case pocket_type::MAGAZINE_WELL: return "MAGAZINE_WELL";
-    case pocket_type::MOD: return "MOD";
-    case pocket_type::CORPSE: return "CORPSE";
-    case pocket_type::SOFTWARE: return "SOFTWARE";
-    case pocket_type::EBOOK: return "EBOOK";
-    case pocket_type::CABLE: return "CABLE";
-    case pocket_type::MIGRATION: return "MIGRATION";
-    case pocket_type::E_FILE_STORAGE: return "E_FILE_STORAGE";
-    case pocket_type::LAST: break;
+    switch( data ) {
+        case pocket_type::CONTAINER:
+            return "CONTAINER";
+        case pocket_type::MAGAZINE:
+            return "MAGAZINE";
+        case pocket_type::MAGAZINE_WELL:
+            return "MAGAZINE_WELL";
+        case pocket_type::MOD:
+            return "MOD";
+        case pocket_type::CORPSE:
+            return "CORPSE";
+        case pocket_type::SOFTWARE:
+            return "SOFTWARE";
+        case pocket_type::EBOOK:
+            return "EBOOK";
+        case pocket_type::CABLE:
+            return "CABLE";
+        case pocket_type::MIGRATION:
+            return "MIGRATION";
+        case pocket_type::E_FILE_STORAGE:
+            return "E_FILE_STORAGE";
+        case pocket_type::LAST:
+            break;
     }
     cata_fatal( "Invalid valid_target" );
 }
-// *INDENT-ON*
-} // namespace io
+
+}
 
 std::vector<item_pocket::favorite_settings> item_pocket::pocket_presets;
 
@@ -163,8 +174,8 @@ void pocket_data::load( const JsonObject &jo )
         mandatory( jo, was_loaded, "item_restriction", item_restriction );
         default_magazine = item_restriction.front();
     }
-    // ammo_restriction is a type of override, making the mandatory members not mandatory and superfluous
-    // putting it in an if statement like this should allow for report_unvisited_member to work here
+
+
     if( ammo_restriction.empty() ) {
         optional( jo, was_loaded, "min_item_volume", min_item_volume, volume_reader(), 0_ml );
         units::volume temp = -1_ml;
@@ -201,7 +212,7 @@ void pocket_data::load( const JsonObject &jo )
     optional( jo, was_loaded, "ablative", ablative );
     optional( jo, was_loaded, "inherits_flags", inherits_flags );
     optional( jo, was_loaded, "ememory_max", ememory_max );
-    // if ablative also flag as a holster so it only holds 1 item
+
     if( ablative ) {
         holster = true;
     }
@@ -273,7 +284,7 @@ void item_pocket::restack()
         return;
     }
     if( is_type( pocket_type::MAGAZINE ) ) {
-        // Restack magazine contents in a way that preserves order of items
+
         for( auto iter = contents.begin(); iter != contents.end(); ) {
             if( !iter->count_by_charges() ) {
                 continue;
@@ -311,14 +322,14 @@ void item_pocket::restack()
     }
 }
 
-item *item_pocket::restack( /*const*/ item *it )
+item *item_pocket::restack( item *it )
 {
     item *ret = it;
     if( contents.size() <= 1 ) {
         return ret;
     }
     if( is_type( pocket_type::MAGAZINE ) ) {
-        // Restack magazine contents in a way that preserves order of items
+
         for( auto iter = contents.begin(); iter != contents.end(); ) {
             if( !iter->count_by_charges() ) {
                 continue;
@@ -330,7 +341,7 @@ item *item_pocket::restack( /*const*/ item *it )
             }
 
             if( iter->combine( *next ) ) {
-                // next was placed in iter, check if next was the item that we track
+
                 if( &( *next ) == ret ) {
                     ret = &( *iter );
                 }
@@ -351,7 +362,7 @@ item *item_pocket::restack( /*const*/ item *it )
                 continue;
             }
             if( outer_iter->combine( *inner_iter ) ) {
-                // inner was placed in outer, check if inner was the item that we track
+
                 if( &( *inner_iter ) == ret ) {
                     ret = &( *outer_iter );
                 }
@@ -378,11 +389,11 @@ bool item_pocket::has_item_stacks_with( const item &it ) const
 bool item_pocket::better_pocket( const item_pocket &rhs, const item &it, bool nested ) const
 {
     if( this->settings.priority() != rhs.settings.priority() ) {
-        // Priority overrides all other factors.
+
         return rhs.settings.priority() > this->settings.priority();
     }
 
-    // if we've somehow bypassed the pocket autoinsert rules, check them here
+
     if( !rhs.settings.accepts_item( it ) ) {
         return false;
     } else if( !this->settings.accepts_item( it ) ) {
@@ -403,17 +414,17 @@ bool item_pocket::better_pocket( const item_pocket &rhs, const item &it, bool ne
     }
 
     if( data->ammo_restriction.empty() != rhs.data->ammo_restriction.empty() ) {
-        // pockets restricted by ammo should try to get filled first
+
         return !rhs.data->ammo_restriction.empty();
     }
 
     if( data->get_flag_restrictions().empty() != rhs.data->get_flag_restrictions().empty() ) {
-        // pockets restricted by flag should try to get filled first
+
         return !rhs.data->get_flag_restrictions().empty();
     }
 
     if( it.is_comestible() && it.get_comestible()->spoils != 0_seconds ) {
-        // a lower spoil multiplier is better
+
         return rhs.spoil_multiplier() < spoil_multiplier();
     }
 
@@ -429,28 +440,28 @@ bool item_pocket::better_pocket( const item_pocket &rhs, const item &it, bool ne
         }
     }
 
-    //Skip irrelevant properties of nested containers
+
     if( nested ) {
         return false;
     }
 
     if( rhs.data->extra_encumbrance != data->extra_encumbrance ) {
-        // pockets with less extra encumbrance should be prioritized
+
         return rhs.data->extra_encumbrance < data->extra_encumbrance;
     }
 
     if( data->ripoff != rhs.data->ripoff ) {
-        // pockets without ripoff chance should be prioritized
+
         return rhs.data->ripoff < data->ripoff;
     }
 
     if( data->rigid != rhs.data->rigid ) {
-        // Prefer rigid containers, as their fixed volume is wasted unless filled
+
         return rhs.data->rigid;
     }
 
     if( remaining_volume() != rhs.remaining_volume() ) {
-        // we want the least amount of remaining volume
+
         return rhs.remaining_volume() < remaining_volume();
     }
 
@@ -472,8 +483,8 @@ bool item_pocket::stacks_with( const item_pocket &rhs, int depth, int maxdepth )
 
 bool item_pocket::is_funnel_container( units::volume &bigger_than ) const
 {
-    // should not be static, since after reloading some members of the item objects,
-    // such as item types, may be invalidated.
+
+
     const std::vector<item> allowed_liquids{
         item( itype_water, calendar::turn_zero, 1 ),
     };
@@ -794,8 +805,8 @@ int item_pocket::remaining_ammo_capacity( const ammotype &ammo ) const
         }
         ammo_count += it.count();
     }
-    // A capacity-shrinking mod (or removing a boost mod) can leave a pocket
-    // overfilled; grandfather the overflow rather than report negative space.
+
+
     return std::max( 0, total_capacity - ammo_count );
 }
 
@@ -817,7 +828,7 @@ void item_pocket::casings_handle( const std::function<bool( item & )> &func )
                 it = contents.erase( it );
                 continue;
             }
-            // didn't handle the casing so reset the flag ready for next call
+
             it->set_flag( flag_CASING );
         }
         ++it;
@@ -835,8 +846,8 @@ void item_pocket::handle_liquid_or_spill( Character &guy, const item *avoid )
         if( iter->made_of( phase_id::LIQUID ) ) {
             liquid_dest_opt liquid_target;
             while( iter->charges > 0 && liquid_handler::handle_liquid( *iter, liquid_target, avoid, 1 ) ) {
-                // Reset so the next iteration re-prompts for a target,
-                // matching consume_liquid (handle_liquid.cpp).
+
+
                 liquid_target.dest_opt = LD_NULL;
             }
             if( iter->charges == 0 ) {
@@ -918,9 +929,9 @@ bool item_pocket::sealed() const
 }
 bool item_pocket::sealable() const
 {
-    // if it has sealed data it is understood that the
-    // data is different when sealed than when not
-    // In other words, a pocket is sealable IFF it has sealed_data.
+
+
+
     return !!data->sealed_data;
 }
 
@@ -940,7 +951,7 @@ bool item_pocket::detonate( const tripoint_bub_ms &pos, std::vector<item> &drops
     } );
     if( new_end != contents.end() ) {
         contents.erase( new_end, contents.end() );
-        // If any of the contents explodes, so does the container
+
         return true;
     }
     return false;
@@ -991,7 +1002,7 @@ void item_pocket::general_info( std::vector<iteminfo> &info, int pocket_number,
         info.emplace_back( "DESCRIPTION", string_format( "<info>%s</info>",
                            get_description().translated() ) );
     } else if( name_as_description ) {
-        // fallback to the original items name as a description
+
         info.emplace_back( "DESCRIPTION", string_format( "<info>%s</info>",
                            get_name().translated() ) );
     }
@@ -1001,9 +1012,9 @@ void item_pocket::general_info( std::vector<iteminfo> &info, int pocket_number,
     // NOLINTNEXTLINE(cata-translate-string-literal)
     const std::string base_type_str = string_format( "{%d}BASE", pocket_number );
 
-    // Show volume/weight for normal containers, or ammo capacity if ammo_restriction is defined if its an ablative pocket don't display any info
+
     if( is_ablative() ) {
-        // its an ablative pocket volume and weight maxes don't matter
+
         info.emplace_back( "DESCRIPTION",
                            _( "Holds a <info>single armored plate</info>." ) );
     } else if( data->ammo_restriction.empty() ) {
@@ -1032,7 +1043,7 @@ void item_pocket::general_info( std::vector<iteminfo> &info, int pocket_number,
 
     if( data->max_item_length != 0_mm && !is_ablative() ) {
         info.back().bNewLine = true;
-        // if the item has no minimum length then keep it in the same units as max
+
         if( data->min_item_length == 0_mm ) {
             info.emplace_back( base_type_str, _( "Item length: " ),
                                string_format( "<num> %s", length_units( data->max_item_length ) ),
@@ -1149,7 +1160,7 @@ void item_pocket::general_info( std::vector<iteminfo> &info, int pocket_number,
                                data->volume_multiplier * 100 ) );
     }
 
-    // Display flags items need to be stored in this pocket
+
     if( !data->get_flag_restrictions().empty() ) {
         info.emplace_back( "DESCRIPTION", _( "<bold>Restrictions</bold>:" ) );
         bool first = true;
@@ -1167,7 +1178,7 @@ void item_pocket::general_info( std::vector<iteminfo> &info, int pocket_number,
     }
     if( !no_rigid.empty() ) {
         std::vector<sub_bodypart_id> no_rigid_vec( no_rigid.begin(), no_rigid.end() );
-        // Filter to the viewing character's actual anatomy
+
         const Character &viewer = get_player_character();
         body_part_set viewer_parts;
         viewer_parts.fill( viewer.get_all_body_parts() );
@@ -1223,7 +1234,7 @@ void item_pocket::contents_info( std::vector<iteminfo> &info, int pocket_number,
     const std::string arm_type_str = string_format( "{%d}ARMOR", pocket_number );
 
     if( is_ablative() ) {
-        // if we have contents for an ablative pocket display the armor data
+
         if( !contents.empty() ) {
             const item &ablative_armor = contents.front();
             info.emplace_back( arm_type_str, string_format( "%s%s", _( "Coverage:" ), space ), "",
@@ -1258,7 +1269,7 @@ void item_pocket::contents_info( std::vector<iteminfo> &info, int pocket_number,
             }
         }
     } else if( data->ammo_restriction.empty() ) {
-        // With no ammo_restriction defined, show current volume/weight, and total capacity
+
         info.emplace_back( vol_to_info( cont_type_str, _( "Volume: " ),
                                         contents_volume() ) );
         info.emplace_back( vol_to_info( cont_type_str, _( " of " ),
@@ -1270,7 +1281,7 @@ void item_pocket::contents_info( std::vector<iteminfo> &info, int pocket_number,
                                            weight_capacity() ) );
         info.back().bNewLine = true;
     } else {
-        // With ammo_restriction, total capacity does not matter, but show current volume/weight
+
         info.emplace_back( vol_to_info( cont_type_str, _( "Volume: " ),
                                         contents_volume() ) );
         info.back().bNewLine = true;
@@ -1283,7 +1294,7 @@ void item_pocket::contents_info( std::vector<iteminfo> &info, int pocket_number,
                            colorize( _( "This pocket is over capacity and will spill if moved!" ), c_red ) );
     }
 
-    // ablative pockets have their contents displayed earlier in the UI
+
     if( !is_ablative() ) {
         std::vector<std::pair<const item *, int>> counted_contents = get_item_duplicate_counts(
                 all_items_top() );
@@ -1323,7 +1334,7 @@ void item_pocket::favorite_info( std::vector<iteminfo> &info ) const
     settings.info( info );
 }
 
-// for soft containers check all content items to see if they all would fit
+
 static int charges_per_volume_recursive( const units::volume &max_item_volume,
         const item &it )
 {
@@ -1346,7 +1357,7 @@ static int charges_per_volume_recursive( const units::volume &max_item_volume,
 ret_val<item_pocket::contain_code> item_pocket::is_compatible( const item &it ) const
 {
     if( data->type == pocket_type::MIGRATION ) {
-        // migration pockets need to always succeed
+
         return ret_val<item_pocket::contain_code>::make_success();
     }
 
@@ -1360,8 +1371,8 @@ ret_val<item_pocket::contain_code> item_pocket::is_compatible( const item &it ) 
     }
 
     if( data->type == pocket_type::CORPSE ) {
-        // corpses can't have items stored in them the normal way,
-        // we simply don't want them to "spill"
+
+
         return ret_val<item_pocket::contain_code>::make_success();
     }
     if( data->type == pocket_type::E_FILE_STORAGE ) {
@@ -1397,7 +1408,7 @@ ret_val<item_pocket::contain_code> item_pocket::is_compatible( const item &it ) 
         }
     }
 
-    // ammo restriction overrides item volume/weight and watertight/airtight data
+
     if( !data->ammo_restriction.empty() ) {
         if( !it.is_ammo() ) {
             return ret_val<item_pocket::contain_code>::make_failure(
@@ -1427,9 +1438,9 @@ ret_val<item_pocket::contain_code> item_pocket::is_compatible( const item &it ) 
         }
     }
 
-    // liquids and gases avoid the size limit altogether
-    // soft items also avoid the size limit
-    // count_by_charges items check volume of single charge
+
+
+
     if( !it.made_of( phase_id::LIQUID ) && !it.made_of( phase_id::GAS ) &&
         !it.is_frozen_liquid() && data->max_item_volume &&
         !charges_per_volume_recursive( *data->max_item_volume, it ) ) {
@@ -1475,7 +1486,7 @@ ret_val<item_pocket::contain_code> item_pocket::_can_contain( const item &it,
     if( copies_remaining <= 0 ) {
         return ret_val<item_pocket::contain_code>::make_success();
     }
-    // To prevent debugmsg. Casings can only be inserted in a magazine during firing.
+
     if( data->type == pocket_type::MAGAZINE && it.has_flag( flag_CASING ) ) {
         copies_remaining = 0;
         return ret_val<item_pocket::contain_code>::make_success();
@@ -1525,7 +1536,7 @@ ret_val<item_pocket::contain_code> item_pocket::_can_contain( const item &it,
     }
 
     if( ignore_contents ) {
-        // Skip all the checks against other pocket contents.
+
         if( it.weight() > weight_capacity() ) {
             return ret_val<item_pocket::contain_code>::make_failure(
                        contain_code::ERR_TOO_HEAVY, _( "item is too heavy" ) );
@@ -1551,7 +1562,7 @@ ret_val<item_pocket::contain_code> item_pocket::_can_contain( const item &it,
     if( data->ablative ) {
         if( !contents.empty() ) {
             if( contents.front().can_combine( it ) ) {
-                // Only items with charges can succeed here.
+
                 return ret_val<item_pocket::contain_code>::make_success();
             } else {
                 return ret_val<item_pocket::contain_code>::make_failure(
@@ -1574,7 +1585,7 @@ ret_val<item_pocket::contain_code> item_pocket::_can_contain( const item &it,
 
     if( data->holster && !contents.empty() ) {
         if( contents.front().can_combine( it ) ) {
-            // Only items with charges can succeed here.
+
             return ret_val<item_pocket::contain_code>::make_success();
         } else {
             return ret_val<item_pocket::contain_code>::make_failure(
@@ -1588,7 +1599,7 @@ ret_val<item_pocket::contain_code> item_pocket::_can_contain( const item &it,
             return ret_val<item_pocket::contain_code>::make_failure(
                        contain_code::ERR_NO_SPACE, _( "tried to put too many charges of ammo in item" ) );
         }
-        // ammo restriction overrides item volume/weight and watertight/airtight data
+
         copies_remaining = std::max( 0, copies_remaining - remaining_ammo_capacity( it_ammo ) );
         return ret_val<item_pocket::contain_code>::make_success();
     }
@@ -1649,30 +1660,30 @@ bool item_pocket::contains_phase( phase_id phase ) const
 bool item_pocket::can_reload_with( const item &ammo, const bool now ) const
 {
     if( is_type( pocket_type::CONTAINER ) ) {
-        // Only watertight container pockets are reloadable
+
         if( !watertight() ) {
             return false;
         }
 
-        // CONTAINER pockets can reload liquids only
+
         if( !ammo.made_of( phase_id::LIQUID ) ) {
             return false;
         }
     }
 
     if( ammo.has_flag( flag_SPEEDLOADER ) ) {
-        // The speedloader needs to be compatible,
-        // The ammo in it needs to be compatible,
-        // and the opcket needs to have enough space (except casings)
+
+
+
         return allows_speedloader( ammo.typeId() ) &&
                is_compatible( ammo.loaded_ammo() ).success() &&
                ( remaining_ammo_capacity( ammo.loaded_ammo().ammo_type() ) >= ammo.ammo_remaining( ) );
     }
 
     if( ammo.has_flag( flag_SPEEDLOADER_CLIP ) ) {
-        // The speedloader clip needs to be compatible,
-        // The ammo in it needs to be compatible,
-        // and the pocket don't needs have enough space (except casings(if any))
+
+
+
         return allows_speedloader( ammo.typeId() ) &&
                is_compatible( ammo.loaded_ammo() ).success() &&
                ( remaining_ammo_capacity( ammo.loaded_ammo().ammo_type() ) + ammo_capacity(
@@ -1686,18 +1697,18 @@ bool item_pocket::can_reload_with( const item &ammo, const bool now ) const
     if( !now ) {
         return true;
     } else {
-        // Require that the new ammo can fit in with the old ammo.
 
-        // No need to combine if empty.
+
+
         if( empty() ) {
             return true;
         }
 
         if( is_type( pocket_type::MAGAZINE ) ) {
-            // Reloading is refused if
-            // Pocket is full of ammo (casings are ignored)
-            // Ammos are of different ammo type
-            // If either of ammo is liquid while the other is not or they are different types
+
+
+
+
 
             if( full( false ) ) {
                 return false;
@@ -1722,14 +1733,14 @@ bool item_pocket::can_reload_with( const item &ammo, const bool now ) const
             return true;
 
         } else if( is_type( pocket_type::MAGAZINE_WELL ) ) {
-            // Reloading is refused if there already is full magazine here
-            // Reloading with another identical mag with identical contents is also pointless so it is not allowed
-            // Pocket can't know what ammo are compatible with the item so that is checked elsewhere
+
+
+
 
             return !front().is_magazine_full() && !( front().typeId() == ammo.typeId() &&
                     front().same_contents( ammo ) );
         } else if( is_type( pocket_type::CONTAINER ) ) {
-            // Reloading is possible if liquid combines with old liquid
+
 
             if( front().can_combine( ammo ) ) {
                 return true;
@@ -1802,7 +1813,7 @@ static void move_to_parent_pocket_recursive( map &here, const tripoint_bub_ms &p
         carrier->add_msg_player_or_npc( m_bad, _( "Your %s falls to the ground." ),
                                         _( "<npcname>'s %s falls to the ground." ), it.display_name() );
     } else {
-        // TODO: Make operation map aware.
+
         add_msg_if_player_sees( reality_bubble().get_bub( here.get_abs( pos ) ), m_bad,
                                 _( "The %s falls to the ground." ),
                                 it.display_name() );
@@ -1818,11 +1829,11 @@ void item_pocket::overflow( map &here, const tripoint_bub_ms &pos, const item_lo
         return;
     }
     if( empty() ) {
-        // no items to overflow
+
         return;
     }
 
-    // overflow recursively
+
     for( item &it : contents ) {
         if( loc ) {
             item_location content_loc( loc, &it );
@@ -1834,11 +1845,11 @@ void item_pocket::overflow( map &here, const tripoint_bub_ms &pos, const item_lo
 
     Character *carrier = loc.carrier();
 
-    // first remove items that shouldn't be in there anyway
+
     std::unordered_map<itype_id, bool> contained_type_validity;
     for( auto iter = contents.begin(); iter != contents.end(); ) {
 
-        // if item has any contents, check it individually
+
         if( !iter->get_contents().empty_with_no_mods() ) {
             if( !is_type( pocket_type::MIGRATION ) && can_contain( *iter, true ).success() ) {
                 ++iter;
@@ -1849,7 +1860,7 @@ void item_pocket::overflow( map &here, const tripoint_bub_ms &pos, const item_lo
             continue;
         }
 
-        // otherwise, use cached results per item type
+
         auto cont_copy_type = contained_type_validity.emplace( iter->typeId(), true );
         if( cont_copy_type.second ) {
             cont_copy_type.first->second = !is_type( pocket_type::MIGRATION ) &&
@@ -1864,7 +1875,7 @@ void item_pocket::overflow( map &here, const tripoint_bub_ms &pos, const item_lo
     }
 
     if( empty() ) {
-        // we've removed the migration pockets and items that didn't fit
+
         return;
     }
 
@@ -1872,8 +1883,8 @@ void item_pocket::overflow( map &here, const tripoint_bub_ms &pos, const item_lo
         const ammotype contained_ammotype = contents.front().ammo_type();
         const auto ammo_iter = data->ammo_restriction.find( contained_ammotype );
         if( ammo_iter == data->ammo_restriction.end() ) {
-            // only one ammotype is allowed in an ammo restricted pocket
-            // so if the first one is wrong, they're all wrong
+
+
             spill_contents( &here, pos );
             return;
         }
@@ -1894,8 +1905,8 @@ void item_pocket::overflow( map &here, const tripoint_bub_ms &pos, const item_lo
                 ++iter;
             }
         }
-        // return early, the rest of this function checks against volume and weight
-        // and ammo_restriction is an override
+
+
         return;
     }
 
@@ -2000,7 +2011,7 @@ void item_pocket::process( map &here, Character *carrier, const tripoint_bub_ms 
 {
     for( auto iter = contents.begin(); iter != contents.end(); ) {
         if( iter->process( here, carrier, pos, insulation, flag,
-                           // spoil multipliers on pockets are not additive or multiplicative, they choose the best
+
                            std::min( spoil_multiplier_parent, spoil_multiplier() ),
                            watertight_container || can_contain_liquid( false ) ) ) {
             iter->spill_contents( pos );
@@ -2067,7 +2078,7 @@ bool item_pocket::full( bool allow_bucket ) const
     }
 
     if( is_type( pocket_type::MAGAZINE ) && !data->ammo_restriction.empty() ) {
-        // Fullness from remaining ammo capacity instead of volume
+
         for( const item &it : contents ) {
             if( it.has_flag( flag_CASING ) ) {
                 continue;
@@ -2084,7 +2095,7 @@ bool item_pocket::full( bool allow_bucket ) const
 
     if( remaining_capacity_for_item( contents.front() ) == 0 ) {
         bool has_only_one_type = true;
-        // maybe there is a better way?
+
         for( const item &it : contents ) {
             if( it.type->id != contents.front().type->id ) {
                 has_only_one_type = false;
@@ -2262,8 +2273,8 @@ ret_val<item *> item_pocket::insert_item( const item &it,
         inserted = restack( inserted );
     }
     if( bulk_fill_volume ) {
-        // restack conserves total volume/weight, so the inserted item's own
-        // contribution is the delta regardless of any merge.
+
+
         *bulk_fill_volume += it.volume();
         *bulk_fill_weight += it.weight();
     }
@@ -2275,8 +2286,8 @@ std::pair<item_location, item_pocket *> item_pocket::best_pocket_in_contents(
     const bool allow_sealed, const bool ignore_settings )
 {
     std::pair<item_location, item_pocket *> ret( this_loc, nullptr );
-    // If the current pocket has restrictions or blacklists the item or is a holster,
-    // try the nested pocket regardless of whether it's soft or rigid.
+
+
     const bool ignore_rigidity =
         !settings.accepts_item( it ) ||
         !get_pocket_data()->get_flag_restrictions().empty() ||
@@ -2288,10 +2299,10 @@ std::pair<item_location, item_pocket *> item_pocket::best_pocket_in_contents(
         }
         item_location new_loc( this_loc, &contained_item );
         std::pair<item_location, item_pocket *> nested_pocket = contained_item.best_pocket( it, new_loc,
-                avoid, allow_sealed, ignore_settings, /*nested=*/true, ignore_rigidity );
+                avoid, allow_sealed, ignore_settings, true, ignore_rigidity );
         if( nested_pocket.second != nullptr &&
             ( ret.second == nullptr ||
-              ret.second->better_pocket( *nested_pocket.second, it, /*nested=*/true ) ) ) {
+              ret.second->better_pocket( *nested_pocket.second, it, true ) ) ) {
             ret = nested_pocket;
         }
     }
@@ -2404,9 +2415,9 @@ int item_pocket::charges_per_remaining_volume( const item &it ) const
     if( !it.count_by_charges() ) {
         return it.charges_per_volume( remaining_volume(), true );
     }
-    // Single pass: subtract the volume of every item that doesn't stack with
-    // `it`, and tally charges of those that do. When nothing stacks this
-    // reduces to volume_capacity() - contents_volume() == remaining_volume().
+
+
+
     units::volume non_it_volume = volume_capacity();
     int contained_charges = 0;
     for( const item &contained : contents ) {
@@ -2424,9 +2435,9 @@ int item_pocket::charges_per_remaining_weight( const item &it ) const
     if( !it.count_by_charges() ) {
         return it.charges_per_weight( remaining_weight(), true );
     }
-    // Single pass: subtract the weight of every item that doesn't stack with
-    // `it`, and tally charges of those that do. When nothing stacks this
-    // reduces to weight_capacity() - contains_weight() == remaining_weight().
+
+
+
     units::mass non_it_weight = weight_capacity();
     int contained_charges = 0;
     for( const item &contained : contents ) {
@@ -2561,12 +2572,12 @@ units::volume pocket_data::volume_capacity() const
     if( ammo_restriction.empty() ) {
         return raw_volume_capacity;
     }
-    // If pocket is ammo-restricted, its volume capacity is derived from its ammo capacity.
-    // Find all valid ammo itypes
+
+
     std::vector<const itype *> ammo_types = Item_factory::find( [&]( const itype & t ) {
         return t.ammo && ammo_restriction.count( t.ammo->type );
     } );
-    // Figure out which has the greatest volume and calculate on that basis
+
     units::volume max_total_volume = 0_ml;
     for( const auto *ammo_type : ammo_types ) {
         int stack_size = ammo_type->stack_size ? ammo_type->stack_size : 1;
@@ -2602,12 +2613,12 @@ bool item_pocket::favorite_settings::is_null() const
 
 void item_pocket::favorite_settings::whitelist_item( const itype_id &id )
 {
-    // whitelisting twice removes the item from the list
+
     if( item_whitelist.count( id ) ) {
         item_whitelist.erase( id );
         return;
     }
-    // remove the item from the blacklist if listed
+
     if( item_blacklist.count( id ) ) {
         item_blacklist.erase( id );
     }
@@ -2616,12 +2627,12 @@ void item_pocket::favorite_settings::whitelist_item( const itype_id &id )
 
 void item_pocket::favorite_settings::blacklist_item( const itype_id &id )
 {
-    // blacklisting twice removes the item from the list
+
     if( item_blacklist.count( id ) ) {
         item_blacklist.erase( id );
         return;
     }
-    // remove the item from the whitelist if listed
+
     if( item_whitelist.count( id ) ) {
         item_whitelist.erase( id );
     }
@@ -2658,12 +2669,12 @@ item_pocket::favorite_settings::get_category_blacklist() const
 
 void item_pocket::favorite_settings::whitelist_category( const item_category_id &id )
 {
-    // whitelisting twice removes the category from the list
+
     if( category_whitelist.count( id ) ) {
         category_whitelist.erase( id );
         return;
     }
-    // remove the category from the blacklist if listed
+
     if( category_blacklist.count( id ) ) {
         category_blacklist.erase( id );
     }
@@ -2672,12 +2683,12 @@ void item_pocket::favorite_settings::whitelist_category( const item_category_id 
 
 void item_pocket::favorite_settings::blacklist_category( const item_category_id &id )
 {
-    // blacklisting twice removes the category from the list
+
     if( category_blacklist.count( id ) ) {
         category_blacklist.erase( id );
         return;
     }
-    // remove the category from the whitelist if listed
+
     if( category_whitelist.count( id ) ) {
         category_whitelist.erase( id );
     }
@@ -2690,27 +2701,27 @@ void item_pocket::favorite_settings::clear_category( const item_category_id &id 
     category_whitelist.erase( id );
 }
 
-/**
- * Check to see if the given item is accepted by this pocket based on player configured rules.
- *
- * The rules are defined in two list:
- *
- * - whitelist - when one or more items are on the list then only those items are accepted.
- * - blacklist - those items listed here are never accepted.
- *
- * When a whitelist is empty and the item is not blacklisted then it will be accepted.
- * Container items will be accepted only when all items inside are accepted.
- *
- * Note that the rules take into account both item id and category which have
- * to be accepted by the rules outlined above for an item to be accepted.
- *
- * @param it item to check.
- * @return true if the item is accepted by this pocket, false otherwise.
- * @see item_pocket::favorite_settings::accepts_container(const item&)
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool item_pocket::favorite_settings::accepts_item( const item &it ) const
 {
-    // if this pocket is disabled it accepts nothing
+
     if( disabled ) {
         return false;
     }
@@ -2719,7 +2730,7 @@ bool item_pocket::favorite_settings::accepts_item( const item &it ) const
                                   ? item_category_id{} :
                                   it.get_category_of_contents().id;
 
-    // if the item is explicitly listed in either of the lists, then it's clear what to do with it
+
     if( item_blacklist.count( id ) ) {
         return false;
     }
@@ -2727,7 +2738,7 @@ bool item_pocket::favorite_settings::accepts_item( const item &it ) const
         return true;
     }
 
-    // otherwise check the category, the same way
+
     if( category_blacklist.count( cat ) ) {
         return false;
     }
@@ -2735,24 +2746,24 @@ bool item_pocket::favorite_settings::accepts_item( const item &it ) const
         return true;
     }
 
-    // when the item is container then we are actually checking if pocket accepts
-    // container content and not the container itself unless container is blacklisted
+
+
     if( it.is_container() && !it.empty_container() ) {
         const std::list<const item *> items = it.all_items_top();
         return std::all_of( items.begin(), items.end(), [this]( const item * it ) {
             return accepts_item( *it );
         } );
     }
-    // finally, if no match was found, see if there were any filters at all,
-    // and either allow or deny everything that's fallen through to here.
+
+
     if( !category_whitelist.empty() ) {
-        return false;  // we've whitelisted only some categories, and this item is not out of those.
-    }
-    if( !item_whitelist.empty() && category_blacklist.empty() ) {
-        // whitelisting only certain items, and not as a means to tweak blacklist.
         return false;
     }
-    // no whitelist - everything goes.
+    if( !item_whitelist.empty() && category_blacklist.empty() ) {
+
+        return false;
+    }
+
     return true;
 }
 
@@ -2856,8 +2867,8 @@ void pocket_constraint::constrain_by( const item_pocket *outer )
         is_dominated = is_dominated || (
                            remaining_volume <= rem_vol
                            && !outer->is_restricted()
-                           && !outer->is_holster() //if we're in a holster, the holster can't contain anything else, so can't dominate
-                           // NB: we could check if white/blacklists allow a superset of items, but this seems reasonable
+                           && !outer->is_holster()
+
                            && outer->settings.get_category_blacklist().empty()
                            && outer->settings.get_item_blacklist().empty()
                            && outer->settings.get_category_whitelist().empty()

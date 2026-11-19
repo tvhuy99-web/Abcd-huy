@@ -85,7 +85,7 @@ static std::vector<mod_id> extract_mod_selection( const std::string_view mod_str
             ret.emplace_back( mod_name );
         }
     }
-    // Always load test data mod
+
     ret.emplace_back( "test_data" );
 
     return ret;
@@ -122,7 +122,7 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
     get_options().init();
     get_options().load();
 
-    // Apply command-line option overrides for test suite execution.
+
     if( !option_overrides.empty() ) {
         for( const name_value_pair_t &option : option_overrides ) {
             if( get_options().has_option( option.first ) ) {
@@ -139,7 +139,7 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
 
     world_generator->set_active_world( nullptr );
     world_generator->init();
-    // Using unicode characters in the world name to test path encoding
+
 #ifndef _WIN32
     const std::string test_world_name = "Test World 测试世界 " + std::to_string( getpid() );
 #else
@@ -168,15 +168,15 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
     overmap_buffer.create_custom_overmap( point_abs_om{}, empty_specials );
 
     map &here = get_map();
-    // TODO: fix point types
+
     here.load( tripoint_abs_sm( here.get_abs_sub() ), false );
     get_avatar().move_to( tripoint_abs_ms::zero );
 
     get_weather().update_weather();
 }
 
-// Split s on separator sep, returning parts as a pair. Returns empty string as
-// second value if no separator found.
+
+
 static name_value_pair_t split_pair( const std::string &s, const char sep )
 {
     const size_t pos = s.find( sep );
@@ -200,7 +200,7 @@ static option_overrides_t extract_option_overrides( const std::string_view optio
         i = ++pos;
         pos = option_overrides_string.find( delim, pos );
     }
-    // Handle last part
+
     const std::string part = static_cast<std::string>( option_overrides_string.substr( i ) );
     ret.emplace_back( split_pair( part, sep ) );
     return ret;
@@ -249,15 +249,15 @@ struct CataListener : Catch::TestEventListenerBase {
 
     void sectionStarting( Catch::SectionInfo const &sectionInfo ) override {
         TestEventListenerBase::sectionStarting( sectionInfo );
-        // Initialize the cata RNG with the Catch seed for reproducible tests
+
         const unsigned int seed = m_config->rngSeed();
         if( seed ) {
             rng_set_engine_seed( seed );
         } else {
             rng_set_engine_seed( rng_get_first_seed() );
         }
-        // Clear the message log so on test failures we see only messages from
-        // during that test
+
+
         Messages::clear_messages();
     }
 
@@ -286,8 +286,8 @@ struct CataListener : Catch::TestEventListenerBase {
         if( !game_initialized ) {
             return;
         }
-        // Reset lightweight global state that tests commonly modify without
-        // restoring.  Expensive operations like clear_map() stay manual.
+
+
         get_avatar().reset_all_missions();
         mission::clear_all();
         calendar::turn = calendar::turn_zero;
@@ -304,8 +304,8 @@ struct CataListener : Catch::TestEventListenerBase {
         Catch::AssertionResult const &result = assertionStats.assertionResult;
 
         if( result.getResultType() == Catch::ResultWas::FatalErrorCondition ) {
-            // We are in a signal handler for a fatal error condition, so print a
-            // backtrace
+
+
             std::cerr << "Stack trace at fatal error:\n";
             debug_write_backtrace( std::cerr );
         }
@@ -316,7 +316,7 @@ struct CataListener : Catch::TestEventListenerBase {
 
 };
 
-} // namespace
+}
 
 CATCH_REGISTER_LISTENER( CataListener )
 
@@ -331,10 +331,10 @@ TEST_CASE( "noop_test", "[.]" )
 int main( int argc, const char *argv[] )
 {
 #ifdef _WIN32
-    // Suppress the "Microsoft Visual C++ Runtime Library" abort dialog so that
-    // a raw assert() in any third-party header (e.g. plf colony/list, flatbuffers)
-    // cannot hang headless CI test runs. The Cataclysm test vcxproj does not
-    // define NDEBUG for Release, so asserts are live in CI binaries.
+
+
+
+
     _set_abort_behavior( 0, _CALL_REPORTFAULT | _WRITE_ABORT_MSG );
 #endif
     cata::init_allocator();
@@ -343,7 +343,7 @@ int main( int argc, const char *argv[] )
 #else
     bool supports_color = isatty( STDOUT_FILENO );
 #endif
-    // formatter stdout in github actions is redirected but still able to handle ANSI colors
+
     supports_color |= std::getenv( "CI" ) != nullptr;
 
     // NOLINTNEXTLINE(cata-tests-must-restore-global-state)
@@ -353,7 +353,7 @@ int main( int argc, const char *argv[] )
 
     reset_floating_point_mode();
     on_out_of_scope json_member_reporting_guard{ [] {
-            // Disable reporting unvisited members if stack unwinding leaves main early.
+
             Json::globally_report_unvisited_members( false );
         } };
     Catch::Session session;
@@ -373,7 +373,7 @@ int main( int argc, const char *argv[] )
                  ["--user-dir"]
                  ( "[CataclysmDDA] Set user dir (where test world will be created)" )
                  | Opt( dont_save )
-                 ["--drop-world"] // "-D" conflicts with Catch2 own "--min-duration"
+                 ["--drop-world"]
                  ( "[CataclysmDDA] Don't save the world on test failure." )
                  | Opt( option_overrides, "n:v[,…]" )
                  ["--option_overrides"]
@@ -394,16 +394,16 @@ int main( int argc, const char *argv[] )
                  ;
     session.cli( cli );
 
-    // Note: this must not be invoked before all DDA-specific flags are stripped from arg_vec!
+
     int result = session.applyCommandLine( arg_vec.size(), &arg_vec[0] );
     if( result != 0 || session.configData().showHelp ) {
         return result;
     }
 
-    // Validate CDDA arguments
+
     mods = extract_mod_selection( mods_string );
     if( std::find( mods.begin(), mods.end(), MOD_INFORMATION_dda ) == mods.end() ) {
-        mods.insert( mods.begin(), MOD_INFORMATION_dda ); // @todo move unit test items to core
+        mods.insert( mods.begin(), MOD_INFORMATION_dda );
     }
 
     if( user_dir.empty() ) {
@@ -448,7 +448,7 @@ int main( int argc, const char *argv[] )
     } );
 
     setupDebug( DebugOutput::std_err );
-    // DebugFile is a function-local static; shut it down before global teardown.
+
     on_out_of_scope debug_shutdown_guard( []() {
         deinitDebug();
     } );
@@ -456,14 +456,14 @@ int main( int argc, const char *argv[] )
         limitDebugLevel( limit_debug_level );
     }
 
-    // Set the seed for mapgen (the seed will also be reset before each test)
+
     const unsigned int seed = session.config().rngSeed();
     if( seed ) {
         rng_set_engine_seed( seed );
     }
     if( rng_seed_fuzz_iterations <= 1 ) {
-        // If the run is terminated due to a crash during initialization, we won't
-        // see the seed unless it's printed out in advance, so do that here.
+
+
         if( seed ) {
             DebugLog( D_INFO, DC_ALL ) << "Randomness seeded to: " << seed << std::endl;
         } else {
@@ -521,7 +521,7 @@ int main( int argc, const char *argv[] )
     DebugLog( D_INFO, DC_ALL ) << "Finished in " << elapsed_seconds.count() << " seconds";
 
     if( rng_seed_fuzz_iterations <= 1 ) {
-        // Also print the seed at the end so it can be easily found
+
         if( seed ) {
             DebugLog( D_INFO, DC_ALL ) << "Randomness seeded to: " << seed << std::endl;
         } else {
@@ -541,7 +541,7 @@ int main( int argc, const char *argv[] )
     }
 
 #if defined(__MINGW32__)
-    // MinGW static teardown is unreliable after game state cleanup.
+
     debug_shutdown_guard.cancel();
     deinitDebug();
     std::cout.flush();

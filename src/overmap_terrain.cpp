@@ -31,7 +31,7 @@ map_data_summary_scattered_obstacles_omt( "scattered_obstacles_omt" );
 using oter_type_id = int_id<oter_type_t>;
 using oter_type_str_id = string_id<oter_type_t>;
 
-////////////////
+
 static oter_id ot_null;
 
 const oter_type_t oter_type_t::null_type{};
@@ -39,7 +39,7 @@ const oter_type_t oter_type_t::null_type{};
 namespace
 {
 generic_factory<oter_vision> oter_vision_factory( "oter_vision" );
-} // namespace
+}
 
 template<>
 const oter_vision &string_id<oter_vision>::obj() const
@@ -85,7 +85,7 @@ generic_factory<overmap_land_use_code> land_use_codes( "overmap land use codes" 
 generic_factory<oter_type_t> terrain_types( "overmap terrain type" );
 generic_factory<oter_t> terrains( "overmap terrain" );
 
-} // namespace
+}
 
 template<>
 const overmap_land_use_code &overmap_land_use_code_id::obj() const
@@ -99,28 +99,28 @@ bool overmap_land_use_code_id::is_valid() const
     return land_use_codes.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<oter_type_t>::is_valid() const
 {
     return terrain_types.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<oter_type_t> &int_id<oter_type_t>::id() const
 {
     return terrain_types.convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<oter_type_t> string_id<oter_type_t>::id() const
 {
     return terrain_types.convert( *this, int_id<oter_type_t>( 0 ) );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<oter_type_t>::int_id( const string_id<oter_type_t> &id ) : _id( id.id() ) {}
 
@@ -130,60 +130,60 @@ const oter_type_t &int_id<oter_type_t>::obj() const
     return terrain_types.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const oter_type_t &string_id<oter_type_t>::obj() const
 {
     return terrain_types.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<oter_t>::is_valid() const
 {
     return terrains.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const oter_t &string_id<oter_t>::obj() const
 {
     return terrains.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<oter_t> string_id<oter_t>::id() const
 {
     return terrains.convert( *this, ot_null );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<oter_t>::int_id( const string_id<oter_t> &id ) : _id( id.id() ) {}
 
-/** @relates int_id */
+
 template<>
 bool int_id<oter_t>::is_valid() const
 {
     return terrains.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const oter_t &int_id<oter_t>::obj() const
 {
     return terrains.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<oter_t> &int_id<oter_t>::id() const
 {
     return terrains.convert( *this );
 }
 
-static void set_oter_ids()   // FIXME: constify
+static void set_oter_ids()
 {
     ot_null         = oter_str_id::NULL_ID();
 }
@@ -297,14 +297,14 @@ bool is_ot_match( const std::string &name, const oter_id &oter,
     };
 
     static const auto is_ot_type = []( const std::string & otype, const oter_id & oter ) {
-        // Is a match if the base type is the same which will allow for handling rotations/linear features
-        // but won't incorrectly match other locations that happen to contain the substring.
+
+
         return otype == oter->get_type_id().str();
     };
 
     static const auto is_ot_subtype = []( const std::string & otype, const oter_id & oter ) {
-        // Is a match if the base type and linear subtype (end/straight/curved/tee/four_way) are the same which will allow for handling rotations of linear features
-        // but won't incorrectly match other locations that happen to contain the substring.
+
+
         return otype == oter->get_mapgen_id();
     };
 
@@ -320,17 +320,17 @@ bool is_ot_match( const std::string &name, const oter_id &oter,
             return false;
         }
 
-        // check if it's a full match
+
         if( compare_size == oter_size ) {
             return true;
         }
 
-        // only okay for partial if next char is an underscore
+
         return oter_str.str()[compare_size] == '_';
     };
 
     static const auto is_ot_contains = []( const std::string & otype, const oter_id & oter ) {
-        // Checks for any partial match.
+
         return strstr( oter.id().c_str(), otype.c_str() );
     };
 
@@ -350,10 +350,10 @@ bool is_ot_match( const std::string &name, const oter_id &oter,
     }
 }
 
-/*
- * load mapgen functions from an overmap_terrain json entry
- * suffix is for roads/subways/etc which have "_straight", "_curved", "_tee", "_four_way" function mappings
- */
+
+
+
+
 static void load_overmap_terrain_mapgens( const JsonObject &jo, const std::string &id_base,
         const std::string &suffix = "" )
 {
@@ -374,65 +374,115 @@ template<>
 std::string enum_to_string<oter_flags>( oter_flags data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case oter_flags::known_down: return "KNOWN_DOWN";
-        case oter_flags::known_up: return "KNOWN_UP";
-        case oter_flags::river_tile: return "RIVER";
-        case oter_flags::bridge: return "BRIDGE";
-        case oter_flags::has_sidewalk: return "SIDEWALK";
-        case oter_flags::road: return "ROAD";
-        case oter_flags::highway: return "HIGHWAY";
-        case oter_flags::highway_reserved: return "HIGHWAY_RESERVED";
-        case oter_flags::highway_special: return "HIGHWAY_SPECIAL";
-        case oter_flags::no_rotate: return "NO_ROTATE";
-        case oter_flags::should_not_spawn: return "SHOULD_NOT_SPAWN";
-        case oter_flags::ignore_rotation_for_adjacency: return "IGNORE_ROTATION_FOR_ADJACENCY";
-        case oter_flags::line_drawing: return "LINEAR";
-        case oter_flags::subway_connection: return "SUBWAY";
-        case oter_flags::requires_predecessor: return "REQUIRES_PREDECESSOR";
-        case oter_flags::water: return "WATER";
-        case oter_flags::lake: return "LAKE";
-        case oter_flags::lake_shore: return "LAKE_SHORE";
-        case oter_flags::ocean: return "OCEAN";
-        case oter_flags::ocean_shore: return "OCEAN_SHORE";
-        case oter_flags::ravine: return "RAVINE";
-        case oter_flags::ravine_edge: return "RAVINE_EDGE";
-        case oter_flags::pp_generate_riot_damage: return "PP_GENERATE_RIOT_DAMAGE";
-        case oter_flags::pp_generate_ruined: return "PP_GENERATE_RUINED";
-        case oter_flags::generic_loot: return "GENERIC_LOOT";
-        case oter_flags::risk_extreme: return "RISK_EXTREME";
-        case oter_flags::risk_high: return "RISK_HIGH";
-        case oter_flags::risk_low: return "RISK_LOW";
-        case oter_flags::source_ammo: return "SOURCE_AMMO";
-        case oter_flags::source_animals: return "SOURCE_ANIMALS";
-        case oter_flags::source_books: return "SOURCE_BOOKS";
-        case oter_flags::source_chemistry: return "SOURCE_CHEMISTRY";
-        case oter_flags::source_clothing: return "SOURCE_CLOTHING";
-        case oter_flags::source_construction: return "SOURCE_CONSTRUCTION";
-        case oter_flags::source_cooking: return "SOURCE_COOKING";
-        case oter_flags::source_drink: return "SOURCE_DRINK";
-        case oter_flags::source_electronics: return "SOURCE_ELECTRONICS";
-        case oter_flags::source_fabrication: return "SOURCE_FABRICATION";
-        case oter_flags::source_farming: return "SOURCE_FARMING";
-        case oter_flags::source_food: return "SOURCE_FOOD";
-        case oter_flags::source_forage: return "SOURCE_FORAGE";
-        case oter_flags::source_fuel: return "SOURCE_FUEL";
-        case oter_flags::source_gun: return "SOURCE_GUN";
-        case oter_flags::source_luxury: return "SOURCE_LUXURY";
-        case oter_flags::source_medicine: return "SOURCE_MEDICINE";
-        case oter_flags::source_people: return "SOURCE_PEOPLE";
-        case oter_flags::source_safety: return "SOURCE_SAFETY";
-        case oter_flags::source_tailoring: return "SOURCE_TAILORING";
-        case oter_flags::source_vehicles: return "SOURCE_VEHICLES";
-        case oter_flags::source_weapon: return "SOURCE_WEAPON";
-        // *INDENT-ON*
+
+        case oter_flags::known_down:
+            return "KNOWN_DOWN";
+        case oter_flags::known_up:
+            return "KNOWN_UP";
+        case oter_flags::river_tile:
+            return "RIVER";
+        case oter_flags::bridge:
+            return "BRIDGE";
+        case oter_flags::has_sidewalk:
+            return "SIDEWALK";
+        case oter_flags::road:
+            return "ROAD";
+        case oter_flags::highway:
+            return "HIGHWAY";
+        case oter_flags::highway_reserved:
+            return "HIGHWAY_RESERVED";
+        case oter_flags::highway_special:
+            return "HIGHWAY_SPECIAL";
+        case oter_flags::no_rotate:
+            return "NO_ROTATE";
+        case oter_flags::should_not_spawn:
+            return "SHOULD_NOT_SPAWN";
+        case oter_flags::ignore_rotation_for_adjacency:
+            return "IGNORE_ROTATION_FOR_ADJACENCY";
+        case oter_flags::line_drawing:
+            return "LINEAR";
+        case oter_flags::subway_connection:
+            return "SUBWAY";
+        case oter_flags::requires_predecessor:
+            return "REQUIRES_PREDECESSOR";
+        case oter_flags::water:
+            return "WATER";
+        case oter_flags::lake:
+            return "LAKE";
+        case oter_flags::lake_shore:
+            return "LAKE_SHORE";
+        case oter_flags::ocean:
+            return "OCEAN";
+        case oter_flags::ocean_shore:
+            return "OCEAN_SHORE";
+        case oter_flags::ravine:
+            return "RAVINE";
+        case oter_flags::ravine_edge:
+            return "RAVINE_EDGE";
+        case oter_flags::pp_generate_riot_damage:
+            return "PP_GENERATE_RIOT_DAMAGE";
+        case oter_flags::pp_generate_ruined:
+            return "PP_GENERATE_RUINED";
+        case oter_flags::generic_loot:
+            return "GENERIC_LOOT";
+        case oter_flags::risk_extreme:
+            return "RISK_EXTREME";
+        case oter_flags::risk_high:
+            return "RISK_HIGH";
+        case oter_flags::risk_low:
+            return "RISK_LOW";
+        case oter_flags::source_ammo:
+            return "SOURCE_AMMO";
+        case oter_flags::source_animals:
+            return "SOURCE_ANIMALS";
+        case oter_flags::source_books:
+            return "SOURCE_BOOKS";
+        case oter_flags::source_chemistry:
+            return "SOURCE_CHEMISTRY";
+        case oter_flags::source_clothing:
+            return "SOURCE_CLOTHING";
+        case oter_flags::source_construction:
+            return "SOURCE_CONSTRUCTION";
+        case oter_flags::source_cooking:
+            return "SOURCE_COOKING";
+        case oter_flags::source_drink:
+            return "SOURCE_DRINK";
+        case oter_flags::source_electronics:
+            return "SOURCE_ELECTRONICS";
+        case oter_flags::source_fabrication:
+            return "SOURCE_FABRICATION";
+        case oter_flags::source_farming:
+            return "SOURCE_FARMING";
+        case oter_flags::source_food:
+            return "SOURCE_FOOD";
+        case oter_flags::source_forage:
+            return "SOURCE_FORAGE";
+        case oter_flags::source_fuel:
+            return "SOURCE_FUEL";
+        case oter_flags::source_gun:
+            return "SOURCE_GUN";
+        case oter_flags::source_luxury:
+            return "SOURCE_LUXURY";
+        case oter_flags::source_medicine:
+            return "SOURCE_MEDICINE";
+        case oter_flags::source_people:
+            return "SOURCE_PEOPLE";
+        case oter_flags::source_safety:
+            return "SOURCE_SAFETY";
+        case oter_flags::source_tailoring:
+            return "SOURCE_TAILORING";
+        case oter_flags::source_vehicles:
+            return "SOURCE_VEHICLES";
+        case oter_flags::source_weapon:
+            return "SOURCE_WEAPON";
+
         case oter_flags::num_oter_flags:
             break;
     }
     cata_fatal( "Invalid oter_flags" );
 }
 
-} // namespace io
+}
 
 std::string oter_type_t::get_symbol() const
 {
@@ -442,17 +492,25 @@ std::string oter_type_t::get_symbol() const
 double oter_type_t::see_cost_value( oter_type_t::see_costs cost )
 {
     switch( cost ) {
-        // *INDENT-OFF*
+
         case oter_type_t::see_costs::all_clear:
-        case oter_type_t::see_costs::none: return 0;
-        case oter_type_t::see_costs::low: return 1;
-        case oter_type_t::see_costs::medium: return 2;
-        case oter_type_t::see_costs::spaced_high: return 4;
-        case oter_type_t::see_costs::high: return 5;
-        case oter_type_t::see_costs::full_high: return 10;
-        case oter_type_t::see_costs::opaque: return 999;
-        default: break;
-        // *INDENT-ON*
+        case oter_type_t::see_costs::none:
+            return 0;
+        case oter_type_t::see_costs::low:
+            return 1;
+        case oter_type_t::see_costs::medium:
+            return 2;
+        case oter_type_t::see_costs::spaced_high:
+            return 4;
+        case oter_type_t::see_costs::high:
+            return 5;
+        case oter_type_t::see_costs::full_high:
+            return 10;
+        case oter_type_t::see_costs::opaque:
+            return 999;
+        default:
+            break;
+
     }
     return 0;
 }
@@ -463,31 +521,48 @@ template<>
 std::string enum_to_string<oter_travel_cost_type>( oter_travel_cost_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case oter_travel_cost_type::other: return "other";
-        case oter_travel_cost_type::highway: return "highway";
-        case oter_travel_cost_type::road: return "road";
-        case oter_travel_cost_type::field: return "field";
-        case oter_travel_cost_type::crop_field: return "crop_field";
-        case oter_travel_cost_type::dirt_road: return "dirt_road";
-        case oter_travel_cost_type::trail: return "trail";
-        case oter_travel_cost_type::forest: return "forest";
-        case oter_travel_cost_type::shore: return "shore";
-        case oter_travel_cost_type::swamp: return "swamp";
-        case oter_travel_cost_type::water: return "water";
-        case oter_travel_cost_type::air: return "air";
-        case oter_travel_cost_type::structure: return "structure";
-        case oter_travel_cost_type::roof: return "roof";
-        case oter_travel_cost_type::basement: return "basement";
-        case oter_travel_cost_type::tunnel: return "tunnel";
-        case oter_travel_cost_type::impassable: return "impassable";
-        // *INDENT-ON*
+
+        case oter_travel_cost_type::other:
+            return "other";
+        case oter_travel_cost_type::highway:
+            return "highway";
+        case oter_travel_cost_type::road:
+            return "road";
+        case oter_travel_cost_type::field:
+            return "field";
+        case oter_travel_cost_type::crop_field:
+            return "crop_field";
+        case oter_travel_cost_type::dirt_road:
+            return "dirt_road";
+        case oter_travel_cost_type::trail:
+            return "trail";
+        case oter_travel_cost_type::forest:
+            return "forest";
+        case oter_travel_cost_type::shore:
+            return "shore";
+        case oter_travel_cost_type::swamp:
+            return "swamp";
+        case oter_travel_cost_type::water:
+            return "water";
+        case oter_travel_cost_type::air:
+            return "air";
+        case oter_travel_cost_type::structure:
+            return "structure";
+        case oter_travel_cost_type::roof:
+            return "roof";
+        case oter_travel_cost_type::basement:
+            return "basement";
+        case oter_travel_cost_type::tunnel:
+            return "tunnel";
+        case oter_travel_cost_type::impassable:
+            return "impassable";
+
         case oter_travel_cost_type::last:
             break;
     }
     cata_fatal( "Invalid oter_travel_cost_type" );
 }
-} // namespace io
+}
 
 void oter_vision::level::deserialize( const JsonObject &jo )
 {
@@ -544,12 +619,12 @@ void oter_vision::check() const
 }
 
 static string_id<map_data_summary> map_data_for_travel_cost( oter_travel_cost_type type,
-        const JsonObject &/*jo*/ )
+        const JsonObject & )
 {
-    // With no specific override, set based on travel_cost_type if present.
+
     switch( type ) {
         case oter_travel_cost_type::impassable:
-        // Revisit water and air?
+
         case oter_travel_cost_type::water:
         case oter_travel_cost_type::air:
             return map_data_summary_full_omt;
@@ -565,12 +640,12 @@ static string_id<map_data_summary> map_data_for_travel_cost( oter_travel_cost_ty
             return map_data_summary_scattered_obstacles_omt;
         case oter_travel_cost_type::other:
         default:
-            // Should not reach, throw an error.
-            //jo.throw_error( string_format( "No inferred or explicit default_map_data for %s", id.str() ) );
+
+
             break;
     }
-    // Terrible hack, just mark it impssable?
-    // There seem to be something like 2,500 entries that need to be annotted for this to work.
+
+
     return map_data_summary_full_omt;
 }
 
@@ -579,7 +654,7 @@ void oter_type_t::load( const JsonObject &jo, const std::string_view )
     optional( jo, was_loaded, "sym", symbol, unicode_codepoint_from_symbol_reader, NULL_UNICODE );
 
     optional( jo, was_loaded, "name", name );
-    // For some reason an enum can be read as a number??
+
     if( jo.has_number( "see_cost" ) ) {
         jo.throw_error( string_format( "In %s: See cost uses invalid number format", id.str() ) );
     }
@@ -630,10 +705,10 @@ void oter_type_t::load( const JsonObject &jo, const std::string_view )
         }
 
         if( symbol == NULL_UNICODE ) {
-            // Default the sym for linear terrains to a specific value which
-            // has special behaviour when using fallback ASCII tiles so as to
-            // cause it to draw using the box drawing characters (see
-            // load_ascii_set).
+
+
+
+
             symbol = LINE_XOXO_C;
         }
     } else {
@@ -672,16 +747,16 @@ void oter_type_t::check() const
                                          "oter_type " << id.str() << " uses deprecated PP_GENERATE_RIOT_DAMAGE flag; "
                                          "use \"post_process_generators\": [\"riot_damage\"] instead";
     }
-    /* find omts without vision_levels assigned
-    if( vision_levels == oter_vision_default && !has_flag( oter_flags::should_not_spawn ) ) {
-        fprintf( stderr, "%s (%s)\n", id.c_str(), name.translated().c_str() );
-    }
-    */
+
+
+
+
+
 }
 
 void oter_type_t::finalize()
 {
-    directional_peers.clear();  // In case of a second finalization.
+    directional_peers.clear();
 
     if( is_rotatable() ) {
         for( om_direction::type dir : om_direction::all ) {
@@ -826,7 +901,7 @@ nc_color oter_t::get_color( om_vision_level vision, const bool from_land_use_cod
 
 std::string oter_t::get_tileset_id( om_vision_level vision ) const
 {
-    // If this changes, be sure to change the debug display on the overmap ui to not strip the prefix!
+
     if( type->vision_levels->viewed( vision ) != nullptr ) {
         return string_format( "vl#%s$%s", type->vision_levels.str(), io::enum_to_string( vision ) );
     }
@@ -852,8 +927,8 @@ int oter_t::get_rotation() const
 {
     if( is_linear() ) {
         const om_lines::type &t = om_lines::all[line];
-        // It turns out the rotation used for linear things is the opposite of
-        // the rotation used for other things.  Sigh.
+
+
         return ( 4 - t.rotation ) % 4;
     }
     if( is_rotatable() ) {
@@ -874,7 +949,7 @@ bool oter_t::type_is( const oter_type_t &type ) const
 
 bool oter_t::has_connection( om_direction::type dir ) const
 {
-    // TODO: It's a DAMN UGLY hack. Remove it as soon as possible.
+
     if( id == oter_road_nesw_manhole ) {
         return true;
     }
@@ -940,13 +1015,18 @@ template<>
 std::string enum_to_string<ot_match_type>( ot_match_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case ot_match_type::exact: return "EXACT";
-        case ot_match_type::type: return "TYPE";
-        case ot_match_type::subtype: return "SUBTYPE";
-        case ot_match_type::prefix: return "PREFIX";
-        case ot_match_type::contains: return "CONTAINS";
-        // *INDENT-ON*
+
+        case ot_match_type::exact:
+            return "EXACT";
+        case ot_match_type::type:
+            return "TYPE";
+        case ot_match_type::subtype:
+            return "SUBTYPE";
+        case ot_match_type::prefix:
+            return "PREFIX";
+        case ot_match_type::contains:
+            return "CONTAINS";
+
         case ot_match_type::num_ot_match_type:
             break;
     }
@@ -957,13 +1037,18 @@ template<>
 std::string enum_to_string<om_vision_level>( om_vision_level data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case om_vision_level::unseen: return "unseen";
-        case om_vision_level::vague: return "vague";
-        case om_vision_level::outlines: return "outlines";
-        case om_vision_level::details: return "details";
-        case om_vision_level::full: return "full";
-        // *INDENT-ON*
+
+        case om_vision_level::unseen:
+            return "unseen";
+        case om_vision_level::vague:
+            return "vague";
+        case om_vision_level::outlines:
+            return "outlines";
+        case om_vision_level::details:
+            return "details";
+        case om_vision_level::full:
+            return "full";
+
         default:
             break;
     }
@@ -975,23 +1060,31 @@ template<>
 std::string enum_to_string<oter_type_t::see_costs>( oter_type_t::see_costs data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case oter_type_t::see_costs::all_clear: return "all_clear";
-        case oter_type_t::see_costs::none: return "none";
-        case oter_type_t::see_costs::low: return "low";
-        case oter_type_t::see_costs::medium: return "medium";
-        case oter_type_t::see_costs::spaced_high: return "spaced_high";
-        case oter_type_t::see_costs::high: return "high";
-        case oter_type_t::see_costs::full_high: return "full_high";
-        case oter_type_t::see_costs::opaque: return "opaque";
-        // *INDENT-ON*
+
+        case oter_type_t::see_costs::all_clear:
+            return "all_clear";
+        case oter_type_t::see_costs::none:
+            return "none";
+        case oter_type_t::see_costs::low:
+            return "low";
+        case oter_type_t::see_costs::medium:
+            return "medium";
+        case oter_type_t::see_costs::spaced_high:
+            return "spaced_high";
+        case oter_type_t::see_costs::high:
+            return "high";
+        case oter_type_t::see_costs::full_high:
+            return "full_high";
+        case oter_type_t::see_costs::opaque:
+            return "opaque";
+
         default:
             break;
     }
     debugmsg( "Unknown see_cost %d", static_cast<int>( data ) );
     return "none";
 }
-} // namespace io
+}
 
 static const std::array<std::string, 4> suffixes = {{ "_north", "_west", "_south", "_east" }};
 

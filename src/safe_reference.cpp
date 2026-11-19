@@ -14,9 +14,9 @@ safe_reference_anchor::safe_reference_anchor( const safe_reference_anchor & ) :
     safe_reference_anchor()
 {}
 
-// Technically the move constructor and move assignment can throw bad_alloc,
-// but we have no way to recover from that so mark it noexcept anyway; will
-// cause terminate on out-of-memory.
+
+
+
 safe_reference_anchor::safe_reference_anchor( safe_reference_anchor && ) noexcept :
     safe_reference_anchor()
 {}

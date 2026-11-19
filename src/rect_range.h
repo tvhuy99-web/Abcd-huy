@@ -4,8 +4,8 @@
 
 #include "point.h"
 
-// This is a template parameter, it's usually SDL_Rect, but that way the class
-// can be used without include any SDL header.
+
+
 template<typename RectType>
 class rect_range
 {
@@ -60,4 +60,4 @@ class rect_range
         }
 };
 
-#endif // CATA_SRC_RECT_RANGE_H
+#endif

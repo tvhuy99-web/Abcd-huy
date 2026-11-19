@@ -31,7 +31,7 @@ struct configurable_distraction {
     std::string description;
     bool is_toggle = false;
 };
-} // namespace
+}
 
 static const std::vector<configurable_distraction> &get_configurable_distractions()
 {
@@ -83,11 +83,12 @@ void distraction_manager_gui::show()
     ctxt.register_leftright();
     ctxt.register_navigate_ui_list();
 
-    // Publish the exact toggles and descriptions displayed by this UI.
-    // Focus only moves the cursor; activating a row uses the original CONFIRM path.
+
+
     a11y::screen_scope reader( &ctxt, "distraction-manager",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        for( int i = 0; i < number_of_distractions; ++i ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( int i = 0; i < number_of_distractions; ++i )
+        {
             if( intent.node == "distraction:item:" + std::to_string( i ) ) {
                 if( intent.action == "focus" || intent.action == "activate" ) {
                     currentLine = i;
@@ -100,7 +101,7 @@ void distraction_manager_gui::show()
     } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        // Draw border
+
         draw_border( w_border, BORDER_COLOR, _( "Distractions manager" ) );
         wattron( w_border, c_light_gray );
         mvwaddch( w_border, point( 0, iHeaderHeight - 1 ), LINE_XXXO );
@@ -109,12 +110,12 @@ void distraction_manager_gui::show()
         wattroff( w_border, c_light_gray );
         wnoutrefresh( w_border );
 
-        // Draw header
+
         werase( w_header );
         fold_and_print( w_header, point::zero, getmaxx( w_header ), c_white,
                         _( get_configurable_distractions()[currentLine].description.c_str() ) );
 
-        // Draw horizontal line and corner pieces of the table
+
         wattron( w_header, c_light_gray );
         mvwhline( w_header, point( 0, iHeaderHeight - 2 ), LINE_OXOX, 78 );
         mvwaddch( w_header, point( 60, iHeaderHeight - 2 ), LINE_OXXX );
@@ -123,7 +124,7 @@ void distraction_manager_gui::show()
 
         wnoutrefresh( w_header );
 
-        // Clear table
+
         mvwrectf( w, point::zero, c_black, ' ', 79, iContentHeight );
         mvwvline( w, point( 60, 0 ), c_light_gray, LINE_XOXO, iContentHeight ) ;
 
@@ -140,11 +141,11 @@ void distraction_manager_gui::show()
                                               _( "Enabled" ) :
                                               _( "Disabled" );
 
-            // Print distraction types
+
             mvwprintz( w, point( 1, i - startPosition ), line_color, "%s",
                        _( get_configurable_distractions()[i].name.c_str() ) );
 
-            // Print "Enabled/Disabled" text
+
             mvwprintz( w, point( 62, i - startPosition ), status_color, "%s", status_string );
         }
 
@@ -157,7 +158,7 @@ void distraction_manager_gui::show()
         ui_manager::redraw();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                    ctxt, _( "Distractions manager" ) );
+                                                   ctxt, _( "Distractions manager" ) );
             snapshot.summary = _( "Select a condition to enable or disable interruption.  "
                                   "Toggle all affects every condition." );
             for( int i = 0; i < number_of_distractions; ++i ) {
@@ -210,14 +211,14 @@ void distraction_manager_gui::show()
             if( a11y::enabled() ) {
                 const configurable_distraction &item = get_configurable_distractions()[currentLine];
                 a11y::announce_game_message( string_format( _( "%1$s: %2$s." ),
-                                              _( item.name.c_str() ),
-                                              *item.state ? _( "Enabled" ) : _( "Disabled" ) ), false );
+                                             _( item.name.c_str() ),
+                                             *item.state ? _( "Enabled" ) : _( "Disabled" ) ), false );
             }
         }
     }
 }
 
-} // namespace distraction_manager
+}
 
 distraction_manager::distraction_manager_gui &get_distraction_manager()
 {

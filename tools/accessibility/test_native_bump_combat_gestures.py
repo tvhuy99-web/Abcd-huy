@@ -83,8 +83,7 @@ class NativeBumpCombatGestures(unittest.TestCase):
         self.assertNotIn('msgid "No visible hostile creature in that direction.', self.vietnamese)
 
     def test_nearby_direction_description_is_declared_before_use(self):
-        # This is the C++ error that broke ARM64 compilation in run
-        # 43193229259: a local lambda declared below the reader handler.
+
         definition = self.nearby.index("const auto relative_words = [](")
         handler = self.nearby.index('a11y::screen_scope reader( &ctxt, "surroundings"')
         first_use = self.nearby.index("relative_words( target.relative )")

@@ -35,11 +35,11 @@
 #include <jni.h>
 #include "sdltiles.h"
 
-// Reuse the standard popup pipeline for every ordinary text/number field.
-// The native Android EditText is accessible to TalkBack, while the original
-// ImGui editor remains in place for non-reader mode and custom callbacks.
-// The optional is empty on Cancel; false means JNI is unavailable and the
-// existing game editor should handle the request instead.
+
+
+
+
+
 static bool android_accessible_input( const std::string &title, const std::string &initial,
                                       int kind, int limit, double minimum, double maximum,
                                       std::optional<std::string> &result )
@@ -185,7 +185,7 @@ void input_popup::draw_controls()
         if( description_monofont ) {
             cataimgui::PushMonoFont();
         }
-        // todo: you should not have to manually split text to print it as paragraphs
+
         uint64_t offset = 0;
         uint64_t pos = 0;
         while( pos != std::string::npos ) {
@@ -206,7 +206,7 @@ void input_popup::draw_controls()
         ImGui::SameLine();
     }
 
-    // make sure the cursor is in the input field when we regain focus
+
     if( !ImGui::IsWindowFocused() ) {
         set_focus = true;
     }
@@ -241,8 +241,8 @@ string_input_popup_imgui::string_input_popup_imgui( int width, const std::string
     text( old_input ),
     old_input( old_input )
 {
-    // for opening uilist history
-    // non-uilist history is handled by imgui itself and not customizable (yet?)
+
+
     ctxt.register_action( "HISTORY_UP" );
 }
 
@@ -272,7 +272,7 @@ static int input_callback( ImGuiInputTextCallbackData *data )
     }
 
     if( data->EventFlag == ImGuiInputTextFlags_CallbackAlways && popup->want_clear_text() ) {
-        // Only called when popup->text is empty
+
         data->BufTextLen = 0;
         data->SelectionStart = 0;
         data->SelectionEnd = 0;
@@ -305,8 +305,8 @@ void string_input_popup_imgui::draw_input_control()
         flags |= ImGuiInputTextFlags_CallbackAlways;
     }
 
-    // shrink width of input field if we only allow short inputs
-    // todo: use full available width for unrestricted inputs in wider windows
+
+
     float input_width = str_width_to_pixels( max_input_length + 1 );
     if( max_input_length > 0 && input_width < ImGui::CalcItemWidth() ) {
         ImGui::SetNextItemWidth( input_width );
@@ -394,7 +394,7 @@ void string_input_popup_imgui::update_input_history( ImGuiInputTextCallbackData 
         } else if( history_index == 0 ) {
             session_input.assign( data->Buf, data->BufTextLen );
 
-            //avoid showing the same result twice (after reopen filter window without reset)
+
             if( hist.size() > 1 && session_input == hist.back() ) {
                 history_index += 1;
             }
@@ -402,7 +402,7 @@ void string_input_popup_imgui::update_input_history( ImGuiInputTextCallbackData 
     } else {
         if( history_index == 1 ) {
             ::set_text( data, session_input );
-            //show initial string entered and 'return'
+
             history_index = 0;
             return;
         } else if( history_index == 0 ) {
@@ -449,11 +449,16 @@ std::string string_input_popup_imgui::query()
 #endif
     a11y::screen_scope reader( &ctxt, "STRING_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) )
+        {
             return "TEXT.QUIT";
         }
-        if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
-        if( intent.node == "text" && intent.action == "set_text" ) {
+        if( intent.node == "confirm" && intent.action == "activate" )
+        {
+            return "TEXT.CONFIRM";
+        }
+        if( intent.node == "text" && intent.action == "set_text" )
+        {
             if( max_input_length > 0 && intent.value.size() > static_cast<std::size_t>( max_input_length ) ) {
                 a11y::android::status( "invalid_value", &intent );
                 return std::nullopt;
@@ -468,7 +473,7 @@ std::string string_input_popup_imgui::query()
     while( true ) {
         ui_manager::redraw_invalidated();
         reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
-                       remove_color_tags( reader_description() ), text, false ) );
+                                            remove_color_tags( reader_description() ), text, false ) );
 
         std::string action = ctxt.handle_input();
         if( handle_custom_callbacks( action ) ) {
@@ -481,13 +486,13 @@ std::string string_input_popup_imgui::query()
         } else if( action == "TEXT.QUIT" ) {
             break;
         } else if( action == "HISTORY_UP" && is_uilist_history ) {
-            // non-uilist history is handled inside input callback
+
             show_history();
         } else if( action == "TEXT.CLEAR" ) {
             do_clear_text = true;
         }
 
-        // mouse click on x to close leads here
+
         if( !get_is_open() ) {
             break;
         }
@@ -525,14 +530,14 @@ number_input_popup<T>::number_input_popup( int width, T old_value, const std::st
     value( old_value ),
     old_value( old_value )
 {
-    // potentially register context keys
+
 }
 
 template<>
 void number_input_popup<int>::draw_input_control()
 {
-    // todo: maybe set width of input field, default is fairly long
-    // step size default values are imgui defaults
+
+
     ImGui::InputInt( "##number_input", &value, step_size.value_or( 1 ),
                      fast_step_size.value_or( 100 ) );
 }
@@ -540,8 +545,8 @@ void number_input_popup<int>::draw_input_control()
 template<>
 void number_input_popup<float>::draw_input_control()
 {
-    // todo: maybe set width of input field, default is fairly long
-    // step size default values are imgui defaults
+
+
     cataimgui::InputFloat( "##number_input", &value, step_size.value_or( 0.f ),
                            fast_step_size.value_or( 0.f ) );
 }
@@ -578,31 +583,37 @@ T number_input_popup<T>::query()
                     return value;
                 }
             }
-            // The Java dialog already validates numeric syntax and bounds
-            // (int / finite float), so this path is defensive only.
+
+
             return old_value;
         }
     }
 #endif
     a11y::screen_scope reader( &ctxt, "NUMBER_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) )
+        {
             return "TEXT.QUIT";
         }
-        if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
+        if( intent.node == "confirm" && intent.action == "activate" )
+        {
+            return "TEXT.CONFIRM";
+        }
         if( accessible_quantity_max && std::is_integral_v<T> &&
-            intent.node == "quantity" && intent.action == "set_value" ) {
+            intent.node == "quantity" && intent.action == "set_value" )
+        {
             const auto count = a11y::selected_quantity( intent.value,
-                               static_cast<std::size_t>( *accessible_quantity_max ) );
+                    static_cast<std::size_t>( *accessible_quantity_max ) );
             if( !count ) {
                 a11y::android::status( "invalid_value", &intent );
                 return std::nullopt;
             }
             value = static_cast<T>( *count );
-            // Selecting one completed number closes the popup.
+
             return "TEXT.CONFIRM";
         }
-        if( intent.node == "text" && intent.action == "set_text" ) {
+        if( intent.node == "text" && intent.action == "set_text" )
+        {
             std::istringstream parser( intent.value );
             parser.imbue( std::locale::classic() );
             T parsed{};
@@ -651,9 +662,9 @@ T number_input_popup<T>::query()
             reader.update( std::move( snapshot ) );
         } else {
             reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
-                           remove_color_tags( reader_description() ), reader_value.str(), true,
-                           step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
-                           std::is_integral_v<T> ) );
+                                                remove_color_tags( reader_description() ), reader_value.str(), true,
+                                                step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
+                                                std::is_integral_v<T> ) );
         }
         std::string action = ctxt.handle_input();
 
@@ -668,7 +679,7 @@ T number_input_popup<T>::query()
             break;
         }
 
-        // mouse click on x to close leads here
+
         if( !get_is_open() ) {
             last_quantity_cancelled = true;
             break;
@@ -681,7 +692,7 @@ T number_input_popup<T>::query()
 template<typename T>
 void number_input_popup<T>::set_accessible_quantity_max( const T available )
 {
-    if( std::is_integral_v<T> && available > 0 ) {
+    if( std::is_integral_v<T> &&available > 0 ) {
         accessible_quantity_max = available;
     }
 }

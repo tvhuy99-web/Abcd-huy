@@ -15,4 +15,4 @@ struct lang_stats {
 
 const lang_stats *lang_stats_for( std::string_view lang );
 
-#endif // CATA_SRC_LANG_STATS_H
+#endif

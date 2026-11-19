@@ -31,8 +31,8 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
         self.assertIn("const bool actionable = pocket_item_actions", INV)
         self.assertIn('pocket_node.has_children = !contents_rows.empty();', INV)
         self.assertIn('item_node.label = ancestors + " > " + item_node.label;', INV)
-        browsing = INV.split("// Ordinary Inventory now exposes real actionable", 1)[1]
-        browsing = browsing.split("// A sealed or non-browsable pocket", 1)[0]
+        browsing = INV.split("else if( !pickup_mode && !pocket->sealed() &&", 1)[1]
+        browsing = browsing.split("pocket_node.value = pocket->sealed()", 1)[0]
         for mutator in ("toggle_entry(", "set_collapsed(", "store(", "obtain_item("):
             self.assertNotIn(mutator, browsing)
 
@@ -52,8 +52,7 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
         self.assertIn('if (pocketStage == 3 && pocketAllowsSelection())', CTRL)
 
     def test_noninteractive_nodes_do_not_generate_stale_tap_receipts(self):
-        # Previously skill categories were 'focus' only but Java still sent
-        # 'activate'; C++ correctly refused it and spoke 'Choose again'.
+
         self.assertIn('header.id = "pd:skill:category:"', PLAYER)
         self.assertIn('header.actions = { "focus" };', PLAYER)
         tap = CTRL.split("public void activate()", 1)[1].split(
@@ -97,9 +96,9 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
         self.assertIn('_( "Item condition intact." )', INV)
         self.assertIn('_( "Pickup allow or deny rule marker." )', INV)
         self.assertIn('node.detail +=', INV)
-        # Native item status and inventory save are not modified for speech.
+
         clean = INV.split("const std::string durability_bar =", 1)[1].split(
-            "// A plain inventory selection opens", 1
+            'if( activation == "TOGGLE_ENTRY" ) {', 1
         )[0]
         self.assertNotIn("set_damage(", clean)
         self.assertNotIn("set_flag(", clean)

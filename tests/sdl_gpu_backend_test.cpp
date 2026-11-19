@@ -52,4 +52,4 @@ TEST_CASE( "gpu_backend_choices_start_with_automatic_and_list_sdl_drivers",
     }
 }
 
-#endif // TILES
+#endif

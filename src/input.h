@@ -11,25 +11,25 @@
 
 class cata_path;
 
-// Curses key constants
+
 constexpr int KEY_ESCAPE     = 27;
 constexpr int KEY_MIN        =
-    0x101;    /* minimum extended key value */ //<---------not used
+    0x101;
 constexpr int KEY_BREAK      =
-    0x101;    /* break key */                  //<---------not used
-constexpr int KEY_DOWN       = 0x102;    /* down arrow */
-constexpr int KEY_UP         = 0x103;    /* up arrow */
-constexpr int KEY_LEFT       = 0x104;    /* left arrow */
-constexpr int KEY_RIGHT      = 0x105;    /* right arrow*/
+    0x101;
+constexpr int KEY_DOWN       = 0x102;
+constexpr int KEY_UP         = 0x103;
+constexpr int KEY_LEFT       = 0x104;
+constexpr int KEY_RIGHT      = 0x105;
 constexpr int KEY_HOME       =
-    0x106;    /* home key */
+    0x106;
 constexpr int KEY_BACKSPACE  =
-    0x107;    /* Backspace */                  //<---------not used
-constexpr int KEY_DC         = 0x14A;    /* Delete Character */
+    0x107;
+constexpr int KEY_DC         = 0x14A;
 constexpr int KEY_F0         = 0x108;
 inline constexpr int KEY_F( const int n )
 {
-    return KEY_F0 + n;    /* F1, F2, etc*/
+    return KEY_F0 + n;
 }
 constexpr int F_KEY_NUM_BEG  = 0;
 constexpr int F_KEY_NUM_END  = 63;
@@ -41,34 +41,34 @@ inline constexpr bool IS_F_KEY( const int key )
 {
     return key >= KEY_F( F_KEY_NUM_BEG ) && key <= KEY_F( F_KEY_NUM_END );
 }
-/** @return true if the given character is in the range of basic ASCII control characters */
+
 inline constexpr bool IS_CTRL_CHAR( const int key )
 {
-    // https://en.wikipedia.org/wiki/C0_and_C1_control_codes#Basic_ASCII_control_codes
+
     return key >= 0 && key < ' ';
 }
-/** @return true if the given character is an ASCII control char but should not be rendered with "CTRL+" */
+
 inline constexpr bool IS_NAMED_CTRL_CHAR( const int key )
 {
     return key == '\t' || key == '\n' || key == KEY_ESCAPE || key == KEY_BACKSPACE;
 }
 inline constexpr int KEY_NUM( const int n )
 {
-    return 0x30 + n;     /* Numbers 0, 1, ..., 9 */
+    return 0x30 + n;
 }
-constexpr int KEY_NPAGE      = 0x152;    /* page down */
-constexpr int KEY_PPAGE      = 0x153;    /* page up */
-constexpr int KEY_ENTER      = 0x157;    /* enter */
-constexpr int KEY_BTAB       = 0x161;    /* back-tab = shift + tab */
-constexpr int KEY_END        = 0x168;    /* End */
+constexpr int KEY_NPAGE      = 0x152;
+constexpr int KEY_PPAGE      = 0x153;
+constexpr int KEY_ENTER      = 0x157;
+constexpr int KEY_BTAB       = 0x161;
+constexpr int KEY_END        = 0x168;
 
-// Platform independent key code (though largely based on SDL key code)
-//
-// These and other code related to keyboard_code event should NOT be guarded with
-// platform macros, since they are required to load and save keyboard_code events,
-// which should always be done regardless whether the platform supports it, otherwise
-// custom keybindings might be lost when someone switches e.g. from tiles to curses
-// and save the keybindings, and switches back to tiles later.
+
+
+
+
+
+
+
 namespace keycode
 {
 enum : int {
@@ -126,15 +126,15 @@ enum : int {
     f23       = 0x40000072,
     f24       = 0x40000073,
 };
-} // namespace keycode
+}
 
 bool is_mouse_enabled();
 bool is_keycode_mode_supported();
 std::string get_input_string_from_file( const std::string &fname = "input.txt" );
 
-/**
- * A set of attributes for an action
- */
+
+
+
 struct action_attributes {
     action_attributes() : is_user_created( false ) {}
     bool is_user_created;
@@ -142,11 +142,11 @@ struct action_attributes {
     std::vector<input_event> input_events;
 };
 
-// Definitions for joystick/gamepad.
 
-// On the joystick there's a maximum of 256 key states.
-// So for joy axis events, we simply use a number larger
-// than that.
+
+
+
+
 constexpr int JOY_0  = 0;
 constexpr int JOY_1  = 1;
 constexpr int JOY_2  = 2;
@@ -197,36 +197,36 @@ constexpr int JOY_RS_DOWN_RIGHT = 256 + 14;
 constexpr int JOY_RS_UP_LEFT    = 256 + 15;
 constexpr int JOY_RS_DOWN_LEFT  = 256 + 16;
 
-// Named gamepad buttons (SDL controller mapping)
-// Face buttons (SDL: A=0, B=1, X=2, Y=3)
+
+
 constexpr int JOY_A  = 256 + 32;
 constexpr int JOY_B  = 256 + 33;
 constexpr int JOY_X  = 256 + 34;
 constexpr int JOY_Y  = 256 + 35;
 
-// Shoulder buttons
-constexpr int JOY_LB = 256 + 36;  // Left bumper (ALT modifier)
-constexpr int JOY_RB = 256 + 37;  // Right bumper
 
-// Triggers
-constexpr int JOY_LT = 256 + 38;  // Left trigger
-constexpr int JOY_RT = 256 + 39;  // Right trigger (move confirm)
+constexpr int JOY_LB = 256 + 36;
+constexpr int JOY_RB = 256 + 37;
 
-// Stick clicks
-constexpr int JOY_LS = 256 + 40;  // Left stick click
-constexpr int JOY_RS = 256 + 41;  // Right stick click
 
-// D-pad (for gameplay actions, not menu navigation)
+constexpr int JOY_LT = 256 + 38;
+constexpr int JOY_RT = 256 + 39;
+
+
+constexpr int JOY_LS = 256 + 40;
+constexpr int JOY_RS = 256 + 41;
+
+
 constexpr int JOY_UP    = 256 + 42;
 constexpr int JOY_DOWN  = 256 + 43;
 constexpr int JOY_LEFT  = 256 + 44;
 constexpr int JOY_RIGHT = 256 + 45;
 
-// Start/Back
+
 constexpr int JOY_START = 256 + 46;
 constexpr int JOY_BACK  = 256 + 47;
 
-// ALT variants (when LB is held)
+
 constexpr int JOY_ALT_A  = 256 + 48;
 constexpr int JOY_ALT_B  = 256 + 49;
 constexpr int JOY_ALT_X  = 256 + 50;
@@ -243,7 +243,7 @@ constexpr int JOY_ALT_RIGHT = 256 + 61;
 constexpr int JOY_ALT_START = 256 + 62;
 constexpr int JOY_ALT_BACK  = 256 + 63;
 
-// Left radial menu
+
 constexpr int JOY_L_RADIAL_N  = 256 + 64;
 constexpr int JOY_L_RADIAL_NE = 256 + 65;
 constexpr int JOY_L_RADIAL_E  = 256 + 66;
@@ -253,7 +253,7 @@ constexpr int JOY_L_RADIAL_SW = 256 + 69;
 constexpr int JOY_L_RADIAL_W  = 256 + 70;
 constexpr int JOY_L_RADIAL_NW = 256 + 71;
 
-// Right radial menu
+
 constexpr int JOY_R_RADIAL_N  = 256 + 72;
 constexpr int JOY_R_RADIAL_NE = 256 + 73;
 constexpr int JOY_R_RADIAL_E  = 256 + 74;
@@ -264,91 +264,91 @@ constexpr int JOY_R_RADIAL_W  = 256 + 78;
 constexpr int JOY_R_RADIAL_NW = 256 + 79;
 
 
-/**
- * Manages the translation from action IDs to associated input.
- *
- * Planned methods of input:
- * 1. Single key press: a
- * 2. Multi-key combination: `a
- * 3. Gamepad button: A
- */
+
+
+
+
+
+
+
+
 class input_manager
 {
         friend class keybindings_ui;
     public:
-        // TODO: rewrite this to have several alternative input events for the same action
 
-        /**
-         * Get the input events associated with an action ID in a given context.
-         *
-         * @param action_descriptor The action ID to get the input events for.
-         * @param context The context in which to get the input events. Defaults to "default".
-         * @param overwrites_default If this is non-NULL, this will be used as return parameter and will be set to true if the default
-         *                           keybinding is overridden by something else in the given context.
-         */
+
+
+
+
+
+
+
+
+
         const std::vector<input_event> &get_input_for_action( const std::string &action_descriptor,
                 const std::string &context = "default", bool *overwrites_default = nullptr );
 
-        /**
-         * Return first char associated with an action ID in a given context.
-         */
+
+
+
         int get_first_char_for_action( const std::string &action_descriptor,
                                        const std::string &context = "default" );
 
-        /**
-         * Initializes the input manager, aka loads the input mapping configuration JSON.
-         */
+
+
+
         void init();
-        /**
-         * Opposite of @ref init, save the data that has been loaded by @ref init,
-         * and possibly been modified.
-         */
+
+
+
+
         void save();
 
-        /**
-         * Return the previously pressed key, or 0 if there is no previous input
-         * or the previous input wasn't a key.
-         */
+
+
+
+
         int get_previously_pressed_key() const;
 
-        /**
-         * Get the keycode associated with the given key name.
-         */
+
+
+
         int get_keycode( input_event_t inp_type, const std::string &name ) const;
 
-        /**
-         * Get the key name associated with the given keyboard keycode.
-         *
-         * @param ch Character code.
-         * @param inp_type Whether the keycode is a gamepad or a keyboard code.
-         * @param portable If true, return a language independent and portable name
-         * of the key. This acts as the inverse to get_keyname:
-         * <code>get_keyname(get_keycode(a), , true) == a</code>
-         */
+
+
+
+
+
+
+
+
+
         std::string get_keyname( int ch, input_event_t inp_type, bool portable = false ) const;
 
-        /**
-         * curses getch() replacement.
-         *
-         * Defined in the respective platform wrapper, e.g. sdlcurse.cpp
-         */
+
+
+
+
+
         input_event get_input_event( keyboard_mode preferred_keyboard_mode = keyboard_mode::keycode );
-        /**
-         * Resize & refresh if necessary, process all pending window events, and ignore keypresses
-         */
+
+
+
         void pump_events();
 
-        /**
-         * Wait until the user presses a key. Mouse and similar input is ignored,
-         * only input events from the keyboard are considered.
-         */
+
+
+
+
         void wait_for_any_key();
 
-        /**
-         * Sets global input polling timeout in milliseconds as appropriate for the current interface system.
-         * Use `input_context::(re)set_timeout()` when possible so timeout will be properly
-         * reset when entering a new input context.
-         */
+
+
+
+
+
         void set_timeout( int delay );
         void reset_timeout() {
             set_timeout( -1 );
@@ -359,7 +359,7 @@ class input_manager
 
         static keyboard_mode actual_keyboard_mode( keyboard_mode preferred_keyboard_mode );
 
-        // Checks if a category and bind are present in action_contexts and debugmsg if not
+
         void check_keybind( const std::string &category, const std::string &keybind,
                             const std::string &context ) const;
     private:
@@ -369,10 +369,10 @@ class input_manager
         using t_actions = std::map<std::string, action_attributes>;
         using t_action_contexts = std::map<std::string, t_actions>;
         t_action_contexts action_contexts;
-        /**
-         * called basic rather than default to not confuse default context
-         * basic means default keybindings (without user changes)
-         */
+
+
+
+
         t_action_contexts basic_action_contexts;
 
         using t_key_to_name_map = std::map<int, std::string>;
@@ -386,76 +386,76 @@ class input_manager
         t_name_to_key_map gamepad_keyname_to_keycode;
         t_name_to_key_map mouse_keyname_to_keycode;
 
-        // See @ref get_previously_pressed_key
+
         int previously_pressed_key;
 
-        // Maps the key names we see in keybindings.json and in-game to
-        // the keycode integers.
+
+
         void init_keycode_mapping();
         void add_keyboard_char_keycode_pair( int ch, const std::string &name );
         void add_keyboard_code_keycode_pair( int ch, const std::string &name );
         void add_gamepad_keycode_pair( int ch, const std::string &name );
         void add_mouse_keycode_pair( MouseInput mouse_input, const std::string &name );
-        /**
-         * Load keybindings from a json file, override existing bindings.
-         * Throws std::string on errors
-         */
+
+
+
+
         void load( const cata_path &file_name, bool is_user_preferences );
 
         int input_timeout;
 
         t_input_event_list &get_or_create_event_list( const std::string &action_descriptor,
                 const std::string &context );
-        /**
-         * @return true if `remove_input_for_action` uncovers potentially new global keys. These could cause conflicts.
-         */
+
+
+
         bool remove_input_for_action( const std::string &action_descriptor, const std::string &context );
         void add_input_for_action( const std::string &action_descriptor, const std::string &context,
                                    const input_event &event );
 
-        /**
-         * Get the attributes of the action associated with an action ID by
-         * searching the given context and the default context.
-         *
-         * @param action_id The action ID of the action to find.
-         * @param context The context in which to get the action. If not found,
-         *                the "default" context will additionally be checked.
-         *                Defaults to "default".
-         * @param overwrites_default If this is non-NULL, this will be used as a
-         *                           return parameter. It will be set to true if
-         *                           the found action was not in the default
-         *                           context. It will be set to false if the found
-         *                           action was in the default context.
-         * @param use_basic_action_contexts If true, use non-customized keybindings.
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         const action_attributes &get_action_attributes(
             const std::string &action_id,
             const std::string &context = "default",
             bool *overwrites_default = nullptr,
             bool use_basic_action_contexts = false );
 
-        /**
-         * Get a value to be used as the default name for a newly created action.
-         * This name should be used as a fallback in cases where it is necessary
-         * to create a new action.
-         *
-         * @param action_id The action ID of the action.
-         *
-         * @return If the action ID exists in the default context, the name of
-         *         that action's name is returned. Otherwise, no_translation( action_id ) is
-         *         returned.
-         */
+
+
+
+
+
+
+
+
+
+
+
         translation get_default_action_name( const std::string &action_id ) const;
 };
 
-// Singleton for our input manager.
+
 extern input_manager inp_mngr;
 
-/**
- * Check whether a gamepad is plugged in/available.
- *
- * Always false in non-SDL versions.
- */
+
+
+
+
+
 bool gamepad_available();
 
-#endif // CATA_SRC_INPUT_H
+#endif

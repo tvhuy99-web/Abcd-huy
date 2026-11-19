@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/** Source test for startup gesture ownership; not executed during the code-writing phase. */
+
 @RunWith(AndroidJUnit4.class)
 public class BootstrapSelfVoiceSurfaceTest {
     @Test
@@ -126,7 +126,7 @@ public class BootstrapSelfVoiceSurfaceTest {
                 activity.setContentView(surface);
                 surface.setContent(content);
                 doubleTap(surface);
-                // Focus in the chooser starts on the currently selected voice.
+
                 swipe(surface, 15, 235);
                 doubleTap(surface);
                 assertEquals(1, spinner.getSelectedItemPosition());

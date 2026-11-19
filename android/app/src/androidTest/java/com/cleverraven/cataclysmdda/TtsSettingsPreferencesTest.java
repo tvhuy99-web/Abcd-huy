@@ -16,7 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/** Verify that the dedicated TTS settings persist as one configuration. */
+
 @RunWith(AndroidJUnit4.class)
 public class TtsSettingsPreferencesTest {
     @Test

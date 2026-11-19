@@ -22,12 +22,12 @@ template <typename T, typename W> struct weighted_list {
         weighted_list &operator=( weighted_list && ) noexcept = default;
         virtual ~weighted_list() = default;
 
-        /**
-         * This will add a new object to the weighted list. Returns a pointer to
-           the added object, or NULL if weight was zero.
-         * @param obj The object that will be added to the list.
-         * @param weight The weight of the object.
-         */
+
+
+
+
+
+
         T *add( const T &obj, const W &weight ) {
             if( weight > 0 ) {
                 objects.emplace_back( obj, weight );
@@ -42,11 +42,11 @@ template <typename T, typename W> struct weighted_list {
             return add( obj_and_weight.first, obj_and_weight.second );
         }
 
-        /**
-        * Adds a new object to the weighted list.
-        * Does nothing if the object already exists.
-        * Returns a pointer to the added object, or nullptr if it already existed.
-        */
+
+
+
+
+
         T *try_add( const T &obj, const W &weight ) {
             if( std::find_if( objects.begin(), objects.end(),
             [&obj]( const std::pair<T, W> &element ) {
@@ -75,14 +75,14 @@ template <typename T, typename W> struct weighted_list {
             invalidate_precalc();
         }
 
-        /**
-         * This will check to see if the given object is already in the weighted
-           list. If it is, we update its weight with the new weight value. If it
-           is not, we add it normally. Returns a pointer to the added or updated
-           object, or NULL if weight was zero.
-         * @param obj The object that will be updated or added to the list.
-         * @param weight The new weight of the object.
-         */
+
+
+
+
+
+
+
+
         T *add_or_replace( const T &obj, const W &weight ) {
             if( weight == 0 ) {
                 remove( obj );
@@ -98,38 +98,38 @@ template <typename T, typename W> struct weighted_list {
                     }
                 }
 
-                // if not found, add to end of list
+
                 return add( obj, weight );
             }
             return nullptr;
         }
 
-        /**
-         * This will call the given callback function once for every object in the weighted list.
-         * @param func The callback function.
-         */
+
+
+
+
         void apply( std::function<void( const T & )> func ) const {
             for( auto &itr : objects ) {
                 func( itr.first );
             }
         }
 
-        /**
-         * This will call the given callback function once for every object in the weighted list.
-         * This is the non-const version.
-         * @param func The callback function.
-         */
+
+
+
+
+
         void apply( std::function<void( T & )> func ) {
             for( auto &itr : objects ) {
                 func( itr.first );
             }
         }
 
-        /**
-         * This will return a pointer to an object from the list randomly selected
-         * and biased by weight. If the weighted list is empty or all items in it
-         * have a weight of zero, it will return a NULL pointer.
-         */
+
+
+
+
+
         const T *pick( unsigned int randi ) const {
             if( total_weight > 0 ) {
                 return &( objects[pick_ent( randi )].first );
@@ -141,12 +141,12 @@ template <typename T, typename W> struct weighted_list {
             return pick( rng_bits() );
         }
 
-        /**
-         * This will return a pointer to an object from the list randomly selected
-         * and biased by weight. If the weighted list is empty or all items in it
-         * have a weight of zero, it will return a NULL pointer. This is the
-         * non-const version so that the returned result may be modified.
-         */
+
+
+
+
+
+
         T *pick( unsigned int randi ) {
             if( total_weight > 0 ) {
                 return &( objects[pick_ent( randi )].first );
@@ -158,19 +158,19 @@ template <typename T, typename W> struct weighted_list {
             return pick( rng_bits() );
         }
 
-        /**
-         * This will remove all objects from the list.
-         */
+
+
+
         void clear() {
             total_weight = 0;
             objects.clear();
             invalidate_precalc();
         }
 
-        /**
-         * This will return the weight of a specific object. If the object is not
-         * in the weighted list it will return 0.
-         */
+
+
+
+
         W get_specific_weight( const T &obj ) const {
             for( const std::pair<T, W> &itr : objects ) {
                 if( itr.first == obj ) {
@@ -180,9 +180,9 @@ template <typename T, typename W> struct weighted_list {
             return 0;
         }
 
-        /**
-         * This will return the sum of all the object's weights in the list.
-         */
+
+
+
         W get_weight() const {
             return total_weight;
         }
@@ -235,8 +235,8 @@ template <typename T, typename W> struct weighted_list {
         }
 
         void deserialize( const JsonValue &jv ) {
-            // this function does things in a way that makes clang-tidy unhappy
-            // CATA_DO_NOT_CHECK_SERIALIZE
+
+
             if( jv.test_array() ) {
                 for( const JsonValue entry : jv.get_array() ) {
                     if( entry.test_array() ) {
@@ -267,12 +267,12 @@ template <typename T> struct weighted_int_list : public weighted_list<T, int> {
 
         weighted_int_list() = default;
         explicit weighted_int_list( int default_weight ) : default_weight( default_weight ) {};
-        // populate the precalc_array for O(1) lookups
+
         void precalc() {
             precalc_array.clear();
-            // to avoid additional reallocations
+
             precalc_array.reserve( this->total_weight );
-            // weights [3,1,5] will produce vector of indices [0,0,0,1,2,2,2,2,2]
+
             for( size_t i = 0; i < this->objects.size(); i++ ) {
                 precalc_array.resize( precalc_array.size() + this->objects[i].second, i );
             }
@@ -286,10 +286,10 @@ template <typename T> struct weighted_int_list : public weighted_list<T, int> {
             }
             const int picked = ( randi % ( this->total_weight ) ) + 1;
             if( !precalc_array.empty() ) {
-                // if the precalc_array is populated, use it for O(1) lookup
+
                 return precalc_array[picked - 1];
             }
-            // lazy-populate cumulative-weight table for O(log N) binary search
+
             if( cum_weights.size() != this->objects.size() ) {
                 cum_weights.clear();
                 cum_weights.reserve( this->objects.size() );
@@ -317,7 +317,7 @@ static_assert( std::is_nothrow_move_constructible_v<weighted_int_list<int>> );
 
 template <typename T> struct weighted_float_list : public weighted_list<T, double> {
 
-        // TODO: precalc using alias method
+
         weighted_float_list() = default;
         explicit weighted_float_list( int default_weight ) : default_weight( default_weight ) {};
 
@@ -339,4 +339,4 @@ template <typename T> struct weighted_float_list : public weighted_list<T, doubl
         float default_weight = 1;
 };
 
-#endif // CATA_SRC_WEIGHTED_LIST_H
+#endif

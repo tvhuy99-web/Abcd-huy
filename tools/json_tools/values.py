@@ -53,8 +53,7 @@ if __name__ == "__main__":
 
     json_data, load_errors = import_data(json_fmatch=args.fnmatch)
     if load_errors:
-        # If we start getting unexpected JSON or other things, might need to
-        # revisit quitting on load_errors
+
         print("Error loading JSON data.")
         for e in load_errors:
             print(e)

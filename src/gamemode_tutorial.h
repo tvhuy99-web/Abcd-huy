@@ -53,7 +53,7 @@ struct hash<tut_lesson> {
     }
 };
 
-} // namespace std
+}
 
 struct tutorial_game : public special_game {
         special_game_type id() override {
@@ -71,4 +71,4 @@ struct tutorial_game : public special_game {
         std::map<tut_lesson, bool> tutorials_seen;
 };
 
-#endif // CATA_SRC_GAMEMODE_TUTORIAL_H
+#endif

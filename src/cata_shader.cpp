@@ -31,7 +31,7 @@ bool g_reprobe_requested = false;
 int test_probe_unsafe_countdown = 0;
 bool test_flush_failure_armed = false;
 int test_probe_run_count = 0;
-} // namespace
+}
 
 void request_reprobe()
 {
@@ -78,10 +78,10 @@ void test_reset_seams()
 namespace
 {
 
-// SDL_GPU shader format selection. SDL_GetGPUShaderFormats reports a bitmask
-// of supported formats; we ship one artifact per format and pick the matching
-// one. The order below mirrors common backend preference: Vulkan (SPIR-V),
-// D3D12 (DXIL), Metal (MSL).
+
+
+
+
 struct format_artifact {
     SDL_GPUShaderFormat sdl_flag;
     const char *suffix;
@@ -105,7 +105,7 @@ std::vector<unsigned char> read_file_bytes( const std::string &path )
              std::istreambuf_iterator<char>() };
 }
 
-} // namespace
+}
 
 shader shader::load_fragment( SDL_GPUDevice *device, const std::string &basename,
                               unsigned int num_samplers, unsigned int num_uniform_buffers )
@@ -122,7 +122,7 @@ shader shader::load_fragment( SDL_GPUDevice *device, const std::string &basename
         return shader{};
     }
 
-    // Pick the first format we have an artifact for that the device reports.
+
     const format_artifact *chosen = nullptr;
     for( const format_artifact &candidate : SUPPORTED_FORMATS ) {
         if( ( available & candidate.sdl_flag ) != 0 ) {
@@ -149,7 +149,7 @@ shader shader::load_fragment( SDL_GPUDevice *device, const std::string &basename
     SDL_GPUShaderCreateInfo info{};
     info.code_size = bytes.size();
     info.code = bytes.data();
-    info.entrypoint = nullptr; // Let SDL supply backend default; do not hardcode "main".
+    info.entrypoint = nullptr;
     info.format = chosen->shader_format;
     info.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
     info.num_samplers = num_samplers;
@@ -196,8 +196,8 @@ shader &shader::operator=( shader &&other ) noexcept
 
 render_state render_state::create( SDL_Renderer *renderer, const shader &fragment_shader )
 {
-    // No additional sampler/storage bindings: the atlas sampler comes from the
-    // renderer's normal textured-draw path
+
+
     return create( renderer, fragment_shader, nullptr, 0 );
 }
 
@@ -253,9 +253,9 @@ render_state &render_state::operator=( render_state &&other ) noexcept
 namespace
 {
 
-// Disposal slot for probe-owned textures left undestroyable by a failed
-// SDL_SetGPURenderState(NULL). Recovery replaces the renderer, so the gate
-// keeps teardown from destroying them on a dead renderer.
+
+
+
 gpu_handle_graveyard &probe_texture_graveyard()
 {
     static gpu_handle_graveyard g;
@@ -301,43 +301,43 @@ using probe_predicate = bool ( * )( int r, int g, int b );
 
 bool grayscale_predicate( int r, int g, int b )
 {
-    // Gray-toned (R~=G~=B within 8 LSB) AND strictly darker than the
-    // mid-gray (128) input.
+
+
     return std::abs( r - g ) < 8 && std::abs( g - b ) < 8 && r < 120;
 }
 
 bool nightvision_predicate( int r, int g, int b )
 {
-    // Green-tinted: G clearly greater than R and B. Margin 20 covers driver
-    // rounding without false-positiving the unmodulated gray (R==G==B).
+
+
     return g > r + 20 && g > b + 20;
 }
 
 bool darken_predicate( int r, int g, int b )
 {
-    // Memory darken multiplies by 85/256 (~1/3) of input mid-gray, so the
-    // expected output is ~42 on each channel. Allow some driver slack.
+
+
     return std::abs( r - g ) < 8 && std::abs( g - b ) < 8 && r < 80;
 }
 
-bool warm_predicate( int r, int /*g*/, int b )
+bool warm_predicate( int r, int, int b )
 {
-    // Sepia variants emit warm-tinted output: R clearly greater than B.
+
     return r > b + 5;
 }
 
-bool cool_predicate( int r, int /*g*/, int b )
+bool cool_predicate( int r, int, int b )
 {
-    // Blue dark emits cool-tinted output: B clearly greater than R.
+
     return b > r + 5;
 }
 
-// red at strength 128/255, applied to the probe's mid-gray source
+
 constexpr tint_texture_mod tint_probe_mod{ 255, 0, 0, 127 };
 
 bool tint_predicate( int r, int g, int b )
 {
-    // identity shader returns source gray and fails
+
     const auto expected = []( const uint8_t mod_channel ) {
         return static_cast<int>( std::lround( tint_mix_channel( 128.0f, mod_channel,
                                               tint_probe_mod.a ) ) );
@@ -379,7 +379,7 @@ probe_predicate predicate_for( memory_preset p )
     return nullptr;
 }
 
-} // namespace
+}
 
 bool variant_takes_tint( const variant_kind v )
 {
@@ -404,7 +404,7 @@ std::optional<memory_preset> memory_preset_from_option_value(
     return std::nullopt;
 }
 
-// one count shared by all passes, so no two passes report the same generation
+
 static uint32_t next_resource_generation()
 {
     static uint32_t last = 0;
@@ -422,9 +422,9 @@ namespace lit_probe
 static constexpr int probe_columns = 8;
 static constexpr int probe_rows = 8;
 
-// light texel of a probe map character: 'o' full, 'h' half, 'f' a fifth and
-// 'z' no light, all white; 'r' and 'g' full red and green light; '#' a wall
-// lit green; '1' to '5' white at that many fifths; ' ' out of sight
+
+
+
 static smooth_lighting::lightmap_texel probe_texel( const char c )
 {
     const std::array<float, 3> white = { 1.0f, 1.0f, 1.0f };
@@ -458,19 +458,19 @@ static smooth_lighting::lightmap_texel probe_texel( const char c )
 
 namespace
 {
-// light map shape of a probe case: `levels` z levels of `columns` by `rows`
-// cells; `own` is the level the case's cell is on
+
+
 struct probe_layout {
     int columns = probe_columns;
     int rows = probe_rows;
     int levels = 3;
     int own = 1;
 };
-} // namespace
+}
 
-// probe case: `rows` fill level layout.own, reach masks come from reach_mask,
-// and every quad corner has own cell `cell` and ground point `at`; `standing`
-// marks a standing sprite
+
+
+
 static probe_case make_case( const std::string &name, const std::vector<std::string> &rows,
                              const point &cell, const std::array<float, 2> &at, const bool standing,
                              const probe_layout &layout = probe_layout() )
@@ -550,36 +550,36 @@ std::vector<probe_case> cases()
     out.back().frame.memory.custom_light = { 0.9f, 0.5f, 0.1f };
     out.back().frame.memory.custom_gamma = 1.6f;
 
-    // standing ortho sprite takes its light from the middle of its own row,
-    // red; at its top edge, as a ground sprite, half green
+
+
     out.push_back( make_case( "ortho standing", {
         "gggggggg", "gggggggg", "gggggggg", "rrrrrrrr", "rrrrrrrr", "rrrrrrrr", "rrrrrrrr", "rrrrrrrr"
     }, point( 3, 3 ), { 3.5f, 3.0f }, true ) );
 
-    // standing iso sprite at its cell's bottom left corner takes the light of
-    // its own red cell's center; ground sampling there would read the green
-    // south and west
+
+
+
     out.push_back( make_case( "iso standing", {
         "gggrrrrr", "gggrrrrr", "gggrrrrr", "gggrrrrr", "gggggggg", "gggggggg", "gggggggg", "gggggggg"
     }, point( 3, 3 ), { 3.0f, 4.0f }, true ) );
     out.back().frame.iso = true;
 
-    // a wall between the cell and the green beyond it: red only
+
     out.push_back( make_case( "barrier", std::vector<std::string>( probe_rows, "gg#rrrrr" ),
                               point( 3, 3 ), { 3.0f, 3.5f }, false ) );
 
-    // both sides of a floor edge near a wall agree
+
     const std::vector<std::string> seam = { "ffffffff", "frffffff", "f#ffffff", "ffffffff",
                                             "ffffffff", "ffffffff", "ffffffff", "ffffffff"
                                           };
     out.push_back( make_case( "seam, left cell", seam, point( 1, 3 ), { 2.0f, 3.5f }, false ) );
     out.push_back( make_case( "seam, right cell", seam, point( 2, 3 ), { 2.0f, 3.5f }, false ) );
 
-    // last light column; the reach masks beside it are not light
+
     out.push_back( make_case( "edge of the light columns", half, point( 7, 3 ), { 7.9f, 3.5f },
                               false ) );
 
-    // light gradient across a quad four pixels wide
+
     probe_case gradient = make_case( "coordinates across a quad", std::vector<std::string>( probe_rows,
                                      "12345555" ), point( 2, 3 ), { 2.0f, 3.5f }, false );
     gradient.size = point( 4, 1 );
@@ -587,7 +587,7 @@ std::vector<probe_case> cases()
     gradient.corners[2].x = 3.0f;
     out.push_back( gradient );
 
-    // diagonal edge from dark to full light across a 4x4 quad
+
     probe_case grid = make_case( "coordinates across a square", {
         "zzzzzooo", "zzzzoooo", "zzzooooo", "zzoooooo", "zooooooo", "oooooooo", "oooooooo", "oooooooo"
     }, point( 2, 2 ), { 2.0f, 2.0f }, false );
@@ -598,7 +598,7 @@ std::vector<probe_case> cases()
     grid.corners[3].y += 1.0f;
     out.push_back( grid );
 
-    // quad running into the sight edge, part way into the memory look
+
     probe_case edge = make_case( "into the edge of sight", std::vector<std::string>( probe_rows,
                                  "oooo    " ), point( 3, 3 ), { 3.0f, 3.5f }, false );
     edge.size = point( 4, 1 );
@@ -607,17 +607,17 @@ std::vector<probe_case> cases()
     edge.frame.blend_memory = true;
     out.push_back( edge );
 
-    // colored artwork drained toward gray by half light
+
     out.push_back( make_case( "colored sprite, half light", half, point( 3, 3 ), { 3.5f, 3.5f },
                               false ) );
     out.back().source = { 220, 120, 30, 255 };
 
-    // a translucent sprite edge blends over what is under it
+
     out.push_back( make_case( "translucent sprite", half, point( 3, 3 ), { 3.5f, 3.5f }, false ) );
     out.back().source = { 220, 120, 30, 128 };
 
-    // corner of a full size level in the real stack, red full light on the
-    // levels above and below it
+
+
     const probe_layout packed{ MAPSIZE_X, MAPSIZE_Y, OVERMAP_LAYERS, OVERMAP_LAYERS - 2 };
     probe_case corner = make_case( "corner of a packed level", std::vector<std::string>( MAPSIZE_Y,
                                    std::string( MAPSIZE_X, 'f' ) ), point( MAPSIZE_X - 1, MAPSIZE_Y - 1 ),
@@ -634,8 +634,8 @@ std::vector<probe_case> cases()
     }
     out.push_back( corner );
 
-    // a cell joined to an unseen neighbour and, past a wall, to a seen
-    // diagonal: its sight fraction is a ratio that changes fastest here
+
+
     probe_case steep = make_case( "steep sight ratio", {
         "o o o o ", "#o#o#o#o", "o o o o ", "#o#o#o#o", "o o o o ", "#o#o#o#o", "o o o o ", "#o#o#o#o"
     }, point( 2, 2 ), { 2.0f, 2.0f }, false );
@@ -646,7 +646,7 @@ std::vector<probe_case> cases()
     steep.corners[3].y += 1.0f;
     out.push_back( steep );
 
-    // filtered night vision from full light, overexposed, out of sight
+
     probe_case night_edge = make_case( "night, filtered, edge of sight",
                                        std::vector<std::string>( probe_rows, "oooo    " ), point( 3, 3 ), { 3.0f, 3.5f }, false );
     night_edge.size = point( 4, 1 );
@@ -671,7 +671,7 @@ static std::array<float, 3> source_rgb( const probe_case &c )
     return { c.source[0] / 255.0f, c.source[1] / 255.0f, c.source[2] / 255.0f };
 }
 
-// shader output blended over the black target
+
 static std::array<float, 3> over_black( const probe_case &c, const std::array<float, 3> &rgb )
 {
     const float a = c.source[3] / 255.0f;
@@ -698,7 +698,7 @@ static rgb to_rgb( const std::array<float, 3> &c )
     return { byte( c[0] ), byte( c[1] ), byte( c[2] ) };
 }
 
-// the vertex color the rasterizer gives the center of pixel ( i, j )
+
 static smooth_lighting::lit_coords at_pixel( const probe_case &c, const int i, const int j )
 {
     const float u = ( i + 0.5f ) / c.size.x;
@@ -775,13 +775,13 @@ bool matches( const std::vector<rgb> &expected, const std::vector<rgb> &readback
     return true;
 }
 
-} // namespace lit_probe
+}
 
 variant_pass::~variant_pass()
 {
     const bool flushed = flush();
-    // On flush failure the handles may still be referenced; abandon rather
-    // than have RAII teardown call SDL on a still-bound resource.
+
+
     clear_state_arrays( !flushed );
 }
 
@@ -790,23 +790,23 @@ namespace
 
 struct probe_result {
     bool ok = false;
-    // False when the renderer was left with an undefined shader-state bind
-    // or with rt still active as the target. Caller must NOT destroy any
-    // resources that the renderer might still reference.
+
+
+
     bool boundary_safe = true;
 };
 
 struct target_readback {
-    // draw call ran and every pixel came back
+
     bool read = false;
-    // as probe_result::boundary_safe
+
     bool boundary_safe = true;
-    // RGBA per pixel, row by row
+
     std::vector<std::array<Uint8, 4>> pixels;
 };
 
-// Binds a `size` render target, draws a 1x1 `source` texel through `state`
-// with `draw`, and reads the target back.
+
+
 target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderState *state,
                                         const point &size, const std::array<Uint8, 4> &source,
                                         const std::optional<tint_texture_mod> &mod,
@@ -824,10 +824,10 @@ target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderSta
     if( !src ) {
         return res;
     }
-    // blended as sprites are, over the cleared black target
+
     SDL_SetTextureBlendMode( src, SDL_BLENDMODE_BLEND );
     if( mod ) {
-        // src is local to the probe, so nothing else sees the mod
+
         SDL_SetTextureColorMod( src, mod->r, mod->g, mod->b );
         SDL_SetTextureAlphaMod( src, mod->a );
     }
@@ -840,8 +840,8 @@ target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderSta
     SDL_Texture *prior_target = SDL_GetRenderTarget( renderer );
     const bool target_bound = SDL_SetRenderTarget( renderer, rt );
     if( !target_bound ) {
-        // SDL may mutate target state before failing, so this is not a clean
-        // no-op: mark the boundary unsafe and graveyard the probe textures.
+
+
         DebugLog( D_ERROR, DC_ALL )
                 << "cata_shader::draw_probe: SDL_SetRenderTarget(rt) failed: "
                 << SDL_GetError();
@@ -852,8 +852,8 @@ target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderSta
         SDL_RenderClear( renderer );
         if( SDL_SetGPURenderState( renderer, state ) ) {
             const bool drew = draw( src );
-            // Unbind shader state before any further switch/readback. On
-            // failure the bind is still held, so skip rt + restore.
+
+
             const bool unbound = SDL_SetGPURenderState( renderer, nullptr );
             if( drew && unbound ) {
                 const SDL_Rect rect{ 0, 0, size.x, size.y };
@@ -885,8 +885,8 @@ target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderSta
                 res.boundary_safe = false;
             }
         } else {
-            // Bind state undefined after a failed SDL_SetGPURenderState:
-            // assume still held, so do not ship rt/probe through teardown.
+
+
             DebugLog( D_ERROR, DC_ALL )
                     << "cata_shader::draw_probe: SDL_SetGPURenderState failed: "
                     << SDL_GetError();
@@ -897,13 +897,13 @@ target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderSta
                     << "cata_shader::draw_probe: SDL_SetRenderTarget restore failed: "
                     << SDL_GetError();
             res.read = false;
-            // rt is still the active target: mark unsafe so neither rt nor
-            // src is destroyed and the caller refuses the still-bound state.
+
+
             res.boundary_safe = false;
         }
     }
-    // Preserve rt and src when the renderer state is undefined: destroying
-    // them here would invalidate resources the renderer still references.
+
+
     if( res.boundary_safe ) {
         SDL_DestroyTexture( rt );
         SDL_DestroyTexture( src );
@@ -914,12 +914,12 @@ target_readback draw_into_probe_target( SDL_Renderer *renderer, SDL_GPURenderSta
     return res;
 }
 
-// Renders a 1x1 mid-gray sprite via state and checks readback via pred.
+
 probe_result draw_probe( SDL_Renderer *renderer, SDL_GPURenderState *state,
                          probe_predicate pred, const std::optional<tint_texture_mod> &mod )
 {
-    // mid gray gives each variant a distinctive output, so a passing check
-    // tells "shader ran" from "bind silently ignored"
+
+
     static constexpr std::array<Uint8, 4> mid_gray = { 128, 128, 128, 255 };
     const target_readback rb = draw_into_probe_target( renderer, state, point::south_east, mid_gray,
                                mod,
@@ -936,7 +936,7 @@ probe_result draw_probe( SDL_Renderer *renderer, SDL_GPURenderState *state,
     return res;
 }
 
-} // namespace
+}
 
 namespace
 {
@@ -947,9 +947,9 @@ enum class load_outcome {
     failed_unsafe,
 };
 
-// Loads shader + render_state for basename and validates via draw_probe.
-// On a probe boundary failure the local shader/state are abandoned so their
-// destructors do not release SDL handles the renderer may still reference.
+
+
+
 load_outcome load_and_probe( SDL_GPUDevice *device, SDL_Renderer *renderer,
                              const char *basename, probe_predicate pred,
                              shader &out_shader, render_state &out_state,
@@ -991,7 +991,7 @@ load_outcome load_and_probe( SDL_GPUDevice *device, SDL_Renderer *renderer,
     return load_outcome::ok;
 }
 
-} // namespace
+}
 
 probe_state variant_pass::ensure_probed()
 {
@@ -1022,8 +1022,8 @@ void variant_pass::reset()
     const bool flushed = flush();
     clear_state_arrays( !flushed );
     if( !flushed ) {
-        // renderer might still hold the bind, keep probe_attempted_ so nothing
-        // probes against it
+
+
         boundary_lost_ = true;
         shader_fault_ = true;
         return;
@@ -1083,10 +1083,10 @@ void variant_pass::clear_state_arrays( bool abandon_handles )
     }
     release_lit( abandon_handles );
     resource_generation_ = next_resource_generation();
-    // rebuilt resources are probed again
+
     lit_capability_.reset();
-    // Render states reference their fragment shader; clear states before
-    // shaders so SDL does not see a dangling reference on the clean path.
+
+
     states_ = {};
     memory_states_ = {};
     tint_state_ = {};
@@ -1170,7 +1170,7 @@ bool variant_pass::lit_takes( const variant_kind v ) const
     if( !lit_active_ || lit_suspended_ ) {
         return false;
     }
-    // memory blends back toward the lit look near the edge of sight
+
     return v == variant_kind::NORMAL || v == variant_kind::SHADOW || v == variant_kind::NIGHT ||
            v == variant_kind::OVEREXPOSED ||
            ( v == variant_kind::MEMORY && lit_params_.mode[2] != 0 );
@@ -1179,7 +1179,7 @@ bool variant_pass::lit_takes( const variant_kind v ) const
 SDL_GPURenderState *variant_pass::state_for( variant_kind v, const bool tinted ) const
 {
     if( lit_takes( v ) ) {
-        // light carries the tint, so tinted doesn't matter
+
         const bool night = v == variant_kind::NIGHT || v == variant_kind::OVEREXPOSED ||
                            ( v == variant_kind::MEMORY && lit_night_vision_ );
         return night ? nv_lit_state_.get() :
@@ -1200,7 +1200,7 @@ SDL_GPURenderState *variant_pass::state_for( variant_kind v, const bool tinted )
 variant_pass::begin_result variant_pass::try_begin( variant_kind v, const bool tinted )
 {
     if( abandoned_pending_rebind_ || boundary_lost_ ) {
-        // embargo or lost boundary: refuse without calling SDL until rebind
+
         return begin_result::abort_frame;
     }
     if( reprobe_requested() ) {
@@ -1211,9 +1211,9 @@ variant_pass::begin_result variant_pass::try_begin( variant_kind v, const bool t
         }
     }
     if( shader_fault_ || session_disabled_ ) {
-        // Drop held bind so that a faulted or disabled session doesn't leave
-        // any shader state on later draws. A failed flush leaves the renderer
-        // undefined.
+
+
+
         if( !flush() ) {
             return begin_result::abort_frame;
         }
@@ -1233,7 +1233,7 @@ variant_pass::begin_result variant_pass::try_begin( variant_kind v, const bool t
         return target != nullptr ? begin_result::bound : begin_result::use_atlas;
     }
     if( !SDL_SetGPURenderState( renderer_, target ) ) {
-        // bind state is undefined after failure, treat as held
+
         note_draw_bind_failure();
         return begin_result::abort_frame;
     }
@@ -1250,13 +1250,13 @@ bool variant_pass::end()
 bool variant_pass::flush()
 {
     if( abandoned_pending_rebind_ || boundary_lost_ ) {
-        // Refuse without SDL: false tells every caller not to cross a render
-        // target boundary until rebind_renderer.
+
+
         return false;
     }
     if( test_flush_failure_armed ) {
-        // stands in for a failed SDL_SetGPURenderState(NULL) even with nothing
-        // bound; the software fixture never binds
+
+
         test_flush_failure_armed = false;
         DebugLog( D_INFO, DC_ALL ) << "cata_shader::variant_pass: armed flush failure";
         mark_flush_failed();
@@ -1378,7 +1378,7 @@ SDL_Texture *create_prefilter_target( SDL_Renderer *renderer, const point &size 
     SDL_Texture *texture = SDL_CreateTextureWithProperties( renderer, props );
     SDL_DestroyProperties( props );
     if( texture ) {
-        // texels are light values the sprites interpolate, never scaled
+
         SDL_SetTextureBlendMode( texture, SDL_BLENDMODE_NONE );
     }
     return texture;
@@ -1404,8 +1404,8 @@ lit_prepare_result variant_pass::prepare_lit()
             return failed( lit_failure::state_create );
         }
         lit_device_ = device;
-        // lit_sample.glsl reads light map texels whole with texelFetch; the
-        // hardware lookup filters the prefiltered light
+
+
         lit_sampler_ = create_lit_sampler( device, SDL_GPU_FILTER_NEAREST );
         if( !lit_sampler_ ) {
             DebugLog( D_ERROR, DC_ALL )
@@ -1413,7 +1413,7 @@ lit_prepare_result variant_pass::prepare_lit()
             release_lit( false );
             return failed( lit_failure::sampler_create );
         }
-        // without it filtered light takes the manual lookup
+
         lit_linear_sampler_ = create_lit_sampler( device, SDL_GPU_FILTER_LINEAR );
         if( !lit_linear_sampler_ ) {
             DebugLog( D_WARNING, DC_ALL )
@@ -1425,7 +1425,7 @@ lit_prepare_result variant_pass::prepare_lit()
             release_lit( false );
             return failed( lit_failure::shader_load );
         }
-        // without it filtered light is unavailable, per tile light still draws
+
         prefilter_shader_ = shader::load_fragment( device, "lit_prefilter.frag", 1, 1 );
         if( prefilter_shader_.is_valid() ) {
             prefilter_state_ = render_state::create( renderer_, prefilter_shader_ );
@@ -1470,7 +1470,7 @@ lit_begin_result variant_pass::begin_lit( const lit_frame &frame )
                        sampler != lit_bound_sampler_;
     if( fresh ) {
         if( lit_state_.is_valid() ) {
-            // queued draws still run the old states
+
             if( !flush() ) {
                 return abort;
             }
@@ -1523,10 +1523,10 @@ prefilter_outcome variant_pass::prefilter_lit( const lit_frame &frame )
     }
     const point size = frame.layout.size();
     if( size.x <= 0 || size.y <= 0 ) {
-        // nothing seen: every sprite takes the dark constant
+
         return prefilter_outcome::ok;
     }
-    // a held sprite state must not cross the target switch
+
     if( !flush() ) {
         return prefilter_outcome::unsafe;
     }
@@ -1549,15 +1549,15 @@ prefilter_outcome variant_pass::run_prefilter( SDL_Texture *lightmap, SDL_Textur
     clean = clean && SDL_SetRenderDrawColor( renderer_, 0, 0, 0, 0 ) && SDL_RenderClear( renderer_ );
     if( clean ) {
         if( !SDL_SetGPURenderState( renderer_, prefilter_state_.get() ) ) {
-            // bind is undefined: leave target as is
+
             note_draw_bind_failure();
             return prefilter_outcome::unsafe;
         }
-        // light map alpha is flags; drawn blended would scale the stored light
+
         SDL_SetTextureBlendMode( lightmap, SDL_BLENDMODE_NONE );
         const float w = static_cast<float>( size.x );
         const float h = static_cast<float>( size.y );
-        // vertex colors carry target pixel coordinates
+
         const std::array<SDL_Vertex, 4> quad = { {
                 { { 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
                 { { w, 0.0f }, { w, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
@@ -1676,8 +1676,8 @@ smooth_lighting::probe_group_result variant_pass::probe_lit_group( const bool fi
             destroy();
             return probe_group_result::mismatch;
         }
-        // one quad over the whole target, its corners carrying the case's
-        // vertex colors
+
+
         const std::array<SDL_FPoint, 4> at = { {
                 { 0.0f, 0.0f }, { static_cast<float>( c.size.x ), 0.0f },
                 { static_cast<float>( c.size.x ), static_cast<float>( c.size.y ) },
@@ -1769,7 +1769,7 @@ bool variant_pass::drop_lit_states()
     }
     const bool flushed = flush();
     if( !flushed ) {
-        // renderer might still hold them
+
         lit_state_.abandon();
         nv_lit_state_.abandon();
     }
@@ -1794,11 +1794,11 @@ bool variant_pass::drop_lit()
 void variant_pass::release_gpu_resources()
 {
     if( abandoned_pending_rebind_ ) {
-        // Embargo already raised; nothing to do until rebind.
+
         return;
     }
-    // flush() returns false on an undefined bind; abandon the handles in that
-    // case rather than let their destructors touch a still-referenced resource.
+
+
     bool flushed = true;
     if( bound_state_ || unbind_required_ || boundary_lost_ ) {
         flushed = flush();
@@ -1807,12 +1807,12 @@ void variant_pass::release_gpu_resources()
     bound_state_ = nullptr;
     probe_attempted_ = false;
     probed_ok_ = false;
-    // active_memory_preset_ is logical config, not a GPU handle; keep it.
+
     if( flushed ) {
         unbind_required_ = false;
         session_disabled_ = false;
     } else {
-        // Abandoned: raise the embargo so later calls refuse SDL (see header).
+
         abandoned_pending_rebind_ = true;
     }
 }
@@ -1830,9 +1830,9 @@ void variant_pass::force_abandon_gpu_resources()
 
 void variant_pass::rebind_renderer( SDL_Renderer *renderer )
 {
-    // Do NOT call release_gpu_resources() here: its flush() would touch
-    // renderer_, already destroyed on a LOST recovery. Callers release against
-    // the OLD renderer first, so the arrays are already empty by now.
+
+
+
     clear_state_arrays( true );
     bound_state_ = nullptr;
     unbind_required_ = false;
@@ -1844,6 +1844,6 @@ void variant_pass::rebind_renderer( SDL_Renderer *renderer )
     renderer_ = renderer;
 }
 
-} // namespace cata_shader
+}
 
-#endif // TILES
+#endif

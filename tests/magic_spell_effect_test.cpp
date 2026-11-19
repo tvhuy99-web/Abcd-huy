@@ -42,7 +42,7 @@ static std::set<tripoint_abs_ms> count_fields_near(
 TEST_CASE( "line_attack", "[magic]" )
 {
     map &here = get_map();
-    // manually construct a testable spell
+
     JsonObject obj = json_loader::from_string(
                          "  {\n"
                          "    \"id\": \"test_line_spell\",\n"
@@ -63,15 +63,15 @@ TEST_CASE( "line_attack", "[magic]" )
 
     spell sp( spell_test_line_spell );
 
-    // set up Character to test with, only need position
+
     npc &c = spawn_npc( point_bub_ms::zero, "test_talker" );
     clear_character( c );
     c.setpos( here, tripoint_bub_ms::zero );
 
-    // target point 5 tiles east of zero
+
     tripoint_bub_ms target = c.pos_bub() + tripoint_rel_ms::east * 5;
 
-    // Ensure that AOE=0 spell covers the 5 tiles along vector towards target
+
     SECTION( "aoe=0" ) {
         const std::set<tripoint_bub_ms> reference( {
             c.pos_bub( here ) + tripoint_rel_ms::east * 1,
@@ -89,8 +89,8 @@ TEST_CASE( "line_attack", "[magic]" )
 
 TEST_CASE( "remove_field_fd_fatigue", "[magic]" )
 {
-    // Test relies on lighting conditions, so ensure we control the level of
-    // daylight.
+
+
     set_time( calendar::turn_zero );
     clear_map_without_vision();
 
@@ -105,7 +105,7 @@ TEST_CASE( "remove_field_fd_fatigue", "[magic]" )
         CAPTURE( with_light );
         CHECK( dummy.pos_abs() == player_initial_pos );
 
-        // create fd_fatigue of each intensity near player
+
         tripoint_abs_ms p1 = player_initial_pos + tripoint::east * 10;
         tripoint_abs_ms p2 = player_initial_pos + tripoint::east * 11;
         tripoint_abs_ms p3 = player_initial_pos + tripoint::east * 12;
@@ -191,10 +191,10 @@ TEST_CASE( "remove_field_fd_fatigue", "[magic]" )
     CHECK( tear_in_reality_msg ==
            "The tear in reality pulls you in as it closes and ejects you violently!" );
 
-    // check that the player got teleported
+
     CHECK( dummy.pos_abs() != player_initial_pos );
 
-    // remove 3 fields again but without lighting this time
+
     clear_avatar();
     clear_map_without_vision();
     Messages::clear_messages();

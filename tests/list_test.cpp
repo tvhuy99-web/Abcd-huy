@@ -1,11 +1,11 @@
-#include <algorithm> // std::find
-#include <cstdio> // log redirection
-#include <functional> // std::greater
+#include <algorithm>
+#include <cstdio>
+#include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <string>
 #include <utility>
-#include <vector> // range-insert testing
+#include <vector>
 
 #include "cata_catch.h"
 #include "colony_list_test_helpers.h"
@@ -190,7 +190,7 @@ TEST_CASE( "list_basics", "[list]" )
             for( cata::list<int *>::reverse_iterator it = test_list.rbegin();
                  it != test_list.rend(); ) {
                 ++it;
-                cata::list<int *>::iterator it2 = it.base(); // grabs it--, essentially
+                cata::list<int *>::iterator it2 = it.base();
                 test_list.erase( it2 );
                 ++count;
             }
@@ -407,10 +407,10 @@ TEST_CASE( "list_insert_and_erase", "[list]" )
 
     SECTION( "total erase edge case" ) {
         cata::list<int>::iterator temp_iterator = test_list.begin();
-        std::advance( temp_iterator, 2 ); // Advance test 1
+        std::advance( temp_iterator, 2 );
 
         test_list.erase( temp_iterator );
-        // Check edge-case with advance when erasures present in initial group
+
         temp_iterator = test_list.begin();
         std::advance( temp_iterator, 500 );
 
@@ -954,7 +954,7 @@ TEST_CASE( "list_emplace_move_copy_and_reverse_iterate", "[list]" )
     }
 
     SECTION( "emplace post-moved list" ) {
-        // Reuse the moved list will cause segmentation fault
+
         // NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
         test_list.emplace_back( 3 );
         CHECK( test_list.size() == 1 );
@@ -1021,7 +1021,7 @@ TEST_CASE( "list_reorder", "[list]" )
         test_list.push_back( i );
     }
 
-    // Used for the post reorder data consistency test
+
     int original_sum = 0;
     for( int &it : test_list ) {
         original_sum += it;

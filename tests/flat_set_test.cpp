@@ -9,7 +9,7 @@
 #include "flat_set.h"
 
 #if 0
-// Uncomment this to check container concepts if Boost is installed
+
 #include <boost/concept/assert.hpp>
 #include <boost/concept_check.hpp>
 

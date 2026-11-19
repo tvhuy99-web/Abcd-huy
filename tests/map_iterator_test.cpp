@@ -140,7 +140,7 @@ TEST_CASE( "tripoint_range_iteration_order", "[tripoint_range]" )
     }
 }
 
-// Capped so a range that never reaches its end still gives a finite result to check.
+
 static std::vector<tripoint> visit_up_to_64_points( const tripoint_range<tripoint> &range )
 {
     std::vector<tripoint> visited;
@@ -193,9 +193,9 @@ TEST_CASE( "tripoint_range_with_inverted_bounds_is_empty", "[tripoint_range]" )
     }
 }
 
-// Using static functions instead of lambdas to suppress -Wmaybe-uninitialized
-// false positives triggered by lambda's implicit anonymous data structure in
-// debug builds
+
+
+
 static bool tripoint_range_handle_bad_predicates_test_func( const tripoint & )
 {
     return false;
@@ -248,53 +248,53 @@ TEST_CASE( "tripoint_range_circle_order", "[tripoint_range]" )
 
 TEST_CASE( "tripoint_range_circle_sizes_correct", "[tripoint_range]" )
 {
-    /* 0:
-     * ...
-     * .x.
-     * ...
-     */
+
+
+
+
+
     CHECK( points_in_radius_circ( tripoint::zero, 0 ).size() == 1 );
-    /* 1:
-     * xxx
-     * xxx
-     * xxx
-     */
+
+
+
+
+
     CHECK( points_in_radius_circ( tripoint::zero, 1 ).size() == 9 );
-    /* 2:
-     * .xxx.
-     * xxxxx
-     * xxxxx
-     * xxxxx
-     * .xxx.
-     */
+
+
+
+
+
+
+
     CHECK( points_in_radius_circ( tripoint::zero, 2 ).size() == 21 );
-    /* 3:
-     * ..xxx..
-     * .xxxxx.
-     * xxxxxxx
-     * xxxxxxx
-     * xxxxxxx
-     * .xxxxx.
-     * ..xxx..
-     */
+
+
+
+
+
+
+
+
+
     CHECK( points_in_radius_circ( tripoint::zero, 3 ).size() == 37 );
-    /* 4:
-     * ..xxxxx..
-     * .xxxxxxx.
-     * xxxxxxxxx
-     * xxxxxxxxx
-     * xxxxxxxxx
-     * xxxxxxxxx
-     * xxxxxxxxx
-     * .xxxxxxx.
-     * ..xxxxx..
-     */
+
+
+
+
+
+
+
+
+
+
+
     CHECK( points_in_radius_circ( tripoint::zero, 4 ).size() == 69 );
 }
 
-// Using static functions instead of lambdas to suppress -Wmaybe-uninitialized
-// false positives triggered by lambda's implicit anonymous data structure in
-// debug builds
+
+
+
 static bool tripoint_range_predicates_radius_test_func( const tripoint &pt )
 {
     return pt.z < 0;
@@ -326,9 +326,9 @@ TEST_CASE( "tripoint_range_predicates_radius", "[tripoint_range]" )
     CHECK( i == tested.size() );
 }
 
-// Using static functions instead of lambdas to suppress -Wmaybe-uninitialized
-// false positives triggered by lambda's implicit anonymous data structure in
-// debug builds
+
+
+
 static bool tripoint_range_predicates_test_func( const tripoint &pt )
 {
     return pt.x == 0;

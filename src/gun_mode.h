@@ -15,11 +15,11 @@ class gun_mode
         translation name_;
 
     public:
-        /** pointer to item providing this mode - base gun or attached gunmod */
+
         item *target = nullptr;
-        /** burst size for is_gun() firearms, or melee range for is_melee() weapons */
+
         int qty = 0;
-        /** flags change behavior of gun mode, e.g. MELEE for bayonets that make a reach attack instead of firing - these are **not** equivalent to item flags! */
+
         std::set<std::string> flags;
 
         gun_mode() = default;
@@ -29,7 +29,7 @@ class gun_mode
             qty( qty ),
             flags( flags ) {}
 
-        /** if true perform a melee attach as opposed to shooting */
+
         bool melee() const {
             return flags.count( "MELEE" );
         }
@@ -59,4 +59,4 @@ class gun_mode
         }
 };
 
-#endif // CATA_SRC_GUN_MODE_H
+#endif

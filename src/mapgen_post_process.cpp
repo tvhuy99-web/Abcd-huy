@@ -52,7 +52,7 @@ static const ter_str_id ter_t_wall_prefab_metal( "t_wall_prefab_metal" );
 namespace
 {
 generic_factory<pp_generator> pp_generator_factory( "pp_generator" );
-} // namespace
+}
 
 void pp_generators::load( const JsonObject &jo, const std::string &src )
 {
@@ -74,14 +74,14 @@ void pp_generators::check_consistency()
     pp_generator_factory.check();
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<pp_generator>::is_valid() const
 {
     return pp_generator_factory.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const pp_generator &string_id<pp_generator>::obj() const
 {
@@ -94,16 +94,24 @@ template<>
 std::string enum_to_string<sub_generator_type>( sub_generator_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case sub_generator_type::bash_damage: return "bash_damage";
-        case sub_generator_type::move_items: return "move_items";
-        case sub_generator_type::add_fire: return "add_fire";
-        case sub_generator_type::pre_burn: return "pre_burn";
-        case sub_generator_type::place_blood: return "place_blood";
-        case sub_generator_type::aftershock_ruin: return "aftershock_ruin";
-        case sub_generator_type::modify_items: return "modify_items";
-        case sub_generator_type::ter_furn_transform: return "ter_furn_transform";
-        // *INDENT-ON*
+
+        case sub_generator_type::bash_damage:
+            return "bash_damage";
+        case sub_generator_type::move_items:
+            return "move_items";
+        case sub_generator_type::add_fire:
+            return "add_fire";
+        case sub_generator_type::pre_burn:
+            return "pre_burn";
+        case sub_generator_type::place_blood:
+            return "place_blood";
+        case sub_generator_type::aftershock_ruin:
+            return "aftershock_ruin";
+        case sub_generator_type::modify_items:
+            return "modify_items";
+        case sub_generator_type::ter_furn_transform:
+            return "ter_furn_transform";
+
         case sub_generator_type::last:
             break;
     }
@@ -114,16 +122,18 @@ template<>
 std::string enum_to_string<pp_sub_generator_scope>( pp_sub_generator_scope data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case pp_sub_generator_scope::omt: return "omt";
-        case pp_sub_generator_scope::overmap_special: return "overmap_special";
-        // *INDENT-ON*
+
+        case pp_sub_generator_scope::omt:
+            return "omt";
+        case pp_sub_generator_scope::overmap_special:
+            return "overmap_special";
+
         case pp_sub_generator_scope::last:
             break;
     }
     cata_fatal( "Invalid pp_sub_generator_scope" );
 }
-} // namespace io
+}
 
 void generator_item_filter::load( const JsonObject &jo )
 {
@@ -169,10 +179,10 @@ void pp_generator::check() const
     for( const pp_sub_generator &sg : sub_generators_ ) {
         sg.check( id.str() );
     }
-    // Uniqueness rule: when a sub_generator_type has any overmap_special-scoped
-    // entry, it must be the ONLY entry of that type in this generator. This
-    // guarantees the persisted (type, ordinal=0) identity is stable across
-    // reorders and additions of omt-scoped entries.
+
+
+
+
     std::map<sub_generator_type, int> total_counts;
     std::map<sub_generator_type, int> special_counts;
     for( const pp_sub_generator &sg : sub_generators_ ) {
@@ -307,13 +317,13 @@ void pp_sub_generator::check( const std::string &ctx ) const
     }
 
     if( scope == pp_sub_generator_scope::overmap_special ) {
-        // Only pre_burn and aftershock_ruin fit the single-bool shared-decision model.
+
         if( type != sub_generator_type::pre_burn &&
             type != sub_generator_type::aftershock_ruin ) {
             debugmsg( "pp_generator '%s' %s: scope 'overmap_special' not supported "
                       "for this sub-generator type", ctx, tname );
         }
-        // Multi-attempt semantics cannot be encoded as one shared bool decision.
+
         if( type == sub_generator_type::pre_burn && attempts > 1 ) {
             debugmsg( "pp_generator '%s' %s: scope 'overmap_special' requires "
                       "attempts<=1, got %d", ctx, tname, attempts );
@@ -331,7 +341,7 @@ enum class blood_trail_direction : int {
     WEST = 4,
     last = 4
 };
-} // namespace
+}
 
 static tripoint_bub_ms get_point_from_direction( int direction,
         const tripoint_bub_ms &current_tile )
@@ -572,7 +582,7 @@ static void execute_add_fire( map &md,
 
 }
 
-// Apply pre_burn effects to every tile, skipping the probability gate.
+
 static void apply_pre_burn_tiles( map &md,
                                   std::list<tripoint_bub_ms> &all_points_in_map )
 {
@@ -615,7 +625,7 @@ static void apply_pre_burn_tiles( map &md,
 
         if( !md.has_flag_ter( ter_furn_flag::TFLAG_SWIMMABLE, current_tile ) &&
             !md.has_flag_ter( ter_furn_flag::TFLAG_LIQUID, current_tile ) ) {
-            // Mirrors seed preservation in execute_move_items.
+
             const bool preserve_seed =
                 md.has_flag_ter_or_furn( ter_furn_flag::TFLAG_SEALED, current_tile ) &&
                 md.has_flag_ter_or_furn( ter_furn_flag::TFLAG_CONTAINER, current_tile ) &&
@@ -636,7 +646,7 @@ static void apply_pre_burn_tiles( map &md,
     }
 }
 
-// Compute the time-dependent pre_burn probability as a percent in [0, 100].
+
 static int pre_burn_percent_chance( const pp_sub_generator &sg, int days_since_cataclysm )
 {
     const double lerp_scalar = static_cast<double>(
@@ -712,7 +722,7 @@ static void execute_aftershock_ruin( map &md, const tripoint_abs_omt &p,
     bool above_ruined = overmap_buffer.ter( tripoint_abs_omt( p.x(), p.y(),
                                             p.z() + 1 ) ) == oter_afs_ruins_dynamic;
 
-    // applied -> fully ruined, skipped -> smashed-up, otherwise 50% roll.
+
     bool full_ruin_roll;
     if( dec && dec->st == pp_sub_decision::status::applied ) {
         full_ruin_roll = true;
@@ -722,7 +732,7 @@ static void execute_aftershock_ruin( map &md, const tripoint_abs_omt &p,
         full_ruin_roll = x_in_y( 1, 2 );
     }
 
-    //fully ruined
+
     if( ( full_ruin_roll && above_open_air ) || above_ruined ) {
         overmap_buffer.ter_set( p, oter_afs_ruins_dynamic );
 
@@ -770,7 +780,7 @@ static void execute_aftershock_ruin( map &md, const tripoint_abs_omt &p,
         return;
     }
 
-    //just smashed up
+
     for( size_t i = 0; i < all_points_in_map.size(); i++ ) {
 
         const tripoint_bub_ms current_tile = random_entry( all_points_in_map );
@@ -803,14 +813,14 @@ static void execute_aftershock_ruin( map &md, const tripoint_abs_omt &p,
     }
 }
 
-// return true if item is erased
-// todo expand with new filters?
+
+
 static bool filter_item( const item &it, const generator_item_filter &f )
 {
     return !f.category || it.get_category_shallow().id == *f.category;
 }
 
-// return true if item is erased
+
 static bool modify_item( const generator_item_modification &mod )
 {
     if( x_in_y( mod.delete_chance, 100 ) ) {
@@ -819,7 +829,7 @@ static bool modify_item( const generator_item_modification &mod )
     return false;
 }
 
-// in the future should do more than just removing
+
 static void modify_items_in_stack( item_stack &stack, const pp_sub_generator &sg )
 {
     const auto hit = [&sg]( const item & it ) {
@@ -884,14 +894,14 @@ void pp_sub_decision::deserialize( const JsonValue &jv )
     type = io::string_to_enum<sub_generator_type>( type_str );
     ordinal = static_cast<uint8_t>( ja.next_int() );
     const int raw_st = ja.next_int();
-    // Clamp unknown future enum values to not_evaluated for forward compat.
+
     if( raw_st >= 0 && raw_st <= static_cast<int>( status::skipped ) ) {
         st = static_cast<status>( raw_st );
     } else {
         st = status::not_evaluated;
     }
-    // Read seed as full uint32_t. JsonValue::read(unsigned int&) handles
-    // the full unsigned range; next_int() would truncate values above INT_MAX.
+
+
     unsigned int seed_raw = 0;
     ja.read_next( seed_raw, true );
     seed = static_cast<uint32_t>( seed_raw );
@@ -912,8 +922,8 @@ void pp_resolved_generator::deserialize( const JsonValue &jv )
     jo.read( "sub_decisions", sub_decisions );
 }
 
-// Mismatch on (type, ordinal) means a stale or not-yet-written entry; callers
-// fall back to fresh rolling.
+
+
 static pp_sub_decision *find_decision( std::vector<pp_sub_decision> *decisions,
                                        sub_generator_type type, uint8_t ordinal )
 {
@@ -928,8 +938,8 @@ static pp_sub_decision *find_decision( std::vector<pp_sub_decision> *decisions,
     return nullptr;
 }
 
-// Uses rng_sequence (deterministic seeded sequence from rng.h) so the resolve
-// step doesn't depend on global RNG state at first-visit time.
+
+
 static bool resolve_pp_decision( const pp_sub_generator &sg, int days_since_cataclysm,
                                  uint32_t seed )
 {
@@ -941,7 +951,7 @@ static bool resolve_pp_decision( const pp_sub_generator &sg, int days_since_cata
             return seq[0] < percent_chance;
         }
         case sub_generator_type::aftershock_ruin: {
-            // Fresh x_in_y(1, 2): fully-ruined rolls at 50%.
+
             const std::vector<int> seq = rng_sequence( 1, 0, 1, seed_int );
             return seq[0] == 0;
         }
@@ -967,7 +977,7 @@ void pp_generator::execute( map &md, const tripoint_abs_omt &p,
     for( const pp_sub_generator &sg : sub_generators_ ) {
         const uint8_t ordinal = type_counts[sg.type]++;
 
-        // applied/skipped mapping is type-specific and lives in each case below.
+
         pp_sub_decision *dec = nullptr;
         if( sg.scope == pp_sub_generator_scope::overmap_special ) {
             dec = find_decision( decisions, sg.type, ordinal );
@@ -992,7 +1002,7 @@ void pp_generator::execute( map &md, const tripoint_abs_omt &p,
                 if( dec && dec->st == pp_sub_decision::status::applied ) {
                     apply_pre_burn_tiles( md, all_points_in_map );
                 } else if( dec && dec->st == pp_sub_decision::status::skipped ) {
-                    // Building rolled not-burned for this special.
+
                 } else {
                     execute_pre_burn( md, all_points_in_map, days_since_cataclysm, sg );
                 }

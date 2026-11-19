@@ -69,7 +69,7 @@ def parse_json(path: list) -> dict:
             for _type, info in JSON_INFO.items():
                 for entry in json_file:
                     if ('type' not in entry or
-                        # abstract item definitions
+
                         'id' not in entry or
                             entry['type'] not in info['allowed_types']):
                         continue
@@ -298,7 +298,6 @@ class Handler:
             if key not in JSON_INFO:
                 raise HandlerUnhandledType(key)
 
-            # 576 = 4 * 12 * 12 = Tiles in a .map file
             total_squares = math.ceil(
                 JSON_INFO[key]['tiles_per'] * len(value) / 576)
             square_length = math.ceil(math.sqrt(total_squares))
@@ -320,7 +319,7 @@ class Handler:
                     fmap.fill_traps(value[counter:counter + amount])
 
                 self._maps[f'{row}.{column}'] = fmap
-                counter += amount  # 4 x ( 12 x 12 )
+                counter += amount
 
             square_offset += square_length
 

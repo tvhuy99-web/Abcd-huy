@@ -21,7 +21,7 @@
 #include "type_id.h"
 #include "value_ptr.h"
 
-// In JSON, "battery" is both an "ammunition_type" (ammo_types.json) and an "AMMO" (ammo.json)
+
 static const ammotype ammo_battery( "battery" );
 
 static const flag_id json_flag_IRREMOVABLE( "IRREMOVABLE" );
@@ -33,68 +33,68 @@ static const itype_id itype_light_battery_cell( "light_battery_cell" );
 static const itype_id itype_magazine_battery_medium_mod( "magazine_battery_medium_mod" );
 static const itype_id itype_medium_battery_cell( "medium_battery_cell" );
 
-// Includes functions:
-// item::magazine_compatible
-// item::magazine_default
-// item::magazine_integral
-// item::can_reload_with
-// item::toolmods
-//
-// item::ammo_type
-// item::ammo_types
-// item::ammo_default
-// item::ammo_remaining
-// item::ammo_capacity
-//
-// item_contents::empty
-// item_contents::empty_with_no_mods
-//
-// Attributes:
-// item.type->mod->acceptable_ammo
-// item.type->mod->magazine_adaptor
-// item.type->tool->ammo_id
-//
-// Related JSON fields:
-// "ammo_type"
-// "acceptable_ammo"
-// "ammo_restriction"
-// "magazine_adaptor"
 
-// This test case steps through several aspects of a battery mod, allowing a battery-powered
-// tool to use differeent batteries than those it was designed for.
-//
-// Along the way, the properties and behavior of the tool, battery mod, and battery are checked,
-// both to ensure they work as expected, and to exhibit their attributes and terminology (like the
-// curious fact that a battery is treated like a magazine full of ammunition).
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "battery_tool_mod_test", "[battery][mod]" )
 {
     item med_mod( itype_magazine_battery_medium_mod );
 
     SECTION( "battery mod properties" ) {
-        // Is a toolmod, and nothing else
+
         CHECK( med_mod.is_toolmod() );
         CHECK_FALSE( med_mod.is_gun() );
         CHECK_FALSE( med_mod.is_tool() );
         CHECK_FALSE( med_mod.is_magazine() );
 
-        // Mod can be installed on items using battery ammotype
+
         CHECK( med_mod.type->mod->acceptable_ammo.count( ammo_battery ) == 1 );
-        // The battery mod does not use ammo_modifier (since it gives explicit battery ids)
+
         CHECK( med_mod.type->mod->ammo_modifier.empty() );
 
-        // Mod itself has no ammo types
+
         CHECK( med_mod.ammo_types().empty() );
 
-        // No tool mods
+
         CHECK( med_mod.toolmods().empty() );
 
-        // Mods are not directly compatible with magazines, nor reloadable
+
         CHECK( med_mod.magazine_compatible().empty() );
         CHECK_FALSE( med_mod.is_reloadable() );
         CHECK_FALSE( med_mod.can_reload_with( item( itype_battery ), true ) );
 
-        // Mod magazine is not integral
+
         CHECK_FALSE( med_mod.magazine_integral() );
     }
 
@@ -103,10 +103,10 @@ TEST_CASE( "battery_tool_mod_test", "[battery][mod]" )
         REQUIRE( flashlight.is_reloadable() );
         REQUIRE( flashlight.can_reload_with( item( itype_light_battery_cell ), true ) );
 
-        // Flashlight must be free of battery or existing mods
+
         REQUIRE_FALSE( flashlight.magazine_current() );
         REQUIRE( flashlight.toolmods().empty() );
-        // Needs a MOD pocket to allow modding
+
         REQUIRE( flashlight.has_pocket_type( pocket_type::MOD ) );
 
         WHEN( "medium battery mod is installed" ) {
@@ -121,9 +121,9 @@ TEST_CASE( "battery_tool_mod_test", "[battery][mod]" )
             }
 
             THEN( "tool contents remain empty unless you count the mod" ) {
-                // The item_contents::empty function ignores mods
+
                 CHECK( flashlight.get_contents().empty() );
-                // The item_contents::empty_with_no_mods function includes mods
+
                 CHECK_FALSE( flashlight.get_contents().empty_with_no_mods() );
             }
 
@@ -182,7 +182,7 @@ TEST_CASE( "battery_tool_mod_test", "[battery][mod]" )
                     clear_avatar();
                     actor->use( dummy, flashlight, &get_map(), dummy->pos_bub() );
 
-                    // Regression tests for #42764 / #42854
+
                     THEN( "mod remains installed" ) {
                         CHECK_FALSE( flashlight.toolmods().empty() );
                         CHECK_FALSE( flashlight.get_contents().magazine_flag_restrictions().empty() );
@@ -201,18 +201,18 @@ TEST_CASE( "battery_tool_mod_test", "[battery][mod]" )
     }
 }
 
-// This test exercises several item functions related to battery-powered tools.
-//
-// Tool battery compartments and battery charge use terms derived from firearms, thus:
-//
-// - Batteries are "magazines"
-//   - Have "ammo types" compatible with them
-//   - Charge left in the battery is "ammo remaining"
-//
-// - Tools have a "magazine well" (battery compartment)
-//   - Can be reloaded with a compatible "magazine" (battery)
-//   - Charge left in the tool's battery is "ammo remaining"
-//
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "battery_and_tool_properties", "[battery][tool][properties]" )
 {
     const item bat_cell( itype_light_battery_cell );
@@ -229,7 +229,7 @@ TEST_CASE( "battery_and_tool_properties", "[battery][tool][properties]" )
 
         SECTION( "is not ammo" ) {
             CHECK_FALSE( bat_cell.is_ammo() );
-            // Non-ammo itself does not have an ammo type
+
             CHECK( bat_cell.ammo_type() == ammotype::NULL_ID() );
         }
 
@@ -264,7 +264,7 @@ TEST_CASE( "battery_and_tool_properties", "[battery][tool][properties]" )
 
         SECTION( "is not ammo" ) {
             CHECK_FALSE( flashlight.is_ammo() );
-            // Non-ammo itself does not have an ammo type
+
             CHECK( flashlight.ammo_type() == ammotype::NULL_ID() );
         }
 
@@ -289,11 +289,11 @@ TEST_CASE( "battery_and_tool_properties", "[battery][tool][properties]" )
         }
 
         SECTION( "can use battery ammo" ) {
-            // Since flashlights get their "ammo" from a "magazine", their ammo_types is empty
+
             CHECK( flashlight.ammo_types().empty() );
             CHECK( flashlight.ammo_default().is_null() );
 
-            // The ammo a flashlight can *use* is given by type->tool->ammo_id
+
             CHECK_FALSE( flashlight.type->tool->ammo_id.empty() );
             CHECK( flashlight.type->tool->ammo_id.count( ammo_battery ) == 1 );
         }
@@ -325,39 +325,39 @@ TEST_CASE( "installing_battery_in_tool", "[battery][tool][install]" )
     }
 
     SECTION( "dead battery installed in flashlight" ) {
-        // Ensure battery is dead
+
         bat_cell.ammo_set( bat_cell.ammo_default(), 0 );
         REQUIRE( bat_cell.ammo_remaining( ) == 0 );
 
-        // Put battery in flashlight
+
         REQUIRE( flashlight.has_pocket_type( pocket_type::MAGAZINE_WELL ) );
         ret_val<void> result = flashlight.put_in( bat_cell, pocket_type::MAGAZINE_WELL );
         CHECK( result.success() );
         CHECK( flashlight.magazine_current() );
 
-        // No remaining ammo
+
         CHECK( flashlight.ammo_remaining( ) == 0 );
     }
 
     SECTION( "charged battery installed in flashlight" ) {
-        // Charge the battery
+
         bat_cell.ammo_set( bat_cell.ammo_default(), bat_charges );
         REQUIRE( bat_cell.ammo_remaining( ) == bat_charges );
 
-        // Put battery in flashlight
+
         REQUIRE( flashlight.has_pocket_type( pocket_type::MAGAZINE_WELL ) );
         ret_val<void> result = flashlight.put_in( bat_cell, pocket_type::MAGAZINE_WELL );
         CHECK( result.success() );
         CHECK( flashlight.magazine_current() );
 
-        // Flashlight has a full charge
+
         CHECK( flashlight.ammo_remaining( ) == bat_charges );
     }
 
     SECTION( "wrong size battery for flashlight" ) {
         item med_bat_cell( itype_medium_battery_cell );
 
-        // Should fail to install the magazine
+
         REQUIRE( flashlight.has_pocket_type( pocket_type::MAGAZINE_WELL ) );
         std::string dmsg = capture_debugmsg_during( [&flashlight, &med_bat_cell]() {
             ret_val<void> result = flashlight.put_in( med_bat_cell, pocket_type::MAGAZINE_WELL );

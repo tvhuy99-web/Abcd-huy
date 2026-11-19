@@ -29,4 +29,4 @@ class iteminfo_window : public cataimgui::window
         cataimgui::scroll s;
 };
 
-#endif // CATA_SRC_UI_ITEMINFO_H
+#endif

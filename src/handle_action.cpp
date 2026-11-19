@@ -133,12 +133,12 @@
 #include "worldfactory.h"
 
 #if defined(TILES)
-#include "cata_tiles.h" // all animation functions will be pushed out to a cata_tiles function in some manner
+#include "cata_tiles.h"
 #include "sdltiles.h"
 #endif
 
-// A heading gesture requests 45 degrees through the original steering physics.
-// Consumed by the next native vehicle move only; reset on each input turn.
+
+
 static int a11y_steering_nudge = 1;
 enum class a11y_vehicle_throttle { none, forward, reverse, faster, slower };
 static a11y_vehicle_throttle a11y_throttle = a11y_vehicle_throttle::none;
@@ -215,9 +215,9 @@ extern bool add_key_to_quick_shortcuts( int key, const std::string &category, bo
 
 static bool has_vehicle_control( avatar &player_character );
 
-// Auto-drive is a series of ordinary native turns, NOT teleportation or a
-// background thread. The normal DEFAULTMODE input context is polled between
-// turns so emergency brake, steering, horns and menus remain responsive.
+
+
+
 static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
 {
     if( !a11y::enabled() || !a11y::android::enabled() ||
@@ -227,7 +227,7 @@ static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
         return false;
     }
     const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
-    // Keep simulating residual momentum during a pause or handbrake.
+
     return seat && seat->vehicle().a11y_continuous_drive &&
            ( !seat->vehicle().a11y_manual_drive ||
              seat->vehicle().a11y_release_controls_pending ) &&
@@ -240,9 +240,9 @@ static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
 
 namespace
 {
-// These flags are set from a registered accessibility-only world action and
-// consumed by the normal per-turn action switch. Reset on every new command;
-// they never modify the existing native keyboard action bindings.
+
+
+
 int combat_attack_direction = -1;
 int combat_cycle_direction = 0;
 bool combat_reload_to_full = false;
@@ -263,11 +263,11 @@ class user_turn
 
         int moves_elapsed() {
             const float turn_duration = get_option<float>( "TURN_DURATION" );
-            // Magic number 0.005 chosen due to option menu's 2 digit precision and
-            // the option menu UI rounding <= 0.005 down to "0.00" in the display.
-            // This conditional will catch values (e.g. 0.003) that the options menu
-            // would round down to "0.00" in the options menu display. This prevents
-            // the user from being surprised by floating point rounding near zero.
+
+
+
+
+
             if( turn_duration <= 0.005 ) {
                 return 0;
             }
@@ -297,12 +297,12 @@ class user_turn
         }
 
 };
-} // namespace
+}
 
-// A one-tile pickup shortcut for the spoken interaction hub. A single
-// individual item starts the real pickup activity immediately; every other
-// case gets a short reader-owned quantity list with one final confirmation.
-// No item is removed or moved until Character::pick_up validates the request.
+
+
+
+
 static void pickup_here_accessible()
 {
     avatar &you = get_avatar();
@@ -326,10 +326,10 @@ static void pickup_here_accessible()
         const int quantity = it.count_by_charges() ? std::max( 1, it.charges ) : 1;
         const std::string label = it.tname();
         const item_location location( map_cursor( pos ), &it );
-        // Identically named ground items form one quantity row instead of
-        // requiring the listener to tick twenty indistinguishable entries.
+
+
         const auto found = std::find_if( choices.begin(), choices.end(),
-        [&]( const pickup_choice &choice ) {
+        [&]( const pickup_choice & choice ) {
             return choice.name == label;
         } );
         if( found != choices.end() ) {
@@ -337,7 +337,7 @@ static void pickup_here_accessible()
             found->available += quantity;
         } else {
             choices.push_back( { { { location, quantity } }, label,
-                                 quantity, 0 } );
+                quantity, 0 } );
         }
     }
     if( choices.empty() ) {
@@ -358,28 +358,31 @@ static void pickup_here_accessible()
     ctxt.register_action( "CONFIRM" );
     a11y::screen_scope reader( &ctxt, "pickup-here",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
             return std::string( "QUIT" );
         }
-        if( intent.node == "pickup-here:confirm" && intent.action == "activate" ) {
-            if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice &choice ) {
+        if( intent.node == "pickup-here:confirm" && intent.action == "activate" )
+        {
+            if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice & choice ) {
             return choice.selected > 0;
-            } ) ) {
+        } ) ) {
                 add_msg( m_info, _( "No items selected." ) );
                 return std::string( "TIMEOUT" );
             }
             return std::string( "CONFIRM" );
         }
-        for( std::size_t i = 0; i < choices.size(); ++i ) {
+        for( std::size_t i = 0; i < choices.size(); ++i )
+        {
             if( intent.node != "pickup-here:item:" + std::to_string( i ) ) {
                 continue;
             }
             pickup_choice &choice = choices[i];
             if( intent.action == "read_detail" ) {
-                // A quantity row may combine multiple items with identical
-                // names but different condition or contents. Read each
-                // distinct original item record once without selecting or
-                // picking up any quantity.
+
+
+
+
                 std::set<std::string> distinct;
                 std::string complete;
                 for( const drop_location &source : choice.sources ) {
@@ -413,8 +416,8 @@ static void pickup_here_accessible()
                 if( !amount ) {
                     return std::nullopt;
                 }
-                // Choosing a number is the complete selection operation.
-                // Moving the items still requires the list's CONFIRM.
+
+
                 choice.selected = static_cast<int>( *amount );
                 return std::string( "TIMEOUT" );
             }
@@ -465,9 +468,9 @@ static void pickup_here_accessible()
             drop_locations selection;
             for( const pickup_choice &choice : choices ) {
                 int remaining = choice.selected;
-                // Keep the original item handles and the requested total.
-                // Picking the entire source uses the engine's quantity=0
-                // convention; partial charged stacks use the precise count.
+
+
+
                 for( const drop_location &source : choice.sources ) {
                     if( remaining <= 0 ) {
                         break;
@@ -495,22 +498,22 @@ input_context game::get_player_input( std::string &action )
     close_blocking_activity_reader();
     map &here = get_map();
 
-    // A destination chosen while on foot must continue even when the
-    // previous menu action used no game time. Finish native boarding and
-    // ignition before opening the next reader/world input frame.
+
+
+
     if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
         ui::omap::update_accessible_drive_to_place();
-        // Taking controls of an already-running car is instantaneous.
-        // Finish that second stage now, before waiting for user input,
-        // rather than strand the trip until another unrelated action.
+
+
+
         if( ui::omap::accessible_drive_to_place_pending() &&
             !u.activity && !u.has_destination() ) {
             ui::omap::update_accessible_drive_to_place();
         }
     }
 
-    // Complete a pending mode exit only after the car has actually stopped.
-    // This runs on the native input thread before publishing the next frame.
+
+
     if( u.in_vehicle ) {
         const optional_vpart_position seat = here.veh_at( u.pos_bub( here ) );
         if( seat && seat->vehicle().a11y_release_controls_pending ) {
@@ -535,32 +538,32 @@ input_context game::get_player_input( std::string &action )
     if( uquit == QUIT_WATCH ) {
         ctxt = input_context( "DEFAULTMODE", keyboard_mode::keycode );
         ctxt.set_iso( true );
-        // The list of allowed actions in death-cam mode in game::handle_action
-        // *INDENT-OFF*
+
+
         for( const action_id id : {
-            ACTION_CENTER,
-            ACTION_SHIFT_N,
-            ACTION_SHIFT_NE,
-            ACTION_SHIFT_E,
-            ACTION_SHIFT_SE,
-            ACTION_SHIFT_S,
-            ACTION_SHIFT_SW,
-            ACTION_SHIFT_W,
-            ACTION_SHIFT_NW,
-            ACTION_LOOK,
-            ACTION_KEYBINDINGS,
-        } ) {
+                 ACTION_CENTER,
+                 ACTION_SHIFT_N,
+                 ACTION_SHIFT_NE,
+                 ACTION_SHIFT_E,
+                 ACTION_SHIFT_SE,
+                 ACTION_SHIFT_S,
+                 ACTION_SHIFT_SW,
+                 ACTION_SHIFT_W,
+                 ACTION_SHIFT_NW,
+                 ACTION_LOOK,
+                 ACTION_KEYBINDINGS,
+             } ) {
             ctxt.register_action( action_ident( id ) );
         }
-        // *INDENT-ON*
+
         ctxt.register_action( "QUIT", to_translation( "Accept your fate" ) );
     } else {
         ctxt = get_default_mode_input_context();
     }
 
-    // Only engine-internal combat dispatch identifiers are registered:
-    // world_snapshot publishes separate semantic nodes and validates their
-    // enabled state. These names never appear in the ordinary action menu.
+
+
+
     for( int i = 0; i < 8; ++i ) {
         ctxt.register_action( "A11Y_INTERNAL_COMBAT_ATTACK_" + std::to_string( i ),
                               to_translation( "Attack a direction without walking" ) );
@@ -596,9 +599,9 @@ input_context game::get_player_input( std::string &action )
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HEADING_RIGHT",
                           to_translation( "Vehicle heading right by 45 degrees" ) );
 
-    // In spoken-only mode the reader refresh below owns the cache
-    // rebuild and visibility update. Avoid doing the same visibility
-    // scan once before entering the input loop and again at snapshot.
+
+
+
     if( !a11y::android::suppress_world_visuals() ) {
         here.update_visibility_cache( pos.z() );
     }
@@ -608,10 +611,10 @@ input_context game::get_player_input( std::string &action )
     int reader_scan_radius = 1;
     int reader_scan_depth = 1;
     a11y::world_scan_filter reader_scan_filter = a11y::world_scan_filter::all;
-    // Explore-mode cursor (R08.1): a reader-local reading position relative
-    // to the avatar. It is bound to the lifecycle epoch in which it was
-    // opened so a leftover cursor can never leak into another session or
-    // character; make_reader_snapshot drops it when the epoch has moved on.
+
+
+
+
     std::optional<tripoint_rel_ms> reader_explore_cursor;
     std::uint64_t reader_explore_epoch = 0;
     const auto make_reader_snapshot = [&]() {
@@ -627,9 +630,9 @@ input_context game::get_player_input( std::string &action )
                                      reader_scan_filter, camera_offset,
                                      reader_explore_cursor );
     };
-    // Parse the "<dx>:<dy>" tail of an explore node id. Returns false on any
-    // malformed input instead of throwing into the intent handler.
-    const auto parse_reader_explore_pair = []( const std::string_view text, point &delta ) {
+
+
+    const auto parse_reader_explore_pair = []( const std::string_view text, point & delta ) {
         const std::size_t colon = text.find( ':' );
         if( colon == std::string::npos ) {
             return false;
@@ -644,14 +647,15 @@ input_context game::get_player_input( std::string &action )
             return false;
         }
     };
-    // Keep the DEFAULTMODE frame across turns: an ordinary step must not
-    // temporarily turn the Android swipe surface into a waiting screen.
+
+
     a11y::screen_scope *reader = nullptr;
     reader = &a11y::bind_world_screen( &ctxt,
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "activate" && intent.node.rfind( "reader:combat:", 0 ) == 0 ) {
-            // Revalidate the native gate at dispatch time; a stale Android
-            // snapshot cannot attack during travel, activity or death cam.
+        if( intent.action == "activate" && intent.node.rfind( "reader:combat:", 0 ) == 0 )
+        {
+
+
             if( !make_reader_snapshot().swipe_movement_allowed ) {
                 a11y::android::status( "blocked", &intent );
                 return std::nullopt;
@@ -662,7 +666,7 @@ input_context game::get_player_input( std::string &action )
                 }
             }
             if( intent.node == "reader:combat:aim-toggle" ) {
-                // A read-only setting change with no game turn or ammo cost.
+
                 target_handler::toggle_combat_precise_aim();
                 add_msg( m_info, target_handler::combat_precise_aim_enabled() ?
                          _( "Combat precise aiming enabled." ) :
@@ -680,11 +684,12 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        // Mode transitions cannot require driver access to enter, but
-        // they must validate the physical seat on the native game thread.
+
+
         if( intent.action == "activate" &&
             ( intent.node == "reader:vehicle:begin" ||
-              intent.node == "reader:vehicle:release" ) ) {
+              intent.node == "reader:vehicle:release" ) )
+        {
             const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
             if( !u.in_vehicle || !seat || ( g && g->remoteveh() == &seat->vehicle() ) ) {
                 a11y::android::status( "blocked", &intent );
@@ -705,8 +710,8 @@ input_context game::get_player_input( std::string &action )
             }
             return "A11Y_INTERNAL_VEHICLE_RELEASE";
         }
-        // Drive-only actions are resolved against the current physical seat.
-        // Never accept a cached Android focus from a passenger or remote car.
+
+
         if( intent.action == "activate" &&
             ( intent.node == "reader:vehicle:forward" ||
               intent.node == "reader:vehicle:reverse" ||
@@ -717,7 +722,8 @@ input_context game::get_player_input( std::string &action )
               intent.node == "reader:vehicle:horn" ||
               intent.node == "reader:vehicle:engine" ||
               intent.node == "reader:vehicle:heading:left" ||
-              intent.node == "reader:vehicle:heading:right" ) ) {
+              intent.node == "reader:vehicle:heading:right" ) )
+        {
             const optional_vpart_position seated = get_map().veh_at( u.pos_bub( get_map() ) );
             if( !seated || !u.controlling_vehicle ||
                 !seated->vehicle().player_in_control( get_map(), u ) ||
@@ -759,9 +765,10 @@ input_context game::get_player_input( std::string &action )
             a11y::android::status( "blocked", &intent );
             return std::nullopt;
         }
-        // Multi-finger reads are verified against the live world snapshot.
-        // They never enqueue movement, consume moves, or change the turn.
-        if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
+
+
+        if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 )
+        {
             if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
                 const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
                 if( !u.in_vehicle || !u.controlling_vehicle || !seat ||
@@ -789,11 +796,12 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        // Explore intents are reader-local: they only move the reading
-        // cursor and republish the snapshot. They are intercepted before
+
+
         // registered_intent so an explore node can never fall through to
-        // the game engine, cost moves, or advance game time.
-        if( intent.action == "activate" && intent.node.rfind( "explore:", 0 ) == 0 ) {
+
+        if( intent.action == "activate" && intent.node.rfind( "explore:", 0 ) == 0 )
+        {
             bool changed = false;
             if( intent.node == "explore:enter" ) {
                 if( !reader_explore_cursor ) {
@@ -852,14 +860,15 @@ input_context game::get_player_input( std::string &action )
                     }
                 }
             }
-            // Any other explore:* node (for example the cursor document
-            // itself) is swallowed here as a no-op.
+
+
             if( changed ) {
                 reader->update( make_reader_snapshot() );
             }
             return std::nullopt;
         }
-        if( intent.node == "world:radius" && intent.action == "set_text" ) {
+        if( intent.node == "world:radius" && intent.action == "set_text" )
+        {
             try {
                 std::size_t consumed = 0;
                 const int radius = std::stoi( intent.value, &consumed );
@@ -875,7 +884,8 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        if( intent.node == "world:depth" && intent.action == "set_text" ) {
+        if( intent.node == "world:depth" && intent.action == "set_text" )
+        {
             try {
                 std::size_t consumed = 0;
                 const int depth = std::stoi( intent.value, &consumed );
@@ -891,7 +901,8 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        if( intent.action == "activate" ) {
+        if( intent.action == "activate" )
+        {
             if( intent.node == "world:filter:all" ) {
                 reader_scan_filter = a11y::world_scan_filter::all;
             } else if( intent.node == "world:filter:known" ) {
@@ -914,12 +925,12 @@ input_context game::get_player_input( std::string &action )
         if( a11y::enabled() ) {
             const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
             if( !reader_snapshot_published || reader_snapshot_epoch != current_epoch ) {
-                // Sample build and publication separately so the next phone
-                // log can distinguish reader work from regular game turns.
+
+
 #if defined(__ANDROID__)
-                // Headless world rendering must still rebuild vision before
-                // the snapshot reads tiles. This is gameplay/reader state,
-                // never visual rendering and never skipped to gain speed.
+
+
+
                 if( a11y::android::suppress_world_visuals() ) {
                     const bool profile = a11y::android::performance_profiling_enabled();
                     const auto vision_started = profile ? std::chrono::steady_clock::now() :
@@ -928,7 +939,7 @@ input_context game::get_player_input( std::string &action )
                     const int z = get_avatar().posz();
                     vision_map.build_map_cache( z );
                     vision_map.update_visibility_cache( z );
-                    // Spoken-only world skips game::draw; use the identical scan.
+
                     if( a11y::android::directional_sonar_enabled() ) {
                         static std::chrono::steady_clock::time_point next_directional_scan{};
                         const auto sonar_now = std::chrono::steady_clock::now();
@@ -944,21 +955,24 @@ input_context game::get_player_input( std::string &action )
                                                    std::chrono::steady_clock::now() - vision_started ).count();
                         a11y::android::performance_vision_sample( vision_ms );
                         a11y::android::diagnostic_event( "WORLD_VISION_TIMING",
-                                "cache_visibility_ms=" + std::to_string( vision_ms ) +
-                                " mode=headless_reader" );
+                                                         "cache_visibility_ms=" + std::to_string( vision_ms ) +
+                                                         " mode=headless_reader" );
                     }
                 }
 #endif
                 const bool profile_reader = a11y::android::performance_profiling_enabled();
-                const std::chrono::steady_clock::time_point started = profile_reader ? std::chrono::steady_clock::now() :
-                                     std::chrono::steady_clock::time_point{};
+                const std::chrono::steady_clock::time_point started = profile_reader ?
+                        std::chrono::steady_clock::now() :
+                        std::chrono::steady_clock::time_point{};
                 a11y::semantic_snapshot next = make_reader_snapshot();
-                const std::chrono::steady_clock::time_point built = profile_reader ? std::chrono::steady_clock::now() :
-                                   std::chrono::steady_clock::time_point{};
+                const std::chrono::steady_clock::time_point built = profile_reader ?
+                        std::chrono::steady_clock::now() :
+                        std::chrono::steady_clock::time_point{};
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
-                const std::chrono::steady_clock::time_point published = profile_reader ? std::chrono::steady_clock::now() :
-                                       std::chrono::steady_clock::time_point{};
+                const std::chrono::steady_clock::time_point published = profile_reader ?
+                        std::chrono::steady_clock::now() :
+                        std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
                     const auto ms = []( const auto from, const auto to ) {
                         return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
@@ -967,39 +981,39 @@ input_context game::get_player_input( std::string &action )
                     const std::chrono::milliseconds::rep publish_ms = ms( built, published );
                     a11y::android::performance_reader_sample( build_ms + publish_ms );
                     a11y::android::diagnostic_event( "WORLD_READER_TIMING",
-                            "build_ms=" + std::to_string( build_ms ) +
-                            " update_publish_ms=" + std::to_string( publish_ms ) +
-                            " nodes=" + std::to_string( nodes ) );
+                                                     "build_ms=" + std::to_string( build_ms ) +
+                                                     " update_publish_ms=" + std::to_string( publish_ms ) +
+                                                     " nodes=" + std::to_string( nodes ) );
                 }
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
             }
-            // The snapshot above is only republished when the lifecycle
-            // epoch moves (reader enable / session change), so an area
-            // announcement placed inside that block never fired while
-            // walking -- the snapshot itself is refreshed after every
-            // action by the intent handler. Check for a new area on
-            // every input wait instead; the function only speaks when
-            // the known overmap terrain actually changes, and an
-            // internal submap cache shift alone is not a new area.
+
+
+
+
+
+
+
+
             a11y::announce_area_transition();
         } else {
             reader_snapshot_published = false;
         }
-        // The scope is live here, so status transitions can be spoken without
-        // carrying a stale alert across a menu, background transition or turn.
+
+
         a11y::announce_status_changes();
     };
 #if defined(TILES)
-    // Mark cata_tiles draw caches as dirty
+
     tilecontext->set_draw_cache_dirty();
 #endif
 
     user_turn current_turn;
-    // In normal turn-based play, TURN_DURATION can be zero and a native
-    // TIMEOUT never advances time. While reader auto-drive is active, poll
-    // controls for a short wall-clock interval, then let the normal
-    // ACTION_TIMEOUT consume a game turn and run native vehicle physics.
+
+
+
+
     const auto drive_input_started = std::chrono::steady_clock::now();
     const auto continuous_drive_tick_due = [&]() {
         return a11y_continuous_vehicle_ready( u, here ) &&
@@ -1007,9 +1021,9 @@ input_context game::get_player_input( std::string &action )
                std::chrono::milliseconds( 350 );
     };
 
-    // Nothing in this animation loop is required for speech or gameplay.
-    // Avoid weather, minimap and tile-animation redraws while waiting for
-    // footsteps in the spoken-only world.
+
+
+
     if( get_option<bool>( "ANIMATIONS" ) && !a11y::android::suppress_world_visuals() ) {
         const int TOTAL_VIEW = MAX_VIEW_DISTANCE * 2 + 1;
         point iStart( ( TERRAIN_WINDOW_WIDTH > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_WIDTH - TOTAL_VIEW ) / 2 : 0,
@@ -1029,7 +1043,7 @@ input_context game::get_player_input( std::string &action )
             iEnd.y = TERMY;
         }
 
-        //x% of the Viewport, only shown on visible areas
+
         const weather_animation_t weather_info = weather.weather_id->weather_animation;
         point offset( u.view_offset.xy().raw() + point( -getmaxx( w_terrain ) / 2 + pos.x(),
                       -getmaxy( w_terrain ) / 2 + pos.y() ) );
@@ -1043,9 +1057,9 @@ input_context game::get_player_input( std::string &action )
             offset.x = 0;
             offset.y = 0;
         }
-#endif //TILES
+#endif
 
-        // TODO: Move the weather calculations out of here.
+
         const bool bWeatherEffect = weather_info.symbol != NULL_UNICODE;
         const int dropCount = static_cast<int>( iEnd.x * iEnd.y * weather_info.factor );
 
@@ -1071,12 +1085,12 @@ input_context game::get_player_input( std::string &action )
         do {
             refresh_reader();
             if( bWeatherEffect && get_option<bool>( "ANIMATION_RAIN" ) ) {
-                /*
-                Location to add rain drop animation bits! Since it refreshes w_terrain it can be added to the animation section easily
-                Get tile information from above's weather information:
-                WEATHER_DRIZZLE | WEATHER_LIGHT_DRIZZLE | WEATHER_RAINY | WEATHER_RAINSTORM | WEATHER_THUNDER | WEATHER_LIGHTNING = "weather_rain_drop"
-                WEATHER_FLURRIES | WEATHER_SNOW | WEATHER_SNOWSTORM = "weather_snowflake"
-                */
+
+
+
+
+
+
                 const bool had_weather_animation = !wPrint.vdrops.empty();
                 wPrint.vdrops.clear();
 
@@ -1091,7 +1105,7 @@ input_context game::get_player_input( std::string &action )
                         here.get_visibility( visibility_cache[mapp.x()][mapp.y()], cache ) ==
                         visibility_type::CLEAR &&
                         !creatures.creature_at( mapp, true ) ) {
-                        // Suppress if a critter is there
+
                         wPrint.vdrops.emplace_back( iRand.x, iRand.y );
                     }
                 }
@@ -1099,13 +1113,13 @@ input_context game::get_player_input( std::string &action )
                     invalidate_main_ui_adaptor();
                 }
             }
-            // don't bother calculating SCT if we won't show it
+
             if( uquit != QUIT_WATCH && get_option<bool>( "ANIMATION_SCT" ) && !SCT.vSCT.empty() ) {
                 invalidate_main_ui_adaptor();
 
                 SCT.advanceAllSteps();
 
-                //Check for creatures on all drawing positions and offset if necessary
+
                 for( auto iter = SCT.vSCT.rbegin(); iter != SCT.vSCT.rend(); ++iter ) {
                     const direction oCurDir = iter->getDirection();
                     const int width = utf8_width( iter->getText() );
@@ -1134,12 +1148,12 @@ input_context game::get_player_input( std::string &action )
 
             if( pixel_minimap_option && g->w_pixel_minimap ) {
                 if( liveview.is_enabled() ) {
-                    // Mouse View overlaps the minimap; a direct wnoutrefresh
-                    // ignores ui_adaptor z-order and paints over it.
+
+
                     invalidate_main_ui_adaptor();
                 } else {
 #if defined(TILES)
-                    // Mark minimap dirty so beacon colors keep cycling
+
                     if( tilecontext->has_blinking_minimap() ) {
                         werase( g->w_pixel_minimap );
                     }
@@ -1156,7 +1170,7 @@ input_context game::get_player_input( std::string &action )
                 .on_top( true );
             }
 
-            // Remove asynchronous animations after animation delay if no input
+
             if( current_turn.async_anim_timeout() ) {
                 bool cleared = g->void_async_anim_curses();
 #if defined(TILES)
@@ -1168,19 +1182,19 @@ input_context game::get_player_input( std::string &action )
             }
 
 #if defined(TILES)
-            // Expire stale hit-animation overlays between draws
+
             if( tilecontext->expire_hit_animations() ) {
                 invalidate_main_ui_adaptor();
             }
 
-            // Animated tiles need periodic redraws to cycle frames
+
             if( tilecontext->has_animated_tiles() ) {
                 invalidate_main_ui_adaptor();
             }
 #endif
 
             if( g->has_blink_curses() && current_turn.blink_timeout() ) {
-                // Toggle blink phase and redraw
+
                 g->blink_active_phase = !g->blink_active_phase;
                 g->invalidate_main_ui_adaptor();
             }
@@ -1205,7 +1219,7 @@ input_context game::get_player_input( std::string &action )
         ctxt.reset_timeout();
     }
 
-    // Clear the handler referencing this call's local input_context.
+
     a11y::unbind_world_screen();
     return ctxt;
 }
@@ -1217,11 +1231,11 @@ static void rcdrive( const point_rel_ms &d )
     diag_value const *car_location = player_character.maybe_get_value( "remote_controlling" );
 
     if( !car_location ) {
-        //no turned radio car found
+
         add_msg( m_warning, _( "No radio car connected." ) );
         return;
     }
-    // FIXME: migrate to abs
+
     tripoint_bub_ms c{ car_location->tripoint().raw() };
 
     auto rc_pairs = here.get_rc_items( c );
@@ -1250,7 +1264,7 @@ static void rcdrive( const point_rel_ms &d )
         sounds::sound( src, 6, sounds::sound_t::movement, _( "zzz…" ), true, "misc", "rc_car_drives" );
         player_character.mod_moves( -to_moves<int>( 1_seconds ) * 0.5 );
         here.i_rem( src, rc_car );
-        // FIXME: migrate to abs
+
         player_character.set_value( "remote_controlling", tripoint_abs_ms{ dest.raw() } );
         return;
     }
@@ -1375,12 +1389,12 @@ static void auto_features_warn()
                  auto_features.getPage(),
                  auto_features.getGroupName(),
                  auto_features.getMenuText(),
-                 auto_features.getValueName()  // false in locale
+                 auto_features.getValueName()
                );
     }
 }
 
-// Establish or release a grab on a vehicle
+
 static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
 {
     avatar &you = get_avatar();
@@ -1452,7 +1466,7 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
 
     const optional_vpart_position &vp = here.veh_at( grabp );
-    // Object might not be on the same z level if on a ramp.
+
     if( !( vp || here.has_furn( grabp ) ) ) {
         if( here.has_flag( ter_furn_flag::TFLAG_RAMP_UP, grabp ) ||
             here.has_flag( ter_furn_flag::TFLAG_RAMP_UP, you.pos_bub() ) ) {
@@ -1472,8 +1486,8 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
             add_msg( m_info, _( "You can't move that, it's attached to the wall." ) );
             return;
         }
-        // Powergrids with more than one part are undraggable.
-        // Offer to split the targeted part off onto its own, making it draggable.
+
+
         if( vp->vehicle().is_powergrid() && vp->vehicle().part_count() > 1 ) {
             if( !query_yn(
                     _( "That's part of a power grid.  Separate it from the grid so you can move it?" ) ) ) {
@@ -1498,7 +1512,7 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
                 return;
             }
         }
-        //solid vehicles can't be grabbed while boarded
+
         const optional_vpart_position vp_boarded = here.veh_at( you.pos_bub() );
         if( vp_boarded ) {
             if( &vp_boarded->vehicle() == &vp->vehicle() &&
@@ -1509,13 +1523,13 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
         }
         you.grab( object_type::VEHICLE, grabp - you.pos_bub() );
         add_msg( _( "You grab the %s." ), veh_name );
-    } else if( here.has_furn( grabp ) ) { // If not, grab furniture if present
+    } else if( here.has_furn( grabp ) ) {
         if( !here.furn( grabp ).obj().is_movable() ) {
             add_msg( _( "You can not grab the %s." ), here.furnname( grabp ) );
             return;
         }
         if( !g->warn_player_maybe_anger_local_faction( true ) ) {
-            return; // player declined to mess with faction's stuff
+            return;
         }
         you.grab( object_type::FURNITURE, grabp - you.pos_bub() );
         if( !here.can_move_furniture( grabp, &you ) ) {
@@ -1523,7 +1537,7 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
         } else {
             add_msg( _( "You grab the %s." ), here.furnname( grabp ) );
         }
-    } else { // TODO: grab mob? Captured squirrel = pet (or meat that stays fresh longer).
+    } else {
         add_msg( m_info, _( "There's nothing to grab there!" ) );
     }
 }
@@ -1657,7 +1671,7 @@ static void haul_toggle()
 
 static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
 {
-    const bool allow_floor_bash = debug_mode; // Should later become "true"
+    const bool allow_floor_bash = debug_mode;
     std::optional<tripoint_bub_ms> smashp_ = p;
     if( !smashp_ ) {
         smashp_ = choose_adjacent( _( "Smash where?" ),
@@ -1668,8 +1682,8 @@ static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
     tripoint_bub_ms smashp = *smashp_;
 
-    // Little hack: If there's a smashable corpse, it'll always be bashed first. So don't bother warning about
-    // terrain smashing unless it's actually possible.
+
+
     bool smashable_corpse_at_target = false;
     for( const item &maybe_corpse : get_map().i_at( smashp ) ) {
         if( maybe_corpse.can_revive() ) {
@@ -1679,7 +1693,7 @@ static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
 
     if( !smashable_corpse_at_target && !g->warn_player_maybe_anger_local_faction( true ) ) {
-        return; // player declined to smash faction's stuff
+        return;
     }
 
     avatar &player_character = get_avatar();
@@ -1726,7 +1740,7 @@ avatar::smash_result avatar::smash( tripoint_bub_ms &smashp )
     bool smash_floor = false;
     if( smashp.z() != posz() ) {
         if( smashp.z() > posz() ) {
-            // TODO: Knock on the ceiling
+
             return ret;
         }
 
@@ -1782,13 +1796,13 @@ avatar::smash_result avatar::smash( tripoint_bub_ms &smashp )
     bool should_pulp = false;
     for( const item &maybe_corpse : here.i_at( smashp ) ) {
         if( maybe_corpse.can_revive() ) {
-            should_pulp = true; // There is at least one corpse to pulp
+            should_pulp = true;
         }
     }
 
     if( should_pulp ) {
         assign_activity( pulp_activity_actor( here.get_abs( smashp ) ) );
-        return ret; // don't smash terrain if we've smashed a corpse
+        return ret;
     }
 
     vehicle *veh = veh_pointer_or_null( here.veh_at( smashp ) );
@@ -1819,7 +1833,7 @@ avatar::smash_result avatar::smash( tripoint_bub_ms &smashp )
 
     const bash_params bash_result = here.bash( smashp, smash_damage, false, false, smash_floor );
     ret.can_smash = bash_result.can_bash;
-    // Weariness scaling
+
     float weary_mult = 1.0f;
     item_location weapon = used_weapon();
     if( bash_result.did_bash ) {
@@ -1851,7 +1865,7 @@ avatar::smash_result avatar::smash( tripoint_bub_ms &smashp )
                                  rng( 0,
                                       vol ) ) );
                     if( vol > 20 ) {
-                        // Hurt left arm too, if it was big
+
                         deal_damage( nullptr, bodypart_id( "hand_l" ), damage_instance( damage_cut,
                                      rng( 0, static_cast<int>( vol * .5 ) ) ) );
                     }
@@ -1865,20 +1879,20 @@ avatar::smash_result avatar::smash( tripoint_bub_ms &smashp )
 
         if( bash_result.success ) {
             ret.success = true;
-            // Bash results in destruction of target
+
             g->draw_async_anim( smashp, "bash_complete", "X", c_light_gray );
         } else if( bash_result.did_bash ) {
-            // Bash effective but target not yet destroyed
+
             g->draw_async_anim( smashp, "bash_effective", "/", c_light_gray );
         } else {
-            // Bash not effective
+
             g->draw_async_anim( smashp, "bash_ineffective" );
             if( one_in( 10 ) ) {
                 if( here.has_furn( smashp ) && here.furn( smashp ).obj().bash ) {
-                    // %s is the smashed furniture
+
                     add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), here.furnname( smashp ) );
                 } else {
-                    // %s is the smashed terrain
+
                     add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), here.tername( smashp ) );
                 }
             }
@@ -1921,15 +1935,15 @@ static void wait()
 
     if( player_character.controlling_vehicle ) {
         const vehicle &veh = here.veh_at( player_character.pos_bub() )->vehicle();
-        if( !veh.can_use_rails( here ) && ( // control optional if on rails
-                veh.is_flying_in_air() ||   // control required: fuel is consumed even at hover
-                veh.is_falling ||           // *not* vertical_velocity, which is only used for collisions
-                veh.velocity ||             // is moving
-                ( veh.cruise_velocity && (  // would move if it could
-                      ( veh.is_watercraft() && veh.can_float( here ) ) || // is viable watercraft floating on water
-                      veh.sufficient_wheel_config() // is viable land vehicle on ground or fording shallow water
+        if( !veh.can_use_rails( here ) && (
+                veh.is_flying_in_air() ||
+                veh.is_falling ||
+                veh.velocity ||
+                ( veh.cruise_velocity && (
+                      ( veh.is_watercraft() && veh.can_float( here ) ) ||
+                      veh.sufficient_wheel_config()
                   ) ) ||
-                ( veh.is_in_water( true ) && !veh.can_float( here ) ) // is sinking in deep water
+                ( veh.is_in_water( true ) && !veh.can_float( here ) )
             ) ) {
             popup( _( "You can't pass time while controlling a moving vehicle." ) );
             return;
@@ -1971,11 +1985,11 @@ static void wait()
     } else {
         if( player_character.get_stamina() < player_character.get_stamina_max() ) {
             as_m.addentry( 14, true, 'w', _( "Wait until you catch your breath" ) );
-            durations.emplace( 14, 15_minutes ); // to hide it from showing
+            durations.emplace( 14, 15_minutes );
         }
         if( !wait_followers_activity_actor::get_absent_followers( player_character ).empty() ) {
             as_m.addentry( 15, true, 'f', _( "Wait for followers to catch up" ) );
-            durations.emplace( 15, 15_minutes ); // to hide it from showing(?)
+            durations.emplace( 15, 15_minutes );
         }
         add_menu_item( 1, '1', !has_watch ? _( "Wait 20 heartbeats" ) : "", 20_seconds );
         add_menu_item( 2, '2', !has_watch ? _( "Wait 60 heartbeats" ) : "", 1_minutes );
@@ -1993,9 +2007,9 @@ static void wait()
     if( here.get_abs_sub().z() >= 0 || has_watch ) {
         const time_point last_midnight = calendar::turn - time_past_midnight( calendar::turn );
         const auto diurnal_time_before = []( const time_point & p ) {
-            // Either the given time is in the future (e.g. waiting for sunset while it's early morning),
-            // than use it directly. Otherwise (in the past), add a single day to get the same time tomorrow
-            // (e.g. waiting for sunrise while it's noon).
+
+
+
             const time_point target_time = p > calendar::turn ? p : p + 1_days;
             return target_time - calendar::turn;
         };
@@ -2027,9 +2041,10 @@ static void wait()
                                            to_string_time_of_day( calendar::turn ) ) : "";
     as_m.text += setting_alarm ? _( "Set alarm for when?" ) : _( "Wait for how long?" );
     if( !setting_alarm && a11y::enabled() ) {
-        as_m.text += "\n\n" + std::string( _( "Waiting advances game time.  The world may change while you wait." ) );
+        as_m.text += "\n\n" + std::string(
+                         _( "Waiting advances game time.  The world may change while you wait." ) );
     }
-    as_m.query(); /* calculate key and window variables, generate window, and loop until we get a valid answer */
+    as_m.query();
 
     const auto dur_iter = durations.find( as_m.ret );
     if( dur_iter == durations.end() ) {
@@ -2038,7 +2053,7 @@ static void wait()
     const time_duration time_to_wait = dur_iter->second;
 
     if( setting_alarm ) {
-        // Setting alarm
+
         player_character.remove_effect( effect_alarm_clock );
         if( as_m.ret == 13 ) {
             add_msg( _( "You cancel your alarm." ) );
@@ -2048,7 +2063,7 @@ static void wait()
         }
 
     } else {
-        // Announce the real option selected in the native waiting menu.
+
         if( a11y::enabled() ) {
             for( const uilist_entry &entry : as_m.entries ) {
                 if( entry.retval == as_m.ret && !entry.txt.empty() ) {
@@ -2099,7 +2114,7 @@ static void sleep()
 
     uilist as_m;
     as_m.title = _( "Are you sure you want to sleep?" );
-    // (Y)es/(S)ave before sleeping/(N)o
+
     as_m.entries.emplace_back( 0, true,
                                get_option<bool>( "FORCE_CAPITAL_YN" ) ? 'Y' : 'y',
                                _( "Yes." ) );
@@ -2110,7 +2125,7 @@ static void sleep()
                                get_option<bool>( "FORCE_CAPITAL_YN" ) ? 'N' : 'n',
                                _( "No." ) );
 
-    // List all active items, bionics or mutations so player can deactivate them
+
     std::vector<std::string> active;
     player_character.visit_items(
     [&active, &player_character]( const item_location & it ) {
@@ -2127,8 +2142,8 @@ static void sleep()
             continue;
         }
 
-        // some bionics
-        // bio_alarm is useful for waking up during sleeping
+
+
         if( bio.info().has_flag( json_flag_BIONIC_SLEEP_FRIENDLY ) ) {
             continue;
         }
@@ -2145,17 +2160,17 @@ static void sleep()
         }
     }
 
-    // check for deactivating any currently played music instrument.
+
     for( item *&item : player_character.inv_dump() ) {
         if( item->active && item->get_use( "musical_instrument" ) != nullptr ) {
             player_character.add_msg_if_player( _( "You stop playing your %s before trying to sleep." ),
                                                 item->tname() );
-            // deactivate instrument
+
             item->active = false;
         }
     }
 
-    // ask for deactivation
+
     std::stringstream data;
     if( !active.empty() ) {
         as_m.selected = 2;
@@ -2169,12 +2184,12 @@ static void sleep()
             data << std::endl;
         }
         data << string_format(
-                    _( "Before sleep.  Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
-                       "Location: %4$s." ),
-                    display::sleepiness_text_color( player_character ).first,
-                    display::thirst_text_color( player_character ).first,
-                    display::pain_text_color( player_character ).first,
-                    here.tername( p ) ) << std::endl;
+                 _( "Before sleep.  Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
+                    "Location: %4$s." ),
+                 display::sleepiness_text_color( player_character ).first,
+                 display::thirst_text_color( player_character ).first,
+                 display::pain_text_color( player_character ).first,
+                 here.tername( p ) ) << std::endl;
         data << _( "Sleeping advances game time.  You cannot issue ordinary commands until you wake; "
                    "scheduled events and world changes may occur." );
     }
@@ -2182,8 +2197,8 @@ static void sleep()
         as_m.text = data.str();
     }
 
-    /* Calculate key and window variables, generate window,
-       and loop until we get a valid answer. */
+
+
     as_m.query();
 
     if( as_m.ret == 1 ) {
@@ -2193,7 +2208,7 @@ static void sleep()
     }
 
     if( !g->warn_player_maybe_anger_local_faction( false, true ) ) {
-        return; // player declined to annoy locals by illegally sleeping in their territory
+        return;
     }
 
     time_duration try_sleep_dur = 24_hours;
@@ -2202,7 +2217,7 @@ static void sleep()
         deaf_text = _( "<color_c_red> (DEAF!)</color>" );
     }
     if( player_character.has_alarm_clock() ) {
-        /* Reuse menu to ask player whether they want to set an alarm. */
+
         bool can_hibernate = player_character.get_hunger() < -60 &&
                              player_character.has_active_mutation( trait_HIBERNATE );
 
@@ -2260,17 +2275,17 @@ static void loot()
     int flags = 0;
     zone_manager &mgr = zone_manager::get_manager();
 
-    // reset any potentially disabled zones from a past activity
+
     mgr.reset_disabled();
 
-    // cache should only happen if we have personal zones defined
+
     if( mgr.has_personal_zones() ) {
         mgr.cache_data();
     }
 
-    // Manually update vehicle cache.
-    // In theory this would be handled by the related activity (zone_sort_activity_actor())
-    // but with a stale cache we never get that far.
+
+
+
     mgr.cache_vzones();
 
     flags |= g->check_near_zone( zone_type_LOOT_UNSORTED,
@@ -2384,7 +2399,7 @@ static void loot()
             player_character.assign_activity( zone_sort_activity_actor() );
             break;
         case SortLootStatic:
-            //temporarily disable personal zones
+
             for( const auto &i : mgr.get_zones() ) {
                 zone_data &zone = i.get();
                 if( zone.get_is_personal() && zone.get_enabled() ) {
@@ -2399,7 +2414,7 @@ static void loot()
             player_character.assign_activity( zone_sort_activity_actor() );
             break;
         case SortLootPersonal:
-            //temporarily disable non personal zones
+
             for( const auto &i : mgr.get_zones() ) {
                 zone_data &zone = i.get();
                 if( !zone.get_is_personal() && zone.get_enabled() ) {
@@ -2482,7 +2497,7 @@ static void takeoff()
 static void read()
 {
     avatar &player_character = get_avatar();
-    // Can read items from inventory or within one tile (including in vehicles)
+
     item_location loc = game_menus::inv::read( player_character );
 
     if( loc ) {
@@ -2492,7 +2507,7 @@ static void read()
             if( loc->type->can_use( "learn_spell" ) ) {
                 the_book.get_use( "learn_spell" )->call( &player_character, the_book, player_character.pos_bub() );
             } else if( loc.is_efile() ) {
-                // obtain e-storage device if not allowed to use remotely
+
                 if( !parent_loc->has_flag( json_flag_ALLOWS_REMOTE_USE ) ) {
                     parent_loc = parent_loc.obtain( player_character );
                     item *newit = parent_loc->get_item_with( [&]( const item & it ) {
@@ -2514,7 +2529,7 @@ static void read()
     }
 }
 
-// Perform a reach attack
+
 static void reach_attack( avatar &you )
 {
     g->temp_exit_fullscreen();
@@ -2549,10 +2564,10 @@ static void fire()
 
     const item_location weapon = you.get_wielded_item();
     if( a11y::enabled() && combat_attack_direction < 0 ) {
-        // The accessible Fire action is a gun chooser, not the generic
-        // holster "use" menu. A selected firearm is equipped with the
-        // engine's normal wield/location cost before aiming begins.
-        // This also works when a melee weapon is currently wielded.
+
+
+
+
         std::vector<item_location> guns;
         std::vector<std::string> labels;
         for( item_location &loc : you.all_items_loc() ) {
@@ -2586,8 +2601,8 @@ static void fire()
                 return;
             }
             if( !you.is_wielding( *selected ) ) {
-                // Standard location-aware wield validates conflicts and
-                // spends retrieval time, including when nested in holsters.
+
+
                 a11y::set_weapon_auto_stow( true );
                 const on_out_of_scope reset_auto_stow = on_out_of_scope( []() {
                     a11y::set_weapon_auto_stow( false );
@@ -2600,8 +2615,8 @@ static void fire()
             return;
         }
     }
-    // try reach weapon
-    // used_weapon() returns null location if force unarmed is selected
+
+
     if( weapon && !you.used_weapon() && !weapon->is_gun() ) {
         add_msg( m_info, _( "You can't use reach attacks while forcing yourself to fight unarmed." ) );
         return;
@@ -2632,15 +2647,15 @@ static void fire()
         add_msg( m_bad, _( "Your hands aren't suited for using firearms!" ) );
         return;
     }
-    // try firing gun
+
     if( weapon && weapon->is_gun() && !weapon->gun_current_mode().melee() ) {
         if( combat_attack_direction >= 0 ) {
-            // Quick combat shots must verify the actual *current firing
-            // mode* before starting an aim activity. An empty magazine,
-            // insufficient charges, an unavailable power source, blocked
-            // firing mode or unusable weapon is NOT a zero-range target.
-            // Leave the user on the world screen and speak the engine's
-            // specific reason instead of flashing a targeting menu.
+
+
+
+
+
+
             const gun_mode selected_mode = weapon->gun_current_mode();
             std::vector<std::string> reasons;
             const bool mode_blocked = weapon->firing_mode_blocked( weapon->gun_get_mode_id() );
@@ -2654,14 +2669,14 @@ static void fire()
                          reason, weapon->ammo_remaining() );
                 return;
             }
-            // Queued once for the next native aim activity. No gun chooser
-            // or separate target confirmation for a combat swipe.
+
+
             target_handler::queue_accessible_combat_shot( combat_attack_direction );
         }
         avatar_action::fire_wielded_weapon( you );
         return;
     }
-    // try firing turrets
+
     if( const optional_vpart_position ovp = here.veh_at( you.pos_abs() ) ) {
         if( turret_data turret_here = ovp->vehicle().turret_query( you.pos_abs() ) ) {
             if( avatar_action::fire_turret_manual( you, here, turret_here ) ) {
@@ -2673,7 +2688,7 @@ static void fire()
             }
         }
     }
-    // offer to draw a gun from worn holster
+
     std::vector<std::string> options;
     std::vector<std::function<void()>> actions;
     you.worn.fire_options( you, options, actions );
@@ -2711,10 +2726,10 @@ static void open_movement_mode_menu()
                                    label );
     }
     as_m.entries.emplace_back( cycle,
-                               true, // cycling movement is controlled in relevant functions, always allow
-                               hotkey_for_action( ACTION_OPEN_MOVEMENT, /*maximum_modifier_count=*/1 ),
+                               true,
+                               hotkey_for_action( ACTION_OPEN_MOVEMENT, 1 ),
                                _( "Cycle move mode" ) );
-    // This should select the middle move mode
+
     as_m.selected = std::floor( modes.size() / 2 );
     as_m.query();
 
@@ -2731,7 +2746,7 @@ static void cast_spell( bool recast_spell = false )
 {
     Character &player_character = get_player_character();
     player_character.magic->clear_opens_spellbook_data();
-    get_event_bus().send<event_type::opens_spellbook>( player_character.getID() ); // trigger EoC
+    get_event_bus().send<event_type::opens_spellbook>( player_character.getID() );
     player_character.magic->evaluate_opens_spellbook_data();
     std::vector<spell_id> spells = player_character.magic->spells();
 
@@ -2768,13 +2783,13 @@ static void cast_spell( bool recast_spell = false )
     spell &sp = recast_spell
                 ? player_character.magic->get_spell( player_character.magic->last_spell )
                 : player_character.magic->select_spell( player_character );
-    // if no spell was selected
+
     if( sp.id().is_null() ) {
         return;
     }
     if( recast_spell && a11y::enabled() ) {
-        // Information only. Recasting remains a single action and does not
-        // require a second confirmation; native cast checks still apply.
+
+
         add_msg( m_info, _( "Repeat %1$s. Cost %2$s %3$s. Time %4$s." ),
                  sp.name(), sp.energy_cost_string( player_character ),
                  sp.energy_string(), to_string( time_duration::from_moves( sp.casting_time( player_character ) ) ) );
@@ -2783,7 +2798,7 @@ static void cast_spell( bool recast_spell = false )
     player_character.cast_spell( sp, false, std::nullopt );
 }
 
-// returns true if the spell was assigned
+
 bool Character::cast_spell( spell &sp, bool fake_spell,
                             const std::optional<tripoint_bub_ms> &target = std::nullopt )
 {
@@ -2834,11 +2849,11 @@ bool Character::cast_spell( spell &sp, bool fake_spell,
     return true;
 }
 
-// this is here because it shares some things in common with cast_spell
+
 bool bionic::activate_spell( Character &caster ) const
 {
     if( !caster.is_avatar() || !id->spell_on_activate ) {
-        // the return value tells us if the spell fails. if it has no spell it can't fail
+
         return true;
     }
     spell sp = id->spell_on_activate->get_spell( caster );
@@ -2873,7 +2888,7 @@ static void handle_debug_mode()
         entry.text_color = debug_mode ? c_green : c_light_gray;
     };
 
-    // returns if entry became active
+
     auto debugmode_entry_setup = []( uilist_entry & entry, bool active ) -> void {
         if( active )
         {
@@ -2913,7 +2928,7 @@ static void handle_debug_mode()
         uilist_entry entry( i + 2, true, assigned_hotkey,
                             "  " + debugmode::filter_name( static_cast<debugmode::debug_filter>( i ) ) );
         assigned_hotkey = ctxt.next_unassigned_hotkey( hotkeys, assigned_hotkey );
-        // Skip d and t, special cased
+
         if( assigned_hotkey.sequence.front() == reserved_character_d ||
             assigned_hotkey.sequence.front() == reserved_character_t ) {
             assigned_hotkey = hotkeys.next( assigned_hotkey );
@@ -3033,7 +3048,7 @@ static void do_deathcam_action( const action_id &act, avatar &player_character )
             g->look_around();
             break;
 
-        case ACTION_KEYBINDINGS: // already handled by input context
+        case ACTION_KEYBINDINGS:
         default:
             break;
     }
@@ -3131,7 +3146,7 @@ static std::map<action_id, std::string> get_actions_disabled_mounted()
 
 static bool is_move_mode_action( const action_id act )
 {
-    // Avoid allocating a fresh vector for every movement command.
+
     switch( act ) {
         case ACTION_CYCLE_MOVE:
         case ACTION_CYCLE_MOVE_REVERSE:
@@ -3155,8 +3170,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
           player_character.has_active_bionic( bio_remote ) ) ) {
         rcdrive( get_delta_from_movement_action( act, iso_rotate::yes ) );
     } else if( has_vehicle_control( player_character ) ) {
-        // vehicle control uses x for steering and y for ac/deceleration,
-        // so no rotation needed
+
+
         const point_rel_ms direction = get_delta_from_movement_action( act, iso_rotate::no );
         const int nudge = a11y_steering_nudge;
         a11y_steering_nudge = 1;
@@ -3168,14 +3183,14 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 seat->vehicle().player_in_control( here, player_character ) &&
                 ( !g || g->remoteveh() != &seat->vehicle() ) ) {
                 vehicle &car = seat->vehicle();
-                // Never accelerate while the accessible driving mode is paused.
+
                 if( car.a11y_drive_paused ) {
                     add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
                 } else {
-                    // A second forward swipe after a sensor stop explicitly
-                    // accepts the collision risk. Only the accessibility
-                    // obstacle guard is bypassed; native collision and vehicle
-                    // physics still run normally.
+
+
+
+
                     const std::optional<a11y::vehicle_obstacle> stopped_hazard =
                         throttle == a11y_vehicle_throttle::forward && car.a11y_obstacle_stop ?
                         a11y::vehicle_obstacle_ahead( car, here ) : std::nullopt;
@@ -3191,107 +3206,107 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         car.a11y_brake_alerted = false;
                     } else if( throttle == a11y_vehicle_throttle::forward &&
                                car.a11y_obstacle_stop ) {
-                        // A turn or cleared path invalidates the original
-                        // warning; re-check this direction normally.
+
+
                         car.a11y_obstacle_stop = false;
                         car.a11y_obstacle_resume_speed = 0;
                     }
-                    // Retain pldrive's original checks and timing.
+
                     switch( throttle ) {
-                    case a11y_vehicle_throttle::forward:
-                        if( force_forward && car.velocity >= 0 ) {
-                            // Resume a previously selected speed (or the
-                            // native first cruise increment after a blocked
-                            // start) without re-announcing the obstacle.
-                            if( car.cruise_velocity == 0 ) {
-                                pldrive( point_rel_ms( 0, -1 ) );
-                            }
-                            const int safe_speed = std::max( 0, car.safe_velocity( here ) );
-                            car.cruise_velocity = std::min( safe_speed,
-                                                          std::max( car.cruise_velocity,
-                                                                  car.a11y_obstacle_resume_speed ) );
-                            car.a11y_continuous_drive = !car.a11y_manual_drive &&
-                                                       car.cruise_velocity > 0;
-                        } else if( car.cruise_velocity < 0 || car.velocity < 0 ) {
-                            car.cruise_velocity = 0;
-                            add_msg( m_info, _( "Slowing down before driving forward." ) );
-                        } else if( car.cruise_velocity == 0 ) {
-                            // Select a forward cruise target on the first swipe.
-                            // Further forward swipes advance the vehicle turn
-                            // without repeatedly increasing that target.
-                            const std::optional<a11y::vehicle_obstacle> obstruction =
-                                a11y::vehicle_obstacle_ahead( car, here );
-                            if( !car.a11y_manual_drive && obstruction &&
-                                obstruction->distance <= 8 ) {
-                                car.a11y_obstacle_stop = true;
-                                car.a11y_stopped_obstacle_name = obstruction->label;
-                                car.a11y_stopped_heading = car.turn_dir;
-                                car.a11y_obstacle_resume_speed = 400;
-                                car.a11y_continuous_drive = false;
-                                add_msg( m_warning,
-                                         _( "Cannot move forward: %1$s, about %2$d tiles." ),
-                                         obstruction->label, obstruction->distance );
-                            } else {
-                                pldrive( point_rel_ms( 0, -1 ) );
-                                car.a11y_obstacle_stop = false;
-                                car.a11y_continuous_drive = !car.a11y_manual_drive &&
-                                                           car.cruise_velocity > 0;
-                                if( !car.a11y_manual_drive ) {
-                                    add_msg( m_info, _( "Forward selected." ) );
+                        case a11y_vehicle_throttle::forward:
+                            if( force_forward && car.velocity >= 0 ) {
+
+
+
+                                if( car.cruise_velocity == 0 ) {
+                                    pldrive( point_rel_ms( 0, -1 ) );
                                 }
-                            }
-                        } else if( car.cruise_velocity > 0 ) {
-                            car.a11y_continuous_drive = !car.a11y_manual_drive;
-                        }
-                        break;
-                    case a11y_vehicle_throttle::reverse:
-                        car.a11y_obstacle_stop = false;
-                        car.a11y_obstacle_override = false;
-                        if( car.cruise_velocity > 0 || car.velocity > 0 ) {
-                            car.cruise_velocity = 0;
-                            add_msg( m_info, _( "Slowing down before reversing." ) );
-                        } else if( car.cruise_velocity == 0 ) {
-                            const std::optional<a11y::vehicle_obstacle> obstruction =
-                                a11y::vehicle_obstacle_ahead( car, here, true );
-                            if( !car.a11y_manual_drive && obstruction &&
-                                obstruction->distance <= 8 ) {
-                                car.a11y_obstacle_stop = true;
-                                car.a11y_stopped_obstacle_name = obstruction->label;
-                                car.a11y_stopped_heading = car.turn_dir;
-                                car.a11y_obstacle_resume_speed = -400;
-                                car.a11y_continuous_drive = false;
-                                add_msg( m_warning,
-                                         _( "Cannot reverse: %1$s, about %2$d tiles." ),
-                                         obstruction->label, obstruction->distance );
-                            } else {
-                                pldrive( point_rel_ms( 0, 1 ) );
+                                const int safe_speed = std::max( 0, car.safe_velocity( here ) );
+                                car.cruise_velocity = std::min( safe_speed,
+                                                                std::max( car.cruise_velocity,
+                                                                        car.a11y_obstacle_resume_speed ) );
                                 car.a11y_continuous_drive = !car.a11y_manual_drive &&
-                                                           car.cruise_velocity < 0;
-                                if( !car.a11y_manual_drive ) {
-                                    add_msg( m_info, _( "Reverse selected." ) );
+                                                            car.cruise_velocity > 0;
+                            } else if( car.cruise_velocity < 0 || car.velocity < 0 ) {
+                                car.cruise_velocity = 0;
+                                add_msg( m_info, _( "Slowing down before driving forward." ) );
+                            } else if( car.cruise_velocity == 0 ) {
+
+
+
+                                const std::optional<a11y::vehicle_obstacle> obstruction =
+                                    a11y::vehicle_obstacle_ahead( car, here );
+                                if( !car.a11y_manual_drive && obstruction &&
+                                    obstruction->distance <= 8 ) {
+                                    car.a11y_obstacle_stop = true;
+                                    car.a11y_stopped_obstacle_name = obstruction->label;
+                                    car.a11y_stopped_heading = car.turn_dir;
+                                    car.a11y_obstacle_resume_speed = 400;
+                                    car.a11y_continuous_drive = false;
+                                    add_msg( m_warning,
+                                             _( "Cannot move forward: %1$s, about %2$d tiles." ),
+                                             obstruction->label, obstruction->distance );
+                                } else {
+                                    pldrive( point_rel_ms( 0, -1 ) );
+                                    car.a11y_obstacle_stop = false;
+                                    car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                                car.cruise_velocity > 0;
+                                    if( !car.a11y_manual_drive ) {
+                                        add_msg( m_info, _( "Forward selected." ) );
+                                    }
                                 }
+                            } else if( car.cruise_velocity > 0 ) {
+                                car.a11y_continuous_drive = !car.a11y_manual_drive;
                             }
-                        } else if( car.cruise_velocity < 0 ) {
-                            car.a11y_continuous_drive = !car.a11y_manual_drive;
-                        }
-                        break;
-                    case a11y_vehicle_throttle::faster:
-                        pldrive( point_rel_ms( 0, car.cruise_velocity < 0 ? 1 : -1 ) );
-                        break;
-                    case a11y_vehicle_throttle::slower:
-                        if( car.cruise_velocity != 0 ) {
-                            pldrive( point_rel_ms( 0, car.cruise_velocity > 0 ? 1 : -1 ) );
-                        }
-                        break;
-                    case a11y_vehicle_throttle::none:
-                        break;
+                            break;
+                        case a11y_vehicle_throttle::reverse:
+                            car.a11y_obstacle_stop = false;
+                            car.a11y_obstacle_override = false;
+                            if( car.cruise_velocity > 0 || car.velocity > 0 ) {
+                                car.cruise_velocity = 0;
+                                add_msg( m_info, _( "Slowing down before reversing." ) );
+                            } else if( car.cruise_velocity == 0 ) {
+                                const std::optional<a11y::vehicle_obstacle> obstruction =
+                                    a11y::vehicle_obstacle_ahead( car, here, true );
+                                if( !car.a11y_manual_drive && obstruction &&
+                                    obstruction->distance <= 8 ) {
+                                    car.a11y_obstacle_stop = true;
+                                    car.a11y_stopped_obstacle_name = obstruction->label;
+                                    car.a11y_stopped_heading = car.turn_dir;
+                                    car.a11y_obstacle_resume_speed = -400;
+                                    car.a11y_continuous_drive = false;
+                                    add_msg( m_warning,
+                                             _( "Cannot reverse: %1$s, about %2$d tiles." ),
+                                             obstruction->label, obstruction->distance );
+                                } else {
+                                    pldrive( point_rel_ms( 0, 1 ) );
+                                    car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                                car.cruise_velocity < 0;
+                                    if( !car.a11y_manual_drive ) {
+                                        add_msg( m_info, _( "Reverse selected." ) );
+                                    }
+                                }
+                            } else if( car.cruise_velocity < 0 ) {
+                                car.a11y_continuous_drive = !car.a11y_manual_drive;
+                            }
+                            break;
+                        case a11y_vehicle_throttle::faster:
+                            pldrive( point_rel_ms( 0, car.cruise_velocity < 0 ? 1 : -1 ) );
+                            break;
+                        case a11y_vehicle_throttle::slower:
+                            if( car.cruise_velocity != 0 ) {
+                                pldrive( point_rel_ms( 0, car.cruise_velocity > 0 ? 1 : -1 ) );
+                            }
+                            break;
+                        case a11y_vehicle_throttle::none:
+                            break;
                     }
-                    // Native pldrive's straight-ahead cruise commands only
-                    // update the target speed. Unlike steering, they do not
-                    // spend moves. Advance a real game turn for each reader
-                    // throttle swipe, including repeated forward/reverse
-                    // swipes after a target has already been selected.
-                    // Never teleport the vehicle or bypass native physics.
+
+
+
+
+
+
                     if( !car.a11y_manual_drive && !car.a11y_obstacle_override &&
                         ( throttle == a11y_vehicle_throttle::forward ||
                           throttle == a11y_vehicle_throttle::reverse ||
@@ -3302,8 +3317,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             a11y::vehicle_obstacle_ahead( car, here, reverse );
                         const int braking_range = std::clamp(
                                                       8 + std::abs( car.velocity ) / 500, 8, 32 );
-                        // A speed-up swipe must not bypass the same obstacle
-                        // guard used by the forward and reverse buttons.
+
+
                         if( hazard && hazard->distance <= braking_range ) {
                             car.a11y_obstacle_resume_speed = car.cruise_velocity;
                             car.a11y_obstacle_stop = true;
@@ -3324,20 +3339,20 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         }
                     }
                     if( car.a11y_manual_drive ) {
-                        // Manual gestures each advance one native turn but
-                        // cannot schedule further unattended ticks.
+
+
                         car.a11y_continuous_drive = false;
                     }
-                    // Every accepted reader throttle swipe advances one
-                    // native game turn, regardless of the speed target.
-                    // Setting moves to at most zero is the same native
-                    // turn boundary used for vehicle rotorcraft thrust.
+
+
+
+
                     player_character.set_moves( std::min( player_character.get_moves(), 0 ) );
                 }
             }
         } else {
             const optional_vpart_position seated = here.veh_at(
-                        player_character.pos_bub( here ) );
+                    player_character.pos_bub( here ) );
             if( a11y::enabled() && seated && player_character.in_vehicle &&
                 player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( here, player_character ) &&
@@ -3345,28 +3360,28 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 direction.x() != 0 && direction.y() == 0 &&
                 ( seated->vehicle().a11y_drive_paused ||
                   seated->vehicle().velocity == 0 ) ) {
-                // Explicit accessibility exception: rotate the ACTUAL car
-                // while stopped, including when driving is paused. The
-                // native map updates its occupied cells and passengers.
-                // A single horizontal swipe turns 45 degrees, so the
-                // compass changes immediately without forward throttle.
+
+
+
+
+
                 const int steps = direction.x() * std::max( 3, nudge );
                 seated->vehicle().a11y_rotate_in_place( here, steps );
             } else if( seated && seated->vehicle().a11y_drive_paused ) {
-                // Keep paused throttle disabled. If the vehicle is still
-                // coasting, a turn request reports why it cannot yet pivot.
+
+
                 add_msg( m_warning, _( "Driving is paused. Double-tap to resume." ) );
             } else {
                 pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
             }
-            // A new steering direction re-arms the sensor for its new path.
-            // An intentional bypass applies only to the previous trajectory.
+
+
             if( direction.x() != 0 && seated ) {
                 seated->vehicle().a11y_obstacle_override = false;
             }
-            // Steering changes turn_dir before the world's next physics
-            // step. Check the newly requested trajectory immediately so
-            // a near-side pillar is not first detected after a collision.
+
+
+
             if( a11y::enabled() && direction.x() != 0 && seated &&
                 !seated->vehicle().a11y_manual_drive &&
                 player_character.in_vehicle && player_character.controlling_vehicle &&
@@ -3444,10 +3459,10 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 !player_character.is_auto_moving() ) {
                 return false;
             }
-            // get_next_auto_move_direction() consumed this waypoint
-            // before the move failed. Put that exact tile back so
-            // "No, keep traveling" never loses or skips the dangerous
-            // step, and require an explicit safe-mode decision later.
+
+
+
+
             std::vector<tripoint_bub_ms> &route = player_character.get_auto_move_route();
             route.insert( route.begin(), dest_tile );
             a11y::android::set_travel_state( 3 );
@@ -3462,7 +3477,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                                        ovp->part_index(), true );
         }
         if( !avatar_action::move( player_character, here, tripoint_rel_ms( dest_delta, 0 ) ) ) {
-            // auto-move should be canceled due to a failed move or obstacle
+
             add_msg_debug( debugmode::DF_ACTIVITY,
                            "auto_move: move(%d,%d) FAILED at pos=(%d,%d), aborting",
                            dest_delta.x(), dest_delta.y(),
@@ -3472,17 +3487,17 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             }
         } else if( player_character.pos_bub() == pos_before &&
                    dest_delta != point_rel_ms::zero ) {
-            // General auto-move safety: catches cases where move() returns true
-            // ("handled") but the player didn't actually move. Covers grabbed
-            // vehicle collisions, NPC interactions, and any future similar cases.
-            // Check if terrain, furniture, or a vehicle part changed (door/trunk
-            // opened) - if so, next step will walk through, so don't abort.
+
+
+
+
+
             const ter_id ter_after = here.ter( dest_tile );
             const furn_id furn_after = here.furn( dest_tile );
             bool veh_part_opened = false;
             if( const optional_vpart_position ovp = here.veh_at( dest_tile ) ) {
-                // If there was an openable part before but not now, a vehicle
-                // door/trunk/hatch was opened by avatar_action::move.
+
+
                 const int openable_now = ovp->vehicle().next_part_to_open(
                                              ovp->part_index(), true );
                 veh_part_opened = ( veh_door_part_before >= 0 && openable_now < 0 ) ||
@@ -3503,12 +3518,12 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             }
         }
 
-        // if we changed move modes this action, refund half the cost of changing move mode
-        // if their move action was an easy movement to represent combining the two actions
+
+
         if( desired_move_mode_cost > 0 ) {
             const int moves_delta = pre_walk_moves - player_character.get_moves();
-            // add 10% to the easy movement threshold to allow for some minor encumbrance
-            // add 20% if going prone because it has an extra 20% crawling mod
+
+
             const int easy_moves = 110 /
                                    player_character.get_modifier( character_modifier_move_mode_move_cost_mod ) *
                                    ( player_character.is_prone() ? 1.2 : 1 );
@@ -3524,7 +3539,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             for( const tripoint_bub_ms &point : here.points_in_radius( player_character.pos_bub(), 1 ) ) {
                 bool did_mop = false;
                 if( is_blind ) {
-                    // blind character have a 1/3 chance of actually mopping
+
                     if( one_in( 3 ) ) {
                         did_mop = here.mop_spills( point );
                     } else {
@@ -3533,7 +3548,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 } else {
                     did_mop = here.mop_spills( point );
                 }
-                // iuse::mop costs 15 moves per use
+
                 if( did_mop ) {
                     player_character.mod_moves( -15 );
                 }
@@ -3551,10 +3566,10 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
     const bool in_shell = player_character.has_active_mutation( trait_SHELL2 )
                           || player_character.has_active_mutation( trait_SHELL3 );
 
-    // Most turns are ordinary footsteps. Do not allocate and translate
-    // three maps of restricted action descriptions on every step. Build
-    // one only when the corresponding exceptional character state exists;
-    // translations are still resolved at use-time after language changes.
+
+
+
+
     if( in_shell ) {
         const auto actions_disabled_in_shell = get_actions_disabled_in_shell();
         const auto blocked = actions_disabled_in_shell.find( act );
@@ -3588,7 +3603,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
     }
 
     const bool is_actions_move_mode = is_move_mode_action( act );
-    // Are we performing an action that is not a move mode action?
+
     int desired_move_mode_cost = 0;
     if( player_character.is_waiting_to_change_mode_mode() && !is_actions_move_mode ) {
         move_mode_id desired_move = player_character.get_desired_move_mode();
@@ -3606,18 +3621,18 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
     }
 
     switch( act ) {
-        case ACTION_NULL: // dummy entry
-        case NUM_ACTIONS: // dummy entry
-        case ACTION_ACTIONMENU: // handled above
+        case ACTION_NULL:
+        case NUM_ACTIONS:
+        case ACTION_ACTIONMENU:
         case ACTION_MAIN_MENU:
         case ACTION_KEYBINDINGS:
             break;
 
         case ACTION_TIMEOUT: {
-            // Finishing a requested brake is safer than leaving a moving
-            // car stuck in Drive control because safe mode blocks input.
+
+
             const optional_vpart_position seat = here.veh_at(
-                        player_character.pos_bub( here ) );
+                    player_character.pos_bub( here ) );
             const bool braking_to_release = seat && player_character.controlling_vehicle &&
                                             seat->vehicle().a11y_release_controls_pending &&
                                             seat->vehicle().velocity != 0;
@@ -3693,19 +3708,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             }
 
             if( !player_character.in_vehicle ) {
-                // We're NOT standing on tiles with stairs, ropes, ladders etc
+
                 if( !here.has_flag( ter_furn_flag::TFLAG_GOES_DOWN, player_character.pos_bub() ) &&
                     !u.has_flag( json_flag_PHASE_MOVEMENT ) ) {
                     std::vector<tripoint_bub_ms> pts;
 
-                    // If levitating, just move straight down if possible.
+
                     if( player_character.has_flag( json_flag_LEVITATION ) &&
                         here.has_flag( ter_furn_flag::TFLAG_NO_FLOOR, player_character.pos_bub() ) ) {
                         pts.push_back( player_character.pos_bub() );
                     }
 
                     if( pts.empty() ) {
-                        // Check tiles around player character for open air
+
                         for( const tripoint_bub_ms &p : here.points_in_radius( player_character.pos_bub(), 1 ) ) {
                             if( here.has_flag( ter_furn_flag::TFLAG_NO_FLOOR, p ) ) {
                                 pts.push_back( p );
@@ -3713,14 +3728,14 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                         }
                     }
 
-                    // If we found tiles with open air, prompt player with query on direction they want to climb
+
                     if( !pts.empty() ) {
                         const std::optional<tripoint_bub_ms> pnt = point_selection_menu( pts, false );
                         if( !pnt ) {
                             break;
                         }
 
-                        // If player selected direction, climb down there, and exit from the whole ACTION_MOVE_DOWN case
+
                         climb_down( *pnt );
                         if( a11y::enabled() && player_character.posz() != initial_level ) {
                             add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
@@ -3729,8 +3744,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     }
                 }
 
-                // If we're here, we might or might not be standing on tiles with stairs, ropes, ladders etc
-                // In any case, attempt a descend
+
+
                 vertical_move( -1, u.has_flag( json_flag_PHASE_MOVEMENT ) );
             }
             if( a11y::enabled() && player_character.posz() != initial_level ) {
@@ -3763,8 +3778,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         }
 
         case ACTION_OPEN:
-            // Preserve an object already chosen by the accessible interaction
-            // list (or gamepad). Otherwise the native activity prompts normally.
+
+
             player_character.assign_activity( open_tile_activity_actor( mouse_target ) );
             break;
 
@@ -3790,7 +3805,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_EXAMINE:
         case ACTION_EXAMINE_AND_PICKUP:
             if( mouse_target ) {
-                // Examine including item pickup if ACTION_EXAMINE_AND_PICKUP is used
+
                 examine( *mouse_target, act == ACTION_EXAMINE_AND_PICKUP );
             } else {
                 examine( act == ACTION_EXAMINE_AND_PICKUP );
@@ -3867,8 +3882,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_USE:
-            // Shell-users are presumed to be able to mess with their inventories, etc
-            // while in the shell.  Eating, gear-changing, and item use are OK.
+
+
             avatar_action::use_item( player_character );
             break;
 
@@ -3903,15 +3918,15 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_READ:
-            // Shell-users are presumed to have the book just at an opening and read it that way
+
             read();
             break;
 
         case ACTION_WIELD: {
             if( combat_cycle_direction != 0 ) {
-                // Unarmed is a real entry in the cycle. Weapons retain the
-                // game's location-aware wield rules, retrieval costs and
-                // safe auto-stow when the former weapon fits in inventory.
+
+
+
                 std::vector<item_location> options;
                 for( item_location loc : player_character.all_items_loc() ) {
                     if( loc && ( loc->is_gun() || loc->is_melee() ) &&
@@ -3920,7 +3935,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     }
                 }
                 const int total = static_cast<int>( options.size() ) + 1;
-                int current = 0; // index zero = unarmed
+                int current = 0;
                 for( std::size_t i = 0; i < options.size(); ++i ) {
                     if( player_character.is_wielding( *options[i] ) ) {
                         current = static_cast<int>( i ) + 1;
@@ -4074,7 +4089,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_UNLOAD_CONTAINER:
-            // You CAN drop things to your own tile while in the shell.
+
             unload_container( mouse_target );
             break;
 
@@ -4182,8 +4197,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_TOGGLE_AUTOSAFE: {
-            // Keep a single short outcome for reader users; set_next_option
-            // already speaks a verbose options string, so do not call both.
+
+
             if( a11y::enabled() ) {
                 get_options().get_option( "AUTOSAFEMODE" ).setNext();
                 get_options().save();
@@ -4256,13 +4271,13 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     player_character.set_moves( 0 );
                     uquit = QUIT_SAVED;
                 } else if( save_is_dirty && query_yn( _( "Unable to save, quit anyway?" ) ) ) {
-                    // Game refused to save because of unsupported game state. But we don't want to trap them here, so at least let give them the option.
+
                     player_character.set_moves( 0 );
                     uquit = QUIT_NOSAVED;
                 } else if( a11y::enabled() ) {
-                    // R20.1: a failed save otherwise ends in silence --
-                    // the confirmation dialog closes and nothing says the
-                    // game was not saved or that the player has not quit.
+
+
+
                     popup( _( "The game could not be saved.  You are still in the game; nothing was quit." ) );
                 }
             }
@@ -4273,8 +4288,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             return false;
 
         case ACTION_QUICKLOAD:
-            // Unlike Save and Quit, quickload can silently discard every
-            // change since the last save. Require spoken confirmation.
+
+
             if( a11y::enabled() &&
                 !query_yn( _( "Reload the last save?  Any progress not saved will be lost.  Continue?" ) ) ) {
                 break;
@@ -4380,7 +4395,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
         case ACTION_DEBUG:
             if( MAP_SHARING::isCompetitive() && !MAP_SHARING::isDebugger() ) {
-                break;    //don't do anything when sharing and not debugger
+                break;
             }
             debug_menu::debug();
             break;
@@ -4402,18 +4417,18 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_TOGGLE_AUTO_FEATURES:
-            // Set Auto Features to x
+
             set_next_option( "AUTO_FEATURES" );
             break;
 
         case ACTION_TOGGLE_AUTO_PULP_BUTCHER:
-            // Set Auto pulp or butcher to x
+
             set_next_option( "AUTO_PULP_BUTCHER" );
             auto_features_warn();
             break;
 
         case ACTION_TOGGLE_AUTO_MINING:
-            // Set Auto Mining to x
+
             set_next_option( "AUTO_MINING" );
             auto_features_warn();
             break;
@@ -4432,20 +4447,20 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 //~ Thief mode cycled between THIEF_ASK/THIEF_HONEST/THIEF_STEAL
                 add_msg( _( "Thief mode: Default - you will be prompted when picking up owned items." ) );
             } else {
-                // ERROR
+
                 add_msg( _( "THIEF_MODE CONTAINED BAD VALUE [ %s ]!" ),
                          player_character.get_value( "THIEF_MODE" ).to_string() );
             }
             break;
 
         case ACTION_TOGGLE_AUTO_FORAGING:
-            // Set Auto Foraging to x
+
             set_next_option( "AUTO_FORAGING" );
             auto_features_warn();
             break;
 
         case ACTION_TOGGLE_AUTO_PICKUP:
-            // Set Auto pickup enabled to x
+
             set_next_option( "AUTO_PICKUP" );
             break;
 
@@ -4455,7 +4470,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
         case ACTION_TOGGLE_DEBUG_MODE:
             if( MAP_SHARING::isCompetitive() && !MAP_SHARING::isDebugger() ) {
-                break;    //don't do anything when sharing and not debugger
+                break;
             }
             handle_debug_mode();
             break;
@@ -4479,8 +4494,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_AUTOATTACK:
-            // The game's original Autoattack command remains automatic:
-            // it chooses the best target in reach using native rules.
+
+
             avatar_action::autoattack( player_character, here );
             break;
 
@@ -4507,10 +4522,10 @@ bool game::handle_action()
     combat_cycle_direction = 0;
     combat_reload_to_full = false;
 
-    // Walking auto-travel owns Character::has_destination(), while fully
-    // autonomous Explore Places driving owns ACT_AUTODRIVE and its own game-
-    // thread control pump. Never consume the car's pending JNI command or
-    // clear its active state just because it has no walking waypoints.
+
+
+
+
     const bool driving_destination_activity = player_character.activity &&
             player_character.activity.id() == activity_id( "ACT_AUTODRIVE" );
     const int travel_control = driving_destination_activity ? 0 :
@@ -4520,10 +4535,10 @@ bool game::handle_action()
     } else if( !a11y::android::enabled() &&
                ( a11y::android::travel_state() == 2 ||
                  a11y::android::travel_state() == 3 ) ) {
-        // Disabling accessibility entirely must not trap native controls.
-        // Merely suspending the reader (screen lock, lost Android focus,
-        // TTS recovery) must NEVER silently resume an explicitly paused
-        // journey, especially one stopped because of danger.
+
+
+
+
         a11y::android::set_travel_state( 1 );
     }
     if( player_character.has_destination() && travel_control == 3 &&
@@ -4540,8 +4555,8 @@ bool game::handle_action()
         add_msg( m_info, _( "Automatic travel paused.  Your route is kept." ) );
     } else if( player_character.has_destination() && travel_control == 4 &&
                a11y::android::travel_state() == 3 && safe_mode == SAFE_MODE_STOP ) {
-        // Same safety semantics as ACTION_IGNORE_ENEMY: an explicit user
-        // choice for this warning only, not a global safemode shutdown.
+
+
         for( auto &visible : player_character.get_mon_visible().new_seen_mon ) {
             monster &critter = *visible;
             critter.ignoring = rl_dist( player_character.pos_bub(), critter.pos_bub() );
@@ -4568,10 +4583,10 @@ bool game::handle_action()
     }
     if( player_character.has_destination() &&
         ( a11y::android::travel_state() == 2 || a11y::android::travel_state() == 3 ) ) {
-        // Run the ordinary world reader without consuming the next waypoint.
-        // Its input wait times out quickly, allowing a queued Resume/Cancel
-        // to be processed on the next iteration. Ignore ordinary gameplay
-        // commands while a route is explicitly paused.
+
+
+
+
         std::string ignored_action;
         get_player_input( ignored_action );
         return false;
@@ -4579,7 +4594,7 @@ bool game::handle_action()
     if( player_character.has_destination() && a11y::enabled() ) {
         a11y::android::set_travel_state( 1 );
     }
-    // Check if we have an auto-move destination
+
     if( player_character.has_destination() ) {
         act = player_character.get_next_auto_move_direction();
         if( act == ACTION_NULL ) {
@@ -4589,46 +4604,46 @@ bool game::handle_action()
         }
         handle_key_blocking_activity();
     } else if( player_character.has_destination_activity() ) {
-        // starts destination activity after the player successfully reached his destination
+
         player_character.start_destination_activity();
         return false;
     } else if( uistate.open_menu ) {
-        // make a copy so that uistate.open_menu can be assigned a new function
-        // during the execution of the copied old function
+
+
         std::optional<std::function<void()>> open_menu_tmp = std::nullopt;
         std::swap( uistate.open_menu, open_menu_tmp );
         open_menu_tmp.value()();
         return false;
     } else {
-        // No auto-move, ask player for input
+
         ctxt = get_player_input( action );
     }
 
-    // Remove asynchronous animations if any action taken before the input timeout
-    // Otherwise repeated input can cause animations to accumulate as the timeout is never reached
+
+
     g->void_async_anim_curses();
 #if defined(TILES)
     tilecontext->void_async_anim();
 #else
-    // Curses does not redraw itself so do it here
+
     g->invalidate_main_ui_adaptor();
 #endif
 
     bool veh_ctrl = has_vehicle_control( player_character );
 
-    // Never advance a driving turn when ordinary safe mode is stopping play.
-    // Unlike manual obstacle override, this preserves the native player
-    // safety-mode gate.
+
+
+
     if( action == "TIMEOUT" && safe_mode == SAFE_MODE_STOP ) {
         const optional_vpart_position seat = here.veh_at(
-                    player_character.pos_bub( here ) );
+                player_character.pos_bub( here ) );
         if( seat && seat->vehicle().a11y_continuous_drive ) {
             vehicle &car = seat->vehicle();
             car.cruise_velocity = 0;
             if( car.velocity != 0 ) {
                 handbrake( here );
-                // Ordinary safe mode must still allow the physics of
-                // the remaining braking momentum to finish.
+
+
                 car.a11y_continuous_drive = car.velocity != 0;
                 player_character.set_moves( std::min( player_character.get_moves(), 0 ) );
             } else {
@@ -4638,8 +4653,8 @@ bool game::handle_action()
         }
     }
 
-    // If performing an action with right mouse button, co-ordinates
-    // of location clicked.
+
+
     std::optional<tripoint_bub_ms> mouse_target;
 
     if( uquit == QUIT_WATCH && action == "QUIT" ) {
@@ -4648,28 +4663,28 @@ bool game::handle_action()
     }
 
     if( act == ACTION_NULL ) {
-        // World combat commands are distinct from walking and never pass
-        // through the generic movement action lookup. The normal action
-        // pipeline below still handles costs, safemode and game turns.
+
+
+
         if( a11y::enabled() && action.rfind( "A11Y_INTERNAL_COMBAT_ATTACK_", 0 ) == 0 ) {
             const std::string direction = action.substr( 28 );
             if( direction.size() == 1 && direction[0] >= '0' && direction[0] <= '7' ) {
                 const int dir = direction[0] - '0';
                 const item_location held = player_character.get_wielded_item();
                 if( held && held->is_gun() && !held->gun_current_mode().melee() ) {
-                    // Gun gestures retain their native directional firing
-                    // path and aim mode, unchanged.
+
+
                     combat_attack_direction = dir;
                     act = ACTION_FIRE;
                 } else {
-                    // CDDA's ordinary eight-direction movement is also its
-                    // melee control. Walking into a creature lets the game
-                    // decide whether to attack, displace, talk, or refuse;
-                    // an empty square follows the game's walking rules.
-                    // Do not invent a hostile-only filter or a no-move
-                    // fallback. Use the normal action pipeline so safety,
-                    // status effects, terrain, isometric rotation and turn
-                    // costs behave exactly as with a native movement key.
+
+
+
+
+
+
+
+
                     constexpr action_id step_actions[8] = {
                         ACTION_MOVE_FORTH, ACTION_MOVE_FORTH_RIGHT,
                         ACTION_MOVE_RIGHT, ACTION_MOVE_BACK_RIGHT,
@@ -4692,7 +4707,7 @@ bool game::handle_action()
                 car.a11y_release_controls_pending = false;
                 car.a11y_drive_paused = false;
                 car.a11y_resume_cruise_velocity = 0;
-                // Preserve native ownership, weapon and ignition checks.
+
                 if( !player_character.controlling_vehicle ||
                     !car.player_in_control( here, player_character ) ) {
                     control_vehicle( std::nullopt );
@@ -4716,7 +4731,7 @@ bool game::handle_action()
             car.cruise_velocity = 0;
             car.a11y_obstacle_stop = false;
             car.a11y_obstacle_override = false;
-            // Native physics owns the stopping distance. Keep the engine on.
+
             car.a11y_continuous_drive = car.velocity != 0;
             if( car.velocity == 0 ) {
                 car.a11y_release_controls_pending = false;
@@ -4753,8 +4768,8 @@ bool game::handle_action()
                       ACTION_MOVE_LEFT : ACTION_MOVE_RIGHT;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_BRAKE" ) {
-            // Smash is already the native driving handbrake. Use that same
-            // action rather than implementing another vehicle physics path.
+
+
             if( veh_ctrl && player_character.controlling_vehicle ) {
                 const optional_vpart_position seat =
                     here.veh_at( player_character.pos_bub( here ) );
@@ -4766,11 +4781,11 @@ bool game::handle_action()
                 act = ACTION_SMASH;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_PAUSE" ) {
-            // A pause is physical braking; resuming is guarded by the real
-            // speed and projected obstacle clearance, never a blind restart.
+
+
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
-                        player_character.pos_bub( vehicle_map ) );
+                    player_character.pos_bub( vehicle_map ) );
             if( !veh_ctrl || !seated || !player_character.in_vehicle ||
                 !player_character.controlling_vehicle ||
                 !seated->vehicle().player_in_control( vehicle_map, player_character ) ||
@@ -4787,7 +4802,7 @@ bool game::handle_action()
                 add_msg( m_info, _( "Driving paused. Braking to a stop." ) );
                 a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
                                          std::string( _( "Driving paused. Braking to a stop." ) ), 1 );
-                // Same handbrake used by every other native driver.
+
                 act = ACTION_SMASH;
             } else if( car.velocity != 0 ) {
                 add_msg( m_warning, _( "Vehicle still moving. Braking again before resuming." ) );
@@ -4827,11 +4842,11 @@ bool game::handle_action()
                 return false;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_ENGINE" ) {
-            // Use the ordinary timed ignition activity. A request to start
-            // an engine does not claim that the engine has started yet.
+
+
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
-                        player_character.pos_bub( vehicle_map ) );
+                    player_character.pos_bub( vehicle_map ) );
             if( veh_ctrl && seated && player_character.in_vehicle &&
                 player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( vehicle_map, player_character ) &&
@@ -4847,8 +4862,8 @@ bool game::handle_action()
                 } else {
                     car.start_engines( vehicle_map, &player_character );
                     add_msg( m_info, _( "Starting engine." ) );
-                    // Ignition request is not proof that the engine started.
-                    // The typed world state announces confirmed running.
+
+
                     a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
                                              std::string( _( "Starting engine." ) ), 1 );
                 }
@@ -4861,12 +4876,12 @@ bool game::handle_action()
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_HORN" ) {
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
-                        player_character.pos_bub( vehicle_map ) );
+                    player_character.pos_bub( vehicle_map ) );
             if( veh_ctrl && seated && player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( vehicle_map, player_character ) &&
                 ( !g || g->remoteveh() != &seated->vehicle() ) &&
                 seated->vehicle().has_part( "HORN" ) ) {
-                // The native horn sound is enough; speak only on failure.
+
                 seated->vehicle().honk_horn( vehicle_map, true );
             }
             return false;
@@ -4883,13 +4898,13 @@ bool game::handle_action()
         if( act != ACTION_NULL ) {
             user_action_counter += 1;
             a11y::android::diagnostic_event( "COMBAT_NATIVE",
-                    "action=" + action );
+                                             "action=" + action );
         } else {
             act = look_up_action( action );
         }
 
         if( act == ACTION_KEYBINDINGS ) {
-            // already handled by input context
+
             return false;
         }
 
@@ -4897,7 +4912,7 @@ bool game::handle_action()
             if( uquit == QUIT_WATCH ) {
                 return false;
             }
-            // No auto-move actions have or can be set at this point.
+
             player_character.clear_destination();
             destination_preview.clear();
             act = handle_main_menu();
@@ -4910,7 +4925,7 @@ bool game::handle_action()
         if( gamepad::is_active() ) {
             gamepad::direction dir = gamepad::get_left_stick_direction();
             if( dir != gamepad::direction::NONE ) {
-                // List of actions that can use the directional cursor
+
                 if( act == ACTION_INTERACT || act == ACTION_SMASH || act == ACTION_GRAB ||
                     act == ACTION_PEEK || act == ACTION_UNLOAD_CONTAINER || act == ACTION_DIR_DROP ||
                     act == ACTION_EXAMINE || act == ACTION_EXAMINE_AND_PICKUP ||
@@ -4926,7 +4941,7 @@ bool game::handle_action()
             if( uquit == QUIT_WATCH ) {
                 return false;
             }
-            // No auto-move actions have or can be set at this point.
+
             player_character.clear_destination();
             destination_preview.clear();
             act = handle_action_menu( here );
@@ -4942,15 +4957,15 @@ bool game::handle_action()
 
         if( act == ACTION_INTERACT ) {
             if( !mouse_target && a11y::enabled() ) {
-                // Show all actionable visible tiles, then native actions for
-                // the chosen tile. Merely browsing does not spend game time.
+
+
                 mouse_target = choose_accessible_nearby_target(
                                    _( "Interact with nearby objects" ),
-                [&]( const tripoint_bub_ms &target ) {
+                [&]( const tripoint_bub_ms & target ) {
                     for( const action_id candidate : {
-                                ACTION_EXAMINE, ACTION_PICKUP, ACTION_OPEN,
-                                ACTION_CLOSE, ACTION_BUTCHER, ACTION_CHAT
-                            } ) {
+                             ACTION_EXAMINE, ACTION_PICKUP, ACTION_OPEN,
+                             ACTION_CLOSE, ACTION_BUTCHER, ACTION_CHAT
+                         } ) {
                         if( can_interact_at( candidate, here, target ) ) {
                             return true;
                         }
@@ -4985,19 +5000,19 @@ bool game::handle_action()
         }
 
         if( act == ACTION_CLICK_AND_DRAG ) {
-            // Need to return false to avoid disrupting actions like character mouse movement that require two clicks
+
             return false;
         }
 
         if( act == ACTION_SELECT || act == ACTION_SEC_SELECT ) {
-            // Mouse button click
+
             if( veh_ctrl ) {
-                // No mouse use in vehicle
+
                 return false;
             }
 
             if( player_character.is_dead_state() ) {
-                // do not allow mouse actions while dead
+
                 return false;
             }
 
@@ -5008,15 +5023,15 @@ bool game::handle_action()
                 return false;
             }
             if( !player_character.sees( here, *mouse_pos ) ) {
-                // Not clicked in visible terrain
+
                 return false;
             }
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
-                // Note: The following has the potential side effect of
-                // setting auto-move destination state in addition to setting
-                // act.
+
+
+
                 if( !try_get_left_click_action( act, *mouse_target ) ) {
                     return false;
                 }
@@ -5026,12 +5041,12 @@ bool game::handle_action()
                 }
             }
         } else if( act != ACTION_TIMEOUT ) {
-            // act has not been set for an auto-move, so clearing possible
-            // auto-move destinations. Since initializing an auto-move with
-            // the mouse may span across multiple actions, we do not clear the
-            // auto-move destination if the action is only a timeout, as this
-            // would require the user to double click quicker than the
-            // timeout delay.
+
+
+
+
+
+
             player_character.clear_destination();
             destination_preview.clear();
         }
@@ -5056,14 +5071,14 @@ bool game::handle_action()
         return false;
     }
 
-    // This has no action unless we're in a special game mode.
+
 #if defined(__ANDROID__)
     const bool diagnostic_profile = a11y::android::performance_profiling_enabled();
     const auto diagnostic_action_started = diagnostic_profile ? std::chrono::steady_clock::now() :
-                                            std::chrono::steady_clock::time_point{};
+                                           std::chrono::steady_clock::time_point{};
     const std::string diagnostic_action_name = diagnostic_profile ? action_ident( act ) : "";
-    // A JNI-accepted direction is not proof of movement. Record the
-    // authoritative position before and after the original game action.
+
+
     const bool walking_action = act == ACTION_MOVE_FORTH ||
                                 act == ACTION_MOVE_FORTH_RIGHT ||
                                 act == ACTION_MOVE_RIGHT ||
@@ -5089,12 +5104,12 @@ bool game::handle_action()
 
     int before_action_moves = player_character.get_moves();
 
-    // These actions are allowed while deathcam is active. Registered in game::get_player_input
+
     if( uquit == QUIT_WATCH || !player_character.is_dead_state() ) {
         do_deathcam_action( act, player_character );
     }
 
-    // actions allowed only while alive
+
     if( !player_character.is_dead_state() ) {
         if( !do_regular_action( act, player_character, mouse_target ) ) {
 #if defined(__ANDROID__)
@@ -5102,8 +5117,8 @@ bool game::handle_action()
                 a11y::android::performance_step_sample( false );
                 if( diagnostic_profile ) {
                     a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
-                            "action=" + diagnostic_action_name +
-                            " result=action_rejected changed=false" );
+                                                     "action=" + diagnostic_action_name +
+                                                     " result=action_rejected changed=false" );
                 }
             }
             if( diagnostic_profile && act != ACTION_TIMEOUT ) {
@@ -5127,8 +5142,8 @@ bool game::handle_action()
     gamemode->post_action( act );
 #if defined(__ANDROID__)
     if( walking_action && a11y::android::enabled() && !a11y::android::suspended() ) {
-        // Covers both manual walking and auto-travel, which may not pass
-        // through a waiting reader screen between successive steps.
+
+
         a11y::announce_area_transition();
     }
 #endif
@@ -5152,20 +5167,20 @@ bool game::handle_action()
             const int dz = after.z() - diagnostic_before_position->z();
             a11y::android::performance_step_sample( dx != 0 || dy != 0 || dz != 0 );
             a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
-                    "action=" + diagnostic_action_name +
-                    " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
-                                   std::string( "same_tile" ) ) +
-                    " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
-                                     std::string( "false" ) ) +
-                    " from_x=" + std::to_string( diagnostic_before_position->x() ) +
-                    " from_y=" + std::to_string( diagnostic_before_position->y() ) +
-                    " from_z=" + std::to_string( diagnostic_before_position->z() ) +
-                    " to_x=" + std::to_string( after.x() ) +
-                    " to_y=" + std::to_string( after.y() ) +
-                    " to_z=" + std::to_string( after.z() ) +
-                    " moves_spent=" + std::to_string( before_action_moves -
+                                             "action=" + diagnostic_action_name +
+                                             " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
+                                                     std::string( "same_tile" ) ) +
+                                             " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
+                                                     std::string( "false" ) ) +
+                                             " from_x=" + std::to_string( diagnostic_before_position->x() ) +
+                                             " from_y=" + std::to_string( diagnostic_before_position->y() ) +
+                                             " from_z=" + std::to_string( diagnostic_before_position->z() ) +
+                                             " to_x=" + std::to_string( after.x() ) +
+                                             " to_y=" + std::to_string( after.y() ) +
+                                             " to_z=" + std::to_string( after.z() ) +
+                                             " moves_spent=" + std::to_string( before_action_moves -
                                                      player_character.get_moves() ) +
-                    " action_ms=" + std::to_string( elapsed ) );
+                                             " action_ms=" + std::to_string( elapsed ) );
         }
     }
 #endif

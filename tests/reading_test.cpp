@@ -180,8 +180,8 @@ TEST_CASE( "character_reading_speed", "[reading][character][speed]" )
     Character &dummy = get_avatar();
     dummy.worn.wear_item( dummy, item( itype_backpack ), false, false );
 
-    // Note: read_speed() returns number of moves;
-    // 6000 == 60 seconds
+
+
 
     WHEN( "character has average intelligence" ) {
         REQUIRE( dummy.get_int() == 8 );
@@ -223,24 +223,24 @@ TEST_CASE( "character_reading_speed", "[reading][character][speed]" )
 TEST_CASE( "estimated_reading_time_for_a_book", "[reading][book][time]" )
 {
     avatar dummy;
-    //Give eyes to our dummy
+
     dummy.set_body();
     REQUIRE( dummy.has_part( bodypart_id( "eyes" ) ) );
     REQUIRE( dummy.get_limb_score( limb_score_vision ) != 0 );
 
     dummy.worn.wear_item( dummy, item( itype_backpack ), false, false );
 
-    // Easy, medium, and hard books
+
     item_location child = dummy.i_add( item( itype_child_book ) );
     item_location western = dummy.i_add( item( itype_novel_western ) );
     item_location alpha = dummy.i_add( item( itype_recipe_alpha ) );
 
-    // Ensure the books are actually books
+
     REQUIRE( child->type->book );
     REQUIRE( western->type->book );
     REQUIRE( alpha->type->book );
 
-    // Convert time to read from minutes to moves, for easier comparison later
+
     time_duration moves_child = child->type->book->time;
     time_duration moves_western = western->type->book->time;
     time_duration moves_alpha = alpha->type->book->time;
@@ -249,7 +249,7 @@ TEST_CASE( "estimated_reading_time_for_a_book", "[reading][book][time]" )
         REQUIRE_FALSE( dummy.has_identified( child->typeId() ) );
         REQUIRE_FALSE( dummy.has_identified( western->typeId() ) );
 
-        // Get some light
+
         dummy.i_add( item( itype_test_lamp ) );
         REQUIRE( dummy.fine_detail_vision_mod() == 1 );
 
@@ -260,7 +260,7 @@ TEST_CASE( "estimated_reading_time_for_a_book", "[reading][book][time]" )
     }
 
     GIVEN( "some identified books and plenty of light" ) {
-        // Identify the books
+
         dummy.identify( *child );
         dummy.identify( *western );
         dummy.identify( *alpha );
@@ -268,14 +268,14 @@ TEST_CASE( "estimated_reading_time_for_a_book", "[reading][book][time]" )
         REQUIRE( dummy.has_identified( western->typeId() ) );
         REQUIRE( dummy.has_identified( alpha->typeId() ) );
 
-        // Get some light
+
         dummy.i_add( item( itype_test_lamp ) );
         REQUIRE( dummy.fine_detail_vision_mod() == 1 );
 
         WHEN( "player has average intelligence" ) {
             dummy.set_int_base( 8 );
             REQUIRE( dummy.get_int() == 8 );
-            REQUIRE( dummy.read_speed() * 60 == 6000 ); // 60s, "normal"
+            REQUIRE( dummy.read_speed() * 60 == 6000 );
 
             THEN( "they can read books at their reading level in the normal amount time" ) {
                 CHECK( dummy.time_to_read( *child, dummy ) == moves_child );
@@ -289,7 +289,7 @@ TEST_CASE( "estimated_reading_time_for_a_book", "[reading][book][time]" )
         WHEN( "player has below average intelligence" ) {
             dummy.set_int_base( 6 );
             REQUIRE( dummy.get_int() == 6 );
-            REQUIRE( dummy.read_speed() * 60 == 6480 ); // 65s
+            REQUIRE( dummy.read_speed() * 60 == 6480 );
 
             THEN( "they take longer than average to read any book" ) {
                 CHECK( dummy.time_to_read( *child, dummy ) > moves_child );
@@ -301,7 +301,7 @@ TEST_CASE( "estimated_reading_time_for_a_book", "[reading][book][time]" )
         WHEN( "player has above average intelligence" ) {
             dummy.set_int_base( 10 );
             REQUIRE( dummy.get_int() == 10 );
-            REQUIRE( dummy.read_speed() * 60 == 5460 ); // 55s
+            REQUIRE( dummy.read_speed() * 60 == 5460 );
 
             THEN( "they take less time than average to read any book" ) {
                 CHECK( dummy.time_to_read( *child, dummy ) < moves_child );
@@ -353,12 +353,12 @@ TEST_CASE( "reasons_for_not_being_able_to_read", "[reading][reasons]" )
     }
 
     GIVEN( "some identified books and plenty of light" ) {
-        // Identify the books
+
         dummy.identify( *child );
         dummy.identify( *western );
         dummy.identify( *alpha );
 
-        // Get some light
+
         dummy.i_add( item( itype_test_lamp ) );
         REQUIRE( dummy.fine_detail_vision_mod() == 1 );
 
@@ -553,7 +553,7 @@ TEST_CASE( "reading_a_book_with_an_ebook_reader", "[reading][book][ereader]" )
         } );
         REQUIRE_FALSE( ebook->is_null() );
 
-        // CAN_USE_IN_DARK should get inherited from the ereader.
+
         REQUIRE( ebook->has_flag( flag_CAN_USE_IN_DARK ) );
 
         item battery( itype_test_battery_disposable );
@@ -594,4 +594,3 @@ TEST_CASE( "reading_a_book_with_an_ebook_reader", "[reading][book][ereader]" )
         test_ebook_is_reading( dummy, ereader, booklc );
     }
 }
-

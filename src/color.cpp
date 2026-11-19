@@ -73,7 +73,7 @@ void color_manager::finalize()
         entry.invert = get( entry.invert_id );
 
         if( !entry.name_custom.empty() ) {
-            // Not using name_to_color because we want default color of this name
+
             const color_id id = name_to_id( entry.name_custom );
             auto &other = color_array[id];
             entry.custom = other.color;
@@ -89,14 +89,14 @@ void color_manager::finalize()
         inverted_map[entry.invert] = entry.invert_id;
     }
 
-    // Highlights in a next run, to make sure custom colors are set
+
     for( color_manager::color_struct &entry : color_array ) {
         const std::string my_name = get_name( entry.color );
         const std::string root = my_name.substr( 2, my_name.length() - 2 );
         const size_t underscore_num = std::count( root.begin(), root.end(), '_' ) -
                                       ( root.find( "light_" ) != std::string::npos ) -
                                       ( root.find( "dark_" ) != std::string::npos );
-        // do not try to highlight color pairs, highlighted, background, and invalid colors
+
         if( my_name.substr( 0, 2 ) == "c_" && root != "unset" && underscore_num < 1 ) {
             for( size_t j = 0; j < NUM_HL; j++ ) {
                 entry.highlight[j] = highlight_from_names( my_name, hilights[j] );
@@ -140,7 +140,7 @@ color_id color_manager::color_to_id( const nc_color &color ) const
         return iter->second;
     }
 
-    // Optimally this shouldn't happen, but allow for now
+
     for( const color_manager::color_struct &entry : color_array ) {
         if( entry.color == color ) {
             debugmsg( "Couldn't find color %d", color.operator int() );
@@ -203,16 +203,16 @@ nc_color color_manager::get_highlight( const nc_color &color, const hl_enum bg )
 nc_color color_manager::highlight_from_names( const std::string &name,
         const std::string &bg_name ) const
 {
-    /*
-    //            Base Name      Highlight      Red BG              White BG            Green BG            Yellow BG
-    add_highlight("c_black",     "h_black",     "",                 "c_black_white",    "c_black_green",    "c_black_yellow",   "c_black_magenta",      "c_black_cyan");
-    add_highlight("c_white",     "h_white",     "c_white_red",      "c_white_white",    "c_white_green",    "c_white_yellow",   "c_white_magenta",      "c_white_cyan");
-    etc.
-    */
+
+
+
+
+
+
 
     std::string hi_name;
 
-    if( bg_name.empty() ) {  //c_black -> h_black
+    if( bg_name.empty() ) {
         hi_name = "h_" + name.substr( 2, name.length() - 2 );
     } else {
         hi_name = name + "_" + bg_name;
@@ -228,7 +228,7 @@ void color_manager::load_default()
         return nc_color::from_color_pair_index( n );
     };
 
-    //        Color         Name      Color Pair      Invert
+
     add_color( def_c_black, "c_black", color_pair( 30 ), def_i_black );
     add_color( def_c_white, "c_white", color_pair( 1 ).bold(), def_i_white );
     add_color( def_c_light_gray, "c_light_gray", color_pair( 1 ), def_i_light_gray );
@@ -396,7 +396,7 @@ void color_manager::load_default()
     add_color( def_c_light_cyan_cyan, "c_light_cyan_cyan", color_pair( 71 ).bold(),
                def_c_light_cyan_cyan );
 
-    // Allow real dark gray for terminals that support it
+
     if( catacurses::supports_256_colors() ) {
         add_color( def_c_dark_gray, "c_dark_gray", color_pair( 72 ), def_i_dark_gray );
         add_color( def_h_dark_gray, "h_dark_gray", color_pair( 75 ), def_c_light_blue );
@@ -428,7 +428,7 @@ void color_manager::load_default()
 
 void init_colors()
 {
-    using namespace catacurses; // to get the base_color enumeration
+    using namespace catacurses;
     init_pair( 1, white,      black );
     init_pair( 2, red,        black );
     init_pair( 3, green,      black );
@@ -437,7 +437,7 @@ void init_colors()
     init_pair( 6, magenta,    black );
     init_pair( 7, yellow,     black );
 
-    // Inverted Colors
+
     init_pair( 8, black,      white );
     init_pair( 9, black,      red );
     init_pair( 10, black,      green );
@@ -446,7 +446,7 @@ void init_colors()
     init_pair( 13, black,      magenta );
     init_pair( 14, black,      yellow );
 
-    // Highlighted - blue background
+
     init_pair( 15, white,      blue );
     init_pair( 16, red,        blue );
     init_pair( 17, green,      blue );
@@ -456,7 +456,7 @@ void init_colors()
     init_pair( 21, magenta,    blue );
     init_pair( 22, yellow,     blue );
 
-    // Red background - for monsters on fire
+
     init_pair( 23, white,      red );
     init_pair( 24, red,        red );
     init_pair( 25, green,      red );
@@ -533,7 +533,7 @@ void init_colors()
     all_colors.load_default();
     all_colors.load_custom( {} );
 
-    // The short color codes (e.g. "br") are intentionally untranslatable.
+
     color_by_string_map = {
         {"br", {c_brown, to_translation( "brown" )}}, {"lg", {c_light_gray, to_translation( "light gray" )}},
         {"dg", {c_dark_gray, to_translation( "dark gray" )}}, {"r", {c_light_red, to_translation( "light red" )}},
@@ -623,17 +623,17 @@ std::string hilite_string( const std::string &text )
     return highlighted;
 }
 
-/**
- * Given the name of a foreground color, returns the nc_color value that matches. If
- * no match is found, c_unset is returned.
- * Special cases:
- * {"black"           , c_black}, // missing default prefix c_
- * {"<c|h|i>_black"   , h_black}, // has prefix c_ or h_ or i_
- * {"dark_gray_red"   , c_dark_gray_red}, // use dark_ instead of dk as the latter is being deprecated
- * {"light_blue_red"  , c_light_blue_red}, // use light_ instead of lt as the latter is being deprecated
- * @param color The color to get, as a std::string.
- * @return The nc_color constant that matches the input.
- */
+
+
+
+
+
+
+
+
+
+
+
 nc_color color_from_string( std::string_view color,
                             const report_color_error color_error )
 {
@@ -641,7 +641,7 @@ nc_color color_from_string( std::string_view color,
         return c_unset;
     }
     std::string new_color( color );
-    if( new_color.substr( 1, 1 ) != "_" ) { //c_  //i_  //h_
+    if( new_color.substr( 1, 1 ) != "_" ) {
         new_color = "c_" + new_color;
     }
 
@@ -669,9 +669,9 @@ nc_color color_from_string( std::string_view color,
     return c_unset;
 }
 
-/**
- * The reverse of color_from_string.
- */
+
+
+
 std::string string_from_color( const nc_color &color )
 {
     std::string sColor = all_colors.get_name( color );
@@ -683,13 +683,13 @@ std::string string_from_color( const nc_color &color )
     return "c_white";
 }
 
-/**
- * Given the name of a background color (that is, one of the i_xxxxx colors),
- * returns the nc_color constant that matches. If no match is found, i_white is
- * returned.
- * @param color The color to get, as a std::string.
- * @return The nc_color constant that matches the input.
- */
+
+
+
+
+
+
+
 nc_color bgcolor_from_string( const std::string &color )
 {
 
@@ -777,19 +777,19 @@ std::string get_note_string_from_color( const nc_color &color )
             return i.first;
         }
     }
-    // The default note string.
+
     return "Y";
 }
 
 nc_color get_note_color( std::string_view note_id )
 {
-    // TODO in C++20 we can pass a string_view in directly rather than
-    // constructing a string to use as the find argument
+
+
     const auto candidate_color = color_by_string_map.find( std::string( note_id ) );
     if( candidate_color != std::end( color_by_string_map ) ) {
         return candidate_color->second.color;
     }
-    // The default note color.
+
     return c_yellow;
 }
 
@@ -825,8 +825,8 @@ static void draw_header( const catacurses::window &w )
     mvwprintz( w, point( 0, 2 ), c_white, _( "Some color changes may require a restart." ) );
 
     wattron( w, BORDER_COLOR );
-    mvwhline( w, point( 0, 3 ), LINE_OXOX, getmaxx( w ) ); // Draw line under header
-    mvwaddch( w, point( 48, 3 ), LINE_OXXX ); //^|^
+    mvwhline( w, point( 0, 3 ), LINE_OXOX, getmaxx( w ) );
+    mvwaddch( w, point( 48, 3 ), LINE_OXXX );
     wattroff( w, BORDER_COLOR );
 
     mvwprintz( w, point( 3, 4 ), c_white, _( "Colorname" ) );
@@ -882,16 +882,16 @@ void color_manager::show_gui()
         name_color_map[pr.first] = color_array[pr.second];
     }
 
-    // Reader adapter (R19.4). The visual screen conveys each entry's
-    // custom replacement only by printing its name in that very color;
-    // the snapshot publishes the same working-copy data (name_color_map,
-    // the exact map the screen draws and edits) as words. Editing never
-    // uses a form field here: the replacement domain is every named
-    // color (well over the form contract's 128-choice limit), so an
-    // edit intent returns this screen's own CONFIRM / REMOVE_CUSTOM /
-    // LOAD_* actions and the original loop performs the change through
-    // its own uilist pickers, which carry their own reader adapters.
-    // Saving still happens only through the original exit path.
+
+
+
+
+
+
+
+
+
+
     enum class reader_target_kind {
         entry,
         normal,
@@ -908,14 +908,16 @@ void color_manager::show_gui()
     };
     std::unordered_map<std::string, reader_target> reader_targets;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "COLORS",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "COLORS",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             if( selected.kind != reader_target_kind::load_theme &&
                 selected.kind != reader_target_kind::load_template ) {
                 iCurrentLine = selected.line;
@@ -929,10 +931,12 @@ void color_manager::show_gui()
             }
             return std::string( "A11Y_INTERNAL_COLOR_FOCUS" );
         }
-        if( intent.action != "activate" ) {
+        if( intent.action != "activate" )
+        {
             return std::nullopt;
         }
-        switch( selected.kind ) {
+        switch( selected.kind )
+        {
             case reader_target_kind::load_theme:
                 return std::string( "LOAD_BASE_COLORS" );
             case reader_target_kind::load_template:
@@ -960,12 +964,14 @@ void color_manager::show_gui()
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Color manager" );
-        snapshot.summary = _( "Each entry names a game color, its custom normal replacement and its custom inverted replacement, or default when there is no custom replacement. Activate Normal or Invert to choose a replacement from the original list, or remove a custom replacement. Some color changes may require a restart. Changes are saved when you exit and confirm, as on the original screen." );
+        snapshot.summary =
+            _( "Each entry names a game color, its custom normal replacement and its custom inverted replacement, or default when there is no custom replacement. Activate Normal or Invert to choose a replacement from the original list, or remove a custom replacement. Some color changes may require a restart. Changes are saved when you exit and confirm, as on the original screen." );
         a11y::semantic_table colors_table;
         colors_table.id = "colors:entries";
         colors_table.columns = { { "name", _( "Color name" ), "" },
-                                 { "normal", _( "Normal" ), "" },
-                                 { "invert", _( "Invert" ), "" } };
+            { "normal", _( "Normal" ), "" },
+            { "invert", _( "Invert" ), "" }
+        };
         snapshot.tables.push_back( colors_table );
         int line = 0;
         for( const auto &pr : name_color_map ) {
@@ -976,7 +982,9 @@ void color_manager::show_gui()
                                               _( "default" ) : entry.name_invert_custom;
             const std::string row_id = "colors:entry:" + std::to_string( line );
             std::vector<a11y::semantic_node> children;
-            for( const int col : { 1, 2 } ) {
+            for( const int col : {
+                     1, 2
+                 } ) {
                 const bool normal_col = col == 1;
                 a11y::semantic_node child;
                 child.id = row_id + ( normal_col ? ":normal" : ":invert" );
@@ -1030,8 +1038,9 @@ void color_manager::show_gui()
             row.table_id = "colors:entries";
             row.row_index = line;
             row.cells = { { "name", pr.first, "", "" },
-                          { "normal", normal_spoken, "", "" },
-                          { "invert", invert_spoken, "", "" } };
+                { "normal", normal_spoken, "", "" },
+                { "invert", invert_spoken, "", "" }
+            };
             row.depth = 0;
             row.expanded = true;
             row.has_children = true;
@@ -1049,13 +1058,16 @@ void color_manager::show_gui()
             }
             line++;
         }
-        for( const bool theme : { true, false } ) {
+        for( const bool theme : {
+                 true, false
+             } ) {
             a11y::semantic_node node;
             node.id = theme ? "colors:load_theme" : "colors:load_template";
             node.role = "button";
             node.label = theme ? _( "Load a color theme" ) : _( "Load template" );
             node.detail = theme ?
-                          _( "Activate to choose a color theme from the original list. The chosen theme replaces the base colors file immediately, as on the original screen." ) :
+                          _( "Activate to choose a color theme from the original list. The chosen theme replaces the base colors file immediately, as on the original screen." )
+                          :
                           _( "Activate to choose a color template from the original list and load it into this screen." );
             node.actions = { "focus", "activate" };
             reader_targets.emplace( node.id,
@@ -1072,14 +1084,14 @@ void color_manager::show_gui()
         if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(),
         [&]( const a11y::semantic_node & node ) {
         return node.id == snapshot.focus;
-        } ) ) {
+    } ) ) {
             snapshot.focus = snapshot.nodes.empty() ? std::string() :
                              snapshot.nodes.front().id;
         }
         for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
-            // Tree nodes keep their sibling position/total from above;
-            // flat nodes (load actions, commands) use whole-list
-            // numbering, as in the options builder.
+
+
+
             if( snapshot.nodes[i].depth >= 0 ) {
                 continue;
             }
@@ -1092,12 +1104,12 @@ void color_manager::show_gui()
     ui.on_redraw( [&]( const ui_adaptor & ) {
         draw_border( w_colors_border, BORDER_COLOR, _( "Color manager" ) );
         wattron( w_colors_border, BORDER_COLOR );
-        mvwaddch( w_colors_border, point( 0, 4 ), LINE_XXXO ); // |-
-        mvwaddch( w_colors_border, point( getmaxx( w_colors_border ) - 1, 4 ), LINE_XOXX ); // -|
+        mvwaddch( w_colors_border, point( 0, 4 ), LINE_XXXO );
+        mvwaddch( w_colors_border, point( getmaxx( w_colors_border ) - 1, 4 ), LINE_XOXX );
 
         for( const int &iCol : vLines ) {
             if( iCol > -1 ) {
-                mvwaddch( w_colors_border, point( iCol + 1, FULL_SCREEN_HEIGHT - 1 ), LINE_XXOX ); // _|_
+                mvwaddch( w_colors_border, point( iCol + 1, FULL_SCREEN_HEIGHT - 1 ), LINE_XXOX );
                 mvwaddch( w_colors_header, point( iCol, 4 ), LINE_XOXO );
             }
         }
@@ -1106,7 +1118,7 @@ void color_manager::show_gui()
 
         draw_header( w_colors_header );
 
-        // Clear all lines
+
         mvwrectf( w_colors, point::zero, c_black, ' ', 79, iContentHeight );
         for( int &iCol : vLines ) {
             mvwvline( w_colors, point( iCol, 0 ), BORDER_COLOR, LINE_XOXO, iContentHeight );
@@ -1120,7 +1132,7 @@ void color_manager::show_gui()
         auto iter = name_color_map.begin();
         std::advance( iter, iStartPos );
 
-        // display color manager
+
         for( int i = iStartPos; iter != name_color_map.end(); ++iter, ++i ) {
             if( i >= iStartPos &&
                 i < iStartPos + std::min( iContentHeight, iMaxColors ) ) {
@@ -1130,20 +1142,20 @@ void color_manager::show_gui()
                     mvwprintz( w_colors, point( vLines[iCurrentCol - 1] + 2, i - iStartPos ), c_yellow, ">" );
                 }
 
-                mvwprintz( w_colors, point( 3, i - iStartPos ), c_white, iter->first ); //color name
-                mvwprintz( w_colors, point( 21, i - iStartPos ), entry.color, _( "default" ) ); //default color
+                mvwprintz( w_colors, point( 3, i - iStartPos ), c_white, iter->first );
+                mvwprintz( w_colors, point( 21, i - iStartPos ), entry.color, _( "default" ) );
 
                 if( !entry.name_custom.empty() ) {
                     mvwprintz( w_colors, point( 30, i - iStartPos ), name_color_map[entry.name_custom].color,
-                               entry.name_custom ); //custom color
+                               entry.name_custom );
                 }
 
                 mvwprintz( w_colors, point( 52, i - iStartPos ), entry.invert,
-                           _( "default" ) ); //invert default color
+                           _( "default" ) );
 
                 if( !entry.name_invert_custom.empty() ) {
                     mvwprintz( w_colors, point( 61, i - iStartPos ), name_color_map[entry.name_invert_custom].color,
-                               entry.name_invert_custom ); //invert custom color
+                               entry.name_invert_custom );
                 }
             }
         }
@@ -1159,8 +1171,8 @@ void color_manager::show_gui()
         const int recmax = iMaxColors;
         const int scroll_rate = recmax > 20 ? 10 : 3;
         if( action == "A11Y_INTERNAL_COLOR_FOCUS" ) {
-            // Reader focus bookkeeping only; no color state changes
-            // beyond what the intent handler already applied.
+
+
         } else if( action == "QUIT" ) {
             break;
         } else if( navigate_ui_list( action, iCurrentLine, scroll_rate, recmax, true ) ) {
@@ -1179,7 +1191,7 @@ void color_manager::show_gui()
 
             }
 
-            finalize(); // Need to recalculate caches
+            finalize();
 
         } else if( action == "LOAD_TEMPLATE" ) {
             auto vFiles = get_files_from_path( ".json", PATH_INFO::color_templates(), false, true );
@@ -1209,7 +1221,7 @@ void color_manager::show_gui()
                 }
             }
 
-            finalize(); // Need to recalculate caches
+            finalize();
 
         } else if( action == "LOAD_BASE_COLORS" ) {
             auto vFiles = get_files_from_path( ".json", PATH_INFO::color_themes(), false, true );
@@ -1285,7 +1297,7 @@ void color_manager::show_gui()
                 }
             }
 
-            finalize(); // Need to recalculate caches
+            finalize();
         }
     }
 
@@ -1323,7 +1335,7 @@ void color_manager::load_custom( const cata_path &sPath )
     read_from_file_optional_json( file, [this]( const JsonArray & jsonin ) {
         deserialize( jsonin );
     } );
-    finalize(); // Need to finalize regardless of success
+    finalize();
 }
 
 void color_manager::serialize( JsonOut &json ) const

@@ -55,4 +55,4 @@ class shearing_data
         std::vector<shearing_entry> entries_;
 };
 
-#endif // CATA_SRC_SHEARING_H
+#endif

@@ -9,8 +9,8 @@
 class JsonValue;
 struct int_distribution_impl;
 
-// This represents a probability distribution over the integers, which is
-// abstract and can be read from a JSON definition
+
+
 class int_distribution
 {
     public:
@@ -25,4 +25,4 @@ class int_distribution
         shared_ptr_fast<int_distribution_impl> impl_;
 };
 
-#endif // CATA_SRC_DISTRIBUTION_H
+#endif

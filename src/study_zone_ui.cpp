@@ -56,7 +56,7 @@ class study_zone_window : public cataimgui::window
             ctxt.register_action( "QUIT" );
             ctxt.set_timeout( 10 );
 
-            // Get all skills
+
             for( const Skill &s : Skill::skills ) {
                 all_skills.push_back( s.ident() );
             }
@@ -65,7 +65,7 @@ class study_zone_window : public cataimgui::window
                 return localized_compare( a->name(), b->name() );
             } );
 
-            // get followers
+
             std::set<character_id> follower_ids = g->get_follower_list();
             for( const character_id &id : follower_ids ) {
                 shared_ptr_fast<npc> npc_ptr = overmap_buffer.find_npc( id );
@@ -73,7 +73,7 @@ class study_zone_window : public cataimgui::window
                     npc_names.push_back( npc_ptr->name );
                 }
             }
-            // include NPCs that are already in preferences but not in follower list
+
             for( const auto &pair : npc_skill_preferences ) {
                 if( std::find( npc_names.begin(), npc_names.end(), pair.first ) == npc_names.end() ) {
                     npc_names.push_back( pair.first );
@@ -81,7 +81,7 @@ class study_zone_window : public cataimgui::window
             }
             std::sort( npc_names.begin(), npc_names.end(), localized_compare );
 
-            // for new NPCs set all checkboxes
+
             for( const std::string &npc_name : npc_names ) {
                 if( npc_skill_preferences.find( npc_name ) == npc_skill_preferences.end() ) {
                     std::set<skill_id> &npc_skills = npc_skill_preferences[npc_name];
@@ -110,19 +110,19 @@ class study_zone_window : public cataimgui::window
         }
 
         study_zone_ui_result execute() {
-            // Reader adapter (R16): this ImGui window would otherwise only
-            // get the generic command fallback, which never publishes the
-            // per-companion skill checkboxes. The preferences are published
-            // as an R02 table (one row per skill, one column per companion)
-            // whose cells are presentation only; each (skill, companion)
-            // pair is also a bool form field in the tree under its skill
-            // row. Reader edits follow the form contract --
-            // select_choice only records a draft in reader_drafts, apply
-            // writes it through the same insert/erase logic as the ImGui
-            // checkbox in draw_skill_row, and activate toggles immediately
-            // like that checkbox. Every write goes to
-            // npc_skill_preferences, the single real store owned by
-            // study_zone_options; the drafts are never a parallel store.
+
+
+
+
+
+
+
+
+
+
+
+
+
             a11y::screen_scope reader( &ctxt, "study-zone",
             [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
                 return reader_intent( intent );
@@ -183,7 +183,7 @@ class study_zone_window : public cataimgui::window
                 bool is_selected = npc_skills.count( skill ) > 0;
                 bool was_selected = is_selected;
 
-                // center the checkbox
+
                 float offset = ( ImGui::GetColumnWidth() - ImGui::GetFrameHeight() ) * 0.5f;
                 ImGui::SetCursorPosX( ImGui::GetCursorPosX() + offset );
 
@@ -206,7 +206,7 @@ class study_zone_window : public cataimgui::window
         }
 
         void draw_footer( const std::vector<skill_id> &filtered_skills ) {
-            // filter input, buttons, and Done button
+
             std::string filter_label = _( "Filter skills: " );
             ImGui::TextUnformatted( filter_label.c_str() );
             ImGui::SameLine();
@@ -278,25 +278,25 @@ class study_zone_window : public cataimgui::window
 
             const float footer_height_to_reserve = ImGui::GetFrameHeightWithSpacing() * 3;
 
-            // inner scroll
+
             if( ImGui::BeginChild( "table_scroll_region", ImVec2( 0, -footer_height_to_reserve ), false,
                                    ImGuiWindowFlags_HorizontalScrollbar ) ) {
-                // Create a table with Skills as rows and npc names as columns
+
                 if( ImGui::BeginTable( "skill_npc_table", static_cast<int>( npc_names.size() ) + 1,
                                        ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY |
                                        ImGuiTableFlags_RowBg ) ) {
-                    // table header row
+
                     ImGui::TableSetupColumn( "Skill", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide,
                                              max_skill_name_width );
                     for( const std::string &npc_name : npc_names ) {
                         ImGui::TableSetupColumn( npc_name.c_str(), ImGuiTableColumnFlags_WidthFixed,
                                                  max_npc_name_width );
                     }
-                    // freeze skill column horizontally and header vertically
+
                     ImGui::TableSetupScrollFreeze( 1, 1 );
                     ImGui::TableHeadersRow();
 
-                    // skill rows
+
                     ImGuiListClipper clipper;
                     clipper.Begin( filtered_skills.size() );
                     while( clipper.Step() ) {
@@ -314,20 +314,20 @@ class study_zone_window : public cataimgui::window
         }
 
     private:
-        // The state the ImGui checkbox in draw_skill_row shows for one
-        // (companion, skill) pair: an entry must exist and contain the
-        // skill. A missing entry (erased when its set became empty) reads
-        // as unchecked for every skill, exactly as drawn -- even though
-        // study_zone_options::get_skill_preferences treats a missing entry
-        // as "reads everything" when the zone is later applied.
+
+
+
+
+
+
         bool skill_allowed( const std::string &npc_name, const skill_id &skill ) const {
             const auto found = npc_skill_preferences.find( npc_name );
             return found != npc_skill_preferences.end() && found->second.count( skill ) > 0;
         }
 
-        // The state change of draw_skill_row, shared by the reader's
-        // apply and activate paths: insert or erase the skill, and erase
-        // the companion's entry altogether when its set becomes empty.
+
+
+
         void set_skill_allowed( const std::string &npc_name, const skill_id &skill,
                                 bool allowed ) {
             if( allowed ) {
@@ -344,9 +344,9 @@ class study_zone_window : public cataimgui::window
             preferences_changed = true;
         }
 
-        // The Check All / Clear All loops of draw_footer. The reader has
-        // no filter, so they run over every skill in all_skills, not over
-        // the footer's filtered_skills.
+
+
+
         void set_all_skills( bool allowed ) {
             for( const std::string &npc_name : npc_names ) {
                 std::set<skill_id> &npc_skills = npc_skill_preferences[npc_name];
@@ -368,10 +368,18 @@ class study_zone_window : public cataimgui::window
             if( intent.node == "study:npc_prev" || intent.node == "study:npc_next" ||
                 intent.node == "study:skill_prev" || intent.node == "study:skill_next" ) {
                 if( intent.action == "activate" ) {
-                    if( intent.node == "study:npc_prev" && reader_npc_page > 0 ) { --reader_npc_page; }
-                    if( intent.node == "study:npc_next" ) { ++reader_npc_page; }
-                    if( intent.node == "study:skill_prev" && reader_skill_page > 0 ) { --reader_skill_page; }
-                    if( intent.node == "study:skill_next" ) { ++reader_skill_page; }
+                    if( intent.node == "study:npc_prev" && reader_npc_page > 0 ) {
+                        --reader_npc_page;
+                    }
+                    if( intent.node == "study:npc_next" ) {
+                        ++reader_npc_page;
+                    }
+                    if( intent.node == "study:skill_prev" && reader_skill_page > 0 ) {
+                        --reader_skill_page;
+                    }
+                    if( intent.node == "study:skill_next" ) {
+                        ++reader_skill_page;
+                    }
                 }
                 return std::string( "TIMEOUT" );
             }
@@ -447,9 +455,9 @@ class study_zone_window : public cataimgui::window
             constexpr std::size_t npc_page_size = 8;
             constexpr std::size_t skill_page_size = 32;
             reader_npc_page = std::min( reader_npc_page,
-                                       npc_names.empty() ? std::size_t( 0 ) : ( npc_names.size() - 1 ) / npc_page_size );
+                                        npc_names.empty() ? std::size_t( 0 ) : ( npc_names.size() - 1 ) / npc_page_size );
             reader_skill_page = std::min( reader_skill_page,
-                                         all_skills.empty() ? std::size_t( 0 ) : ( all_skills.size() - 1 ) / skill_page_size );
+                                          all_skills.empty() ? std::size_t( 0 ) : ( all_skills.size() - 1 ) / skill_page_size );
             const std::size_t npc_begin = reader_npc_page * npc_page_size;
             const std::size_t npc_end = std::min( npc_names.size(), npc_begin + npc_page_size );
             const std::size_t skill_begin = reader_skill_page * skill_page_size;
@@ -458,9 +466,9 @@ class study_zone_window : public cataimgui::window
                                                _( "Study Zone Skill Preferences" ) );
             std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
             snapshot.nodes.clear();
-            // The semantics study_zone_options applies later: a companion
-            // with a preference entry studies only the skills in it, and a
-            // companion with no entry reads every skill.
+
+
+
             snapshot.summary = string_format(
                                    _( "Each companion studies only books for the skills marked "
                                       "for them in this study zone; a companion with no "
@@ -477,9 +485,9 @@ class study_zone_window : public cataimgui::window
                 empty.actions = { "focus" };
                 snapshot.nodes.push_back( std::move( empty ) );
             } else {
-                // Table contract (R02.2): the skills table is declared
-                // once; skill rows below only carry cells referencing
-                // these columns, and cells never carry actions.
+
+
+
                 a11y::semantic_table skills_table;
                 skills_table.id = "study:skills";
                 skills_table.columns.push_back( { "skill", _( "Skill" ), "" } );
@@ -497,14 +505,14 @@ class study_zone_window : public cataimgui::window
                             ++allowed_count;
                         }
                     }
-                    // Row role: medical and trade rows leave the default
-                    // role, so this row does the same.
+
+
                     a11y::semantic_node node;
                     node.id = row_id;
                     node.label = skill->name();
-                    // The row itself only carries the cells; editing a
-                    // (skill, companion) pair goes through the child
-                    // checkbox nodes below, so the row offers no activate.
+
+
+
                     node.actions = { "focus" };
                     node.detail = string_format( _( "Allowed for %1$d of %2$d companions." ),
                                                  allowed_count,
@@ -540,9 +548,11 @@ class study_zone_window : public cataimgui::window
                         child.value = allowed ? _( "Allowed" ) : _( "Not allowed" );
                         child.checked = allowed;
                         child.choices = { { "true", _( "Enabled" ) },
-                                          { "false", _( "Disabled" ) } };
+                            { "false", _( "Disabled" ) }
+                        };
                         child.actions = { "focus", "activate", "select_choice", "apply",
-                                          "cancel_draft" };
+                                          "cancel_draft"
+                                        };
                         const auto draft = reader_drafts.find(
                                                std::make_pair( npc_name, skill.str() ) );
                         if( draft != reader_drafts.end() ) {
@@ -568,13 +578,15 @@ class study_zone_window : public cataimgui::window
             done.label = _( "Done" );
             done.detail = _( "Finish editing the study zone skill preferences." );
             snapshot.nodes.push_back( std::move( done ) );
-            const auto page_button = [&]( const std::string &id, const std::string &label,
-                                          const bool available ) {
+            const auto page_button = [&]( const std::string & id, const std::string & label,
+            const bool available ) {
                 a11y::semantic_node node;
                 node.id = id;
                 node.label = label;
                 node.enabled = available;
-                if( !available ) { node.disabled_reason = _( "No more entries in this direction." ); }
+                if( !available ) {
+                    node.disabled_reason = _( "No more entries in this direction." );
+                }
                 snapshot.nodes.push_back( std::move( node ) );
             };
             if( npc_names.size() > npc_page_size ) {
@@ -591,8 +603,8 @@ class study_zone_window : public cataimgui::window
             snapshot.focus = !npc_names.empty() && !all_skills.empty()
                              ? "study:skill:" + all_skills[skill_begin].str()
                              : "study:done";
-            // Flat positions for ordinary nodes; tree nodes count their
-            // sibling set under the same parent (R02.1).
+
+
             for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
                 snapshot.nodes[i].position = static_cast<int>( i ) + 1;
                 snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
@@ -614,9 +626,9 @@ class study_zone_window : public cataimgui::window
         }
 
         std::map<std::string, std::set<skill_id>> &npc_skill_preferences;
-        // Unapplied reader edits, keyed by (companion name, skill id).
-        // A draft changes nothing until apply writes it through
-        // set_skill_allowed into npc_skill_preferences above.
+
+
+
         std::map<std::pair<std::string, std::string>, bool> reader_drafts;
         std::size_t reader_npc_page = 0;
         std::size_t reader_skill_page = 0;
@@ -631,7 +643,7 @@ class study_zone_window : public cataimgui::window
         float max_npc_name_width = 0.0f;
         input_context ctxt;
 };
-} // namespace
+}
 
 study_zone_ui_result query_study_zone_skills( std::map<std::string, std::set<skill_id>>
         &npc_skill_preferences )
@@ -639,4 +651,3 @@ study_zone_ui_result query_study_zone_skills( std::map<std::string, std::set<ski
     study_zone_window window( npc_skill_preferences );
     return window.execute();
 }
-

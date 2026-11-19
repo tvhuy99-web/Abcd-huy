@@ -44,111 +44,111 @@
 #include "veh_type.h"
 #include "vpart_position.h"
 
-/*
- * This file contains code that allows a vehicle to be driven by an in-game character (most
- * likely the player character) to some remote destination, following a path of adjacent overmap
- * tile (OMT) coordinates, while avoiding any obstacles along the way.
- *
- * The main entry point is do_autodrive(), which is intended to be called from the do_turn() of
- * a long-running activity. This will cause the driver character to perform one or more driving
- * actions (as long as they have enough moves), which could be steering and/or changing the
- * desired speed. The driver may also do nothing if the vehicle is going in the right
- * direction.
- *
- * Most of the logic is inside the private implementation class autodrive_controller, which is
- * instantiated at the beginning of an autodrive activity and cleaned up at the end. This class
- * caches information about the vehicle, driver and the local terrain in order to minimize the
- * amount of computation required on each invocation of do_autodrive().
- *
- * Upon reaching a new overmap tile, as well as once initially, the autodrive algorithm will
- * try to find a path that takes the vehicle from its current position through the current
- * and next OMT in order to reach the 2nd next OMT in the overall path to destination (which
- * is obtained from driver.omt_path). Thus we always plan ahead 2 OMTs worth of navigation,
- * but we only follow the first half of the route, then recompute a new route for the next
- * 2 OMTs. This ensures that we don't drive up to the edge of an OMT only to get stuck due
- * to a large obstacle that can't be driven around from that position (a dead end) and instead
- * we always choose to cross OMT boundaries in a position from which we are guaranteed to be
- * able to continue onward.
- *
- * The pathfinding algorithm being employed is A*. The graph being searched is made up of nodes
- * denoted by x and y coordinates as well as a direction of travel. Since steering changes the
- * vehicle's direction in increments of 15 degrees there are 360/15 possible orientations. By
- * limiting navigation to 2 OMTs at a time we have a maximum search space of 2*24*24*24 nodes.
- * In practice, A* finds a good path after visiting fewer than 50 nodes due to the heuristic
- * function that estimates which nodes are most likely to lead to the destination (which is
- * based on proximity to the "exit zone" leading to the next OMT and whether the vehicle is
- * pointing towards the middle of that zone). Although there can be many paths that we could
- * take to get through to the next OMT, we just take the first one we find since it tends to
- * be the most direct and is usually near-optimal. When the way is blocked we'll either give
- * up after exhausting the search space or after we hit a limit on the search length.
- *
- * In order to build the search graph for A*, we consider every possible map tile and orientation
- * in the search zone and we figure out whether the vehicle's pivot point could be placed there
- * without the vehicle overlapping some obstacle (a collision-free placement). The pivot point
- * is the part of the vehicle that moves the least while steering and is usually between the
- * wheels of the vehicle, closer to the non-steerable ones. The pathfinding problem reduces to
- * finding a path for the pivot point to follow through the set of possible positions and
- * orientations (nodes). In order to figure out the possible connections between nodes (the
- * edges of the graph) we consider a limited set of actions that the driver can perform at
- * each location: nothing, steer left or steer right (possibly more than once). Given a current
- * node, current speed and amount of steering we can predict where the vehicle's pivot point
- * will end up in 1 turn and connect the 2 nodes.
- *
- * In order to keep the search space small we only consider paths traveled at constant speed
- * (otherwise we'd have to add speed as an extra attribute in every node). When we need to
- * compute a new path we first try to use the maximum safe autodrive speed (which is typically
- * much less than the vehicle's max speed). If we can't find a path we cut the speed in half and
- * try again, repeating until we succeed or reach the minimum speed. When the target speed is
- * different from the current speed of the vehicle we try to estimate how long it will take to
- * reach that speed and take that into account when simulating the first few edges (they'll be
- * shorter or longer than the rest).
- *
- * Once we have generated a sequence of nodes to follow, we do not invoke A* again until we reach
- * the next OMT. We simply cache the path and on every subsequent call to do_autodrive() we
- * check where we are on that path, what node we're supposed to reach next and what action we
- * should use to get there. However, sometimes the simplified simulation used to compute the
- * search graph fails to accurately predict where the vehicle will end up. This could be because
- * there was too much error in an approximation (such as time to accelerate) or the driving
- * conditions changed (ran over a mound of dirt that interfered with steering). When such a
- * discrepancy is detected, autodrive will fall back to "safe mode", cutting the speed to the
- * minimum (1 tile per second) and recomputing the path.
- *
- * Since the navigation graph is cached and not updated in response to dynamic obstacles (such
- * as animals) autodrive will also perform collision detection at every turn, before taking
- * any action that may end the turn. If a possible collision is detected autodrive will enter
- * "safe mode", reducing speed and recomputing. If the speed is already at minimum it will
- * abort instead with a warning message.
- *
- * In most cases when autodrive aborts it will not automatically stop the vehicle. Stopping
- * may be undesirable since nearby enemies could get into the vehicle. It is up to the player
- * to either stop or continue driving manually for a while. However, when aborting due to a
- * collision (which happened despite collision detection, i.e. there was a simulation discrepancy
- * near an obstacle) the brakes will be engaged.
- *
- * In order to prevent exploiting the system to navigate in the dark, autodrive will also
- * perform visibility checks. Not being able to see anything in front of the vehicle will
- * immediately cancel (or fail to start) autodrive. If the driver has only partial visibility
- * of the front of the vehicle, safe mode will engage limiting the speed. Furthermore, the
- * driver needs to either see or have map memory for the map tiles in the current OMT; all
- * unseen tiles will be treated as obstacles during pathfinding. In practice, this means
- * that driving at night should only be possible through familiar terrain with limited
- * lights / night vision or through unfamiliar terrain but with good headlights / excellent
- * night vision.
- *
- * In order to keep the memory footprint small and constant, this implementation uses a different
- * coordinate system for the navigation caches than on the game map. The "nav map" is always
- * allocated to the size of two OMTs wide and one OMT high. Picture it like having one OMT `a` on
- * the left and one OMT `b` on the right. The coordinates of the nav map are translated and
- * rotated so that `a` is always the current OMT and `b` is the next OMT we are trying to reach.
- * So even if, for example, we are planning a route south, the nav map is still allocated as two
- * OMTs wide, but its coordinates are instead rotated when we want to deal with actual game map
- * coordinates.
- *
- * Additional greedy optimization has been added to the main A* algorithm to increase autodrive
- * maximum speed whenever possible. If the path calculated by A* does not contain any turns,
- * we can increase the vehicle speed for this segment. This is mostly applicable when the car
- * is traversing via roads across long distances.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static const ter_str_id ter_t_open_air( "t_open_air" );
 
@@ -161,58 +161,58 @@ static constexpr int NAV_VIEW_SIZE_X = NAV_MAP_SIZE_X + 2 * NAV_VIEW_PADDING;
 static constexpr int NAV_VIEW_SIZE_Y = NAV_MAP_SIZE_Y + 2 * NAV_VIEW_PADDING;
 static constexpr int TURNING_INCREMENT = 15;
 static constexpr int NUM_ORIENTATIONS = 360 / TURNING_INCREMENT;
-// min and max speed in tiles/s
+
 static constexpr int MIN_SPEED_TPS = 1;
 static constexpr int MAX_CAUTIOUS_SPEED_TPS = 3;
 static constexpr int MAX_GREEDY_SPEED_TPS = 10;
-// 16 tiles/s is roughly 55 knots, helicopter efficiency is greatest around 50-70 knots.
+
 static constexpr int MAX_AIR_SPEED_TPS = 16;
 static constexpr int VMIPH_PER_TPS = static_cast<int>( vehicles::vmiph_per_tile );
 
 namespace
 {
-/**
- * Data type representing a vehicle orientation, which corresponds to an angle that is
- * a multiple of TURNING_INCREMENT degrees, measured from the x axis.
- * Range: [0, NUM_ORIENTATIONS)
- */
+
+
+
+
+
 enum class orientation : int8_t {
     d0 = 0,
 };
 
-/*
- * Rotation amount which is a multiple of 90 degrees.
- */
+
+
+
 enum class quad_rotation : int {
     d0 = 0, d90, d180, d270,
 };
 
-/**
- * Data type representing the convex hull of a vehicle under a particular rotation.
- */
+
+
+
 struct vehicle_profile {
     tileray tdir;
-    // Points occupied by the convex hull of the vehicle. Coordinates relative to pivot.
+
     std::vector<point_rel_ms> occupied_zone;
-    // Points to check for collision when moving one step in this direction.
-    // Coordinates relative to pivot.
+
+
     std::vector<point_rel_ms> collision_points;
 };
 
-/**
- * Data type describing how what driving actions to perform at a given location
- * in order to follow the current path to destination.
- */
+
+
+
+
 struct navigation_step {
     tripoint_abs_ms pos;
     orientation steering_dir;
     int target_speed_tps;
 };
-} // namespace
+}
 
-/**
- * The address of a navigation node, i.e. a position and orientation on the nav map.
- */
+
+
+
 namespace
 {
 // NOLINTNEXTLINE(cata-xy)
@@ -227,7 +227,7 @@ struct node_address {
         return {x, y};
     }
 };
-} // namespace
+}
 
 namespace
 {
@@ -240,10 +240,10 @@ struct node_address_hasher {
     }
 };
 
-/*
- * A node address annotated with its heuristic score, an approximation of how
- * much it would cost to reach the goal from this node.
- */
+
+
+
+
 struct scored_address {
     struct node_address addr;
     int16_t score;
@@ -251,15 +251,15 @@ struct scored_address {
         return score > other.score;
     }
 };
-} // namespace
+}
 
 namespace
 {
-/*
- * Data structure representing a navigation node that is known to be reachable. Contains
- * information about the path to get there and enough information about the state of
- * the vehicle and driver to predict which nodes can be reached on the next turn.
- */
+
+
+
+
+
 struct navigation_node {
     node_address prev;
     int16_t cost;
@@ -269,9 +269,9 @@ struct navigation_node {
     bool is_goal;
 };
 
-/*
- * Data type describing a point transformation via translation and rotation.
- */
+
+
+
 struct coord_transformation {
     point pre_offset;
     quad_rotation rotation;
@@ -284,11 +284,11 @@ struct coord_transformation {
     coord_transformation inverse() const;
 };
 
-/*
- * Collection of points for which there is still some check left to do, and a list of points
- * that have already been visited. Used for remembering which points are up/down ramps when
- * evaluating obstacles. Ramps will lead to obstacle-detection on another z-level
- */
+
+
+
+
+
 struct point_queue {
     std::queue<tripoint_bub_ms> to_check;
     std::unordered_set<tripoint_bub_ms> visited;
@@ -298,63 +298,63 @@ struct point_queue {
         }
     }
 };
-} // namespace
+}
 
 namespace
 {
-/**
- * Data structure that caches all the data needed in order to navigate from one
- * OMT to the next OMT along the path to destination. Main components:
- * - the view map (precomputed obstacle positions)
- * - the nav map (valid positions and orientations where the vehicle pivot may be placed)
- * - the navigation path found by A* search
- */
+
+
+
+
+
+
+
 struct auto_navigation_data {
     tripoint_abs_omt current_omt;
     tripoint_abs_omt next_omt;
     tripoint_abs_omt next_next_omt;
 
-    // boundaries of the view map
+
     half_open_rectangle<point> view_bounds;
-    // boundaries of the nav map
+
     half_open_rectangle<point> nav_bounds;
-    // boundaries of the next omt in nav map coords
+
     half_open_rectangle<point> next_omt_bounds;
-    // transformation from nav map to game map coords
+
     coord_transformation nav_to_map;
-    // transformation from view map to game map coords
+
     coord_transformation view_to_map;
-    // transformation from nav map to view map coords
+
     coord_transformation nav_to_view;
 
     bool land_ok;
     bool water_ok;
     bool air_ok;
     bool is_flying;
-    // the maximum speed to consider driving at when using A*, in tiles/s
+
     int max_cautious_speed_tps;
-    // the maximum speed to consider driving at when using greedy approach, in tiles/s
+
     int max_greedy_speed_tps;
-    // max acceleration
+
     std::vector<int> acceleration;
-    // max amount of steering actions per turn
+
     int max_steer;
 
     std::array<vehicle_profile, NUM_ORIENTATIONS> profiles;
-    // known obstacles on the view map
+
     cata::mdarray<bool, point, NAV_VIEW_SIZE_X, NAV_VIEW_SIZE_Y> is_obstacle;
-    // z-level of where the ground is per point on the view map
-    // Almost always same as the OMT's z, but might differ per mapsquare if we are driving up or down ramps
+
+
     cata::mdarray<int, point, NAV_VIEW_SIZE_X, NAV_VIEW_SIZE_Y> ground_z;
-    // where on the nav map the vehicle pivot may be placed
+
     std::array<cata::mdarray<bool, point, NAV_VIEW_SIZE_X, NAV_VIEW_SIZE_Y>, NUM_ORIENTATIONS>
     valid_positions;
-    // node addresses that are valid end positions
+
     std::unordered_set<node_address, node_address_hasher> goal_zone;
-    // the middle of the goal zone, in nav map coords
+
     std::array<point, NAV_MAP_NUM_OMT> goal_points;
 
-    // computed path to next OMT
+
     std::vector<navigation_step> path;
 
     void clear() {
@@ -376,15 +376,15 @@ struct auto_navigation_data {
     bool valid_position( const node_address &addr ) const {
         return valid_position( addr.facing_dir, point( addr.x, addr.y ) );
     }
-    // transforms a point from map coords into view map coords
+
     point to_view( const tripoint_abs_ms &p ) const {
         return view_to_map.inverse().transform( p.raw().xy() );
     }
-    // transforms a point from map bub coords into view map coords
+
     point to_view( const map &here, const tripoint_bub_ms &p ) const {
         return to_view( here.get_abs( p ) );
     }
-    // returns `p` adjusted so that the z-level is placed on the ground
+
     tripoint_bub_ms adjust_z( map &here, const tripoint_bub_ms &p ) const;
     tripoint_abs_ms adjust_z( const tripoint_abs_ms &p ) const;
 };
@@ -395,31 +395,31 @@ enum class collision_check_result : int {
     close_obstacle,
     slow_down
 };
-} // namespace
+}
 
 vehicle_autodrive::tile_blocker vehicle_autodrive::classify_tile(
     const vehicle &driven_veh, map &here, const tripoint_bub_ms &pt,
     const Character &driver, const mobility_profile &mobility )
 {
-    // A map-bubble boundary is not a wall. The autonomous pathfinder will
-    // refuse to plan outside the loaded map; the reader only reports actual
-    // physical obstacles in its current live map.
+
+
+
     if( !here.inbounds( pt ) ) {
         return tile_blocker::map_boundary;
     }
 
-    // Tiles under the current vehicle are necessarily drivable, even if
-    // there is furniture under its wheels. Other vehicles are obstacles.
+
+
     const optional_vpart_position other = here.veh_at( pt );
     if( other ) {
         return &other->vehicle() == &driven_veh ?
                tile_blocker::none : tile_blocker::other_vehicle;
     }
 
-    // Physical obstacles are classified identically for A*, stationary
-    // rotation and the reader's forward/reverse sensors. Ground item stacks
-    // are NOT solid walls: native vehicle wheels drive over loose items and
-    // may damage them or take damage according to the ordinary physics.
+
+
+
+
     const Creature *creature = get_creature_tracker().creature_at( pt, true );
     if( creature && ( mobility.unrestricted_creatures ||
                       driver.sees( here, *creature ) ) ) {
@@ -447,8 +447,8 @@ vehicle_autodrive::tile_blocker vehicle_autodrive::classify_tile(
     if( !mobility.land_ok ) {
         return tile_blocker::terrain;
     }
-    // Neutral pavement, sidewalks and other movement-cost 2 floors are not
-    // collisions even if they can be bashed. This matches native autodrive.
+
+
     if( terrain_type.movecost <= 0 ) {
         return tile_blocker::terrain;
     }
@@ -533,13 +533,13 @@ static const std::array<orientation, NUM_ORIENTATIONS> &all_orientations()
     return orientations_array;
 }
 
-/*
- * Normalize an orientation value to the range [0, NUM_ORIENTATIONS-1] using modular arithmetic.
- */
+
+
+
 static orientation normalize_orientation( int steering_turns )
 {
     steering_turns %= NUM_ORIENTATIONS;
-    // beware that x % N < 0 when x < 0
+
     if( steering_turns < 0 ) {
         steering_turns += NUM_ORIENTATIONS;
     }
@@ -609,18 +609,18 @@ static units::angle to_angle( const orientation &dir )
     return units::from_degrees( static_cast<int>( dir ) * TURNING_INCREMENT );
 }
 
-/*
- * Returns the difference between two orientation values, normalized to the range
- * [-NUM_ORIENTATIONS/2, NUM_ORIENTATIONS/2) via modular arithmetic.
- */
+
+
+
+
 static int orientation_diff( const orientation &dir1, const orientation &dir2 )
 {
     return static_cast<int>( dir1 - dir2 + quad_rotation::d180 ) - NUM_ORIENTATIONS / 2;
 }
 
-/*
- * Returns the angle of the given point, which must lie on either axis
- */
+
+
+
 static quad_rotation to_quad_rotation( const point &pt )
 {
     if( pt.x > 0 ) {
@@ -639,10 +639,10 @@ static node_address make_node_address( point pos, orientation dir )
     return { static_cast<int16_t>( pos.x ), static_cast<int16_t>( pos.y ), dir };
 }
 
-/*
- * Computes atan2(dy, dx) in "orientation" units. Optimized to use only integer
- * arithmetic and table lookups since it's used in the inner loop of A*.
- */
+
+
+
+
 // NOLINTNEXTLINE(cata-xy)
 static orientation approx_orientation( int dx, int dy )
 {
@@ -728,7 +728,7 @@ tripoint_bub_ms auto_navigation_data::adjust_z( map &here, const tripoint_bub_ms
     const point pt_view = to_view( here, p );
     if( !view_bounds.contains( pt_view ) ) {
         debugmsg( "Autodrive tried to adjust zlevel on out-of-bounds point p=%s", p.to_string() );
-        return p; // shouldn't happen, but who knows.
+        return p;
     }
     return { p.xy(), ground_z[pt_view] };
 }
@@ -741,7 +741,7 @@ tripoint_abs_ms auto_navigation_data::adjust_z( const tripoint_abs_ms &p ) const
     const point pt_view = to_view( p );
     if( !view_bounds.contains( pt_view ) ) {
         debugmsg( "Autodrive tried to adjust zlevel on out-of-bounds point p=%s", p.to_string() );
-        return p; // shouldn't happen, but who knows.
+        return p;
     }
     return { p.xy(), ground_z[pt_view] };
 }
@@ -805,15 +805,15 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( map &here,
             }
         }
     }
-    // figure out the maximum amount of displacement that can happen from advancing the
-    // tileray a single step by advancing it a bunch of times and reducing the x and y
-    // components of the displacement to at most 1
+
+
+
     constexpr int far_advance = 100;
     tdir.advance( far_advance );
     const point increment( signum( tdir.dx() ), signum( tdir.dy() ) );
-    // compute the subset of vehicle points that would move to previously unoccupied spots
-    // (a.k.a. "moving first") when the vehicle moves one step; these are the only points
-    // we need to check for collision when the vehicle is moving in this direction
+
+
+
     const std::unordered_set<point_rel_ms> occupied_set( ret.occupied_zone.begin(),
             ret.occupied_zone.end() );
     for( const point_rel_ms &pt : ret.occupied_zone ) {
@@ -824,15 +824,15 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( map &here,
     return ret;
 }
 
-// The pathfinder retains its own unknown-map/memory gate, but shares every
-// physical tile classification with the accessible driver collision guard.
+
+
 bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bub_ms &pt ) const
 {
     if( !here.inbounds( pt ) ) {
         return false;
     }
-    // An existing vehicle footprint always counts as valid, including when
-    // the character does not yet remember the terrain beneath the car.
+
+
     const optional_vpart_position occupied = here.veh_at( pt );
     if( occupied ) {
         return &occupied->vehicle() == &driven_veh;
@@ -843,8 +843,8 @@ bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bu
     const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
                                 driven_veh.is_autodriving;
     if( pt_omt == data.current_omt && !reader_sensors ) {
-        // Ordinary autodrive is constrained by the driver's remembered
-        // map. Accessible reader sensors explicitly inspect the live map.
+
+
         if( !driver.sees( here, pt ) ) {
             if( !driver.is_avatar() ) {
                 return false;
@@ -884,8 +884,8 @@ void vehicle::autodrive_controller::compute_obstacles( map &here )
     compute_obstacles_from_enqueued_ramp_points( ramp_points, here );
 }
 
-// Checks whether `p` is a drivable ramp up or down,
-// and if so adds the ramp's destination tripoint to `ramp_points`
+
+
 void vehicle::autodrive_controller::enqueue_if_ramp( point_queue &ramp_points,
         const map &here, const tripoint_bub_ms &p ) const
 {
@@ -901,9 +901,9 @@ void vehicle::autodrive_controller::enqueue_if_ramp( point_queue &ramp_points,
     }
 }
 
-// Flood-fills from all enqueued points of up or down ramps. For each connected point, we
-// set `is_obstacle` and `ground_z` again, based on whether they are an obstacle or not on
-// this zlevel.
+
+
+
 void vehicle::autodrive_controller::compute_obstacles_from_enqueued_ramp_points(
     point_queue &ramp_points, map &here )
 {
@@ -919,12 +919,12 @@ void vehicle::autodrive_controller::compute_obstacles_from_enqueued_ramp_points(
             if( !data.view_bounds.contains( pt_view ) ) {
                 continue;
             }
-            // We now know that point p is drivable (and not an obstacle) on this zlevel, since
-            // it passed the is_drivable check.
+
+
             if( data.is_obstacle[pt_view] ) {
-                // We have examined this point previously on a different zlevel but conluded
-                // that it was an obstacle at that zlevel. But on this zlevel it is apparently
-                // not an obstacle, so this must be our groundlevel.
+
+
+
                 data.ground_z[pt_view] = p.z();
             } else {
                 data.ground_z[pt_view] = std::min( data.ground_z[pt_view], p.z() );
@@ -963,15 +963,15 @@ void vehicle::autodrive_controller::compute_goal_zone()
     data.goal_zone.clear();
     coord_transformation goal_transform;
     if( data.next_next_omt.xy() != data.next_omt.xy() ) {
-        // set the goal at the edge of next_omt and next_next_omt (in next_omt
-        // space, pointing towards next_next_omt)
+
+
         const point next_omt_middle( OMT_SIZE + OMT_SIZE / 2, OMT_SIZE / 2 );
         const tripoint_rel_omt omt_diff = data.next_next_omt - data.next_omt;
         const quad_rotation rotation = to_quad_rotation( omt_diff.raw().xy() ) - data.nav_to_map.rotation;
         goal_transform = {next_omt_middle, rotation, next_omt_middle};
     } else {
-        // set the goal at the edge of cur_omt and next_omt (in next_omt space,
-        // pointing away from cur_omt)
+
+
         goal_transform = { point( OMT_SIZE - 1, 0 ), quad_rotation::d0, point::zero };
     }
     constexpr int max_turns = NUM_ORIENTATIONS / 8 + 1;
@@ -1003,7 +1003,7 @@ void vehicle::autodrive_controller::precompute_data( map &here )
         data.next_omt = next_omt;
         data.next_next_omt = next_next_omt;
 
-        // initialize car and driver properties
+
         data.land_ok = driven_veh.valid_wheel_config( here );
         data.water_ok = driven_veh.can_float( here );
         data.air_ok = driven_veh.has_sufficient_rotorlift( here );
@@ -1017,8 +1017,8 @@ void vehicle::autodrive_controller::precompute_data( map &here )
                                         driven_veh.safe_velocity( here ) / VMIPH_PER_TPS
                                     );
         if( a11y::enabled() && driver.is_avatar() && driven_veh.is_autodriving ) {
-            // Expanded sensory reach is an accessibility aid, not a reason
-            // to race into unseen hazards. Keep the automatic route slow.
+
+
             data.max_greedy_speed_tps =
                 std::min( data.max_greedy_speed_tps, MAX_CAUTIOUS_SPEED_TPS );
         }
@@ -1026,15 +1026,15 @@ void vehicle::autodrive_controller::precompute_data( map &here )
         for( int speed_tps = 0; speed_tps < data.max_cautious_speed_tps; speed_tps++ ) {
             data.acceleration[speed_tps] = driven_veh.acceleration( here, true, speed_tps * VMIPH_PER_TPS );
         }
-        // TODO: compute from driver's skill and speed stat
-        // TODO: change it during simulation based on vehicle speed and terrain
-        // or maybe just keep track of player moves?
+
+
+
         data.max_steer = 1;
         for( orientation dir : all_orientations() ) {
             data.profile( dir ) = compute_profile( here, dir );
         }
 
-        // initialize navigation data
+
         compute_coordinates();
         compute_obstacles( here );
         compute_valid_positions();
@@ -1058,7 +1058,7 @@ static navigation_node make_start_node( const node_address &start, const vehicle
 scored_address vehicle::autodrive_controller::compute_node_score( const node_address &addr,
         const navigation_node &node ) const
 {
-    // TODO: tweak this
+
     constexpr int cost_mult = 1;
     constexpr int forward_dist_mult = 10;
     constexpr int side_dist_mult = 8;
@@ -1123,8 +1123,8 @@ const
             next_addr.x += tdir.dx();
             next_addr.y += tdir.dy();
             if( !data.nav_bounds.contains( next_addr.get_point() ) ) {
-                // it's ok to go out of bounds only from the "next" omt and only
-                // after crossing the goal zone
+
+
                 if( cur_omt == 0 || !goal_found ) {
                     ok = false;
                     ++last_search.rejected_bounds;
@@ -1141,14 +1141,14 @@ const
         }
         const int next_omt = next_addr.x / OMT_SIZE;
         if( next_omt < cur_omt ) {
-            // no going back to a previous omt
+
             ++last_search.rejected_backtrack;
             continue;
         }
         navigation_node next_node;
         next_node.prev = addr;
         next_node.tileray_steps = num_tiles_to_move + ( !steer ? node.tileray_steps : 0 );
-        // TODO: improve this
+
         next_node.cost = node.cost + move_cost * num_tiles_to_move + ( steer ? steering_cost : 0 );
         next_node.speed = next_speed;
         next_node.target_speed_tps = target_speed_tps;
@@ -1165,10 +1165,10 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
     if( speed_tps == 0 || speed_tps < -1 ) {
         return std::nullopt;
     }
-    // TODO: tweak this
+
     const int max_search_count = search_limit;
     std::vector<navigation_step> ret;
-    // TODO: check simple reachability first and bail out or set upper bound on node score
+
     std::unordered_map<node_address, navigation_node, node_address_hasher> known_nodes;
     std::priority_queue<scored_address, std::vector<scored_address>, std::greater<>>
             open_set;
@@ -1245,10 +1245,10 @@ vehicle::autodrive_controller::autodrive_controller( const vehicle &driven_veh,
 
 void vehicle::autodrive_controller::check_safe_speed( map &here )
 {
-    // We normally drive at or below the vehicle's "safe speed" (beyond which the engine starts
-    // taking damage). We normally determine this at the beginning of path planning and cache it.
-    // However, sometimes the vehicle's safe speed may drop (e.g. amphibious vehicle entering
-    // water), so this extra check is needed to adjust our max speed.
+
+
+
+
     int safe_speed_tps = driven_veh.safe_velocity( here ) / VMIPH_PER_TPS;
     if( data.max_cautious_speed_tps > safe_speed_tps ) {
         data.max_cautious_speed_tps = safe_speed_tps;
@@ -1260,7 +1260,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
 {
     const tripoint_bub_ms veh_pos = driven_veh.pos_bub( here );
 
-    // first check if we have any visibility in front, to prevent blind driving
+
     tileray face_dir = driven_veh.face;
     face_dir.advance();
     const point forward_offset( face_dir.dx(), face_dir.dy() );
@@ -1271,10 +1271,10 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
         if( driver.sees( here, next ) ) {
             blind = false;
         }
-        // Known quirk: the player does not always see points above or below when driving
-        // up or down ramps, which makes this check think that we should stop pathfinding.
-        // So here we allow having no visibility in case the path changes zlevel.
-        // Checks further down below in this method will make sure that we instead slow down.
+
+
+
+
         changed_zlevel |= ( next.z() != veh_pos.z() );
     }
     const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
@@ -1283,8 +1283,8 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
         return collision_check_result::no_visibility;
     }
 
-    // now check the area we're about to move into in 1 step, anything there
-    // should force us to stop
+
+
     const vehicle_profile &profile = data.profile( turn_dir );
     tileray tdir = driven_veh.face;
     if( turn_dir != to_orientation( tdir.dir() ) ) {
@@ -1305,7 +1305,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
         }
     }
 
-    // finally check the area further ahead; we can still avoid those collisions by reducing speed
+
     collision_zone.clear();
     for( int i = 1; i < speed_tps; i++ ) {
         tdir.advance();
@@ -1331,26 +1331,26 @@ void vehicle::autodrive_controller::reduce_speed()
     data.max_cautious_speed_tps = MIN_SPEED_TPS;
 }
 
-// Returns true, if greedy traveling mode should be enabled.
+
 bool vehicle::autodrive_controller::check_greedy_mode()
 {
-    // If vehicle is flying, we don't need greedy optimization, TPS speed is
-    // already good enough.
+
+
     if( data.is_flying ) {
         return false;
     }
-    // If vehicle is close to the destination slow down to avoid missing the
-    // finish point
+
+
     if( driver.omt_path.size() <= 2 ) {
         return false;
     }
-    // If vehicle is slow enough, A* is already traveling at max speed,
-    // so we don't need to use greedy solutions.
+
+
     if( data.max_greedy_speed_tps <= data.max_cautious_speed_tps ) {
         return false;
     }
-    // If the whole computed path does not contain any turns, we can speed up
-    // until the next OMT.
+
+
     bool straight_path = true;
     for( const navigation_step &step : data.path ) {
         if( step.steering_dir != to_orientation( driven_veh.turn_dir ) ) {
@@ -1375,15 +1375,15 @@ std::string vehicle::autodrive_controller::search_details() const
            " search_limit=" + ( last_search.hit_limit ? "true" : "false" );
 }
 
-// A reverse proposal is NOT a command to reverse the vehicle. Compare each
-// native A* candidate with the real map's current, turned and displaced body
-// hulls, so a planning-only option is not mistaken for a drivable maneuver.
+
+
+
 std::string vehicle::autodrive_controller::reverse_clearance_details( map &here )
 {
     precompute_data( here );
     const tripoint_abs_ms pos = driven_veh.pos_abs();
     const node_address start = data.nav_to_map.inverse().transform(
-            pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+                                   pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     if( !data.nav_bounds.contains( start.get_point() ) ||
         !data.valid_position( start ) ) {
         return " reverse_start_options=0 reverse_live_clear=0"
@@ -1401,15 +1401,16 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
     for( const auto &candidate : candidates ) {
         const node_address &addr = candidate.first;
         const tripoint_abs_ms target_abs( data.nav_to_map.transform(
-                addr.get_point(), data.current_omt.z() ) );
+                                              addr.get_point(), data.current_omt.z() ) );
         const tripoint_bub_ms target = here.get_bub( data.adjust_z( target_abs ) );
         const orientation target_heading = data.nav_to_map.transform( addr.facing_dir );
-        // Check the two endpoint footprints AND the turned footprint at
-        // both endpoints. Conservative for a one-tile reverse prediction.
+
+
         const std::array<std::pair<tripoint_bub_ms, orientation>, 4> placements = {{
                 { origin, initial_heading }, { origin, target_heading },
                 { target, initial_heading }, { target, target_heading }
-            }};
+            }
+        };
         bool clear = true;
         std::string blocked_tile = "none";
         std::string blocked_terrain = "none";
@@ -1434,12 +1435,12 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
             ++live_blocked;
         }
         a11y::android::diagnostic_event( "AUTODRIVE_REVERSE_PROBE",
-                "result=" + std::string( clear ? "live_clear" : "live_blocked" ) +
-                " target=" + target_abs.to_string() +
-                " heading_steps=" + std::to_string( orientation_diff(
-                    target_heading, initial_heading ) ) +
-                " blocked_tile=" + blocked_tile +
-                " terrain_name=" + blocked_terrain );
+                                         "result=" + std::string( clear ? "live_clear" : "live_blocked" ) +
+                                         " target=" + target_abs.to_string() +
+                                         " heading_steps=" + std::to_string( orientation_diff(
+                                                 target_heading, initial_heading ) ) +
+                                         " blocked_tile=" + blocked_tile +
+                                         " terrain_name=" + blocked_terrain );
     }
     return " reverse_start_options=" + std::to_string( candidates.size() ) +
            " reverse_live_clear=" + std::to_string( live_clear ) +
@@ -1447,10 +1448,10 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
            " reverse_probe=diagnostic_only";
 }
 
-// A recovery move uses the existing native vehicle physics, not a map
-// displacement. Only a one-tile STRAIGHT reverse edge may be requested.
-// Check the whole footprint at the present and predicted locations; A*
-// candidates with a steering change are deliberately excluded here.
+
+
+
+
 std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reverse_step(
     map &here )
 {
@@ -1461,7 +1462,7 @@ std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reve
     }
     const tripoint_abs_ms current = driven_veh.pos_abs();
     const node_address start = data.nav_to_map.inverse().transform(
-            current.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+                                   current.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     if( !data.nav_bounds.contains( start.get_point() ) ||
         !data.valid_position( start ) ) {
         return std::nullopt;
@@ -1474,16 +1475,18 @@ std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reve
     const orientation world_heading = to_orientation( driven_veh.face.dir() );
     for( const auto &candidate : candidates ) {
         if( candidate.first.facing_dir != start.facing_dir ) {
-            continue; // Never reverse and pivot in a single unverified move.
+            continue;
         }
         const tripoint_abs_ms target_abs( data.nav_to_map.transform(
-                candidate.first.get_point(), data.current_omt.z() ) );
+                                              candidate.first.get_point(), data.current_omt.z() ) );
         if( target_abs.xy() == current.xy() ) {
             continue;
         }
         const tripoint_bub_ms target = here.get_bub( data.adjust_z( target_abs ) );
         bool safe = true;
-        for( const tripoint_bub_ms &center : { origin, target } ) {
+        for( const tripoint_bub_ms &center : {
+                 origin, target
+             } ) {
             for( const point_rel_ms &offset : data.profile( world_heading ).occupied_zone ) {
                 const tripoint_bub_ms tile = center + offset;
                 if( !here.inbounds( tile ) || !check_drivable( here, tile ) ) {
@@ -1502,14 +1505,14 @@ std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reve
     return std::nullopt;
 }
 
-// Used only to avoid expensive overmap detours when even a first forward
-// step is impossible at the vehicle's current position. Never changes speed.
+
+
 std::size_t vehicle::autodrive_controller::forward_start_options( map &here )
 {
     precompute_data( here );
     const tripoint_abs_ms pos = driven_veh.pos_abs();
     const node_address start = data.nav_to_map.inverse().transform(
-            pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+                                   pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     if( !data.nav_bounds.contains( start.get_point() ) ||
         !data.valid_position( start ) ) {
         return 0;
@@ -1529,10 +1532,10 @@ std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &he
         data.max_cautious_speed_tps < MIN_SPEED_TPS ) {
         return std::nullopt;
     }
-    // Require only the NEXT 45-degree physical turn to be safe. Later
-    // increments will be checked again against the live swept footprint.
-    // Requiring the whole 90-180 degree rotation before the first step
-    // rejected viable turns and regressed Android autodrive.
+
+
+
+
     constexpr std::array<int, 7> turns = { 3, -3, 6, -6, 9, -9, 12 };
     const orientation current = to_orientation( driven_veh.face.dir() );
     const tripoint_abs_ms current_pos = driven_veh.pos_abs();
@@ -1547,7 +1550,7 @@ std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &he
         }
         const orientation candidate = current + steps;
         const node_address start = data.nav_to_map.inverse().transform(
-                current_pos.raw().xy(), candidate );
+                                       current_pos.raw().xy(), candidate );
         if( !data.nav_bounds.contains( start.get_point() ) ||
             !data.valid_position( start ) ) {
             ++invalid_headings;
@@ -1555,18 +1558,18 @@ std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &he
         }
         if( compute_path( MIN_SPEED_TPS, candidate, 2000 ) ) {
             a11y::android::diagnostic_event( "AUTODRIVE_PIVOT",
-                    "result=selected steps=" + std::to_string( steps ) +
-                    " first_step=" + std::to_string( first_step ) +
-                    " blocked_first=" + std::to_string( blocked_first_turns ) +
-                    " invalid_headings=" + std::to_string( invalid_headings ) );
+                                             "result=selected steps=" + std::to_string( steps ) +
+                                             " first_step=" + std::to_string( first_step ) +
+                                             " blocked_first=" + std::to_string( blocked_first_turns ) +
+                                             " invalid_headings=" + std::to_string( invalid_headings ) );
             return steps;
         }
         ++no_path_headings;
     }
     a11y::android::diagnostic_event( "AUTODRIVE_PIVOT",
-            "result=none blocked_first=" + std::to_string( blocked_first_turns ) +
-            " invalid_headings=" + std::to_string( invalid_headings ) +
-            " no_path=" + std::to_string( no_path_headings ) );
+                                     "result=none blocked_first=" + std::to_string( blocked_first_turns ) +
+                                     " invalid_headings=" + std::to_string( invalid_headings ) +
+                                     " no_path=" + std::to_string( no_path_headings ) );
     return std::nullopt;
 }
 
@@ -1580,10 +1583,10 @@ std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step(
     const navigation_step second_step = two_steps ? data.path.at( data.path.size() - 2 ) :
                                         navigation_step();
     bool maintain_speed = false;
-    // If vehicle did not move as far as planned and direction is the same
-    // then it is still accelerating. If the vehicle moved more than expected
-    // then we likely underestimated the acceleration when planning the path.
-    // If either of these happen, we should maintain speed but compute a new path.
+
+
+
+
     if( !in_greedy_mode ) {
         if( two_steps &&
             square_dist( first_step.pos.xy().raw(), second_step.pos.xy().raw() ) !=
@@ -1603,13 +1606,13 @@ std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step(
         }
     }
     if( data.path.empty() ) {
-        // if we're just starting out or we've gone off-course use the lowest speed
+
         if( ( had_cached_path && !maintain_speed ) || driven_veh.velocity == 0 ) {
             data.max_cautious_speed_tps = MIN_SPEED_TPS;
         }
         auto new_path = compute_path( data.max_cautious_speed_tps );
         while( !new_path && data.max_cautious_speed_tps > MIN_SPEED_TPS ) {
-            // high speed didn't work, try a lower speed
+
             data.max_cautious_speed_tps /= 2;
             new_path = compute_path( data.max_cautious_speed_tps );
         }
@@ -1620,8 +1623,8 @@ std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step(
         in_greedy_mode = check_greedy_mode();
     }
     if( in_greedy_mode ) {
-        // If we are in greedy mode, we simply want to go forward at max speed
-        // without any worry, so creating a fake navigation step with this goal.
+
+
         navigation_step greedy_step;
         greedy_step.pos = driven_veh.pos_abs();
         greedy_step.steering_dir = to_orientation( driven_veh.turn_dir );
@@ -1727,7 +1730,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     if( !player_in_control( here, driver ) || skidding ) {
         if( reader_autodrive ) {
             a11y::android::diagnostic_event( "AUTODRIVE_ABORT",
-                    skidding ? "reason=skidding" : "reason=driver_controls_lost" );
+                                             skidding ? "reason=skidding" : "reason=driver_controls_lost" );
         }
         driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
         if( reader_autodrive ) {
@@ -1739,13 +1742,13 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         stop_autodriving( reader_autodrive );
         return autodrive_result::abort;
     }
-    // The full autonomous reader route must try the native A* obstacle
-    // planner first. Only after it cannot find a safe step may it pause;
-    // never show an Android blocker-choice dialog.
+
+
+
     const auto safety_stop = [&]( const char *reason ) {
         if( !a11y_obstacle_stop ) {
-            // A single diagnostic record per blocked segment. This records
-            // why re-planning failed without flooding the spoken interface.
+
+
             const auto_navigation_data &nav = active_autodrive_controller->get_data();
             const node_address start = nav.nav_to_map.inverse().transform(
                                            pos_abs().raw().xy(), to_orientation( face.dir() ) );
@@ -1753,25 +1756,25 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                                      nav.valid_position( start );
             const tripoint_rel_omt segment = nav.next_omt - nav.current_omt;
             a11y::android::diagnostic_event( "AUTODRIVE_ROUTE",
-                    std::string( "paused reason=" ) + reason +
-                    " remaining_omts=" + std::to_string( driver.omt_path.size() ) +
-                    " velocity=" + std::to_string( velocity ) +
-                    " safe_speed_tps=" + std::to_string(
-                        active_autodrive_controller->get_data().max_cautious_speed_tps ) +
-                    " goal_states=" + std::to_string( nav.goal_zone.size() ) +
-                    " land_ok=" + ( nav.land_ok ? "true" : "false" ) +
-                    " start_valid=" + ( valid_start ? "true" : "false" ) +
-                    " segment_dx=" + std::to_string( segment.raw().x ) +
-                    " segment_dy=" + std::to_string( segment.raw().y ) +
-                    " facing_degrees=" + std::to_string( units::to_degrees( face.dir() ) ) +
-                    " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
-                    " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
-                    " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
-                    active_autodrive_controller->reverse_clearance_details( here ) +
-                    active_autodrive_controller->search_details() );
-            // One speech report with real remaining distance is produced
-            // on the following activity state transition. Never also enqueue
-            // a separate warning that duplicates that report.
+                                             std::string( "paused reason=" ) + reason +
+                                             " remaining_omts=" + std::to_string( driver.omt_path.size() ) +
+                                             " velocity=" + std::to_string( velocity ) +
+                                             " safe_speed_tps=" + std::to_string(
+                                                 active_autodrive_controller->get_data().max_cautious_speed_tps ) +
+                                             " goal_states=" + std::to_string( nav.goal_zone.size() ) +
+                                             " land_ok=" + ( nav.land_ok ? "true" : "false" ) +
+                                             " start_valid=" + ( valid_start ? "true" : "false" ) +
+                                             " segment_dx=" + std::to_string( segment.raw().x ) +
+                                             " segment_dy=" + std::to_string( segment.raw().y ) +
+                                             " facing_degrees=" + std::to_string( units::to_degrees( face.dir() ) ) +
+                                             " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
+                                             " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
+                                             " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
+                                             active_autodrive_controller->reverse_clearance_details( here ) +
+                                             active_autodrive_controller->search_details() );
+
+
+
             if( !reader_autodrive || !a11y::android::enabled() ) {
                 driver.add_msg_if_player( m_warning,
                                           _( "No safe route found. Vehicle paused." ) );
@@ -1790,7 +1793,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     const tripoint_abs_ms veh_pos = pos_abs();
     const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
     if( reader_autodrive && ( !a11y_recovery_segment_omt ||
-                             *a11y_recovery_segment_omt != veh_omt ) ) {
+                              *a11y_recovery_segment_omt != veh_omt ) ) {
         a11y_recovery_segment_omt = veh_omt;
         a11y_pivot_tried = false;
         a11y_pivot_steps_remaining = 0;
@@ -1800,15 +1803,15 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         a11y_reverse_recovery_ticks = 0;
     }
     std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;
-    // following code finds the last overmap path tile matched to the vehicle coordinates
-    // usually it's just the last in the path vector, but we may skip it is we drive fast and cross the tile in a corner
+
+
     const auto veh_on_path = std::find_if( omt_path.rbegin(),
     omt_path.rend(), [xy = veh_omt.xy()]( const auto & path ) {
         return path.xy() == xy;
     } );
     if( veh_on_path != omt_path.rend() ) {
         omt_path.erase( ( veh_on_path + 1 ).base(), omt_path.end() );
-        // it removes XY duplicates spanned across mupltiple Z levels
+
         while( !omt_path.empty() && veh_omt.xy() == omt_path.back().xy() ) {
             omt_path.pop_back();
         }
@@ -1830,8 +1833,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
     active_autodrive_controller->check_safe_speed( here );
     if( reader_autodrive && a11y_reverse_recovery_active ) {
-        // No teleport and no repeated reverse beyond the first physical map
-        // tile. Once a tile has been traversed, brake and start fresh A*.
+
+
         if( veh_pos.xy() != a11y_reverse_recovery_start.xy() ) {
             cruise_velocity = 0;
             if( velocity != 0 ) {
@@ -1842,8 +1845,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y_route_alternatives_tried = false;
             active_autodrive_controller.reset();
             a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=moved_one_tile from=" + a11y_reverse_recovery_start.to_string() +
-                    " to=" + veh_pos.to_string() );
+                                             "result=moved_one_tile from=" + a11y_reverse_recovery_start.to_string() +
+                                             " to=" + veh_pos.to_string() );
             driver.set_moves( 0 );
             return autodrive_result::ok;
         }
@@ -1854,21 +1857,21 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( !target || ( rear && rear->distance <= 3 ) ||
             a11y_reverse_recovery_ticks++ >= 6 || velocity > 0 || skidding ) {
             a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=aborted_no_clear_step ticks=" +
-                    std::to_string( a11y_reverse_recovery_ticks ) );
+                                             "result=aborted_no_clear_step ticks=" +
+                                             std::to_string( a11y_reverse_recovery_ticks ) );
             return safety_stop( "reverse_recovery_blocked" );
         }
-        // Native cruise control accelerates the car backwards at 1 tile/s.
-        // The physics engine still determines whether the car actually moves.
+
+
         turn_dir = face.dir();
         cruise_velocity = -VMIPH_PER_TPS;
         driver.set_moves( 0 );
         return autodrive_result::ok;
     }
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step( here );
-    // Cached obstacle maps and paths can become stale when a bush, car or
-    // creature blocks the route. Rebuild the full A* map and try another
-    // path ONCE this turn before deciding the destination is unreachable.
+
+
+
     const auto retry_local_route = [&]() -> std::optional<navigation_step> {
         active_autodrive_controller = std::make_shared<autodrive_controller>( *this, driver );
         active_autodrive_controller->check_safe_speed( here );
@@ -1878,17 +1881,17 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         next_step = retry_local_route();
     }
     if( !next_step && reader_autodrive && velocity == 0 && !is_rotorcraft( here ) ) {
-        // Native A* cannot propose a stationary heading change. Try a
-        // bounded orientation search and physically rotate only when the
-        // complete swept footprint is clear.
+
+
+
         if( a11y_pivot_steps_remaining == 0 && !a11y_pivot_tried ) {
             a11y_pivot_tried = true;
             const std::optional<int> pivot = active_autodrive_controller->find_accessible_pivot(
-                    here, [&]( const int first_step ) {
+            here, [&]( const int first_step ) {
                 return a11y_rotate_in_place( here, first_step, true );
             } );
             if( pivot ) {
-                // Every increment is still checked before physical rotation.
+
                 a11y_pivot_steps_remaining = *pivot;
             }
         }
@@ -1904,9 +1907,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y_pivot_steps_remaining = 0;
         }
     }
-    // Shared last-resort escape for no_local_path, blocked pivot, or a
-    // newly obstructed close-forward footprint. Reversal is always physical,
-    // straight, bounded and checked on the live map and rear sensor.
+
+
+
     const auto try_reverse_escape = [&]() {
         if( !reader_autodrive || velocity != 0 || is_rotorcraft( here ) ||
             a11y_reverse_recovery_attempts >= 2 ) {
@@ -1918,9 +1921,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y::vehicle_obstacle_ahead( *this, here, true );
         if( !target || ( rear && rear->distance <= 3 ) ) {
             a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=not_safe target=" +
-                    std::string( target ? target->to_string() : "none" ) +
-                    " rear_hazard=" + ( rear ? rear->label : "none" ) );
+                                             "result=not_safe target=" +
+                                             std::string( target ? target->to_string() : "none" ) +
+                                             " rear_hazard=" + ( rear ? rear->label : "none" ) );
             return false;
         }
         a11y_reverse_recovery_start = veh_pos;
@@ -1928,41 +1931,44 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         a11y_reverse_recovery_ticks = 0;
         ++a11y_reverse_recovery_attempts;
         a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                "result=started attempt=" +
-                std::to_string( a11y_reverse_recovery_attempts ) +
-                " target=" + target->to_string() );
+                                         "result=started attempt=" +
+                                         std::to_string( a11y_reverse_recovery_attempts ) +
+                                         " target=" + target->to_string() );
         turn_dir = face.dir();
         cruise_velocity = -VMIPH_PER_TPS;
         driver.set_moves( 0 );
         return true;
     };
-    // Reuse bounded alternate-route discovery both for no local A* path
-    // and for a turn whose actual swept footprint cannot be rotated.
+
+
     const auto retry_nearby_route = [&]() -> std::optional<navigation_step> {
-        if( !( reader_autodrive && !a11y_route_alternatives_tried && !omt_path.empty() ) ) {
+        if( !( reader_autodrive && !a11y_route_alternatives_tried && !omt_path.empty() ) )
+        {
             return std::nullopt;
         }
-        // First establish a locally executable action. A long strategic
-        // reroute cannot free a car with no possible forward move or turn.
-        // If no forward-first action exists, the bounded native reverse
-        // escape is considered after the strategic route attempts.
-        if( velocity == 0 && !is_rotorcraft( here ) ) {
+
+
+
+
+        if( velocity == 0 && !is_rotorcraft( here ) )
+        {
             const std::size_t forward_options =
-                active_autodrive_controller->forward_start_options( here );
+            active_autodrive_controller->forward_start_options( here );
             const bool pivot_left = a11y_rotate_in_place( here, -3, true );
             const bool pivot_right = a11y_rotate_in_place( here, 3, true );
             if( forward_options == 0 && !pivot_left && !pivot_right ) {
                 a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
-                        "skipped=no_executable_first_step forward_options=0"
-                        " pivot_left=false pivot_right=false" );
+                                                 "skipped=no_executable_first_step forward_options=0"
+                                                 " pivot_left=false pivot_right=false" );
                 return std::nullopt;
             }
         }
         a11y_route_alternatives_tried = true;
         const std::vector<tripoint_abs_omt> original_route = omt_path;
         const auto alternatives = ui::omap::accessible_vehicle_alternative_routes(
-                original_route.front(), original_route.back() );
-        for( const std::vector<tripoint_abs_omt> &route : alternatives ) {
+                                      original_route.front(), original_route.back() );
+        for( const std::vector<tripoint_abs_omt> &route : alternatives )
+        {
             omt_path = route;
             auto candidate_controller = std::make_shared<autodrive_controller>( *this, driver );
             candidate_controller->check_safe_speed( here );
@@ -1971,8 +1977,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             if( !candidate_step || candidate_step->pos.xy() != veh_pos.xy() ) {
                 continue;
             }
-            // A valid A* step is not enough: reject routes whose first
-            // stationary turn cannot physically clear the body sweep.
+
+
             if( velocity == 0 && !is_rotorcraft( here ) ) {
                 const int candidate_turn = orientation_diff( candidate_step->steering_dir,
                                            to_orientation( turn_dir ) );
@@ -1981,8 +1987,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     continue;
                 }
             }
-            // The candidate must have a safe FIRST action on the live map,
-            // not merely a route over the large-scale map.
+
+
             const collision_check_result live_clearance =
                 candidate_controller->check_collision_zone( here, candidate_step->steering_dir );
             if( live_clearance == collision_check_result::close_obstacle ||
@@ -1992,23 +1998,23 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             active_autodrive_controller = std::move( candidate_controller );
             a11y_pivot_steps_remaining = 0;
             a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
-                    "accepted alternate_route_omts=" + std::to_string( route.size() ) +
-                    " candidates=" + std::to_string( alternatives.size() ) );
-            // A reroute is diagnostic progress, not a new spoken tile event.
-            // Only the end/pause report announces the remaining distance.
+                                             "accepted alternate_route_omts=" + std::to_string( route.size() ) +
+                                             " candidates=" + std::to_string( alternatives.size() ) );
+
+
             return candidate_step;
         }
         omt_path = original_route;
         a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
-                "result=no_viable_first_step alternatives=" + std::to_string( alternatives.size() ) );
+                                         "result=no_viable_first_step alternatives=" + std::to_string( alternatives.size() ) );
         return std::nullopt;
     };
     if( !next_step ) {
         next_step = retry_nearby_route();
     }
     if( !next_step ) {
-        // No forward A*, physical pivot or strategic detour succeeded.
-        // Try the native-physics reverse escape before pausing.
+
+
         if( try_reverse_escape() ) {
             return autodrive_result::ok;
         }
@@ -2036,9 +2042,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
     cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
 
-    // Check collisions before any steering/throttle. If the selected cached
-    // path is newly obstructed, try A* again with fresh live obstacles.
-    // A successful alternative is followed normally without prompting.
+
+
+
     collision_check_result clearance =
         active_autodrive_controller->check_collision_zone( here, next_step->steering_dir );
     if( reader_autodrive &&
@@ -2087,14 +2093,14 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
 
     int turn_delta = orientation_diff( next_step->steering_dir, to_orientation( turn_dir ) );
     if( reader_autodrive && velocity == 0 && turn_delta != 0 && !is_rotorcraft( here ) ) {
-        // The accessibility stationary pivot rotates the ACTUAL car, not
-        // just a requested steering direction. Limit to 45 degrees/turn,
-        // check the entire swept footprint, and recompute the A* route
-        // after the physical heading has changed. No throttle in this turn.
+
+
+
+
         cruise_velocity = 0;
         if( !a11y_rotate_in_place( here, std::clamp( turn_delta, -3, 3 ) ) ) {
-            // A* found a turn but the real vehicle cannot execute it.
-            // Try a different initial segment before giving up.
+
+
             if( retry_nearby_route() ) {
                 cruise_velocity = 0;
                 driver.set_moves( 0 );
@@ -2109,18 +2115,18 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         driver.set_moves( 0 );
         return autodrive_result::ok;
     }
-    // pldrive() does not handle steering multiple times in one call correctly
-    // call it multiple times, matching how a player controls the vehicle
+
+
     for( int i = 0; i < std::abs( turn_delta ); i++ ) {
         if( driver.get_moves() <= 0 ) {
-            // we couldn't steer as many times as we wanted to but there's
-            // nothing we can do about it now, hope we don't crash!
+
+
             break;
         }
         pldrive( here, driver, signum( turn_delta ), 0 );
     }
-    // Don't do anything else below; the driver's turn may be over (moves <= 0) so
-    // any extra actions would be "cheating".
+
+
 
     return autodrive_result::ok;
 }

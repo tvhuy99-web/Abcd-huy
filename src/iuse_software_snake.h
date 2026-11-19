@@ -5,7 +5,7 @@
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 class snake_game
 {
@@ -17,4 +17,4 @@ class snake_game
         int start_game();
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_SNAKE_H
+#endif

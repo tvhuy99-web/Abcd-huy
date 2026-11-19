@@ -9,9 +9,9 @@
 
 #include "talker.h"
 
-/*
- * Talker wrapper class for an empty talker thats just topics
- */
+
+
+
 class talker_topic_const: public const_talker_cloner<talker_topic_const>
 {
     public:
@@ -25,7 +25,7 @@ class talker_topic_const: public const_talker_cloner<talker_topic_const>
         ~talker_topic_const() override = default;
 
         std::vector<std::string> get_topics( bool radio_contact ) const override;
-        bool will_talk_to_u( const Character &/* you */, bool /* force */ ) const override {
+        bool will_talk_to_u( const Character &, bool ) const override {
             return true;
         }
 
@@ -48,4 +48,4 @@ class talker_topic: virtual public talker_topic_const, public talker_cloner<talk
 
 std::unique_ptr<talker> get_talker_for( const std::vector<std::string> &topics );
 
-#endif // CATA_SRC_TALKER_TOPIC_H
+#endif

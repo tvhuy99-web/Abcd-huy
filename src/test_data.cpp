@@ -4,7 +4,7 @@
 #include "generic_factory.h"
 #include "pocket_type.h"  // IWYU pragma: keep // need full type to read from json
 
-// Define the static class varaibles
+
 std::set<itype_id> test_data::legacy_to_hit;
 std::set<itype_id> test_data::known_bad;
 std::set<itype_id> test_data::known_bad_calorie;
@@ -115,8 +115,8 @@ void item_demographic_test_data::deserialize( const JsonObject &jo )
 
 void test_data::load( const JsonObject &jo )
 {
-    // It's probably not necessary, but these are set up to
-    // extend existing data instead of overwrite it.
+
+
     if( jo.has_array( "legacy_to_hit" ) ) {
         std::set<itype_id> new_legacy_to_hit;
         jo.read( "legacy_to_hit", new_legacy_to_hit );
@@ -144,7 +144,7 @@ void test_data::load( const JsonObject &jo )
     if( jo.has_array( "known_good_uncraft" ) ) {
         std::set<itype_id> new_known_good_uncraft;
         jo.read( "known_good_uncraft", new_known_good_uncraft );
-        // yes, we populate the same list for both good and bad uncrafts
+
         known_bad_uncraft.insert( new_known_good_uncraft.begin(), new_known_good_uncraft.end() );
     }
 
@@ -264,7 +264,7 @@ void test_data::load( const JsonObject &jo )
         while( demo_list.has_more() ) {
             demo_list.read_next( data );
         }
-        // This does not support merging, so only add one instance of each category.
+
         item_demographics[category] = data;
     }
 }

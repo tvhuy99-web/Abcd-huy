@@ -101,7 +101,7 @@ float availability::get_max_proficiency_skill_maluses() const
 
 namespace
 {
-// all the craftability answer needs before any inventory query
+
 struct recipe_gate {
     bool has_all_skills = false;
     bool crafter_has_primary_skill = false;
@@ -109,7 +109,7 @@ struct recipe_gate {
     bool base_requirements = false;
     bool npc_cannot_craft = false;
 };
-} // namespace
+}
 
 static recipe_gate gate_recipe( const Character &crafter, const recipe &recp,
                                 bool camp_crafting )
@@ -223,7 +223,7 @@ availability::availability( Character &_crafter, const recipe *recp, int batch_s
     useless_practice = is_practice && cannot_gain_skill_or_prof( crafter, *recp );
     is_nested_category = is_nested;
 
-    // Idk whats going on here so i will leave it for now
+
     for( const auto &[skill, skill_lvl] : recp->required_skills ) {
         if( crafter.get_skill_level( skill ) < skill_lvl ) {
             has_all_skills = false;
@@ -465,7 +465,7 @@ std::vector<std::string> recipe_info(
         if( nearby_amount == 0 ) {
             nearby_string = "<color_light_gray>0</color>";
         } else if( nearby_amount > 9000 ) {
-            // at some point you get too many to count at a glance and just know you have a lot
+
             nearby_string = _( "<color_red>It's Over 9000!!!</color>" );
         } else {
             nearby_string = string_format( "<color_yellow>%d</color>", nearby_amount );
@@ -522,8 +522,8 @@ std::vector<std::string> recipe_info(
 
     if( recp.has_byproducts() ) {
         oss << _( "Byproducts:\n" );
-        // A reader can reuse the UI's already sampled preview. Reading must not
-        // sample a randomized byproduct group again or change the game's RNG.
+
+
         const std::map<itype_id, int> byproducts = display_byproducts ?
                 *display_byproducts : recp.get_byproducts();
         for( const std::pair<const itype_id, int> &bp : byproducts ) {
@@ -563,7 +563,7 @@ std::vector<std::string> recipe_info(
         }
         std::vector<const Character *> knowing_helpers;
         for( const Character *helper : crafting_group ) {
-            // guy.getID() != helper->getID(): guy doesn't know the recipe anyway, but this should be faster
+
             if( guy.getID() != helper->getID() && helper->knows_recipe( &recp ) ) {
                 knowing_helpers.push_back( helper );
             }
@@ -634,11 +634,11 @@ recipe_subset filter_recipes( const recipe_subset &available_recipes,
     size_t qry_end = 0;
     recipe_subset filtered_recipes = available_recipes;
     do {
-        // Find next ','
+
         qry_end = qry.find_first_of( ',', qry_begin );
 
         std::string qry_filter_str = trim( qry.substr( qry_begin, qry_end - qry_begin ) );
-        // Process filter
+
         if( qry_filter_str.size() > 2 && qry_filter_str[1] == ':' ) {
             switch( qry_filter_str[0] ) {
                 case 't':
@@ -702,13 +702,13 @@ recipe_subset filter_recipes( const recipe_subset &available_recipes,
                     break;
 
                 case 'm': {
-                    // get_learned_recipes lists NO nested_recipes
+
                     const recipe_subset &learned = crafter.get_learned_recipes();
                     recipe_subset temp_subset;
                     if( query_is_yes( qry_filter_str ) ) {
                         temp_subset = available_recipes.intersection( learned );
                     } else {
-                        // nested_recipes cannot be learned so don't show them
+
                         temp_subset = available_recipes.difference( learned )
                                       .difference( recipe_dict.all_nested() );
                     }
@@ -732,9 +732,9 @@ recipe_subset filter_recipes( const recipe_subset &available_recipes,
                     break;
 
                 case 'r': {
-                    // TODO: this replaces filtered_recipes instead of intersecting,
-                    // which breaks comma-chaining when r: appears after other filters.
-                    // Prior filters in the chain are lost. Fix in a separate PR.
+
+
+
                     recipe_subset result;
                     for( const itype *e : item_controller->all() ) {
                         if( lcmatch( e->nname( 1 ), qry_filter_str.substr( 2 ) ) ) {
@@ -799,7 +799,7 @@ const translation filter_help_start = to_translation(
         "\n\n"
         "<color_white>Examples:</color>\n" );
 
-// --- Recipe result info ---
+
 
 static void insert_block_separator( std::vector<iteminfo> &info_vec,
                                     const std::string &title, int panel_width )
@@ -914,13 +914,13 @@ item get_recipe_result_item( const recipe &rec, Character &crafter )
     return dummy_result;
 }
 
-// Build an iteminfo_query that hides sections irrelevant for crafting decisions,
-// based on the result item type.  Always hidden: price, disassembly,
-// "you know nothing you could craft with it".  Conditionally hidden: melee stats
-// (unless it's a weapon), gun stats (unless it's a gun), armor stats (unless armor).
+
+
+
+
 static const iteminfo_query &crafting_query_for_item( const item &it )
 {
-    // Sections always hidden during crafting
+
     static const std::vector<iteminfo_parts> always_hide = {
         iteminfo_parts::BASE_PRICE,
         iteminfo_parts::BASE_BARTER,
@@ -946,7 +946,7 @@ static const iteminfo_query &crafting_query_for_item( const item &it )
         iteminfo_parts::DESCRIPTION_APPLICABLEMARTIALARTS,
     };
 
-    // Default: hide always_hide + melee
+
     static const iteminfo_query q_default = [&]() {
         std::vector<iteminfo_parts> hide = always_hide;
         hide.insert( hide.end(), melee_parts.begin(), melee_parts.end() );
@@ -954,7 +954,7 @@ static const iteminfo_query &crafting_query_for_item( const item &it )
     }
     ();
 
-    // Weapons: hide always_hide only (keep melee)
+
     static const iteminfo_query q_melee = iteminfo_query(
             iteminfo_query::all & ~iteminfo_query( always_hide ) );
 
@@ -1021,7 +1021,7 @@ std::vector<iteminfo> recipe_result_info( const recipe &rec, Character &crafter,
     return info;
 }
 
-// --- Recipe list pipeline ---
+
 
 static void recursively_expand_recipes( std::vector<const recipe *> &current,
                                         std::vector<int> &indent,
@@ -1058,7 +1058,7 @@ static void recursively_expand_recipes( std::vector<const recipe *> &current,
     current.insert( current.begin() + i + 1, tmp.begin(), tmp.end() );
 }
 
-// TODO: Make this more efficient
+
 static void expand_recipes( std::vector<const recipe *> &current,
                             std::vector<int> &indent,
                             std::map<const recipe *, availability> &availability_cache,
@@ -1118,7 +1118,7 @@ recipe_list_data build_recipe_list(
             if( uistate.hidden_recipes.find( r->ident() ) != uistate.hidden_recipes.end() ) {
                 continue;
             }
-            // Hide nested groups with no available child recipes
+
             if( r->is_nested() ) {
                 bool has_child = false;
                 for( const recipe_id &child : r->nested_category_data ) {
@@ -1136,7 +1136,7 @@ recipe_list_data build_recipe_list(
         result.num_hidden = picking.size() - result.entries.size();
     }
 
-    // Cache availability on first display
+
     for( const recipe *e : result.entries ) {
         cached_availability( availability_cache, crafter, *e, camp_crafting, inventory_override );
     }
@@ -1155,13 +1155,13 @@ recipe_list_data build_recipe_list(
         } );
     }
 
-    // Set up indents and expand nested categories (must happen after sort)
+
     result.indent.assign( result.entries.size(), 0 );
     expand_recipes( result.entries, result.indent, availability_cache, crafter,
                     unread_first, highlight_unread, available_recipes, uistate.hidden_recipes,
                     camp_crafting, inventory_override );
 
-    // Build the parallel availability vector
+
     result.available.reserve( result.entries.size() );
     std::transform( result.entries.begin(), result.entries.end(),
     std::back_inserter( result.available ), [&]( const recipe * e ) {

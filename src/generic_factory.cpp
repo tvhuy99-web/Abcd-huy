@@ -62,7 +62,7 @@ bool unicode_codepoint_from_symbol_reader( const JsonObject &jo,
     int sym_as_int;
     std::string sym_as_string;
     if( !jo.read( member_name, sym_as_string, false ) ) {
-        // Legacy fallback to integer `sym`.
+
         if( !jo.read( member_name, sym_as_int ) ) {
             return false;
         } else {

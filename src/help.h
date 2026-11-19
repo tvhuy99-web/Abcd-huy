@@ -21,10 +21,10 @@
 class JsonObject;
 
 enum message_modifier {
-    MM_NORMAL = 0, // Normal message
-    MM_SUBTITLE, // Formatted subtitle
-    MM_MONOFONT, // Forced monofont for fixed space diagrams
-    MM_SEPARATOR // ImGui seperator, value is the color to use
+    MM_NORMAL = 0,
+    MM_SUBTITLE,
+    MM_MONOFONT,
+    MM_SEPARATOR
 };
 
 struct help_category {
@@ -53,9 +53,9 @@ class help_data
     private:
         void load_object( const JsonObject &jo, const std::string &src );
         std::map<const int, const help_category> _help_categories;
-        // Only persists per load, intentionally resets on menu -> game, game -> menu
+
         std::unordered_set<int> _read_categories;
-        // Modifier for each mods order
+
         int current_order_start = 0;
         std::string current_src;
 };
@@ -78,11 +78,11 @@ class help_window : public cataimgui::window
 
         const bool screen_reader = get_option<bool>( "SCREEN_READER_MODE" );
 
-        // Width needed to display two of the longest category name side by side
+
         bool is_space_for_two_cat();
         void draw_category_selection();
         void draw_category_option( const int &option, const help_category &category );
-        // Options aren't necessarily sequential and loop
+
         int previous_option( int option );
         int next_option( int option );
         int selected_option;
@@ -90,7 +90,7 @@ class help_window : public cataimgui::window
         int loaded_option;
         std::string imgui_action;
 
-        // Save currently displayed parsed tag + translated paragraphs so they don't need to be recalced every frame
+
         void swap_translated_paragraphs();
         std::vector<std::pair<std::string, message_modifier>> translated_paragraphs;
 
@@ -104,8 +104,8 @@ class help_window : public cataimgui::window
                             const nc_color &category_color );
         const float one_em = ImGui::CalcTextSize( "M" ).x;
 
-        // Temporary to fix issue where IMGUI scrollbar width isn't accounted for for the first few frames
+
         float get_wrap_width();
 };
 
-#endif // CATA_SRC_HELP_H
+#endif

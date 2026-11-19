@@ -21,8 +21,8 @@ static void try_parse_int_simple_parsing()
     try {
         std::locale::global( std::locale( "en_US.UTF-8" ) );
     } catch( std::runtime_error & ) {
-        // On platforms where we can't set the locale, the test should still
-        // pass
+
+
     }
     CAPTURE( setlocale( LC_ALL, nullptr ) );
     CAPTURE( std::locale().name() );
@@ -69,7 +69,7 @@ static void try_parse_int_simple_parsing()
             CHECK( result.str() == "Could not convert 'a' to an integer" );
         }
         {
-            // Verify that we detect overflow
+
             ret_val<TestType> result =
                 try_parse_integer<TestType>( "999999999999999999999", use_locale );
             CHECK( !result.success() );
@@ -102,8 +102,8 @@ static void try_parse_int_locale_parsing()
         }
         CAPTURE( setlocale( LC_ALL, nullptr ) );
         CAPTURE( std::locale().name() );
-        // Disabling on Apple; seems like their C library doesn't do localized integer
-        // parsing.
+
+
 #ifndef __APPLE__
         {
             ret_val<TestType> result = try_parse_integer<TestType>( "1.234", true );

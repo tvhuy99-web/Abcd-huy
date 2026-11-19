@@ -118,24 +118,24 @@ bool cleanup_at_end()
 {
     avatar &u = get_avatar();
     if( g->uquit == QUIT_DIED || g->uquit == QUIT_SUICIDE ) {
-        // Put (non-hallucinations) into the overmap so they are not lost.
+
         for( monster &critter : g->all_monsters() ) {
             g->despawn_monster( critter );
         }
-        // if player has "hunted" trait, remove their nemesis monster on death
+
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
             overmap_buffer.remove_nemesis();
         }
-        // Reset NPC factions and disposition
+
         g->reset_npc_dispositions();
-        // Save the factions', missions and set the NPC's overmap coordinates
-        // Npcs are saved in the overmap.
-        g->save_factions_missions_npcs(); //missions need to be saved as they are global for all saves.
 
-        // and the overmap, and the local map.
-        g->save_maps(); //Omap also contains the npcs who need to be saved.
 
-        //save achievements entry
+        g->save_factions_missions_npcs();
+
+
+        g->save_maps();
+
+
         g->save_achievements();
 
         g->death_screen();
@@ -144,22 +144,22 @@ bool cleanup_at_end()
                 std::chrono::steady_clock::now() - g->time_of_last_load );
         std::chrono::seconds total_time_played = g->time_played_at_last_load + time_since_load;
         get_event_bus().send<event_type::game_over>( total_time_played );
-        // Struck the save_player_data here to forestall Weirdness
+
         g->move_save_to_graveyard();
         g->write_memorial_file( g->stats().value_of( event_statistic_last_words )
                                 .get<cata_variant_type::string>() );
         get_memorial().clear();
         if( a11y::enabled() ) {
-            // R20.4: exporting and removing the dead character's save is
-            // entirely automatic and was silent: the memorial file was
-            // written and the save moved to the graveyard folder with
-            // no spoken trace either happened.
+
+
+
+
             a11y::announce_game_message(
                 _( "Your character's memorial file was written, and the character's save was moved to the graveyard folder." ),
                 false );
         }
         std::vector<std::string> characters = g->list_active_saves();
-        // remove current player from the active characters list, as they are dead
+
         std::vector<std::string>::iterator curchar = std::find( characters.begin(),
                 characters.end(), u.get_save_id() );
         if( curchar != characters.end() ) {
@@ -207,9 +207,9 @@ bool cleanup_at_end()
                 const std::string ended_world_name = world_generator->active_world->world_name;
                 world_generator->delete_world( ended_world_name, true );
                 if( a11y::enabled() ) {
-                    // R20.4: when the WORLD_END option deletes the world
-                    // automatically there was no spoken result at all;
-                    // name the outcome like the main-menu deletion does.
+
+
+
                     popup( _( "World \"%s\" deleted." ), ended_world_name );
                 }
             } else if( queryReset || get_option<std::string>( "WORLD_END" ) == "reset" ) {
@@ -229,14 +229,14 @@ bool cleanup_at_end()
             popup( _( "World retained.  Characters remaining:%s" ), tmpmessage );
         }
         if( g->gamemode ) {
-            g->gamemode = std::make_unique<special_game>(); // null gamemode or something..
+            g->gamemode = std::make_unique<special_game>();
         }
     }
 
-    //Reset any offset due to driving
+
     g->set_driving_view_offset( point_rel_ms::zero );
 
-    //clear all sound channels
+
     sfx::fade_audio_channel( sfx::channel::any, 300 );
     sfx::fade_audio_group( sfx::group::weather, 300 );
     sfx::fade_audio_group( sfx::group::time_of_day, 300 );
@@ -254,7 +254,7 @@ bool cleanup_at_end()
     return true;
 }
 
-} // namespace turn_handler
+}
 
 namespace
 {
@@ -269,7 +269,7 @@ blocking_activity_reader_state &blocking_activity_reader()
     static blocking_activity_reader_state state;
     return state;
 }
-} // namespace
+}
 
 void close_blocking_activity_reader()
 {
@@ -286,17 +286,17 @@ void handle_key_blocking_activity()
         return;
     }
     avatar &u = get_avatar();
-    // ACT_AUTODRIVE's blocked/paused branch deliberately sets moves to 0.
-    // Character::process_activity() only calls its actor while moves > 0;
-    // without this explicit game-thread pump, Android Resume/Cancel can
-    // remain in the JNI mailbox forever while the activity input UI waits.
-    // Only service a pending explicit request and never add a movement turn.
+
+
+
+
+
     if( a11y::enabled() && u.get_moves() <= 0 && u.activity &&
         u.activity.id() == ACT_AUTODRIVE && a11y::android::travel_control_pending() ) {
         u.activity.do_turn( u );
     }
-    // If an interrupted activity vanished without the usual finish/cancel
-    // callback, do not leave a stale full-screen blocked-route panel.
+
+
     if( !u.activity && !u.has_destination() &&
         a11y::android::travel_state() != 0 ) {
         a11y::android::reset_travel_control();
@@ -310,9 +310,9 @@ void handle_key_blocking_activity()
             state.context = std::make_unique<input_context>( get_default_mode_input_context() );
         }
         input_context &ctxt = *state.context;
-        // ACT_AUTODRIVE is gameplay ownership, not an activity *screen*.
-        // Keep the car in the ordinary Drive reader so native blocked-input
-        // handling cannot replace it with "Activity in progress".
+
+
+
         const bool drive_reader = u.activity && u.activity.id() == ACT_AUTODRIVE &&
                                   u.in_vehicle && u.controlling_vehicle;
         if( a11y::enabled() ) {
@@ -322,32 +322,34 @@ void handle_key_blocking_activity()
             if( !state.reader ) {
                 state.reader_is_autodrive = drive_reader;
                 state.reader = std::make_unique<a11y::screen_scope>(
-                    &ctxt, drive_reader ? "DEFAULTMODE" : "activity",
-                []( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-                    if( intent.action == "cancel" ) {
+                                   &ctxt, drive_reader ? "DEFAULTMODE" : "activity",
+                []( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                    if( intent.action == "cancel" )
+                    {
                         const avatar &player = get_avatar();
                         if( player.activity.is_interruptible_with_kb() || player.has_destination() ) {
                             return "pause";
                         }
-                    } else if( intent.action == "activate" ) {
+                    } else if( intent.action == "activate" )
+                    {
                         const avatar &driver = get_avatar();
                         if( driver.activity && driver.activity.id() == ACT_AUTODRIVE &&
                             intent.node == "control_vehicle" ) {
-                            // Holding a finger continues to open the native
-                            // vehicle menu, including its final Gesture Guide.
+
+
                             g->control_vehicle( std::nullopt );
                             return std::string( "TIMEOUT" );
                         }
                         if( driver.activity &&
                             driver.activity.id() == ACT_AUTODRIVE &&
                             intent.node.rfind( "reader:", 0 ) == 0 ) {
-                            // The activity owns the game-thread vehicle.
-                            // Allow only read-only scans/coordinates and the
-                            // original horn. No steering, throttle or engine
-                            // actions can interfere with autonomous routing.
+
+
+
+
                             if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
                                 a11y::announce_vehicle_relative_scan( intent.node.substr(
-                                            std::string( "reader:scan:vehicle:" ).size() ) );
+                                        std::string( "reader:scan:vehicle:" ).size() ) );
                                 return std::string( "TIMEOUT" );
                             }
                             if( intent.node == "reader:coordinates" ) {
@@ -372,15 +374,15 @@ void handle_key_blocking_activity()
                 } );
             }
             if( drive_reader ) {
-                // Reuse the already restricted ACT_AUTODRIVE documents and
-                // real world:here row, but expose them as the normal World
-                // screen. The activity remains alive ONLY on the game thread.
+
+
+
                 a11y::semantic_snapshot drive = a11y::activity_snapshot( ctxt );
                 drive.title = _( "World" );
                 drive.summary.clear();
                 drive.focus = "world:here";
                 drive.nodes.erase( std::remove_if( drive.nodes.begin(), drive.nodes.end(),
-                []( const a11y::semantic_node &node ) {
+                []( const a11y::semantic_node & node ) {
                     return node.id != "world:here" &&
                            node.id != "activity:autodrive" &&
                            node.id != "world:status" &&
@@ -409,15 +411,15 @@ void handle_key_blocking_activity()
             if( u.activity.is_interruptible_with_kb() || u.has_destination() ) {
                 const bool canceled = g->cancel_activity_query( _( "Confirm:" ) );
                 if( canceled && a11y::enabled() ) {
-                    // Report the engine's actual result, not the request:
-                    // cancel_activity_query only returns true after it has
-                    // canceled the activity (and possibly resumed a backlog
-                    // one, which the next activity snapshot will describe).
-                    // Declining the query announces nothing here -- the
-                    // activity simply continues and its snapshot is
-                    // unchanged. This announcement is the completion of
-                    // the reader's separate cancel intent; merely stopping
-                    // speech never reaches this code path.
+
+
+
+
+
+
+
+
+
                     a11y::announce_game_message( _( "The activity was canceled." ), false );
                 }
             }
@@ -468,23 +470,23 @@ npc_turn_result process_npc_turn( map &m, npc &guy )
         const bool has_destination = guy.has_destination_activity();
         guy.move();
         if( moves == guy.get_moves() ) {
-            // Count every time we exit npc::move() without spending any moves.
+
             real_count++;
             if( has_destination == guy.has_destination_activity() || real_count > count_limit ) {
                 turns++;
             }
         }
-        // Turn on debug mode when in infinite loop
-        // It has to be done before the last turn, otherwise
-        // there will be no meaningful debug output.
+
+
+
         if( turns == 9 ) {
             debugmsg( "NPC '%s' entered infinite loop, npc activity id: '%s'",
                       guy.get_name(), guy.activity.id().str() );
         }
     }
 
-    // If we spun too long trying to decide what to do (without spending moves),
-    // Invoke cognitive suspension to prevent an infinite loop.
+
+
     if( turns == 10 ) {
         add_msg( _( "%s faints!" ), guy.get_name() );
         guy.reboot();
@@ -519,7 +521,7 @@ void monmove()
         }
         const tripoint_bub_ms critter_pos = critter.pos_bub( m );
 
-        // Critters in impassable tiles get pushed away, unless it's not impassable for them
+
         if( !critter.is_dead() && ( m.impassable( critter_pos ) &&
                                     !m.get_impassable_field_at( critter_pos ).has_value() ) &&
             !critter.can_move_to( critter_pos ) ) {
@@ -539,7 +541,7 @@ void monmove()
                 }
             }
             if( !okay ) {
-                // die of "natural" cause (overpopulation is natural)
+
                 critter.die( &m, nullptr );
             }
         }
@@ -558,15 +560,15 @@ void monmove()
         }
         while( critter.get_moves() > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
             critter.made_footstep = false;
-            // Controlled critters don't make their own plans
+
             if( !critter.has_effect( effect_controlled ) ) {
-                // Formulate a path to follow
+
                 critter.plan();
             } else {
                 critter.set_moves( 0 );
                 break;
             }
-            critter.move(); // Move one square, possibly hit u
+            critter.move();
             critter.process_triggers();
             m.creature_in_field( critter );
         }
@@ -595,10 +597,10 @@ void monmove()
                                         std::chrono::steady_clock::now() - monster_started ).count();
             if( monster_ms >= 40 ) {
                 a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
-                        "kind=monster name=" + critter.name() +
-                        " elapsed_ms=" + std::to_string( monster_ms ) +
-                        " x=" + std::to_string( critter.pos_abs().x() ) +
-                        " y=" + std::to_string( critter.pos_abs().y() ) );
+                                                 "kind=monster name=" + critter.name() +
+                                                 " elapsed_ms=" + std::to_string( monster_ms ) +
+                                                 " x=" + std::to_string( critter.pos_abs().x() ) +
+                                                 " y=" + std::to_string( critter.pos_abs().y() ) );
             }
         }
 #endif
@@ -606,12 +608,12 @@ void monmove()
 
     g->cleanup_dead();
 
-    // The remaining monsters are all alive, but may be outside of the reality bubble.
-    // If so, despawn them. This is not the same as dying, they will be stored for later and the
-    // monster::die function is not called.
+
+
+
     g->despawn_nonlocal_monsters();
 
-    // Now, do active NPCs.
+
     for( npc &guy : g->all_npcs() ) {
 #if defined(__ANDROID__)
         const auto npc_started = profile_ai ? std::chrono::steady_clock::now() :
@@ -625,9 +627,9 @@ void monmove()
                                     std::chrono::steady_clock::now() - npc_started ).count();
             if( npc_ms >= 40 ) {
                 a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
-                        "kind=npc elapsed_ms=" + std::to_string( npc_ms ) +
-                        " x=" + std::to_string( guy.pos_abs().x() ) +
-                        " y=" + std::to_string( guy.pos_abs().y() ) );
+                                                 "kind=npc elapsed_ms=" + std::to_string( npc_ms ) +
+                                                 " x=" + std::to_string( guy.pos_abs().x() ) +
+                                                 " y=" + std::to_string( guy.pos_abs().y() ) );
             }
         }
 #endif
@@ -636,8 +638,8 @@ void monmove()
 #if defined(__ANDROID__)
     if( profile_ai ) {
         a11y::android::diagnostic_event( "WORLD_AI_COUNTS",
-                "monsters=" + std::to_string( active_monsters ) +
-                " npcs=" + std::to_string( active_npcs ) );
+                                         "monsters=" + std::to_string( active_monsters ) +
+                                         " npcs=" + std::to_string( active_npcs ) );
     }
 #endif
 }
@@ -662,7 +664,7 @@ void overmap_npc_move()
         if( elem->has_omt_destination() ) {
             if( !elem->omt_path.empty() ) {
                 if( rl_dist( elem->omt_path.back(), elem->pos_abs_omt() ) > 2 ) {
-                    // recalculate path, we got distracted doing something else probably
+
                     elem->omt_path.clear();
                 } else if( elem->omt_path.back() == elem->pos_abs_omt() ) {
                     elem->omt_path.pop_back();
@@ -671,7 +673,7 @@ void overmap_npc_move()
             if( elem->omt_path.empty() ) {
                 elem->omt_path = overmap_buffer.get_travel_path( elem->pos_abs_omt(), elem->goal,
                                  overmap_path_params::for_npc() ).points;
-                if( elem->omt_path.empty() ) { // goal is unreachable, or already reached goal, reset it
+                if( elem->omt_path.empty() ) {
                     elem->goal = npc::no_goal_point;
                 }
             } else {
@@ -680,7 +682,7 @@ void overmap_npc_move()
             }
         }
         if( !elem->has_omt_destination() && calendar::once_every( 1_hours ) && one_in( 3 ) ) {
-            // travelling destination is reached/not set, try different one
+
             elem->set_omt_destination();
         }
     }
@@ -689,13 +691,13 @@ void overmap_npc_move()
     }
 }
 
-} // namespace
+}
 
 void game::handle_progress_ui()
 {
     avatar &u = get_avatar();
 
-    // handle activity/progress/waiting UI
+
     const bool player_is_sleeping = u.has_effect( effect_sleep );
     bool wait_redraw = false;
     std::string wait_message;
@@ -725,10 +727,10 @@ void game::handle_progress_ui()
                 ui_manager::redraw();
             }
 
-            // Avoid redrawing the main UI every time due to invalidation
+
 #ifdef TILES
-            // If an ImGui window just closed and cleared the buffer, do a full
-            // redraw now before blocking UIs below.
+
+
             if( cataimgui::clear_pending() ) {
                 ui_manager::redraw();
             }
@@ -743,7 +745,7 @@ void game::handle_progress_ui()
             first_redraw_since_waiting_started = false;
         }
     } else {
-        // Nothing to wait for now
+
         wait_popup_reset();
         first_redraw_since_waiting_started = true;
     }
@@ -759,7 +761,7 @@ bool game::do_turn()
 
     weather_manager &weather = get_weather();
 
-    // Increment game turn
+
     if( new_game ) {
         new_game = false;
         weather.on_game_start();
@@ -767,13 +769,13 @@ bool game::do_turn()
         gamemode->per_turn();
         calendar::turn += 1_turns;
     }
-    //used for dimension swapping
+
     if( swapping_dimensions ) {
         swapping_dimensions = false;
     }
     play_music( music::get_music_id_string() );
 
-    // starting a new turn, clear out temperature cache
+
     weather.temperature_cache.clear();
 
     if( npcs_dirty ) {
@@ -789,7 +791,7 @@ bool game::do_turn()
     mission::process_all();
     avatar &u = get_avatar();
     map &m = get_map();
-    // If controlling a vehicle that is owned by someone else
+
     if( u.in_vehicle && u.controlling_vehicle ) {
         vehicle *veh = veh_pointer_or_null( m.veh_at( u.pos_bub() ) );
         if( veh && !veh->handle_potential_theft( u, true ) ) {
@@ -797,13 +799,13 @@ bool game::do_turn()
         }
     }
 
-    // If you're inside a wall or something and haven't been telefragged, let's get you out.
+
     if( ( m.impassable( u.pos_bub() ) && !m.impassable_field_at( u.pos_bub() ) ) &&
         !m.has_flag( ter_furn_flag::TFLAG_CLIMBABLE, u.pos_bub() ) ) {
         u.stagger();
     }
 
-    // If riding a horse - chance to spook
+
     if( u.is_mounted() ) {
         u.check_mount_is_spooked();
     }
@@ -811,7 +813,7 @@ bool game::do_turn()
         overmap_buffer.process_mongroups();
     }
 
-    // Move hordes every turn, move_hordes has its own rate limiting
+
     overmap_buffer.move_hordes();
     if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
@@ -823,7 +825,7 @@ bool game::do_turn()
 
     u.update_body();
 
-    // Auto-save if autosave is enabled
+
     if( get_option<bool>( "AUTOSAVE" ) &&
         calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
         !u.is_dead_state() ) {
@@ -835,19 +837,19 @@ bool game::do_turn()
     reset_light_level();
     m.mark_turn_light_dirty();
 
-    perhaps_add_random_npc( /* ignore_spawn_timers_and_rates = */ false );
+    perhaps_add_random_npc( false );
 
-    // process avatar activities (ignoring user input)
+
     u.process_activity();
 
-    // Continue the user's selected Explore Places → Drive journey after
-    // native walking to the driver's seat and engine ignition. Keep this
-    // entirely on the game thread, never in Android's snapshot callback.
+
+
+
     if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
         ui::omap::update_accessible_drive_to_place();
     }
 
-    // Process NPC sound events before they move or they hear themselves talking
+
     for( npc &guy : all_npcs() ) {
         if( rl_dist( guy.pos_bub(), u.pos_bub() ) < MAX_VIEW_DISTANCE ) {
             sounds::process_sound_markers( &guy );
@@ -856,24 +858,24 @@ bool game::do_turn()
 
     music::deactivate_music_id( music::music_id::sound );
 
-    // Process sound events into sound markers for display to the player.
+
     sounds::process_sound_markers( &u );
 
     if( u.is_deaf() ) {
         sfx::do_hearing_loss();
     }
 
-    // avatar processes human input through handle_action()
+
     if( !u.has_effect( effect_sleep ) || uquit == QUIT_WATCH ) {
         if( u.get_moves() > 0 || uquit == QUIT_WATCH ) {
             while( u.get_moves() > 0 || uquit == QUIT_WATCH ) {
 
-                // handle_action() may cause map updates, creatures to die
+
                 m.process_falling();
                 cleanup_dead();
 
                 mon_info_update();
-                // Process any new sounds the player caused during their turn.
+
                 for( npc &guy : all_npcs() ) {
                     if( rl_dist( guy.pos_bub(), u.pos_bub() ) < MAX_VIEW_DISTANCE ) {
                         sounds::process_sound_markers( &guy );
@@ -890,10 +892,10 @@ bool game::do_turn()
                     const auto draw_started = profile ? std::chrono::steady_clock::now() :
                                               std::chrono::steady_clock::time_point{};
                     if( !headless ) {
-                        // Menus and the ordinary renderer still redraw normally.
-                        // The spoken-only world does not need an ImGui/SDL frame
-                        // before every walking input: snapshot and input are
-                        // maintained independently.
+
+
+
+
                         if( a11y::enabled() ) {
                             ui_manager::redraw_invalidated();
                         } else {
@@ -905,8 +907,8 @@ bool game::do_turn()
                                                  std::chrono::steady_clock::now() - draw_started ).count();
                         a11y::android::performance_draw_sample( draw_ms );
                         a11y::android::diagnostic_event( "WORLD_DRAW_TIMING",
-                                "draw_ms=" + std::to_string( draw_ms ) +
-                                ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
+                                                         "draw_ms=" + std::to_string( draw_ms ) +
+                                                         ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
                     }
 #else
                     ui_manager::redraw();
@@ -931,14 +933,14 @@ bool game::do_turn()
                     break;
                 }
 
-                // avatar processes moves for activities started by handle_action()
+
                 u.process_activity();
             }
-            // Reset displayed sound markers now that the turn is over.
-            // We only want this to happen if the player had a chance to examine the sounds.
+
+
             sounds::reset_markers();
         } else {
-            // Rate limit key polling to 10 times a second.
+
             static auto start = std::chrono::time_point_cast<std::chrono::milliseconds>(
                                     std::chrono::steady_clock::now() );
             const auto now = std::chrono::time_point_cast<std::chrono::milliseconds>(
@@ -950,9 +952,9 @@ bool game::do_turn()
 
             mon_info_update();
 
-            // If player is performing a task, a monster is dangerously close,
-            // and monster can reach to the player or it has some sort of a ranged attack,
-            // warn them regardless of previous safemode warnings
+
+
+
             if( u.activity ) {
                 for( std::pair<const distraction_type, std::string> &dist : u.activity.get_distractions() ) {
                     if( cancel_activity_or_ignore_query( dist.first, dist.second ) ) {
@@ -964,10 +966,10 @@ bool game::do_turn()
     }
 
     if( driving_view_offset.x() != 0 || driving_view_offset.y() != 0 ) {
-        // Still have a view offset, but might not be driving anymore,
-        // or the option has been deactivated,
-        // might also happen when someone dives from a moving car.
-        // or when using the handbrake.
+
+
+
+
         vehicle *veh = veh_pointer_or_null( m.veh_at( u.pos_bub() ) );
         calc_driving_offset( veh );
     }
@@ -978,14 +980,14 @@ bool game::do_turn()
                                    std::chrono::steady_clock::time_point{};
 #endif
     scent_map &scent = get_scent();
-    // No-scent debug mutation has to be processed here or else it takes time to start working
+
     if( !u.has_flag( json_flag_NO_SCENT ) ) {
         scent.set( u.pos_bub(), u.scent, u.get_type_of_scent() );
         overmap_buffer.set_scent( u.pos_abs_omt(),  u.scent );
     }
     scent.update( u.pos_bub(), m );
 
-    // We need floor cache before checking falling 'n stuff
+
     m.build_floor_caches();
 
     m.process_falling();
@@ -995,11 +997,11 @@ bool game::do_turn()
     explosion_handler::process_explosions();
     m.creature_in_field( u );
 
-    // Apply sounds from previous turn to monster and NPC AI.
+
     sounds::process_sounds();
     const int levz = m.get_abs_sub().z();
-    // Update vision caches for monsters. If this turns out to be expensive,
-    // consider a stripped down cache just for monsters.
+
+
 #if defined(__ANDROID__)
     const auto before_monster_cache = world_profile ? std::chrono::steady_clock::now() :
                                       std::chrono::steady_clock::time_point{};
@@ -1010,7 +1012,7 @@ bool game::do_turn()
                                      std::chrono::steady_clock::time_point{};
 #endif
 
-    // process monster and npc turn
+
     monmove();
 #if defined(__ANDROID__)
     const auto after_monster_turn = world_profile ? std::chrono::steady_clock::now() :
@@ -1021,22 +1023,22 @@ bool game::do_turn()
         overmap_npc_move();
     }
     m.furniture_terrain_emit_fields();
-    // required after monsters move and fields emit
+
     mon_info_update();
 
-    // replenish avatar moves
+
     u.process_turn();
 
-    // Status changes (worsening bleeding, new infection, hunger/thirst/
-    // pain crossing a threshold) were only announced from the input-wait
-    // path in handle_action.cpp, so nothing was spoken while a long
-    // activity ran -- sleeping, waiting or treatment -- and a player who
-    // died in their sleep heard no warning at all. The monitor itself
-    // guards on the reader being enabled and rate-limits repeats, so
-    // this is a no-op for sighted play and for the walking loop, which
-    // already calls it. Waking the player on worsening bleeding is a
-    // separate, larger change (interrupting the sleep activity) and is
-    // deliberately not done here.
+
+
+
+
+
+
+
+
+
+
     a11y::announce_status_changes();
 #if defined(__ANDROID__)
     if( world_profile ) {
@@ -1047,21 +1049,21 @@ bool game::do_turn()
         const auto total_ms = ms( world_sim_started, now );
         a11y::android::performance_sim_sample( total_ms );
         a11y::android::diagnostic_event( "WORLD_SIM_TIMING",
-                "total_ms=" + std::to_string( total_ms ) +
-                " before_cache_ms=" + std::to_string(
-                    ms( world_sim_started, before_monster_cache ) ) +
-                " cache_ms=" + std::to_string(
-                    ms( before_monster_cache, after_monster_cache ) ) +
-                " monsters_ms=" + std::to_string(
-                    ms( after_monster_cache, after_monster_turn ) ) +
-                " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
+                                         "total_ms=" + std::to_string( total_ms ) +
+                                         " before_cache_ms=" + std::to_string(
+                                             ms( world_sim_started, before_monster_cache ) ) +
+                                         " cache_ms=" + std::to_string(
+                                             ms( before_monster_cache, after_monster_cache ) ) +
+                                         " monsters_ms=" + std::to_string(
+                                             ms( after_monster_cache, after_monster_turn ) ) +
+                                         " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
     }
 #endif
 
     if( u.get_moves() < 0 && get_option<bool>( "FORCE_REDRAW" )
         && !a11y::android::suppress_world_visuals() ) {
-        // FORCE_REDRAW is visual-only. Spoken-only walking must not incur
-        // a full SDL present after every simulated world turn.
+
+
         ui_manager::redraw();
         refresh_display();
     }
@@ -1103,16 +1105,16 @@ bool game::do_turn()
     sfx::do_vehicle_exterior_engine_sfx();
     sfx::do_low_stamina_sfx();
 
-    // reset player noise
+
     u.volume = 0;
 
-    // Calculate bionic power balance
+
     u.power_balance = u.get_power_level() - u.power_prev_turn;
     u.power_prev_turn = u.get_power_level();
 
 #if defined(EMSCRIPTEN)
-    // This will cause a prompt to be shown if the window is closed, until the
-    // game is saved.
+
+
     EM_ASM( window.game_unsaved = true; );
 #endif
 

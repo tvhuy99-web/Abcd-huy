@@ -26,11 +26,11 @@ double iso_tangent( double distance, const units::angle &vertex )
 void bresenham( const point_bub_ms &p1, const point_bub_ms &p2, int t,
                 const std::function<bool( const point_bub_ms & )> &interact )
 {
-    // The slope components.
+
     const point_rel_ms d = p2 - p1;
-    // Signs of slope values.
+
     const point s( ( d.x() == 0 ) ? 0 : sgn( d.x() ), ( d.y() == 0 ) ? 0 : sgn( d.y() ) );
-    // Absolute values of slopes x2 to avoid rounding errors.
+
     const point_rel_ms a = d.abs() * 2;
 
     point_bub_ms cur = p1;
@@ -73,12 +73,12 @@ void bresenham( const point_bub_ms &p1, const point_bub_ms &p2, int t,
 void bresenham( const tripoint_bub_ms &loc1, const tripoint_bub_ms &loc2, int t, int t2,
                 const std::function<bool( const tripoint_bub_ms & )> &interact )
 {
-    // The slope components.
+
     const tripoint_rel_ms d( loc2 - loc1 );
-    // The signs of the slopes.
+
     const tripoint s( ( d.x() == 0 ? 0 : sgn( d.x() ) ), ( d.y() == 0 ? 0 : sgn( d.y() ) ),
                       ( d.z() == 0 ? 0 : sgn( d.z() ) ) );
-    // Absolute values of slope components, x2 to avoid rounding errors.
+
     const tripoint a( std::abs( d.x() ) * 2, std::abs( d.y() ) * 2, std::abs( d.z() ) * 2 );
 
     tripoint_bub_ms cur( loc1 );
@@ -198,7 +198,7 @@ void bresenham( const tripoint_bub_ms &loc1, const tripoint_bub_ms &loc2, int t,
                     break;
                 }
             }
-        } else { //dy > dx >= dz
+        } else {
             while( cur.y() != loc2.y() ) {
                 if( t > 0 ) {
                     cur.x() += s.x;
@@ -219,11 +219,11 @@ void bresenham( const tripoint_bub_ms &loc1, const tripoint_bub_ms &loc2, int t,
     }
 }
 
-//Trying to pull points out of a tripoint vector is messy and
-//probably slow, so leaving two full functions for now
+
+
 std::vector<point> line_to( const point &p1, const point &p2, int t )
 {
-    // Preallocate the number of cells we need instead of allocating them piecewise.
+
     const int numCells = square_dist( p1, p2 ) + 1;
     std::vector<point> line;
     line.reserve( numCells );
@@ -240,7 +240,7 @@ std::vector<point> line_to( const point &p1, const point &p2, int t )
 
 std::vector <tripoint> line_to( const tripoint &loc1, const tripoint &loc2, int t, int t2 )
 {
-    // Preallocate the number of cells we need instead of allocating them piecewise.
+
     const int numCells = square_dist( loc1, loc2 ) + 1;
     std::vector<tripoint> line;
     line.reserve( numCells );
@@ -258,7 +258,7 @@ std::vector <tripoint> line_to( const tripoint &loc1, const tripoint &loc2, int 
 
 std::vector<point_abs_om> orthogonal_line_to( const point_abs_om &p1, const point_abs_om &p2 )
 {
-    // Preallocate the number of cells we need instead of allocating them piecewise.
+
     const int numCells = manhattan_dist( p1, p2 ) + 1;
     std::vector<point_abs_om> points;
     points.reserve( numCells );
@@ -271,11 +271,11 @@ std::vector<point_abs_om> orthogonal_line_to( const point_abs_om &p1, const poin
     point i;
     for( i.x = 0, i.y = 0; i.x < diff_abs.x || i.y < diff_abs.y; ) {
         if( ( 0.5 + i.x ) / diff_abs.x < ( 0.5 + i.y ) / diff_abs.y ) {
-            // next step is horizontal
+
             iter.x() += diff_sign.x;
             i.x++;
         } else {
-            // next step is vertical
+
             iter.y() += diff_sign.y;
             i.y++;
         }
@@ -302,7 +302,7 @@ int octile_dist( const point &loc1, const point &loc2, int multiplier )
 {
     const point d = ( loc1 - loc2 ).abs();
     const int mind = std::min( d.x, d.y );
-    // sqrt(2) is approximately 99 / 70
+
     return ( d.x + d.y - 2 * mind ) * multiplier + mind * multiplier * 99 / 70;
 }
 
@@ -323,7 +323,7 @@ units::angle atan2( const rl_vec2d &p )
     return units::atan2( p.y, p.x );
 }
 
-// This more general version of this function gives correct values for larger values.
+
 unsigned make_xyz( const tripoint &p )
 {
     static constexpr double sixteenth_arc = M_PI / 8;
@@ -331,11 +331,11 @@ unsigned make_xyz( const tripoint &p )
     if( p.xy() == point::zero ) {
         return vertical_position;
     }
-    // Get the arctan of the angle and divide by approximately 22.5 deg to get the octant.
-    // the angle is in, then truncate it and map to the right direction.
-    // You can read 'octant' as being "number of 22.5 degree sections away from due south".
-    // FIXME: atan2 normally takes arguments in ( y, x ) order.  This is
-    // passing ( x, y ).
+
+
+
+
+
     int octant = atan2( p.x, p.y ) / sixteenth_arc;
     switch( octant ) {
         case 0:
@@ -367,7 +367,7 @@ unsigned make_xyz( const tripoint &p )
     }
 }
 
-// returns the normalized dx, dy, dz for the current line vector.
+
 static std::tuple<double, double, double> slope_of( const std::vector<tripoint> &line )
 {
     cata_assert( !line.empty() && line.front() != line.back() );
@@ -375,12 +375,12 @@ static std::tuple<double, double, double> slope_of( const std::vector<tripoint> 
     double normDx = ( line.back().x - line.front().x ) / len;
     double normDy = ( line.back().y - line.front().y ) / len;
     double normDz = ( line.back().z - line.front().z ) / len;
-    // slope of <x, y, z>
+
     return std::make_tuple( normDx, normDy, normDz );
 }
 
-// returns the normalized dx, dy, dz for the current line vector.
-// todo: make it templated to work with all tripoint types?
+
+
 static std::tuple<double, double, double> slope_of( const std::vector<tripoint_bub_ms> &line )
 {
     cata_assert( !line.empty() && line.front() != line.back() );
@@ -388,13 +388,13 @@ static std::tuple<double, double, double> slope_of( const std::vector<tripoint_b
     double normDx = ( line.back().x() - line.front().x() ) / len;
     double normDy = ( line.back().y() - line.front().y() ) / len;
     double normDz = ( line.back().z() - line.front().z() ) / len;
-    // slope of <x, y, z>
+
     return std::make_tuple( normDx, normDy, normDz );
 }
 
 float get_normalized_angle( const point &start, const point &end )
 {
-    // Taking the abs value of the difference puts the values in the first quadrant.
+
     const float absx = std::abs( std::max( start.x, end.x ) - std::min( start.x, end.x ) );
     const float absy = std::abs( std::max( start.y, end.y ) - std::min( start.y, end.y ) );
     const float max = std::max( absx, absy );
@@ -408,8 +408,8 @@ float get_normalized_angle( const point &start, const point &end )
 tripoint move_along_line( const tripoint &loc, const std::vector<tripoint> &line,
                           const int distance )
 {
-    // May want to optimize this, but it's called fairly infrequently as part of specific attack
-    // routines, erring on the side of readability.
+
+
     tripoint res( loc );
     const auto slope = slope_of( line );
     res.x += distance * std::get<0>( slope );
@@ -421,8 +421,8 @@ tripoint move_along_line( const tripoint &loc, const std::vector<tripoint> &line
 tripoint_bub_ms move_along_line( const tripoint_bub_ms &loc,
                                  const std::vector<tripoint_bub_ms> &line, const int distance )
 {
-    // May want to optimize this, but it's called fairly infrequently as part of specific attack
-    // routines, erring on the side of readability.
+
+
     tripoint_bub_ms res( loc );
     const auto slope = slope_of( line );
     res.x() += distance * std::get<0>( slope );
@@ -449,44 +449,71 @@ template<>
 std::string enum_to_string<direction>( direction data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case direction::ABOVENORTHWEST: return "above_north_west";
-        case direction::NORTHWEST: return "north_west";
-        case direction::BELOWNORTHWEST: return "below_north_west";
-        case direction::ABOVENORTH: return "above_north";
-        case direction::NORTH: return "north";
-        case direction::BELOWNORTH: return "below_north";
-        case direction::ABOVENORTHEAST: return "above_north_east";
-        case direction::NORTHEAST: return "north_east";
-        case direction::BELOWNORTHEAST: return "below_north_east";
 
-        case direction::ABOVEWEST: return "above_west";
-        case direction::WEST: return "west";
-        case direction::BELOWWEST: return "below_west";
-        case direction::ABOVECENTER: return "above";
-        case direction::CENTER: return "center";
-        case direction::BELOWCENTER: return "below";
-        case direction::ABOVEEAST: return "above_east";
-        case direction::EAST: return "east";
-        case direction::BELOWEAST: return "below_east";
+        case direction::ABOVENORTHWEST:
+            return "above_north_west";
+        case direction::NORTHWEST:
+            return "north_west";
+        case direction::BELOWNORTHWEST:
+            return "below_north_west";
+        case direction::ABOVENORTH:
+            return "above_north";
+        case direction::NORTH:
+            return "north";
+        case direction::BELOWNORTH:
+            return "below_north";
+        case direction::ABOVENORTHEAST:
+            return "above_north_east";
+        case direction::NORTHEAST:
+            return "north_east";
+        case direction::BELOWNORTHEAST:
+            return "below_north_east";
 
-        case direction::ABOVESOUTHWEST: return "above_south_west";
-        case direction::SOUTHWEST: return "south_west";
-        case direction::BELOWSOUTHWEST: return "below_south_west";
-        case direction::ABOVESOUTH: return "above_south";
-        case direction::SOUTH: return "south";
-        case direction::BELOWSOUTH: return "below_south";
-        case direction::ABOVESOUTHEAST: return "above_south_east";
-        case direction::SOUTHEAST: return "south_east";
-        case direction::BELOWSOUTHEAST: return "below_south_east";
-        // *INDENT-ON*
+        case direction::ABOVEWEST:
+            return "above_west";
+        case direction::WEST:
+            return "west";
+        case direction::BELOWWEST:
+            return "below_west";
+        case direction::ABOVECENTER:
+            return "above";
+        case direction::CENTER:
+            return "center";
+        case direction::BELOWCENTER:
+            return "below";
+        case direction::ABOVEEAST:
+            return "above_east";
+        case direction::EAST:
+            return "east";
+        case direction::BELOWEAST:
+            return "below_east";
+
+        case direction::ABOVESOUTHWEST:
+            return "above_south_west";
+        case direction::SOUTHWEST:
+            return "south_west";
+        case direction::BELOWSOUTHWEST:
+            return "below_south_west";
+        case direction::ABOVESOUTH:
+            return "above_south";
+        case direction::SOUTH:
+            return "south";
+        case direction::BELOWSOUTH:
+            return "below_south";
+        case direction::ABOVESOUTHEAST:
+            return "above_south_east";
+        case direction::SOUTHEAST:
+            return "south_east";
+        case direction::BELOWSOUTHEAST:
+            return "below_south_east";
+
         case direction::last:
             break;
     }
     cata_fatal( "Invalid direction" );
 }
 
-} // namespace io
+}
 
 direction direction_from( const point &p ) noexcept
 {
@@ -667,7 +694,7 @@ std::string direction_name_impl( const direction dir, const bool short_name )
 
     return short_name ? _( names[i].first ) : _( names[i].second );
 }
-} //namespace
+}
 
 std::string direction_name( const direction dir )
 {
@@ -720,11 +747,11 @@ std::string direction_suffix( const tripoint_abs_ms &p, const tripoint_abs_ms &q
     return string_format( "%d%s", dist, trim( direction_name_short( direction_from( p, q ) ) ) );
 }
 
-// Cardinals are cardinals. Result is cardinal and adjacent sub-cardinals.
-// Sub-Cardinals are sub-cardinals && abs(x) == abs(y). Result is sub-cardinal and adjacent cardinals.
-// Sub-sub-cardinals are direction && abs(x) > abs(y) or vice versa.
-// Result is adjacent cardinal and sub-cardinals, plus the nearest other cardinal.
-// e.g. if the direction is NNE, also include E.
+
+
+
+
+
 std::vector<tripoint> squares_closer_to( const tripoint &from,
         const tripoint &to )
 {
@@ -736,7 +763,7 @@ std::vector<tripoint> squares_closer_to( const tripoint &from,
         adjacent_closer_squares.push_back( from + tripoint( sgn( d.x ), sgn( d.y ), sgn( d.z ) ) );
     }
     if( a.x > a.y ) {
-        // X dominant.
+
         adjacent_closer_squares.push_back( from + point( sgn( d.x ), 0 ) );
         adjacent_closer_squares.push_back( from + point( sgn( d.x ), 1 ) );
         adjacent_closer_squares.push_back( from + point( sgn( d.x ), -1 ) );
@@ -744,7 +771,7 @@ std::vector<tripoint> squares_closer_to( const tripoint &from,
             adjacent_closer_squares.push_back( from + point( 0, sgn( d.y ) ) );
         }
     } else if( a.x < a.y ) {
-        // Y dominant.
+
         adjacent_closer_squares.push_back( from + point( 0, sgn( d.y ) ) );
         adjacent_closer_squares.push_back( from + point( 1, sgn( d.y ) ) );
         adjacent_closer_squares.push_back( from + point( -1, sgn( d.y ) ) );
@@ -752,7 +779,7 @@ std::vector<tripoint> squares_closer_to( const tripoint &from,
             adjacent_closer_squares.push_back( from + point( sgn( d.x ), 0 ) );
         }
     } else if( d.x != 0 ) {
-        // Pure diagonal.
+
         adjacent_closer_squares.push_back( from + point( sgn( d.x ), sgn( d.y ) ) );
         adjacent_closer_squares.push_back( from + point( sgn( d.x ), 0 ) );
         adjacent_closer_squares.push_back( from + point( 0, sgn( d.y ) ) );
@@ -761,8 +788,8 @@ std::vector<tripoint> squares_closer_to( const tripoint &from,
     return adjacent_closer_squares;
 }
 
-// Returns a vector of the adjacent square in the direction of the target,
-// and the two squares flanking it.
+
+
 std::vector<point_bub_ms> squares_in_direction( const point_bub_ms &p1, const point_bub_ms &p2 )
 {
     int junk = 0;
@@ -771,15 +798,15 @@ std::vector<point_bub_ms> squares_in_direction( const point_bub_ms &p1, const po
     adjacent_squares.reserve( 3 );
     adjacent_squares.push_back( center_square );
     if( p1.x() == center_square.x() ) {
-        // Horizontally adjacent.
+
         adjacent_squares.emplace_back( p1.x() + 1, center_square.y() );
         adjacent_squares.emplace_back( p1.x() - 1, center_square.y() );
     } else if( p1.y() == center_square.y() ) {
-        // Vertically adjacent.
+
         adjacent_squares.emplace_back( center_square.x(), p1.y() + 1 );
         adjacent_squares.emplace_back( center_square.x(), p1.y() - 1 );
     } else {
-        // Diagonally adjacent.
+
         adjacent_squares.emplace_back( p1.x(), center_square.y() );
         adjacent_squares.emplace_back( center_square.x(), p1.y() );
     }
@@ -818,7 +845,7 @@ float rl_vec3d::magnitude() const
 rl_vec2d rl_vec2d::normalized() const
 {
     rl_vec2d ret;
-    if( is_null() ) { // shouldn't happen?
+    if( is_null() ) {
         ret.x = ret.y = 1;
         return ret;
     }
@@ -831,7 +858,7 @@ rl_vec2d rl_vec2d::normalized() const
 rl_vec3d rl_vec3d::normalized() const
 {
     rl_vec3d ret;
-    if( is_null() ) { // shouldn't happen?
+    if( is_null() ) {
         ret.x = ret.y = ret.z = 0;
         return ret;
     }
@@ -895,7 +922,7 @@ tripoint rl_vec3d::as_point() const
            );
 }
 
-// scale.
+
 rl_vec2d rl_vec2d::operator*( const float rhs ) const
 {
     rl_vec2d ret;
@@ -917,7 +944,7 @@ rl_vec3d rl_vec3d::operator*( const float rhs ) const
     return rl_vec3d( *this ) *= rhs;
 }
 
-// subtract
+
 rl_vec2d rl_vec2d::operator-( const rl_vec2d &rhs ) const
 {
     rl_vec2d ret;
@@ -935,7 +962,7 @@ rl_vec3d rl_vec3d::operator-( const rl_vec3d &rhs ) const
     return ret;
 }
 
-// unary negation
+
 rl_vec2d rl_vec2d::operator-() const
 {
     rl_vec2d ret;
@@ -993,7 +1020,7 @@ rl_vec3d rl_vec3d::operator/( const float rhs ) const
 
 void calc_ray_end( units::angle angle, const int range, const tripoint &p, tripoint &out )
 {
-    // forces input angle to be between 0 and 360, calculated from actual input
+
     angle = fmod( angle, 360_degrees );
     if( angle < 0_degrees ) {
         angle += 360_degrees;

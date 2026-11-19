@@ -32,8 +32,8 @@ enum explosion_neighbors {
 struct explosion_tile {
     explosion_neighbors neighborhood;
     nc_color color;
-    // we use this if we don't want to use a color
+
     std::optional<std::string> tile_name;
 };
 
-#endif // CATA_SRC_ANIMATION_H
+#endif

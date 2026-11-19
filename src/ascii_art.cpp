@@ -12,7 +12,7 @@ static const int ascii_art_width = 41;
 namespace
 {
 generic_factory<ascii_art> ascii_art_factory( "ascii_art" );
-} // namespace
+}
 
 template<>
 const ascii_art &string_id<ascii_art>::obj() const
@@ -52,4 +52,3 @@ void ascii_art::reset()
 {
     ascii_art_factory.reset();
 }
-

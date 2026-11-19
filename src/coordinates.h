@@ -80,21 +80,21 @@ constexpr scale scale_from_origin( origin o )
     }
 }
 
-/**
- * A generic coordinate-type-safe point.
- *
- * Generally you wouldn't use this class directly, but via the typedefs below
- * (point_abs_ms, etc.).
- *
- * Point should be the underlying representation type (either point or
- * tripoint).
- *
- * Origin and Scale define the coordinate system for the point.
- *
- * InBounds define if the point is guaranteed to be inbounds.
- *
- * For more details see doc/c++/POINTS_COORDINATES.md.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename Point>
 class coord_point_base
 {
@@ -135,7 +135,7 @@ class coord_point_mut : public coord_point_base<Point>
         template<typename T>
         constexpr coord_point_mut( T x, T y, T z ) : base( x, y, z ) {}
 
-        // TODO: move the const accessors into base when cata-unsequenced-calls is fixed.
+
         constexpr const Point &raw() const {
             return this->raw_;
         }
@@ -209,14 +209,14 @@ class coord_point_ob : public
         using base::base;
 
         static constexpr int dimension = Point::dimension;
-        // Coordinate representing the origin
+
         static const coord_point_ob zero;
-        // Coordinate with minimum representable coordinates
+
         static const coord_point_ob min;
-        // Coordinate with maximum representable coordinates
+
         static const coord_point_ob max;
-        // Sentinel value for returning and detecting invalid coordinates.
-        // Equal to @ref min for backward compatibility.
+
+
         static const coord_point_ob invalid;
         constexpr bool is_invalid() const {
             return *this == invalid;
@@ -296,8 +296,8 @@ class coord_point_ob : public
         }
 };
 
-// These definitions can go in the class in clang and gcc, and are much shorter there,
-// but MSVC doesn't allow that, so...
+
+
 template<typename Point, origin Origin, scale Scale>
 const coord_point_ob<Point, Origin, Scale>
 coord_point_ob<Point, Origin, Scale>::min =
@@ -378,9 +378,9 @@ class coord_point_ib : public coord_point_ob<Point, Origin, Scale>
         using this_as_tripoint_ob = coord_point_ob<tripoint, Origin, Scale>;
         using this_as_ob = base;
 
-        // Explicit functions to construct inbounds versions without doing any
-        // bounds checking. Only use these with a very good reason, when you
-        // are completely sure the result will be inbounds.
+
+
+
         template <typename T>
         static constexpr coord_point_ib make_unchecked( T x, T y ) {
             return coord_point_ib( x, y );
@@ -404,7 +404,7 @@ class coord_point_ib : public coord_point_ob<Point, Origin, Scale>
             return coord_point_ib( other.x, other.y, z );
         }
 
-        // Allow implicit conversions from inbounds to out of bounds.
+
         // NOLINTNEXTLINE(google-explicit-constructor)
         operator const this_as_ob &() const {
             return *this;
@@ -504,8 +504,8 @@ constexpr inline auto operator+(
 }
 
 template < typename PointL, typename PointR, origin OriginR, scale Scale,
-           // enable_if to prevent ambiguity with above when both args are
-           // relative
+
+
            typename = std::enable_if_t < OriginR != origin::relative >>
 constexpr inline auto operator+(
     const coord_point_ob<PointL, origin::relative, Scale> &l,
@@ -525,8 +525,8 @@ constexpr inline auto operator-(
 }
 
 template < typename PointL, typename PointR, origin Origin, scale Scale,
-           // enable_if to prevent ambiguity with above when both args are
-           // relative
+
+
            typename = std::enable_if_t < Origin != origin::relative >>
 constexpr inline auto operator-(
     const coord_point_ob<PointL, Origin, Scale> &l,
@@ -544,7 +544,7 @@ constexpr inline auto operator-(
     return coord_point_ob<PointResult, Origin, Scale>( - l.raw() );
 }
 
-// Only relative points can be multiplied by a constant
+
 template<typename Point, scale Scale>
 constexpr inline coord_point_ob<Point, origin::relative, Scale> operator*(
     int l, const coord_point_ob<Point, origin::relative, Scale> &r )
@@ -586,7 +586,7 @@ coord_max( const coord_point_ob<Point, Origin, Scale> &l,
                     r.z() ) );
 }
 
-// Min and max of inbounds points results in an inbounds point.
+
 
 template <typename Point, origin Origin, scale Scale>
 constexpr inline coord_point_ib < Point, Origin, Scale>
@@ -616,10 +616,10 @@ struct project_to_impl<ScaleUp, 0, ResultScale> {
     template<template<class, origin, scale> class coord, typename Point, origin Origin, scale SourceScale>
     coord<Point, Origin, ResultScale> CATA_FORCEINLINE operator()(
         const coord<Point, Origin, SourceScale> src ) {
-        // Inbounds points are guaranteed to be inbounds after scaling up.
-        //
-        // e.g. point_bub_sm_ib scaled up to point_bub_ms_ib points to the top
-        // left of the submap, which is still inbounds.
+
+
+
+
         return coord<Point, Origin, ResultScale>::make_unchecked( multiply_xy( src.raw(),
                 ScaleUp ) );
     }
@@ -637,9 +637,9 @@ struct project_to_impl<0, ScaleDown, ResultScale> {
     template<typename Point, origin Origin, scale SourceScale>
     coord_point_ib<Point, Origin, ResultScale> CATA_FORCEINLINE operator()(
         const coord_point_ib<Point, Origin, SourceScale> src ) {
-        // Inbounds points are guaranteed to be inbounds after scaling down.
-        //
-        // They are also guaranteed to be >= 0, so we can use a more effecient method of scaling.
+
+
+
         return coord_point_ib<Point, Origin, ResultScale>::make_unchecked(
                    divide_xy_round_to_minus_infinity_non_negative( src.raw(), ScaleDown ) );
     }
@@ -661,19 +661,19 @@ CATA_FORCEINLINE auto project_to( const coord_point_ib<Point, Origin, SourceScal
     return project_to_impl<scale_up, scale_down, ResultScale>()( src );
 }
 
-// Resolves the remainer type for project_remain. In most cases the result shares
-// the same InBounds as the source, however some cases let us get inbounds results
-// from out of bounds input.
-//
-// This needs to be special cased, as due to the existance of tinymap we cannot
-// do this for origin::reality_bubble
+
+
+
+
+
+
 template<typename Point, origin RemainderOrigin, scale SourceScale, bool InBounds>
 struct remainder_inbounds {
     using type =
         std::conditional_t<InBounds, coord_point_ib<Point, RemainderOrigin, SourceScale>, coord_point_ob<Point, RemainderOrigin, SourceScale>>;
 };
 
-// *_sm_ms are always inbounds as remainder.
+
 template<typename Point, bool InBounds>
 struct remainder_inbounds<Point, origin::submap, scale::map_square, InBounds> {
     using type = coord_point_ib<Point, origin::submap, scale::map_square>;
@@ -711,7 +711,7 @@ struct quotient_remainder_point {
     quotient_type quotient;
     remainder_type remainder;
 
-    // For assigning to std::tie( q, r );
+
     // NOLINTNEXTLINE(google-explicit-constructor)
     operator std::tuple<quotient_type &, remainder_type &>() {
         return std::tie( quotient, remainder );
@@ -730,20 +730,20 @@ struct quotient_remainder_tripoint {
     using remainder_type_ob = typename helper::remainder_type_ob;
     using remainder_type_tripoint_ob = typename helper::remainder_type_tripoint_ob;
 
-    // Annoyingly, for the conversion operators below to work correctly, we
-    // need to have point and tripoint version of both quotient and remainder
-    // ready here, so that we can take references to any of them.
-    // Luckily the entire lifetime of this struct should be pretty short, so
-    // the compiler can do its magic to remove the overhead of initializing the
-    // ones that don't actually get used.
+
+
+
+
+
+
     quotient_type quotient;
     remainder_type remainder;
     quotient_type_tripoint quotient_tripoint;
     remainder_type_tripoint remainder_tripoint;
 
-    // For assigning to std::tie( q, r );
-    // Exactly one of the two resulting types should be a tripoint, so that the
-    // z-coordinate doesn't get duplicated.
+
+
+
     // NOLINTNEXTLINE(google-explicit-constructor)
     operator std::tuple<quotient_type_tripoint &, remainder_type &>() {
         return std::tie( quotient_tripoint, remainder );
@@ -753,8 +753,8 @@ struct quotient_remainder_tripoint {
         return std::tie( quotient, remainder_tripoint );
     }
 
-    // Additional conversions that allow converting _ib results to _ob outputs.
-    // The template trickery is to avoid ambiguous overloads
+
+
 
     template < typename quotient_tripoint_ob = quotient_type_tripoint_ob,
                std::enable_if_t < !std::is_same_v<quotient_type_tripoint, quotient_tripoint_ob >> * = nullptr >
@@ -784,25 +784,25 @@ struct quotient_remainder_tripoint {
 
 };
 
-// project_remain returns a helper struct, intended to be used with std::tie
-// to pull out the two components of the result.
-// For example, when splitting a point:
-//  point_abs_sm val;
-//  point_abs_om quotient;
-//  point_om_sm remainder;
-//  std::tie( quotient, remainder ) = project_remain<coords::om>( val );
-//
-// If passing a tripoint to project_remain, you must choose exactly one of the
-// quotient or remainder to get the z coordinate.  Both of these should work:
-//  tripoint_abs_sm val;
-//
-//  tripoint_abs_om quotient;
-//  point_om_sm remainder;
-//  std::tie( quotient, remainder ) = project_remain<coords::om>( val );
-//
-//  point_abs_om quotient;
-//  tripoint_om_sm remainder;
-//  std::tie( quotient, remainder ) = project_remain<coords::om>( val );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<scale ResultScale, origin Origin, scale SourceScale, template<class, origin, scale> class coord, bool InBounds = coord<point, Origin, SourceScale>::is_inbounds>
 CATA_FORCEINLINE quotient_remainder_point<Origin, ResultScale, SourceScale, InBounds>
 project_remain(
@@ -878,7 +878,7 @@ inline auto project_bounds( const coord_point_ob<tripoint, Origin, CoarseScale> 
                project_to<FineScale>( coarse ), project_to<FineScale>( coarse + one ) );
 }
 
-} // namespace coords
+}
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 // NOLINTNEXTLINE(cert-dcl58-cpp)
@@ -894,7 +894,7 @@ using coords::project_remain;
 using coords::project_combine;
 using coords::project_bounds;
 
-// Rebase relative coordinates to the base you know they're actually relative to.
+
 point_rel_ms rebase_rel( point_sm_ms );
 point_rel_ms rebase_rel( point_omt_ms p );
 point_rel_ms rebase_rel( point_bub_ms p );
@@ -913,9 +913,9 @@ tripoint_omt_ms rebase_omt( tripoint_rel_ms p );
 tripoint_bub_ms rebase_bub( tripoint_rel_ms p );
 tripoint_bub_sm rebase_bub( tripoint_rel_sm p );
 
-// 'Glue' rebase operations for when a tinymap is using the underlying map operation and when a tinymap
-// has to be cast to a map to access common functionality. Note that this doesn't actually change anything
-// as the reference remains the same location regardless, and the map operation still knows how large the map is.
+
+
+
 point_bub_ms rebase_bub( point_omt_ms p );
 tripoint_bub_ms rebase_bub( tripoint_omt_ms p );
 tripoint_omt_ms rebase_omt( tripoint_bub_ms p );
@@ -969,7 +969,7 @@ direction direction_from( const coords::coord_point_ob<Point, Origin, Scale> &lo
     return direction_from( loc1.raw(), loc2.raw() );
 }
 
-// line from loc1 to loc2, including loc2 but not loc1
+
 template<typename Point, coords::origin Origin, coords::scale Scale, std::enable_if_t<std::is_same_v<Point, point>, int> = 0>
 std::vector < coords::coord_point < Point, Origin, Scale >>
         line_to( const coords::coord_point_ob<Point, Origin, Scale> &loc1,
@@ -985,7 +985,7 @@ std::vector < coords::coord_point < Point, Origin, Scale >>
     return result;
 }
 
-// line from loc1 to loc2, including loc2 but not loc1
+
 template<typename Point, coords::origin Origin, coords::scale Scale, std::enable_if_t<std::is_same_v<Point, point>, int> = 0>
 std::vector < coords::coord_point_ib < Point, Origin, Scale >>
         line_to( const coords::coord_point_ib<Point, Origin, Scale> &loc1,
@@ -1001,7 +1001,7 @@ std::vector < coords::coord_point_ib < Point, Origin, Scale >>
     return result;
 }
 
-// line from loc1 to loc2, including loc2 but not loc1
+
 template<typename Tripoint, coords::origin Origin, coords::scale Scale,
          std::enable_if_t<std::is_same_v<Tripoint, tripoint>, int> = 0>
 std::vector < coords::coord_point < Tripoint, Origin, Scale >>
@@ -1018,7 +1018,7 @@ std::vector < coords::coord_point < Tripoint, Origin, Scale >>
     return result;
 }
 
-// line from loc1 to loc2, including loc2 but not loc1
+
 template<typename Tripoint, coords::origin Origin, coords::scale Scale,
          std::enable_if_t<std::is_same_v<Tripoint, tripoint>, int> = 0>
 std::vector < coords::coord_point_ib < Tripoint, Origin, Scale>>
@@ -1035,8 +1035,8 @@ std::vector < coords::coord_point_ib < Tripoint, Origin, Scale>>
     return result;
 }
 
-// Returns the coordinates adjacent to loc1 that are closer to loc2 than loc1 is.
-// Out-of-bounds version.
+
+
 template<typename Tripoint, coords::origin Origin, coords::scale Scale,
          std::enable_if_t<std::is_same_v<Tripoint, tripoint>, int> = 0>
 std::vector < coords::coord_point < Tripoint, Origin, Scale >>
@@ -1052,8 +1052,8 @@ std::vector < coords::coord_point < Tripoint, Origin, Scale >>
     return result;
 }
 
-// Returns the coordinates adjacent to loc1 that are closer to loc2 than loc1 is.
-// Out-of-bounds version.
+
+
 template<typename Tripoint, coords::origin Origin, coords::scale Scale,
          std::enable_if_t<std::is_same_v<Tripoint, tripoint>, int> = 0>
 std::vector < coords::coord_point_ib < Tripoint, Origin, Scale>>
@@ -1160,7 +1160,7 @@ std::vector<coords::coord_point_ib<Point, Origin, Scale>>
     return closest_points_first( loc, 0, max_dist );
 }
 
-// construct a maximum point using the maximum value of every dimension from a set of points
+
 template<typename Point, coords::origin Origin, coords::scale Scale>
 coords::coord_point_ob<Point, Origin, Scale> construct_max( const
         std::vector< coords::coord_point_ob<Point, Origin, Scale>> &locs )
@@ -1184,7 +1184,7 @@ coords::coord_point_ob<Point, Origin, Scale> construct_max( const
     return constructed_max;
 }
 
-// construct a minimum point using the minimum value of every dimension from a set of points
+
 template<typename Point, coords::origin Origin, coords::scale Scale>
 coords::coord_point_ob<Point, Origin, Scale> construct_min( const
         std::vector< coords::coord_point_ob<Point, Origin, Scale>> &locs )
@@ -1208,7 +1208,7 @@ coords::coord_point_ob<Point, Origin, Scale> construct_min( const
     return constructed_min;
 }
 
-// converts a JCV point to a CATA point
+
 template<typename Point, coords::origin Origin, coords::scale Scale>
 coords::coord_point_ob<Point, Origin, Scale> jcv_to_cata_point( const jcv_point &loc )
 {
@@ -1222,9 +1222,9 @@ coords::coord_point_ib<Point, Origin, Scale> jcv_to_cata_point( const jcv_point 
     return jcv_to_cata_point<coords::coord_point_ib<Point, Origin, Scale>>( loc );
 }
 
-// returns whether a single point `loc` is in the inclusive triangle defined by points `t0 -> t1 -> t2`
-// barycentric coordinate solution obtained from https://stackoverflow.com/a/14382692,
-// which itself was derived from https://en.wikipedia.org/wiki/Barycentric_coordinate_system
+
+
+
 template<typename Point, coords::origin Origin, coords::scale Scale>
 bool point_in_triangle_2d( const coords::coord_point_ob<Point, Origin, Scale> &loc,
                            const coords::coord_point_ob<Point, Origin, Scale> &t0,
@@ -1237,7 +1237,7 @@ bool point_in_triangle_2d( const coords::coord_point_ob<Point, Origin, Scale> &l
                     ( t2.y() - t0.y() ) * loc.x() + ( t0.x() - t2.x() ) * loc.y() );
     const float t = 1.0f / ( 2.0f * area ) * ( t0.x() * t1.y() - t0.y() * t1.x() +
                     ( t0.y() - t1.y() ) * loc.x() + ( t1.x() - t0.x() ) * loc.y() );
-    constexpr float positive_float_threshold = -0.001f; // what constitutes a "positive number"
+    constexpr float positive_float_threshold = -0.001f;
     return s >= positive_float_threshold && t >= positive_float_threshold &&
            1.0f - s - t >= positive_float_threshold;
 }
@@ -1251,7 +1251,7 @@ bool point_in_triangle_2d( const coords::coord_point_ib<Point, Origin, Scale> &l
     return point_in_triangle_2d( loc, t0, t1, t2 );
 }
 
-// returns ALL points in the inclusive triangle defined by points `t0 -> t1 -> t2`
+
 template<typename Point, coords::origin Origin, coords::scale Scale>
 std::vector<coords::coord_point_ob<Point, Origin, Scale>>
         points_in_triangle_2d( const coords::coord_point_ob<Point, Origin, Scale> &t0,
@@ -1283,29 +1283,29 @@ bool points_in_triangle_2d(
     return points_in_triangle_2d( t0, t1, t2 );
 }
 
-/* find appropriate subdivided coordinates for absolute tile coordinate.
- * This is less obvious than one might think, for negative coordinates, so this
- * was created to give a definitive answer.
- *
- * 'absolute' is defined as the -actual- submap x,y * SEEX + position in submap, and
- * can be obtained from map.getabs(x, y);
- *   usage:
- *    real_coords rc( g->m.getabs(g->u.posx(), g->u.posy() ) );
- */
+
+
+
+
+
+
+
+
+
 struct real_coords {
     static const int tiles_in_sub = SEEX;
     static const int tiles_in_sub_n = tiles_in_sub - 1;
     static const int subs_in_om = OMAPX * 2;
     static const int subs_in_om_n = subs_in_om - 1;
 
-    point abs_pos;     // 1 per tile, starting from tile 0,0 of submap 0,0 of overmap 0,0
-    point abs_sub;     // submap: 12 tiles.
-    point abs_om;      // overmap: 360 submaps.
+    point abs_pos;
+    point abs_sub;
+    point abs_om;
 
-    point sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
+    point sub_pos;
 
-    point om_pos;      // overmap tile: 2x2 submaps.
-    point om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
+    point om_pos;
+    point om_sub;
 
     real_coords() = default;
 
@@ -1315,14 +1315,14 @@ struct real_coords {
 
     void fromabs( const point &abs );
 
-    // specifically for the subjective position returned by overmap::draw
+
     void fromomap( const point &rel_om, const point &rel_om_pos );
 
     point_abs_omt abs_omt() const {
         return project_to<coords::omt>( point_abs_sm( abs_sub ) );
     }
 
-    // helper functions to return abs_pos of submap/overmap tile/overmap's start
+
 
     point begin_sub() const {
         return point( abs_sub.x * tiles_in_sub, abs_sub.y * tiles_in_sub );
@@ -1335,4 +1335,4 @@ struct real_coords {
         return point( abs_om.x * subs_in_om * tiles_in_sub, abs_om.y * subs_in_om * tiles_in_sub );
     }
 };
-#endif // CATA_SRC_COORDINATES_H
+#endif

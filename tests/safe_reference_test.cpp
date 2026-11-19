@@ -15,7 +15,7 @@ struct example {
     }
 };
 
-} // namespace
+}
 
 TEST_CASE( "safe_reference_returns_correct_object", "[safe_reference]" )
 {

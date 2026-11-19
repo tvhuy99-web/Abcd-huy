@@ -6,7 +6,7 @@
 #include <cmath> // IWYU pragma: keep
 #include <cstdint>
 #include <cstdio>
-#include <cstring> // strcmp
+#include <cstring>
 #include <exception>
 #include <functional>
 #include <iterator>
@@ -28,18 +28,18 @@
 
 json_error_output_colors_t json_error_output_colors = json_error_output_colors_t::unset;
 
-// JSON parsing and serialization tools for Cataclysm-DDA.
-// For documentation, see the included header, json.h.
+
+
 
 static bool is_whitespace( char ch )
 {
-    // These are all the valid whitespace characters allowed by RFC 4627.
+
     return ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r';
 }
 
-// Thw following function would fit more logically in catacharset.cpp, but it's
-// needed for the json formatter and we can't easily include that file in that
-// binary.
+
+
+
 std::string utf32_to_utf8( uint32_t ch )
 {
     std::array<char, 5> out;
@@ -108,15 +108,15 @@ void TextJsonValue::throw_error_after( const std::string &err ) const
     jsin_.error( err );
 }
 
-/* class TextJsonObject
- * represents a JSON object,
- * providing access to the underlying data.
- */
+
+
+
+
 TextJsonObject::TextJsonObject( TextJsonIn &j )
 {
     jsin = &j;
     start = jsin->tell();
-    // cache the position of the value for each member
+
     jsin->start_object();
     while( !jsin->end_object() ) {
         std::string n = jsin->get_member_name();
@@ -210,8 +210,8 @@ int TextJsonObject::verify_position( std::string_view name,
         if( throw_exception ) {
             throw JsonError( str_cat( "member lookup on empty object: ", name ) );
         }
-        // 0 is always before the opening brace,
-        // so it will never indicate a valid member position
+
+
         return 0;
     }
     const auto iter = positions.find( name );
@@ -220,8 +220,8 @@ int TextJsonObject::verify_position( std::string_view name,
             jsin->seek( start );
             jsin->error( str_cat( "member not found: ", name ) );
         }
-        // 0 is always before the opening brace,
-        // so it will never indicate a valid member position
+
+
         return 0;
     }
     return iter->second;
@@ -240,8 +240,8 @@ std::string TextJsonObject::line_number() const
 
 std::string TextJsonObject::str() const
 {
-    // If we're getting the string form, we might be re-parsing later, so don't
-    // complain about unvisited members.
+
+
     allow_omitted_members();
 
     if( jsin && end_ >= start ) {
@@ -324,7 +324,7 @@ json_source_location TextJsonObject::get_source_location() const
     return loc;
 }
 
-/* returning values by name */
+
 
 bool TextJsonObject::get_bool( std::string_view name ) const
 {
@@ -391,7 +391,7 @@ std::string TextJsonObject::get_string( std::string_view name,
     return jsin->get_string();
 }
 
-/* returning containers by name */
+
 
 TextJsonArray TextJsonObject::get_array( std::string_view name ) const
 {
@@ -446,7 +446,7 @@ TextJsonObject TextJsonObject::get_object( std::string_view name ) const
     return jsin->get_object();
 }
 
-/* non-fatal member existence and type testing */
+
 
 bool TextJsonObject::has_null( std::string_view name ) const
 {
@@ -509,16 +509,16 @@ bool TextJsonObject::has_object( std::string_view name ) const
     return jsin->test_object();
 }
 
-/* class TextJsonArray
- * represents a JSON array,
- * providing access to the underlying data.
- */
+
+
+
+
 TextJsonArray::TextJsonArray( TextJsonIn &j )
 {
     jsin = &j;
     start = jsin->tell();
     index = 0;
-    // cache the position of each element
+
     jsin->start_array();
     while( !jsin->end_array() ) {
         positions.push_back( jsin->tell() );
@@ -588,7 +588,7 @@ void TextJsonArray::verify_index( const size_t i ) const
     }
 }
 
-/* iterative access */
+
 
 TextJsonValue TextJsonArray::next_value()
 {
@@ -645,7 +645,7 @@ void TextJsonArray::skip_value()
     ++index;
 }
 
-/* static access */
+
 
 bool TextJsonArray::get_bool( const size_t i ) const
 {
@@ -689,7 +689,7 @@ TextJsonObject TextJsonArray::get_object( const size_t i ) const
     return jsin->get_object();
 }
 
-/* iterative type checking */
+
 
 bool TextJsonArray::test_null() const
 {
@@ -754,7 +754,7 @@ bool TextJsonArray::test_object() const
     return jsin->test_object();
 }
 
-/* random-access type checking */
+
 
 bool TextJsonArray::has_null( const size_t i ) const
 {
@@ -894,7 +894,7 @@ void TextJsonIn::skip_separator()
         stream->get();
         ate_separator = true;
     } else if( ch == ']' || ch == '}' || ch == ':' ) {
-        // okay
+
         if( ate_separator ) {
             std::stringstream err;
             err << "comma should not be found before '" << ch << "'";
@@ -903,14 +903,14 @@ void TextJsonIn::skip_separator()
         }
         ate_separator = false;
     } else if( ch == EOF ) {
-        // that's okay too... probably
+
         if( ate_separator ) {
             uneat_whitespace();
             error( "comma at end of file not allowed" );
         }
         ate_separator = false;
     } else {
-        // not okay >:(
+
         uneat_whitespace();
         error( 1, "missing comma" );
     }
@@ -959,32 +959,32 @@ void TextJsonIn::skip_value()
 {
     eat_whitespace();
     char ch = peek();
-    // it's either a string '"'
+
     if( ch == '"' ) {
         skip_string();
-        // or an object '{'
+
     } else if( ch == '{' ) {
         skip_object();
-        // or an array '['
+
     } else if( ch == '[' ) {
         skip_array();
-        // or a number (-0123456789)
+
     } else if( ch == '-' || ( ch >= '0' && ch <= '9' ) ) {
         skip_number();
-        // or "true", "false" or "null"
+
     } else if( ch == 't' ) {
         skip_true();
     } else if( ch == 'f' ) {
         skip_false();
     } else if( ch == 'n' ) {
         skip_null();
-        // or an error.
+
     } else {
         std::stringstream err;
         err << "expected JSON value but got '" << ch << "'";
         error( err.str() );
     }
-    // skip_* end value automatically
+
 }
 
 void TextJsonIn::skip_object()
@@ -993,7 +993,7 @@ void TextJsonIn::skip_object()
     while( !end_object() ) {
         skip_member();
     }
-    // end_value called by end_object
+
 }
 
 void TextJsonIn::skip_array()
@@ -1002,7 +1002,7 @@ void TextJsonIn::skip_array()
     while( !end_array() ) {
         skip_value();
     }
-    // end_value called by end_array
+
 }
 
 void TextJsonIn::skip_true()
@@ -1051,7 +1051,7 @@ void TextJsonIn::skip_number()
 {
     char ch;
     eat_whitespace();
-    // skip all of (+-0123456789.eE)
+
     while( stream->good() ) {
         stream->get( ch );
         if( ch != '+' && ch != '-' && ( ch < '0' || ch > '9' ) &&
@@ -1083,7 +1083,7 @@ static bool get_escaped_or_unicode( std::istream &stream, std::string &s, std::s
         return false;
     }
     if( ch == '\\' ) {
-        // converting \", \\, \/, \b, \f, \n, \r, \t and \uxxxx according to JSON spec.
+
         stream.get( ch );
         if( !stream.good() ) {
             err = "read operation failed";
@@ -1144,7 +1144,7 @@ static bool get_escaped_or_unicode( std::istream &stream, std::string &s, std::s
         err = "reached end of line without closing string";
         return false;
     } else if( ch == '"' ) {
-        // the caller is supposed to handle the ending quote
+
         err = "unexpected ending quote";
         return false;
     } else if( static_cast<unsigned char>( ch ) < 0x20 ) {
@@ -1207,7 +1207,7 @@ std::string TextJsonIn::get_string()
     std::string err;
     bool success = false;
     do {
-        // the first character had better be a '"'
+
         stream->get( ch );
         if( !stream->good() ) {
             err = "read operation failed";
@@ -1217,7 +1217,7 @@ std::string TextJsonIn::get_string()
             err = "expected string but got '" + std::string( 1, ch ) + "'";
             break;
         }
-        // add chars to the string, one at a time
+
         do {
             ch = stream->peek();
             if( !stream->good() ) {
@@ -1247,7 +1247,7 @@ std::string TextJsonIn::get_string()
     }
 }
 
-// These functions get -INT_MIN and -INT64_MIN while very carefully avoiding any overflow.
+
 constexpr static uint64_t neg_INT_MIN()
 {
     static_assert( sizeof( int ) <= sizeof( int64_t ),
@@ -1279,7 +1279,7 @@ number_sci_notation TextJsonIn::get_any_int()
     if( n.exp < 0 ) {
         error( "Integers cannot have a decimal point or negative order of magnitude." );
     }
-    // Manually apply scientific notation, since std::pow converts to double under the hood.
+
     for( int64_t i = 0; i < n.exp; i++ ) {
         if( n.number > std::numeric_limits<uint64_t>::max() / 10ULL ) {
             error( "Specified order of magnitude too large -- encountered overflow applying it." );
@@ -1375,7 +1375,7 @@ double TextJsonIn::get_float()
 
 number_sci_notation TextJsonIn::get_any_number()
 {
-    // this could maybe be prettier?
+
     char ch;
     number_sci_notation ret;
     int mod_e = 0;
@@ -1388,13 +1388,13 @@ number_sci_notation TextJsonIn::get_any_number()
             error( "unexpected end of input" );
         }
     } else if( ch != '.' && ( ch < '0' || ch > '9' ) ) {
-        // not a valid float
+
         std::stringstream err;
         err << "expecting number but found '" << ch << "'";
         error( -1, err.str() );
     }
     if( ch == '0' ) {
-        // allow a single leading zero in front of a '.' or 'e'/'E'
+
         stream->get( ch );
         if( ch >= '0' && ch <= '9' ) {
             error( -1, "leading zeros not allowed" );
@@ -1435,7 +1435,7 @@ number_sci_notation TextJsonIn::get_any_number()
             ret.exp *= -1;
         }
     }
-    // unget the final non-number character (probably a separator)
+
     if( stream ) {
         stream->unget();
     }
@@ -1498,7 +1498,7 @@ void TextJsonIn::start_array()
         ate_separator = false;
         return;
     } else {
-        // expecting an array, so this is an error
+
         std::stringstream err;
         err << "tried to start array, but found '";
         err << peek() << "', not '['";
@@ -1518,7 +1518,7 @@ bool TextJsonIn::end_array()
         end_value();
         return true;
     } else {
-        // not the end yet, so just return false?
+
         return false;
     }
 }
@@ -1528,10 +1528,10 @@ void TextJsonIn::start_object()
     eat_whitespace();
     if( peek() == '{' ) {
         stream->get();
-        ate_separator = false; // not that we want to
+        ate_separator = false;
         return;
     } else {
-        // expecting an object, so fail loudly
+
         std::stringstream err;
         err << "tried to start object, but found '";
         err << peek() << "', not '{'";
@@ -1551,7 +1551,7 @@ bool TextJsonIn::end_object()
         end_value();
         return true;
     } else {
-        // not the end yet, so just return false?
+
         return false;
     }
 }
@@ -1600,7 +1600,7 @@ bool TextJsonIn::test_object()
     return peek() == '{';
 }
 
-/* non-fatal value setting by reference */
+
 
 bool TextJsonIn::read_null( bool throw_on_error )
 {
@@ -1642,7 +1642,7 @@ bool TextJsonIn::read( signed char &c, bool throw_on_error )
     if( !test_number() ) {
         return error_or_false( throw_on_error, "Expected number" );
     }
-    // TODO: test for overflow
+
     c = get_int();
     return true;
 }
@@ -1652,7 +1652,7 @@ bool TextJsonIn::read( unsigned char &c, bool throw_on_error )
     if( !test_number() ) {
         return error_or_false( throw_on_error, "Expected number" );
     }
-    // TODO: test for overflow
+
     c = get_int();
     return true;
 }
@@ -1662,7 +1662,7 @@ bool TextJsonIn::read( short unsigned int &s, bool throw_on_error )
     if( !test_number() ) {
         return error_or_false( throw_on_error, "Expected number" );
     }
-    // TODO: test for overflow
+
     s = get_int();
     return true;
 }
@@ -1672,7 +1672,7 @@ bool TextJsonIn::read( short int &s, bool throw_on_error )
     if( !test_number() ) {
         return error_or_false( throw_on_error, "Expected number" );
     }
-    // TODO: test for overflow
+
     s = get_int();
     return true;
 }
@@ -1748,22 +1748,22 @@ bool TextJsonIn::read( std::bitset<N> &b, bool throw_on_error )
     }
     std::string tmp_string = get_string();
     if( tmp_string.length() > N ) {
-        // If the loaded string contains more bits than expected, skip the most significant bits
+
         tmp_string.erase( 0, tmp_string.length() - N );
     }
     b = std::bitset<N> ( tmp_string );
     return true;
 }
 
-/**
- * Get the normal form of a relative path. Does not work on absolute paths.
- * Slash and backslash are both treated as path separators and replaced with
- * slash. Trailing slashes are always removed.
- */
+
+
+
+
+
 static std::string normalize_relative_path( const std::string &path )
 {
     if( path.empty() ) {
-        // normal form of an empty path is an empty path
+
         return path;
     }
     std::vector<std::string> names;
@@ -1773,7 +1773,7 @@ static std::string normalize_relative_path( const std::string &path )
         if( name_start < name_end ) {
             const std::string name = path.substr( name_start, name_end - name_start );
             if( name == "." ) {
-                // do nothing
+
             } else if( name == ".." ) {
                 if( names.empty() || names.back() == ".." ) {
                     names.emplace_back( name );
@@ -1801,10 +1801,10 @@ static std::string normalize_relative_path( const std::string &path )
     }
 }
 
-/**
- * Escape special chars in github action command properties.
- * See https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts
- */
+
+
+
+
 static std::string escape_property( std::string str )
 {
     switch( error_log_format ) {
@@ -1821,10 +1821,10 @@ static std::string escape_property( std::string str )
     return str;
 }
 
-/**
- * Escape special chars in github action command messages.
- * See https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts
- */
+
+
+
+
 static std::string escape_data( std::string str )
 {
     switch( error_log_format ) {
@@ -1839,9 +1839,9 @@ static std::string escape_data( std::string str )
     return str;
 }
 
-/* error display */
 
-// WARNING: for occasional use only.
+
+
 std::string TextJsonIn::line_number( int offset_modifier )
 {
     const std::string name = escape_property( path ? normalize_relative_path( *path )
@@ -1860,7 +1860,7 @@ std::string TextJsonIn::line_number( int offset_modifier )
             case error_log_format_t::github_action:
                 return "file=" + name + ",line=???";
         }
-    } // else stream is fine
+    }
     int pos = tell();
     int line = 1;
     int offset = 1;
@@ -1899,7 +1899,7 @@ std::string TextJsonIn::line_number( int offset_modifier )
     return ret.str();
 }
 
-// see note at utf8_width_raw(...
+
 static uint32_t UTF8_getch_raw( const char **src, int *srclen )
 {
     const unsigned char *p = *reinterpret_cast<const unsigned char **>( src );
@@ -1981,12 +1981,12 @@ static uint32_t UTF8_getch_raw( const char **src, int *srclen )
     return ch;
 }
 
-//Calculate width of a Unicode string
-//Latin characters have a width of 1
-//CJK characters have a width of 2, etc
-// This is a copy of the function in catacharset.cpp but without
-// dependencies on catacharset.h => output.h => more dependencies...
-// TODO: untangle the dependencies and remove this copy and UTF8_getch_raw
+
+
+
+
+
+
 static int utf8_width_raw( std::string_view s )
 {
     int len = s.size();
@@ -2040,43 +2040,43 @@ void TextJsonIn::error( int offset, const std::string &message )
             err_header << "( json_error_output_colors is unset, defaulting to no colors ) ";
             break;
         default:
-            // leave color strings empty
+
             break;
     }
 
-    // if we can't get more info from the stream don't try
+
     if( !stream->good() ) {
         throw JsonError( err_header.str() + escape_data( message ) );
     }
-    // Seek to eof after throwing to avoid continue reading from the incorrect
-    // location. The calling code of json error methods is supposed to restore
-    // the stream location if it wishes to recover from the error.
+
+
+
     on_out_of_scope seek_to_eof( [this]() {
         stream->seekg( 0, std::istream::end );
     } );
     std::ostringstream err;
     err << color_normal << color_highlight << message << color_end << "\n\n";
-    const int max_context_lines = 3;   // limits context length to this many lines
-    const int max_context_chars = 480; // limits context length to this many chars
+    const int max_context_lines = 3;
+    const int max_context_chars = 480;
     stream->seekg( offset, std::istream::cur );
 
-    // if offset points to middle of a codepoint then rewind stream to codepoint start
-    // this is so utf8_width below has correct utf-8 to count length.
-    // pattern of 10xxxxxx means the byte is utf-8 continuation byte.
+
+
+
     while( ( stream->tellg() > 0 ) && ( ( stream->peek() & 0xC0 ) == 0x80 ) ) {
         stream->seekg( -1, std::istream::cur );
     }
 
-    // remember positions of several places to print a few lines of context
-    const size_t cursor_pos = tell();               // exact position of error
-    rewind( 1, max_context_chars );                 // rewind to start of line
-    const size_t start_of_line = tell();            // start of error line
-    rewind( max_context_lines, max_context_chars ); // rewind a couple lines to show context
-    const size_t start_of_context = tell();         // start of context (couple lines above)
-    size_t end_of_line;                             // end of error line (without \n)
+
+    const size_t cursor_pos = tell();
+    rewind( 1, max_context_chars );
+    const size_t start_of_line = tell();
+    rewind( max_context_lines, max_context_chars );
+    const size_t start_of_context = tell();
+    size_t end_of_line;
 
     {
-        // find end of line and store in end_of_line
+
         seek( cursor_pos );
         end_of_line = tell();
         while( stream->peek() != EOF ) {
@@ -2088,14 +2088,14 @@ void TextJsonIn::error( int offset, const std::string &message )
         }
     }
     {
-        // print context lines to start of error line
+
         seek( start_of_context );
         std::string buffer( start_of_line - start_of_context, '\0' );
         stream->read( buffer.data(), start_of_line - start_of_context );
         err << buffer;
     }
     {
-        // print error line
+
         std::string buffer( end_of_line - start_of_line, '\0' );
         stream->read( buffer.data(), end_of_line - start_of_line );
         err << color_error << buffer << color_end << "\n";
@@ -2105,14 +2105,14 @@ void TextJsonIn::error( int offset, const std::string &message )
         std::string buffer( cursor_pos - start_of_line, '\0' );
         stream->read( buffer.data(), cursor_pos - start_of_line );
 
-        // display a cursor at the position if possible, or at start of line
+
         if( const int padding = std::max( 0, utf8_width_raw( buffer ) - 1 ); padding > 0 ) {
             err << std::string( padding, ' ' );
         }
         err << color_highlight << "▲▲▲" << color_end;
     }
     seek( end_of_line );
-    // print the next couple lines as well
+
     int line_count = 0;
     char ch = 0;
     for( int i = 0; line_count < max_context_lines && stream->good() && i < max_context_chars; ++i ) {
@@ -2138,7 +2138,7 @@ void TextJsonIn::error( int offset, const std::string &message )
 void TextJsonIn::string_error( const int offset, const std::string &message )
 {
     if( test_string() ) {
-        // skip quote mark
+
         stream->ignore();
         std::string s;
         std::string err;
@@ -2167,7 +2167,7 @@ bool TextJsonIn::error_or_false( bool throw_, int offset, const std::string &mes
 void TextJsonIn::rewind( int max_lines, int max_chars )
 {
     if( max_lines < 0 && max_chars < 0 ) {
-        // just rewind to the beginning i guess
+
         seek( 0 );
         return;
     }
@@ -2192,7 +2192,7 @@ void TextJsonIn::rewind( int max_lines, int max_chars )
             ++lines_found;
         }
         if( lines_found == max_lines ) {
-            // don't include the last \n or \r
+
             if( peek() == '\n' ) {
                 stream->seekg( 1, std::istream::cur );
             } else if( peek() == '\r' ) {
@@ -2226,13 +2226,13 @@ std::string TextJsonIn::substr( size_t pos, size_t len )
 JsonOut::JsonOut( std::ostream &s, bool pretty, int depth ) :
     stream( &s ), pretty_print( pretty ), indent_level( depth )
 {
-    // ensure consistent and locale-independent formatting of numerals
+
     stream->imbue( std::locale::classic() );
     stream->setf( std::ios_base::showpoint );
     stream->setf( std::ios_base::dec, std::ostream::basefield );
     stream->setf( std::ios_base::fixed, std::ostream::floatfield );
 
-    // automatically stringify bool to "true" or "false"
+
     stream->setf( std::ios_base::boolalpha );
 }
 
@@ -2260,12 +2260,12 @@ void JsonOut::write_separator()
     }
     stream->put( ',' );
     if( pretty_print ) {
-        // Wrap after separator between objects and between members of top-level objects.
+
         if( indent_level < 2 || need_wrap.back() ) {
             stream->put( '\n' );
             write_indent();
         } else {
-            // Otherwise pad after commas.
+
             stream->put( ' ' );
         }
     }
@@ -2286,12 +2286,12 @@ void JsonOut::start_pretty()
 {
     if( pretty_print ) {
         indent_level += 1;
-        // Wrap after top level object and array opening.
+
         if( indent_level < 2 || need_wrap.back() ) {
             stream->put( '\n' );
             write_indent();
         } else {
-            // Otherwise pad after opening.
+
             stream->put( ' ' );
         }
     }
@@ -2301,13 +2301,13 @@ void JsonOut::end_pretty()
 {
     if( pretty_print ) {
         indent_level -= 1;
-        // Wrap after ending top level array and object.
-        // Also wrap in the special case of exiting an array containing an object.
+
+
         if( indent_level < 1 || need_wrap.back() ) {
             stream->put( '\n' );
             write_indent();
         } else {
-            // Otherwise pad after ending.
+
             stream->put( ' ' );
         }
     }
@@ -2373,7 +2373,7 @@ void JsonOut::write( std::string_view val )
         } else if( ch == '\\' ) {
             stream->write( "\\\\", 2 );
         } else if( ch == '/' ) {
-            // don't technically need to escape this
+
             stream->put( '/' );
         } else if( ch == '\b' ) {
             stream->write( "\\b", 2 );
@@ -2386,7 +2386,7 @@ void JsonOut::write( std::string_view val )
         } else if( ch == '\t' ) {
             stream->write( "\\t", 2 );
         } else if( ch < 0x20 ) {
-            // convert to "\uxxxx" unicode escape
+
             stream->write( "\\u00", 4 );
             stream->put( ( ch < 0x10 ) ? '0' : '1' );
             char remainder = ch & 0x0F;
@@ -2441,9 +2441,9 @@ std::ostream &operator<<( std::ostream &stream, const JsonError &err )
     return stream << err.what();
 }
 
-// Need to instantiate those template to make them available for other compilation units.
-// Currently only bitsets of size 12 are loaded / stored, if you need other sizes, either explicitly
-// instantiate them here, or move the templated read/write functions into the header.
+
+
+
 template void JsonOut::write<12>( const std::bitset<12> & );
 template bool TextJsonIn::read<12>( std::bitset<12> &, bool throw_on_error );
 

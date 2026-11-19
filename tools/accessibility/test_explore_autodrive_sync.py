@@ -127,7 +127,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_unreachable_route_pauses_without_obstacle_dialog(self):
         self.assertIn("if( player_vehicle->a11y_obstacle_stop && state == 1 )", ACTOR)
         self.assertIn("state = 2;", ACTOR)
-        self.assertNotIn("state = 4; // obstacle", ACTOR)
+        self.assertNotIn("state = 4;", ACTOR)
         self.assertNotIn('Cannot resume: an obstacle still blocks the vehicle.', ACTOR)
         self.assertIn("player_vehicle->a11y_obstacle_stop = false;", ACTOR)
         self.assertIn("if( state != 1 )", ACTOR)
@@ -312,10 +312,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("driver.is_avatar()", DRIVER)
 
     def test_stopped_car_can_process_cancel_without_player_moves(self):
-        # The deadlock occurred because Character::process_activity()
-        # refuses to call ACT_AUTODRIVE with zero moves, while the Android
-        # buttons only post a JNI request. The blocking-input pump MUST
-        # process the request on the game thread even when out of moves.
+
         world = read(SRC / "do_turn.cpp")
         character = read(SRC / "character.cpp")
         header = read(SRC / "a11y_android.h")
@@ -333,9 +330,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_autonomous_drive_keeps_existing_gestures_without_modal(self):
         self.assertIn("else if (walkingTravelPanelActive()", CONTROLLER)
         self.assertIn("if (activeTravel != 0 && !autonomousDriveTrip && !vehicleMode)", CONTROLLER)
-        # A paused or transitioning destination must keep the ordinary
-        # vehicle gestures and must not re-open the walking travel panel.
-        # The poll now deliberately covers both autonomous and vehicle mode.
+
         self.assertIn("if (autonomousDriveTrip || vehicleMode) {", CONTROLLER)
         self.assertIn("private boolean walkingTravelPanelActive()", CONTROLLER)
         self.assertIn("return !autonomousDriveTrip && !vehicleMode && travelState() != 0;",
@@ -424,7 +419,6 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
             "void vehicle::leak_fuel(", 1
         )[0]
 
-        # Ordinary damage and actual collisions still stop the autopilot.
         self.assertIn("bool interrupt_autodrive = true", header)
         self.assertIn("if( is_autodriving && interrupt_autodrive )", damage)
         self.assertIn('reason=vehicle_part_damage', damage)
@@ -432,8 +426,6 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("stop_autodriving();", damage)
         self.assertIn("stop_autodriving();", movement)
 
-        # Natural rim wear from an already flat tire is not a blocked road.
-        # One serious warning survives while the route and planner continue.
         self.assertIn("const bool reader_trip = is_autodriving", wear)
         self.assertIn("a11y_flat_tire_alerted = true;", wear)
         self.assertIn("damage_direct( here, vp, one_damage_level, damage_pure, !reader_trip );",
@@ -460,11 +452,9 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',
                       CONTROLLER)
-        # d9c2b55 rewrote the driving speech policy in the positive form;
-        # urgent warnings still pass the gate.
+
         self.assertIn("priority >= ReaderSpeechQueue.URGENT", CONTROLLER)
-        # d9c2b55 routes the scan/detail exceptions through the shared
-        # allowedDuringDriving policy instead of an inline condition.
+
         self.assertIn('|| message.startsWith("A11Y_SCAN:")', CONTROLLER)
         self.assertIn('|| message.startsWith("A11Y_DETAIL:")', CONTROLLER)
         self.assertIn("if (state != announcedTravelState)", CONTROLLER)

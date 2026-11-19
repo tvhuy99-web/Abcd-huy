@@ -65,9 +65,9 @@ static const flag_id json_flag_THERMOMETER( "THERMOMETER" );
 static const itype_id fuel_type_battery( "battery" );
 static const itype_id fuel_type_muscle( "muscle" );
 
-// Cache for the overmap widget string
+
 static disp_overmap_cache disp_om_cache;
-// Cache for the bodygraph widget string
+
 static std::array<disp_bodygraph_cache, 5> disp_bg_cache = { {
         disp_bodygraph_cache( bodygraph_var::hp ),
         disp_bodygraph_cache( bodygraph_var::temp ),
@@ -104,18 +104,18 @@ bool disp_bodygraph_cache::is_valid_for( const Character &u, const std::string &
     std::vector<bodypart_id> cur_parts = u.get_all_body_parts( get_body_part_flags::none );
     for( const auto &bp : _bp_cur_max ) {
         if( std::find( cur_parts.begin(), cur_parts.end(), bp.first ) == cur_parts.end() ) {
-            // cached bodypart no longer on character
+
             return false;
         }
     }
     for( const bodypart_id &bp : cur_parts ) {
         auto prev_color = _bp_cur_max.find( bp );
         if( prev_color == _bp_cur_max.end() ) {
-            // uncached bodypart
+
             return false;
         }
         if( prev_color->second != display::get_bodygraph_bp_color( u, bp, _var ).to_int() ) {
-            // values differ
+
             return false;
         }
     }
@@ -133,7 +133,7 @@ void disp_bodygraph_cache::rebuild( const Character &u, const std::string &graph
     _graph_wgt_str = bg_wgt_str;
 }
 
-// Get remotely controlled vehicle, or vehicle character is inside of
+
 vehicle *display::vehicle_driven( const Character &u )
 {
     vehicle *veh = g->remoteveh();
@@ -206,7 +206,7 @@ std::string display::date_string()
 
 std::string display::time_string( const Character &u )
 {
-    // Return exact time if character has a watch, or approximate time if can see the sky
+
     if( u.has_watch() ) {
         return to_string_time_of_day( calendar::turn );
     } else if( can_creature_see_sky( u ) ) {
@@ -219,7 +219,7 @@ std::string display::time_string( const Character &u )
 
 std::string display::sundial_time_text_color( const Character &u, int width )
 {
-    // Return exact time if character has a watch, or approximate time if can see the sky
+
     if( u.has_watch() ) {
         return to_string_time_of_day( calendar::turn );
     } else if( can_creature_see_sky( u ) ) {
@@ -232,12 +232,12 @@ std::string display::sundial_time_text_color( const Character &u, int width )
 
 std::string display::sundial_text_color( const Character &u, int width )
 {
-    // Not using "correct" symbols, 🌖 and so forth, because they're not in unifont.
+
     const std::vector<std::string > moon_phases { "○", "☽", "◑", "◕", "●", "◕", "◐", "☾" };
     auto left_right_highlight_index = []( int azm_idx, int covers, int width ) {
-        // Indexes to cover `covers` places centered around `azm_idx` but slide the cover indexes
-        // so that they stay within 0 to `width`. Use this to color the sky proportional to how much
-        // illumination it's providing to the player.
+
+
+
         const int max_index = width - 1;
         if( covers <= 0 ) {
             return std::make_pair( -1, -1 );
@@ -268,12 +268,12 @@ std::string display::sundial_text_color( const Character &u, int width )
 
     std::pair<units::angle, units::angle> sun_pos = sun_azimuth_altitude( calendar::turn );
     float azm_sun = to_degrees( sun_pos.first );
-    azm_sun += 180.f; // Show south, i.e. midday, as center of the sundial.
+    azm_sun += 180.f;
     if( azm_sun >= 360.f ) {
         azm_sun -= 360.f;
     }
     const units::angle alt_sun = sun_pos.second;
-    // TODO: moonrise and moonset. It seems that the moon magically stays overhead currently.
+
     float azm_moon = azm_sun + 180.0f;
     if( azm_moon >= 360.f ) {
         azm_moon -= 360.f;
@@ -285,7 +285,7 @@ std::string display::sundial_text_color( const Character &u, int width )
 
     weather_manager &weather = get_weather();
 
-    // Sunlight that makes it through the weather is highlighted blue in proportion to sight_range
+
     const float incident_sun_light = incident_sunlight( weather.weather_id, calendar::turn );
     const int sun_highlight = u.sight_range( incident_sun_light ) * width / range_day;
     int sun_left_highlight_idx;
@@ -294,7 +294,7 @@ std::string display::sundial_text_color( const Character &u, int width )
               sun_right_highlight_idx ) = left_right_highlight_index( sun_pos_idx,
                                           sun_highlight, width );
 
-    // Sunlight ignoring the weather will be covered by weather symbols to show the light reduction
+
     const float ideal_sun_light = sun_light_at( calendar::turn );
     const int sun_weather_highlight = u.sight_range( ideal_sun_light ) * width / range_day;
     int sun_left_idx;
@@ -302,7 +302,7 @@ std::string display::sundial_text_color( const Character &u, int width )
     std::tie( sun_left_idx, sun_right_idx ) = left_right_highlight_index( sun_pos_idx,
             sun_weather_highlight, width );
 
-    // Same for moonlight; illumination after weather is highlighted yellow
+
     const float incident_moon_light = incident_moonlight( weather.weather_id, calendar::turn );
     const int moon_highlight = u.sight_range( incident_moon_light ) * width / range_day;
     int moon_left_highlight_idx;
@@ -311,7 +311,7 @@ std::string display::sundial_text_color( const Character &u, int width )
               moon_right_highlight_idx ) = left_right_highlight_index( moon_pos_idx, moon_highlight,
                                            width );
 
-    // Moonlight ignoring weather shows weather glyphs to hint at the cloud cover
+
     const float ideal_moon_light = moon_light_at( calendar::turn );
     const int moon_weather_highlight = u.sight_range( ideal_moon_light ) * width / range_day;
     int moon_left_idx;
@@ -395,11 +395,11 @@ static std::pair<bodypart_id, bodypart_id> temp_delta( const Character &u )
 std::pair<std::string, nc_color> display::temp_text_color( const Character &u,
         const bodypart_str_id &bp )
 {
-    /// Find hottest/coldest bodypart
-    // Calculate the most extreme body temperatures
+
+
     const bodypart_id current_bp_extreme = bp.is_null() ? temp_delta( u ).first : bp;
 
-    // printCur the hottest/coldest bodypart
+
     std::string temp_string;
     nc_color temp_color = c_yellow;
     if( u.get_part_temp_cur( current_bp_extreme ) > BODYTEMP_SCORCHING ) {
@@ -441,7 +441,7 @@ std::pair<std::string, nc_color> display::morale_emotion( const int morale_cur,
         }
     }
 
-    // Return the last value found
+
     if( !current_face.empty() ) {
         return std::make_pair( current_face, current_color );
     }
@@ -525,8 +525,8 @@ std::pair<std::string, nc_color> display::power_balance_text_color( const avatar
 
 std::pair<std::string, nc_color> display::safe_mode_text_color( const bool classic_mode )
 {
-    // "classic" mode used by draw_limb2 and draw_health_classic are "SAFE" or (empty)
-    // draw_stat_narrow and draw_stat_wide display "On" or "Off" value
+
+
     std::string s_text;
     if( classic_mode ) {
         if( g->safe_mode || get_option<bool>( "AUTOSAFEMODE" ) ) {
@@ -536,9 +536,9 @@ std::pair<std::string, nc_color> display::safe_mode_text_color( const bool class
         s_text = g->safe_mode ? _( "On" ) : _( "Off" );
     }
 
-    // By default, color is green if safe, red otherwise
+
     nc_color s_color = g->safe_mode ? c_green : c_red;
-    // If auto-safe-mode is enabled, go to light red, yellow, and green as the turn limit approaches
+
     if( g->safe_mode == SAFE_MODE_OFF && get_option<bool>( "AUTOSAFEMODE" ) ) {
         time_duration s_return = time_duration::from_turns( get_option<int>( "AUTOSAFEMODETURNS" ) );
         int iPercent = g->turnssincelastmon * 100 / s_return;
@@ -572,7 +572,7 @@ std::pair<translation, nc_color> display::weariness_text_color( size_t weariness
             {to_translation( "weariness description", "Very" ), c_red },
             {to_translation( "weariness description", "Extreme" ), c_red }
         } };
-    // We can have more than level 5, but we don't really care about it
+
     if( weariness >= weary_descriptions.size() ) {
         weariness = 5;
     }
@@ -601,8 +601,8 @@ std::string display::activity_level_str( float level )
             to_translation( "activity description", "Active" ),
             to_translation( "activity description", "Extreme" ),
         } };
-    // Activity levels are 1, 2, 4, 6, 8, 10
-    // So we can easily cut them in half and round down for an index
+
+
     int idx = std::floor( level / 2 );
 
     return activity_descriptions[idx].translated();
@@ -633,7 +633,7 @@ std::pair<std::string, nc_color> display::activity_text_color( const Character &
 
 std::pair<std::string, nc_color> display::thirst_text_color( const Character &u )
 {
-    // some delay from water in stomach is desired, but there needs to be some visceral response
+
     int thirst = u.get_instant_thirst();
     std::string hydration_string;
     nc_color hydration_color = c_white;
@@ -664,15 +664,15 @@ std::pair<std::string, nc_color> display::thirst_text_color( const Character &u 
 
 std::pair<std::string, nc_color> display::hunger_text_color( const Character &u )
 {
-    // NPCs who do not need food have no hunger
+
     if( !u.needs_food() ) {
         return std::make_pair( _( "Without Hunger" ), c_white );
     }
-    // clang 3.8 has some sort of issue where if the initializer list contains const arguments,
-    // like all of the effect_* string_id variables which are const string_id, then it fails to
-    // initialize the array with tuples successfully complaining that
-    // "chosen constructor is explicit in copy-initialization". Using std::forward_as_tuple
-    // returns a tuple consisting of correctly implcitly copyable types.
+
+
+
+
+
     static const std::array<std::tuple<const efftype_id &, const char *, nc_color>, 9> hunger_states{ {
             std::forward_as_tuple( effect_hunger_engorged, translate_marker( "Engorged" ), c_red ),
             std::forward_as_tuple( effect_hunger_full, translate_marker( "Full" ), c_yellow ),
@@ -695,9 +695,9 @@ std::pair<std::string, nc_color> display::hunger_text_color( const Character &u 
 
 std::pair<std::string, nc_color> display::weight_text_color( const Character &u )
 {
-    // Remove after 0.J.
-    // NPCs with the default mod should always be spawned at healthy weight. But some older saves had NPCs generated without normal weight.
-    // Just in case, debug mode always shows the real value.
+
+
+
     if( !u.needs_food() && !debug_mode ) {
         return { _( translate_marker( "Normal" ) ), c_light_gray };
     }
@@ -879,19 +879,19 @@ std::pair<std::string, nc_color> display::pain_text_color( const Creature &c )
 
 std::pair<std::string, nc_color> display::pain_text_color( const Character &u )
 {
-    // Get base Creature pain text to start with
+
     const std::pair<std::string, nc_color> pain = display::pain_text_color(
                 static_cast<const Creature &>( u ) );
     nc_color pain_color = pain.second;
     std::string pain_string;
-    // get pain color
+
     int perceived_pain = u.get_perceived_pain();
     if( perceived_pain >= 60 ) {
         pain_color = c_red;
     } else if( perceived_pain >= 40 ) {
         pain_color = c_light_red;
     }
-    // get pain string
+
     if( u.has_effect( effect_got_checked ) && perceived_pain > 0 ) {
         pain_string = string_format( "%s %d", _( "Pain " ), perceived_pain );
     } else if( perceived_pain > 0 ) {
@@ -927,10 +927,10 @@ std::pair<std::string, nc_color> display::faction_text( const Character &u )
 
 nc_color display::bodytemp_color( const Character &u, const bodypart_id &bp )
 {
-    nc_color color = c_light_gray; // default
+    nc_color color = c_light_gray;
     const units::temperature temp_conv = u.get_part_temp_conv( bp );
     if( bp == body_part_eyes ) {
-        color = c_light_gray;    // Eyes don't count towards warmth
+        color = c_light_gray;
     } else if( temp_conv  > BODYTEMP_SCORCHING ) {
         color = c_red;
     } else if( temp_conv  > BODYTEMP_VERY_HOT ) {
@@ -978,27 +978,27 @@ nc_color display::limb_color( const Character &u, const bodypart_id &bp, bool bl
     const bool bitten = bite && u.has_effect( effect_bite, bp.id() );
     const bool infected = infect && u.has_effect( effect_infected, bp.id() );
 
-    // Handle worst cases first
+
     if( bleeding && infected ) {
-        // Red and green make yellow
+
         if( intense < 21 ) {
             i_color = c_yellow;
         } else {
             i_color = c_yellow_red;
         }
     } else if( bleeding && bitten ) {
-        // Red and blue make magenta
+
         if( intense < 21 ) {
             i_color = c_magenta;
         } else {
             i_color = c_magenta_red;
         }
     } else if( infected ) {
-        i_color = c_green; // Green is very bad
+        i_color = c_green;
     } else if( bitten ) {
-        i_color = c_blue; // Blue is also bad
+        i_color = c_blue;
     } else if( bleeding ) {
-        // Blood is some shade of red, naturally
+
         i_color = colorize_bleeding_intensity( intense );
     }
 
@@ -1018,16 +1018,16 @@ std::pair<std::string, nc_color> display::vehicle_cruise_text_color( const Chara
 {
     map &here = get_map();
 
-    // Defaults in case no vehicle is found
+
     std::string vel_text;
     nc_color vel_color = c_light_gray;
 
-    // Show target velocity and current velocity, with units.
-    // For example:
-    //     25 < 10 mph : accelerating towards 25 mph
-    //     25 < 25 mph : cruising at 25 mph
-    //     10 < 25 mph : decelerating toward 10
-    // Text color indicates how much the engine is straining beyond its safe velocity.
+
+
+
+
+
+
     vehicle *veh = display::vehicle_driven( u );
     if( veh ) {
         const double target = convert_velocity( veh->cruise_velocity, VU_VEHICLE );
@@ -1053,21 +1053,21 @@ std::pair<std::string, nc_color> display::vehicle_fuel_percent_text_color( const
 {
     map &here = get_map();
 
-    // Defaults in case no vehicle is found
+
     std::string fuel_text;
     nc_color fuel_color = c_light_gray;
 
     vehicle *veh = display::vehicle_driven( u );
     if( veh ) {
         itype_id fuel_type = itype_id::NULL_ID();
-        // FIXME: Move this to a vehicle helper function like get_active_engine
+
         for( const int p : veh->engines ) {
             const vehicle_part &vp = veh->part( p );
             if( veh->is_engine_on( vp )
                 && !veh->is_perpetual_type( vp )
                 && !veh->is_engine_type( vp, fuel_type_battery )
                 && !veh->is_engine_type( vp, fuel_type_muscle ) ) {
-                // Get the fuel type of the first engine that is turned on
+
                 fuel_type = vp.fuel_current();
             }
         }
@@ -1075,7 +1075,7 @@ std::pair<std::string, nc_color> display::vehicle_fuel_percent_text_color( const
         int cur_fuel = veh->fuel_left( here, fuel_type );
         if( max_fuel != 0 ) {
             int percent = cur_fuel * 100 / max_fuel;
-            // Simple percent indicator, yellow under 25%, red under 10%
+
             fuel_text = string_format( "%d %%", percent );
             fuel_color = percent < 10 ? c_red : ( percent < 25 ? c_yellow : c_green );
         }
@@ -1088,7 +1088,7 @@ std::pair<std::string, nc_color> display::vehicle_battery_percent_text_color( co
 {
     map &here = get_map();
 
-    // Defaults in case no vehicle is found
+
     std::string battery_text;
     nc_color battery_color = c_light_gray;
 
@@ -1098,7 +1098,7 @@ std::pair<std::string, nc_color> display::vehicle_battery_percent_text_color( co
         const int cur_battery = veh->fuel_left( here, fuel_type_battery );
         if( max_battery != 0 ) {
             int percent = cur_battery * 100 / max_battery;
-            // Simple percent indicator, yellow under 25%, red under 10%
+
             battery_text = string_format( "%d %%", percent );
             battery_color = percent < 10 ? c_red : ( percent < 25 ? c_yellow : c_green );
         }
@@ -1107,7 +1107,7 @@ std::pair<std::string, nc_color> display::vehicle_battery_percent_text_color( co
     return std::make_pair( battery_text, battery_color );
 }
 
-// Single-letter move mode (W, R, C, P)
+
 std::pair<std::string, nc_color> display::move_mode_letter_color( const Character &u )
 {
     const std::string mm_text = std::string( 1, u.current_movement_mode()->panel_letter() );
@@ -1115,7 +1115,7 @@ std::pair<std::string, nc_color> display::move_mode_letter_color( const Characte
     return std::make_pair( mm_text, mm_color );
 }
 
-// Movement counter and mode letter, like "50(R)" or "100(W)"
+
 std::pair<std::string, nc_color> display::move_count_and_mode_text_color( const avatar &u )
 {
     std::pair<std::string, nc_color> mode_pair = display::move_mode_letter_color( u );
@@ -1123,7 +1123,7 @@ std::pair<std::string, nc_color> display::move_count_and_mode_text_color( const 
     return std::make_pair( count_and_mode, mode_pair.second );
 }
 
-// Weight carried, relative to capacity, in %, like "90%".
+
 std::pair<std::string, nc_color> display::carry_weight_text_color( const avatar &u )
 {
     int carry_wt;
@@ -1152,29 +1152,29 @@ std::pair<std::string, nc_color> display::carry_weight_text_color( const avatar 
     return std::make_pair( weight_text, weight_color );
 }
 
-// Weight carried, formatted as "current/max" in kg
+
 std::pair<std::string, nc_color> display::carry_weight_value_color( const avatar &ava )
 {
     float carry_wt = convert_weight( ava.weight_carried() );
     float max_wt = convert_weight( ava.weight_capacity() );
 
-    // Create a string showing "current_weight / max_weight"
+
     std::string weight_text = string_format( "%.1f/%.1f %s", carry_wt, max_wt, weight_units() );
 
-    // Set the color based on carry weight
-    nc_color weight_color = c_green;  // Default color
+
+    nc_color weight_color = c_green;
 
     if( max_wt > 0 ) {
         if( carry_wt > max_wt ) {
-            weight_color = c_red;  // Exceeds capacity
+            weight_color = c_red;
         } else if( carry_wt > 0.75 * max_wt ) {
-            weight_color = c_light_red;  // Approaching capacity (75%)
+            weight_color = c_light_red;
         } else if( carry_wt > 0.5 * max_wt ) {
-            weight_color = c_yellow;  // At half capacity (50%)
+            weight_color = c_yellow;
         } else if( carry_wt > 0.25 * max_wt ) {
-            weight_color = c_light_green;  // Below half capacity (25%)
+            weight_color = c_light_green;
         } else {
-            weight_color = c_green;  // Light load
+            weight_color = c_green;
         }
     }
 
@@ -1187,13 +1187,13 @@ std::pair<std::string, nc_color> display::overmap_note_symbol_color( std::string
     std::string ter_sym = "N";
     nc_color ter_color = c_yellow;
 
-    // Parse note text for : (symbol) and ; (color) separators
+
     int symbolIndex = note_text.find( ':' );
     int colorIndex = note_text.find( ';' );
 
     bool symbolFirst = symbolIndex < colorIndex;
 
-    // Both color and symbol
+
     if( colorIndex > -1 && symbolIndex > -1 ) {
         if( symbolFirst ) {
             if( colorIndex > 4 ) {
@@ -1278,15 +1278,15 @@ std::string display::colorized_overmap_text( const avatar &u, const int width, c
     std::string overmap_text;
     map &here = get_map();
 
-    // Map is roughly centered around this point
+
     const tripoint_abs_omt &center_xyz = u.pos_abs_omt();
     const tripoint_abs_omt &mission_xyz = u.get_active_mission_target();
-    // Retrieve cached string instead of constantly rebuilding it
+
     if( disp_om_cache.is_valid_for( center_xyz, mission_xyz, width ) ) {
         return disp_om_cache.get_val();
     }
 
-    // Figure out extents of the map area, so we know where the edges are
+
     const int left = -( width / 2 );
     const int right = width + left - 1;
     const int top = -( height / 2 );
@@ -1305,13 +1305,13 @@ std::string display::colorized_overmap_text( const avatar &u, const int width, c
     opts.hilite_pc = true;
     opts.hilite_mission = true;
 
-    // Scan each row of overmap tiles
+
     for( int row = top; row <= bottom; row++ ) {
-        // Scan across the width of the row
+
         for( int col = left; col <= right; col++ ) {
-            // Is this point along the border of the overmap text area we have to work with?
-            // If so, overmap_tile_symbol_color may draw a mission indicator at this point.
-            // Get colorized symbol for this point
+
+
+
             const tripoint_abs_omt omt( center_xyz.xy() + point( col, row ), here.get_abs_sub().z() );
 
             oter_display_args args( overmap_buffer.seen( omt ) );
@@ -1319,13 +1319,13 @@ std::string display::colorized_overmap_text( const avatar &u, const int width, c
 
             std::pair<std::string, nc_color> sym_color = oter_symbol_and_color( omt, args, opts );
 
-            // Append the colorized symbol for this point to the map
+
             overmap_text += colorize( sym_color.first, sym_color.second );
         }
         overmap_text += "\n";
     }
 
-    // Rebuild the cache so we can reuse it if nothing changes
+
     disp_om_cache.rebuild( center_xyz, mission_xyz, width, overmap_text );
 
     return overmap_text;
@@ -1345,39 +1345,39 @@ std::string display::current_position_text( const tripoint_abs_omt &loc )
     return overmap_buffer.ter( loc )->get_name( seen );
 }
 
-// Return (x, y) position of mission target, relative to avatar location, within an overmap of the
-// given width and height.
+
+
 point display::mission_arrow_offset( const avatar &you, int width, int height )
 {
-    // FIXME: Use tripoint for curs
+
     const point_abs_omt curs = you.pos_abs_omt().xy();
     const tripoint_abs_omt targ = you.get_active_mission_target();
     const point mid( width / 2, height / 2 );
 
-    // If x-coordinates are the same, mission is either due north or due south
-    // Use an extreme slope rather than dividing by zero
+
+
     double slope = curs.x() == targ.x() ? 1000 :
                    static_cast<double>( targ.y() - curs.y() ) / ( targ.x() - curs.x() );
 
     if( std::fabs( slope ) > 12 ) {
-        // For any near-vertical slope, center the marker
+
         if( targ.y() > curs.y() ) {
-            // Target is due south
+
             return point( mid.x, height - 1 );
-            //mvwputch( w_minimap, point( mid.x + start_x, height - 1 + start_y ), c_red, '*' );
+
         } else if( targ.y() < curs.y() ) {
-            // Target is due north
+
             return point( mid.x, 1 );
-            //mvwputch( w_minimap, point( mid.x + start_x, 1 + start_y ), c_red, '*' );
+
         } else {
-            // Target is right here
+
             return mid;
         }
     } else {
-        // For non-vertical slope, calculate where it intersects the edge of the map
+
         point arrow( point::north_west );
         if( std::fabs( slope ) >= 1. ) {
-            // If target to the north or south, arrow on top or bottom edge of minimap
+
             if( targ.y() > curs.y() ) {
                 arrow.x = static_cast<int>( ( 1. + ( 1. / slope ) ) * mid.x );
                 arrow.y = height - 1;
@@ -1385,11 +1385,11 @@ point display::mission_arrow_offset( const avatar &you, int width, int height )
                 arrow.x = static_cast<int>( ( 1. - ( 1. / slope ) ) * mid.x );
                 arrow.y = 0;
             }
-            // Clip to left/right edges
+
             arrow.x = std::max( arrow.x, 0 );
             arrow.x = std::min( arrow.x, width - 1 );
         } else {
-            // If target to the east or west, arrow on left or right edge of minimap
+
             if( targ.x() > curs.x() ) {
                 arrow.x = width - 1;
                 arrow.y = static_cast<int>( ( 1. + slope ) * mid.y );
@@ -1397,12 +1397,12 @@ point display::mission_arrow_offset( const avatar &you, int width, int height )
                 arrow.x = 0;
                 arrow.y = static_cast<int>( ( 1. - slope ) * mid.y );
             }
-            // Clip to top/bottom edges
+
             arrow.y = std::max( arrow.y, 0 );
             arrow.y = std::min( arrow.y, height - 1 );
         }
         return arrow;
-        //mvwputch( w_minimap, arrow + point( start_x, start_y ), c_red, glyph );
+
     }
 }
 
@@ -1506,7 +1506,7 @@ nc_color display::get_bodygraph_bp_color( const Character &u, const bodypart_id 
         const bodygraph_var var )
 {
     if( !u.has_part( bid, body_part_filter::equivalent ) ) {
-        return c_black; // character is missing this part
+        return c_black;
     }
 
     switch( var ) {
@@ -1538,7 +1538,7 @@ nc_color display::get_bodygraph_bp_color( const Character &u, const bodypart_id 
         case bodygraph_var::wet: {
             const int cur_wet = u.get_part_wetness( bid );
             if( cur_wet == 0 ) {
-                return c_light_gray; // dry
+                return c_light_gray;
             } else {
                 const float cur_wet = u.get_part_wetness_percentage( bid );
                 if( cur_wet < BODYWET_PERCENT_WET ) {
@@ -1546,7 +1546,7 @@ nc_color display::get_bodygraph_bp_color( const Character &u, const bodypart_id 
                 } else if( cur_wet < BODYWET_PERCENT_SOAKED ) {
                     return c_light_blue;
                 } else {
-                    return c_blue; // maximum wetness
+                    return c_blue;
                 }
             }
         }
@@ -1565,7 +1565,7 @@ std::string display::colorized_bodygraph_text( const Character &u, const std::st
     int var_idx = int( var );
 
     if( disp_bg_cache[var_idx].is_valid_for( u, graph_id ) ) {
-        // Nothing changed, just retrieve from cache
+
         return disp_bg_cache[var_idx].get_val();
     }
 
@@ -1595,7 +1595,7 @@ std::string display::colorized_bodygraph_text( const Character &u, const std::st
         sep = "\n";
     }
 
-    // Rebuild bodygraph text cache
+
     disp_bg_cache[var_idx].rebuild( u, graph_id, ret );
 
     return ret;
@@ -1651,10 +1651,9 @@ std::pair<std::string, nc_color> display::wind_text_color( const Character &u )
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                                             u.pos_abs(), weather.winddirection, g->is_sheltered( u.pos_bub() ) );
 
-    // Wind descriptor followed by a directional arrow
+
     const std::string wind_text = get_wind_desc( windpower ) + " " + get_wind_arrow(
                                       weather.winddirection );
 
     return std::make_pair( wind_text, get_wind_color( windpower ) );
 }
-

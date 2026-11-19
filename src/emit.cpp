@@ -8,7 +8,7 @@
 
 static std::map<emit_id, emit> emits_all;
 
-/** @relates string_id */
+
 template<>
 const emit &string_id<emit>::obj() const
 {
@@ -21,7 +21,7 @@ const emit &string_id<emit>::obj() const
     return found->second;
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<emit>::is_valid() const
 {

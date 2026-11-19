@@ -27,7 +27,7 @@ TEST_CASE( "doors_should_be_able_to_open_and_close", "[gates]" )
     tripoint_bub_ms pos = get_avatar().pos_bub() + point::east;
 
     WHEN( "the door is unlocked" ) {
-        // create closed door on tile next to player
+
         REQUIRE( here.ter_set( pos, ter_t_door_c ) );
         REQUIRE( here.ter( pos ).obj().id == ter_t_door_c->id );
 
@@ -40,7 +40,7 @@ TEST_CASE( "doors_should_be_able_to_open_and_close", "[gates]" )
         }
     }
     WHEN( "the door is locked" ) {
-        // create locked door on tile next to player
+
         REQUIRE( here.ter_set( pos, ter_t_door_locked ) );
         REQUIRE( here.ter( pos ).obj().id == ter_t_door_locked->id );
 
@@ -58,7 +58,7 @@ TEST_CASE( "windows_should_be_able_to_open_and_close", "[gates]" )
 
     tripoint_bub_ms pos = get_avatar().pos_bub() + point::east;
 
-    // create closed window on tile next to player
+
     REQUIRE( here.ter_set( pos, ter_t_window_no_curtains ) );
     REQUIRE( here.ter( pos ).obj().id == ter_t_window_no_curtains->id );
 
@@ -76,9 +76,9 @@ TEST_CASE( "windows_should_be_able_to_open_and_close", "[gates]" )
     }
 }
 
-// Note that it is not intended for all doors and windows to make swish sound,
-// some doors and windows might make other types of sounds in the future
-// TODO: update test case when door and window sounds become defined in JSON.
+
+
+
 TEST_CASE( "doors_and_windows_should_make_whoosh_sound", "[gates]" )
 {
     map &here = get_map();
@@ -92,7 +92,7 @@ TEST_CASE( "doors_and_windows_should_make_whoosh_sound", "[gates]" )
         REQUIRE( here.ter_set( pos, ter_t_door_c ) );
         REQUIRE( here.ter( pos ).obj().id == ter_t_door_c->id );
 
-        // make sure there is no sounds before action
+
         REQUIRE( sounds::get_monster_sounds().first.empty() );
 
         REQUIRE( here.open_door( get_avatar(), pos, true, false ) );
@@ -106,7 +106,7 @@ TEST_CASE( "doors_and_windows_should_make_whoosh_sound", "[gates]" )
         REQUIRE( here.ter_set( pos, ter_t_door_o ) );
         REQUIRE( here.ter( pos ).obj().id == ter_t_door_o->id );
 
-        // make sure there is no sounds before action
+
         REQUIRE( sounds::get_monster_sounds().first.empty() );
 
         REQUIRE( here.close_door( pos, true, false ) );
@@ -120,7 +120,7 @@ TEST_CASE( "doors_and_windows_should_make_whoosh_sound", "[gates]" )
         REQUIRE( here.ter_set( pos, ter_t_window_no_curtains ) );
         REQUIRE( here.ter( pos ).obj().id == ter_t_window_no_curtains->id );
 
-        // make sure there is no sounds before action
+
         REQUIRE( sounds::get_monster_sounds().first.empty() );
 
         REQUIRE( here.open_door( get_avatar(), pos, true, false ) );
@@ -134,7 +134,7 @@ TEST_CASE( "doors_and_windows_should_make_whoosh_sound", "[gates]" )
         REQUIRE( here.ter_set( pos, ter_t_window_no_curtains_open ) );
         REQUIRE( here.ter( pos ).obj().id == ter_t_window_no_curtains_open->id );
 
-        // make sure there is no sounds before action
+
         REQUIRE( sounds::get_monster_sounds().first.empty() );
 
         REQUIRE( here.close_door( pos, true, false ) );
@@ -156,12 +156,12 @@ TEST_CASE( "character_should_lose_moves_when_opening_or_closing_doors_or_windows
 
     tripoint_bub_ms pos = get_avatar().pos_bub() + point::east;
 
-    // the movement cost for opening and closing gates
-    // remember to update this if changing value in code
+
+
     const int open_move_cost = 100;
 
-    // set move value to 0 so we know how many
-    // move points were spent opening and closing gates
+
+
     they.set_moves( 0 );
 
     WHEN( "avatar opens door" ) {
@@ -203,8 +203,8 @@ TEST_CASE( "character_should_lose_moves_when_opening_or_closing_doors_or_windows
         ter_id ter_concrete_floor = ter_id( "t_thconc_floor" );
         ter_id ter_concrete_wall = ter_id( "t_concrete_wall" );
 
-        // enclose the player in single tile room surrounded with
-        // concrete floor and roof to test opening windows from indoors
+
+
         const std::vector<tripoint_bub_ms> room_walls{
             pos + point::south_east,
             pos + point::south,
@@ -220,8 +220,8 @@ TEST_CASE( "character_should_lose_moves_when_opening_or_closing_doors_or_windows
         REQUIRE( here.ter_set( pos, ter_concrete_floor ) );
         REQUIRE( here.ter_set( pos + tripoint::above, ter_flat_roof ) );
 
-        // mark map cache as dirty and rebuild it so that map starts
-        // recognizing that tile player is standing on is indoors
+
+
         here.set_outside_cache_dirty( pos.z() );
         here.build_outside_cache( pos.z() );
         REQUIRE_FALSE( here.is_outside( pos ) );

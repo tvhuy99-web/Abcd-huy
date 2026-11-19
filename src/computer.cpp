@@ -126,7 +126,7 @@ void computer::set_mission( const int id )
     mission_id = id;
 }
 
-// Methods for setting/getting misc key/value pairs.
+
 void computer::set_value( const std::string &key, diag_value value )
 {
     values[ key ] = std::move( value );
@@ -157,7 +157,7 @@ void computer::load_legacy_data( const std::string &data )
 
     name = string_replace( name, "_", " " );
 
-    // Pull in options
+
     int optsize;
     dump >> optsize;
     for( int n = 0; n < optsize; n++ ) {
@@ -167,9 +167,9 @@ void computer::load_legacy_data( const std::string &data )
         int tmpsec;
 
         dump >> tmpname >> tmpaction >> tmpsec;
-        // Legacy missile launch option that got removed before `computer_action` was
-        // refactored to be saved and loaded as string ids. Do not change this number:
-        // `computer_action` now has different underlying values from back then!
+
+
+
         if( tmpaction == 15 ) {
             continue;
         }
@@ -177,7 +177,7 @@ void computer::load_legacy_data( const std::string &data )
                     tmpsec );
     }
 
-    // Pull in failures
+
     int failsize;
     dump >> failsize;
     for( int n = 0; n < failsize; n++ ) {
@@ -189,9 +189,9 @@ void computer::load_legacy_data( const std::string &data )
     std::string tmp_access_denied;
     dump >> tmp_access_denied;
 
-    // For backwards compatibility, only set the access denied message if it
-    // isn't empty. This is to avoid the message becoming blank when people
-    // load old saves.
+
+
+
     if( !tmp_access_denied.empty() ) {
         access_denied = string_replace( tmp_access_denied, "_", " " );
     }
@@ -233,7 +233,7 @@ void computer::deserialize( const JsonValue &jv )
         jo.read( "chat_topics", chat_topics );
         jo.read( "values", values );
         if( !jo.read( "location", loc ) ) {
-            // Backward compatibility code for change made 2025-02-19.
+
             tripoint_bub_ms temp;
             jo.read( "loc", temp );
             loc = get_map().get_abs( temp );
@@ -254,81 +254,141 @@ void computer::remove_option( computer_action const action )
 static computer_action computer_action_from_legacy_enum( const int val )
 {
     switch( val ) {
-        // Used to migrate old saves. Do not change the numbers!
-        // *INDENT-OFF*
+
+
         default:
-        case 0: return COMPACT_NULL;
-        case 1: return COMPACT_OPEN;
-        case 2: return COMPACT_LOCK;
-        case 3: return COMPACT_UNLOCK;
-        case 4: return COMPACT_TOLL;
-        case 5: return COMPACT_SAMPLE;
-        case 6: return COMPACT_RELEASE;
-        case 7: return COMPACT_RELEASE_BIONICS;
-        case 8: return COMPACT_TERMINATE;
-        case 9: return COMPACT_PORTAL;
-        case 10: return COMPACT_CASCADE;
-        case 11: return COMPACT_RESEARCH;
-        case 12: return COMPACT_MAPS;
-        case 13: return COMPACT_MAP_SEWER;
-        case 14: return COMPACT_MAP_SUBWAY;
-        // options with action enum 15 are removed in load_legacy_data()
-        case 16: return COMPACT_MISS_DISARM;
-        case 17: return COMPACT_LIST_BIONICS;
-        case 18: return COMPACT_ELEVATOR_ON;
-        case 19: return COMPACT_AMIGARA_LOG;
-        case 20: return COMPACT_AMIGARA_START;
-        case 21: return COMPACT_COMPLETE_DISABLE_EXTERNAL_POWER;
-        case 22: return COMPACT_REPEATER_MOD;
-        case 23: return COMPACT_DOWNLOAD_SOFTWARE;
-        case 24: return COMPACT_BLOOD_ANAL;
-        case 25: return COMPACT_DATA_ANAL;
-        case 26: return COMPACT_DISCONNECT;
-        case 27: return COMPACT_EMERG_MESS;
-        case 28: return COMPACT_EMERG_REF_CENTER;
-        case 29: return COMPACT_TOWER_UNRESPONSIVE;
-        case 30: return COMPACT_SR1_MESS;
-        case 31: return COMPACT_SR2_MESS;
-        case 32: return COMPACT_SR3_MESS;
-        case 33: return COMPACT_SR4_MESS;
-        case 34: return COMPACT_SRCF_1_MESS;
-        case 35: return COMPACT_SRCF_2_MESS;
-        case 36: return COMPACT_SRCF_3_MESS;
-        case 37: return COMPACT_SRCF_SEAL_ORDER;
-        case 38: return COMPACT_SRCF_SEAL;
-        case 39: return COMPACT_SRCF_ELEVATOR;
-        case 40: return COMPACT_OPEN_DISARM;
-        case 41: return COMPACT_UNLOCK_DISARM;
-        case 42: return COMPACT_RELEASE_DISARM;
-        case 43: return COMPACT_IRRADIATOR;
-        case 44: return COMPACT_GEIGER;
-        case 45: return COMPACT_CONVEYOR;
-        case 46: return COMPACT_SHUTTERS;
-        case 47: return COMPACT_EXTRACT_RAD_SOURCE;
-        case 48: return COMPACT_DEACTIVATE_SHOCK_VENT;
-        case 49: return COMPACT_RADIO_ARCHIVE;
-        // *INDENT-ON*
+        case 0:
+            return COMPACT_NULL;
+        case 1:
+            return COMPACT_OPEN;
+        case 2:
+            return COMPACT_LOCK;
+        case 3:
+            return COMPACT_UNLOCK;
+        case 4:
+            return COMPACT_TOLL;
+        case 5:
+            return COMPACT_SAMPLE;
+        case 6:
+            return COMPACT_RELEASE;
+        case 7:
+            return COMPACT_RELEASE_BIONICS;
+        case 8:
+            return COMPACT_TERMINATE;
+        case 9:
+            return COMPACT_PORTAL;
+        case 10:
+            return COMPACT_CASCADE;
+        case 11:
+            return COMPACT_RESEARCH;
+        case 12:
+            return COMPACT_MAPS;
+        case 13:
+            return COMPACT_MAP_SEWER;
+        case 14:
+            return COMPACT_MAP_SUBWAY;
+
+        case 16:
+            return COMPACT_MISS_DISARM;
+        case 17:
+            return COMPACT_LIST_BIONICS;
+        case 18:
+            return COMPACT_ELEVATOR_ON;
+        case 19:
+            return COMPACT_AMIGARA_LOG;
+        case 20:
+            return COMPACT_AMIGARA_START;
+        case 21:
+            return COMPACT_COMPLETE_DISABLE_EXTERNAL_POWER;
+        case 22:
+            return COMPACT_REPEATER_MOD;
+        case 23:
+            return COMPACT_DOWNLOAD_SOFTWARE;
+        case 24:
+            return COMPACT_BLOOD_ANAL;
+        case 25:
+            return COMPACT_DATA_ANAL;
+        case 26:
+            return COMPACT_DISCONNECT;
+        case 27:
+            return COMPACT_EMERG_MESS;
+        case 28:
+            return COMPACT_EMERG_REF_CENTER;
+        case 29:
+            return COMPACT_TOWER_UNRESPONSIVE;
+        case 30:
+            return COMPACT_SR1_MESS;
+        case 31:
+            return COMPACT_SR2_MESS;
+        case 32:
+            return COMPACT_SR3_MESS;
+        case 33:
+            return COMPACT_SR4_MESS;
+        case 34:
+            return COMPACT_SRCF_1_MESS;
+        case 35:
+            return COMPACT_SRCF_2_MESS;
+        case 36:
+            return COMPACT_SRCF_3_MESS;
+        case 37:
+            return COMPACT_SRCF_SEAL_ORDER;
+        case 38:
+            return COMPACT_SRCF_SEAL;
+        case 39:
+            return COMPACT_SRCF_ELEVATOR;
+        case 40:
+            return COMPACT_OPEN_DISARM;
+        case 41:
+            return COMPACT_UNLOCK_DISARM;
+        case 42:
+            return COMPACT_RELEASE_DISARM;
+        case 43:
+            return COMPACT_IRRADIATOR;
+        case 44:
+            return COMPACT_GEIGER;
+        case 45:
+            return COMPACT_CONVEYOR;
+        case 46:
+            return COMPACT_SHUTTERS;
+        case 47:
+            return COMPACT_EXTRACT_RAD_SOURCE;
+        case 48:
+            return COMPACT_DEACTIVATE_SHOCK_VENT;
+        case 49:
+            return COMPACT_RADIO_ARCHIVE;
+
     }
 }
 
 static computer_failure_type computer_failure_type_from_legacy_enum( const int val )
 {
     switch( val ) {
-        // Used to migrate old saves. Do not change the numbers!
-        // *INDENT-OFF*
+
+
         default:
-        case 0: return COMPFAIL_NULL;
-        case 1: return COMPFAIL_SHUTDOWN;
-        case 2: return COMPFAIL_ALARM;
-        case 3: return COMPFAIL_MANHACKS;
-        case 4: return COMPFAIL_SECUBOTS;
-        case 5: return COMPFAIL_DAMAGE;
-        case 6: return COMPFAIL_PUMP_EXPLODE;
-        case 7: return COMPFAIL_PUMP_LEAK;
-        case 8: return COMPFAIL_AMIGARA;
-        case 9: return COMPFAIL_DESTROY_BLOOD;
-        case 10: return COMPFAIL_DESTROY_DATA;
-        // *INDENT-ON*
+        case 0:
+            return COMPFAIL_NULL;
+        case 1:
+            return COMPFAIL_SHUTDOWN;
+        case 2:
+            return COMPFAIL_ALARM;
+        case 3:
+            return COMPFAIL_MANHACKS;
+        case 4:
+            return COMPFAIL_SECUBOTS;
+        case 5:
+            return COMPFAIL_DAMAGE;
+        case 6:
+            return COMPFAIL_PUMP_EXPLODE;
+        case 7:
+            return COMPFAIL_PUMP_LEAK;
+        case 8:
+            return COMPFAIL_AMIGARA;
+        case 9:
+            return COMPFAIL_DESTROY_BLOOD;
+        case 10:
+            return COMPFAIL_DESTROY_DATA;
+
     }
 }
 
@@ -338,61 +398,114 @@ template<>
 std::string enum_to_string<computer_action>( const computer_action act )
 {
     switch( act ) {
-        // *INDENT-OFF*
-        case COMPACT_NULL: return "null";
-        case COMPACT_AMIGARA_LOG: return "amigara_log";
-        case COMPACT_AMIGARA_START: return "amigara_start";
-        case COMPACT_BLOOD_ANAL: return "blood_anal";
-        case COMPACT_CASCADE: return "cascade";
-        case COMPACT_COMPLETE_DISABLE_EXTERNAL_POWER: return "complete_disable_external_power";
-        case COMPACT_CONVEYOR: return "conveyor";
-        case COMPACT_DATA_ANAL: return "data_anal";
-        case COMPACT_DEACTIVATE_SHOCK_VENT: return "deactivate_shock_vent";
-        case COMPACT_DISCONNECT: return "disconnect";
-        case COMPACT_DOWNLOAD_SOFTWARE: return "download_software";
-        case COMPACT_ELEVATOR_ON: return "elevator_on";
-        case COMPACT_EMERG_MESS: return "emerg_mess";
-        case COMPACT_EMERG_REF_CENTER: return "emerg_ref_center";
-        case COMPACT_EXTRACT_RAD_SOURCE: return "extract_rad_source";
-        case COMPACT_GEIGER: return "geiger";
-        case COMPACT_IRRADIATOR: return "irradiator";
-        case COMPACT_LIST_BIONICS: return "list_bionics";
-        case COMPACT_LIST_MUTATIONS: return "list_mutations";
-        case COMPACT_LOCK: return "lock";
-        case COMPACT_MAP_SEWER: return "map_sewer";
-        case COMPACT_MAP_SUBWAY: return "map_subway";
-        case COMPACT_MAPS: return "maps";
-        case COMPACT_MISS_DISARM: return "miss_disarm";
-        case COMPACT_MISS_LAUNCH: return "miss_launch";
-        case COMPACT_OPEN: return "open";
-        case COMPACT_OPEN_GATE: return "open_gate";
-        case COMPACT_CLOSE_GATE: return "close_gate";
-        case COMPACT_OPEN_DISARM: return "open_disarm";
-        case COMPACT_PORTAL: return "portal";
-        case COMPACT_RADIO_ARCHIVE: return "radio_archive";
-        case COMPACT_RELEASE: return "release";
-        case COMPACT_RELEASE_BIONICS: return "release_bionics";
-        case COMPACT_RELEASE_DISARM: return "release_disarm";
-        case COMPACT_REPEATER_MOD: return "repeater_mod";
-        case COMPACT_RESEARCH: return "research";
-        case COMPACT_SAMPLE: return "sample";
-        case COMPACT_SHUTTERS: return "shutters";
-        case COMPACT_SR1_MESS: return "sr1_mess";
-        case COMPACT_SR2_MESS: return "sr2_mess";
-        case COMPACT_SR3_MESS: return "sr3_mess";
-        case COMPACT_SR4_MESS: return "sr4_mess";
-        case COMPACT_SRCF_1_MESS: return "srcf_1_mess";
-        case COMPACT_SRCF_2_MESS: return "srcf_2_mess";
-        case COMPACT_SRCF_3_MESS: return "srcf_3_mess";
-        case COMPACT_SRCF_ELEVATOR: return "srcf_elevator";
-        case COMPACT_SRCF_SEAL: return "srcf_seal";
-        case COMPACT_SRCF_SEAL_ORDER: return "srcf_seal_order";
-        case COMPACT_TERMINATE: return "terminate";
-        case COMPACT_TOLL: return "toll";
-        case COMPACT_TOWER_UNRESPONSIVE: return "tower_unresponsive";
-        case COMPACT_UNLOCK: return "unlock";
-        case COMPACT_UNLOCK_DISARM: return "unlock_disarm";
-        // *INDENT-OFF*
+
+        case COMPACT_NULL:
+            return "null";
+        case COMPACT_AMIGARA_LOG:
+            return "amigara_log";
+        case COMPACT_AMIGARA_START:
+            return "amigara_start";
+        case COMPACT_BLOOD_ANAL:
+            return "blood_anal";
+        case COMPACT_CASCADE:
+            return "cascade";
+        case COMPACT_COMPLETE_DISABLE_EXTERNAL_POWER:
+            return "complete_disable_external_power";
+        case COMPACT_CONVEYOR:
+            return "conveyor";
+        case COMPACT_DATA_ANAL:
+            return "data_anal";
+        case COMPACT_DEACTIVATE_SHOCK_VENT:
+            return "deactivate_shock_vent";
+        case COMPACT_DISCONNECT:
+            return "disconnect";
+        case COMPACT_DOWNLOAD_SOFTWARE:
+            return "download_software";
+        case COMPACT_ELEVATOR_ON:
+            return "elevator_on";
+        case COMPACT_EMERG_MESS:
+            return "emerg_mess";
+        case COMPACT_EMERG_REF_CENTER:
+            return "emerg_ref_center";
+        case COMPACT_EXTRACT_RAD_SOURCE:
+            return "extract_rad_source";
+        case COMPACT_GEIGER:
+            return "geiger";
+        case COMPACT_IRRADIATOR:
+            return "irradiator";
+        case COMPACT_LIST_BIONICS:
+            return "list_bionics";
+        case COMPACT_LIST_MUTATIONS:
+            return "list_mutations";
+        case COMPACT_LOCK:
+            return "lock";
+        case COMPACT_MAP_SEWER:
+            return "map_sewer";
+        case COMPACT_MAP_SUBWAY:
+            return "map_subway";
+        case COMPACT_MAPS:
+            return "maps";
+        case COMPACT_MISS_DISARM:
+            return "miss_disarm";
+        case COMPACT_MISS_LAUNCH:
+            return "miss_launch";
+        case COMPACT_OPEN:
+            return "open";
+        case COMPACT_OPEN_GATE:
+            return "open_gate";
+        case COMPACT_CLOSE_GATE:
+            return "close_gate";
+        case COMPACT_OPEN_DISARM:
+            return "open_disarm";
+        case COMPACT_PORTAL:
+            return "portal";
+        case COMPACT_RADIO_ARCHIVE:
+            return "radio_archive";
+        case COMPACT_RELEASE:
+            return "release";
+        case COMPACT_RELEASE_BIONICS:
+            return "release_bionics";
+        case COMPACT_RELEASE_DISARM:
+            return "release_disarm";
+        case COMPACT_REPEATER_MOD:
+            return "repeater_mod";
+        case COMPACT_RESEARCH:
+            return "research";
+        case COMPACT_SAMPLE:
+            return "sample";
+        case COMPACT_SHUTTERS:
+            return "shutters";
+        case COMPACT_SR1_MESS:
+            return "sr1_mess";
+        case COMPACT_SR2_MESS:
+            return "sr2_mess";
+        case COMPACT_SR3_MESS:
+            return "sr3_mess";
+        case COMPACT_SR4_MESS:
+            return "sr4_mess";
+        case COMPACT_SRCF_1_MESS:
+            return "srcf_1_mess";
+        case COMPACT_SRCF_2_MESS:
+            return "srcf_2_mess";
+        case COMPACT_SRCF_3_MESS:
+            return "srcf_3_mess";
+        case COMPACT_SRCF_ELEVATOR:
+            return "srcf_elevator";
+        case COMPACT_SRCF_SEAL:
+            return "srcf_seal";
+        case COMPACT_SRCF_SEAL_ORDER:
+            return "srcf_seal_order";
+        case COMPACT_TERMINATE:
+            return "terminate";
+        case COMPACT_TOLL:
+            return "toll";
+        case COMPACT_TOWER_UNRESPONSIVE:
+            return "tower_unresponsive";
+        case COMPACT_UNLOCK:
+            return "unlock";
+        case COMPACT_UNLOCK_DISARM:
+            return "unlock_disarm";
+
         case NUM_COMPUTER_ACTIONS:
             break;
     }
@@ -402,26 +515,37 @@ std::string enum_to_string<computer_action>( const computer_action act )
 template<>
 std::string enum_to_string<computer_failure_type>( const computer_failure_type fail )
 {
-    switch( fail ){
-        // *INDENT-OFF*
-        case COMPFAIL_NULL: return "null";
-        case COMPFAIL_ALARM: return "alarm";
-        case COMPFAIL_AMIGARA: return "amigara";
-        case COMPFAIL_DAMAGE: return "damage";
-        case COMPFAIL_DESTROY_BLOOD: return "destroy_blood";
-        case COMPFAIL_DESTROY_DATA: return "destroy_data";
-        case COMPFAIL_MANHACKS: return "manhacks";
-        case COMPFAIL_PUMP_EXPLODE: return "pump_explode";
-        case COMPFAIL_PUMP_LEAK: return "pump_leak";
-        case COMPFAIL_SECUBOTS: return "secubots";
-        case COMPFAIL_SHUTDOWN: return "shutdown";
-        // *INDENT-ON*
+    switch( fail ) {
+
+        case COMPFAIL_NULL:
+            return "null";
+        case COMPFAIL_ALARM:
+            return "alarm";
+        case COMPFAIL_AMIGARA:
+            return "amigara";
+        case COMPFAIL_DAMAGE:
+            return "damage";
+        case COMPFAIL_DESTROY_BLOOD:
+            return "destroy_blood";
+        case COMPFAIL_DESTROY_DATA:
+            return "destroy_data";
+        case COMPFAIL_MANHACKS:
+            return "manhacks";
+        case COMPFAIL_PUMP_EXPLODE:
+            return "pump_explode";
+        case COMPFAIL_PUMP_LEAK:
+            return "pump_leak";
+        case COMPFAIL_SECUBOTS:
+            return "secubots";
+        case COMPFAIL_SHUTDOWN:
+            return "shutdown";
+
         case NUM_COMPUTER_FAILURES:
             break;
     }
     cata_fatal( "Invalid computer_failure_type" );
 }
-} // namespace io
+}
 
 template<>
 struct enum_traits<computer_action> {

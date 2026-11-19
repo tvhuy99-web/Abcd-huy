@@ -61,4 +61,4 @@ ID format_effect<ID>::translate( const char c ) const
 template class format_effect<furn_id>;
 template class format_effect<ter_id>;
 
-}//END NAMESPACE mapf
+}

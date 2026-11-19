@@ -21,7 +21,7 @@
 namespace
 {
 template<typename T>
-constexpr std::string_view _str_type_of( T const &/* t */ )
+constexpr std::string_view _str_type_of( T const & )
 {
     if constexpr( std::is_same_v<T, double> ) {
         return "double";
@@ -60,10 +60,10 @@ T _convert( diag_value::legacy_value const &val )
 }
 
 template<typename C, bool at_runtime = false, typename R = C const &>
-constexpr R _diag_value_helper( diag_value::impl_t const &data, const_dialogue const &/* d */ = {} )
+constexpr R _diag_value_helper( diag_value::impl_t const &data, const_dialogue const & = {} )
 {
     return std::visit( overloaded{
-        []( std::monostate const &/* std */ ) -> R
+        []( std::monostate const & ) -> R
         {
             static C const null_R{};
             return null_R;
@@ -97,12 +97,12 @@ constexpr R _diag_value_helper( diag_value::impl_t const &data, const_dialogue c
     data );
 }
 
-} // namespace
+}
 
 std::string diag_value::to_string( bool i18n ) const
 {
     return std::visit( overloaded{
-        []( std::monostate const &/* std */ )
+        []( std::monostate const & )
         {
             return std::string{};
         },
@@ -283,7 +283,7 @@ namespace
 void _serialize( diag_value::impl_t const &data, JsonOut &jsout )
 {
     std::visit( overloaded{
-        [&jsout]( std::monostate const &/* std */ )
+        [&jsout]( std::monostate const & )
         {
             jsout.write_null();
         },
@@ -292,7 +292,7 @@ void _serialize( diag_value::impl_t const &data, JsonOut &jsout )
             if( std::isfinite( v ) ) {
                 jsout.write( v );
             } else {
-                // inf and nan aren't allowed in JSON
+
                 jsout.start_object();
                 jsout.member( "dbl", std::to_string( v ) );
                 jsout.end_object();
@@ -326,7 +326,7 @@ void _serialize( diag_value::impl_t const &data, JsonOut &jsout )
     data );
 }
 
-} //namespace
+}
 
 void diag_value::serialize( JsonOut &jsout ) const
 {
@@ -360,7 +360,7 @@ void diag_value::_deserialize( const JsonValue &jsin, bool allow_legacy )
             jo.read( "str", str );
             data = str;
         } else if( jo.has_member( "dbl" ) ) {
-            // inf and nan
+
             std::string str;
             jo.read( "dbl", str );
             std::optional<double> opt = svtod( str );

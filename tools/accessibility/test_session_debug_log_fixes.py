@@ -27,9 +27,7 @@ class SessionDebugLogFixes(unittest.TestCase):
         migration = self.overmap.split("void overmap::migrate_camps(", 1)[1].split(
             "oter_id overmap::get_or_migrate_oter(", 1
         )[0]
-        # Camp registry keys are point_abs_omt, not tripoint_abs_omt.
-        # The original 3-D lookup compiled in source-only tests but failed
-        # the Android NDK build. Keep a type-safe 2-D lookup before inserting.
+
         header = (SRC / "overmap.h").read_text("utf-8")
         self.assertIn("std::map<point_abs_omt, basecamp> camps;", header)
         self.assertIn("const tripoint_abs_omt &point : points", migration)
@@ -37,7 +35,7 @@ class SessionDebugLogFixes(unittest.TestCase):
         self.assertNotIn("camps.find( point )", migration)
         self.assertLess(migration.index("camps.find( point.xy() ) != camps.end()"),
                         migration.index('get_map().add_camp( point, "faction_camp", false );'))
-        # Keep genuine conflicting-camp diagnostics intact elsewhere.
+
         insertion = self.overmap.split("void overmap::add_camp(", 1)[1].split(
             "std::optional<basecamp *> overmap::find_camp(", 1
         )[0]
@@ -59,8 +57,7 @@ class SessionDebugLogFixes(unittest.TestCase):
         self.assertIn("priority > active.priority", self.queue)
 
     def test_ascii_armor_silhouette_is_not_spoken_as_numbers(self):
-        # Only hash-only visual lines are suppressed. Actual '#123',
-        # narrative, percentages, coverage and item stats remain intact.
+
         self.assertIn("ASCII_ARMOR_DIAGRAM_LINE", self.speech_text)
         self.assertIn(r'(?m)^[ \\t]*(?:#[ \\t]*){2,}\\r?$', self.speech_text)
         self.assertIn('if (cleaned.indexOf(\'#\') >= 0)', self.speech_text)

@@ -66,7 +66,7 @@ struct malloc_impl : mmap_file::impl {
 
     malloc_impl &operator=( malloc_impl &&rhs ) = default;
 
-    // No copying
+
     malloc_impl( const malloc_impl & ) = delete;
     malloc_impl &operator=( const malloc_impl & ) = delete;
 
@@ -120,7 +120,7 @@ struct file_impl : mmap_file::impl {
     }
     file_impl &operator=( file_impl &&rhs ) = default;
 
-    // No copying
+
     file_impl( const file_impl & ) = delete;
     file_impl &operator=( const file_impl & ) = delete;
 
@@ -147,7 +147,7 @@ struct file_impl : mmap_file::impl {
         }
         LARGE_INTEGER file_size{};
         if( !GetFileSizeEx( file, &file_size ) ) {
-            // Failed to get file size.
+
             return false;
         }
 
@@ -176,7 +176,7 @@ struct file_impl : mmap_file::impl {
                              file_size.QuadPart
                          );
         if( map_base == nullptr ) {
-            // Failed to mmap file.
+
             return false;
         }
         close_file_mapping_guard.cancel();
@@ -282,7 +282,7 @@ struct file_impl : mmap_file::impl {
         FlushViewOfFile( base_ptr, length );
         FlushFileBuffers( file );
 #else
-        // msync requires the base pointer to be rounded to a page boundary.
+
         size_t page_offset = offset % 4096;
         base_ptr -= page_offset;
         length += page_offset;
@@ -291,7 +291,7 @@ struct file_impl : mmap_file::impl {
         return true;
     }
 };
-} // namespace
+}
 
 std::unique_ptr<mmap_file> mmap_file::map_file_generic(
     const std::filesystem::path &file_path,
@@ -316,8 +316,8 @@ std::unique_ptr<mmap_file> mmap_file::map_file_generic(
     }
 #else
     const std::string &file_path_string = file_path.native();
-    // 644 = User RW, Group R, Other R.
-    // Only used when creating a file. Ignored when file exists.
+
+
     int perms = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     int file_handle = open( file_path_string.c_str(), writeable ? O_CREAT | O_RDWR : O_RDONLY, perms );
     if( file_handle == -1 ) {

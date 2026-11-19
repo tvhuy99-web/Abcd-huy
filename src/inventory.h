@@ -25,13 +25,13 @@ using indexed_invslice = std::vector< std::pair<std::list<item>*, int> >;
 using itype_bin = std::unordered_map< itype_id, std::list<const item *> >;
 using invlets_bitset = std::bitset<std::numeric_limits<char>::max()>;
 
-/**
- * Wrapper to handled a set of valid "inventory" letters. "inventory" can be any set of
- * objects that the player can access via a single character (e.g. bionics).
- * The class is (currently) derived from std::string for compatibility and because it's
- * simpler. But it may be changed to derive from `std::set<int>` or similar to get the full
- * range of possible characters.
- */
+
+
+
+
+
+
+
 class invlet_wrapper : private std::string
 {
     public:
@@ -39,8 +39,8 @@ class invlet_wrapper : private std::string
 
         bool valid( int invlet ) const;
 
-        // Get ordinal number (first, second, third, ...) of invlet.
-        // Informs sorting order.
+
+
         int ordinal( int invlet ) const {
             return this->find( invlet );
         }
@@ -59,9 +59,9 @@ class invlet_wrapper : private std::string
 
 const extern invlet_wrapper inv_chars;
 
-// For each item id, store a set of "favorite" inventory letters.
-// This class maintains a bidirectional mapping between invlet letters and item ids.
-// Each invlet has at most one id and each id has any number of invlets.
+
+
+
 class invlet_favorites
 {
     public:
@@ -73,7 +73,7 @@ class invlet_favorites
         bool contains( char invlet, const itype_id & ) const;
         std::string invlets_for( const itype_id & ) const;
 
-        // For serialization only
+
         const std::unordered_map<itype_id, std::string> &get_invlets_by_id() const;
     private:
         std::unordered_map<itype_id, std::string> invlets_by_id;
@@ -94,17 +94,17 @@ struct quality_query {
     }
 };
 
-// Shared with reservation discovery, so a bound provider cannot outlive the condition
-// that made it usable.
+
+
 bool tile_has_sufficient_sunlight( const map &m, const tripoint_bub_ms &p );
 
 class map_stack;
 struct itype;
 
-// Charges of the first item in the stack matching the type, or the first matching the
-// ammotype with its id written back.
+
+
 int count_charges_in_list( const itype *type, const map_stack &items );
 int count_charges_in_list( const ammotype *ammotype, const map_stack &items,
                            itype_id &item_type );
 
-#endif // CATA_SRC_INVENTORY_H
+#endif

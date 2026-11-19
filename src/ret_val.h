@@ -35,14 +35,14 @@ class ret_val_common
         bool succ;
 };
 
-/**
- * The class represents a composite return value of an arbitrary function (result).
- * 'Composite' means that apart from the value itself, the result also contains:
- *   - a boolean flag which indicates the binary state of the result: success/failure.
- *   - an arbitrary string which additionally describes the result (may be empty).
- *
- * Template parameter T specifies the type of the value.
- */
+
+
+
+
+
+
+
+
 
 template<typename T>
 class ret_val : public ret_val_common
@@ -50,11 +50,11 @@ class ret_val : public ret_val_common
         static_assert( !std::is_convertible_v<T, std::string>, "string values aren't allowed" );
 
     public:
-        /**
-         * These structures are mandatory only if you want to omit the explicit return
-         * values of type T when creating instances of @ref ret_val with make_ functions.
-         * Each of these structures must contain a static constexpr member named 'value'.
-         */
+
+
+
+
+
         struct default_success;
         struct default_failure;
 
@@ -124,4 +124,4 @@ class ret_val<void> : public ret_val_common
         using ret_val_common::ret_val_common;
 };
 
-#endif // CATA_SRC_RET_VAL_H
+#endif

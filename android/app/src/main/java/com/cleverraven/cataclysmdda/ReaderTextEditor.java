@@ -13,10 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Native IME with TalkBack for text and numbers, plus one-tap completed-number
- *  choices with digit/punctuation entry for item quantities. (The former
- *  one-finger Vietnamese letter/tone keyboard was removed: no editor could
- *  reach it — only numeric quantity editors get past the native-input path.) */
+
+
+
+
 public final class ReaderTextEditor {
     public interface Listener {
         void speak(String text);
@@ -29,17 +29,17 @@ public final class ReaderTextEditor {
     private final Listener listener;
     private final boolean numeric;
     private final boolean integer;
-    // Only item-quantity pickers use one-touch completed numbers. Other
-    // numeric and text forms retain their existing draft/Apply workflow.
+
+
     private final boolean quantityChoices;
-    // Ordinary text and number fields use the Android IME with two controls.
-    // Completed item quantities keep their dedicated one-step selector.
+
+
     private final boolean nativeInputOnly;
-    // Numeric domain from the form contract (R04.2). Null means the source
-    // publishes no bound: classic number popups have no min/max at all,
-    // only an edit step. The engine stays the authority; these values let
-    // the editor refuse an invalid draft before it is sent and speak the
-    // specific reason (not a number / out of range / wrong step).
+
+
+
+
+
     private final Double rangeMin;
     private final Double rangeMax;
     private final Double rangeStep;
@@ -94,10 +94,10 @@ public final class ReaderTextEditor {
         field = new EditText(activity);
         field.setSaveEnabled(false);
         field.setSingleLine(true);
-        // No suggestions/autocorrect: the text a user types or pastes must
-        // reach the game verbatim, especially search text, where the
-        // reader preserves the query exactly and only case-folds it when
-        // matching (R04.2).
+
+
+
+
         field.setInputType(numeric ? InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL
                 : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
@@ -108,8 +108,8 @@ public final class ReaderTextEditor {
         choices = new LinearLayout(activity);
         choices.setOrientation(LinearLayout.VERTICAL);
         root.addView(choices);
-        // Number dialogs start on actual digits, not a long controls menu.
-        // One-finger up/down selects a digit; double-tap enters it.
+
+
         if (numeric) {
             group = this.quantityChoices ? "quantities" : "digits";
             selected = 1;
@@ -130,9 +130,9 @@ public final class ReaderTextEditor {
         revision++;
         items.clear();
         if (nativeInputOnly) {
-            // TalkBack can focus the actual EditText and the Android IME.
-            // The game does not enable/disable TalkBack; the player does.
-            // No simulated letter/digit keyboard is displayed here.
+
+
+
             group = "controls";
             selected = 0;
             add(R.string.ok, this::submitCurrent);
@@ -141,9 +141,9 @@ public final class ReaderTextEditor {
             return;
         }
         if ("quantities".equals(group)) {
-            // Each number is a whole choice, not a digit to be entered
-            // into a draft. One double tap commits and returns to the
-            // previous inventory selection screen.
+
+
+
             add(R.string.a11yQuantityDeselect, () -> listener.submit("0"));
             final int quickMax = (int) Math.min(9, Math.floor(rangeMax));
             for (int count = 1; count <= quickMax; count++) {
@@ -182,10 +182,10 @@ public final class ReaderTextEditor {
             add(R.string.a11yEditorApply, this::submitCurrent);
             add(R.string.a11yEditorCancel, listener::cancel);
         } else {
-            // Only the digit and punctuation groups can reach this branch:
-            // the Vietnamese letter/tone keyboard is gone (see the header).
-            // Both groups are numeric-only here, because only item-quantity
-            // editors get past the native-input early return above.
+
+
+
+
             add(R.string.a11yEditorKeyboardReturn, () -> open("controls"));
             String alphabet = "digits".equals(group) ? "0123456789" : "-+.";
             for (int offset = 0; offset < alphabet.length();) {
@@ -208,8 +208,8 @@ public final class ReaderTextEditor {
     }
 
     private void render() {
-        // Do not show an editable value from a previous choice beside a
-        // one-tap quantity list. Reveal the field only in manual entry.
+
+
         field.setVisibility(quantityChoices && "quantities".equals(group)
                 ? View.GONE : View.VISIBLE);
         choices.removeAllViews();
@@ -245,12 +245,12 @@ public final class ReaderTextEditor {
 
     public void activate() { items.get(selected).action.run(); }
 
-    /** Used by the global two-finger Up confirmation, including digit view. */
+
     public void submitCurrent() {
         if (quantityChoices && "quantities".equals(group)) {
-            // Two-finger Up and the confirm action must activate the
-            // highlighted completed number, not submit the stale text
-            // retained in the editor field from the last selection.
+
+
+
             activate();
             return;
         }
@@ -259,11 +259,11 @@ public final class ReaderTextEditor {
         else { listener.submit(getText()); }
     }
 
-    /** Two-finger Down discards the entire draft, even from the digit view. */
+
     public void cancelInput() { listener.cancel(); }
 
     public void readCurrent() {
-        // Restore position feedback for all editor and keyboard choices.
+
         listener.speak(items.get(selected).label + ". "
                 + activity.getString(R.string.a11yControlButton) + ", "
                 + activity.getString(R.string.a11yPosition, selected + 1, items.size()));
@@ -283,8 +283,8 @@ public final class ReaderTextEditor {
 
     private void insert(String value) {
         clearing = false;
-        // Starting a numeric entry replaces the old value rather than
-        // turning, for example, 12 followed by 5 into an accidental 125.
+
+
         if (numeric && "digits".equals(group) && replaceInitialNumberOnFirstDigit
                 && getText().equals(initialNumber)) {
             field.setText(value);
@@ -331,14 +331,14 @@ public final class ReaderTextEditor {
         return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
-    /** Mirrors the engine's field check (a11y_semantics check_field_value). */
+
     private String validationError() {
         if (!numeric) { return null; }
         String text = getText();
         double value;
         try {
-            // The engine's parser skips leading whitespace but rejects
-            // anything trailing; mirror that instead of trim-everything.
+
+
             if (text.isEmpty()
                     || Character.isWhitespace(text.charAt(text.length() - 1))) {
                 throw new NumberFormatException("empty or trailing space");

@@ -10,17 +10,17 @@
 
 #include "cata_scope_helpers.h"
 
-/**
- * A vector type that is specialized for storing trivial types in contiguous
- * storage with a statically predetermined amount of inline storage.
- *
- * Because this is intended to be *small*, the internal capacity and size variables
- * default to uint8_t for minimal overhead over the inline storage.
- */
+
+
+
+
+
+
+
 template<typename T, size_t kInlineCount = 4, typename SizeT = uint8_t>
 struct alignas( T * ) alignas( T ) small_literal_vector {
-    // To avoid having to invoke constructors and destructors when copying Elements
-    // around or inserting new ones, we enforce it is a literal type.
+
+
     static_assert( std::is_trivially_destructible_v<T>, "T must be trivially destructible." );
     static_assert( std::is_trivially_copyable_v<T>, "T must be trivially copyable." );
     static_assert( std::is_trivially_default_constructible_v<T>,
@@ -112,7 +112,7 @@ struct alignas( T * ) alignas( T ) small_literal_vector {
         return len_ == 0;
     }
 
-    // Some nonstandard helpers below.
+
     void ensure_capacity_for( size_t count ) {
         check_capacity( count );
 
@@ -120,12 +120,12 @@ struct alignas( T * ) alignas( T ) small_literal_vector {
             return;
         }
 
-        // 1.5x resize factor allows for reuse of earlier allocations at larger sizes.
-        // That works best if we tracked explicit capacity, but it's better than nothing.
-        // https://stackoverflow.com/a/1100426
+
+
+
         size_t new_capacity = capacity_;
         size_t next_capacity = capacity_ * 1.5;
-        // Prevent overflow by testing before multiplying
+
         while( next_capacity > new_capacity && next_capacity < count ) {
             new_capacity = next_capacity;
             next_capacity *= 1.5;
@@ -153,7 +153,7 @@ private:
         }
     }
 
-    // 'exact' rounds up to kInlineCount
+
     void reserve_exact( size_t new_capacity ) {
         T *heap = nullptr;
         if( capacity_ <= kInlineCount ) {
@@ -166,8 +166,8 @@ private:
             heap_ = heap;
             heap_guard.cancel();
         } else {
-            // Don't bother 'unheapifying', but do shrink allocation.
-            // GCC incorrectly tags heap_ as possibly uninitialized in the copy_init path.
+
+
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -197,13 +197,13 @@ private:
     void steal_init( small_literal_vector &&other ) noexcept {
         if( this != &other ) {
             if( other.on_heap() ) {
-                // Optimization: steal the heap pointer.
+
                 heap_ = other.heap_;
                 capacity_ = other.capacity_;
                 other.heap_ = nullptr;
                 other.capacity_ = kInlineCount;
             } else {
-                // Skip the ensure_capacity_for call cause we know it has to be inline.
+
                 std::uninitialized_copy_n( other.inline_, other.len_, inline_ );
                 capacity_ = kInlineCount;
             }
@@ -216,12 +216,12 @@ private:
         return capacity_ > kInlineCount;
     }
 
-    // The whole small_literal_vector has at least alignas(T*) so that the alignment requirements of heap_
+
     // are never violated, even if you allocate several of these in a row. However we use pragma pack
-    // so there are no padding bytes inserted into the union to bring it to a multiple of sizeof(T*)
-    // so that capacity_ and len_ can be tightly packed adjacent to it. Their alignments will still
-    // be legal because the compiler will insert padding before capacity_ if necessary.
-    // We put T *heap_ as the first entry in the union to avoid default initializing the whole inline storage.
+
+
+
+
 #pragma pack(push, 1)
     union alignas( T ) {
         T *heap_;
@@ -229,9 +229,9 @@ private:
         T inline_[ kInlineCount ];
     };
 #pragma pack(pop)
-    // capacity_ > kInlineCount => on heap.
+
     SizeT capacity_;
     SizeT len_;
 };
 
-#endif // CATA_SRC_CATA_SMALL_LITERAL_VECTOR_H
+#endif

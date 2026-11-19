@@ -26,9 +26,9 @@ static const itype_id itype_test_rock( "test_rock" );
 
 TEST_CASE( "truncate_spawn_when_items_dont_fit", "[item_group]" )
 {
-    // This item group is a 10L container with three 4L objects.  We should
-    // always see exactly 2 of the 3.
-    // Moreover, we should see all possible pairs chosen from amongst those 3.
+
+
+
     item_group_id truncate_test_id( "test_truncating_to_container" );
     std::set<std::pair<itype_id, itype_id>> observed_pairs;
 
@@ -48,9 +48,9 @@ TEST_CASE( "truncate_spawn_when_items_dont_fit", "[item_group]" )
 
 TEST_CASE( "spill_when_items_dont_fit", "[item_group]" )
 {
-    // This item group is a 10L container with three 4L objects.  We should
-    // always see 2 in the container and one outside.
-    // Moreover, we should see all possible combinations chosen from amongst those 3.
+
+
+
     item_group_id truncate_test_id( "test_spilling_from_container" );
     std::set<std::pair<itype_id, itype_id>> observed_pairs_inside;
     std::set<itype_id> observed_outside;
@@ -203,9 +203,9 @@ TEST_CASE( "item_modifier_modifies_charges_for_item", "[item_group]" )
             modifier.charges = { min_charges, max_charges };
 
             WHEN( "the item is modified" ) {
-                // We have to repeat this a bunch because the charges assignment
-                // actually does rng between min and max, and if we only checked once
-                // we might get a false success.
+
+
+
                 std::vector<int> results;
                 results.reserve( 100 );
                 for( int i = 0; i < 100; i++ ) {
@@ -229,9 +229,9 @@ TEST_CASE( "item_modifier_modifies_charges_for_item", "[item_group]" )
             modifier.charges = { min_charges, max_charges };
 
             WHEN( "the item is modified" ) {
-                // We have to repeat this a bunch because the charges assignment
-                // actually does rng between min and max, and if we only checked once
-                // we might get a false success.
+
+
+
                 std::vector<int> results;
                 results.reserve( 100 );
                 for( int i = 0; i < 100; i++ ) {

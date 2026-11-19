@@ -24,19 +24,19 @@ class cata_path;
 class options_manager
 {
     public:
-        // first is internal value, second is text
+
         using id_and_option = std::pair<std::string, translation>;
         using int_and_option = std::pair<int, translation>;
         static std::vector<id_and_option> get_lang_options();
     private:
-        /**
-         * Search for resources.
-         * @p storage is the resource map (e.g. SOUNDPACKS) to fill from resources found. It will be cleared.
-         * @p option_list is the option list corresponding to the resources found. It will be cleared.
-         * @p search_paths are the paths to search for resources in, in order of priority.
-         * @p resource_name is the type of resource being searched for (e.g. "sound").
-         * @p resource_filename is the name of the config file for the type of resource (e.g. path_info::soundpack_conf()).
-         */
+
+
+
+
+
+
+
+
         static void search_resource(
             std::map<std::string, std::string> &storage, std::vector<id_and_option> &option_list,
             const std::vector<std::string> &search_paths, const std::string &resource_name,
@@ -63,17 +63,17 @@ class options_manager
 
     public:
         enum copt_hide_t {
-            /** Don't hide this option */
+
             COPT_NO_HIDE,
-            /** Hide this option in SDL build */
+
             COPT_SDL_HIDE,
-            /** Show this option in SDL builds only */
+
             COPT_CURSES_HIDE,
-            /** Hide this option in non-Windows Curses builds */
+
             COPT_POSIX_CURSES_HIDE,
-            /** Hide this option in builds without sound support */
+
             COPT_NO_SOUND_HIDE,
-            /** Hide this option always, it should not be changed by user directly through UI. **/
+
             COPT_ALWAYS_HIDE
         };
 
@@ -83,27 +83,27 @@ class options_manager
             public:
                 cOpt();
 
-                /**
-                 * Option should be hidden in current build.
-                 * @return true if option should be hidden, false if not.
-                 */
+
+
+
+
                 bool is_hidden() const;
 
                 std::string getName() const;
                 std::string getPage() const;
-                /// The translated group name. If not in a group, an empty string.
+
                 std::string getGroupName() const;
-                /// The translated displayed option name.
+
                 std::string getMenuText() const;
-                /// The translated displayed option tool tip.
+
                 std::string getTooltip() const;
                 std::string getType() const;
 
                 std::string getValue( bool classis_locale = false ) const;
-                /// The translated currently selected option value.
+
                 std::string getValueName() const;
                 std::string getDefaultText( bool bTranslated = true ) const;
-                // raw default of a string option, e.g. a string_select id
+
                 const std::string &getDefaultValue() const {
                     return sDefault;
                 }
@@ -116,10 +116,10 @@ class options_manager
 
                 int getMaxLength() const;
 
-                // Numeric domain for the accessibility form contract
-                // (R02.3): only meaningful for int/float options, where the
-                // add() overloads stored an explicit range (and a step for
-                // float). Other types report an empty 0 domain.
+
+
+
+
                 double getNumericMin() const {
                     return eType == CVT_FLOAT ? static_cast<double>( fMin ) :
                            eType == CVT_INT ? static_cast<double>( iMin ) : 0.0;
@@ -133,11 +133,11 @@ class options_manager
                            eType == CVT_INT ? 1.0 : 0.0;
                 }
 
-                //set to next item
+
                 void setNext();
-                //set to previous item
+
                 void setPrev();
-                //set value
+
                 void setValue( const std::string &sSetIn );
                 void setValue( float fSetIn );
                 void setValue( int iSetIn );
@@ -174,9 +174,9 @@ class options_manager
             private:
                 std::string sName;
                 std::string sPage;
-                // The displayed option name ( short string ).
+
                 translation sMenuText;
-                // The displayed option tool tip ( longer string ).
+
                 translation sTooltip;
                 std::string sType;
                 bool verbose = false;
@@ -190,25 +190,25 @@ class options_manager
 
                 COPT_VALUE_TYPE eType;
 
-                //sType == "string"
+
                 std::string sSet;
                 std::vector<id_and_option> vItems;
                 std::string sDefault;
 
                 int iMaxLength = 0;
 
-                //sType == "bool"
+
                 bool bSet = false;
                 bool bDefault = false;
 
-                //sType == "int"
+
                 int iSet = 0;
                 int iMin = 0;
                 int iMax = 0;
                 int iDefault = 0;
                 std::vector<int_and_option> mIntValues;
 
-                //sType == "float"
+
                 float fSet = 0.0f;
                 float fMin = 0.0f;
                 float fMax = 0.0f;
@@ -241,62 +241,62 @@ class options_manager
         std::string migrateOptionName( const std::string &name ) const;
         std::string migrateOptionValue( const std::string &name, const std::string &val ) const;
 
-        // updates the caches in options_cache.h
+
         static void update_options_cache();
 
-        /**
-         * Returns a copy of the options in the "world default" page. The options have their
-         * current value, which acts as the default for new worlds.
-         */
+
+
+
+
         options_container get_world_defaults() const;
 
-        // Return a bare copy of all options in raw form, for debugging use only.
+
         options_container get_raw_options();
 
         void set_world_options( options_container *options );
 
-        /** Check if an option exists? */
+
         bool has_option( const std::string &name ) const;
 
         cOpt &get_option( const std::string &name );
 
-        //add hidden external option with value
+
         void add_external( const std::string &sNameIn, const std::string &sPageIn,
                            const std::string &sType );
 
-        //add string select option
+
         void add( const std::string &sNameIn, const std::string &sPageIn,
                   const translation &sMenuTextIn, const translation &sTooltipIn,
-                  // first is option value, second is display name of that value
+
                   const std::vector<id_and_option> &sItemsIn, std::string sDefaultIn,
                   copt_hide_t opt_hide = COPT_NO_HIDE );
 
-        //add string input option
+
         void add( const std::string &sNameIn, const std::string &sPageIn,
                   const translation &sMenuTextIn, const translation &sTooltipIn,
                   const std::string &sDefaultIn, int iMaxLengthIn,
                   copt_hide_t opt_hide = COPT_NO_HIDE );
 
-        //add bool option
+
         void add( const std::string &sNameIn, const std::string &sPageIn,
                   const translation &sMenuTextIn, const translation &sTooltipIn,
                   bool bDefaultIn, copt_hide_t opt_hide = COPT_NO_HIDE );
 
-        //add int option
+
         void add( const std::string &sNameIn, const std::string &sPageIn,
                   const translation &sMenuTextIn, const translation &sTooltipIn,
                   int iMinIn, int iMaxIn, int iDefaultIn,
                   copt_hide_t opt_hide = COPT_NO_HIDE,
                   const std::string &format = "%i" );
 
-        //add int map option
+
         void add( const std::string &sNameIn, const std::string &sPageIn,
                   const translation &sMenuTextIn, const translation &sTooltipIn,
                   const std::vector<int_and_option> &mIntValuesIn,
                   int iInitialIn, int iDefaultIn, copt_hide_t opt_hide = COPT_NO_HIDE,
                   bool verbose = false );
 
-        //add float option
+
         void add( const std::string &sNameIn, const std::string &sPageIn,
                   const translation &sMenuTextIn, const translation &sTooltipIn,
                   float fMinIn, float fMaxIn,
@@ -308,15 +308,15 @@ class options_manager
         options_container options;
         std::optional<options_container *> world_options; // NOLINT(cata-serialize)
 
-        /** Option group. */
+
         class Group
         {
             public:
-                /** Group identifier. Should be unique across all pages. */
+
                 std::string id_;
-                /** Group name */
+
                 translation name_;
-                /** Tooltip with description */
+
                 translation tooltip_;
 
                 Group() = default;
@@ -324,20 +324,20 @@ class options_manager
                     : id_( id ), name_( name ), tooltip_( tooltip ) { }
         };
 
-        /** Page item type. */
+
         enum class ItemType {
             BlankLine,
             GroupHeader,
             Option,
         };
 
-        /** Single page item (entry). */
+
         class PageItem
         {
             public:
                 ItemType type;
                 std::string data;
-                /** Empty if not assigned to any group. */
+
                 std::string group;
 
                 PageItem() : type( ItemType::BlankLine ) { }
@@ -347,22 +347,22 @@ class options_manager
                 std::string fmt_tooltip( const std::string &group_id, const options_container &cont ) const;
         };
 
-        /**
-         * A page (or tab) to be displayed in the options UI.
-         * It contains a @ref id that is used to detect what options should go into this
-         * page (see @ref cOpt::getPage).
-         * It also has a name that will be translated and displayed.
-         * And it has items, each item is either nothing (will be represented as empty line
-         * in the UI) or the name of an option.
-         */
+
+
+
+
+
+
+
+
         class Page
         {
             public:
-                /** Page identifier */
+
                 std::string id_;
-                /** Page name */
+
                 translation name_;
-                /** Page items (entries) */
+
                 std::vector<PageItem> items_;
 
                 void removeRepeatedEmptyLines();
@@ -374,27 +374,27 @@ class options_manager
         std::string adding_to_group_; // NOLINT(cata-serialize)
         std::vector<Group> groups_; // NOLINT(cata-serialize)
 
-        /**
-        * Specify option group.
-        *
-        * Option groups are used for visual separation of options on pages,
-        * and allow some additional UI functionality (i.e. collapse/expand).
-        *
-        * @param page_id Page to create group at.
-        * @param group Group to create.
-        * @param entries Page entries added within this closure will be assigned to the group.
-        *                Receives "page_id" as it's only argument.
-        */
+
+
+
+
+
+
+
+
+
+
+
         void add_option_group( const std::string &page_id, const Group &group,
                                const std::function<void( const std::string & )> &entries );
 
-        /** Add empty line to page. */
+
         void add_empty_line( const std::string &sPageIn );
 
-        /** Find page by id. */
+
         Page &find_page( const std::string &id );
 
-        /** Find group by id. */
+
         const Group &find_group( const std::string &id ) const;
 };
 
@@ -506,15 +506,15 @@ struct option_slider {
         int random_level() const;
 };
 
-/** A mapping(string:string) that stores all tileset values.
- * Firsts string is tileset NAME from config.
- * Second string is directory that contain tileset.
- */
+
+
+
+
 extern std::map<std::string, cata_path> TILESETS;
-/** A mapping(string:string) that stores all soundpack values.
- * Firsts string is soundpack NAME from config.
- * Second string is directory that contains soundpack.
- */
+
+
+
+
 extern std::map<std::string, cata_path> SOUNDPACKS;
 
 options_manager &get_options();
@@ -530,4 +530,4 @@ inline T get_option( const std::string &name, bool convert = false )
     return get_options().get_option( name ).value_as<T>( convert );
 }
 
-#endif // CATA_SRC_OPTIONS_H
+#endif

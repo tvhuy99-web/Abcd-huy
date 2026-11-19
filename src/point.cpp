@@ -80,8 +80,8 @@ std::string point::to_string() const
 
 std::string point::to_string_writable() const
 {
-    // This is supposed to be a non-translated version of to_string, but we can
-    // just use regular to_string
+
+
     return to_string();
 }
 
@@ -108,8 +108,8 @@ std::string tripoint::to_string() const
 
 std::string tripoint::to_string_writable() const
 {
-    // This is supposed to be a non-translated version of to_string, but we can
-    // just use regular to_string
+
+
     return to_string();
 }
 
@@ -126,7 +126,7 @@ std::ostream &operator<<( std::ostream &os, const tripoint &pos )
 std::istream &operator>>( std::istream &is, point &pos )
 {
     char c;
-    // silence -Wunused-value
+
     static_cast<void>( is.get( c ) && c == '(' && is >> pos.x && is.get( c ) && c == ',' &&
                        is >> pos.y && is.get( c ) && c == ')' );
     return is;

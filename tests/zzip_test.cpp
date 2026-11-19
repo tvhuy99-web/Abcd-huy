@@ -43,7 +43,7 @@ std::vector<std::byte> make_bytes( size_t count )
     return bytes;
 }
 
-} // namespace
+}
 
 TEST_CASE( "zzip_basic_functionality", "[.][zzip]" )
 {
@@ -246,7 +246,7 @@ TEST_CASE( "zzip_corruption_recovery", "[.][zzip]" )
                                        mem_file->len(),
                                        buf.data(),
                                        sizeof( buf ),
-                                       /* kFooterChecksumMagic */ 15 );
+                                       15 );
         REQUIRE( !ZSTD_isError( footer_frame_size ) );
 
         SECTION( "Recovery works" ) {
@@ -284,7 +284,7 @@ TEST_CASE( "zzip_corruption_recovery", "[.][zzip]" )
                 for( size_t truncated_len : std::array{ len - 1, len / 2, static_cast<size_t>( 1 ) } ) {
                     z.reset();
 
-                    // Truncate each file one byte off the end, in the middle, and one byte from the start
+
 
                     mem_file->resize_file( offset + truncated_len );
 
@@ -336,7 +336,7 @@ TEST_CASE( "zzip_corruption_recovery", "[.][zzip]" )
                 size_t truncated_len = len / 2;
 
                 z.reset();
-                // Truncate each overwritten file, verify when we reload we get the older copy.
+
                 mem_file->resize_file( offset + truncated_len );
 
                 z = zzip::load( mem_file );

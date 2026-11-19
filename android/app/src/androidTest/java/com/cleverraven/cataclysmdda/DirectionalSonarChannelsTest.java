@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 
 import static org.junit.Assert.assertEquals;
 
-/** Validate real item/creature SoundPool channel gating without playing sounds. */
+
 @RunWith(AndroidJUnit4.class)
 public final class DirectionalSonarChannelsTest {
     private static int distanceFor(AlignmentSonarPlayer sonar, String category)

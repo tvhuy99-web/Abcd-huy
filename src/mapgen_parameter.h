@@ -10,11 +10,11 @@ template <typename Id> class mapgen_value;
 class mapgendata;
 
 enum class mapgen_parameter_scope {
-    // Should be ordered from most general to most specific
+
     overmap_special,
     omt,
-    // Wants to be equal to omt bc they're evaluated in the same place but that borks enum_to_string
-    // Represents a vertical stack of omts sharing the same point_abs_omt
+
+
     omt_stack,
     nest,
     last
@@ -51,8 +51,8 @@ class mapgen_parameter
     private:
         mapgen_parameter_scope scope_;
         cata_variant_type type_;
-        // Using a pointer here mostly to move the definition of mapgen_value to the
-        // cpp file
+
+
         shared_ptr_fast<const mapgen_value<std::string>> default_;
 };
 
@@ -70,4 +70,4 @@ struct mapgen_parameters {
                           mapgen_parameter_scope up_to_scope = mapgen_parameter_scope::last );
 };
 
-#endif // CATA_SRC_MAPGEN_PARAMETER_H
+#endif

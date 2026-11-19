@@ -27,4 +27,4 @@ struct profession_group {
         std::vector<profession_id> profession_list;
 
 };
-#endif // CATA_SRC_PROFESSION_GROUP_H
+#endif

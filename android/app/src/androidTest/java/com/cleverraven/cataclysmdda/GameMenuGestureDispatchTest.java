@@ -15,7 +15,7 @@ import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 
-/** Exercise the real gesture dispatcher with synthetic two-finger touch events. */
+
 @RunWith(AndroidJUnit4.class)
 public final class GameMenuGestureDispatchTest {
     private static final class Actions implements ReaderGestureSurface.Listener {
@@ -90,7 +90,7 @@ public final class GameMenuGestureDispatchTest {
         @Override public boolean handleCustomGesture(String id) {
             if ("swipe_3_right".equals(id) || "swipe_3_left".equals(id)
                     || "swipe_3_up".equals(id) || "swipe_3_down".equals(id)) {
-                if (combatMode) { return true; } // Replaced by two fingers.
+                if (combatMode) { return true; }
                 if (customThreeFingerSwipe) { savedThreeFingerSwipes++; return true; }
             }
             if (combatMode) {
@@ -157,7 +157,7 @@ public final class GameMenuGestureDispatchTest {
         MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointers];
         for (int i = 0; i < pointers; i++) {
             properties[i] = new MotionEvent.PointerProperties();
-            // Deliberately non-contiguous IDs: pointer index is not identity.
+
             properties[i].id = 10 + i * 2;
             properties[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
             coords[i] = new MotionEvent.PointerCoords();
@@ -264,15 +264,15 @@ public final class GameMenuGestureDispatchTest {
                 activity.setContentView(surface[0]);
                 long start = SystemClock.uptimeMillis();
                 startMulti(surface[0], 3, start);
-                // Android delivered ACTION_CANCEL with the same three stable
-                // pointer IDs: recover a tap instead of silently discarding it.
+
+
                 multiTouch(surface[0], start, start + 145,
                         MotionEvent.ACTION_CANCEL, 3, 0);
             });
             Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
             scenario.onActivity(activity -> {
                 assertEquals(1, actions.tripleFingerTaps);
-                // A dragged system cancellation must never become a tap.
+
                 long start = SystemClock.uptimeMillis();
                 startMulti(surface[0], 3, start);
                 multiTouch(surface[0], start, start + 115,

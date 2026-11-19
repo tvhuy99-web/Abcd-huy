@@ -41,6 +41,6 @@ class lexer
         void read_string();
 };
 
-} // namespace math
+}
 
-#endif // CATA_SRC_MATH_PARSER_LEX_H
+#endif

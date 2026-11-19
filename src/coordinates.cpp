@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-// Moved from obsolete coordinate_conversions
+
 static point om_to_omt_copy( const point &p )
 {
     return point( p.x * OMAPX, p.y * OMAPY );
@@ -13,7 +13,7 @@ static point omt_to_ms_copy( const point &p )
     return point( p.x * 2 * SEEX, p.y * 2 * SEEY );
 }
 
-// End of moved code.
+
 
 void real_coords::fromabs( const point &abs )
 {

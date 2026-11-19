@@ -49,10 +49,10 @@ static const npc_class_id NC_DOCTOR( "NC_DOCTOR" );
 static const ter_str_id ter_t_floor( "t_floor" );
 static const ter_str_id ter_t_wall_metal( "t_wall_metal" );
 
-/* These functions are responsible for making changes to the game at the moment
- * the mission is accepted by the player.  They are also responsible for
- * updating *miss with the target and any other important information.
- */
+
+
+
+
 
 void mission_start::standard( mission * )
 {
@@ -60,9 +60,9 @@ void mission_start::standard( mission * )
 
 void mission_start::kill_nemesis( mission * )
 {
-    // Pick an area for the nemesis to spawn
 
-    // Force z = 0 for overmapbuffer::find_random. (spawning on a rooftop is valid!)
+
+
     const tripoint_abs_omt center = { get_player_character().pos_abs_omt().xy(), 0 };
     tripoint_abs_omt site = tripoint_abs_omt::invalid;
 
@@ -80,13 +80,13 @@ void mission_start::kill_nemesis( mission * )
     overmap_buffer.add_nemesis( site );
 }
 
-/*
- * Find a location to place a computer.  In order, prefer:
- * 1) Broken consoles.
- * 2) Corners or coords adjacent to a bed/dresser? (this logic may be flawed, dates from Whales in 2011)
- * 3) A spot near the center of the tile that is not a console
- * 4) A random spot near the center of the tile.
- */
+
+
+
+
+
+
+
 static tripoint_omt_ms find_potential_computer_point( const tinymap &compmap )
 {
     constexpr int rng_x_min = 10;
@@ -139,7 +139,7 @@ static tripoint_omt_ms find_potential_computer_point( const tinymap &compmap )
     if( used->empty() ) {
         used = &last_resort;
     }
-    // if there's no possible location, then we have to overwrite an existing console...
+
     const tripoint_omt_ms fallback( rng( rng_x_min, rng_x_max ), rng( rng_y_min, rng_y_max ),
                                     compmap.get_abs_sub().z() );
     return random_entry( *used, fallback );
@@ -177,7 +177,7 @@ void mission_start::place_npc_software( mission *miss )
 
     tinymap compmap;
     compmap.load( place, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
     swap_map swap( *compmap.cast_to_map() );
     tripoint_omt_ms comppoint;
 
@@ -203,7 +203,7 @@ void mission_start::place_deposit_box( mission *miss )
         debugmsg( "could not find mission NPC %d", miss->npc_id.get_value() );
         return;
     }
-    // Npc joins you
+
     p->set_attitude( NPCATT_FOLLOW );
     tripoint_abs_omt site =
         overmap_buffer.find_closest( p->pos_abs_omt(), "bank", 0, false );
@@ -221,7 +221,7 @@ void mission_start::place_deposit_box( mission *miss )
 
     tinymap compmap;
     compmap.load( site, false );
-    // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
     swap_map swap( *compmap.cast_to_map() );
     std::vector<tripoint_omt_ms> valid;
     for( const tripoint_omt_ms &p : compmap.points_on_zlevel() ) {
@@ -245,8 +245,8 @@ void mission_start::find_safety( mission *miss )
     const tripoint_abs_omt place = get_player_character().pos_abs_omt();
     for( int radius = 0; radius <= 20; radius++ ) {
         for( int dist = 0 - radius; dist <= radius; dist++ ) {
-            int offset = rng( 0, 3 ); // Randomizes the direction we check first
-            for( int i = 0; i <= 3; i++ ) { // Which direction?
+            int offset = rng( 0, 3 );
+            for( int i = 0; i <= 3; i++ ) {
                 tripoint_abs_omt check = place;
                 switch( ( offset + i ) % 4 ) {
                     case 0:
@@ -273,7 +273,7 @@ void mission_start::find_safety( mission *miss )
             }
         }
     }
-    // Couldn't find safety; so just set the target to far away
+
     switch( rng( 0, 3 ) ) {
         case 0:
             miss->target = place + point( -20, -20 );
@@ -318,7 +318,7 @@ void mission_start::reveal_refugee_center( mission *miss )
     const tripoint_abs_omt dest_road = overmap_buffer.find_closest( *target_pos, "road", 3, false );
 
     if( overmap_buffer.reveal_route( source_road, dest_road, 1, true ) ) {
-        //reset the mission target to the refugee center entrance and reveal path from the road
+
         t.overmap_terrain = "refctr_S3e";
         t.reveal_radius = 3;
         target_pos = mission_util::assign_mission_target( t, d );

@@ -55,19 +55,19 @@ public class SplashScreen extends Activity {
 
     private AlertDialog accessibilityServicesAlert;
     private boolean installationRunning;
-    // The game Activity is launched exactly once per SplashScreen instance:
-    // repeated triggers (resume, dialog buttons, the Start button) and a
-    // queued delayed start must not stack a second launch (R03.2).
+
+
+
     private boolean gameStartLaunched;
-    // A backup restore running on another thread holds ReaderGameSession
-    // busy, so StartGameRunnable waits and retries instead of stopping
-    // dead. Bounded: after the last retry the user gets an
-    // explicit retry button instead of a silent splash.
+
+
+
+
     private static final long GAME_START_RESTORE_RETRY_DELAY_MS = 2000;
     private static final int GAME_START_RESTORE_MAX_RETRIES = 15;
     private int gameStartRestoreRetries;
-    // Optional gameplay soundpack gate. The packaged data/sound tree is not
-    // touched, and Skip/Cancel never modifies any existing save.
+
+
     private boolean soundpackGateResolved;
     private boolean soundpackDownloadRunning;
     private boolean soundpackMeteredApproved;
@@ -204,7 +204,7 @@ public class SplashScreen extends Activity {
             }
         }
         showBootstrapContent(content);
-        // Match the screen's explicit Back button when one is present.
+
         bootstrapBackAction = SplashScreen.this::finish;
         if (labels != null && actions != null) {
             for (int i = 0; i < Math.min(labels.length, actions.length); i++) {
@@ -251,7 +251,7 @@ public class SplashScreen extends Activity {
 
             @Override
             public void interruptForFocus() {
-                // Focus navigation must not set the persistent manual mute flag.
+
                 pendingBootstrapSpeech = null;
                 if (bootstrapSpeech != null) { bootstrapSpeech.cancel(); }
             }
@@ -285,8 +285,8 @@ public class SplashScreen extends Activity {
     private void reportBootstrapProgress(int copied, int total) {
         if (bootstrapProgressText == null) { return; }
         int percent = total <= 0 ? 0 : (int) Math.max(0L, Math.min(100L, (long) copied * 100L / total));
-        // Only 25%, 50%, 75% and 100% change the live region and TTS.
-        // Updating the TextView every percent also makes TalkBack chatter.
+
+
         int bucket = percent / 25;
         if (bucket > lastBootstrapProgressBucket) {
             lastBootstrapProgressBucket = bucket;
@@ -301,15 +301,15 @@ public class SplashScreen extends Activity {
     private void showCrashAlert() {
         File externalFiles = getExternalFilesDir(null);
         if (externalFiles == null) {
-            // installOrRun already shows the storage error in this case;
-            // never crash here on the null.
+
+
             return;
         }
         String externalFilesDir = externalFiles.getPath();
         File crashAlertPrompt = new File(externalFilesDir + "/config/crash.log.prompt");
         try {
             crashAlertPrompt.delete();
-            if(crashAlertPrompt.exists()) { // Sometimes .delete() doesn't really delete the file and I don't know why
+            if(crashAlertPrompt.exists()) {
                 crashAlertPrompt.getCanonicalFile().delete();
             }
         } catch(IOException e) {
@@ -381,8 +381,8 @@ public class SplashScreen extends Activity {
             if (shouldSelfVoiceBootstrap()) { bootstrapSurface.speakFocused(); }
             return;
         }
-        // The accessibility APK no longer requires a voice-trial screen.
-        // Android system TalkBack can only be enabled by the user.
+
+
         if (BuildConfig.FLAVOR.equals("accessibility")) {
             SplashScreen.this.installOrRun();
             return;
@@ -400,27 +400,27 @@ public class SplashScreen extends Activity {
     @Override
     protected void onDestroy() {
         SessionDebugLog.event("LIFECYCLE", "splash_onDestroy finishing=" + isFinishing());
-        // Splash.finish() launches the game. It is not a normal game exit.
+
         if (soundpackInstaller != null) { soundpackInstaller.cancel(); }
         if (soundpackDialog != null) { soundpackDialog.dismiss(); }
         if (bootstrapSpeech != null) { bootstrapSpeech.close(); }
         super.onDestroy();
     }
 
-    // Install journal (R06.4): written by InstallProgramTask around the
-    // staged swap. A SWAPPING state found at launch means the previous
-    // process died mid-swap, so the "installed" version must not be
-    // trusted until the task has restored the rollback copy.
+
+
+
+
     static final String INSTALL_JOURNAL_FILE = "install_journal.txt";
 
-    // Journal file tracking a staged backup restore (moved here from the
-    // deleted ReaderSetupActivity shim, which only held the constant).
+
+
     private static final String BACKUP_JOURNAL_FILE = "reader_backup_journal.txt";
 
     @Override
     public void onBackPressed() {
         if (shouldSelfVoiceBootstrap() && bootstrapSurface != null) {
-            // Do not interrupt an in-progress game-data installation.
+
             if (installationRunning) {
                 speakBootstrap(getString(R.string.a11yBootstrapPreparing));
                 return;
@@ -439,21 +439,21 @@ public class SplashScreen extends Activity {
         Log.e(TAG, "onCreate()");
         if (installationRunning) { return; }
         accessibilityServicesAlert.dismiss();
-        // No external storage, no game data and no install target: report
-        // it with a way back instead of crashing on a null path.
+
+
         File externalRoot = getExternalFilesDir(null);
         if (externalRoot == null) {
             showExternalStorageUnavailable(this::installOrRun);
             return;
         }
-        // Start the game if already installed, otherwise start installing...
-        // A mid-swap death (journal left at SWAPPING) forces the install
-        // task even when the version matches: the task restores the
-        // rollback copy before staging anything new (R06.4).
+
+
+
+
         boolean swapInterrupted = new File(getFilesDir(), INSTALL_JOURNAL_FILE).exists()
                 || new File(externalRoot, InstallProgramTask.ROLLBACK_DIR).exists();
         if (!swapInterrupted && getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
-            // Show an alert box if the game crashed last time
+
             String externalFilesDir = externalRoot.getPath();
             File crashAlertPrompt = new File(externalFilesDir + "/config/crash.log.prompt");
             if(crashAlertPrompt.exists()) {
@@ -521,7 +521,7 @@ public class SplashScreen extends Activity {
             runOnUiThread(new StartGameRunnable());
         }
         else {
-            // Wait 1.5 seconds, then start game
+
             Timer timer = new Timer();
             TimerTask gameStartTask = new TimerTask() {
                 @Override
@@ -584,8 +584,8 @@ public class SplashScreen extends Activity {
     }
 
     private void skipSoundpack() {
-        // Continue game startup even if Wi-Fi is unavailable, data costs too
-        // much, or the user does not want this third-party soundpack.
+
+
         if (soundpackInstaller != null) { soundpackInstaller.cancel(); }
         soundpackGateResolved = true;
         soundpackDownloadRunning = false;
@@ -695,13 +695,13 @@ public class SplashScreen extends Activity {
         }
     }
 
-    /**
-     * getExternalFilesDir(null) is null when external storage is
-     * unavailable: announce it and offer retry/exit instead of
-     * crashing on the null or stopping silently. Retry re-runs whatever
-     * was trying to start, so storage that came back is picked up.
-     * Title and shape follow the backup-recovery branch below.
-     */
+
+
+
+
+
+
+
     private void showExternalStorageUnavailable(Runnable retry) {
         if (shouldSelfVoiceBootstrap()) {
             showBootstrapMessage(R.string.a11yBackupHeading,
@@ -719,11 +719,11 @@ public class SplashScreen extends Activity {
         }
     }
 
-    /**
-     * A restore still running after every automatic retry: say
-     * so and offer an explicit retry instead of leaving a silent splash.
-     * Retry restarts the whole start attempt, so the wait starts over.
-     */
+
+
+
+
+
     private void showGameStartRestoreBusy() {
         if (shouldSelfVoiceBootstrap()) {
             showBootstrapMessage(R.string.a11yBackupHeading,
@@ -742,19 +742,19 @@ public class SplashScreen extends Activity {
         }
     }
 
-    /**
-     * A deferred restore that could not be applied before the
-     * game starts: do not start the game on unrestored (or half-swapped)
-     * data. Retry restarts the whole start attempt, which first repairs
-     * any interrupted swap and then tries the staged import again.
-     * Discard is the escape hatch a merely-retrying dialog would lack:
-     * a staged import that deterministically fails verification (for
-     * example files changed under staging after they were checked)
-     * would otherwise block every launch, since this screen is the only
-     * place the restore can run. Discarding drops the staged copy and
-     * its confirmation and starts the game on the current data; the
-     * backup file the user picked is untouched and can be staged again.
-     */
+
+
+
+
+
+
+
+
+
+
+
+
+
     private void showDeferredRestoreFailed() {
         if (shouldSelfVoiceBootstrap()) {
             showBootstrapMessage(R.string.a11yBackupHeading,
@@ -777,13 +777,13 @@ public class SplashScreen extends Activity {
         }
     }
 
-    /** Drop a deferred restore that cannot be applied and start on current data. */
+
     private void discardDeferredRestoreAndStart() {
         File playerRoot = getExternalFilesDir(null);
         if (playerRoot != null) {
-            // Deletes the staging directory, so the deferred marker goes
-            // with it; the next start attempt then repairs any leftover
-            // swap journal before the game starts.
+
+
+
             new ReaderBackupArchive(playerRoot,
                     new File(getFilesDir(), BACKUP_JOURNAL_FILE))
                     .cancelStagedImport();
@@ -794,8 +794,8 @@ public class SplashScreen extends Activity {
     private final class StartGameRunnable implements Runnable {
         @Override
         public void run() {
-            // A start queued before this Activity went away (or a second
-            // trigger racing the first launch) must not fire late (R03.2).
+
+
             if (gameStartLaunched || isFinishing() || isDestroyed()) { return; }
             File playerRoot = getExternalFilesDir(null);
             if (playerRoot == null) {
@@ -824,17 +824,17 @@ public class SplashScreen extends Activity {
                 }
                 return;
             }
-            // Deferred restore: a staged import the user
-            // explicitly confirmed in BackupRestoreActivity while the
-            // engine was running is applied here, before the engine
-            // starts, so the game opens on the restored data. Only a
-            // confirmed stage is ever applied: the deferred marker is
-            // written solely by that screen's Confirm action, and a
-            // merely staged import is left alone. This runs after
-            // recoverInterruptedSwap(), so a half-swapped tree from an
-            // earlier process is repaired before the new swap, and
-            // before reserveGameStart(), so beginRestore() inside
-            // restoreStagedImport() still succeeds.
+
+
+
+
+
+
+
+
+
+
+
             if (ReaderGameSession.hasDeferredRestore(playerRoot)
                     && backupArchive.hasStagedImport()) {
                 try {
@@ -845,10 +845,10 @@ public class SplashScreen extends Activity {
                 }
             }
             if (!ReaderGameSession.reserveGameStart()) {
-                // A restore is running on another thread: wait
-                // and try again instead of stopping dead. The wait message
-                // is spoken once; retries are silent until they succeed or
-                // run out, when the user gets a retry button.
+
+
+
+
                 if (gameStartRestoreRetries < GAME_START_RESTORE_MAX_RETRIES) {
                     gameStartRestoreRetries++;
                     if (gameStartRestoreRetries == 1) {
@@ -871,15 +871,15 @@ public class SplashScreen extends Activity {
     }
 
     private class InstallProgramTask extends AsyncTask<Void, Integer, Boolean> {
-        private final List<String> PRESERVE_SUBFOLDERS = Arrays.asList("sound", "mods", "gfx"); // don't delete custom subfolders under these folders
-        private final List<String> PRESERVE_FOLDERS = Arrays.asList("font"); // don't delete this folder
-        private final List<String> PRESERVE_FILES = Arrays.asList("user-default-mods.json"); // don't delete this file
+        private final List<String> PRESERVE_SUBFOLDERS = Arrays.asList("sound", "mods", "gfx");
+        private final List<String> PRESERVE_FOLDERS = Arrays.asList("font");
+        private final List<String> PRESERVE_FILES = Arrays.asList("user-default-mods.json");
 
         private int totalFiles = 0;
         private long countMillis = 0;
-        // one copy buffer for all files
+
         private final byte[] buffer = new byte[256 * 1024];
-        // per-file progress updates flood the UI thread
+
         private static final long PROGRESS_INTERVAL_MILLIS = 100;
         private static final String ASSET_FILE_LIST = "android/asset_files.txt";
         private long lastProgressMillis = 0;
@@ -892,12 +892,12 @@ public class SplashScreen extends Activity {
         private String installationError;
         private String installationErrorCode;
 
-        // Staged installation (R06.4): new data is copied to a staging
-        // tree, verified, and only then swapped into place. The previous
-        // live tree is kept as a rollback copy until the swap commits, and
-        // a journal in internal storage records the phase so a process
-        // death mid-swap is recovered on the next launch instead of
-        // leaving a half-written data tree that looks installed.
+
+
+
+
+
+
         static final String ERR_NO_SPACE = "no_space";
         static final String ERR_COPY = "copy";
         static final String ERR_VERIFY = "verify";
@@ -905,8 +905,8 @@ public class SplashScreen extends Activity {
         private static final String STAGING_DIR = ".reader_install_staging";
         private static final String ROLLBACK_DIR = ".reader_install_rollback";
         private static final long INSTALL_RESERVE_BYTES = 32L * 1024L * 1024L;
-        // Instance field on purpose: a String[] is not a compile-time
-        // constant, so it may not be static inside this inner class.
+
+
         private final String[] DATA_TOPS = { "data", "gfx", "lang" };
 
         @Override
@@ -1223,11 +1223,11 @@ public class SplashScreen extends Activity {
 
             long copyMillis;
             try {
-                // Finish or undo whatever a previous process left behind
-                // before touching anything (journal-driven, see below).
+
+
                 recoverInterruptedInstall(root, staging, rollback);
 
-                // builds without the generated list fall back to walking the APK
+
                 long phaseStart = SystemClock.elapsedRealtime();
                 List<String> assetFiles = readAssetFileList(assetManager);
                 if (assetFiles == null) {
@@ -1240,11 +1240,11 @@ public class SplashScreen extends Activity {
                 countMillis = SystemClock.elapsedRealtime() - phaseStart;
                 publishProgress(0, totalFiles);
 
-                // Measure the exact uncompressed size by streaming the
-                // assets once. The totals are the completion criteria for
-                // the staged copy below: file count and byte count must
-                // match exactly, and the free-space check uses the same
-                // measured number instead of a guessed constant.
+
+
+
+
+
                 long expectedBytes = 0;
                 for (String assetFile : assetFiles) {
                     expectedBytes += countAssetBytes(assetManager, assetFile);
@@ -1257,9 +1257,9 @@ public class SplashScreen extends Activity {
                 }
 
                 phaseStart = SystemClock.elapsedRealtime();
-                // Stage the whole new tree next to the live one; the live
-                // tree (and the user's custom content inside it) is not
-                // modified in this phase, so a failure here loses nothing.
+
+
+
                 writeInstallJournal("STAGING");
                 deletePlain(staging);
                 if (!staging.mkdirs() && !staging.isDirectory()) {
@@ -1281,8 +1281,8 @@ public class SplashScreen extends Activity {
                 }
                 copyMillis = SystemClock.elapsedRealtime() - phaseStart;
 
-                // Completion check on the staged tree itself, not on the
-                // copy loop's claims: count and measure what is on disk.
+
+
                 long[] staged = measureTree(staging);
                 if (staged[0] != totalFiles || staged[1] != expectedBytes || staged[1] != copiedBytes) {
                     installationErrorCode = ERR_VERIFY;
@@ -1292,12 +1292,12 @@ public class SplashScreen extends Activity {
                 }
                 writeInstallJournal("STAGED");
 
-                // Swap: park the live tree as the rollback copy, move the
-                // staged tree in, then move the user's preserved custom
-                // content back out of the rollback copy. All moves are
-                // renames inside one filesystem. From the SWAPPING journal
-                // write until COMMITTED, a process death is recovered by
-                // restoring the rollback copy on the next launch.
+
+
+
+
+
+
                 installationErrorCode = ERR_SWAP;
                 final List<String> preservedAssets = assetFiles;
                 new ReaderFileTransaction(root, rollback,
@@ -1312,9 +1312,9 @@ public class SplashScreen extends Activity {
                 return false;
             }
 
-            // Remember which version the installed data is. This is only
-            // written after the swap committed, so the game is never
-            // reported ready on staged or half-swapped data.
+
+
+
             PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString("installed", getVersionName()).commit();
 
             deletePlain(rollback);
@@ -1339,20 +1339,20 @@ public class SplashScreen extends Activity {
             }
         }
 
-        /**
-         * Bring the data tree back to a known state after a previous
-         * install died: STAGING/STAGED leftovers are discarded (the live
-         * tree was never touched), a SWAPPING leftover restores the
-         * parked rollback copy over the half-swapped live tree, and a
-         * COMMITTED leftover only needs its rollback copy cleaned up.
-         */
+
+
+
+
+
+
+
         private void recoverInterruptedInstall(File root, File staging, File rollback) throws IOException {
             new ReaderFileTransaction(root, rollback,
                     new File(getFilesDir(), INSTALL_JOURNAL_FILE), "", DATA_TOPS).recover();
             deletePlain(staging);
         }
 
-        /** Uncompressed length of one asset, measured by streaming it. */
+
         private long countAssetBytes(AssetManager assetManager, String assetPath) throws IOException {
             long total = 0;
             byte[] chunk = new byte[256 * 1024];
@@ -1365,7 +1365,7 @@ public class SplashScreen extends Activity {
             return total;
         }
 
-        /** {file count, total bytes} of everything under a directory. */
+
         private long[] measureTree(File directory) {
             long[] result = { 0, 0 };
             File[] children = directory.listFiles();
@@ -1385,7 +1385,7 @@ public class SplashScreen extends Activity {
             return result;
         }
 
-        /** Plain recursive delete with no preservation rules (staging/rollback only). */
+
         private void deletePlain(File fileOrDirectory) {
             if (fileOrDirectory == null || !fileOrDirectory.exists()) {
                 return;
@@ -1401,16 +1401,16 @@ public class SplashScreen extends Activity {
             fileOrDirectory.delete();
         }
 
-        /**
-         * Move the user's custom content out of the parked old tree into
-         * the new live tree, mirroring the preservation rules the old
-         * delete-then-copy flow applied: whole custom folders under
-         * data/sound, data/mods and data/gfx that are not shipped in the
-         * APK, any folder named font, and files named
-         * user-default-mods.json. Shipped paths are already in the new
-         * tree from staging and are left in the rollback copy to be
-         * discarded with it.
-         */
+
+
+
+
+
+
+
+
+
+
         private void restorePreservedCustom(File rollback, File root, List<String> assetFiles) throws IOException {
             java.util.Set<String> shippedDirs = new java.util.HashSet<>();
             for (String assetFile : assetFiles) {
@@ -1461,7 +1461,7 @@ public class SplashScreen extends Activity {
         }
 
         private void copyPreserved(File source, File target) throws IOException {
-            // Keep the complete original in rollback until COMMITTED.
+
             if (!source.getCanonicalFile().equals(source.getAbsoluteFile())) {
                 throw new IOException("Cannot preserve a symbolic link: " + source);
             }
@@ -1487,11 +1487,11 @@ public class SplashScreen extends Activity {
             String parentFolder = fileOrDirectory.getParentFile().getName().toLowerCase();
             String fileOrDirectoryName = fileOrDirectory.getName().toLowerCase();
             if (fileOrDirectory.isDirectory()) {
-                // Don't delete the folder if it is in the preserve folders list
+
                 if (PRESERVE_FOLDERS.contains(fileOrDirectoryName))
                     return;
 
-                // Don't delete the folder if its parent is in the preserve subfolders list, and it doesn't exist in the APK assets (so must be custom data)
+
                 if (PRESERVE_SUBFOLDERS.contains(parentFolder) && !assetExists(assetManager, fileOrDirectory.getPath().substring(externalFilesDir.length()+1)))
                     return;
 
@@ -1499,7 +1499,7 @@ public class SplashScreen extends Activity {
                     deleteRecursive(assetManager, externalFilesDir, child);
             }
             else {
-                // Don't delete the file if it's in the preserve files list
+
                 if (PRESERVE_FILES.contains(fileOrDirectoryName))
                     return;
             }
@@ -1507,8 +1507,8 @@ public class SplashScreen extends Activity {
             fileOrDirectory.delete();
         }
 
-        // Returns true if an asset exists in the APK (either a directory or a file)
-        // eg. assetExists("data/sound") or assetExists("data/font", "unifont.ttf") would both return true
+
+
         private boolean assetExists(AssetManager assetManager, String assetPath) {
             return assetExists(assetManager, assetPath, "");
         }
@@ -1517,10 +1517,10 @@ public class SplashScreen extends Activity {
             try {
                 String[] files = assetManager.list(assetPath);
                 if (assetName.isEmpty())
-                    return files.length > 0; // folder exists
+                    return files.length > 0;
                 for (String file : files) {
                     if (file.equalsIgnoreCase(assetName))
-                        return true; // file exists
+                        return true;
                 }
                 return false;
             } catch (Exception e) {
@@ -1530,7 +1530,7 @@ public class SplashScreen extends Activity {
         }
 
         // asset paths generated by generateAssetFileList at build time, or null if not
-        // written
+
         private List<String> readAssetFileList(AssetManager assetManager) throws IOException {
             InputStream in;
             try {

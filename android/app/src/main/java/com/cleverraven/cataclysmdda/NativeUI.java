@@ -44,7 +44,7 @@ public class NativeUI {
             try {
                 semaphore.acquire();
             } catch (InterruptedException ex) {
-                // No-op
+
             }
         }
     }
@@ -80,7 +80,7 @@ public class NativeUI {
             try {
                 semaphore.acquire();
             } catch (InterruptedException ex) {
-                // No-op
+
             }
 
             return response == YesNoDialogResponse.YES;
@@ -138,7 +138,7 @@ public class NativeUI {
                 try {
                     semaphore.acquire();
                 } catch (InterruptedException ex) {
-                    // No-op
+
                 }
 
                 if (singleChoiceResponse != cancel && enabled[singleChoiceResponse] == false) {
@@ -151,14 +151,14 @@ public class NativeUI {
     }
 
 
-    /**
-     * Shared native Android input dialog for CDDA text and numeric fields.
-     * Type 0 = text, 1 = signed integer, 2 = decimal. TalkBack can inspect
-     * the real EditText and the two dialog buttons; no accessibility service
-     * is started or stopped by the app. A null response means Cancel/Back.
-     *
-     * Called from the SDL game thread, never from the UI thread.
-     */
+
+
+
+
+
+
+
+
     public String inputText(final String title, final String initial, final int type,
                             final int maxLength, final double minimum, final double maximum) {
         final Semaphore completion = new Semaphore(0, true);
@@ -214,7 +214,7 @@ public class NativeUI {
                                 return;
                             }
                         } catch (NumberFormatException invalid) {
-                            // Preserve the draft and keep the Android keyboard open.
+
                             field.setError(activity.getString(R.string.a11yEditorInvalid));
                             field.requestFocus();
                             return;

@@ -51,4 +51,4 @@ class extended_description_window : public cataimgui::window
         cataimgui::scroll info_scroll = cataimgui::scroll::none;
 };
 
-#endif // CATA_SRC_UI_EXTENDED_DESCRIPTION_H
+#endif

@@ -39,4 +39,4 @@ class bash_damage_profile
         static void check_all();
 };
 
-#endif // CATA_SRC_MAP_ACCESSORIES_H
+#endif

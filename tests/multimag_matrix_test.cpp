@@ -40,9 +40,9 @@
 #include "units.h"
 #include "value_ptr.h"
 
-// Cartesian product of 1-3 pockets over the ammotype palette, installed
-// as runtime itypes. Same-ammo tuples are intentional: they exercise
-// sibling-pocket-borrow regressions.
+
+
+
 
 static const ammotype ammo_9mm( "9mm" );
 static const ammotype ammo_battery( "battery" );
@@ -61,8 +61,8 @@ static const skill_id skill_pistol( "pistol" );
 namespace
 {
 
-// Liquid/gas projectile pockets exist in shipping data (e.g. watercannon).
-// ensure_synth marks those pockets watertight/airtight to match.
+
+
 const std::vector<ammotype> &palette()
 {
     static const std::vector<ammotype> r = {
@@ -71,13 +71,13 @@ const std::vector<ammotype> &palette()
     return r;
 }
 
-// Bullets fit one per chamber; everything else gets tank-like capacity.
+
 int pocket_cap_for( const ammotype &at )
 {
     return at == ammo_9mm ? 1 : 50;
 }
 
-// Battery draws are larger per use to mimic the railgun pattern.
+
 int pocket_qty_for( const ammotype &at )
 {
     return at == ammo_battery ? 5 : 1;
@@ -98,8 +98,8 @@ itype_id synth_id_for( bool is_gun, const std::vector<ammotype> &pockets )
     return itype_id( s );
 }
 
-// item ctor's qty maps to charges only for count_by_charges itypes;
-// set charges explicitly so both representations carry the same amount.
+
+
 item make_synth_ammo( const itype_id &id, int qty )
 {
     item r( id, calendar::turn, qty );
@@ -109,9 +109,9 @@ item make_synth_ammo( const itype_id &id, int qty )
     return r;
 }
 
-// Sum of live charges across a pocket's top items, excluding spent
-// casings (those remain in the pocket after fire but should not count
-// toward loaded ammo for matrix invariants).
+
+
+
 int pocket_live_charges( const item_pocket *p )
 {
     int n = 0;
@@ -133,15 +133,15 @@ const itype *ensure_synth( const synth_spec &spec )
                           spec.id,
                           no_translation( "synth multimag matrix item" ),
                           no_translation( "Runtime-built multimag item for matrix tests." ) );
-    // const_cast: add_runtime returns const* and the factory exposes no
-    // mutable accessor. Safe here - nothing observes the entry until
-    // find_template hands it out.
+
+
+
     itype *t = const_cast<itype *>( ct );
 
     t->weight = 1000_gram;
     t->volume = 1500_ml;
-    // finalize_pre is skipped for runtime types; populate the fields it
-    // would have set so generic all-items iteration tests don't trip.
+
+
     t->longest_side = 200_mm;
     t->materials[material_steel] = 1;
     t->mat_portion_total = 1;
@@ -167,9 +167,9 @@ const itype *ensure_synth( const synth_spec &spec )
         pd.rigid = true;
         pd.pocket_id = "p" + std::to_string( idx );
         pd.ammo_restriction[a] = pocket_cap_for( a );
-        // Liquid into a non-watertight pocket spills, leaving stragglers
-        // that surface later as remove_item debug noise. Gas needs
-        // airtight for the same reason.
+
+
+
         if( a == ammo_water || a == ammo_lamp_oil ) {
             pd.watertight = true;
         }
@@ -187,15 +187,15 @@ const itype *ensure_synth( const synth_spec &spec )
         t->firing_requirements.per_mode[gun_mode_DEFAULT].push_back( e );
     }
 
-    // MOD pocket so the mod-matrix cases can attach a synth mod by force-insert.
+
     t->pockets.emplace_back( pocket_type::MOD );
 
     return ct;
 }
 
-// Runtime gun-mod / tool-mod for the mod-matrix cases. configure() sets the
-// slot fields under test (gunmod->mode_modifier/firing_requirements/hide_modes,
-// or mod->consumption_mods/capacity_mods), keyed by the synth pocket ids p0..pN.
+
+
+
 const itype *ensure_synth_mod( const itype_id &id,
                                const std::function<void( itype & )> &configure )
 {
@@ -263,10 +263,10 @@ void install_all_synth_types()
     installed = true;
 }
 
-// Bypasses item::reload and item::ammo_set on purpose: those are
-// host-level APIs that can route to a different pocket or reset others
-// on multimag hosts. The matrix wants each pocket exercised in
-// isolation against its own ammo_restriction.
+
+
+
+
 bool load_pocket( item_location &host, int pocket_idx,
                   const ammotype &at, int qty, std::string &api_used )
 {
@@ -323,7 +323,7 @@ int segments_in_display( std::string_view display )
     return commas + 1;
 }
 
-} // namespace
+}
 
 TEST_CASE( "multimag_matrix_display_name_structural", "[multimag][matrix][display]" )
 {
@@ -336,9 +336,9 @@ TEST_CASE( "multimag_matrix_display_name_structural", "[multimag][matrix][displa
 
         const std::string name_empty = remove_color_tags( it.display_name() );
         INFO( "empty: " << name_empty );
-        // 1-pocket multimag tnames may render a single bare "(X/Y)" or
-        // skip the parens entirely depending on display_name code paths,
-        // so segments_in_display >= 1 is the conservative assertion.
+
+
+
         if( pc == 1 ) {
             CHECK( segments_in_display( name_empty ) >= 1 );
         } else {
@@ -378,8 +378,8 @@ TEST_CASE( "multimag_matrix_load_then_display", "[multimag][matrix][load][displa
             CHECK( segments_in_display( name_loaded ) == pc );
         }
         CHECK( name_loaded.find( "invalid" ) == std::string::npos );
-        // "0/0" segment indicates the per-pocket renderer fell back to a
-        // zero-capacity branch; never legitimate for a loaded host.
+
+
         CHECK( name_loaded.find( "0/0" ) == std::string::npos );
     }
 }
@@ -395,11 +395,11 @@ TEST_CASE( "multimag_matrix_tool_consume_drains_each_pocket",
             continue;
         }
         CAPTURE( spec.id.str() );
-        // Fresh avatar per shape: accumulating synth tools loaded with
-        // comestible ammo seeds active_item_cache stragglers that
-        // surface later as remove_item debug noise.
-        // TODO: active_item_cache holds raw pointers; pocket/item
-        // destruction doesn't deregister, so stale refs linger.
+
+
+
+
+
         clear_avatar();
         Character &chr = get_player_character();
         const tripoint_bub_ms pos = chr.pos_bub( here );
@@ -462,11 +462,11 @@ TEST_CASE( "multimag_matrix_reload_pocket_index_loads_target",
             CAPTURE( target_idx );
             CAPTURE( spec.pockets[target_idx].str() );
 
-            // item::reload(pocket_index) is the bullet/charge-style path.
-            // Liquid (water, lamp_oil) and gas (oxygen) pockets load via
-            // item::fill_with; their default ammotype itype is a
-            // comestible whose is_ammo() is false, so dispatching them
-            // through reload refuses and leaks the source comestible.
+
+
+
+
+
             const itype_id ammo_id = spec.pockets[target_idx]->default_ammotype();
             if( ammo_id.is_null() || !item::type_is_defined( ammo_id ) ) {
                 continue;
@@ -475,8 +475,8 @@ TEST_CASE( "multimag_matrix_reload_pocket_index_loads_target",
                 continue;
             }
 
-            // Fresh avatar per iteration so prior stacked ammo doesn't
-            // invalidate the per-call item_location handle.
+
+
             clear_avatar();
             Character &chr = get_player_character();
             item_location host = chr.i_add( item( spec.id ) );
@@ -509,8 +509,8 @@ TEST_CASE( "multimag_matrix_reload_pocket_index_loads_target",
             if( reloaded ) {
                 CHECK( loaded_target >= 1 );
             } else {
-                // Reload refused must leave the pocket untouched - no
-                // partial state.
+
+
                 CHECK( loaded_target == 0 );
             }
         }
@@ -552,15 +552,15 @@ TEST_CASE( "multimag_matrix_fire_gun_no_invalid_or_shortage",
 {
     install_all_synth_types();
 
-    // Fire is the most expensive setup (clear_map + clear_avatar +
-    // wield + capture_debugmsg per case), so sample a representative
-    // subset instead of the full Cartesian: every 1-pocket gun shape,
-    // plus the two-pocket bullet+power "railgun" pattern, plus one
-    // 3-pocket exotic. The shape-coverage axes (display, load, reload,
-    // unload) stay exhaustive in the other TEST_CASEs.
+
+
+
+
+
+
     std::set<itype_id> fire_shapes;
     for( const ammotype &a : palette() ) {
-        fire_shapes.insert( synth_id_for( /*is_gun=*/true, { a } ) );
+        fire_shapes.insert( synth_id_for( true, { a } ) );
     }
     for( const ammotype &a : palette() ) {
         fire_shapes.insert( synth_id_for( true, { a, ammo_battery } ) );
@@ -573,9 +573,9 @@ TEST_CASE( "multimag_matrix_fire_gun_no_invalid_or_shortage",
         }
         CAPTURE( spec.id.str() );
 
-        // Fresh avatar + map per shape so prior fire effects (catching
-        // fire, recoil-induced unwield) don't carry over and drop the
-        // synth gun mid-shot in the next iteration.
+
+
+
         clear_map();
         clear_avatar();
         avatar &dummy = get_avatar();
@@ -628,9 +628,9 @@ TEST_CASE( "multimag_matrix_tool_uses_remaining_local_after_load",
         } );
         REQUIRE( pockets.size() == spec.pockets.size() );
 
-        // Canonical multimag math: floor(local / qty) per pocket, then
-        // min across pockets. tool_uses_remaining_local() recomputes the
-        // same invariant from the host's own state.
+
+
+
         int expected = INT_MAX;
         for( size_t i = 0; i < spec.pockets.size(); ++i ) {
             const int cap = pocket_cap_for( spec.pockets[i] );
@@ -653,7 +653,7 @@ TEST_CASE( "multimag_matrix_tool_uses_remaining_local_after_load",
 
 namespace
 {
-// Live MAGAZINE-pocket charge counts in pocket order, for before/after diffs.
+
 std::vector<int> magazine_live_charges( const item &host )
 {
     std::vector<int> out;
@@ -664,7 +664,7 @@ std::vector<int> magazine_live_charges( const item &host )
     }
     return out;
 }
-} // namespace
+}
 
 TEST_CASE( "multimag_matrix_gunmod_mode_override_drains_modded_rate",
            "[multimag][matrix][mod]" )
@@ -687,7 +687,7 @@ TEST_CASE( "multimag_matrix_gunmod_mode_override_drains_modded_rate",
                                   pocket_cap_for( spec.pockets[i] ), api ) );
         }
 
-        // One mod per pocket count: adds MODE_X (qty 1 per pocket) and hides DEFAULT.
+
         const itype_id mod_id( "mm_mx_modeover_" + std::to_string( spec.pockets.size() ) );
         ensure_synth_mod( mod_id, [&]( itype & t ) {
             t.gunmod = cata::make_value<islot_gunmod>();
@@ -715,7 +715,7 @@ TEST_CASE( "multimag_matrix_gunmod_mode_override_drains_modded_rate",
         REQUIRE( before.size() == after.size() );
         for( size_t i = 0; i < before.size(); ++i ) {
             CAPTURE( i, spec.pockets[i].str(), before[i], after[i] );
-            CHECK( after[i] == before[i] - 1 );  // modded rate: 1 per pocket
+            CHECK( after[i] == before[i] - 1 );
         }
     }
 }
@@ -738,7 +738,7 @@ TEST_CASE( "multimag_matrix_consumption_mods_override_each_pocket",
                                   pocket_cap_for( spec.pockets[i] ), api ) );
         }
 
-        // Override every pocket's per-use cost to 1 via set.
+
         const itype_id mod_id( "mm_mx_consume_" + std::to_string( spec.pockets.size() ) );
         ensure_synth_mod( mod_id, [&]( itype & t ) {
             t.mod = cata::make_value<islot_mod>();
@@ -761,7 +761,7 @@ TEST_CASE( "multimag_matrix_consumption_mods_override_each_pocket",
         REQUIRE( before.size() == after.size() );
         for( size_t i = 0; i < before.size(); ++i ) {
             CAPTURE( i, spec.pockets[i].str(), before[i], after[i] );
-            CHECK( after[i] == before[i] - 1 );  // set 1 per pocket
+            CHECK( after[i] == before[i] - 1 );
         }
     }
 }
@@ -780,7 +780,7 @@ TEST_CASE( "multimag_matrix_capacity_mods_scale_integral_pockets",
             base.push_back( p->ammo_capacity( spec.pockets[i] ) );
         }
 
-        // Double only p0; siblings must keep base capacity.
+
         const itype_id mod_id( "mm_mx_cap_" + std::to_string( spec.pockets.size() ) );
         ensure_synth_mod( mod_id, [&]( itype & t ) {
             t.mod = cata::make_value<islot_mod>();

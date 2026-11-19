@@ -93,4 +93,4 @@ void PointInitializationCheck::check( const MatchFinder::MatchResult &Result )
     CheckInit( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

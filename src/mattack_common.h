@@ -29,7 +29,7 @@ class mattack_actor
 
         dbl_or_var cooldown;
 
-        // Dialogue conditions of the attack
+
         std::function<bool( const_dialogue const & )> condition;
         bool has_condition = false;
 
@@ -43,7 +43,7 @@ class mattack_actor
 
 struct mtype_special_attack {
     protected:
-        // TODO: Remove friend
+
         friend struct special_attacks_reader;
         cata::clone_ptr<mattack_actor> actor;
 
@@ -64,4 +64,4 @@ struct mtype_special_attack {
         }
 };
 
-#endif // CATA_SRC_MATTACK_COMMON_H
+#endif

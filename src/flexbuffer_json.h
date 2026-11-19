@@ -18,15 +18,15 @@
 #include "memory_fast.h"
 #include "string_id.h"
 
-// Represents a 'path' in a json object, a series of object keys or indices, that when accessed from the root get you to some element in the json structure.
+
 struct JsonPath {
-        // Flexbuffer structures are either arrays or objects, where objects are just
-        // arrays with an extra 'key vector'. As such, we can store a jsonpath as a series
-        // of numeric indices and not store any string pointer values at all. This lets us
-        // compress the datastructure to a series of shorts (at least one vector has >1k
-        // elements in it). How this index should be interpreted depends on the type of
-        // the json value at that location. Arrays as native indices, objects as an index
-        // into the object's corresponding key vector.
+
+
+
+
+
+
+
 
         using index_type = uint32_t;
 
@@ -101,7 +101,7 @@ class Json
 
         static const std::string &flexbuffer_type_to_string( flexbuffers::Type t );
 
-        // Atomically sets whether Json destructors report unvisited members or not. Returns the prior value.
+
         static bool globally_report_unvisited_members( bool do_report );
 
     protected:
@@ -116,9 +116,9 @@ class Json
         Json( Json && ) noexcept = default;
         Json &operator=( Json && ) noexcept = default;
 
-        // Keeps the backing memory alive, also contains the root reference and source file for error logging.
+
         std::shared_ptr<parsed_flexbuffer> root_;
-        // The actual thing we are pointing to with this Json instance.
+
         flexbuffer json_;
         std::string get_root_source_path() const;
 };
@@ -157,13 +157,13 @@ class JsonWithPath : protected Json
         JsonPath path_;
 };
 
-// A single value wrapper. Convertible to any actual value or array/object.
-// To keep creating these as trivial as possible, these do not contain a JsonPath. The typical
-// pattern with JsonValue's is to immediately cast to the desired type, and generally are
-// retrieved while iterating members of a JsonObject or values in a JsonArray. This
-// means the parent_path will outlive the JsonValue. But we have no real way to guarantee
-// this without resorting to moving the JsonPath into a heap allocation with shared_ptr.
-// We still aren't totally trivial because Json has a shared_ptr member, but it's close.
+
+
+
+
+
+
+
 class JsonValue : Json
 {
     public:
@@ -208,7 +208,7 @@ class JsonValue : Json
         bool test_array() const;
         bool test_null() const;
 
-        // overidden by JsonMember
+
         virtual bool is_member() const;
 
         std::string get_string() const;
@@ -226,9 +226,9 @@ class JsonValue : Json
         using Json::string_error;
         using Json::get_root_source_path;
 
-        // optionally-fatal reading into values by reference
-        // returns true if the data was read successfully, false otherwise
-        // if throw_on_error then throws JsonError rather than returning false.
+
+
+
         bool read( bool &b, bool throw_on_error = false ) const;
         bool read( char &c, bool throw_on_error = false ) const;
         bool read( signed char &c, bool throw_on_error = false ) const;
@@ -243,64 +243,64 @@ class JsonValue : Json
         bool read( double &d, bool throw_on_error = false ) const;
         bool read( std::string &s, bool throw_on_error = false ) const;
 
-        // This is for the string_id type
+
         template <typename T>
         auto read( string_id<T> &thing, bool throw_on_error = false ) const -> bool;
 
-        // This is for the int_id type
+
         template <typename T>
         auto read( int_id<T> &thing, bool throw_on_error = false ) const -> bool;
 
-        /// Overload that calls a global function `deserialize(T&,JsonIn&)`, if available.
+
         template<typename T>
         auto read( T &v, bool throw_on_error = false ) const ->
         decltype( deserialize( v, *this ), true );
 
-        /// Overload that calls a member function `T::deserialize(JsonIn&)`, if available.
+
         template<typename T>
         auto read( T &v, bool throw_on_error = false ) const -> decltype( v.deserialize( *this ), true );
 
         template<typename T, std::enable_if_t<std::is_enum_v<T>, int> = 0>
         bool read( T &val, bool throw_on_error = false ) const;
 
-        /// Overload for std::pair
+
         template<typename T, typename U>
         bool read( std::pair<T, U> &p, bool throw_on_error = false ) const;
 
-        // array ~> vector, deque, list
+
         template < typename T, std::enable_if_t <
                        !std::is_same_v<void, typename T::value_type> > * = nullptr
                    >
         auto read( T &v, bool throw_on_error = false ) const -> decltype( v.front(), true );
 
-        // array ~> array
+
         template <typename T, size_t N>
         bool read( std::array<T, N> &v, bool throw_on_error = false ) const;
 
-        // object ~> containers with matching key_type and value_type
-        // set, unordered_set ~> object
+
+
         template <typename T, std::enable_if_t<
                       std::is_same_v<typename T::key_type, typename T::value_type>> * = nullptr
                   >
         bool read( T &v, bool throw_on_error = false ) const;
 
-        // special case for enum_bitset
+
         template <typename T>
         bool read( enum_bitset<T> &v, bool throw_on_error = false ) const;
 
-        // special case for colony<item> as it supports RLE
-        // see corresponding `write` for details
+
+
         template <typename T, std::enable_if_t<std::is_same_v<T, item>>* = nullptr >
         bool read( cata::colony<T> &v, bool throw_on_error = false ) const;
 
-        // special case for colony as it uses `insert()` instead of `push_back()`
-        // and therefore doesn't fit with vector/deque/list
-        // for colony of items there is another specialization with RLE
+
+
+
         template < typename T, std::enable_if_t < !std::is_same_v<T, item> > * = nullptr >
         bool read( cata::colony<T> &v, bool throw_on_error = false ) const;
 
-        // object ~> containers with unmatching key_type and value_type
-        // map, unordered_map ~> object
+
+
         template < typename T, std::enable_if_t <
                        !std::is_same_v<typename T::key_type, typename T::value_type> > * = nullptr
                    >
@@ -341,7 +341,7 @@ class JsonValue : Json
         JsonPath const *parent_path_;
         size_t path_index_;
 
-        // Putting this in the header allows inlining and eliding a bunch of code with constant folding.
+
         bool error_or_false( bool throw_on_error, const std::string &message ) const noexcept( false ) {
             if( throw_on_error ) {
                 throw_error( 0, message );
@@ -398,7 +398,7 @@ class JsonArray : JsonWithPath
         class const_iterator;
         friend const_iterator;
 
-        // Iterates the values in this array.
+
         const_iterator begin() const;
         const_iterator end() const;
 
@@ -450,16 +450,16 @@ class JsonArray : JsonWithPath
         template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
                  E next_enum_value() ;
 
-                 // array ~> vector, deque, list
+
                  template < typename T, std::enable_if_t <
                                 !std::is_same_v<void, typename T::value_type> > * = nullptr
                             >
                  auto read( T &v, bool throw_on_error = false ) const -> decltype( v.front(), true );
 
-                 // random-access read values by reference
+
                  template <typename T> bool read_next( T &t, bool throw_on_error = false );
 
-                 // random-access read values by reference
+
                  template <typename T> bool read( size_t idx, T &t, bool throw_on_error = false ) const;
 
                  template <typename T = std::string, typename Res = std::set<T>>
@@ -569,7 +569,7 @@ class JsonObject : JsonWithPath
         JsonObject &operator=( const JsonObject &rhs ) {
             JsonWithPath::operator=( rhs );
             init( json_ );
-            // Copying an object resets visited fields.
+
             visited_fields_bitset_.clear_all();
             return *this;
         }
@@ -617,7 +617,7 @@ class JsonObject : JsonWithPath
         template<typename T, typename std::enable_if_t<std::is_convertible_v<T, std::string>>* = nullptr>
         std::string get_string( const char *key, T && fallback ) const;
 
-        // Vanilla accessors. Just return the named member and use it's conversion function.
+
         bool get_bool( std::string_view key ) const;
         int get_int( std::string_view key ) const;
         int64_t get_int64( std::string_view key ) const;
@@ -625,55 +625,55 @@ class JsonObject : JsonWithPath
         JsonArray get_array( std::string_view key ) const;
         JsonObject get_object( std::string_view key ) const;
 
-        // *INDENT-OFF*
-        template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
-        E get_enum_value( const std::string &name ) const;
-        template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
-        E get_enum_value( const char *name ) const;
 
         template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
-        E get_enum_value( const std::string &name, E fallback ) const;
-        template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
-        E get_enum_value( const char *name, E fallback ) const;
+                 E get_enum_value( const std::string &name ) const;
+                 template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
+                          E get_enum_value( const char *name ) const;
 
-        // Sigh.
-        std::vector<int> get_int_array( std::string_view name ) const;
-        std::vector<std::string> get_string_array( std::string_view name ) const;
-        std::vector<std::string> get_as_string_array( const std::string &name ) const;
-        std::set<std::string> get_as_string_set( const std::string &name ) const;
+                          template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
+                                   E get_enum_value( const std::string &name, E fallback ) const;
+                                   template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
+                                            E get_enum_value( const char *name, E fallback ) const;
 
-        bool has_member( std::string_view key ) const;
-        bool has_null( std::string_view key ) const;
-        bool has_string( std::string_view key ) const;
-        bool has_bool( std::string_view key ) const;
-        bool has_number( std::string_view key ) const;
-        bool has_int( std::string_view key ) const;
-        bool has_float( std::string_view key ) const;
-        bool has_array( std::string_view key ) const;
-        bool has_object( std::string_view key ) const;
 
-        // Fallback accessors. Test if the named member exists, and if yes, return it,
-        // else will return the fallback value. Does *not* test the member is the type
-        // being requested.
-        bool get_bool( std::string_view key, bool fallback ) const;
-        int get_int( std::string_view key, int fallback ) const;
-        double get_float( std::string_view key, double fallback ) const;
+                                            std::vector<int> get_int_array( std::string_view name ) const;
+                                            std::vector<std::string> get_string_array( std::string_view name ) const;
+                                            std::vector<std::string> get_as_string_array( const std::string &name ) const;
+                                            std::set<std::string> get_as_string_set( const std::string &name ) const;
 
-        // Tries to get the member, and if found, calls it visited.
-        std::optional<JsonValue> get_member_opt( std::string_view key ) const;
-        JsonValue get_member( std::string_view key ) const;
-        JsonValue operator[]( std::string_view key ) const;
+                                            bool has_member( std::string_view key ) const;
+                                            bool has_null( std::string_view key ) const;
+                                            bool has_string( std::string_view key ) const;
+                                            bool has_bool( std::string_view key ) const;
+                                            bool has_number( std::string_view key ) const;
+                                            bool has_int( std::string_view key ) const;
+                                            bool has_float( std::string_view key ) const;
+                                            bool has_array( std::string_view key ) const;
+                                            bool has_object( std::string_view key ) const;
 
-        // Schwillions of read overloads
-        template <typename T>
-        bool read( std::string_view name, T &t, bool throw_on_error = true ) const;
 
-        template <typename T = std::string, typename Res = std::set<T>>
-        Res get_tags( std::string_view name ) const;
 
-        [[noreturn]] void throw_error( const std::string &err ) const;
-        [[noreturn]] void throw_error_at( std::string_view member, const std::string &err ) const;
-        // *INDENT-ON*
+
+                                            bool get_bool( std::string_view key, bool fallback ) const;
+                                            int get_int( std::string_view key, int fallback ) const;
+                                            double get_float( std::string_view key, double fallback ) const;
+
+
+                                            std::optional<JsonValue> get_member_opt( std::string_view key ) const;
+                                            JsonValue get_member( std::string_view key ) const;
+                                            JsonValue operator[]( std::string_view key ) const;
+
+
+                                            template <typename T>
+                                            bool read( std::string_view name, T &t, bool throw_on_error = true ) const;
+
+                                            template <typename T = std::string, typename Res = std::set<T>>
+                                            Res get_tags( std::string_view name ) const;
+
+                                            [[noreturn]] void throw_error( const std::string &err ) const;
+                                            [[noreturn]] void throw_error_at( std::string_view member, const std::string &err ) const;
+
 
         void allow_omitted_members() const {
             visited_fields_bitset_.set_all();
@@ -692,7 +692,7 @@ class JsonObject : JsonWithPath
         const_iterator end() const;
 
     private:
-        // Only called by the iterator which can't be manually constructed.
+
         JsonValue operator[]( size_t idx ) const;
 
         // NOLINTNEXTLINE(cata-large-inline-function)
@@ -708,7 +708,7 @@ class JsonObject : JsonWithPath
         // NOLINTNEXTLINE(cata-large-inline-function)
         static bool find_map_key_idx( const std::string_view key, const flexbuffers::TypedVector &keys,
                                       size_t &idx ) {
-            // Handlrolled binary search because the STL does not provide a version that just uses indexes.
+
             std::make_signed_t<size_t>low = 0;
             std::make_signed_t<size_t>high = keys.size() - 1;
             while( low <= high ) {
@@ -735,22 +735,22 @@ class JsonObject : JsonWithPath
 
         void report_unvisited() const;
 
-        // Reports an error via JsonObject at this location.
+
         [[noreturn]] void error_no_member( std::string_view member ) const;
 
-        // debugmsg prints all the skipped members.
+
         void error_skipped_members( const std::vector<size_t> &skipped_members ) const;
 };
 
-// Having this uncommented causes unable to match definition errors for msvc.
-// The implementation still exists in the -inl header but has to come after all
-// the definitions for JsonValue::read().
-//template<typename T>
-//void deserialize( std::optional<T> &obj, const JsonValue &jsin );
+
+
+
+
+
 
 void add_array_to_set( std::set<std::string> &s, const JsonObject &json,
                        std::string_view name );
 
 #include "flexbuffer_json-inl.h"
 
-#endif // CATA_SRC_FLEXBUFFER_JSON_H
+#endif

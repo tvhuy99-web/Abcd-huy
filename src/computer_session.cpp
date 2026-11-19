@@ -171,7 +171,7 @@ void computer_session::use()
     } );
 
     avatar &player_character = get_avatar();
-    // Login
+
     print_line( _( "Logging into %s…" ), comp.name );
     if( comp.security > 0 ) {
         if( calendar::turn < comp.next_attempt ) {
@@ -201,18 +201,18 @@ void computer_session::use()
                     activate_random_failure();
                     reset_terminal();
                     return;
-                } else { // Successful hack attempt
+                } else {
                     comp.security = 0;
                     query_any( _( "Login successful.  Press any key…" ) );
                     reset_terminal();
                 }
         }
-    } else { // No security
+    } else {
         query_any( _( "Login successful.  Press any key…" ) );
         reset_terminal();
     }
 
-    // Main computer loop
+
     int sel = 0;
     while( true ) {
         size_t options_size = comp.options.size();
@@ -228,19 +228,19 @@ void computer_session::use()
             if( !activatable ) {
                 action_name = string_format( _( "%s (UNAVAILABLE)" ), action_name );
             }
-            // Reader (R17): state the one consequence the engine itself
-            // announces before an option runs, in the entry description
-            // the shared uilist adapter publishes. Selecting this option
-            // prompts "Hack into system?" first exactly when its own
-            // security or the computer's alert count makes the activation
-            // check below (current.security + comp.alerts > 0) require a
-            // password; the string is the same one use() prints at that
-            // point. The label stays the option's original name.
-            // can_activate() is a pure boolean terrain check with no
-            // reason text anywhere in the engine, so a non-activatable
-            // entry deliberately gets no a11y_disabled_reason here: the
-            // shared adapter falls back to its default reason instead of
-            // an invented one.
+
+
+
+
+
+
+
+
+
+
+
+
+
             std::string entry_desc;
             if( comp.options[i].security > 0 ||
                 comp.options[i].security + comp.alerts > 0 ) {
@@ -259,7 +259,7 @@ void computer_session::use()
         sel = computer_menu.ret;
         computer_option current = comp.options[sel];
         reset_terminal();
-        // Once you trip the security, you have to roll every time you want to do something
+
         if( current.security + comp.alerts > 0 ) {
             print_error( _( "Password required." ) );
             if( query_bool( _( "Hack into system?" ) ) ) {
@@ -268,31 +268,31 @@ void computer_session::use()
                     reset_terminal();
                     return;
                 } else {
-                    // Successfully hacked function
+
                     comp.options[sel].security = 0;
                     activate_function( current.action );
                 }
             }
-        } else { // No need to hack, just activate
+        } else {
             activate_function( current.action );
         }
         reset_terminal();
-        // Done processing a selected option.
+
     }
 
-    reset_terminal(); // This should have been done by now, but just in case.
+    reset_terminal();
 }
 
 bool computer_session::hack_attempt( Character &you, int Security ) const
 {
     if( Security == -1 ) {
-        Security = comp.security;    // Set to main system security if no value passed
+        Security = comp.security;
     }
     const int hack_skill = round( you.get_skill_level( skill_computer ) );
 
-    // Every time you dig for lab notes, (or, in future, do other suspicious stuff?)
-    // +2 dice to the system's hack-resistance
-    // So practical max files from a given terminal = 5, at 10 Computer
+
+
+
     if( comp.alerts > 0 ) {
         Security += ( comp.alerts * 2 );
     }
@@ -300,16 +300,16 @@ bool computer_session::hack_attempt( Character &you, int Security ) const
     you.mod_moves( -( 10 * ( 5 + Security * 2 ) / std::max( 1, hack_skill + 1 ) ) );
 
     int player_roll = round( you.get_greater_skill_or_knowledge_level(
-                                 skill_computer ) ); //this relates to the success of the roll for hacking - the practical skill covers the time.
-    ///\EFFECT_INT <8 randomly penalizes hack attempts, 50% of the time
+                                 skill_computer ) );
+
     if( you.get_int() < 8 && one_in( 2 ) ) {
         player_roll -= rng( 0, 8 - you.get_int() );
-        ///\EFFECT_INT >8 randomly benefits hack attempts, 33% of the time
+
     } else if( you.get_int() > 8 && one_in( 3 ) ) {
         player_roll += rng( 0, you.get_int() - 8 );
     }
 
-    ///\EFFECT_COMPUTER increases chance of successful hack attempt, vs Security level
+
     bool successful_attempt = dice( player_roll, 6 ) >= dice( Security, 6 );
     you.practice( skill_computer, successful_attempt ? ( 15 + Security * 3 ) : 7 );
     return successful_attempt;
@@ -334,7 +334,7 @@ static void remove_submap_turrets()
     Character &player_character = get_player_character();
     map &here = get_map();
     for( monster &critter : g->all_monsters() ) {
-        // Check 1) same overmap coords, 2) turret, 3) hostile
+
         if( coords::project_to<coords::omt>( here.get_abs( critter.pos_bub() ) ) ==
             coords::project_to<coords::omt>( here.get_abs(
                     player_character.pos_bub() ) ) &&
@@ -400,7 +400,7 @@ computer_session::computer_action_functions = {
     { COMPACT_UNLOCK_DISARM, &computer_session::action_unlock_disarm },
 };
 
-//* Is the given position a specimen chamber eligible for termination */
+
 static bool has_terminate_terrain( const map &here, const tripoint_bub_ms &p )
 {
     const ter_id &t_north = here.ter( p + tripoint::north );
@@ -454,7 +454,7 @@ void computer_session::activate_function( computer_action action )
 {
     const auto it = computer_action_functions.find( action );
     if( it != computer_action_functions.end() ) {
-        // Token move cost for any action, if an action takes longer decrement moves further.
+
         get_player_character().mod_moves( -to_moves<int>( 1_seconds ) * 0.3 );
         ( this->*( it->second ) )();
     }
@@ -490,11 +490,11 @@ void computer_session::action_close_gate()
     query_any( _( "Gates closed.  Press any key…" ) );
 }
 
-//LOCK AND UNLOCK are used to build more complex buildings
-// that can have multiple doors that can be locked and be
-// unlocked by different computers.
-//Simply uses translate_radius which take a given radius and
-// player position to determine which terrain tiles to edit.
+
+
+
+
+
 void computer_session::action_lock()
 {
     get_map().translate_radius( ter_t_door_metal_c, ter_t_door_metal_locked, 8.0,
@@ -517,7 +517,7 @@ void computer_session::action_unlock()
     query_any( _( "Lock disabled.  Press any key…" ) );
 }
 
-//Toll is required for the church/school computer/mechanism to function
+
 void computer_session::action_toll()
 {
     if( calendar::turn < comp.next_attempt ) {
@@ -657,8 +657,8 @@ void computer_session::action_cascade()
 void computer_session::action_research()
 {
     map &here = get_map();
-    // TODO: seed should probably be a member of the computer, or better: of the computer action.
-    // It is here to ensure one computer reporting the same text on each invocation.
+
+
     const int seed = std::hash<tripoint_abs_sm> {}( here.get_abs_sub() ) + comp.alerts;
     std::optional<translation> log = SNIPPET.random_from_category( "lab_notes", seed );
     if( !log.has_value() ) {
@@ -668,12 +668,12 @@ void computer_session::action_research()
     }
 
     print_text( "%s", log.value() );
-    // One's an anomaly
+
     if( comp.alerts == 0 ) {
         query_any( _( "Local data-access error logged, alerting helpdesk.  Press any key…" ) );
         comp.alerts ++;
     } else {
-        // Two's a trend.
+
         query_any(
             _( "Warning: anomalous archive-access activity detected at this node.  Press any key…" ) );
         comp.alerts ++;
@@ -748,11 +748,11 @@ void computer_session::action_map_subway()
 
 void computer_session::action_miss_disarm()
 {
-    // TODO: stop the nuke from creating radioactive clouds.
+
     if( query_yn( _( "Disarm missile." ) ) ) {
         get_event_bus().send<event_type::disarms_nuke>();
         add_msg( m_info, _( "Nuclear missile disarmed!" ) );
-        //disable missile.
+
         comp.options.clear();
         activate_failure( COMPFAIL_SHUTDOWN );
     } else {
@@ -765,7 +765,7 @@ void computer_session::action_miss_launch()
 {
     map &here = get_map();
 
-    // Target Acquisition.
+
     const tripoint_abs_omt target( ui::omap::choose_point(
                                        _( "Choose a target for the nuclear missile." ), 0 ) );
     if( target.is_invalid() ) {
@@ -775,14 +775,14 @@ void computer_session::action_miss_launch()
 
     if( query_yn( _( "Confirm nuclear missile launch." ) ) ) {
         add_msg( m_info, _( "Nuclear missile launched!" ) );
-        //Remove the option to fire another missile.
+
         comp.options.clear();
     } else {
         add_msg( m_info, _( "Nuclear missile launch aborted." ) );
         return;
     }
 
-    //Put some smoke gas and explosions at the nuke location.
+
     const tripoint_bub_ms nuke_location = { get_player_character().pos_bub() - point( 12, 0 ) };
     for( const tripoint_bub_ms &loc : here.points_in_radius( nuke_location, 5, 0 ) ) {
         if( one_in( 4 ) ) {
@@ -790,11 +790,11 @@ void computer_session::action_miss_launch()
         }
     }
 
-    //Only explode once. But make it large.
+
     explosion_handler::explosion( &get_player_character(), nuke_location, 2000, 0.7, true );
 
-    //...ERASE MISSILE, OPEN SILO, DISABLE COMPUTER
-    // For each level between here and the surface, remove the missile
+
+
     for( int level = here.get_abs_sub().z(); level <= 0; level++ ) {
         map tmpmap;
         tmpmap.load( tripoint_abs_sm( here.get_abs_sub().xy(), level ),
@@ -875,12 +875,12 @@ void computer_session::action_list_mutations()
         uilist wmenu;
 
         for( const trait_id &traits_iter : category_mutations ) {
-            // Reader (R17): the shared uilist adapter publishes entry
-            // descriptions, so give each mutation the same facts the
-            // selection handler below prints to the terminal --
-            // description, replacements and cancellations, all from the
-            // mutation branch itself -- instead of a name alone. The
-            // label stays the mutation's original name.
+
+
+
+
+
+
             const mutation_branch &mdata = traits_iter.obj();
             std::string entry_desc = mdata.desc();
             if( !mdata.replacements.empty() ) {
@@ -985,8 +985,8 @@ void computer_session::action_amigara_log()
 void computer_session::action_amigara_start()
 {
     get_timed_events().add( timed_event_type::AMIGARA, calendar::turn + 10_seconds );
-    // Disable this action to prevent further amigara events, which would lead to
-    // further amigara monster, which would lead to further artifacts.
+
+
     comp.remove_option( COMPACT_AMIGARA_START );
 }
 
@@ -1082,7 +1082,7 @@ void computer_session::action_data_anal()
             } else if( items.only_item().typeId() == itype_usb_drive &&
                        items.only_item().empty() ) {
                 print_error( _( "ERROR: Memory bank is empty." ) );
-            } else { // Success!
+            } else {
                 if( items.only_item().typeId() == itype_black_box ) {
                     print_line( _( "Memory Bank: Military Hexron Encryption\nPrinting Transcript\n" ) );
                     item transcript( itype_black_box_transcript, calendar::turn );
@@ -1215,7 +1215,7 @@ void computer_session::action_srcf_seal()
             explosion_handler::explosion( &get_player_character(), p, 50, 0.7, true );
         }
     }
-    comp.options.clear(); // Disable the terminal.
+    comp.options.clear();
     activate_failure( COMPFAIL_SHUTDOWN );
 }
 
@@ -1247,14 +1247,14 @@ void computer_session::action_srcf_elevator()
         }
     }
 
-    //If some are destroyed
+
     if( !is_surface_elevator_exist || !is_underground_elevator_exist ) {
         reset_terminal();
         print_error(
             _( "\nElevator control network unreachable!\n\n" ) );
     }
 
-    //If both are disabled try to enable
+
     else if( !is_surface_elevator_on && !is_underground_elevator_on ) {
         if( !player_character.has_amount( itype_sarcophagus_access_code, 1 ) ) {
             print_error( _( "Access code required!\n\n" ) );
@@ -1267,7 +1267,7 @@ void computer_session::action_srcf_elevator()
         }
     }
 
-    //If only one is enabled, enable the other one. Fix for before this change
+
     else if( is_surface_elevator_on && !is_underground_elevator_on && is_underground_elevator_exist ) {
         here.ter_set( underground_elevator, ter_t_elevator_control );
         is_underground_elevator_on = true;
@@ -1278,7 +1278,7 @@ void computer_session::action_srcf_elevator()
         is_surface_elevator_on = true;
     }
 
-    //If the elevator is working
+
     if( is_surface_elevator_on && is_underground_elevator_on ) {
         reset_terminal();
         print_line(
@@ -1288,7 +1288,7 @@ void computer_session::action_srcf_elevator()
     query_any( _( "Press any key…" ) );
 }
 
-//irradiates food at ter_t_rad_platform, adds radiation
+
 void computer_session::action_irradiator()
 {
     Character &player_character = get_player_character();
@@ -1305,11 +1305,11 @@ void computer_session::action_irradiator()
             } else {
                 player_character.mod_moves( -to_moves<int>( 3_seconds ) );
                 for( auto it = ms.begin(); it != ms.end(); ++it ) {
-                    // actual food processing
+
                     if( !it->rotten() ) {
                         it->set_flag( flag_IRRADIATED );
                     }
-                    // critical failure - radiation spike sets off electronic detonators
+
                     if( it->typeId() == itype_mininuke || it->typeId() == itype_mininuke_act ||
                         it->typeId() == itype_c4 ) {
                         explosion_handler::explosion( &get_player_character(), dest, 40 );
@@ -1339,7 +1339,7 @@ void computer_session::action_irradiator()
                         }
                         query_any( _( "EMERGENCY SHUTDOWN!  Press any key…" ) );
                         error = true;
-                        comp.options.clear(); // Disable the terminal.
+                        comp.options.clear();
                         activate_failure( COMPFAIL_SHUTDOWN );
                         break;
                     }
@@ -1348,7 +1348,7 @@ void computer_session::action_irradiator()
                         here.adjust_radiation( radorigin, rng( 20, 50 ) / ( rl_dist( radorigin,
                                                dest ) > 0 ? rl_dist( radorigin, dest ) : 1 ) );
                     }
-                    // if unshielded, rad source irradiates player directly, reduced by distance to source
+
                     if( here.pl_sees( dest, 10 ) ) {
                         player_character.irradiate( rng_float( 5, 25 ) / rl_dist( player_character.pos_bub(), dest ) );
                     }
@@ -1369,7 +1369,7 @@ void computer_session::action_irradiator()
     }
 }
 
-// geiger counter for irradiator, primary measurement at ter_t_rad_platform, secondary at player location
+
 void computer_session::action_geiger()
 {
     Character &player_character = get_player_character();
@@ -1411,15 +1411,15 @@ void computer_session::action_geiger()
     query_any( _( "Press any key…" ) );
 }
 
-// imitates item movement through conveyor belt through 3 different loading/unloading bays
-// ensure only bay of each type in range
+
+
 void computer_session::action_conveyor()
 {
     Character &player_character = get_player_character();
     player_character.mod_moves( -to_moves<int>( 3_seconds ) );
-    tripoint_bub_ms loading; // red tile = loading bay
-    tripoint_bub_ms unloading; // green tile = unloading bay
-    tripoint_bub_ms platform; // radiation platform = middle point
+    tripoint_bub_ms loading;
+    tripoint_bub_ms unloading;
+    tripoint_bub_ms platform;
     bool l_exists = false;
     bool u_exists = false;
     bool p_exists = false;
@@ -1467,7 +1467,7 @@ void computer_session::action_conveyor()
     query_any( _( "Conveyor belt cycle complete.  Press any key…" ) );
 }
 
-// toggles reinforced glass shutters open->closed and closed->open depending on their current state
+
 void computer_session::action_shutters()
 {
     Character &player_character = get_player_character();
@@ -1479,7 +1479,7 @@ void computer_session::action_shutters()
     query_any( _( "Toggling shutters.  Press any key…" ) );
 }
 
-// extract radiation source material from irradiator
+
 void computer_session::action_extract_rad_source()
 {
     Character &player_character = get_player_character();
@@ -1506,7 +1506,7 @@ void computer_session::action_extract_rad_source()
     }
 }
 
-// remove shock vent fields; check for existing plutonium generators in radius
+
 void computer_session::action_deactivate_shock_vent()
 {
     Character &player_character = get_player_character();
@@ -1716,7 +1716,7 @@ void computer_session::action_emerg_ref_center()
 
     tripoint_abs_omt mission_target;
     avatar &player_character = get_avatar();
-    // Check completed missions too, so people can't repeatedly get the mission.
+
     const std::vector<mission *> completed_missions = player_character.get_completed_missions();
     std::vector<mission *> missions = player_character.get_active_missions();
     missions.insert( missions.end(), completed_missions.begin(), completed_missions.end() );
@@ -1780,9 +1780,9 @@ std::string computer_session::terminal_text() const
 template<typename ...Args>
 bool computer_session::query_any( const std::string &text, Args &&... args )
 {
-    // Format once: the printed line and the reader summary are then the
-    // same string, and the already-formatted text cannot be reinterpreted
-    // as a format string when it is printed.
+
+
+
     const std::string formatted_text = string_format( text, std::forward<Args>( args )... );
     print_indented_line( 0, width, "%s", formatted_text );
     return query_any_impl( formatted_text );
@@ -1800,31 +1800,33 @@ bool computer_session::query_any_impl( const std::string_view summary )
         inp_mngr.wait_for_any_key();
         return true;
     }
-    // Reader (R17): wait_for_any_key() never goes through handle_input --
-    // on Android it builds a WAIT_FOR_ANY_KEY context but does not poll
-    // it -- so reader intents could never be served while the terminal
-    // waited. Poll a local context instead. Physical-key behaviour is
-    // equivalent: ANY_INPUT is registered, so every key that is not bound
-    // to a registered action in this context is returned as ANY_INPUT by
-    // input_context (the same fallback bionics_ui and query_popup rely
-    // on), Enter is bound to the globally-defined CONFIRM, and mouse
-    // events with no action are ignored inside handle_input before the
-    // ANY_INPUT fallback, exactly as wait_for_any_key ignores them.
-    // Either result ends the wait; only a reader focus intent, which the
-    // handler answers with TIMEOUT, keeps it open.
+
+
+
+
+
+
+
+
+
+
+
+
     input_context ctxt( "COMPUTER_CONTINUE", keyboard_mode::keycode );
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "CONFIRM" );
     a11y::screen_scope reader( &ctxt, "computer-continue",
-    [&ctxt]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.node == "computer:continue" ) {
+    [&ctxt]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "computer:continue" )
+        {
             if( intent.action == "activate" ) {
                 return std::string( "ANY_INPUT" );
             }
             return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" )
                    : std::nullopt;
         }
-        if( intent.node == "computer:text" && intent.action == "focus" ) {
+        if( intent.node == "computer:text" && intent.action == "focus" )
+        {
             return std::string( "TIMEOUT" );
         }
         return a11y::registered_intent( ctxt, intent );
@@ -1874,31 +1876,31 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
                          ctxt.describe_key_and_name( "NO", allow_key ),
                          ctxt.describe_key_and_name( "QUIT", allow_key ) );
 
-    // Reader (R17): without a scope bound to this context, handle_input
-    // would publish only the generic YES/NO/QUIT command fallback, which
-    // has no question -- the question exists only in the terminal lines.
-    // Publish it once, before the loop: the summary is the exact
-    // formatted question, the command nodes come from command_snapshot
-    // (their ids are the action ids, so registered_intent returns the
-    // original YES/NO/QUIT actions, and a reader "cancel" resolves to
-    // the registered QUIT), and the whole current terminal text rides
-    // along as a document node. The scope is bound to &ctxt, so the
-    // generic fallback in handle_input does not replace it. The
-    // question does not change inside the loop, so one update is
-    // enough; the known limit is that lines printed after this point,
-    // while the question is already open, are not republished until
-    // the next query. A reader intent arrives as a default (error-type)
-    // raw event, which both allow_key filters accept, so the case rule
-    // for physical keys is unchanged and reader answers are not
-    // rejected by it.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "computer-query",
-    [&ctxt]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&ctxt]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
     {
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
-                                           comp.name.empty() ? _( "Computer" )
-                                           : remove_color_tags( comp.name ) );
+                comp.name.empty() ? _( "Computer" )
+                : remove_color_tags( comp.name ) );
         snapshot.summary = remove_color_tags( formatted_text );
         if( !lines.empty() ) {
             a11y::append_document( snapshot, "computer:text", _( "Computer output" ),

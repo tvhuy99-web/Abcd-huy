@@ -33,8 +33,7 @@ if __name__ == "__main__":
 
     json_data, load_errors = import_data(json_fmatch=args.fnmatch)
     if load_errors:
-        # If we start getting unexpected JSON or other things, might need to
-        # revisit quitting on load_errors
+
         print("Error loading JSON data.")
         for e in load_errors:
             print(e)
@@ -51,14 +50,12 @@ if __name__ == "__main__":
         else:
             not_matched.append(item)
 
-    # matched first
     print("[")
     for i, p in enumerate(matched):
         eol = ",\n" if i < len(matched) - 1 else "\n"
         print(CDDAJSONWriter(p, 1).dumps(), end=eol)
     print("]")
 
-    # not_matched second
     print("[", file=sys.stderr)
     for i, p in enumerate(not_matched):
         eol = ",\n" if i < len(not_matched) - 1 else "\n"

@@ -39,7 +39,7 @@ static const spell_id spell_pain_damage( "pain_damage" );
 
 static const trap_str_id tr_pit( "tr_pit" );
 
-// Requires a custom sender for eg. using event types that need to be sent differently for EOCS to work
+
 template<event_type Type>
 static void check_memorial_custom_sender(
     memorial_logger &m,
@@ -59,14 +59,14 @@ static void check_memorial_custom_sender(
     CHECK( result_lines.back().empty() );
     result_lines.pop_back();
 
-    // Remove expected results by matching them against the strings we encounter.
+
     std::vector<std::string> ref_lines = string_split( ref, '\n' );
     for( const std::string &result_string : result_lines ) {
         std::string message = string_split( result_string, '|' ).back();
         if( !message.empty() && message.front() == ' ' ) {
             message.erase( message.begin() );
         }
-        // Remove trailing carriage return, if any
+
         while( !message.empty() && *message.rbegin() == '\r' ) {
             message.erase( message.end() - 1 );
         }
@@ -78,7 +78,7 @@ static void check_memorial_custom_sender(
     CHECK( ref_lines.empty() );
 }
 
-// Send the event via event_bus::send as a sane default
+
 template<event_type Type, typename... Args>
 static void check_memorial(
     memorial_logger &m,
@@ -318,7 +318,7 @@ TEST_CASE( "convert_legacy_memorial_log", "[memorial]" )
 {
     std::string eol = cata_files::eol();
 
-    // Verify that the old format can be transformed into the new format
+
     const std::string input =
         "| Year 1, Spring, day 0 0800.00 | prison | "
         "Hubert 'Daffy' Mullin began their journey into the Cataclysm." + eol +
@@ -336,7 +336,7 @@ TEST_CASE( "convert_legacy_memorial_log", "[memorial]" )
         CHECK( os.str() == json_value );
     }
 
-    // Then verify that the new format is unchanged
+
     {
         std::istringstream is( json_value );
         logger.load( is );
@@ -345,7 +345,7 @@ TEST_CASE( "convert_legacy_memorial_log", "[memorial]" )
         CHECK( os.str() == json_value );
     }
 
-    // Finally, verify that dump matches legacy input
+
     CHECK( logger.dump() == input );
 }
 
@@ -353,7 +353,7 @@ TEST_CASE( "memorial_log_dumping", "[memorial]" )
 {
     std::string eol = cata_files::eol();
 
-    // An example log file with one legacy and one "modern" entry
+
     const std::string json_value =
         R"([{"preformatted":"| Year 1, Spring, day 0 0800.00 | refugee center | Apolonia Trout began their journey into the Cataclysm."},{"time":15614,"oter_id":"cabin_isherwood","oter_name":"forest","message":"Used the debug menu (ENABLE_ACHIEVEMENTS)."}])";
     const std::string expected_output =

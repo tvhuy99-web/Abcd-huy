@@ -49,8 +49,8 @@ void NoStaticTranslationCheck::check( const MatchFinder::MatchResult &Result )
     if( !translationCall ) {
         return;
     }
-    // CXXOperatorCallExpr::getBeginLoc points at the operator parens in clang
-    // 21+; anchor to the receiver so the column stays stable across versions.
+
+
     SourceLocation loc = translationCall->getBeginLoc();
     if( const auto *opCall = dyn_cast<CXXOperatorCallExpr>( translationCall ) ) {
         if( opCall->getOperator() == OO_Call && opCall->getNumArgs() > 0 ) {
@@ -64,4 +64,4 @@ void NoStaticTranslationCheck::check( const MatchFinder::MatchResult &Result )
     );
 }
 
-} // namespace clang::tidy::cata
+}

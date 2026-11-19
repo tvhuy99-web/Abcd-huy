@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
-// A collection of options which are accessed frequently enough that we don't
-// want to pay the overhead of a string lookup each time one is tested.
-// They should be updated when the corresponding option is changed (in
-// options.cpp).
+
+
+
+
 
 extern bool keycode_mode;
 extern bool log_from_top;
@@ -38,10 +38,10 @@ extern struct mouse_t {
     bool enabled: 1;
     bool hidekb: 1;
 } mouse;
-} // namespace cata::options
+}
 
-// test_mode is not a regular game option; it's true when we are running unit
-// tests.
+
+
 extern bool test_mode;
 enum class test_mode_spilling_action_t {
     spill_all,
@@ -53,8 +53,8 @@ extern bool direct3d_mode;
 
 enum class error_log_format_t {
     human_readable,
-    // Output error messages in github action command format (currently json only)
-    // See https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
+
+
     github_action,
 };
 #ifndef CATA_IN_TOOL
@@ -65,8 +65,8 @@ constexpr error_log_format_t error_log_format = error_log_format_t::human_readab
 
 enum class check_plural_t {
     none,
-    certain, // report strings that certainly have a non-regular plural form, such as those ending in "s"
-    possible, // report strings that may or may not have a non-regular plural form, such as those containing the word "of"
+    certain,
+    possible,
 };
 #ifndef CATA_IN_TOOL
 extern check_plural_t check_plural;
@@ -74,4 +74,4 @@ extern check_plural_t check_plural;
 constexpr check_plural_t check_plural = check_plural_t::none;
 #endif
 
-#endif // CATA_SRC_CACHED_OPTIONS_H
+#endif

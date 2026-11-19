@@ -74,7 +74,7 @@ static bool a_satisfies_b( const std::vector<quality_requirement> &a,
 int quality_for_crafter( const item &it, const quality_id &qual, const Character *who,
                          const bool strict_boiling )
 {
-    // Matches item::get_quality_nonrecursive: BOIL counts only while empty.
+
     if( strict_boiling && qual == qual_BOIL && !it.empty_container() ) {
         return INT_MIN;
     }
@@ -98,8 +98,8 @@ int provider_quality_level( const item &cand, const quality_id &id, const Charac
 {
     int best = quality_for_crafter( cand, id, who, strict_boiling );
 
-    // Non-CONTAINER pockets only: a fitted magazine is part of the tool, a stored
-    // screwdriver is not part of the backpack.
+
+
     for( int pk = 0; pk < static_cast<int>( pocket_type::LAST ); ++pk ) {
         const pocket_type pk_type = static_cast<pocket_type>( pk );
         if( pk_type == pocket_type::CONTAINER || !cand.has_pocket_type( pk_type ) ) {
@@ -113,14 +113,14 @@ int provider_quality_level( const item &cand, const quality_id &id, const Charac
     return best;
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<requirement_data>::is_valid() const
 {
     return requirements_all.count( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const requirement_data &string_id<requirement_data>::obj() const
 {
@@ -146,7 +146,7 @@ std::vector<requirement_data> requirement_data::get_all()
 namespace
 {
 generic_factory<quality> quality_factory( "tool quality" );
-} // namespace
+}
 
 void quality::reset()
 {
@@ -175,14 +175,14 @@ void quality::load( const JsonObject &jo, std::string_view )
     }
 }
 
-/** @relates string_id */
+
 template<>
 const quality &string_id<quality>::obj() const
 {
     return quality_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<quality>::is_valid() const
 {
@@ -228,7 +228,7 @@ std::string item_comp::to_string( const int batch, const int avail ) const
     const int num_wanted = std::abs( count ) * batch;
     const item item_temp = item( type );
     if( item_temp.count_by_charges() ) {
-        // Count-by-charge
+
 
         if( avail == item::INFINITE_CHARGES ) {
             //~ %1$s: item name, %2$s: charge requirement (number or weight or volume of item, depending on type)
@@ -282,7 +282,7 @@ void quality_requirement::load( const JsonValue &value )
     if( count <= 0 ) {
         quality_data.throw_error_at( "amount", "quality amount must be a positive number" );
     }
-    // Note: level is not checked, negative values and 0 are allow, see butchering quality.
+
 }
 
 void quality_requirement::dump( JsonOut &jsout ) const
@@ -301,7 +301,7 @@ void quality_requirement::dump( JsonOut &jsout ) const
 void tool_comp::load( const JsonValue &value )
 {
     if( value.test_string() ) {
-        // constructions uses this format: [ "tool", ... ]
+
         value.read( type, true );
         count = -1;
     } else {
@@ -316,7 +316,7 @@ void tool_comp::load( const JsonValue &value )
     if( count == 0 ) {
         value.throw_error( "tool count must not be 0" );
     }
-    // Note: negative count means charges (of the tool) should be consumed
+
 }
 
 void tool_comp::dump( JsonOut &jsout ) const
@@ -379,8 +379,8 @@ void requirement_data::load_obj_list( const JsonArray &jsarr, std::vector< std::
                 objs.push_back( choices );
             }
         } else {
-            // tool qualities don't normally use a list of alternatives
-            // each quality is mandatory.
+
+
             objs.push_back( std::vector<T>( 1 ) );
             objs.back().back().load( entry );
         }
@@ -395,9 +395,9 @@ requirement_data requirement_data::operator*( unsigned scalar ) const
             e.count = std::max( e.count * static_cast<int>( scalar ), -1 );
         }
     }
-    // A presence tool carries a negative count, which the clamp leaves at -1: a scaled
-    // requirement demands one provider whatever the entry asked for.  A group that needs
-    // two of something has to ask through a quality with an amount.
+
+
+
     for( auto &group : res.tools ) {
         for( tool_comp &e : group ) {
             e.count = std::max( e.count * static_cast<int>( scalar ), -1 );
@@ -416,7 +416,7 @@ static bool a_satisfies_b( const quality_requirement &a, const quality_requireme
 static bool a_satisfies_b( const std::vector<quality_requirement> &a,
                            const std::vector<quality_requirement> &b )
 {
-    // every b_x is satisfied by some a_x
+
     for( const quality_requirement &b_x : b ) {
         bool satisfied = false;
         for( const quality_requirement &a_x : a ) {
@@ -439,22 +439,22 @@ requirement_data requirement_data::operator+( const requirement_data &rhs ) cons
 
     res.components.insert( res.components.end(), rhs.components.begin(), rhs.components.end() );
     res.tools.insert( res.tools.end(), rhs.tools.begin(), rhs.tools.end() );
-    /*
-    TODO: what is / isn't implemented:
-    I will represent type by letter and level by number, always true: count = 1 && requirement = false
-    A1 then has type A with level 1, (count = 1, requirement = false)
-    X) [implemented ? "x" else " "] What's required -> How should it be displayed
-    1) [x] A1 && A1 -> A1
-    2) [x] A1 && A2 -> A2
-    3) [x] (A1 || B1) && A1 -> A1
-    4) [ ] A1 || A2 -> A1
-    5) [ ] (A1 || B1) && A2 -> A2
-    6) [ ] (A1 || B1 || C1) || (A1 || B1) -> A1 || B1 || C1
-    Note: (1) covers most cases, (2) probably the rest, (3..6) probably isn't anywhere?
 
-    It all takes O(n^2), but that's acceptable since n is very small.
-    @Brambor
-    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     for( const std::vector<quality_requirement> &new_quality : rhs.qualities ) {
         bool add = true;
         for( std::vector<quality_requirement> &old_quality : res.qualities ) {
@@ -472,12 +472,12 @@ requirement_data requirement_data::operator+( const requirement_data &rhs ) cons
         }
     }
 
-    // combined result is temporary which caller could store via @ref save_requirement
+
     res.id_ = requirement_id::NULL_ID();
 
-    // TODO: combine other requirements
 
-    // if either operand was blacklisted then their summation should also be
+
+
     res.blacklisted |= rhs.blacklisted;
 
     return res;
@@ -543,8 +543,8 @@ void requirement_data::load_requirement( const JsonObject &jsobj, const requirem
         jsobj.throw_error( "id was not specified for requirement" );
     }
 
-    // Only read display name from standalone requirement definitions,
-    // not from recipes/constructions that also pass through load_requirement.
+
+
     if( id.is_null() && jsobj.has_member( "name" ) ) {
         jsobj.read( "name", req.name_ );
     }
@@ -726,43 +726,43 @@ template <typename T>
 static void inline_requirements( std::vector<std::vector<T>> &list,
                                  const std::function<const std::vector<std::vector<T>> & ( const requirement_data & )> &getter )
 {
-    // add a single component to the vector. If component already exists, chooses min count
+
     const auto add_component = []( const T & comp, std::vector<T> &accum ) {
         auto iter = std::find_if( accum.begin(), accum.end(), [&]( const T & req ) {
             return !req.requirement && req.type == comp.type;
         } );
         if( iter == accum.end() ) {
-            accum.push_back( comp ); // component doesn't exist yet, adding it
+            accum.push_back( comp );
         } else {
-            // this is the list of alternatives (a OR b OR c), so if there are two identical components
-            // with the different counts as an alternatives, the one with the lowest count is selected
+
+
             iter->count = std::min( comp.count, iter->count );
         }
     };
 
-    // if `comp` is a component, adds it to the `accum`
-    // if it's a requirement, recursively expands it into simple components and adds them to the vector
+
+
     const auto inline_one = [&]( const T & comp, std::vector<T> &accum ) {
         std::set<requirement_id> already_nested;
         std::list<requirement_id> stack;
 
         std::function<void( const T &comp )> rec;
         rec = [&]( const T & comp ) {
-            // add simple component to the vector
+
             if( !comp.requirement ) {
                 add_component( comp, accum );
                 return;
             }
-            // otherwise expand component as requirement
+
             const requirement_id r( comp.type.str() );
             if( !r.is_valid() ) {
                 debugmsg( "Tried to inline unknown requirement %s", r.c_str() );
                 return;
             }
-            // stack just holds the current path of inlining for debug purposes
+
             stack.push_back( r );
             if( already_nested.count( r ) ) {
-                // print debug msg and skip just this one requirement
+
                 debugmsg( "Tried to inline requirement %s which forms a cycle: %s",
                 r.c_str(),  debug_menu::iterable_to_string( stack, " -> ", []( const requirement_id & r ) {
                     return r.str();
@@ -857,7 +857,7 @@ std::vector<std::string> requirement_data::get_folded_list( const Character *act
         const std::vector< std::vector<T> > &objs, int batch, std::string_view hilite,
         requirement_display_flags flags ) const
 {
-    // Refresh the cached availability.
+
     can_make_with_inventory( actor, crafting_inv, filter );
 
     const bool no_unavailable =
@@ -947,13 +947,13 @@ bool requirement_data::can_make_with_inventory( const Character *actor,
         const std::function<bool( const item & )> &filter, int batch, craft_flags flags,
         bool restrict_volume ) const
 {
-    // Debug hammerspace belongs to a character, so a query with no actor has none.
+
     if( actor != nullptr && actor->has_trait( trait_DEBUG_HS ) ) {
         return true;
     }
 
     bool retval = true;
-    // All functions must be called to update the available settings in the components.
+
     if( !has_comps( actor, crafting_inv, qualities, return_true<item> ) ) {
         retval = false;
     }
@@ -989,10 +989,10 @@ bool requirement_data::has_comps( const Character *actor,
             if( tool.has( actor, crafting_inv, filter, batch, flags, use_ups ) ) {
                 tool.available = available_status::a_true;
             } else {
-                // Trying to track down why the crafting tests are failing?
-                // Uncomment the below to see the group of requirements that are lacking satisfaction
-                // Add a printf("\n") to the loop above this to separate different groups onto a separate line
-                // printf( "T: %s ", tool.type.str().c_str() );
+
+
+
+
                 tool.available = available_status::a_false;
             }
             has_tool_in_set = has_tool_in_set || tool.available == available_status::a_true;
@@ -1020,9 +1020,9 @@ bool quality_requirement::has(
     if( actor != nullptr && actor->has_trait( trait_DEBUG_HS ) ) {
         return true;
     }
-    // Intrinsic only: has_quality also walks the actor's items, which crafting_inv has
-    // already filtered.  A disjunction rather than a sum of the two counts, since a pseudo
-    // item is reachable from both sides and would be counted twice.
+
+
+
     return crafting_inv.has_provider_quality( type, level, count, actor ) ||
            ( actor != nullptr && actor->has_intrinsic_quality( type, level, count ) );
 }
@@ -1052,15 +1052,15 @@ bool tool_comp::has(
     } else {
         int charges_required = count * batch * item::find_type( type )->charge_factor();
 
-        // The `type->tool` check excludes items counted by charge used as tools,
-        // such as water purification tablets.
+
+
         if( ( flags & craft_flags::start_only ) != craft_flags::none && type->tool ) {
-            // See Character::craft_consume_tools. In theory only
-            // `charges_required / 20 + charges_required % 20` charges are
-            // consumed during the first 5% progress, however that equation
-            // sometimes decreases when the batch size increases, so we take
-            // the largest remainder value 19 to make this function return
-            // false consistently for large batch sizes.
+
+
+
+
+
+
             charges_required = std::min( charges_required, charges_required / 20 + 19 );
         }
 
@@ -1105,7 +1105,7 @@ nc_color item_comp::get_color( const Character *actor, bool has_one,
     if( available == available_status::a_insufficient ) {
         return c_brown;
     } else if( has( actor, crafting_inv, filter, batch ) ) {
-        // Will use non-empty liquid container
+
         if( std::any_of( type->pockets.begin(), type->pockets.end(), []( const pocket_data & d ) {
         return d.type == pocket_type::CONTAINER && d.watertight;
     } ) &&  crafting_inv.must_use_liq_container( type, count * batch ) ) {
@@ -1114,13 +1114,13 @@ nc_color item_comp::get_color( const Character *actor, bool has_one,
         if( crafting_inv.must_use_hallu_poison( type, count * batch ) ) {
             return c_magenta;
         }
-        // Will use favorited component
+
         if( !has( actor, crafting_inv, [&filter]( const item & it ) {
         return filter( it ) && !it.is_favorite;
         }, batch ) ) {
             return c_pink;
         }
-        // Component is OK
+
         return c_green;
     }
     return has_one ? c_dark_gray  : c_red;
@@ -1151,11 +1151,11 @@ bool requirement_data::check_enough_materials( const Character *actor,
         units::volume max_volume_of_this_comp_choice = 0_ml;
         for( const item_comp &comp : component_choices ) {
             if( check_enough_materials( actor, comp, crafting_inv, filter, batch ) ) {
-                // we need different calculations depending on whether or not the item uses charges...
+
                 const double relative_amount = comp.type->count_by_charges() ?
                                                static_cast<double>( comp.count ) / static_cast<double>( comp.type->stack_size ) : comp.count;
                 const units::volume comp_volume = comp.type->volume * relative_amount * batch;
-                // the worst case scenario is used to tally volume
+
                 max_volume_of_this_comp_choice = std::max( max_volume_of_this_comp_choice, comp_volume );
                 atleast_one_available = true;
             }
@@ -1166,8 +1166,8 @@ bool requirement_data::check_enough_materials( const Character *actor,
         }
     }
 
-    // This will be the volume of the resulting in-progress craft item (see item::volume), so we don't want to exceed it.
-    // TODO: Feedback? Some sort of indicator to the player that resulting volume is why it can't be crafted
+
+
     if( restrict_volume && total_component_volume > MAX_ITEM_VOLUME ) {
         retval = false;
     }
@@ -1185,25 +1185,25 @@ bool requirement_data::check_enough_materials( const Character *actor, const ite
     const int cnt = std::abs( comp.count ) * batch;
     const tool_comp *tq = find_by_type( tools, comp.type );
     if( tq != nullptr && tq->available == available_status::a_true ) {
-        // The very same item type is also needed as tool!
-        // Use charges of it, or use it by count?
+
+
         const int tc = tq->by_charges() ? 1 : std::abs( tq->count );
-        // Check for components + tool count. Check item amount (excludes
-        // pseudo items) and tool amount (includes pseudo items)
-        // Imagine: required = 1 welder (component) + 1 welder (tool),
-        // available = 1 welder (real item), 1 welding rig (creates
-        // a pseudo welder item). has_components(welder,2) returns false
-        // as there is only one real welder available, but has_tools(welder,2)
-        // returns true.
-        // Keep in mind that both requirements (tool+component) are checked
-        // before this. That assures that one real item is actually available,
-        // two welding rigs (and no real welder) would make this component
-        // non-available even before this function is called.
-        // Only ammo and (some) food is counted by charges, both are unlikely
-        // to appear as tool, but it's possible /-:
+
+
+
+
+
+
+
+
+
+
+
+
+
         const item_comp i_tmp( comp.type, cnt + tc );
-        const tool_comp t_tmp( comp.type, -( cnt + tc ) ); // not by charges!
-        // batch factor is explicitly 1, because it's already included in the count.
+        const tool_comp t_tmp( comp.type, -( cnt + tc ) );
+
         if( !i_tmp.has( actor, crafting_inv, filter, 1 ) &&
             !t_tmp.has( actor, crafting_inv, filter, 1 ) ) {
             comp.available = available_status::a_insufficient;
@@ -1215,13 +1215,13 @@ bool requirement_data::check_enough_materials( const Character *actor, const ite
         if( qr == nullptr || qr->level > ql.second.level ) {
             continue;
         }
-        // This item can be used for the quality requirement, same as above for specific
-        // tools applies.
-        // One provider outliving the craft is a question about items: the stack a component
-        // comes out of survives losing a charge, so what counts is how many rocks there are
-        // rather than how many stacks.  Two is a question about stacks, since two tools at
-        // once means two separate items.  `cnt` rather than the bare count, since a batch
-        // eats its component once per unit.
+
+
+
+
+
+
+
         const quality_count mode = qr->count == 1
                                    ? quality_count::units
                                    : quality_count::providers;
@@ -1236,19 +1236,19 @@ bool requirement_data::check_enough_materials( const Character *actor, const ite
 template <typename T>
 static bool apply_blacklist( std::vector<std::vector<T>> &vec, const itype_id &id )
 {
-    // remove all instances of @id type from each of the options
+
     for( auto &opts : vec ) {
         opts.erase( std::remove_if( opts.begin(), opts.end(), [&id]( const T & e ) {
             return e.type == id;
         } ), opts.end() );
     }
 
-    // did we remove the last instance of an option group?
+
     const bool blacklisted = std::any_of( vec.begin(), vec.end(), []( const std::vector<T> &e ) {
         return e.empty();
     } );
 
-    // if an option group is left empty then it can be removed
+
     vec.erase( std::remove_if( vec.begin(), vec.end(), []( const std::vector<T> &e ) {
         return e.empty();
     } ), vec.end() );
@@ -1271,8 +1271,8 @@ static void apply_replacements( std::vector<std::vector<T>> &vec,
             auto riter = replacements.find( iiter->type );
             if( riter != replacements.end() ) {
                 itype_id to_id = riter->second;
-                // Replace an item or outright remove it if its replacement
-                // is already present in the vector, to prevent duplicates
+
+
                 bool has_duplicates = std::count_if( opts.cbegin(), opts.cend(), [&to_id]( const T & item ) {
                     return item.type == to_id;
                 } ) != 0;
@@ -1327,11 +1327,11 @@ requirement_data::alter_item_comp_vector &requirement_data::get_components()
 
 requirement_data requirement_data::disassembly_requirements() const
 {
-    // TODO:
-    // Allow jsonizing those tool replacements
 
-    // Make a copy
-    // Maybe TODO: Cache it somewhere and return a reference instead
+
+
+
+
     requirement_data ret = *this;
     auto new_qualities = std::vector<quality_requirement>();
     bool remove_fire = false;
@@ -1340,7 +1340,7 @@ requirement_data requirement_data::disassembly_requirements() const
         for( const tool_comp &tool : it ) {
             const itype_id &type = tool.type;
 
-            // If crafting required a welder or forge then disassembly requires metal sawing
+
             if( type == itype_welder || type == itype_welder_crude || type == itype_oxy_torch ||
                 type == itype_forge || type == itype_char_forge ) {
                 new_qualities.emplace_back( qual_SAW_M_FINE, 1, 1 );
@@ -1351,7 +1351,7 @@ requirement_data requirement_data::disassembly_requirements() const
                 replaced = true;
                 break;
             }
-            //This ensures that you don't need a hand press to break down reloaded ammo.
+
             if( type == itype_press ) {
                 replaced = true;
                 remove_fire = true;
@@ -1365,20 +1365,20 @@ requirement_data requirement_data::disassembly_requirements() const
         }
 
         if( replaced ) {
-            // Replace the entire block of variants
-            // This avoids the pesky integrated toolset
+
+
             it.clear();
         }
     }
 
-    // Warning: This depends on the fact that tool qualities
-    // are all mandatory (don't use variants)
-    // If that ever changes, this will be wrong!
+
+
+
     if( ret.qualities.empty() ) {
         ret.qualities.resize( 1 );
     } else {
-        //If the required quality level is not empty, iterate through and replace or remove
-        //qualities with deconstruction equivalents
+
+
         for( auto &it : ret.qualities ) {
             bool replaced = false;
             for( const quality_requirement &quality : it ) {
@@ -1389,14 +1389,14 @@ requirement_data requirement_data::disassembly_requirements() const
                 }
                 if( quality.type == qual_GLARE ) {
                     replaced = true;
-                    //Just remove the glare protection requirement from deconstruction
-                    //This only happens in case of a reversible recipe, an explicit
-                    //deconstruction recipe can still specify glare protection
+
+
+
                     break;
                 }
                 if( quality.type == qual_KNIT ) {
                     replaced = true;
-                    //Ditto for knitting needles
+
                     break;
                 }
             }
@@ -1408,7 +1408,7 @@ requirement_data requirement_data::disassembly_requirements() const
 
     auto &qualities = ret.qualities[0];
     qualities.insert( qualities.end(), new_qualities.begin(), new_qualities.end() );
-    // Remove duplicate qualities
+
     {
         const auto itr = std::unique( qualities.begin(), qualities.end(),
         []( const quality_requirement & a, const quality_requirement & b ) {
@@ -1417,12 +1417,12 @@ requirement_data requirement_data::disassembly_requirements() const
         qualities.resize( std::distance( qualities.begin(), itr ) );
     }
 
-    // Remove empty variant sections
+
     ret.tools.erase( std::remove_if( ret.tools.begin(), ret.tools.end(),
     []( const std::vector<tool_comp> &tcv ) {
         return tcv.empty();
     } ), ret.tools.end() );
-    // Remove unrecoverable components
+
     ret.components.erase( std::remove_if( ret.components.begin(), ret.components.end(),
     []( std::vector<item_comp> &cov ) {
         cov.erase( std::remove_if( cov.begin(), cov.end(),
@@ -1438,10 +1438,10 @@ requirement_data requirement_data::disassembly_requirements() const
 requirement_data requirement_data::continue_requirements( const std::vector<item_comp>
         &required_comps, const item_components &remaining_comps )
 {
-    // Create an empty requirement_data
+
     requirement_data ret;
 
-    // For items we can't change what alternative we selected half way through
+
     for( const item_comp &it : required_comps ) {
         ret.components.emplace_back( std::vector<item_comp>( {it} ) );
     }
@@ -1453,17 +1453,17 @@ requirement_data requirement_data::continue_requirements( const std::vector<item
         }
     }
 
-    // Remove requirements that are completely fulfilled by current craft components
-    // For each requirement that isn't completely fulfilled, reduce the requirement by the amount
-    // that we still have
-    // We also need to consume whatever charges we use in case two requirements share a common type
+
+
+
+
     ret.components.erase( std::remove_if( ret.components.begin(), ret.components.end(),
     [&craft_components]( std::vector<item_comp> &comps ) {
         item_comp &comp = comps.front();
         if( item::count_by_charges( comp.type ) && comp.count > 0 ) {
             int qty = craft_components.charges_of( comp.type, comp.count );
             comp.count -= qty;
-            // This is terrible but inventory doesn't have a use_charges() function so...
+
             std::vector<item_location> del;
             craft_components.visit_items( [&comp, &qty, &del]( item_location e ) {
                 std::list<item> used;
@@ -1496,15 +1496,15 @@ static std::vector<std::vector<T>> consolidate( std::vector<std::vector<T>> old_
                                 const Accum &accum )
 {
     const auto type_lt = []( const T & lhs, const T & rhs ) -> bool {
-        //TODO change to use localized sorting
+
         return std::forward_as_tuple( lhs.type.str(), lhs.requirement )
         < std::forward_as_tuple( rhs.type.str(), rhs.requirement );
     };
-    // in order to simplify blueprint requirements, we merge a longer requirement
-    // list into a shorter requirement list whose types are a subsequence of the
-    // longer list's types. However, this operation is not symmetric and depends
-    // on the order of the requirement lists. Thus we sort the lists first, to
-    // ensure consistent results when the order of construction requirements changes.
+
+
+
+
+
     for( std::vector<T> &old_inner : old_vec ) {
         std::sort( old_inner.begin(), old_inner.end(), type_lt );
     }
@@ -1518,38 +1518,38 @@ static std::vector<std::vector<T>> consolidate( std::vector<std::vector<T>> old_
     for( std::vector<T> &old_inner : old_vec ) {
         bool match = false;
         for( std::vector<T> &new_inner : new_vec ) {
-            // in order to simplify blueprint requirements, we merge a longer
-            // requirement list into a shorter requirement list whose types are
-            // a subsequence of the longer list's types.
-            //
-            // note this actually may make a requirement stricter.
-            // for example, if the item requirement was
-            //   [ [ [ "a", 1 ], [ "b", 1 ], [ "c", 1 ] ],
-            //     [ [ "a", 1 ], [ "b", 1 ] ] ]
-            // then you could satisfy it by having one "a" and one "b", one
-            // "c" and one "a", two "a", or two "b", etc.
-            //
-            // but after consolidation, it becomes
-            //   [ [ [ "a", 2 ], [ "b", 2 ] ] ]
-            // then you can only satisfy it by having either 2 "a" or 2 "b"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             if( std::includes( new_inner.begin(), new_inner.end(),
                                old_inner.begin(), old_inner.end(),
                                type_lt ) ) {
-                // old_inner is a subsequence of new_inner
+
                 match = true;
                 std::swap( old_inner, new_inner );
             } else if( std::includes( old_inner.begin(), old_inner.end(),
                                       new_inner.begin(), new_inner.end(),
                                       type_lt ) ) {
-                // new_inner is a subsequence of old_inner
+
                 match = true;
             }
             if( match ) {
                 for( auto it1 = new_inner.begin(), it2 = old_inner.begin();
                      it1 < new_inner.end(); ++it2 ) {
                     if( !type_lt( *it2, *it1 ) ) {
-                        // which means *it2 and *it1 have the same type, since
-                        // we know new_inner is a subsequence of old_inner
+
+
                         *it1 = accum( *it1, *it2 );
                         ++it1;
                     }
@@ -1621,7 +1621,7 @@ bool requirement_data::has_same_requirements_as( const requirement_data &that ) 
 template<typename T>
 static void dump_req_vec( const std::vector<std::vector<T>> &vec, JsonOut &jsout )
 {
-    jsout.start_array( /*wrap=*/!vec.empty() );
+    jsout.start_array( !vec.empty() );
     for( const auto &inner : vec ) {
         jsout.start_array();
         for( const auto &val : inner ) {
@@ -1634,7 +1634,7 @@ static void dump_req_vec( const std::vector<std::vector<T>> &vec, JsonOut &jsout
 
 void requirement_data::dump( JsonOut &jsout ) const
 {
-    jsout.start_object( /*wrap=*/true );
+    jsout.start_object( true );
 
     jsout.member( "tools" );
     dump_req_vec( tools, jsout );
@@ -1657,34 +1657,34 @@ uint64_t requirement_data::make_hash() const
     return hasher( stream.str() );
 }
 
-/// Helper function for deduped_requirement_data constructor below.
-///
-/// The goal of this function is to consolidate a particular item_comp that
-/// would otherwise be duplicated between two requirements.
-///
-/// It operates recursively (increasing @p index with the depth of recursion),
-/// searching for another item_comp to merge @p leftover with.  For each
-/// compatible item_comp found it performs that merger and writes out a
-/// suitably updated form of the overall requirements to @p result.
-///
-/// If it chooses *not* to merge with any particular item_comp, then it deletes
-/// that item_comp from the options, to avoid the duplication.
-///
-/// Lastly, it also outputs a version of the requirements where @p leftover
-/// remains where it was, and all other compatible item_comp entries have been
-/// deleted.
-///
-/// @param leftover The item_comp needing to be dealt with.
-/// @param req_prefix The requirements considered so far; more will be appended
-/// to this.
-/// @param to_expand The original requirements we are working through to look
-/// for a duplicate.
-/// @param orig_index The index into the alter_item_comp_vector where @p
-/// leftover was originally to be found.  If it isn't merged with another item,
-/// then it will be re-inserted at this position.
-/// @param index The position within @p to_expand where we will next look for
-/// duplicates of @p leftover to merge with.
-/// @param result The finished requirements should be appended to this.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static void expand_item_in_reqs(
     const item_comp &leftover, requirement_data::alter_item_comp_vector req_prefix,
     const requirement_data::alter_item_comp_vector &to_expand, size_t orig_index, size_t index,
@@ -1694,8 +1694,8 @@ static void expand_item_in_reqs(
     cata_assert( orig_index < index );
 
     if( index == to_expand.size() ) {
-        // We reached the end without using the leftovers.  So need to add them
-        // as their own requirement, separate from everything else.
+
+
         req_prefix.insert( req_prefix.begin() + orig_index, { leftover } );
         result.push_back( req_prefix );
         return;
@@ -1707,21 +1707,21 @@ static void expand_item_in_reqs(
         return c.type == leftover.type;
     } );
     if( duplicate == this_requirement.end() ) {
-        // No match in this one; proceed to next
+
         req_prefix.push_back( this_requirement );
         expand_item_in_reqs( leftover, req_prefix, to_expand, orig_index, index + 1, result );
         return;
     }
-    // First option: amalgamate the leftovers into this requirement, which
-    // forces us to pick that specific option:
+
+
     requirement_data::alter_item_comp_vector req = req_prefix;
     req.push_back( { item_comp( leftover.type, leftover.count + duplicate->count ) } );
     req.insert( req.end(), to_expand.begin() + index + 1, to_expand.end() );
     result.push_back( req );
 
-    // Second option: use a separate option for this requirement, which means
-    // we need to recurse further to find something into which to amalgamate
-    // the original requirement
+
+
+
     this_requirement.erase( duplicate );
     if( !this_requirement.empty() ) {
         req_prefix.push_back( this_requirement );
@@ -1732,13 +1732,13 @@ static void expand_item_in_reqs(
 deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
         const recipe_id &context )
 {
-    // This constructor works through a requirement_data, converting it into an
-    // equivalent set of requirement_data alternatives, where each alternative
-    // has the property that no item type appears more than once.
-    //
-    // We maintain a queue of requirement_data component info to be split.
-    // Each to_check struct has a vector of component requirements, and an
-    // index.  The index is the position within the vector to be checked next.
+
+
+
+
+
+
+
     struct to_check {
         alter_item_comp_vector components;
         size_t index;
@@ -1746,7 +1746,7 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
     std::stack<to_check, std::vector<to_check>> pending;
     pending.push( { in.get_components(), 0 } );
 
-    // Make sure the tools are not duplicated.
+
     requirement_data::alter_tool_comp_vector tools_unique;
     for( auto tools : in.get_tools() ) {
         std::sort( tools.begin(), tools.end() );
@@ -1763,8 +1763,8 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
             continue;
         }
 
-        // Build a set of all the itypes used in later stages of this set of
-        // requirements.
+
+
         std::unordered_set<itype_id> later_itypes;
         for( size_t i = next.index + 1; i != next.components.size(); ++i ) {
             std::transform( next.components[i].begin(), next.components[i].end(),
@@ -1784,7 +1784,7 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
                                 );
 
         for( auto comp_it = first_duplicated; comp_it != this_requirement.end(); ++comp_it ) {
-            // Factor this requirement out into its own separate case
+
 
             alter_item_comp_vector req_prefix( next.components.begin(),
                                                next.components.begin() + next.index );
@@ -1792,14 +1792,14 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
             expand_item_in_reqs( *comp_it, req_prefix, next.components, next.index, next.index + 1,
                                  result );
             for( const alter_item_comp_vector &v : result ) {
-                // When v is smaller, that means the current requirement was
-                // deleted, in which case we don't advance index.
+
+
                 size_t index_inc = v.size() == next.components.size() ? 1 : 0;
                 pending.push( { v, next.index + index_inc } );
             }
         }
 
-        // Deal with all the remaining, non-duplicated ones
+
         this_requirement.erase( first_duplicated, this_requirement.end() );
         if( !this_requirement.empty() ) {
             alter_item_comp_vector without_dupes = next.components;
@@ -1811,10 +1811,10 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
             debugmsg( "Recipe definition %s somehow has no valid recipes!", context.str() );
         }
 
-        // Because this algorithm is super-exponential in the worst case, add a
-        // sanity check to prevent things getting too far out of control.
-        // The worst case in the core game currently is boots_fur
-        // with 114 alternatives.
+
+
+
+
         static constexpr size_t max_alternatives = 115;
         if( alternatives_.size() + pending.size() > max_alternatives ) {
             debugmsg( "Construction of deduped_requirement_data generated too many alternatives.  "

@@ -5,7 +5,7 @@
 #include "cata_utility.h"
 #include "json_loader.h"
 
-// Ensure that unifont is always loaded as a fallback font to prevent users from shooting themselves in the foot
+
 void ensure_unifont_loaded( std::vector<font_config> &font_list )
 {
     const std::string unifont = PATH_INFO::fontdir() + "unifont.ttf";
@@ -72,9 +72,9 @@ void font_config::deserialize( const JsonObject &jo )
     if( !has_path ) {
         jo.throw_error( "Dummy error - force config read to return false." );
     }
-    // Manually read hinting.
-    // Specifying enum traits for would allow all options, and we want only
-    // some to be available to the user.
+
+
+
     if( jo.has_string( "hinting" ) ) {
         hinting = hint_to_fonthint( jo.get_string( "hinting" ) );
     }
@@ -108,7 +108,7 @@ static void load_font_from_config( const JsonObject &config, const std::string &
                     typefaces.push_back( conf );
                 }
             } else {
-                // Value is neither a string nor an object.
+
                 debugmsg( "Invalid font entry for key '%s'. Font array entries should be objects or strings.",
                           key );
             }
@@ -126,7 +126,7 @@ void font_loader::load_throws( const cata_path &path )
     try {
         JsonValue json = json_loader::from_path( path );
         JsonObject config = json.get_object();
-        config.allow_omitted_members(); // We do actually visit every member, but over several functions.
+        config.allow_omitted_members();
         load_font_from_config( config, "typeface", typeface );
         load_font_from_config( config, "gui_typeface", gui_typeface );
         load_font_from_config( config, "map_typeface", map_typeface );
@@ -138,8 +138,8 @@ void font_loader::load_throws( const cata_path &path )
     }
 }
 
-// Convenience function for font_loader::save. Assumes that this is a member of
-// an object.
+
+
 static void write_font_config( JsonOut &json, const std::vector<font_config> &typefaces )
 {
     json.start_array();
@@ -164,7 +164,7 @@ static void write_font_config( JsonOut &json, const std::vector<font_config> &ty
                     json.member( "hinting", "NoAuto" );
                     break;
                 default:
-                    // This should never be reached.
+
                     json.member( "hinting", "Default" );
                     break;
             }
@@ -183,7 +183,7 @@ void font_loader::save( const cata_path &path ) const
 {
     try {
         write_to_file( path, [&]( std::ostream & stream ) {
-            JsonOut json( stream, true ); // pretty-print
+            JsonOut json( stream, true );
             json.start_object();
             json.member( "//", "See docs/user-guides/FONT_OPTIONS.md for an explanation of this file." );
             json.member( "typeface" );
@@ -214,4 +214,4 @@ void font_loader::load()
     }
 }
 
-#endif // TILES
+#endif

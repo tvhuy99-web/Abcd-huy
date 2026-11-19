@@ -12,9 +12,9 @@
 
 class vehicle;
 
-/*
- * Talker wrapper class for vehicle.
- */
+
+
+
 class talker_vehicle_const: public const_talker_cloner<talker_vehicle_const>
 {
     public:
@@ -30,7 +30,7 @@ class talker_vehicle_const: public const_talker_cloner<talker_vehicle_const>
             return me_veh_const;
         }
 
-        // identity and location
+
         std::string disp_name() const override;
         std::string get_name() const override;
         int posx( const map &here ) const override;
@@ -80,7 +80,7 @@ class talker_vehicle: public talker_vehicle_const, public talker_cloner<talker_v
         talker_vehicle &operator=( talker_vehicle && ) = delete;
         ~talker_vehicle() override = default;
 
-        // underlying element accessor functions
+
         vehicle *get_vehicle() override {
             return me_veh;
         }
@@ -95,5 +95,5 @@ class talker_vehicle: public talker_vehicle_const, public talker_cloner<talker_v
         vehicle *me_veh{};
 };
 
-#endif // CATA_SRC_TALKER_VEHICLE_H
+#endif
 #pragma once

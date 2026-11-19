@@ -183,26 +183,26 @@ TEST_CASE( "Nested_monster_groups_spawn_chance", "[mongroup]" )
 
     const int iters = 10000;
 
-    // < result, < layer, expected prob, count > >
+
     std::map<mtype_id, std::tuple<int, float, int>> results {
-        // top layer - 33.3%
+
         { mon_test_CBM,                      { 0, 1.f / 3.f, 0 } },
         { mon_test_bovine,                   { 0, 1.f / 3.f, 0 } },
-        // nested layer 1 - 15.9% (47.6%)
+
         { mon_test_shearable,                { 1, ( 1.f / 3.f ) *( 50.f / 105.f ), 0 } },
         { mon_test_non_shearable,            { 1, ( 1.f / 3.f ) *( 50.f / 105.f ), 0 } },
-        // nested layer 2 - 0.8% (2.4% (50%))
+
         { mon_test_speed_desc_base,          { 2, ( ( 1.f / 3.f ) * ( 5.f / 105.f ) ) * 0.5f, 0 } },
         { mon_test_speed_desc_base_immobile, { 2, ( ( 1.f / 3.f ) * ( 5.f / 105.f ) ) * 0.5f, 0 } }
     };
 
-    // < layer, < expected prob, count > >
+
     std::map<int, std::pair<float, int>> layers {
-        // top layer - 66.7%
+
         { 0, { 2.f / 3.f, 0 } },
-        // nested layer 1 - 31.7% (95.2%)
+
         { 1, { ( 1.f / 3.f ) *( 100.f / 105.f ), 0 } },
-        // nested layer 2 - 1.6% (4.8% (100%))
+
         { 2, { ( 1.f / 3.f ) *( 5.f / 105.f ), 0 } }
     };
 
@@ -245,7 +245,7 @@ TEST_CASE( "Nested_monster_group_pack_size", "[mongroup]" )
                 MonsterGroupManager::GetResultFromGroup( mg, nullptr, &found );
             REQUIRE( found );
 
-            // pack_size == [2, 4] * 1
+
             CHECK( res.size() == 1 );
             int total = 0;
             for( const MonsterGroupResult &mgr : res ) {
@@ -263,7 +263,7 @@ TEST_CASE( "Nested_monster_group_pack_size", "[mongroup]" )
                 MonsterGroupManager::GetResultFromGroup( mg, nullptr, &found );
             REQUIRE( found );
 
-            // pack_size == [2, 4] * [4, 6]
+
             CHECK( res.size() == Approx( 5 ).margin( 1 ) );
             int total = 0;
             for( const MonsterGroupResult &mgr : res ) {
@@ -293,7 +293,7 @@ static void test_multi_spawn( const mtype_id &old_mon, int range, int min, int m
 {
     const int upgrade_attempts = 100;
     clear_avatar();
-    // make sure tested scenarios haven't messed with our start time
+
     calendar::start_of_cataclysm = calendar::turn_zero;
     calendar::start_of_game = calendar::turn_zero;
 
@@ -309,8 +309,8 @@ static void test_multi_spawn( const mtype_id &old_mon, int range, int min, int m
         REQUIRE( orig->pos_bub() == ground_zero );
         REQUIRE( orig->can_upgrade() );
 
-        // monster::next_upgrade_time has a ~3% chance to outright fail
-        // so keep trying until we succeed
+
+
         orig->try_upgrade( false );
         if( orig->type->id == old_mon ) {
             continue;

@@ -12,10 +12,10 @@ static const itype_id itype_test_croc_socks( "test_croc_socks" );
 static const itype_id itype_test_longshirt( "test_longshirt" );
 static const itype_id itype_test_socks( "test_socks" );
 
-// Tests for Character bodypart exposure
-//
-// Covers functions:
-// - Character::bodypart_exposure
+
+
+
+
 
 TEST_CASE( "character_body_part_exposure", "[char][bodypart][exposure]" )
 {
@@ -118,4 +118,3 @@ TEST_CASE( "character_body_part_exposure", "[char][bodypart][exposure]" )
         }
     }
 }
-

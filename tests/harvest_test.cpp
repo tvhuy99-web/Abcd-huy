@@ -145,10 +145,10 @@ TEST_CASE( "butchery_speed", "[harvest]" )
     do_butchery_timing( 8 * 60 * 60, butcher_type::FULL, 5, mon_deer );
 }
 
-// Regression test for #85877 / #85136: butchering birds with sub-gram harvest
-// items (down_feather weighs 10 mg) caused division by zero in the yield
-// calculation because to_gram() truncates sub-gram weights to 0.
-// On x86 this silently produces 0 feathers; on ARM64 it produces 333333 per tile.
+
+
+
+
 TEST_CASE( "butchery_sub_gram_harvest_items", "[harvest]" )
 {
     Character &u = get_player_character();
@@ -173,7 +173,7 @@ TEST_CASE( "butchery_sub_gram_harvest_items", "[harvest]" )
     act.calculate_butchery_data( u, bd );
     destroy_the_carcass( bd, u );
 
-    // Count down_feather charges on the butchery tile and all overflow tiles
+
     int total_down_feathers = 0;
     for( const tripoint_bub_ms &p : closest_points_first( bird_loc, 0, 3 ) ) {
         for( const item &it : here.i_at( p ) ) {
@@ -183,15 +183,15 @@ TEST_CASE( "butchery_sub_gram_harvest_items", "[harvest]" )
         }
     }
 
-    // Chicken is 2 kg, down_feather mass_ratio is 0.005, so 10g of feather material.
-    // Each down_feather weighs 10 mg, so the correct yield is around 500-1000
-    // (depending on skill multiplier which maxes at 1.0).
-    // Before the fix: 0 on x86 (negative roll from UB), 333333/tile on ARM64.
+
+
+
+
     CAPTURE( total_down_feathers );
     CHECK( total_down_feathers > 0 );
     CHECK( total_down_feathers < 5000 );
 
-    // Clean up all tiles that might have overflow items
+
     for( const tripoint_bub_ms &p : closest_points_first( bird_loc, 0, 3 ) ) {
         here.i_clear( p );
     }

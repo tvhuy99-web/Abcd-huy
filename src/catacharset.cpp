@@ -15,8 +15,8 @@
 #include "mmsystem.h"
 #endif
 
-//copied from SDL2_ttf code
-//except type changed from unsigned to uint32_t
+
+
 uint32_t UTF8_getch( const char **src, int *srclen )
 {
     const unsigned char *p = *reinterpret_cast<const unsigned char **>( src );
@@ -98,9 +98,9 @@ uint32_t UTF8_getch( const char **src, int *srclen )
     return ch;
 }
 
-//Calculate width of a Unicode string
-//Latin characters have a width of 1
-//CJK characters have a width of 2, etc
+
+
+
 int utf8_width( std::string_view s, const bool ignore_tags )
 {
     if( ignore_tags ) {
@@ -153,11 +153,11 @@ std::string utf8_justify( const std::string &str, const int width, const bool ig
     }
 }
 
-//Convert cursor position to byte offset
-//returns the first character position in bytes behind the cursor position.
-//If the cursor is not on the first half of the character,
-//prevpos (which points to the first byte of the cursor located char)
-// should be a different value.
+
+
+
+
+
 int cursorx_to_position( const char *line, int cursorx, int *prevpos, int maxlen )
 {
     int dummy;
@@ -265,7 +265,7 @@ void base64_decode_bitset( std::string_view packed_bitset,
 
 std::string base64_encode( const std::string_view &str )
 {
-    //assume it is already encoded
+
     if( !str.empty() && str[0] == '#' ) {
         return std::string{ str };
     }
@@ -304,7 +304,7 @@ std::string base64_encode_raw( std::string_view str )
 
 std::string base64_decode( const std::string_view &str )
 {
-    // do not decode if it is not base64
+
     if( str.empty() || str[0] != '#' || ( str.length() - 1 ) % 4 != 0 ) {
         return std::string{ str };
     }
@@ -442,9 +442,9 @@ int center_text_pos( const utf8_wrapper &text, int start_pos, int end_pos )
     return start_pos + position;
 }
 
-// In an attempt to maintain compatibility with gcc 4.6, use an initializer function
-// instead of a delegated constructor.
-// When we declare a hard dependency on gcc 4.7+, turn this back into a delegated constructor.
+
+
+
 void utf8_wrapper::init_utf8_wrapper()
 {
     const char *utf8str = _data.c_str();
@@ -505,12 +505,12 @@ size_t utf8_wrapper::byte_start_display( size_t bstart, size_t start ) const
         }
         const int width = mk_wcwidth( ch );
         if( static_cast<int>( start ) >= width ) {
-            // If width is 0, include the code point (might be combination character)
-            // Same when width is actually smaller than start
+
+
             start -= width;
         } else {
-            // If width is 2 and start is 1, stop before the multi-cell code point
-            // Same when width is 1 and start is 0.
+
+
             return prevstart - _data.c_str();
         }
     }
@@ -597,6 +597,6 @@ std::string utf8_wrapper::shorten( size_t maxlength ) const
     if( display_width() <= maxlength ) {
         return str();
     }
-    // 2026 is the utf8 for …
+
     return substr_display( 0, maxlength - 1 ).str() + "\u2026";
 }

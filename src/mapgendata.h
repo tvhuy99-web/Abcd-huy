@@ -34,7 +34,7 @@ struct region_settings;
 namespace om_direction
 {
 enum class type : int;
-} // namespace om_direction
+}
 
 struct mapgen_arguments {
     mapgen_arguments() = default;
@@ -73,12 +73,12 @@ struct hash<mapgen_arguments> {
     size_t operator()( const mapgen_arguments & ) const noexcept;
 };
 
-} // namespace std
+}
 
 namespace mapgendata_detail
 {
 
-// helper to get a variant value with any variant being extractable as a string
+
 template<typename Result>
 inline Result extract_variant_value( const cata_variant &v )
 {
@@ -95,23 +95,23 @@ inline cata_variant extract_variant_value<cata_variant>( const cata_variant &v )
     return v;
 }
 
-} // namespace mapgendata_detail
+}
 
-/**
- * Contains various information regarding the individual mapgen instance
- * (generating a specific part of the map), used by the various mapgen
- * functions to do their thing.
- *
- * Contains for example:
- * - the @ref map to generate the map onto,
- * - the overmap terrain of the area to generate and its surroundings,
- * - regional settings to use.
- *
- * An instance of this class is passed through most of the mapgen code.
- * If any of these functions need more information, add them here.
- */
-// TODO: documentation
-// TODO: encapsulate data member
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class mapgendata
 {
     private:
@@ -127,14 +127,14 @@ class mapgendata
     public:
         std::array<oter_id, 8> t_nesw;
 
-        int n_fac = 0;  // dir == 0
-        int e_fac = 0;  // dir == 1
-        int s_fac = 0;  // dir == 2
-        int w_fac = 0;  // dir == 3
-        int ne_fac = 0; // dir == 4
-        int se_fac = 0; // dir == 5
-        int sw_fac = 0; // dir == 6
-        int nw_fac = 0; // dir == 7
+        int n_fac = 0;
+        int e_fac = 0;
+        int s_fac = 0;
+        int w_fac = 0;
+        int ne_fac = 0;
+        int se_fac = 0;
+        int sw_fac = 0;
+        int nw_fac = 0;
 
         oter_id t_above;
         oter_id t_below;
@@ -157,29 +157,29 @@ class mapgendata
 
         std::vector<mapgen_phase> skip;
 
-        /**
-         * Creates a copy of this mapgen data, but stores a different @ref terrain_type.
-         * Useful when you want to create a base map (e.g. forest/field/river), that gets
-         * refined later:
-         * @code
-         * void generate_foo( mapgendata &dat ) {
-         *     mapgendata base_dat( dat, oter_id( "forest" ) );
-         *     generate( base_dat );
-         *     ... // refine map some more.
-         * }
-         * @endcode
-         */
+
+
+
+
+
+
+
+
+
+
+
+
         mapgendata( const mapgendata &other, const oter_id &other_id );
 
-        /**
-         * Creates a copy of this mapgendata, but stores new parameter values.
-         */
+
+
+
         mapgendata( const mapgendata &other, const mapgen_arguments & );
 
-        /**
-         * Creates a copy of this mapgendata, but stores new parameter values
-         * and flags.
-         */
+
+
+
+
         mapgendata( const mapgendata &other, const mapgen_arguments &,
                     const enum_bitset<jmapgen_flags> & );
 
@@ -276,4 +276,4 @@ class mapgendata
         }
 };
 
-#endif // CATA_SRC_MAPGENDATA_H
+#endif

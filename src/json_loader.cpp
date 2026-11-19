@@ -43,17 +43,17 @@ flexbuffer_cache &user_cache()
 
 std::unordered_map<std::string, std::unique_ptr<flexbuffer_cache>> save_caches;
 
-// There's no measurable need to persist flatbuffers for save data, so just create a per-world 'cache' which parses
-// but doesn't disk-cache the parsed flatbuffer.
+
+
 flexbuffer_cache &cache_for_save( const cata_path &path )
 {
-    // Assume lexically normal path
+
     auto path_it = path.get_relative_path().begin();
-    // First path element is the world name
+
     std::filesystem::path worldname_path = *path_it;
     std::string worldname_str = worldname_path.u8string();
     ++path_it;
-    // Next element is either a file, a character folder, or the maps folder
+
     std::string folder_or_file = path_it->u8string();
     ++path_it;
 
@@ -79,8 +79,8 @@ flexbuffer_cache &cache_for_lexically_normal_path( const cata_path &path )
         case cata_path::root_path::memorial:
             return memorial_cache();
         case cata_path::root_path::save:
-            // Saves we store data one per save.
-            // But also... per character per save.
+
+
             return cache_for_save( path );
         case cata_path::root_path::user:
             return user_cache();
@@ -91,7 +91,7 @@ flexbuffer_cache &cache_for_lexically_normal_path( const cata_path &path )
     }
 }
 
-// The file pointed to by source_file must exist.
+
 std::optional<JsonValue> from_path_at_offset_opt_impl( const cata_path &source_file,
         size_t offset )
 {
@@ -112,7 +112,7 @@ std::optional<JsonValue> from_path_at_offset_opt_impl( const cata_path &source_f
     return JsonValue( std::move( buffer ), buffer_root, nullptr, 0 );
 }
 
-} // namespace
+}
 
 std::optional<JsonValue> json_loader::from_path_at_offset_opt( const cata_path &source_file,
         size_t offset ) noexcept( false )

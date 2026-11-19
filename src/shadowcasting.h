@@ -16,11 +16,11 @@
 
 struct fragment_cloud;
 
-// For light we store four values, depending on the direction that the light
-// comes from.  This allows us to determine whether the side of the wall the
-// player is looking at is lit.
-// For non-opaque tiles direction doesn't matter so we just use the single
-// default_ value.
+
+
+
+
+
 enum class quadrant : int {
     NE,
     SE,
@@ -77,9 +77,9 @@ struct four_quadrants {
     friend four_quadrants elementwise_max( const four_quadrants &l, const float r ) {
         four_quadrants result( l );
         for( float &v : result.values ) {
-            // This looks like it should be v = std::max( v, r ) doesn't it?
-            // It turns out this is one simple trick that mingw-w64 HATES,
-            // triggering constant crashes when the above code was used.
+
+
+
             if( v < r ) {
                 v = r;
             }
@@ -89,16 +89,16 @@ struct four_quadrants {
 };
 static_assert( std::is_trivially_copyable_v<four_quadrants> );
 
-// Hoisted to header and inlined so the test in tests/shadowcasting_test.cpp can use it.
-// Beer-Lambert law says attenuation is going to be equal to
-// 1 / (e^al) where a = coefficient of absorption and l = length.
-// Factoring out length, we get 1 / (e^((a1*a2*a3*...*an)*l))
-// We merge all of the absorption values by taking their cumulative average.
+
+
+
+
+
 inline float sight_calc( const float &numerator, const float &transparency, const int &distance )
 {
     return numerator / std::exp( transparency * distance );
 }
-inline bool sight_check( const float &transparency, const float &/*intensity*/ )
+inline bool sight_check( const float &transparency, const float & )
 {
     return transparency > LIGHT_TRANSPARENCY_SOLID;
 }
@@ -133,7 +133,7 @@ using array_of_grids_of =
     std::array<cata::mdarray<T, point_bub_ms>*, OVERMAP_LAYERS>
     >;
 
-// TODO: Generalize the floor check, allow semi-transparent floors
+
 template< typename T, T( *calc )( const T &, const T &, const int & ),
           bool( *check )( const T &, const T & ),
           T( *accumulate )( const T &, const T &, const int & ) >
@@ -144,4 +144,4 @@ void cast_zlight(
     const tripoint_bub_ms &origin, int offset_distance, T numerator,
     vertical_direction dir = vertical_direction::BOTH );
 
-#endif // CATA_SRC_SHADOWCASTING_H
+#endif

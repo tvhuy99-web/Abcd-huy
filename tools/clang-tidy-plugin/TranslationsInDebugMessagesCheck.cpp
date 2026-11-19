@@ -14,7 +14,7 @@ namespace clang::tidy::cata
 
 void TranslationsInDebugMessagesCheck::registerMatchers( MatchFinder *Finder )
 {
-    // <translation function>( ... <json input object>.<method>(...) ... )
+
     Finder->addMatcher(
         callExpr(
             callee(
@@ -59,4 +59,4 @@ void TranslationsInDebugMessagesCheck::check( const MatchFinder::MatchResult &Re
     }
 }
 
-} // namespace clang::tidy::cata
+}

@@ -25,7 +25,7 @@ class map_entity_stack
                 std::optional<std::string> cached_distance_string;
                 std::optional<nc_color> cached_color;
 
-                //only expected to be used for things like lists and vectors
+
                 entity_group() : count( 0 ), entity( nullptr ) {};
                 entity_group( const tripoint_rel_ms &p, int arg_count, const T *entity ) :
                     pos( p ), count( arg_count ), entity( entity ) {};
@@ -50,14 +50,14 @@ class map_entity_stack
         void select_next();
         void select_prev();
 
-        //only expected to be used for things like lists and vectors
+
         map_entity_stack();
         map_entity_stack( const T *entity, const tripoint_rel_ms &pos, int count = 1 );
 
-        // This adds to an existing entity group if the last current
-        // entity group is the same position and otherwise creates and
-        // adds to a new entity group. Note that it does not search
-        // through all older entity groups for a match.
+
+
+
+
         void add_at_pos( const T *entity, const tripoint_rel_ms &pos, int count = 1 );
 
         bool compare( const map_entity_stack<T> &rhs,
@@ -72,4 +72,4 @@ template<typename T>
 int list_filter_low_priority( std::vector<map_entity_stack<T>*> &stack, int start,
                               const std::string &priorities );
 
-#endif // CATA_SRC_MAP_ENTITY_STACK_H
+#endif

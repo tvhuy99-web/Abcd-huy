@@ -18,7 +18,7 @@
 namespace
 {
 generic_factory<butchery_requirements> butchery_req_factory( "butchery_requirements" );
-} // namespace
+}
 
 template<>
 const butchery_requirements &string_id<butchery_requirements>::obj() const
@@ -118,7 +118,7 @@ std::pair<float, requirement_id> butchery_requirements::get_fastest_requirements
             return std::make_pair( riter.first, riter.second.at( size ).at( butcher ) );
         }
     }
-    // we didn't find anything we could "craft", so return the requirement that's the fastest
+
     const auto first = requirements.rbegin();
     return std::make_pair( first->first, first->second.at( size ).at( butcher ) );
 }

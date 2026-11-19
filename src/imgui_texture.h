@@ -35,8 +35,8 @@ static TILE_CATEGORY get_category( const string_id<T> & )
 
 namespace cataimgui
 {
-// does nothing if not a tiles build
-// todo: overload for non-string_id based categories (e.g. NPCs)
+
+
 template<typename T>
 // nolint for curses build...
 // NOLINTBEGIN(unused-parameter)
@@ -61,6 +61,6 @@ void draw_texture( const string_id<T> &id, const tripoint_bub_ms &p, ImVec2 size
 #endif
 }
 // NOLINTEND(unused-parameter)
-} // namespace cataimgui
+}
 
-#endif // CATA_SRC_IMGUI_TEXTURE_H
+#endif

@@ -74,77 +74,126 @@ template<>
 std::string enum_to_string<tut_lesson>( tut_lesson data )
 {
     switch( data ) {
-            // *INDENT-OFF*
-        case tut_lesson::LESSON_INTRO: return "LESSON_INTRO";
-        case tut_lesson::LESSON_MOVE: return "LESSON_MOVE";
-        case tut_lesson::LESSON_MOVEMENT_MODES: return "LESSON_MOVEMENT_MODES";
-        case tut_lesson::LESSON_LOOK: return "LESSON_LOOK";
-        case tut_lesson::LESSON_OPEN: return "LESSON_OPEN";
-        case tut_lesson::LESSON_CLOSE: return "LESSON_CLOSE";
-        case tut_lesson::LESSON_SMASH: return "LESSON_SMASH";
-        case tut_lesson::LESSON_WINDOW: return "LESSON_WINDOW";
-        case tut_lesson::LESSON_PICKUP: return "LESSON_PICKUP";
-        case tut_lesson::LESSON_EXAMINE: return "LESSON_EXAMINE";
-        case tut_lesson::LESSON_INTERACT: return "LESSON_INTERACT";
-        case tut_lesson::LESSON_GOT_ARMOR: return "LESSON_GOT_ARMOR";
-        case tut_lesson::LESSON_GOT_WEAPON: return "LESSON_GOT_WEAPON";
-        case tut_lesson::LESSON_GOT_FOOD: return "LESSON_GOT_FOOD";
-        case tut_lesson::LESSON_GOT_TOOL: return "LESSON_GOT_TOOL";
-        case tut_lesson::LESSON_GOT_GUN: return "LESSON_GOT_GUN";
-        case tut_lesson::LESSON_GOT_AMMO: return "LESSON_GOT_AMMO";
-        case tut_lesson::LESSON_WORE_ARMOR: return "LESSON_WORE_ARMOR";
-        case tut_lesson::LESSON_WORE_STORAGE: return "LESSON_WORE_STORAGE";
-        case tut_lesson::LESSON_WORE_MASK: return "LESSON_WORE_MASK";
-        case tut_lesson::LESSON_WEAPON_INFO: return "LESSON_WEAPON_INFO";
-        case tut_lesson::LESSON_HIT_MONSTER: return "LESSON_HIT_MONSTER";
-        case tut_lesson::LESSON_PAIN: return "LESSON_PAIN";
-        case tut_lesson::LESSON_BUTCHER: return "LESSON_BUTCHER";
-        case tut_lesson::LESSON_TOOK_PAINKILLER: return "LESSON_TOOK_PAINKILLER";
-        case tut_lesson::LESSON_TOOK_CIG: return "LESSON_TOOK_CIG";
-        case tut_lesson::LESSON_DRANK_WATER: return "LESSON_DRANK_WATER";
-        case tut_lesson::LESSON_ACT_GRENADE: return "LESSON_ACT_GRENADE";
-        case tut_lesson::LESSON_ACT_BUBBLEWRAP: return "LESSON_ACT_BUBBLEWRAP";
-        case tut_lesson::LESSON_GUN_LOAD: return "LESSON_GUN_LOAD";
-        case tut_lesson::LESSON_GUN_FIRE: return "LESSON_GUN_FIRE";
-        case tut_lesson::LESSON_RECOIL: return "LESSON_RECOIL";
-        case tut_lesson::LESSON_STAIRS: return "LESSON_STAIRS";
-        case tut_lesson::LESSON_DARK_NO_FLASH: return "LESSON_DARK_NO_FLASH";
-        case tut_lesson::LESSON_DARK: return "LESSON_DARK";
-        case tut_lesson::LESSON_PICKUP_WATER: return "LESSON_PICKUP_WATER";
-        case tut_lesson::LESSON_MONSTER_SIGHTED: return "LESSON_MONSTER_SIGHTED";
-        case tut_lesson::LESSON_LOCKED_DOOR: return "LESSON_LOCKED_DOOR";
-        case tut_lesson::LESSON_RESTORE_STAMINA: return "LESSON_RESTORE_STAMINA";
-        case tut_lesson::LESSON_REACH_ATTACK: return "LESSON_REACH_ATTACK";
-        case tut_lesson::LESSON_HOLSTERS_WEAR: return "LESSON_HOLSTERS_WEAR";
-        case tut_lesson::LESSON_HOLSTERS_ACTIVATE: return "LESSON_HOLSTERS_ACTIVATE";
-        case tut_lesson::LESSON_INVENTORY: return "LESSON_INVENTORY";
-        case tut_lesson::LESSON_FLASHLIGHT: return "LESSON_FLASHLIGHT";
-        case tut_lesson::LESSON_REMOTE_USE: return "LESSON_REMOTE_USE";
-        case tut_lesson::LESSON_CRAFTING_FOOD: return "LESSON_CRAFTING_FOOD";
-        case tut_lesson::LESSON_CONSTRUCTION: return "LESSON_CONSTRUCTION";
-        case tut_lesson::LESSON_THROWING: return "LESSON_THROWING";
-        case tut_lesson::LESSON_FINALE: return "LESSON_FINALE";
-            // *INDENT-ON*
+
+        case tut_lesson::LESSON_INTRO:
+            return "LESSON_INTRO";
+        case tut_lesson::LESSON_MOVE:
+            return "LESSON_MOVE";
+        case tut_lesson::LESSON_MOVEMENT_MODES:
+            return "LESSON_MOVEMENT_MODES";
+        case tut_lesson::LESSON_LOOK:
+            return "LESSON_LOOK";
+        case tut_lesson::LESSON_OPEN:
+            return "LESSON_OPEN";
+        case tut_lesson::LESSON_CLOSE:
+            return "LESSON_CLOSE";
+        case tut_lesson::LESSON_SMASH:
+            return "LESSON_SMASH";
+        case tut_lesson::LESSON_WINDOW:
+            return "LESSON_WINDOW";
+        case tut_lesson::LESSON_PICKUP:
+            return "LESSON_PICKUP";
+        case tut_lesson::LESSON_EXAMINE:
+            return "LESSON_EXAMINE";
+        case tut_lesson::LESSON_INTERACT:
+            return "LESSON_INTERACT";
+        case tut_lesson::LESSON_GOT_ARMOR:
+            return "LESSON_GOT_ARMOR";
+        case tut_lesson::LESSON_GOT_WEAPON:
+            return "LESSON_GOT_WEAPON";
+        case tut_lesson::LESSON_GOT_FOOD:
+            return "LESSON_GOT_FOOD";
+        case tut_lesson::LESSON_GOT_TOOL:
+            return "LESSON_GOT_TOOL";
+        case tut_lesson::LESSON_GOT_GUN:
+            return "LESSON_GOT_GUN";
+        case tut_lesson::LESSON_GOT_AMMO:
+            return "LESSON_GOT_AMMO";
+        case tut_lesson::LESSON_WORE_ARMOR:
+            return "LESSON_WORE_ARMOR";
+        case tut_lesson::LESSON_WORE_STORAGE:
+            return "LESSON_WORE_STORAGE";
+        case tut_lesson::LESSON_WORE_MASK:
+            return "LESSON_WORE_MASK";
+        case tut_lesson::LESSON_WEAPON_INFO:
+            return "LESSON_WEAPON_INFO";
+        case tut_lesson::LESSON_HIT_MONSTER:
+            return "LESSON_HIT_MONSTER";
+        case tut_lesson::LESSON_PAIN:
+            return "LESSON_PAIN";
+        case tut_lesson::LESSON_BUTCHER:
+            return "LESSON_BUTCHER";
+        case tut_lesson::LESSON_TOOK_PAINKILLER:
+            return "LESSON_TOOK_PAINKILLER";
+        case tut_lesson::LESSON_TOOK_CIG:
+            return "LESSON_TOOK_CIG";
+        case tut_lesson::LESSON_DRANK_WATER:
+            return "LESSON_DRANK_WATER";
+        case tut_lesson::LESSON_ACT_GRENADE:
+            return "LESSON_ACT_GRENADE";
+        case tut_lesson::LESSON_ACT_BUBBLEWRAP:
+            return "LESSON_ACT_BUBBLEWRAP";
+        case tut_lesson::LESSON_GUN_LOAD:
+            return "LESSON_GUN_LOAD";
+        case tut_lesson::LESSON_GUN_FIRE:
+            return "LESSON_GUN_FIRE";
+        case tut_lesson::LESSON_RECOIL:
+            return "LESSON_RECOIL";
+        case tut_lesson::LESSON_STAIRS:
+            return "LESSON_STAIRS";
+        case tut_lesson::LESSON_DARK_NO_FLASH:
+            return "LESSON_DARK_NO_FLASH";
+        case tut_lesson::LESSON_DARK:
+            return "LESSON_DARK";
+        case tut_lesson::LESSON_PICKUP_WATER:
+            return "LESSON_PICKUP_WATER";
+        case tut_lesson::LESSON_MONSTER_SIGHTED:
+            return "LESSON_MONSTER_SIGHTED";
+        case tut_lesson::LESSON_LOCKED_DOOR:
+            return "LESSON_LOCKED_DOOR";
+        case tut_lesson::LESSON_RESTORE_STAMINA:
+            return "LESSON_RESTORE_STAMINA";
+        case tut_lesson::LESSON_REACH_ATTACK:
+            return "LESSON_REACH_ATTACK";
+        case tut_lesson::LESSON_HOLSTERS_WEAR:
+            return "LESSON_HOLSTERS_WEAR";
+        case tut_lesson::LESSON_HOLSTERS_ACTIVATE:
+            return "LESSON_HOLSTERS_ACTIVATE";
+        case tut_lesson::LESSON_INVENTORY:
+            return "LESSON_INVENTORY";
+        case tut_lesson::LESSON_FLASHLIGHT:
+            return "LESSON_FLASHLIGHT";
+        case tut_lesson::LESSON_REMOTE_USE:
+            return "LESSON_REMOTE_USE";
+        case tut_lesson::LESSON_CRAFTING_FOOD:
+            return "LESSON_CRAFTING_FOOD";
+        case tut_lesson::LESSON_CONSTRUCTION:
+            return "LESSON_CONSTRUCTION";
+        case tut_lesson::LESSON_THROWING:
+            return "LESSON_THROWING";
+        case tut_lesson::LESSON_FINALE:
+            return "LESSON_FINALE";
+
         case tut_lesson::NUM_LESSONS:
             break;
     }
     cata_fatal( "Invalid tut_lesson" );
 }
-} // namespace io
+}
 
 bool tutorial_game::init()
 {
     loading_ui::done();
-    // TODO: clean up old tutorial
 
-    // Start at noon at the end of the spring and set a fixed temperature of 20 degrees to prevent freezing
+
+
     calendar::turn = calendar::start_of_cataclysm + 8_weeks + 12_hours;
     get_weather().forced_temperature = units::from_celsius( 20 );
 
     tutorials_seen.clear();
     get_scent().reset();
-    // We use a Z-factor of 10 so that we don't plop down tutorial rooms in the
-    // middle of the "real" game world
+
+
     avatar &player_character = get_avatar();
     player_character.normalize();
 
@@ -165,9 +214,9 @@ bool tutorial_game::init()
     //~ default name for the tutorial
     player_character.name = _( "John Smith" );
     player_character.prof = profession::generic();
-    // overmap terrain coordinates
+
     const tripoint_om_omt lp( 50, 50, 0 );
-    // Assume overmap zero
+
     const tripoint_abs_omt lp_abs = project_combine( point_abs_om(), lp );
     overmap &starting_om = overmap_buffer.get( point_abs_om() );
     starting_om.place_special_forced( overmap_special_tutorial, lp, om_direction::type::north );
@@ -185,14 +234,14 @@ bool tutorial_game::init()
     g->load_map( project_to<coords::sm>( lp_abs ) );
     player_character.move_to( project_to<coords::ms>( lp_abs ) + point( 2, 2 ) );
 
-    // This shifts the view to center the players pos
+
     g->update_map( player_character );
 #if defined(__ANDROID__)
-    // The tutorial map has four stationary practice dummies. On Android the
-    // map can be available before its mapgen monsters are activated, leaving
-    // the screen-reader tutorial asking for a melee hit when no target exists.
-    // Restore only empty prescribed tiles, never overwrite an existing
-    // creature, and never respawn dummies killed during play.
+
+
+
+
+
     const std::array<point, 4> dummy_offsets = {
         point( 21, 9 ), point( 8, 10 ), point( 15, 12 ), point( 18, 22 )
     };
@@ -204,9 +253,9 @@ bool tutorial_game::init()
         if( tutorial_map.inbounds( tile ) && g->is_empty( tile ) ) {
             const monster *placed = g->place_critter_at( tutorial_dummy, tile );
             a11y::android::diagnostic_event( "TUTORIAL_DUMMY",
-                    std::string( "action=" ) + ( placed ? "restored" : "restore_failed" ) +
-                    " x=" + std::to_string( tutorial_origin.x() + offset.x ) +
-                    " y=" + std::to_string( tutorial_origin.y() + offset.y ) );
+                                             std::string( "action=" ) + ( placed ? "restored" : "restore_failed" ) +
+                                             " x=" + std::to_string( tutorial_origin.x() + offset.x ) +
+                                             " y=" + std::to_string( tutorial_origin.y() + offset.y ) );
         }
     }
 #endif
@@ -217,7 +266,7 @@ void tutorial_game::per_turn()
 {
     map &here = get_map();
 
-    // note that add_message does nothing if the message was already shown
+
     add_message( tut_lesson::LESSON_INTRO );
     add_message( tut_lesson::LESSON_MOVE );
 
@@ -306,7 +355,7 @@ void tutorial_game::pre_action( action_id &act )
                       "Weird things might happen when you load this save.  You have been warned." ) );
             break;
         default:
-            // Other actions are fine.
+
             break;
     }
 }
@@ -389,7 +438,7 @@ void tutorial_game::post_action( action_id act )
             break;
 
         default:
-            // TODO: add more actions here
+
             break;
 
     }
@@ -404,8 +453,8 @@ void tutorial_game::add_message( tut_lesson lesson )
     g->invalidate_main_ui_adaptor();
     std::string lesson_id = io::enum_to_string<tut_lesson>( lesson );
 #if defined(__ANDROID__)
-    // The Android screen reader uses touch gestures, not keyboard bindings.
-    // Keep the original snippets intact for desktop and other platforms.
+
+
     lesson_id = "ANDROID_READER_" + lesson_id;
 #endif
     std::string translated_lesson = SNIPPET.get_snippet_by_id( snippet_id( lesson_id ) )

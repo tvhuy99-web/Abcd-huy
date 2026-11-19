@@ -56,7 +56,7 @@ using PickupMap = std::map<std::string, ItemCount>;
 static const flag_id json_flag_SHREDDED( "SHREDDED" );
 static const zone_type_id zone_type_NO_AUTO_PICKUP( "NO_AUTO_PICKUP" );
 
-//helper function for Pickup::autopickup
+
 static void show_pickup_message( const PickupMap &mapPickup )
 {
     for( const auto &entry : mapPickup ) {
@@ -76,7 +76,7 @@ namespace
 {
 struct pickup_count {
     bool pick = false;
-    //count is 0 if the whole stack is being picked up, nonzero otherwise.
+
     int count = 0;
 };
 
@@ -87,7 +87,7 @@ enum pickup_answer : int {
     STASH,
     NUM_ANSWERS
 };
-} // namespace
+}
 
 static pickup_answer handle_problematic_pickup( const item &it, const std::string &explain )
 {
@@ -123,7 +123,7 @@ bool Pickup::query_thief( item &it )
         const time_point forfeit_time = time_point::from_turn( it.get_var( "Forfeited_at", 0.0 ) );
         const time_duration time_since_forfeit = calendar::turn - forfeit_time;
         it.erase_var( "Forfeited_at" );
-        // FIXME: Blind assumption that the character picking up is player. Not safe!
+
         if( time_since_forfeit < 1_hours &&
             it.get_old_owner() == get_player_character().get_faction_id() ) {
             it.set_owner( get_player_character().get_faction_id() );
@@ -143,14 +143,14 @@ bool Pickup::query_thief( item &it )
                          .message( "%s", force_uc && !is_keycode_mode_supported()
                                    ? stealing_prompt + _( "  (Case sensitive)" )
                                    : stealing_prompt )
-                         .option( "YES", allow_key ) // yes, steal all items in this location that is selected
-                         .option( "NO", allow_key ) // no, pick up only what is free
-                         .option( "ALWAYS", allow_key ) // Yes, steal all items and stop asking me this question
-                         .option( "NEVER", allow_key ) // no, only grab free item and never ask me again
-                         .cursor( 1 ) // default to the second option `NO`
+                         .option( "YES", allow_key )
+                         .option( "NO", allow_key )
+                         .option( "ALWAYS", allow_key )
+                         .option( "NEVER", allow_key )
+                         .cursor( 1 )
                          .query()
-                         .action; // retrieve the input action
-    // Get faction info for item so we can set steal persist
+                         .action;
+
     const faction_id owner = it.get_owner();
     faction *owner_fac = g->faction_manager_ptr->get( owner, false );
     if( answer == "YES" ) {
@@ -174,7 +174,7 @@ bool Pickup::query_thief( item &it )
         }
         return false;
     } else {
-        // error
+
         debugmsg( "Not a valid option [ %s ]", answer );
     }
     return false;
@@ -182,12 +182,12 @@ bool Pickup::query_thief( item &it )
 
 static bool is_bulk_load( const Pickup::pick_info &lhs, const Pickup::pick_info &rhs )
 {
-    // Check if storage is the same
+
     if( lhs.dst && rhs.dst && lhs.dst->stacks_with( *rhs.dst ) &&
         lhs.dst.where() == item_location::type::container &&
         rhs.dst.where() == item_location::type::container &&
         lhs.dst.parent_item() == rhs.dst.parent_item() ) {
-        // Check if source is the same
+
         if( lhs.src_type == rhs.src_type ) {
             switch( lhs.src_type ) {
                 case item_location::type::container:
@@ -205,7 +205,7 @@ static bool is_bulk_load( const Pickup::pick_info &lhs, const Pickup::pick_info 
     return false;
 }
 
-// Returns false if pickup caused a prompt and the player selected to cancel pickup
+
 static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool &got_gas,
                          PickupMap &mapPickup, bool autopickup, bool &stash_successful, bool &got_frozen_liquid,
                          Pickup::pick_info &info, std::string &failure_reason )
@@ -218,15 +218,15 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
 
     pickup_answer option = CANCEL;
 
-    // We already checked in do_pickup if this was a nullptr
-    // Make copies so the original remains untouched if we bail out
+
+
     item_location newloc = loc;
-    //original item reference
+
     item &it = *newloc.get_item();
-    //new item (copy)
+
     item newit = it;
 
-    // Clear activity_var if it differs from the picker's name
+
     if( it.has_var( "activity_var" ) && it.get_var( "activity_var", "" ) != player_character.name ) {
         it.erase_var( "activity_var" );
         newit.erase_var( "activity_var" );
@@ -237,14 +237,14 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
             failure_reason = _( "Taking another person's property is disabled." );
             return true;
         } else if( thief_mode != "THIEF_STEAL" ) {
-            // Default (THIEF_ASK) - check faction steal_persist
+
             faction *owner_fac = g->faction_manager_ptr->get( newit.get_owner(), false );
             if( owner_fac && owner_fac->steal_persist.has_value() ) {
                 if( !*owner_fac->steal_persist ) {
                     failure_reason = _( "Taking this person's property was declined." );
-                    return true; // NEVER
+                    return true;
                 }
-                // ALWAYS
+
             } else if( !Pickup::query_thief( newit ) ) {
                 failure_reason = _( "Taking this person's property was declined." );
                 return true;
@@ -253,12 +253,12 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
     }
     if( newit.invlet != '\0' &&
         player_character.invlet_to_item( newit.invlet ).valid() ) {
-        // Existing invlet is not re-usable, remove it and let the code in player.cpp/inventory.cpp
-        // add a new invlet, otherwise keep the (usable) invlet.
+
+
         newit.invlet = '\0';
     }
 
-    // Handle charges, quantity == 0 means move all
+
     if( quantity != 0 && newit.count_by_charges() ) {
         if( newit.charges > quantity ) {
             newit.charges = quantity;
@@ -321,7 +321,7 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
 
     switch( option ) {
         case NUM_ANSWERS:
-            // Some other option
+
             break;
         case CANCEL:
             picked_up = false;
@@ -334,7 +334,7 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
                 debugmsg( "Tried to spill contents from an empty container" );
                 break;
             }
-            //using original item, possibly modifying it
+
             picked_up = it.spill_contents( player_character );
             if( !picked_up ) {
                 break;
@@ -347,14 +347,14 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
         case STASH: {
             int last_charges = newit.charges;
             ret_val<item_location> ret = player_character.i_add_or_fill( newit, true, nullptr, &it,
-                                         /*allow_drop=*/false, /*allow_wield=*/false, false );
+                                         false, false, false );
             item_location added_it = ret.value();
             if( ret.success() ) {
                 craft_relocated( added_it );
                 if( added_it == item_location::nowhere ) {
                     newit.charges = last_charges - newit.charges;
-                    // Don't call on_pickup on this local copy -- the real items
-                    // already got it via add_stash -> fill_with (#85439).
+
+
                     if( newit.charges != 0 ) {
                         auto &entry = mapPickup[newit.tname()];
                         entry.second += newit.charges;
@@ -362,10 +362,10 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
                         picked_up = true;
                     }
                 } else if( &*added_it == &it ) {
-                    // merged to the original stack, restore original charges
+
                     it.charges = last_charges;
                 } else {
-                    // successfully added
+
                     auto &entry = mapPickup[newit.tname()];
                     entry.second += newit.count();
                     entry.first = newit;
@@ -373,7 +373,7 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
                 }
             }
             if( picked_up ) {
-                // Update info
+
                 info.set_dst( added_it );
             } else if( !ret.success() && failure_reason.empty() ) {
                 failure_reason = _( "No available pocket accepted this item." );
@@ -390,11 +390,11 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
         info.picked_up_volume += newit.volume();
         info.picked_up_mass += newit.weight();
         if( !is_bulk_load( pre_info, info ) ) {
-            // Cost to take an item from a container or map
+
             player_character.mod_moves( -( loc.obtain_cost( player_character,
                                            quantity ) + ( distance * info.extra_moves_per_distance ) ) );
         } else {
-            // Pure cost to handling item excluding overhead.
+
             player_character.mod_moves( ( -std::max( player_character.item_handling_cost( *loc, true, 0,
                                           quantity,
                                           true ), 1 ) + ( distance * info.extra_moves_per_distance ) ) );
@@ -402,9 +402,9 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
         contents_change_handler handler;
         handler.unseal_pocket_containing( loc );
         item &orig_it = *loc.get_item();
-        // Subtract moved charges instead of assigning leftover charges,
-        // since the total charges of the original item may have changed
-        // due to merging.
+
+
+
         if( orig_it.charges > newit.charges ) {
             orig_it.charges -= newit.charges;
         } else {
@@ -413,7 +413,7 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
         player_character.flag_encumbrance();
         player_character.invalidate_weight_carried_cache();
 
-        // Remove DROPPED_FAVORITES autonote if exists.
+
         const tripoint_abs_omt note_pos = player_character.pos_abs_omt();
         if( overmap_buffer.note( note_pos ) == newit.display_name() ) {
             overmap_buffer.delete_note( note_pos );
@@ -436,16 +436,16 @@ bool Pickup::do_pickup( std::vector<item_location> &targets, std::vector<int> &q
     Character &player_character = get_player_character();
     bool weight_is_okay = ( player_character.weight_carried() <= player_character.weight_capacity() );
 
-    // Map of items picked up so we can output them all at the end and
-    // merge dropping items with the same name.
+
+
     PickupMap mapPickup;
 
     bool problem = false;
     while( !problem && player_character.get_moves() >= 0 && !targets.empty() ) {
         item_location target = std::move( targets.back() );
         int quantity = quantities.back();
-        // Whether we pick the item up or not, we're done trying to do so,
-        // so remove it from the list.
+
+
         targets.pop_back();
         quantities.pop_back();
 
@@ -471,7 +471,7 @@ bool Pickup::do_pickup( std::vector<item_location> &targets, std::vector<int> &q
             }
         }
         if( info.total_bulk_volume > 200_ml ) {
-            // Reset bulk-load accounting but retain results across turns.
+
             Pickup::pick_info fresh;
             fresh.a11y_successes = std::move( info.a11y_successes );
             fresh.a11y_failures = std::move( info.a11y_failures );
@@ -483,8 +483,8 @@ bool Pickup::do_pickup( std::vector<item_location> &targets, std::vector<int> &q
 
     if( !mapPickup.empty() ) {
         if( a11y::enabled() && !autopickup ) {
-            // Do not interrupt speech once per item or once per game turn.
-            // The activity actor speaks one factual result when it ends.
+
+
             for( const auto &entry : mapPickup ) {
                 ++info.a11y_success_count;
                 if( info.a11y_successes.size() < 24 ) {
@@ -514,7 +514,7 @@ bool Pickup::do_pickup( std::vector<item_location> &targets, std::vector<int> &q
     return !problem;
 }
 
-// Auto pickup items at given location
+
 void Pickup::autopickup( const tripoint_bub_ms &p )
 {
     map &local = get_map();
@@ -522,7 +522,7 @@ void Pickup::autopickup( const tripoint_bub_ms &p )
     if( local.i_at( p ).empty() && !get_option<bool>( "AUTO_PICKUP_ADJACENT" ) ) {
         return;
     }
-    // which items are we grabbing?
+
     std::vector<item_stack::iterator> here;
     map_stack mapitems = local.i_at( p );
     here.reserve( mapitems.size() );
@@ -530,9 +530,9 @@ void Pickup::autopickup( const tripoint_bub_ms &p )
         here.push_back( it );
     }
     Character &player = get_player_character();
-    // Recursively pick up adjacent items if that option is on.
+
     if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && player.pos_bub() == p ) {
-        //Autopickup adjacent
+
         std::array<direction, 8> adjacentDir = {
             direction::NORTH, direction::NORTHEAST, direction::EAST,
             direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST,
@@ -545,7 +545,7 @@ void Pickup::autopickup( const tripoint_bub_ms &p )
             autopickup( p + apos );
         }
     }
-    // Bail out if this square cannot be auto-picked-up
+
     if( g->check_zone( zone_type_NO_AUTO_PICKUP, tripoint_bub_ms( p ) ) ||
         local.has_flag( ter_furn_flag::TFLAG_SEALED, p ) ) {
         return;
@@ -554,7 +554,7 @@ void Pickup::autopickup( const tripoint_bub_ms &p )
     if( selected_items.empty() ) {
         return;
     }
-    // At this point we've selected our items, register an activity to pick them up.
+
     std::vector<int> quantities;
     std::vector<item_location> target_items;
     target_items.reserve( selected_items.size() );
@@ -573,23 +573,23 @@ void Pickup::autopickup( const tripoint_bub_ms &p )
     pickup_activity_actor actor( target_items, quantities, player.pos_bub(), true );
     player.assign_activity( actor );
 
-    // Auto pickup will need to auto resume since there can be several of them on the stack.
+
     player.activity.auto_resume = true;
 }
 
 int Pickup::cost_to_move_item( const Character &who, const item &it )
 {
-    // Do not involve inventory capacity, it's not like you put it in backpack
+
     int ret = 50;
     if( who.is_armed() ) {
-        // No free hand? That will cost you extra
+
         ret += 20;
     }
     const int delta_weight = units::to_gram( it.weight() - who.weight_capacity() );
-    // Is it too heavy? It'll take 10 moves per kg over limit
+
     ret += std::max( 0, delta_weight / 100 );
 
-    // Keep it sane - it's not a long activity
+
     return std::min( 400, ret );
 }
 
@@ -637,8 +637,8 @@ void Pickup::pick_info::deserialize( const JsonObject &jsobj )
 
 void Pickup::pick_info::set_src( const item_location &src_ )
 {
-    const map &here = get_map(); // TODO: Change src_pos to absolute?
-    // item_location of source may become invalid after the item is moved, so save the information separately.
+    const map &here = get_map();
+
     src_pos = src_.pos_bub( here );
     src_container = src_.parent_item();
     src_type = src_.where();

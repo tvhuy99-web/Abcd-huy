@@ -23,7 +23,7 @@ class dependency_node
         mod_id key;
         bool availability;
 
-        // cyclic check variables
+
         int index;
         int lowlink;
         bool on_stack;
@@ -38,11 +38,11 @@ class dependency_node
         std::map<NODE_ERROR_TYPE, std::vector<std::string > > errors() const;
         std::string s_errors();
 
-        // Tree traversal
-        // Upward towards head(s)
+
+
         std::vector<mod_id> get_dependencies_as_strings();
         std::vector<dependency_node * > get_dependencies_as_nodes();
-        // Downward towards leaf(ves)
+
         std::vector<mod_id> get_dependents_as_strings();
         std::vector< dependency_node * > get_dependents_as_nodes();
 
@@ -59,11 +59,11 @@ class dependency_tree
 
         void clear();
 
-        // tree traversal
-        // Upward by key
+
+
         std::vector<mod_id > get_dependencies_of_X_as_strings( const mod_id &key );
         std::vector<dependency_node * > get_dependencies_of_X_as_nodes( const mod_id &key );
-        // Downward by key
+
         std::vector< mod_id > get_dependents_of_X_as_strings( const mod_id &key );
         std::vector< dependency_node * > get_dependents_of_X_as_nodes( const mod_id &key );
 
@@ -72,17 +72,17 @@ class dependency_tree
 
         std::map<mod_id, dependency_node> master_node_map;
     private:
-        // Don't need to be called directly. Only reason to call these are during initialization phase.
+
         void build_node_map( const std::map<mod_id, std::vector<mod_id > > &key_dependency_map );
         void build_connections( const std::map<mod_id, std::vector<mod_id > > &key_dependency_map );
 
-        /*
-        Cyclic Dependency checks using Tarjan's Strongly Connected Components algorithm
-        Order is O(N+E) and linearly increases with number of nodes and number of connections between them.
-        References:
-            http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm
-            http://www.cosc.canterbury.ac.nz/tad.takaoka/alg/graphalg/sc.txt
-        */
+
+
+
+
+
+
+
         void check_for_strongly_connected_components();
         void strong_connect( dependency_node *dnode );
 
@@ -93,4 +93,4 @@ class dependency_tree
 
 };
 
-#endif // CATA_SRC_DEPENDENCY_TREE_H
+#endif

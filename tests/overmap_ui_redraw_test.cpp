@@ -75,4 +75,4 @@ TEST_CASE( "draw_om_clears_the_animated_flag_on_a_static_view", "[tiles][overmap
         }
     }
 }
-#endif // TILES
+#endif

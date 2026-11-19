@@ -48,12 +48,12 @@ TEST_CASE( "fault_message_substitution_and_gating", "[fault][item][degrade]" )
         const std::string expected =
             string_format( fault_cotton_torn->message(), worn.tname() );
         CHECK( Messages::recent_messages( 1 ).back().second == expected );
-        // %s must have been substituted; raw "%s" should not appear.
+
         CHECK( expected.find( "%s" ) == std::string::npos );
     }
 
     SECTION( "avatar passed but item not carried is silent" ) {
-        // Same item instance, never added to avatar inventory.
+
         item lone_jacket( itype_jacket_leather );
         REQUIRE_FALSE( av.has_item( lone_jacket ) );
         Messages::clear_messages();

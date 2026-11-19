@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * Sixteen spoken entry points over live, engine-published commands.
- * This is a presentation catalogue, never a second gameplay implementation:
- * activation still passes through the native snapshot/action validation gate.
- */
+
+
+
+
+
 final class GameActionHub {
     static final int ROOT = -1;
     static final int SEARCH = 0;
@@ -25,7 +25,7 @@ final class GameActionHub {
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
     static final int OPEN_FAVORITES = 8;
-    // Keep native group numbers stable for existing saved gesture targets.
+
     static final int DIRECTIONS = 16;
     static final int FAVORITES = 17;
     static final int COMBAT = 8;
@@ -43,7 +43,7 @@ final class GameActionHub {
             this.group = group;
         }
 
-        /** Stable identity shared by the same native command in all groups. */
+
         String shortcutTarget() {
             switch (kind) {
                 case OPEN_GROUP: return "hub:group:" + group;
@@ -58,8 +58,8 @@ final class GameActionHub {
         }
     }
 
-    // Group IDs 1..15 and SEARCH=0 remain stable for saved shortcuts.
-    // The root *display order* is Favorites, groups 1..15, then Search.
+
+
     static final int[] TITLES = {
             R.string.a11yHubSearch,
             R.string.a11yHubNearby,
@@ -141,14 +141,14 @@ final class GameActionHub {
         return plain.toLowerCase(Locale.ROOT).trim();
     }
 
-    // Every hub section uses the same semantic value published by the
-    // native game. A command may be repeated in Combat, Automation, Search
-    // and Favorites, but its current state must never diverge between them.
+
+
+
     private static String spokenNodeLabel(Context context, ReaderSnapshot.Node node) {
         String label = node.label;
-        // The hub is a list of concise actions, not a second document
-        // reader. Read live state for actionable entries, but never inject
-        // an entire long read-only document into its one-line label.
+
+
+
         if (!"document".equals(node.role) && !"status".equals(node.role)
                 && !node.value.isEmpty() && !node.value.equals(label)
                 && !label.endsWith(". " + node.value)) {
@@ -193,8 +193,8 @@ final class GameActionHub {
         if (target.startsWith("action:")) {
             String action = target.substring("action:".length());
             ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(action);
-            // Preserve saved favorites outside the context where they were
-            // selected. Do not claim that an absent command is executable.
+
+
             String label = node == null ? favorite.label : spokenNodeLabel(context, node);
             if (node == null || !node.enabled || (!node.actions.contains("activate")
                     && !"document".equals(node.role))) {
@@ -217,7 +217,7 @@ final class GameActionHub {
                 return new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH);
             case "hub:all":
                 return new Entry(context.getString(R.string.a11yHubAllCommands), "", OPEN_ALL, 0);
-            // Old Settings favorites now use the complete native Settings list.
+
             case "hub:settings":
             case "hub:reader_setup":
                 ReaderSnapshot.Node settings = snapshot == null
@@ -274,7 +274,7 @@ final class GameActionHub {
             return result;
         }
 
-        // Group 2 is a contextual list; all other groups stay unchanged.
+
         if (section == 1) {
             for (String id : ACTIONS[section]) {
                 ReaderSnapshot.Node action = snapshot.find(id);
@@ -321,8 +321,8 @@ final class GameActionHub {
                     "", OPEN_DEBUG_LOG, 0));
         }
 
-        // Any new native commands remain discoverable via the unfiltered
-        // "All commands" catalogue even if they have no curated category.
+
+
         return result;
     }
 

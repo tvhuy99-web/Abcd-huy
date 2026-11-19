@@ -33,24 +33,24 @@
 #include "uilist.h"
 #include "ui_manager.h"
 
-// Basic layout:
-//
-// +---------------------------Proficiencies---------------------------------+
-// |  Category: < All >                                [/] filter  [?] help  |
-// |  (category description)                                                 |
-// |                                                                         |
-// +--------------------------------+----------------------------------------+
-// | >Proficiency 1                 |  Time to learn: 8 hours                |
-// |  Proficiency 2                 |  Progress: 12%                         |
-// |  Proficiency 3                 |  Category: Miscellaneous Crafts        |
-// |  Proficiency 4                 |  Pre-requisite:                        |
-// |  Proficiency 5                 |  Proficiency 2, Proficiency 4, ...     |
-// |  Proficiency 6                 |  Leads to:                             |
-// |  Proficiency 7                 |  Proficiency 6, Proficiency 7, ...     |
-// |  Proficiency 8                 |  Description:                          |
-// |  Proficiency 9                 |  Lorem ipsum etc........               |
-// |  Proficiency 10                |                                        |
-// ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 using display_prof_deps = std::pair<display_proficiency, std::vector<proficiency_id>>;
 
@@ -82,7 +82,7 @@ struct prof_window {
     explicit prof_window( const Character *u ) : u( u ) {}
     shared_ptr_fast<ui_adaptor> create_or_get_ui_adaptor();
     void filter();
-    // Reader adapter (R19.1), defined below with the other methods.
+
     a11y::semantic_snapshot reader_snapshot();
     std::optional<std::string> reader_intent( const a11y::semantic_intent &intent );
     void reader_select( int index );
@@ -95,7 +95,7 @@ struct prof_window {
     void draw_details();
     void run( std::optional<proficiency_id> default_selection = std::nullopt );
 };
-} // namespace
+}
 
 std::vector<display_prof_deps *> &prof_window::get_current_set()
 {
@@ -138,7 +138,7 @@ void prof_window::filter()
     if( prefix == _prof_filter_prefix::AS_PROGRESS ) {
         std::optional<double> v = svtod( qry, false );
         if( !v.has_value() ) {
-            // User mistyped query. Not severe enough for debugmsg.
+
             DebugLog( DebugLevel::D_WARNING, DebugClass::D_GAME ) <<
                     "Malformed proficiency query \"" << filter_str << "\"";
             return;
@@ -199,19 +199,19 @@ void prof_window::draw_details()
     if( !cur_set.empty() ) {
         int y = 0;
         display_prof_deps *p = cur_set[sel_prof];
-        // Time to learn
+
         std::string ttl = !p->first.id->can_learn() ? colorize( _( "Can't learn" ), c_dark_gray ) :
                           to_string( p->first.id->time_to_learn() );
         trim_and_print( w_details, point( 1, y++ ), column_width - 2, c_white,
                         string_format( "%s: %s", colorize( _( "Time to learn" ), c_magenta ), ttl ) );
-        // Progress
+
         trim_and_print( w_details, point( 1, y++ ), column_width - 2, c_white,
                         string_format( "%s: %.2f%%", colorize( _( "Progress" ), c_magenta ), p->first.practice * 100.0f ) );
-        // Category
+
         trim_and_print( w_details, point( 1, y++ ), column_width - 2, c_white,
                         string_format( "%s: %s", colorize( _( "Category" ), c_magenta ),
                                        p->first.id->prof_category()->_name.translated() ) );
-        // Pre-requisites
+
         trim_and_print( w_details, point( 1, y++ ), column_width - 2, c_white,
                         string_format( "%s:", colorize( _( "Pre-requisites" ), c_magenta ) ) );
         std::vector<std::string> reqs =
@@ -222,7 +222,7 @@ void prof_window::draw_details()
         for( auto &req : reqs ) {
             trim_and_print( w_details, point( 1, y++ ), column_width - 1, c_white, req );
         }
-        // Leads to
+
         trim_and_print( w_details, point( 1, y++ ), column_width - 2, c_white,
                         string_format( "%s:", colorize( _( "Leads to" ), c_magenta ) ) );
         std::vector<std::string> leads = foldstring( enumerate_as_string( p->second,
@@ -232,7 +232,7 @@ void prof_window::draw_details()
         for( auto &lead : leads ) {
             trim_and_print( w_details, point( 1, y++ ), column_width - 1, c_white, lead );
         }
-        // Description
+
         fold_and_print( w_details, point( 1, y ), column_width - 1, c_light_gray,
                         string_format( "%s: %s", colorize( _( "Description" ), c_magenta ), p->first.id->description() ) );
     }
@@ -281,12 +281,12 @@ void prof_window::draw_borders()
     const int w = catacurses::getmaxx( w_border );
     const int h = catacurses::getmaxy( w_border );
     draw_border( w_border, c_white, _( "Proficiencies" ), c_yellow );
-    // horizontal header separator
+
     wattron( w_border, c_white );
     mvwhline( w_border, point( 1, 4 ), LINE_OXOX, w - 2 );
     mvwaddch( w_border, point( 0, 4 ), LINE_XXXO );
     mvwaddch( w_border, point( w - 1, 4 ), LINE_XOXX );
-    // vertical column separator
+
     mvwvline( w_border, point( column_width + 1, 5 ), LINE_XOXO, h - 6 );
     mvwaddch( w_border, point( column_width + 1, 4 ), LINE_OXXX );
     mvwaddch( w_border, point( column_width + 1, h - 1 ), LINE_XXOX );
@@ -342,11 +342,11 @@ shared_ptr_fast<ui_adaptor> prof_window::create_or_get_ui_adaptor()
 
 namespace
 {
-// The detail pane text of draw_details for one proficiency, without
-// color tags: the same fields, in the same order, from the same
-// accessors (time_to_learn / can_learn, practice, prof_category,
-// required_proficiencies, the leads-to list populate_categories built,
-// description).
+
+
+
+
+
 std::string prof_reader_detail( const display_prof_deps &p )
 {
     const std::string ttl = !p.first.id->can_learn() ? _( "Can't learn" ) :
@@ -368,7 +368,7 @@ std::string prof_reader_detail( const display_prof_deps &p )
     text += "\n" + string_format( _( "Description: %s" ), p.first.id->description() );
     return text;
 }
-} // namespace
+}
 
 void prof_window::reader_select( const int index )
 {
@@ -391,10 +391,10 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
     snapshot.nodes.clear();
     std::vector<display_prof_deps *> &cur_set = get_current_set();
     const int sel = cur_set.empty() ? 0 : std::clamp( sel_prof, 0,
-                        static_cast<int>( cur_set.size() ) - 1 );
-    // Header state, as draw_header prints it: the category title (or
-    // FILTERED while a filter is active), the category description for
-    // a non-ALL category, and the counts behind the current set.
+                    static_cast<int>( cur_set.size() ) - 1 );
+
+
+
     if( !filter_str.empty() ) {
         snapshot.summary = string_format( _( "Filter: %1$s. Showing %2$d of %3$d proficiencies." ),
                                           filter_str, static_cast<int>( cur_set.size() ),
@@ -419,10 +419,10 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
         node.total = static_cast<int>( cats.size() );
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // Filter state, following the shared uilist pattern (R04.1): the
-    // node names the active filter text and the filtered/total counts;
-    // activating it returns this screen's own FILTER action, so the
-    // original string_input_popup (with its l:/i:/p: prefixes) runs.
+
+
+
+
     {
         a11y::semantic_node node;
         node.id = "proficiency:filter";
@@ -443,10 +443,11 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
     a11y::semantic_table profs_table;
     profs_table.id = "proficiency:list";
     profs_table.columns = { { "name", _( "Proficiency" ), "" },
-                            { "status", _( "Status" ), "" },
-                            { "progress", _( "Progress" ), "%" },
-                            { "time", _( "Time to learn" ), "" },
-                            { "category", _( "Category" ), "" } };
+        { "status", _( "Status" ), "" },
+        { "progress", _( "Progress" ), "%" },
+        { "time", _( "Time to learn" ), "" },
+        { "category", _( "Category" ), "" }
+    };
     snapshot.tables.push_back( profs_table );
     if( cur_set.empty() ) {
         a11y::semantic_node node;
@@ -464,10 +465,10 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
             node.id = "proficiency:entry:" + dp.first.id.str();
             node.role = "listitem";
             node.label = dp.first.id->name();
-            // Known versus still-learning is carried by the row color
-            // in draw_profs (display_proficiency.color, white versus
-            // light gray); the word uses this screen's own filter
-            // vocabulary ("Learned" / "In-progress" in the FILTER help).
+
+
+
+
             const std::string status = dp.first.known ? _( "Learned" ) : _( "In progress" );
             const std::string prog = string_format( "%.2f", dp.first.practice * 100.0f );
             const std::string ttl = !dp.first.id->can_learn() ? _( "Can't learn" ) :
@@ -481,17 +482,18 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
             node.position = static_cast<int>( i ) + 1;
             node.total = static_cast<int>( cur_set.size() );
             node.cells = { { "name", node.label, "", "" },
-                           { "status", status, "", "" },
-                           { "progress", prog, "%", prog },
-                           { "time", ttl, "", "" },
-                           { "category", category, "", "" } };
+                { "status", status, "", "" },
+                { "progress", prog, "%", prog },
+                { "time", ttl, "", "" },
+                { "category", category, "", "" }
+            };
             if( node.selected ) {
                 snapshot.focus = node.id;
             }
             snapshot.nodes.push_back( std::move( node ) );
         }
-        // The selected proficiency's full detail-pane text as a
-        // document, for the long description it can carry.
+
+
         a11y::append_document( snapshot, "proficiency:details",
                                cur_set[sel]->first.id->name(),
                                prof_reader_detail( *cur_set[sel] ) );
@@ -518,9 +520,9 @@ std::optional<std::string> prof_window::reader_intent( const a11y::semantic_inte
             return std::string( "TIMEOUT" );
         }
         if( intent.action == "activate" ) {
-            // The same end state as confirming an empty string in the
-            // original FILTER popup: get_current_set() falls back to
-            // the per-category sets once filter_str is empty.
+
+
+
             filter_str.clear();
             filtered_profs.clear();
             sel_prof = 0;
@@ -546,8 +548,8 @@ std::optional<std::string> prof_window::reader_intent( const a11y::semantic_inte
             if( key != cat_key ) {
                 continue;
             }
-            // Category switching is the LEFT/RIGHT branch of the
-            // original loop, which is disabled while a filter is active.
+
+
             if( filter_str.empty() ) {
                 current_cat = static_cast<int>( i );
                 sel_prof = 0;
@@ -561,12 +563,12 @@ std::optional<std::string> prof_window::reader_intent( const a11y::semantic_inte
         if( intent.action != "focus" && intent.action != "activate" ) {
             return std::nullopt;
         }
-        // Re-resolve against the set the loop is currently showing; an
-        // ID minted against an older category/filter must never select
-        // a proficiency that is no longer listed. This screen has no
-        // CONFIRM action at all: focus and activate alike only move
-        // the original cursor, so browsing can never start learning
-        // or cost a turn.
+
+
+
+
+
+
         const std::string key = intent.node.substr( 18 );
         std::vector<display_prof_deps *> &cur_set = get_current_set();
         for( std::size_t i = 0; i < cur_set.size(); ++i ) {
@@ -610,13 +612,13 @@ void prof_window::run( std::optional<proficiency_id> default_selection )
         }
     }
 
-    // Reader adapter (R19.1): screen_scope bound to this window's own
-    // input_context, updated once per loop iteration before input is
-    // read, exactly like the other dedicated adapters. Its handler
-    // (reader_intent) only moves this window's cursor/category/filter
-    // state or returns the window's own registered actions.
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "proficiencies",
-    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return reader_intent( intent );
     } );
 

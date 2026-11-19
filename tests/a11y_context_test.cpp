@@ -27,7 +27,7 @@ TEST_CASE( "a11y_only_active_overlay_accepts_input", "[a11y][context]" )
     CHECK( stack.accepts( menu_token ) );
     REQUIRE( stack.leave( menu ) );
     CHECK_FALSE( stack.accepts( menu_token ) );
-    // Returning to world must not replay the gesture queued before the menu.
+
     CHECK_FALSE( stack.accepts( world_token ) );
     CHECK( stack.accepts( stack.active_token().value() ) );
 }
@@ -81,8 +81,8 @@ TEST_CASE( "a11y_recreated_runtime_cannot_accept_another_stack_token", "[a11y][c
     second.enter( "world", "DEFAULTMODE" );
     const a11y::context_token token = first.active_token().value();
     CHECK_FALSE( second.accepts( token ) );
-    // A recreated runtime takes a fresh session through the production load
-    // path (invalidate_session); the old token must stay invalid.
+
+
     first.invalidate_session();
     first.enter( "world", "DEFAULTMODE" );
     CHECK_FALSE( first.accepts( token ) );
@@ -114,8 +114,8 @@ TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
     swipe.token = token;
     swipe.action = "activate";
     swipe.request = 1;
-    // The world could have published many new descriptions during the
-    // previous turn. This same-generation intent is still a single step.
+
+
     swipe.revision = 2;
     REQUIRE( stack.accepts( swipe.token ) );
     for( const char *direction : {
@@ -153,8 +153,8 @@ TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
     world.category = "UILIST";
     CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
 
-    // Matching a world command is never sufficient by itself. The actual
-    // runtime first requires the current, unexpired session/frame/generation.
+
+
     world.category = "DEFAULTMODE";
     const std::uint64_t overlay = stack.enter( "inventory", "INVENTORY" );
     CHECK_FALSE( stack.accepts( swipe.token ) );
@@ -179,8 +179,8 @@ TEST_CASE( "a11y_world_step_node_identity_is_exact",
 TEST_CASE( "a11y_item_quantities_are_complete_one_step_choices",
            "[a11y][quantity]" )
 {
-    // The same strict parser is used by inventory multi-select (pickup,
-    // drop, insert and trade) and the one-tile quick pickup menu.
+
+
     REQUIRE( a11y::selected_quantity( "1", 1 ) == std::optional<std::size_t>( 1 ) );
     REQUIRE( a11y::selected_quantity( "0", 1 ) == std::optional<std::size_t>( 0 ) );
     REQUIRE( a11y::selected_quantity( "12", 30 ) == std::optional<std::size_t>( 12 ) );
@@ -188,8 +188,8 @@ TEST_CASE( "a11y_item_quantities_are_complete_one_step_choices",
     REQUIRE( a11y::selected_quantity( "1000000", 1000000 ) ==
              std::optional<std::size_t>( 1000000 ) );
 
-    // Never silently clamp a stale choice to a different count, accept
-    // negatives/whitespace, or overflow the native available amount.
+
+
     CHECK_FALSE( a11y::selected_quantity( "", 30 ) );
     CHECK_FALSE( a11y::selected_quantity( "31", 30 ) );
     CHECK_FALSE( a11y::selected_quantity( "-1", 30 ) );

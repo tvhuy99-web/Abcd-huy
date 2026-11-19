@@ -22,7 +22,7 @@ failures = set()
 
 def format_json(path):
     file_path = os.path.dirname(__file__)
-    # Might need changing to match your setup
+
     format_path_linux = os.path.join(file_path, "../format/json_formatter.cgi")
     path_win = "../../json_formatter.exe"
     alt_path_win = "../format/json_formatter.exe"
@@ -48,7 +48,7 @@ def readWriteJson(path, jo_function):
         except json.JSONDecodeError:
             failures.add(format_error)
             return
-        if type(json_data) is dict:  # File with a single json object
+        if type(json_data) is dict:
             json_data = jo_function(json_data)
             change = json_data is not None
         elif type(json_data) is list:
@@ -75,8 +75,7 @@ def migrateMonsterGroupNameToId(jo):
     assert "type" in jo
     if jo["type"] == "monstergroup" and "name" in jo:
         assert type(jo["name"]) is str
-        # While dicts are ordered they have no way to directly edit keys
-        # or access by index
+
         pos = list(jo.keys()).index("name")
         items = list(jo.items())
         items.insert(pos, ("id", jo["name"]))

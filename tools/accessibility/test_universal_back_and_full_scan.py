@@ -15,7 +15,7 @@ class UniversalBackAndScanContracts(unittest.TestCase):
         self.assertIn("registered_intent( context, *intent )", runtime)
         self.assertIn('android::status( "unsupported", &*intent );', runtime)
         self.assertIn('"QUIT", "UILIST.QUIT", "TEXT.QUIT", "CANCEL"', input_code)
-        # A handler first has one chance to go up an inner level.
+
         self.assertLess(runtime.index("screen.handler( *intent )"),
                         runtime.index("registered_intent( context, *intent )"))
 

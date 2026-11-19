@@ -1,8 +1,8 @@
 #include "string_id.h"
 
-// These are centralized in this file because they must appear in one and only one compilation unit,
-// and it's problematic to define them in the respective cpp files for each class.
-// Very repetitious, so define them with a macro.
+
+
+
 #define MAKE_NULL_ID( type, ... ) \
     class type; \
     template<> const string_id<type> &string_id<type>::NULL_ID() { \
@@ -10,9 +10,9 @@
         return id; \
     }
 
-// If used with default implementation of the generic_factory,
-// these ids must appear in corresponding json file, or "sentinels.json"
-// (or have some alternative way to be inserted into the generic_factory)
+
+
+
 
 //NOLINTNEXTLINE(cata-static-string_id-constants)
 MAKE_NULL_ID( activity_type, "ACT_NULL" )

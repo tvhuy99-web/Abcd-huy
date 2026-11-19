@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-# The goal of this script is to print out sets of mods for testing.  Each line
-# of output is a comma-separated list of mods.  Together the lines should cover
-# all in-repo mods, in as few lines as possible.  Each line must contain only
-# mods which are mutually compatible.
 
 import glob
 import json
@@ -13,8 +9,8 @@ mods_this_time = []
 mods_lists = []
 
 exclusions = [
-    # Tuple of (mod_id, mod_id) - these two mods will be incompatible
-    # Note that mod_id is case sensitive
+
+
 ]
 
 
@@ -35,7 +31,7 @@ def compatible_with(mod, existing_mods):
 def add_mods(mods):
     for mod in mods:
         if mod not in all_mod_dependencies:
-            # Either an invalid mod id, or blacklisted.
+
             return False
     for mod in mods:
         if mod in mods_this_time:
@@ -98,7 +94,7 @@ for r, d, f in os.walk('data/mods'):
 
 mods_remaining = set(all_mod_dependencies)
 
-# Remove mods already covered by mod_interactions lists above
+
 for ml in mods_lists:
     mods_remaining -= set(ml.split(','))
 

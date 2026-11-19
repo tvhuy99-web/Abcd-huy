@@ -76,10 +76,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
 
     def test_combat_two_finger_swipes_use_world_movement_without_cap(self):
         c = self.controller
-        # Three-finger movement is inactive during combat but its custom
-        # map-mode bindings must remain available outside combat.
-        # The autonomous-travel guard added before the combat switch has
-        # its own targetFor call, so scope the segment to the combat switch.
+
         segment = c.split("public boolean handleCustomGesture(", 1)[1]
         segment = segment.split("if (combatMode && directWorldGesturesEnabled()) {", 1)[1]
         segment = segment.split("gestureBindings.targetFor(gestureId)", 1)[0]
@@ -112,9 +109,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
 
     def test_native_combat_buttons_obey_computed_world_gate(self):
         world = self.world
-        # A default snapshot starts with swipe_movement_allowed=False.
-        # The eight combat buttons must be constructed only AFTER the native
-        # world eligibility gate has been computed.
+
         gate = world.index("result.swipe_movement_allowed =")
         attack = world.index("attack.enabled = result.swipe_movement_allowed;")
         weapon = world.index("node.enabled = result.swipe_movement_allowed;")
@@ -142,7 +137,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         for attribute in ("get_str()", "get_dex()", "get_int()", "get_per()"):
             self.assertIn("character." + attribute, w)
         self.assertIn("character.weapname_simple()", w)
-        # The user requested a natural stop with no closing phrase.
+
         self.assertNotIn('_( "End of character information." )', w)
         self.assertIn("character.get_kcal_percent()", w)
         self.assertIn("character.get_focus()", w)

@@ -77,33 +77,33 @@ static const string_id<overmap_connection> overmap_connection_local_road( "local
 extern std::map<std::string, std::list<input_event>> quick_shortcuts_map;
 #endif
 
-/*
- * Changes that break backwards compatibility should bump this number, so the game can
- * load a legacy format loader.
- */
+
+
+
+
 const int savegame_version = 40;
 
-/*
- * This is a global set by detected version header in .sav, maps.txt, or overmap.
- * This allows loaders for classes that exist in multiple files (such as item) to have
- * support for backwards compatibility as well.
- */
+
+
+
+
+
 int savegame_loading_version = savegame_version;
 
-/*
- * Save to opened character.sav
- */
+
+
+
 void game::serialize_json( std::ostream &fout )
 {
-    /*
-     * Format version 12: Fully json, save the header. Weather and memorial exist elsewhere.
-     * To prevent (or encourage) confusion, there is no version 8. (cata 0.8 uses v7)
-     */
-    // Header
-    JsonOut json( fout, true ); // pretty-print
+
+
+
+
+
+    JsonOut json( fout, true );
 
     json.start_object();
-    // basic game state information.
+
     json.member( "savegame_loading_version", savegame_version );
     json.member( "turn", calendar::turn );
     json.member( "debug_mode", debug_mode );
@@ -114,7 +114,7 @@ void game::serialize_json( std::ostream &fout )
     json.member( "auto_travel_mode", auto_travel_mode );
     json.member( "run_mode", static_cast<int>( safe_mode ) );
     json.member( "mostseen", mostseen );
-    // current map coordinates
+
     tripoint_abs_sm pos_abs_sm = get_map().get_abs_sub();
     point_abs_om pos_om;
     tripoint_om_sm pos_sm;
@@ -124,7 +124,7 @@ void game::serialize_json( std::ostream &fout )
     json.member( "levz", pos_sm.z() );
     json.member( "om_x", pos_om.x() );
     json.member( "om_y", pos_om.y() );
-    // view offset
+
     json.member( "view_offset_x", u.view_offset.x() );
     json.member( "view_offset_y", u.view_offset.y() );
     json.member( "view_offset_z", u.view_offset.z() );
@@ -132,14 +132,14 @@ void game::serialize_json( std::ostream &fout )
     json.member( "grscent", scent.serialize() );
     json.member( "typescent", scent.serialize( true ) );
 
-    // Then each monster
+
     json.member( "active_monsters", *critter_tracker );
 
     json.member( "driving_view_offset", driving_view_offset );
     json.member( "turnssincelastmon", turnssincelastmon );
     json.member( "bVMonsterLookFire", bVMonsterLookFire );
 
-    // save stats.
+
     json.member( "kill_tracker", *kill_tracker_ptr );
     json.member( "stats_tracker", *stats_tracker_ptr );
     json.member( "achievements_tracker", *achievements_tracker_ptr );
@@ -148,7 +148,7 @@ void game::serialize_json( std::ostream &fout )
     json.member( "inactive_global_effect_on_condition_vector",
                  inactive_global_effect_on_condition_vector );
 
-    //save queued effect_on_conditions
+
     queued_eocs temp_queued( queued_global_effect_on_conditions );
     json.member( "queued_global_effect_on_conditions" );
     json.start_array();
@@ -213,9 +213,9 @@ static size_t chkversion( std::istream &fin )
     return fin.tellg();
 }
 
-/*
- * Parse an open .sav file.
- */
+
+
+
 
 void game::unserialize( std::istream &fin, const cata_path &path )
 {
@@ -288,7 +288,7 @@ void game::unserialize_impl( const JsonObject &data )
         calendar::start_of_game = calendar::start_of_cataclysm;
     }
 
-    load_map( project_combine( com, lev ), /*pump_events=*/true );
+    load_map( project_combine( com, lev ), true );
 
     safe_mode = static_cast<safe_mode_type>( tmprun );
 
@@ -311,7 +311,7 @@ void game::unserialize_impl( const JsonObject &data )
     data.read( "player", u );
     data.read( "inactive_global_effect_on_condition_vector",
                inactive_global_effect_on_condition_vector );
-    //load queued_eocs
+
     for( JsonObject elem : data.get_array( "queued_global_effect_on_conditions" ) ) {
         queued_eoc temp;
         temp.time = time_point( elem.get_int( "time" ) );
@@ -353,7 +353,7 @@ void scent_map::deserialize( const std::string &data, bool is_type )
 }
 
 #if defined(__ANDROID__)
-///// quick shortcuts
+
 void game::load_shortcuts( const cata_path &path )
 {
     try {
@@ -377,7 +377,7 @@ void game::load_shortcuts( const cata_path &path )
 
 void game::save_shortcuts( std::ostream &fout )
 {
-    JsonOut json( fout, true ); // pretty-print
+    JsonOut json( fout, true );
 
     json.start_object();
     if( get_option<bool>( "ANDROID_SHORTCUT_PERSISTENCE" ) ) {
@@ -410,7 +410,7 @@ void overmap::load_monster_groups( const JsonArray &jsin )
             temp.deserialize( tripoint_json );
             new_group.abs_pos = project_combine( pos(), temp );
             if( new_group.horde ) {
-                // Migrate "horde" type monster groups to new horde map.
+
                 if( !new_group.monsters.empty() ) {
                     spawn_monsters( temp, new_group.monsters );
                 } else {
@@ -439,7 +439,7 @@ void overmap::load_legacy_monstergroups( const JsonArray &jsin )
     }
 }
 
-// throws std::exception
+
 void overmap::unserialize( const cata_path &file_name, std::istream &fin )
 {
     size_t json_offset = chkversion( fin );
@@ -458,7 +458,7 @@ void overmap::unserialize( std::istream &fin )
 
 void overmap::unserialize( const JsonObject &jsobj )
 {
-    // These must be read in this order.
+
     if( jsobj.has_member( "mapgen_arg_storage" ) ) {
         jsobj.read( "mapgen_arg_storage", mapgen_arg_storage, true );
     }
@@ -489,7 +489,7 @@ void overmap::unserialize( const JsonObject &jsobj )
         }
     }
     std::vector<tripoint_abs_omt> camps_to_place;
-    // Extract layers first so predecessor deduplication can happen.
+
     if( jsobj.has_member( "layers" ) ) {
         std::unordered_map<tripoint_om_omt, std::string> oter_id_migrations;
         JsonArray layers_json = jsobj.get_array( "layers" );
@@ -535,7 +535,7 @@ void overmap::unserialize( const JsonObject &jsobj )
             }
         }
         migrate_oter_ids( oter_id_migrations );
-        // Don't do camps_to_place migration attempt yet bc we haven't deserialised existing camps
+
     }
     for( JsonMember om_member : jsobj ) {
         const std::string name = om_member.name();
@@ -596,8 +596,8 @@ void overmap::unserialize( const JsonObject &jsobj )
         } else if( name == "connections_out" ) {
             om_member.read( connections_out );
         } else if( name == "roads_out" ) {
-            // Legacy data, superseded by that stored in the "connections_out" member. A load and save
-            // cycle will migrate this to "connections_out".
+
+
             std::vector<tripoint_om_omt> &roads_out =
                 connections_out[overmap_connection_local_road];
             JsonArray roads_json = om_member;
@@ -668,7 +668,7 @@ void overmap::unserialize( const JsonObject &jsobj )
                     ( *result )->second.last_processed.deserialize( monster_map_json.next_value() );
                     ( *result )->second.moves = monster_map_json.next_int();
                 } else {
-                    // We deserialized something nasty, skip the rest of the stored values
+
                     monster_map_json.next_value();
                     monster_map_json.next_int();
                     monster_map_json.next_value();
@@ -808,7 +808,7 @@ void overmap::unserialize( const JsonObject &jsobj )
             for( auto& [p, serialized_predecessors] : flattened_predecessors ) {
                 predecessors_.insert_or_assign( p, std::move( om_predecessors ) );
 
-                // Reuse allocations because it's a good habit.
+
                 om_predecessors = std::move( serialized_predecessors );
                 om_predecessors.clear();
             }
@@ -817,9 +817,9 @@ void overmap::unserialize( const JsonObject &jsobj )
     migrate_camps( camps_to_place );
 }
 
-// throws std::exception
-// This loads old-style overmaps and is only kept around in order to support
-// MA mod's pregenerated overmaps that are shimmed in by overmap::generate.
+
+
+
 void overmap::unserialize_omap( const JsonValue &jsin, const cata_path &json_path )
 {
     const region_settings_lake &settings_lake = settings->get_settings_lake();
@@ -908,7 +908,7 @@ void overmap::unserialize_omap( const JsonValue &jsin, const cata_path &json_pat
 
         ter_set( p, shore ? oter_lake_shore : oter_lake_surface );
 
-        // If this is not a shore, we'll make our subsurface lake cubes and beds.
+
         if( !shore ) {
             for( int z = -1; z > lake_depth; z-- ) {
                 ter_set( tripoint_om_omt( p.xy(), z ), oter_lake_water_cube );
@@ -938,7 +938,7 @@ void overmap::unserialize_omap( const JsonValue &jsin, const cata_path &json_pat
 
         ter_set( p, shore ? oter_ocean_shore : oter_ocean_surface );
 
-        // If this is not a shore, we'll make our subsurface ocean cubes and beds.
+
         if( !shore ) {
             for( int z = -1; z > ocean_depth; z-- ) {
                 ter_set( tripoint_om_omt( p.xy(), z ), oter_ocean_water_cube );
@@ -992,7 +992,7 @@ static void unserialize_array_from_compacted_sequence( JsonArray &ja, MdArray &a
     }
 }
 
-// throws std::exception
+
 void overmap::unserialize_view( const cata_path &file_name, std::istream &fin )
 {
     size_t json_offset = chkversion( fin );
@@ -1074,7 +1074,7 @@ void overmap::unserialize_view( const JsonObject &jsobj )
                         extra_json.throw_error( "Too many values for extra" );
                     }
 
-                    // obsoleted extras can still appear here, so skip them
+
                     if( tmp.id.is_valid() ) {
                         layer[z].extras.push_back( tmp );
                     }
@@ -1208,8 +1208,8 @@ void overmap::serialize_view( std::ostream &fout ) const
 
 namespace
 {
-// Compares all fields except position and monsters
-// If any group has monsters, it is never equal to any group (because monsters are unique)
+
+
 struct mongroup_bin_eq {
     bool operator()( const mongroup &a, const mongroup &b ) const {
         return a.monsters.empty() &&
@@ -1226,7 +1226,7 @@ struct mongroup_bin_eq {
 
 struct mongroup_hash {
     std::size_t operator()( const mongroup &mg ) const {
-        // Note: not hashing monsters or position
+
         size_t ret = std::hash<mongroup_id>()( mg.type );
         cata::hash_combine( ret, mg.population );
         cata::hash_combine( ret, mg.target );
@@ -1237,28 +1237,28 @@ struct mongroup_hash {
         return ret;
     }
 };
-} // namespace
+}
 
 void overmap::save_monster_groups( JsonOut &jout ) const
 {
     jout.member( "monster_groups" );
     jout.start_array();
-    // Bin groups by their fields, except positions and monsters
+
     std::unordered_map<mongroup, std::list<tripoint_om_sm>, mongroup_hash, mongroup_bin_eq>
     binned_groups;
     binned_groups.reserve( zg.size() );
     for( const auto &pos_group : zg ) {
-        // Each group in bin adds only position
-        // so that 100 identical groups are 1 group data and 100 tripoints
+
+
         std::list<tripoint_om_sm> &positions = binned_groups[pos_group.second];
         positions.emplace_back( pos_group.first );
     }
 
     for( auto &group_bin : binned_groups ) {
         jout.start_array();
-        // Zero the bin position so that it isn't serialized
-        // The position is stored separately, in the list
-        // TODO: Do it without the copy
+
+
+
         mongroup saved_group = group_bin.first;
         saved_group.abs_pos = tripoint_abs_sm::zero;
         jout.write( saved_group );
@@ -1301,11 +1301,11 @@ void overmap::serialize( std::ostream &fout ) const
             }
         }
         json.write( count );
-        // End the last entry for a z-level.
+
         json.end_array();
-        // End the z-level
+
         json.end_array();
-        // Insert a newline occasionally so the file isn't totally unreadable.
+
         fout << std::endl;
     }
     json.end_array();
@@ -1317,7 +1317,7 @@ void overmap::serialize( std::ostream &fout ) const
              entry_location.y() < 180; entry_location.y()++ ) {
             for( entry_location.x() = 0; entry_location.x() < 180; entry_location.x()++ ) {
                 std::shared_ptr<map_data_summary> summary = layer[z].map_cache[ entry_location.xy() ];
-                // We don't serialize placeholders, we regenerate them from the ter for their location.
+
                 if( summary->placeholder ) {
                     continue;
                 }
@@ -1393,7 +1393,7 @@ void overmap::serialize( std::ostream &fout ) const
     json.member( "horde_map" );
     json.start_array();
     for( const auto &monster_entry : hordes ) {
-        // Consider projecting this to tripoint_om_ms which will be slightly smaller.
+
         monster_entry.first.serialize( json );
         if( monster_entry.second.monster_data ) {
             monster_entry.second.monster_data->serialize( json );
@@ -1449,8 +1449,8 @@ void overmap::serialize( std::ostream &fout ) const
     json.end_array();
     fout << std::endl;
 
-    // Condense the overmap special placements so that all placements of a given special
-    // are grouped under a single key for that special.
+
+
     std::map<overmap_special_id, std::vector<tripoint_om_omt>> condensed_overmap_special_placements;
     for( const auto &placement : overmap_special_placements ) {
         condensed_overmap_special_placements[placement.second].emplace_back( placement.first );
@@ -1463,9 +1463,9 @@ void overmap::serialize( std::ostream &fout ) const
         json.member( "special", placement.first );
         json.member( "placements" );
         json.start_array();
-        // When we have a discriminator for different instances of a given special,
-        // we'd use that to group them, but since that doesn't exist yet we'll
-        // dump all the points of a given special into a single entry.
+
+
+
         json.start_object();
         json.member( "points" );
         json.start_array();
@@ -1539,8 +1539,8 @@ void overmap::serialize( std::ostream &fout ) const
     fout << std::endl;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-///// mongroup
+
+
 template<typename Archive>
 void mongroup::io( Archive &archive )
 {
@@ -1602,11 +1602,11 @@ void mongroup::deserialize_legacy( const JsonObject &jo )
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-///// mapbuffer
 
-///////////////////////////////////////////////////////////////////////////////////////
-///// SAVE_MASTER (i.e. master.gsav)
+
+
+
+
 
 void mission::unserialize_all( const JsonArray &ja )
 {
@@ -1631,8 +1631,8 @@ void game::unserialize_master( const cata_path &file_name, std::istream &fin )
 
 void game::unserialize_master( const JsonValue &jv )
 {
-    // Reset state that has no clear-on-load hook of its own; otherwise a
-    // save without the field inherits the previous game's queue.
+
+
     get_item_wakeups().clear();
     JsonObject game_json = jv;
     for( JsonMember jsin : game_json ) {
@@ -1753,16 +1753,16 @@ void weather_manager::unserialize_all( const JsonObject &w )
     get_weather().snow_depth_map.clear();
     if( w.has_array( "snow_depth" ) ) {
         for( JsonObject entry : w.get_array( "snow_depth" ) ) {
-            // Normalize z to 0: snow depth is z-agnostic
+
             tripoint_abs_omt pos( entry.get_int( "x" ), entry.get_int( "y" ), 0 );
-            // Consume "z" if present (old save format stored per-z entries)
+
             if( entry.has_int( "z" ) ) {
                 entry.get_int( "z" );
             }
             omt_snow_state state;
             entry.read( "depth_mm", state.depth_mm );
             entry.read( "last_update", state.last_update );
-            // If duplicate xy from different z-levels, keep the deeper snow
+
             auto it = get_weather().snow_depth_map.find( pos );
             if( it == get_weather().snow_depth_map.end() || state.depth_mm > it->second.depth_mm ) {
                 get_weather().snow_depth_map[pos] = state;
@@ -1773,9 +1773,9 @@ void weather_manager::unserialize_all( const JsonObject &w )
 
 void global_variables::unserialize( const JsonObject &jo )
 {
-    // global variables
+
     jo.read( "global_vals", global_values );
-    // potentially migrate some variable names
+
     for( std::pair<std::string, std::string> migration : migrations ) {
         if( global_values.count( migration.first ) != 0 ) {
             auto extracted = global_values.extract( migration.first );
@@ -1823,7 +1823,7 @@ void timed_event_manager::unserialize_all( const JsonArray &ja )
                     jp.get_member( "items" ).read( itm, false );
                     revert.get_items( pt ) = std::move( itm );
                 }
-                // We didn't always save the point, this is the original logic, it doesn't work right but for older saves at least they won't crash
+
                 if( !jp.has_member( "point" ) ) {
                     if( pt.x()++ < SEEX ) {
                         pt.x() = 0;
@@ -1842,7 +1842,7 @@ void game::serialize_master( std::ostream &fout )
 {
     fout << "# version " << savegame_version << std::endl;
     try {
-        JsonOut json( fout, true ); // pretty-print
+        JsonOut json( fout, true );
         json.start_object();
 
         json.member( "next_mission_id", next_mission_id );
@@ -1871,7 +1871,7 @@ void game::serialize_dimension_data( std::ostream &fout )
 {
     fout << "# version " << savegame_version << std::endl;
     try {
-        JsonOut json( fout, true ); // pretty-print
+        JsonOut json( fout, true );
         json.start_object();
 
         json.member( "overmapbuffer" );
@@ -1953,7 +1953,7 @@ void timed_event_manager::serialize_all( JsonOut &jsout )
 void faction_manager::deserialize( const JsonValue &jv )
 {
     if( jv.test_object() ) {
-        // whoops - this recovers factions saved under the wrong format.
+
         JsonObject jo = jv;
         for( JsonMember jm : jo ) {
             faction add_fac;
@@ -1962,14 +1962,14 @@ void faction_manager::deserialize( const JsonValue &jv )
             faction *old_fac = get( add_fac.id, false );
             if( old_fac ) {
                 *old_fac = add_fac;
-                // force a revalidation of add_fac
+
                 get( add_fac.id, false );
             } else {
                 factions[add_fac.id] = add_fac;
             }
         }
     } else if( jv.test_array() ) {
-        // how it should have been serialized.
+
         JsonArray ja = jv;
         for( JsonValue jav : ja ) {
             faction add_fac;
@@ -1977,7 +1977,7 @@ void faction_manager::deserialize( const JsonValue &jv )
             faction *old_fac = get( add_fac.id, false );
             if( old_fac ) {
                 *old_fac = add_fac;
-                // force a revalidation of add_fac
+
                 get( add_fac.id, false );
             } else {
                 factions[add_fac.id] = add_fac;
@@ -1991,7 +1991,7 @@ void creature_tracker::deserialize( const JsonArray &ja )
     monsters_list.clear();
     monsters_by_location.clear();
     for( JsonValue jv : ja ) {
-        // TODO: would be nice if monster had a constructor using JsonIn or similar, so this could be one statement.
+
         shared_ptr_fast<monster> mptr = make_shared_fast<monster>();
         jv.read( *mptr );
         add( mptr );
@@ -2054,7 +2054,7 @@ void overmap_global_state::deserialize( const JsonObject &json )
     json.read( "overmap_count", overmap_count );
 
     highway_intersections.clear();
-    //TODO: remove legacy loading in 0.J
+
     if( json.has_member( "overmap_highway_intersections" ) ) {
         std::map<std::string, overmap_feature_grid_node> feature_grid;
         json.read( "overmap_highway_intersections", feature_grid );
@@ -2093,12 +2093,12 @@ void npc::import_and_clean( const JsonObject &data )
 {
     deserialize( data );
 
-    npc defaults;  // to avoid hardcoding defaults here
+    npc defaults;
 
-    // avoid duplicate id
-    setID( g->assign_npc_id(), /* force */ true );
 
-    // timestamps are irrelevant if importing into a different world
+    setID( g->assign_npc_id(), true );
+
+
     last_updated = defaults.last_updated;
     lifespan_end = defaults.lifespan_end;
     effects->clear();
@@ -2106,7 +2106,7 @@ void npc::import_and_clean( const JsonObject &data )
     last_sleep_check = defaults.last_sleep_check;
     queued_effect_on_conditions = defaults.queued_effect_on_conditions;
 
-    // space coordinates are irrelevant if importing into a different world
+
     set_pos_abs_only( defaults.pos_abs() );
     omt_path = defaults.omt_path;
     known_traps.clear();
@@ -2120,7 +2120,7 @@ void npc::import_and_clean( const JsonObject &data )
     assigned_camp = defaults.assigned_camp;
     job = defaults.job;
 
-    // mission related
+
     mission = defaults.mission;
     previous_mission = defaults.previous_mission;
     reset_companion_mission();
@@ -2135,7 +2135,7 @@ void npc::import_and_clean( const JsonObject &data )
     chatbin.missions_assigned.clear();
     chatbin.mission_selected = nullptr;
 
-    // activity related
+
     activity = defaults.activity;
     backlog = defaults.backlog;
     clear_destination();
@@ -2144,7 +2144,7 @@ void npc::import_and_clean( const JsonObject &data )
     activity_vehicle_part_index = defaults.activity_vehicle_part_index;
     current_activity_id = defaults.current_activity_id;
 
-    // miscellaneous
+
     in_vehicle = defaults.in_vehicle;
     warning_record = defaults.warning_record;
     complaints = defaults.complaints;
@@ -2159,4 +2159,3 @@ void npc::export_to( const cata_path &path ) const
         serialize( jsout );
     } );
 }
-

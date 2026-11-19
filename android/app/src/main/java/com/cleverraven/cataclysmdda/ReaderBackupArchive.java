@@ -17,37 +17,37 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-/**
- * Accessible backup of the player's own data trees (R20.2), kept separate
- * from the game-data installer in SplashScreen.
- *
- * The game keeps every player tree under one live root (the Android
- * external files directory, which C++ uses as both base path and user
- * directory): {@code save/} and {@code config/} are the core of a backup,
- * and {@code memorial/}, {@code achievements/} and {@code templates/} are
- * player data of the same kind, so they travel with it. Shipped trees
- * ({@code data/}, {@code gfx/}, {@code lang/}) are never part of a backup
- * and an import can never replace them: entry names outside the backup
- * trees are rejected during verification.
- *
- * Export only reads the live trees. Import is staged and journaled with
- * the same discipline as the R06 install swap: the chosen archive is
- * copied into a staging directory on the same filesystem, fully verified
- * (readable zip, backup manifest, exact file/byte counts, at least one
- * save or config file, no path escaping the staging tree, enough free
- * space) before anything live is touched, and the swap itself parks the
- * current trees in a rollback directory and renames the staged trees in.
- * A journal in internal storage records the swap phase, so a process
- * death mid-swap is recovered by {@link #recoverInterruptedSwap()}
- * instead of leaving half-restored data that looks valid. A staged but
- * unconfirmed import is never restored automatically: it lives only in
- * the staging directory and the owning screen discards it when a fresh
- * screen instance starts, so no restore confirmation can survive an
- * Activity recreate or a process death (R20.3).
- *
- * This class has no Android dependencies: the owner passes the live root
- * and the journal file, which keeps the archive logic host-testable.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class ReaderBackupArchive {
     public static final String ERR_NO_SPACE = "no_space";
     public static final String ERR_IO = "io";
@@ -69,7 +69,7 @@ public final class ReaderBackupArchive {
             "save", "config", "memorial", "achievements", "templates" };
     private static final String[] CORE_TREES = { "save", "config" };
 
-    /** A classified backup failure; the code is spoken by the owner. */
+
     public static final class BackupException extends Exception {
         public final String code;
 
@@ -79,7 +79,7 @@ public final class ReaderBackupArchive {
         }
     }
 
-    /** Counts and trees of one measured, exported or staged backup. */
+
     public static final class Summary {
         public final int files;
         public final long bytes;
@@ -113,17 +113,17 @@ public final class ReaderBackupArchive {
         return new File(stagingDir(), STAGED_ROOT);
     }
 
-    // ------------------------------------------------------------------
-    // Export
-    // ------------------------------------------------------------------
 
-    /**
-     * Write the live backup trees to {@code out} as one zip archive with a
-     * manifest entry carrying exact counts. Read-only with respect to the
-     * live trees: a failure (including a file changing size while it is
-     * copied, which fails verification) leaves the player's data exactly
-     * as it was.
-     */
+
+
+
+
+
+
+
+
+
+
     public Summary exportTo(OutputStream out) throws BackupException {
         recoverInterruptedSwap();
         List<String> relativeFiles = new ArrayList<>();
@@ -183,9 +183,9 @@ public final class ReaderBackupArchive {
             throw new BackupException(ERR_IO, String.valueOf(e.getMessage()));
         }
         if (writtenFiles != relativeFiles.size() || writtenBytes != totalBytes) {
-            // A save written by the game while the export streamed makes
-            // the archive inconsistent with its own manifest; report it
-            // instead of handing back a backup that would fail restore.
+
+
+
             throw new BackupException(ERR_VERIFY,
                     "files=" + writtenFiles + "/" + relativeFiles.size()
                             + " bytes=" + writtenBytes + "/" + totalBytes);
@@ -193,16 +193,16 @@ public final class ReaderBackupArchive {
         return new Summary(writtenFiles, writtenBytes, trees);
     }
 
-    // ------------------------------------------------------------------
-    // Import: stage and verify, then an explicitly confirmed swap
-    // ------------------------------------------------------------------
 
-    /**
-     * Copy the chosen archive into staging and verify it completely.
-     * Nothing live is read for writing and nothing live changes here; on
-     * any failure the staging directory is removed again and the current
-     * saves and settings stay exactly as they were.
-     */
+
+
+
+
+
+
+
+
+
     public Summary stageImport(InputStream in) throws BackupException {
         recoverInterruptedSwap();
         File staging = stagingDir();
@@ -236,24 +236,24 @@ public final class ReaderBackupArchive {
         }
     }
 
-    /** True while a verified import is staged and awaiting confirmation. */
+
     public boolean hasStagedImport() {
         return readStagedSummary() != null;
     }
 
-    /** Drop a staged import without touching the live trees. */
+
     public void cancelStagedImport() {
         deletePlain(stagingDir());
     }
 
-    /**
-     * Replace the live trees named by the staged backup with the staged
-     * copies. Only trees present in the backup are replaced; live trees
-     * the backup does not contain are left alone. The caller must have
-     * obtained an explicit overwrite confirmation for this exact staged
-     * backup immediately before calling: this method never asks and never
-     * defaults to overwriting.
-     */
+
+
+
+
+
+
+
+
     public Summary restoreStagedImport() throws BackupException {
         if (!ReaderGameSession.beginRestore()) {
             throw new BackupException(ERR_GAME_ACTIVE, "Restart the app before restoring player data");
@@ -270,18 +270,18 @@ public final class ReaderBackupArchive {
         if (expected == null) {
             throw new BackupException(ERR_INVALID, "no staged import");
         }
-        // The summary lives on disk in the staging directory, which the
-        // DocumentsProvider also exposes: re-validate its tree list here
-        // so only genuine backup trees can ever be swapped, whatever the
-        // summary file claims (staging verification already enforces the
-        // same rule for archives).
+
+
+
+
+
         for (String tree : expected.trees) {
             if (!isBackupTree(tree)) {
                 throw new BackupException(ERR_INVALID, "staged tree not a backup tree: " + tree);
             }
         }
-        // Re-measure what is actually on disk in staging; a summary file
-        // alone is never trusted at swap time.
+
+
         File extracted = stagedRoot();
         List<String> stagedFiles = new ArrayList<>();
         for (String tree : expected.trees) {
@@ -309,28 +309,28 @@ public final class ReaderBackupArchive {
         try {
             transaction().replace(extracted, expected.trees, null);
         } catch (IOException e) {
-            // Keep both staging and the durable journal when recovery failed.
+
             throw new BackupException(ERR_SWAP, String.valueOf(e.getMessage()));
         }
         deletePlain(stagingDir());
         return expected;
     }
 
-    /**
-     * Undo or finish whatever a previous process left behind. SWAPPING
-     * means the live trees may be half-restored, so the parked rollback
-     * copies go back before anything else trusts the live data; COMMITTED
-     * leftovers only need cleaning. With no journal, a leftover rollback
-     * directory cannot be part of a committed swap and is discarded;
-     * staging is the caller's decision (a fresh owner discards it, which
-     * is what makes a staged import die with its screen instance).
-     */
+
+
+
+
+
+
+
+
+
     public void recoverInterruptedSwap() throws BackupException {
         if (liveRoot == null) {
             return;
         }
         if (!ReaderGameSession.beginRestore()) {
-            // Never repair on-disk player trees under an engine still holding a save.
+
             if ((journalFile != null && journalFile.exists()) || rollbackDir().exists()) {
                 throw new BackupException(ERR_GAME_ACTIVE, "Recovery requires a fresh process");
             }
@@ -349,9 +349,9 @@ public final class ReaderBackupArchive {
         return new ReaderFileTransaction(liveRoot, rollbackDir(), journalFile, "BACKUP_", BACKUP_TREES);
     }
 
-    // ------------------------------------------------------------------
-    // Verification and extraction
-    // ------------------------------------------------------------------
+
+
+
 
     private Summary verifyAndExtract(File archiveFile) throws BackupException {
         long manifestFiles = -1;
@@ -427,11 +427,11 @@ public final class ReaderBackupArchive {
                                 + " bytes=" + manifestBytes + "/" + declaredBytes
                                 + " core=" + coreFiles);
             }
-            // The manifest's tree list drives the swap, so it must name
-            // exactly the backup trees that actually carry files in this
-            // archive. A crafted list naming a shipped tree (or any tree
-            // without files) must never reach the swap, where a listed
-            // tree's live copy is parked before its staged copy moves in.
+
+
+
+
+
             Set<String> manifestTreeSet = new HashSet<>(manifestTrees);
             if (manifestTrees.isEmpty() || manifestTreeSet.size() != manifestTrees.size()
                     || !manifestTreeSet.equals(presentTrees)) {
@@ -443,9 +443,9 @@ public final class ReaderBackupArchive {
                     throw invalidEntry(tree);
                 }
             }
-            // Free space for the extraction itself plus a reserve, checked
-            // before a single staged file is written; the swap after that
-            // is renames on this filesystem and needs no further space.
+
+
+
             long usable = liveRoot.getUsableSpace();
             if (usable > 0 && usable < declaredBytes + RESTORE_RESERVE_BYTES) {
                 throw new BackupException(ERR_NO_SPACE,
@@ -491,11 +491,11 @@ public final class ReaderBackupArchive {
             }
             return new Summary(fileEntries, declaredBytes, manifestTrees);
         } catch (IOException e) {
-            // An unreadable or truncated archive is a verification
-            // failure from the user's point of view, not a live-data IO
-            // failure: either way the current data stays untouched.
-            // (BackupExceptions thrown above are not IOExceptions and
-            // already propagate with their own codes.)
+
+
+
+
+
             throw new BackupException(ERR_INVALID, String.valueOf(e.getMessage()));
         }
     }
@@ -512,7 +512,7 @@ public final class ReaderBackupArchive {
         }
     }
 
-    /** Directory path inside the archive: a backup tree, or below one. */
+
     private static boolean isBackupTreePath(String name) {
         String path = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
         if (path.isEmpty() || path.contains("\\") || path.contains("..")) {
@@ -522,7 +522,7 @@ public final class ReaderBackupArchive {
         return isBackupTree(slash < 0 ? path : path.substring(0, slash));
     }
 
-    /** File path inside the archive: strictly below one backup tree. */
+
     private static boolean isBackupFilePath(String name) {
         if (name.startsWith("/") || name.contains("\\")) {
             return false;
@@ -554,9 +554,9 @@ public final class ReaderBackupArchive {
         return false;
     }
 
-    // ------------------------------------------------------------------
-    // Staged summary and journal (same fsync discipline as R06 install)
-    // ------------------------------------------------------------------
+
+
+
 
     private void writeStagedSummary(Summary summary) throws BackupException {
         File file = new File(stagingDir(), STAGED_SUMMARY);

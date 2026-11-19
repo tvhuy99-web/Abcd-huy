@@ -32,11 +32,11 @@ void UnsequencedCallsCheck::registerMatchers( MatchFinder *Finder )
     );
 }
 
-// Keep walking up the AST so long as the nodes are expressions.  When we reach
-// a non-expression or an expressions whose subexpressions we know to be
-// sequenced (like a short-circuiting logical operator), return the previous expression.
-// This is a vague approximation to finding the AST node which represents
-// everything between two sequence points.
+
+
+
+
+
 static const Expr *GetContainingSequenceStatement( ASTContext *Context, const Expr *Node )
 {
     for( const DynTypedNode &parent : Context->getParents( *Node ) ) {
@@ -64,10 +64,10 @@ static const Expr *GetContainingSequenceStatement( ASTContext *Context, const Ex
     return Node;
 }
 
-// Keep walking up the AST so long as the nodes are expressions.  When we reach
-// a non-expression, return the previous expression.
-// This is a vague approximation to finding the AST node which represents
-// everything between two sequence points.
+
+
+
+
 static std::vector<const Expr *> GetAncestorExpressions( ASTContext *Context, const Expr *Node )
 {
     const Expr *stop = GetContainingSequenceStatement( Context, Node );
@@ -146,8 +146,8 @@ void UnsequencedCallsCheck::onEndOfTranslationUnit()
             continue;
         }
 
-        // If some of the calls are an ancestor of other of the calls then we
-        // might not need to report it.
+
+
         std::vector<CallWithASTContext> to_delete;
         for( const CallWithASTContext &member_call : calls ) {
             for( const Expr *ancestor :
@@ -156,8 +156,8 @@ void UnsequencedCallsCheck::onEndOfTranslationUnit()
                 if( in_set == calls.end() ) {
                     continue;
                 }
-                // We have found a pair with an ancestor relationship.  Delete
-                // the most const one.
+
+
                 if( non_const_calls.count( in_set->call ) ) {
                     to_delete.push_back( member_call );
                 } else {
@@ -199,4 +199,4 @@ void UnsequencedCallsCheck::check( const MatchFinder::MatchResult &Result )
     CheckCall( Result );
 }
 
-} // namespace clang::tidy::cata
+}

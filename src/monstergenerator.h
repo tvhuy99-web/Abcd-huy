@@ -63,15 +63,15 @@ class MonsterGenerator
         }
         ~MonsterGenerator();
 
-        // clear monster & species definitions
+
         void reset();
 
-        // JSON loading functions
+
         void load_monster( const JsonObject &jo, const std::string &src );
         void load_species( const JsonObject &jo, const std::string &src );
         void load_monster_attack( const JsonObject &jo, const std::string &src );
 
-        // combines mtype and species information, sets bitflags
+
         void finalize_mtypes();
 
         mtype generate_fake_pseudo_dormant_monster( const mtype &mon );
@@ -89,7 +89,7 @@ class MonsterGenerator
     private:
         MonsterGenerator();
 
-        // Init functions
+
         void init_phases();
         void init_attack();
         void init_defense();
@@ -98,10 +98,10 @@ class MonsterGenerator
         void add_attack( std::unique_ptr<mattack_actor> );
         void add_attack( const mtype_special_attack &wrapper );
 
-        /** Gets an actor object without saving it anywhere */
+
         mtype_special_attack create_actor( const JsonObject &obj, const std::string &src ) const;
 
-        // finalization
+
         void apply_species_attributes( mtype &mon );
         void validate_species_ids( mtype &mon );
         void finalize_pathfinding_settings( mtype &mon );
@@ -124,4 +124,4 @@ class MonsterGenerator
 void load_monster_adjustment( const JsonObject &jsobj );
 void reset_monster_adjustment();
 
-#endif // CATA_SRC_MONSTERGENERATOR_H
+#endif

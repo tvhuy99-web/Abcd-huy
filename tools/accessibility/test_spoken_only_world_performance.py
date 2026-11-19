@@ -49,10 +49,7 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );", reader)
         self.assertIn("a11y::scan_directional_sonar(", reader)
         observer = native("a11y_perception.cpp")
-        # The eight-direction 16-tile sonar intentionally shares the same
-        # unrestricted tile scan as accessible exploration. Visibility
-        # caches are still required for ordinary game/reader perception,
-        # but may not hide an object behind an obstacle from opt-in sonar.
+
         self.assertIn("const unrestricted_tile tile = scan_unrestricted_tile( target );", observer)
         self.assertNotIn("const tile_observation seen = observe_tile( target );", observer)
 

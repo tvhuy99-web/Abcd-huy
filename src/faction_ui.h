@@ -59,7 +59,7 @@ class faction_ui : public cataimgui::window
         void draw_other_factions_list();
         void other_faction_display();
 
-        // i think creature tab better be migrated to diary and adjacent UI
+
         void draw_creatures_tab();
         void draw_creature_list();
         void creature_display() const;
@@ -89,8 +89,8 @@ class faction_ui : public cataimgui::window
         input_context ctxt;
         cataimgui::scroll s = cataimgui::scroll::none;
         tab_mode selected_tab = tab_mode::TAB_MYFACTION;
-        // hack, hide the window if picked talking to someone
-        // remove when npc dialogue menu will be made imgui
+
+
         bool hide_ui = false;
 
         basecamp *picked_camp = nullptr;
@@ -103,4 +103,4 @@ class faction_ui : public cataimgui::window
         }
 };
 
-#endif // CATA_SRC_FACTION_UI_H
+#endif

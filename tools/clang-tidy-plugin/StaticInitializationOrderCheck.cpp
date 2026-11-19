@@ -33,8 +33,8 @@ static void CheckDecl( StaticInitializationOrderCheck &Check,
     }
 
     if( getContainingFunction( Result, referencing_expr ) ) {
-        // This can happen e.g. if the reference is used in a lambda function
-        // in the initializer expression.
+
+
         return;
     }
 
@@ -48,19 +48,19 @@ static void CheckDecl( StaticInitializationOrderCheck &Check,
         bool in_same_file = SM.isWrittenInSameFile( referenced_loc, referencing_loc );
         if( in_same_file &&
             SM.getFileOffset( referenced_loc ) < SM.getFileOffset( referencing_loc ) ) {
-            // We can be sure they will be initialized in the same order, so
-            // it's all good
+
+
             return;
         }
 
         if( !in_same_file && SM.isInMainFile( referencing_loc ) ) {
-            // This case is similarly safe; we know header initializations
-            // always happen before cpp file ones
+
+
             return;
         }
 
         if( in_same_file ) {
-            // We know for certain that this is wrong
+
             Check.diag( referencing_loc, "Static initialization of %0 depends on extern %1, which "
                         "is initialized afterwards." ) << referencing_decl << referenced_decl;
             return;
@@ -76,4 +76,4 @@ void StaticInitializationOrderCheck::check( const MatchFinder::MatchResult &Resu
     CheckDecl( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

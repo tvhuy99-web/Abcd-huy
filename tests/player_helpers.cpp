@@ -68,7 +68,7 @@ bool player_has_item_of_type( const itype_id &id )
     return !matching_items.empty();
 }
 
-// Return true if character has an item with get_var( var ) set to the given value
+
 bool character_has_item_with_var_val( const Character &they, const std::string &var,
                                       const std::string &val )
 {
@@ -82,28 +82,28 @@ void clear_character( Character &dummy, bool skip_nutrition )
     map &here = get_map();
 
     dummy.set_body();
-    dummy.normalize(); // In particular this clears martial arts style
+    dummy.normalize();
 
-    // delete all worn items.
+
     dummy.clear_worn();
     dummy.calc_encumbrance();
     dummy.invalidate_crafting_inventory();
     dummy.remove_weapon();
     dummy.clear_mutations();
-    // clear_mutations() removes traits but does not rebuild bodypart topology.
-    // Rebuild anatomy now so tests see baseline human limbs (e.g. feet, not talons).
+
+
     dummy.set_body();
     dummy.tally_organic_size();
     dummy.mutation_category_level.clear();
     dummy.clear_bionics();
 
-    // Clear stomach and then eat a nutritious meal to normalize stomach
-    // contents (needs to happen before clear_morale).
+
+
     dummy.stomach.empty();
     dummy.guts.empty();
     dummy.clear_vitamins();
     dummy.health_tally = 0;
-    dummy.update_body( calendar::turn, calendar::turn ); // sets last_updated to current turn
+    dummy.update_body( calendar::turn, calendar::turn );
     if( !skip_nutrition ) {
         item food( itype_debug_nutrition );
         dummy.consume( food );
@@ -116,8 +116,8 @@ void clear_character( Character &dummy, bool skip_nutrition )
     dummy.clear_morale();
     dummy.activity.set_to_null();
     dummy.backlog.clear();
-    // Reset age/height before stored kcal since get_healthy_kcal()
-    // depends on height.
+
+
     dummy.reset_chargen_attributes();
     dummy.environmental_revert_effect();
     dummy.set_stored_kcal( dummy.get_healthy_kcal() );
@@ -137,19 +137,19 @@ void clear_character( Character &dummy, bool skip_nutrition )
         dummy.set_proficiency_practiced_time( prof, 0 );
     }
 
-    // Reset cardio_acc to baseline
+
     dummy.reset_cardio_acc();
-    // Restore all stamina and go to walk mode
+
     dummy.set_stamina( dummy.get_stamina_max() );
     dummy.set_movement_mode( move_mode_walk );
     dummy.reset_activity_level();
 
-    // Make sure we don't carry around weird effects.
+
     dummy.clear_effects();
     dummy.set_dodges_left( dummy.get_num_dodges() );
     dummy.set_underwater( false );
 
-    // Make stats nominal.
+
     dummy.set_str_base( 8 );
     dummy.set_dex_base( 8 );
     dummy.set_int_base( 8 );
@@ -168,9 +168,9 @@ void clear_character( Character &dummy, bool skip_nutrition )
     dummy.forget_all_recipes();
     dummy.set_focus( dummy.calc_focus_equilibrium() );
 
-    // Final stored_kcal sync after all attribute resets.
+
     dummy.set_stored_kcal( dummy.get_healthy_kcal() );
-    // Recompute hp_max now that stats, body, and kcal are all finalized.
+
     dummy.recalc_hp();
 }
 
@@ -179,16 +179,16 @@ void arm_shooter( Character &shooter, const itype_id &gun_type,
                   const itype_id &ammo_type )
 {
     shooter.remove_weapon();
-    // XL so arrows can fit.
+
     if( !shooter.is_wearing( itype_debug_backpack ) ) {
         shooter.worn.wear_item( shooter, item( itype_debug_backpack ), false, false );
     }
 
     const itype_id &gun_id( gun_type );
-    // Give shooter a loaded gun of the requested type.
+
     item_location gun = shooter.i_add( item( gun_id ) );
     itype_id ammo_id = ammo_type;
-    // if ammo is not supplied we want the default
+
     if( ammo_type.is_null() ) {
         if( gun->ammo_default().is_null() ) {
             ammo_id = item( gun->magazine_default() ).ammo_default();
@@ -230,7 +230,7 @@ void clear_avatar()
     avatar.clear_identified();
     avatar.clear_nutrition();
     avatar.reset_all_missions();
-    // Records outlive the items they claim.
+
     clear_reservations();
 }
 
@@ -285,7 +285,7 @@ npc &spawn_npc( const point_bub_ms &p, const std::string &npc_class )
     return *guy;
 }
 
-// Clear player traits and give them a single trait by name
+
 void set_single_trait( Character &dummy, const std::string &trait_name )
 {
     dummy.clear_mutations();
@@ -302,7 +302,7 @@ void give_and_activate_bionic( Character &you, bionic_id const &bioid )
     INFO( "dummy has gotten " + bioid.str() + " bionic " );
     REQUIRE( you.has_bionic( bioid ) );
 
-    // get bionic's index - might not be "last added" due to "integrated" ones
+
     int bioindex = -1;
     for( size_t i = 0; i < you.my_bionics->size(); i++ ) {
         const bionic &bio = ( *you.my_bionics )[ i ];
@@ -315,7 +315,7 @@ void give_and_activate_bionic( Character &you, bionic_id const &bioid )
     bionic &bio = you.bionic_at_index( bioindex );
     REQUIRE( bio.id == bioid );
 
-    // turn on if possible
+
     if( bio.id->has_flag( json_flag_BIONIC_TOGGLED ) && !bio.powered ) {
         const std::vector<material_id> fuel_opts = bio.info().fuel_opts;
         if( !fuel_opts.empty() ) {

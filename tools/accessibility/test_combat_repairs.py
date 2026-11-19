@@ -28,8 +28,7 @@ class CombatRepairContracts(unittest.TestCase):
         cls.po = load(ROOT / "lang/po/accessibility/vi.po")
 
     def test_combat_shot_debug_log_formats_float_recoil_correctly(self):
-        # Character::recoil_total() returns double, not an integer.
-        # A %%d formatter here opens a native debug error during gunfire.
+
         shot_log = self.ranged.split('diagnostic_event( "COMBAT_SHOT"', 1)[1]
         shot_log = shot_log.split(");", 1)[0]
         self.assertIn(
@@ -77,7 +76,7 @@ class CombatRepairContracts(unittest.TestCase):
         game = self.game.split("bool game::cancel_activity_or_ignore_query(", 1)[1]
         self.assertIn('.option( "NO", allow_key )', game)
         self.assertIn('if( action == "YES" )', game)
-        # The Back action may not map to YES or MANAGER (both cancel work).
+
         safe = adapter.split("CANCEL_ACTIVITY_OR_IGNORE_QUERY", 1)[1].split("return \"NO\";", 1)[0]
         self.assertNotIn('return "YES";', safe)
 
@@ -169,7 +168,7 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("confirm_non_enemy_target()", self.ranged)
         self.assertIn("who.fire_gun( here, fin_trajectory.back(), gun.qty, *gun, reload_loc );",
                       self.activity)
-        # The original empty-direction fire remains possible in both modes.
+
         self.assertIn("return fallback;", self.ranged)
         self.assertIn("if( automatic_precise_combat_shot )", self.ranged)
         self.assertNotIn('if( automatic_combat_shot && !dst_critter )', self.ranged)

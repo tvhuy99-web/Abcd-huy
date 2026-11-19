@@ -41,14 +41,14 @@ static void CheckConstructor( StaticIntIdConstantsCheck &Check,
 
     StringRef VarName = IntIdVarDecl->getName();
     if( VarName.ends_with( "null" ) || VarName.ends_with( "NULL" ) ) {
-        // Null constants are OK because they probably don't vary
+
         return;
     }
 
     const VarDecl *PreviousDecl = dyn_cast_or_null<VarDecl>( IntIdVarDecl->getPreviousDecl() );
 
     if( PreviousDecl ) {
-        // Only complain about each variable once
+
         return;
     }
 
@@ -78,4 +78,4 @@ void StaticIntIdConstantsCheck::check( const MatchFinder::MatchResult &Result )
     CheckConstructor( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

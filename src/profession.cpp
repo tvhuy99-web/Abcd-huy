@@ -47,7 +47,7 @@ static const trait_id trait_NO_CBM_INSTALLATION( "NO_CBM_INSTALLATION" );
 namespace
 {
 generic_factory<profession> all_profs( "profession" );
-} // namespace
+}
 
 namespace
 {
@@ -72,7 +72,7 @@ class json_item_substitution
                 explicit info( const JsonValue &value );
                 info() = default;
                 itype_id new_item;
-                double ratio = 1.0; // new charges / old charges
+                double ratio = 1.0;
             };
             std::vector<info> infos;
         };
@@ -82,16 +82,16 @@ class json_item_substitution
         std::vector<item> get_bonus_items( const std::vector<trait_id> &traits ) const;
         std::vector<item> get_substitution( const item &it, const std::vector<trait_id> &traits ) const;
 } item_substitutions;
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const profession &string_id<profession>::obj() const
 {
     return all_profs.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<profession>::is_valid() const
 {
@@ -185,7 +185,7 @@ class skilllevel_reader : public generic_typed_reader<skilllevel_reader>
             } );
         }
 };
-} // namespace
+}
 
 namespace
 {
@@ -209,8 +209,8 @@ class item_reader : public generic_typed_reader<item_reader>
 {
     public:
         profession::itypedec get_next( JsonValue &jv ) const {
-            // either a plain item type id string, or an array with item type id
-            // and as second entry the item description.
+
+
             if( jv.test_string() ) {
                 return profession::itypedec( jv.get_string() );
             }
@@ -226,21 +226,21 @@ class item_reader : public generic_typed_reader<item_reader>
             } );
         }
 };
-} // namespace
+}
 
 void profession::load( const JsonObject &jo, std::string_view )
 {
-    //If the "name" is an object then we have to deal with gender-specific titles,
+
     if( jo.has_object( "name" ) ) {
         JsonObject name_obj = jo.get_object( "name" );
-        // Specifying translation context here to avoid adding unnecessary json code for every profession
+
         // NOLINTNEXTLINE(cata-json-translation-input)
         _name_male = to_translation( "profession_male", name_obj.get_string( "male" ) );
         // NOLINTNEXTLINE(cata-json-translation-input)
         _name_female = to_translation( "profession_female", name_obj.get_string( "female" ) );
     } else if( jo.has_string( "name" ) ) {
-        // Same profession names for male and female in English.
-        // Still need to different names in other languages.
+
+
         const std::string name = jo.get_string( "name" );
         _name_female = to_translation( "profession_female", name );
         _name_male = to_translation( "profession_male", name );
@@ -270,7 +270,7 @@ void profession::load( const JsonObject &jo, std::string_view )
             desc_male = desc;
             desc_female = desc;
         }
-        // These also may differ depending on the language settings!
+
         _description_male = to_translation( "prof_desc_male", desc_male );
         _description_female = to_translation( "prof_desc_female", desc_female );
     }
@@ -360,11 +360,11 @@ void profession::load( const JsonObject &jo, std::string_view )
 
     optional( jo, was_loaded, "skills", _starting_skills, skilllevel_reader {} );
     optional( jo, was_loaded, "addictions", _starting_addictions, addiction_reader {} );
-    // TODO: use string_id<bionic_type> or so
+
     optional( jo, was_loaded, "CBMs", _starting_CBMs, string_id_reader<::bionic_data> {} );
     optional( jo, was_loaded, "proficiencies", _starting_proficiencies );
     optional( jo, was_loaded, "recipes", _starting_recipes );
-    // TODO: use string_id<mutation_branch> or so
+
     optional( jo, was_loaded, "traits", _starting_traits );
     optional( jo, was_loaded, "forbidden_traits", _forbidden_traits,
               string_id_reader<::mutation_branch> {} );
@@ -377,7 +377,7 @@ void profession::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "starting_styles_choices", _starting_martialarts_choices );
     optional( jo, was_loaded, "starting_styles_choices_amount", ma_choice_amount, 1 );
 
-    // Flag which denotes if a profession is a hobby
+
     optional( jo, was_loaded, "subtype", _subtype, "" );
     optional( jo, was_loaded, "missions", _missions, string_id_reader<::mission_type> {} );
 }
@@ -399,14 +399,14 @@ std::vector<string_id<profession>> profession::get_all_hobbies()
     std::vector<profession> all = profession::get_all();
     std::vector<profession_id> ret;
 
-    // remove all non-hobbies from list of professions
+
     const auto new_end = std::remove_if( all.begin(),
     all.end(), [&]( const profession & arg ) {
         return !arg.is_hobby();
     } );
     all.erase( new_end, all.end() );
 
-    // convert to string_id's then return
+
     for( const profession &p : all ) {
         ret.emplace( ret.end(), p.ident() );
     }
@@ -479,15 +479,15 @@ void profession::check_definition() const
         bool has_interface = false;
         for( const trait_and_var &t : _starting_traits ) {
             if( t.trait.is_valid() ) {
-                // Accept traits that cancel NO_CBM_INSTALLATION (e.g. CBM_Interface)
+
                 const std::vector<trait_id> &t_cancels = t.trait->cancels;
                 if( std::find( t_cancels.begin(), t_cancels.end(),
                                trait_NO_CBM_INSTALLATION ) != t_cancels.end() ) {
                     has_interface = true;
                     break;
                 }
-                // Accept traits that have the NO_CBM_INSTALLATION flag themselves:
-                // the profession pre-installs CBMs but blocks future installation.
+
+
                 if( t.trait->flags.count( json_flag_NO_CBM_INSTALLATION ) ) {
                     has_interface = true;
                     break;
@@ -651,11 +651,11 @@ std::list<item> profession::items( bool male, const std::vector<trait_id> &trait
     }
 
     if( result.empty() ) {
-        // No need to do the below stuff. Plus it would cause said below stuff to crash
+
         return result;
     }
 
-    // Merge charges for items that stack with each other
+
     for( auto outer = result.begin(); outer != result.end(); ++outer ) {
         if( !outer->count_by_charges() ) {
             continue;
@@ -769,7 +769,7 @@ ret_val<void> profession::can_afford( const Character &you, const int points ) c
 ret_val<void> profession::can_pick() const
 {
     const bool meta_progression = get_option<bool>( "META_PROGRESS" );
-    // if meta progression is disabled then skip this
+
     if( get_past_achievements().is_completed( achievement_achievement_arcade_mode ) ||
         ( !meta_progression && !has_hard_requirement() ) ) {
         return ret_val<void>::make_success();
@@ -842,7 +842,7 @@ std::vector<effect_on_condition_id> profession::get_eocs() const
 bool profession_sorter::operator()( const string_id<profession> &a,
                                     const string_id<profession> &b ) const
 {
-    // The generic ("Unemployed") profession should be listed first.
+
     const profession *gen = profession::generic();
     if( &b.obj() == gen ) {
         return false;
@@ -866,7 +866,7 @@ bool profession_sorter::operator()( const string_id<profession> &a,
     }
 }
 
-// item_substitution stuff:
+
 
 void profession::load_item_substitutions( const JsonObject &jo )
 {
@@ -910,7 +910,7 @@ void json_item_substitution::load( const JsonObject &jo )
     };
 
     if( jo.has_member( "item" ) ) {
-        // items mode
+
         if( check_duplicate_item( itype_id( jo.get_string( "item" ) ) ) ) {
             jo.throw_error( "Duplicate definition of item" );
         }
@@ -925,7 +925,7 @@ void json_item_substitution::load( const JsonObject &jo )
             substitutions[itype_id( jo.get_string( "item" ) )].push_back( s );
         }
     } else if( jo.has_member( "trait" ) ) {
-        // traits mode
+
         for( const JsonObject sub : jo.get_array( "sub" ) ) {
             substitution s;
             itype_id old_it;
@@ -940,7 +940,7 @@ void json_item_substitution::load( const JsonObject &jo )
             substitutions[old_it].push_back( s );
         }
     } else if( jo.has_member( "bonus" ) ) {
-        // bonuses mode
+
         const item_group_id &bonus_items = item_group::load_item_group( jo.get_member( "group" ),
                                            "collection", "bonus items" );
         bonuses.emplace_back( bonus_items, trait_requirements( jo.get_object( "bonus" ) ) );
@@ -1046,7 +1046,7 @@ const
     for( const auto &pair : bonuses ) {
         if( pair.second.meets_condition( traits ) ) {
             const std::vector<item> &items = item_group::items_from( pair.first, advanced_spawn_time() );
-            // ret = ret + items
+
             ret.reserve( ret.size() + items.size() );
             ret.insert( ret.end(), items.begin(), items.end() );
         }

@@ -23,7 +23,7 @@ std::string enum_to_string<music::music_id>( music::music_id data )
 
     cata_fatal( "Invalid music_id in enum_to_string" );
 }
-}  // namespace io
+}
 
 namespace music
 {
@@ -90,4 +90,4 @@ void update_music_id_is_empty_flag( const std::string &data, bool update )
 {
     music_id_list[io::string_to_enum<music_id>( data )].first = update;
 }
-} // namespace music
+}

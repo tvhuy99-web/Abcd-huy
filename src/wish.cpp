@@ -84,9 +84,9 @@ class wish_mutate_callback: public uilist_callback
 {
     public:
         cataimgui::scroll desc_scroll = cataimgui::scroll::none;
-        // Last menu entry
+
         int lastlen = 0;
-        // Feedback message
+
         std::string msg;
         bool started = false;
         bool only_active = false;
@@ -236,7 +236,7 @@ class wish_mutate_callback: public uilist_callback
             ImGui::TableSetColumnIndex( 2 );
 
             ImVec2 info_size = ImGui::GetContentRegionAvail( );
-            // 1 line for ctxt + 0 to 1 line for msg
+
             info_size.y -= ( 1.0 + lines_for_msg( msg ) ) * ImGui::GetTextLineHeightWithSpacing();
             if( ImGui::BeginChild( "mutation info", info_size )
                 && menu->previewing >= 0 && static_cast<size_t>( menu->previewing ) < vTraits.size()
@@ -303,7 +303,7 @@ class wish_mutate_callback: public uilist_callback
 
         ~wish_mutate_callback() override = default;
 };
-} // namespace
+}
 
 void debug_menu::wishmutate( Character *you )
 {
@@ -346,7 +346,7 @@ void debug_menu::wishmutate( Character *you )
             const mutation_branch &mdata = mstr.obj();
             const bool threshold = mdata.threshold;
             const bool profession = mdata.profession;
-            // Manual override for the threshold-gaining
+
             if( threshold || profession ) {
                 if( you->has_permanent_trait( mstr ) ) {
                     do {
@@ -659,8 +659,8 @@ void debug_menu::wisheffect( Creature &p )
             bool invalid_effect = false;
             if( duration > 0 ) {
                 p.add_effect( eff.get_id(), time_duration::from_seconds( duration ), effectbp, permanent );
-                // Some effects like bandages on a limb like foot_l
-                // cause a segmentation fault, check if it was applied first
+
+
                 const effect &new_effect = p.get_effect( eff.get_id(), effectbp );
                 if( !new_effect.is_null() ) {
                     eff = new_effect;
@@ -703,16 +703,16 @@ class wish_monster_callback: public uilist_callback
 {
     public:
         cataimgui::scroll desc_scroll = cataimgui::scroll::none;
-        // last menu entry
+
         int lastent;
-        // feedback message
+
         std::string msg;
-        // spawn friendly critter?
+
         bool friendly;
         bool hallucination;
-        // Number of monsters to spawn.
+
         int group;
-        // scrap critter for monster::print_info
+
         monster tmp;
         const std::vector<const mtype *> &mtypes;
 
@@ -724,8 +724,8 @@ class wish_monster_callback: public uilist_callback
             lastent = -2;
         }
 
-        bool key( const input_context &ctxt, const input_event &event, int /*entnum*/,
-                  uilist * /*menu*/ ) override {
+        bool key( const input_context &ctxt, const input_event &event, int,
+                  uilist * ) override {
             const std::string &action = ctxt.input_to_action( event );
             if( action == "SCROLL_DESC_UP" ) {
                 desc_scroll = cataimgui::scroll::page_up;
@@ -737,9 +737,9 @@ class wish_monster_callback: public uilist_callback
             }
             if( action == "WISH_TOGGLE_FRIENDLY" || event.get_first_input() == 'f' ) {
                 friendly = !friendly;
-                // Force tmp monster regen
+
                 lastent = -2;
-                // Tell menu we handled keypress
+
                 return true;
             } else if( action == "WISH_INCREASE_GROUP" || event.get_first_input() == 'i' ) {
                 group++;
@@ -798,7 +798,7 @@ class wish_monster_callback: public uilist_callback
 
             ImGui::TableSetColumnIndex( 2 );
             ImVec2 info_size = ImGui::GetContentRegionAvail( );
-            // 1 line for ctxt + 0 to 2 lines for msg
+
             info_size.y -= ( 1.0 + lines_for_msg( msg ) ) * ImGui::GetTextLineHeightWithSpacing();
             if( ImGui::BeginChild( "monster info", info_size ) && valid_entnum ) {
                 cataimgui::set_scroll( desc_scroll );
@@ -808,7 +808,7 @@ class wish_monster_callback: public uilist_callback
                                             header.c_str() ).x ) * 0.5 );
                 ImGui::TextColored( c_cyan, "%s", header.c_str() );
 
-                // show debug info
+
                 restore_on_out_of_scope<bool> restore_debugmode( debug_mode );
                 debug_mode = true;
                 tmp.print_info_imgui();
@@ -835,7 +835,7 @@ class wish_monster_callback: public uilist_callback
 
         ~wish_monster_callback() override = default;
 };
-} // namespace
+}
 
 static void setup_wishmonster( uilist &pick_a_monster, std::vector<const mtype *> &mtypes )
 {
@@ -857,12 +857,12 @@ void debug_menu::wishmonstergroup( tripoint_abs_omt &loc )
     bool population_group = query_yn(
                                 _( "Is this a population-based horde, based on an existing monster group?  Select \"No\" to manually assign monsters." ) );
     mongroup new_group;
-    // Just in case, we manually set some values
+
     new_group.abs_pos = project_to<coords::sm>( loc );
     new_group.target = new_group.abs_pos.xy();
-    new_group.population = 1; // overwritten if population_group
+    new_group.population = 1;
     new_group.horde = true;
-    new_group.type = GROUP_ZOMBIE; // overwritten if population_group
+    new_group.type = GROUP_ZOMBIE;
     if( population_group ) {
         uilist type_selection;
         std::vector<mongroup_id> possible_groups;
@@ -879,12 +879,12 @@ void debug_menu::wishmonstergroup( tripoint_abs_omt &loc )
         }
         const mongroup_id selected_group( possible_groups[selected] );
         new_group.type = selected_group;
-        int new_value = new_group.population; // default value if query declined
+        int new_value = new_group.population;
         query_int( new_value, true, _( "Set population to what value?" ) );
         new_group.population = new_value;
         overmap &there = overmap_buffer.get( project_to<coords::om>( loc ).xy() );
         there.debug_force_add_group( new_group );
-        return; // Don't go to adding individual monsters, they'll override the values we just set
+        return;
     }
 
 
@@ -993,7 +993,7 @@ static item wishitem_produce( const itype &type, std::string &flags, bool incont
     if( incontainer ) {
         granted = granted.in_its_container();
     }
-    // If the item has an ammunition, this loads it to capacity, including magazines.
+
     if( !granted.ammo_default().is_null() ) {
         granted.ammo_set( granted.ammo_default(), -1 );
     }
@@ -1038,18 +1038,18 @@ class wish_item_callback: public uilist_callback
             chosen_snippet_id = { -1, "" };
             renew_snippet = true;
             const itype &selected_itype = *standard_itype_ids[menu->selected];
-            // Make liquids "contained" by default (toggled with CONTAINER action)
+
             incontainer = selected_itype.phase == phase_id::LIQUID;
-            // Clear instance flags when switching items
+
             flags.clear();
-            // Grab default flags for the itype (added with the FLAG action)
+
             itype_flags = debug_menu::iterable_to_string( selected_itype.get_flags(), " ",
             []( const flag_id & f ) {
                 return f.str();
             } );
         }
 
-        bool key( const input_context &ctxt, const input_event &event, int /*entnum*/,
+        bool key( const input_context &ctxt, const input_event &event, int,
                   uilist *menu ) override {
 
             const std::string &action = ctxt.input_to_action( event );
@@ -1061,17 +1061,17 @@ class wish_item_callback: public uilist_callback
             if( action == "FLAG" ) {
                 std::string edit_flags;
                 if( flags.empty() ) {
-                    // If this is the first time using the FLAG action on this item, start with itype flags
+
                     edit_flags = itype_flags;
                 } else {
-                    // Otherwise, edit the existing list of user-defined instance flags
+
                     edit_flags = flags;
                 }
                 string_input_popup_imgui popup( 34, edit_flags, _( "Flags:" ) );
                 popup.set_description( _( "UPPERCASE, no quotes, separate with spaces" ) );
                 popup.set_max_input_length( 100 );
                 const std::string &rval = popup.query();
-                // Save instance flags on this item (will be reset when selecting another item)
+
                 if( !popup.cancelled() ) {
                     flags = rval;
                     return true;
@@ -1122,7 +1122,7 @@ class wish_item_callback: public uilist_callback
                 desc_scroll = cataimgui::scroll::page_down;
             }
             if( action == "WISH_REFRESH_PREVIEW_SNIPPET" || cur_key == KEY_LEFT || cur_key == KEY_RIGHT ) {
-                // For Renew snippet_id.
+
                 renew_snippet = true;
                 return true;
             }
@@ -1164,7 +1164,7 @@ class wish_item_callback: public uilist_callback
 
                 const itype_variant_data *variant = itype_variants[entnum];
                 if( variant != nullptr && tmp.has_itype_variant( false ) ) {
-                    // Set the variant type as shown in the selected list item.
+
                     std::string variant_id = variant->id;
                     tmp.set_itype_variant( variant_id );
                 }
@@ -1193,7 +1193,7 @@ class wish_item_callback: public uilist_callback
 
             ImGui::TableSetColumnIndex( 2 );
             ImVec2 info_size = ImGui::GetContentRegionAvail();
-            // 1 line for ctxt + 0 to 1 line for msg
+
             info_size.y -= ( 1.0 + lines_for_msg( msg ) ) * ImGui::GetTextLineHeightWithSpacing();
 
             if( ImGui::BeginChild( "wish item", info_size ) ) {
@@ -1222,7 +1222,7 @@ class wish_item_callback: public uilist_callback
             cataimgui::TextKeybinding( ctxt, "UILIST.QUIT", _( "Quit" ),      false );
         }
 };
-} // namespace
+}
 
 void debug_menu::wishitem( Character *you )
 {
@@ -1397,7 +1397,7 @@ void debug_menu::wishitemgroup( bool test )
                     itemnames[it.display_name()]++;
                 }
             }
-            // Flip the map keys/values and use reverse sorting so common items are first
+
             std::multimap <int, std::string, std::greater<>> itemnames_by_popularity;
             for( const auto &e : itemnames ) {
                 itemnames_by_popularity.insert( std::pair<int, std::string>( e.second, e.first ) );
@@ -1465,8 +1465,8 @@ void debug_menu::wishskill( Character *you, bool change_theory )
             skill_id = sksel;
             const Skill &skill = *sorted_skills[skill_id];
             uilist sksetmenu;
-            // auto skmenu_bounds = skmenu.get_bounds();
-            // sksetmenu.desired_bounds = { skmenu_bounds.x + skmenu_bounds.w, skmenu_bounds.y + (skmenu_bounds.h) / 2
+
+
             sksetmenu.settext( string_format( _( "Set '%s' to…" ), skill.name() ) );
             const int skcur = get_level( skill );
             sksetmenu.selected = skcur;
@@ -1550,7 +1550,7 @@ void debug_menu::wishproficiency( Character *you )
 
         const bool player_know = iterator != known_profs.end();
 
-        // Does the player know all proficiencies
+
         if( know_all ) {
             know_all = player_know;
         }
@@ -1579,7 +1579,7 @@ void debug_menu::wishproficiency( Character *you )
         prmenu.query();
         const int prsel = prmenu.ret;
         if( prsel == 0 ) {
-            // if the player knows everything, unlearn everything
+
             if( know_all ) {
                 for( size_t i = 0; i < sorted_profs.size(); ++i ) {
                     std::pair<proficiency_id, bool> &cur = sorted_profs[i];
@@ -1604,8 +1604,8 @@ void debug_menu::wishproficiency( Character *you )
             }
         } else if( prsel > 0 ) {
             std::pair<proficiency_id, bool> &cur = sorted_profs[prsel - proffset];
-            // if the player didn't know it before now it does
-            // if the player knew it before, unlearn proficiency
+
+
             bool know_prof = !cur.second;
             proficiency_id &prof = cur.first;
 

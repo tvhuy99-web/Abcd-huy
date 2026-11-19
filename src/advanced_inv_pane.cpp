@@ -64,10 +64,10 @@ void advanced_inventory_pane::load_settings( int saved_area_idx,
                            save_state->area_idx;
     const aim_location location = static_cast<aim_location>( i_location );
     const advanced_inv_area &square = squares[location];
-    // determine the square's vehicle/map item presence
+
     bool has_veh_items = square.can_store_in_vehicle() && !square.get_vehicle_stack().empty();
     bool has_map_items = !get_map().i_at( square.pos ).empty();
-    // determine based on map items and settings to show cargo
+
     bool show_vehicle = false;
     if( is_re_enter ) {
         show_vehicle = save_state->in_vehicle;
@@ -102,7 +102,7 @@ bool advanced_inventory_pane::is_filtered( const item &it ) const
     return !filter_function( it );
 }
 
-/** converts a raw list of items to "stacks" - items that are not count_by_charges that otherwise stack go into one stack */
+
 static std::vector<std::vector<item_location>> item_list_to_stack(
             const item_location &parent, std::list<item *> item_list )
 {
@@ -134,7 +134,7 @@ std::vector<advanced_inv_listitem> outfit::get_AIM_inventory( size_t &item_index
                  item_location( you, &worn_item ),
                  worn_item.all_items_top( pocket_type::CONTAINER ) ) ) {
 
-            // dont show if the content are liquids
+
             if( !it_stack.empty() && it_stack.front()->made_of_from_type( phase_id::LIQUID ) &&
                 !it_stack.front()->is_frozen_liquid() ) {
                 continue;
@@ -164,7 +164,7 @@ std::vector<advanced_inv_listitem> avatar::get_AIM_inventory( const advanced_inv
         for( const std::vector<item_location> &it_stack : item_list_to_stack( weapon,
                 weapon->all_items_top( pocket_type::CONTAINER ) ) ) {
 
-            // dont show if the content are liquids
+
             if( !it_stack.empty() && it_stack.front()->made_of_from_type( phase_id::LIQUID ) &&
                 !it_stack.front()->is_frozen_liquid() ) {
                 continue;
@@ -205,8 +205,8 @@ void advanced_inventory_pane::add_items_from_area( advanced_inv_area &square,
     }
     map &m = get_map();
     avatar &u = get_avatar();
-    // Existing items are *not* cleared on purpose, this might be called
-    // several times in case all surrounding squares are to be shown.
+
+
     if( square.id == AIM_INVENTORY ) {
         square.volume = 0_ml;
         square.weight = 0_gram;
@@ -231,7 +231,7 @@ void advanced_inventory_pane::add_items_from_area( advanced_inv_area &square,
         square.weight = 0_gram;
         if( container ) {
             if( !container->is_container_empty() ) {
-                // filtering does not make sense for liquid in container
+
                 size_t item_index = 0;
                 for( const std::vector<item_location> &it_stack : item_list_to_stack( container,
                         container->all_items_top() ) ) {
@@ -253,7 +253,7 @@ void advanced_inventory_pane::add_items_from_area( advanced_inv_area &square,
             square.volume = 0_ml;
             square.weight = 0_gram;
         }
-        // Should not be able to pick up items on terrain with impassable fields.
+
         if( m.impassable_field_at( square.pos ) ) {
             return;
         }
@@ -314,7 +314,7 @@ void advanced_inventory_pane::fix_index()
 
 void advanced_inventory_pane::mod_index( int offset )
 {
-    // 0 would make no sense
+
     cata_assert( offset != 0 );
     cata_assert( !items.empty() );
     index += offset;
@@ -327,7 +327,7 @@ void advanced_inventory_pane::mod_index( int offset )
 
 void advanced_inventory_pane::scroll_by( int offset )
 {
-    // 0 would make no sense
+
     cata_assert( offset != 0 );
     if( items.empty() ) {
         return;
@@ -337,7 +337,7 @@ void advanced_inventory_pane::scroll_by( int offset )
 
 void advanced_inventory_pane::scroll_page( int linesPerPage, int offset )
 {
-    // only those two offsets are allowed
+
     cata_assert( offset == -1 || offset == +1 );
     if( items.empty() ) {
         return;
@@ -349,65 +349,65 @@ void advanced_inventory_pane::scroll_page( int linesPerPage, int offset )
         old_pagination.step( i );
     }
 
-    // underflow
+
     if( old_pagination.page + offset < 0 ) {
         if( index > 0 ) {
-            // scroll to top of first page
+
             index = 0;
         } else {
-            // scroll wrap
+
             index = size - 1;
         }
         return;
     }
 
-    int previous_line = -1; // matching line one up from our line
+    int previous_line = -1;
     advanced_inventory_pagination new_pagination( linesPerPage, *this );
     for( int i = 0; i < size; i++ ) {
         new_pagination.step( i );
-        // right page
+
         if( new_pagination.page == old_pagination.page + offset ) {
-            // right line
+
             if( new_pagination.line == old_pagination.line ) {
                 index = i;
                 return;
             }
-            // one up from right line
+
             if( new_pagination.line == old_pagination.line - 1 ) {
                 previous_line = i;
             }
         }
     }
-    // second-best matching line
+
     if( previous_line != -1 ) {
         index = previous_line;
         return;
     }
 
-    // overflow
+
     if( index < size - 1 ) {
-        // scroll to end of last page
+
         index = size - 1;
     } else {
-        // scroll wrap
+
         index = 0;
     }
 }
 
 void advanced_inventory_pane::scroll_category( int offset )
 {
-    // only those two offsets are allowed
+
     cata_assert( offset == -1 || offset == +1 );
     if( items.empty() ) {
         return;
     }
-    // index must already be valid!
+
     cata_assert( get_cur_item_ptr() != nullptr );
     const item_category *cur_cat = items[index].cat;
     if( offset > 0 ) {
         while( items[index].cat == cur_cat ) {
             index++;
-            // wrap to begin, stop there.
+
             if( static_cast<size_t>( index ) >= items.size() ) {
                 index = 0;
                 break;
@@ -416,7 +416,7 @@ void advanced_inventory_pane::scroll_category( int offset )
     } else {
         while( items[index].cat == cur_cat ) {
             index--;
-            // wrap to end, stop there.
+
             if( index < 0 ) {
                 index = static_cast<int>( items.size() ) - 1;
                 break;
@@ -445,7 +445,7 @@ advanced_inv_listitem *advanced_inventory_pane::get_cur_item_ptr()
 
 units::volume advanced_inventory_pane::free_volume( const advanced_inv_area &square ) const
 {
-    // should be a specific location instead
+
     cata_assert( area != AIM_ALL );
     if( area == AIM_CONTAINER ) {
         if( !container ) {
@@ -463,7 +463,7 @@ units::volume advanced_inventory_pane::free_volume( const advanced_inv_area &squ
 
 units::mass advanced_inventory_pane::free_weight_capacity() const
 {
-    // should be a specific location instead
+
     cata_assert( area != AIM_ALL );
     if( area == AIM_CONTAINER ) {
         if( !container ) {

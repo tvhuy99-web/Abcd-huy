@@ -253,7 +253,7 @@ enum class iteminfo_parts : size_t {
 
     DESCRIPTION_ASCII_ART,
 
-    // element count tracker
+
     NUM_VALUES
 };
 
@@ -262,34 +262,34 @@ using iteminfo_query_base = std::bitset < static_cast<size_t>( iteminfo_parts::N
 class iteminfo_query : public iteminfo_query_base
 {
     public:
-        /* The implemented constructors are a bit arbitrary right now. Currently there are
 
-            ( const std::string &bits )
 
-                ("1001010111110000111....1101")
 
-                used to allow simple 'all'/'none' presets or potentially _very_ specific
-                combinations *but* you have to include _every_ bit here so, it'll mostly
-                just be all/none
 
-            ( const iteminfo_query_base &values )
 
-                ( A & (~ B | C) ^ D )
 
-                allows usage of the underlying std::bitset's many bit operators to combine
-                any sort of fields needed
 
-            ( const std::vector<iteminfo_parts> &setBits )
 
-                ( std::vector { iteminfo_parts::Foo, iteminfo_parts::Bar, ... } )
 
-                allows defining a subset with only specific bits turned on
 
-            These should be sufficient to allow _any_ preset to be defined.
 
-            Since those typically _always_ should all be 'static const' performance should
-            not be any issue.
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         iteminfo_query();
         explicit iteminfo_query( const iteminfo_query_base &values );
         explicit iteminfo_query( const std::string &bits );
@@ -302,4 +302,4 @@ class iteminfo_query : public iteminfo_query_base
         static const iteminfo_query anyflags;
 };
 
-#endif // CATA_SRC_ITEMINFO_QUERY_H
+#endif

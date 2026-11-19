@@ -13,7 +13,7 @@
 #include "point.h"
 #include "type_id.h"
 
-// Will be using for bitmasking so not a class.
+
 namespace horde_map_flavors
 {
 enum {
@@ -22,28 +22,28 @@ enum {
     dormant = 1 << 2,
     immobile = 1 << 3
 };
-} // namespace horde_map_flavors
+}
 
 class monster;
 
-// As this class holds a large number of entries (many thousands per overmap),
-// there are a number of optimizations that are worth investigating.
-// One is minimizing the sizes of the keys.  The outer key could be tripoint_om_sm<byte>
-// and the inner key could be a point_omt_ms<byte>, shrinking their memory footprint from
-// 12 bytes each to 3 and two bytes each respectively.
-/**
- * horde_map handles one overmap worth of monster entities.
- * The primary divisions are location and different behavior,
- * i.e. active monsters vs dormant monsters vs idle monsters.
- */
+
+
+
+
+
+
+
+
+
+
 class horde_map
 {
         using map_type = std::unordered_map
                          <tripoint_om_sm, std::unordered_map<tripoint_abs_ms, horde_entity>>;
 
         map_type active_monster_map;
-        // Monsters with the DORMANT flag get placed in this parallell structure that is
-        // ignored by overmap::move_hordes but is otherwise handled the same.
+
+
         map_type idle_monster_map;
         map_type dormant_monster_map;
         map_type immobile_monster_map;
@@ -89,8 +89,8 @@ class horde_map
                              horde_map_flavors::immobile;
             public:
                 friend horde_map;
-                // TODO: ideally these would be private, no use case for constructing them outside of horde_map
-                // No args gets you the end() iterator.
+
+
                 explicit iterator() = default;
                 explicit iterator( const horde_map &p ) : parent( const_cast<horde_map *>( &p ) ),
                     outer_map( &parent->active_monster_map ),
@@ -103,7 +103,7 @@ class horde_map
                     filter( filt ) {
                     insure_valid();
                 }
-                // Sets the members directly. TODO: make private but accessable to horde_map
+
                 explicit iterator( const horde_map &p, map_type &m, map_type::iterator oi,
                                    std::unordered_map<tripoint_abs_ms, horde_entity>::iterator ii ) : parent( const_cast<horde_map *>
                                                ( &p ) ), outer_map( &m ),
@@ -151,4 +151,4 @@ class horde_map
         }
 };
 
-#endif // CATA_SRC_HORDE_MAP_H
+#endif

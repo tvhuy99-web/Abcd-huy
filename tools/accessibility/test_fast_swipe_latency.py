@@ -110,8 +110,7 @@ class FastSwipeLatencyContracts(unittest.TestCase):
             "void map::shift_traps(", 1)[0]
         self.assertIn("sm == nullptr || sm->is_uniform()", reconcile)
         self.assertIn("for( int sx = 0; sx < SEEX; ++sx )", reconcile)
-        # Vehicles, the character inventory and NPC inventories remain in
-        # reconciliation even if ground submaps are uniform.
+
         self.assertIn("get_vehicles()", reconcile)
         self.assertIn("walk_character( get_avatar() );", reconcile)
 
@@ -127,8 +126,7 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertLess(actualize.index("explosion_handler::process_explosions();"),
                         actualize.index("if( tmpsub->is_uniform() )"))
         self.assertIn("for( int x = 0; x < SEEX; x++ )", actualize)
-        # The normal scene rebuild must remain; this is not a stale-vision
-        # shortcut and does not remove cache invalidation on a map shift.
+
         self.assertIn("void map::build_map_cache(", code)
         self.assertIn("void map::invalidate_map_cache(", code)
 

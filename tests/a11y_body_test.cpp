@@ -9,8 +9,8 @@
 #include "player_helpers.h"
 #include "type_id.h"
 
-// Written during the coding phase. These require real character/item data;
-// execute them with the full suite only after the coding phase is complete.
+
+
 TEST_CASE( "reader_health_does_not_disclose_hp_within_one_visual_band", "[a11y][medical]" )
 {
     clear_avatar();

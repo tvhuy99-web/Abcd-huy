@@ -27,11 +27,11 @@ struct city {
     bool was_loaded = false;
 
     int database_id = 0;
-    // location of the city (in overmap coordinates)
+
     point_abs_om pos_om;
-    // location of the city (in overmap terrain coordinates)
+
     point_om_omt pos;
-    // original population
+
     int population = 0;
     int size = -1;
     std::string name;
@@ -54,4 +54,4 @@ struct city {
 
 generic_factory<city> &get_city_factory();
 
-#endif // CATA_SRC_CITY_H
+#endif

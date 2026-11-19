@@ -113,7 +113,7 @@ valueT dv_to_T( diag_value const &dv )
     } else if constexpr( std::is_same_v<valueT, time_duration> ) {
         return time_duration::from_turns( dv.dbl() );
     } else if constexpr( std::is_same_v<valueT, translation> ) {
-        // translated when set
+
         return translation::no_translation( dv.str() );
     }
 }
@@ -122,11 +122,11 @@ template<typename V, typename T>
 bool try_deserialize_type( V &v, JsonValue const &jsin )
 {
     if constexpr( std::is_same_v<T, diag_value> ) {
-        // ~copy of JsonValue::read() since we need to pass an extra arg to deserialize
+
         diag_value dv;
         try {
             dv._deserialize( jsin, false );
-        } catch( JsonError const &/* je */ ) {
+        } catch( JsonError const & ) {
             return false;
         }
         v = dv;
@@ -146,7 +146,7 @@ bool deserialize_variant( V &v, JsonValue const &jsin )
     return ( try_deserialize_type<V, T>( v, jsin ) || ... );
 }
 
-} // namespace
+}
 
 template<typename valueT, typename... funcT>
 void value_or_var<valueT, funcT...>::deserialize( JsonValue const &jsin )
@@ -171,7 +171,7 @@ valueT value_or_var<valueT, funcT...>::constant() const
         {
             return tv;
         },
-        []( auto const & /* v */ ) -> valueT
+        []( auto const & ) -> valueT
         {
             debugmsg( "this value_or_var is not a constant" );
 

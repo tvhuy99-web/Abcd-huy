@@ -35,17 +35,17 @@ TEST_CASE( "examine_bush" )
     CHECK( m.ter( pine_loc )->has_examine( iexamine::harvest_ter ) );
     CHECK( m.ter( elderberry_loc )->has_examine( iexamine::harvest_ter_nectar ) );
 
-    // In spring, pine is harvestable but elderberry is not
+
     calendar::turn = calendar::turn_zero;
     CHECK( m.ter( pine_loc )->can_examine( pine_loc ) );
     CHECK_FALSE( m.ter( elderberry_loc )->can_examine( elderberry_loc ) );
 
-    // In summer, both are harvestable
+
     calendar::turn = calendar::turn_zero + calendar::season_length() + 1_days;
     CHECK( m.ter( pine_loc )->can_examine( pine_loc ) );
     CHECK( m.ter( elderberry_loc )->can_examine( elderberry_loc ) );
 
-    // In fall, just pine again
+
     calendar::turn = calendar::turn_zero + calendar::season_length() * 2 + 1_days;
     CHECK( m.ter( pine_loc )->can_examine( pine_loc ) );
     CHECK_FALSE( m.ter( elderberry_loc )->can_examine( elderberry_loc ) );

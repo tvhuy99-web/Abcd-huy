@@ -123,7 +123,7 @@ if __name__ == '__main__':
         for p in product(variable_prefix, (game_id,), variable_suffix):
             output = [overlay_data['prefix']]
             output.extend(p)
-            # print(output)
+
             print(''.join(output))
 
     for hardcoded_id in CPP_IDS:

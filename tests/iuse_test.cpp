@@ -74,7 +74,7 @@ static const morale_type morale_wet( "morale_wet" );
 TEST_CASE( "eyedrops", "[iuse][eyedrops]" )
 {
     avatar dummy;
-    //Give eyes to our dummy
+
     dummy.set_body();
     REQUIRE( dummy.has_part( bodypart_id( "eyes" ) ) );
     dummy.normalize();
@@ -300,7 +300,7 @@ TEST_CASE( "anticonvulsant", "[iuse][anticonvulsant]" )
     }
 }
 
-// test the `iuse::oxygen_bottle` function
+
 TEST_CASE( "oxygen_tank", "[iuse][oxygen_bottle]" )
 {
     avatar dummy;
@@ -312,7 +312,7 @@ TEST_CASE( "oxygen_tank", "[iuse][oxygen_bottle]" )
     int charges_before = oxygen.ammo_remaining( );
     REQUIRE( charges_before > 0 );
 
-    // Ensure baseline painkiller value to measure painkiller effects
+
     dummy.set_painkiller( 0 );
     REQUIRE( dummy.get_painkiller() == 0 );
 
@@ -373,7 +373,7 @@ TEST_CASE( "oxygen_tank", "[iuse][oxygen_bottle]" )
             THEN( "a dose of oxygen is stimulating" ) {
                 dummy.invoke_item( &oxygen );
                 CHECK( oxygen.ammo_remaining( ) == charges_before - 1 );
-                // values should match iuse function `oxygen_bottle`
+
                 CHECK( dummy.get_stim() == 8 );
 
                 AND_THEN( "it acts as a stronger painkiller" ) {
@@ -383,8 +383,8 @@ TEST_CASE( "oxygen_tank", "[iuse][oxygen_bottle]" )
         }
 
         WHEN( "they are already quite stimulated" ) {
-            // "quite stimulated" meaning the max-stimulation cutoff defined in
-            // iuse function `oxygen_bottle`, which should match `max_stim` here:
+
+
             int max_stim = 16;
 
             dummy.set_stim( max_stim );
@@ -403,17 +403,17 @@ TEST_CASE( "oxygen_tank", "[iuse][oxygen_bottle]" )
     }
 }
 
-// test the `iuse::caff` and `iuse::atomic_caff` functions
+
 TEST_CASE( "caffeine_and_atomic_caffeine", "[iuse][caff][atomic_caff]" )
 {
     avatar dummy;
     dummy.normalize();
 
-    // Baseline sleepiness level before caffeinating
+
     int sleepiness_before = 200;
     dummy.set_sleepiness( sleepiness_before );
 
-    // No stimulants or radiation
+
     dummy.set_stim( 0 );
     dummy.set_rad( 0 );
     REQUIRE( dummy.get_stim() == 0 );
@@ -443,7 +443,7 @@ TEST_CASE( "towel", "[iuse][towel]" )
     item towel( itype_towel, calendar::turn_zero, item::default_charges_tag{} );
 
     GIVEN( "avatar is wet" ) {
-        // Saturate torso, head, and both arms
+
         dummy.drench( 100, { body_part_torso, body_part_head, body_part_arm_l, body_part_arm_r },
                       false );
         REQUIRE( dummy.get_part_wetness( bodypart_id( "torso" ) ) > 0 );
@@ -639,9 +639,9 @@ TEST_CASE( "prozac", "[iuse][prozac]" )
         dummy.set_stim( 0 );
 
         dummy.consume( prozac );
-        CHECK( dummy.get_stim() == -5 ); // The iuse action gives +0 and item itself -5
+        CHECK( dummy.get_stim() == -5 );
         dummy.consume( prozac );
-        CHECK( dummy.get_stim() == -7 ); // Second iuse gives +3
+        CHECK( dummy.get_stim() == -7 );
     }
 }
 
@@ -719,9 +719,9 @@ TEST_CASE( "xanax", "[iuse][xanax]" )
     }
 }
 
-// Gas mask has no charges_per_use; iuse::gasmask must drain the filter via
-// ammo_consume directly. consume_tool_uses bails out without draining when
-// charges_to_use() is zero.
+
+
+
 TEST_CASE( "gasmask_filter_drains_on_full_absorption", "[iuse][gasmask]" )
 {
     avatar dummy;

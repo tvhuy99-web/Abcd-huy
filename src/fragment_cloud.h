@@ -3,9 +3,9 @@
 #define CATA_SRC_FRAGMENT_CLOUD_H
 
 enum class quadrant : int;
-/*
- * fragment_cloud represents the density and velocity of fragments passing through a square.
- */
+
+
+
 struct fragment_cloud {
     fragment_cloud() : velocity( 0.0 ), density( 0.0 ) {}
     explicit fragment_cloud( float initial_value ) : velocity( initial_value ),
@@ -15,9 +15,9 @@ struct fragment_cloud {
     }
     fragment_cloud &operator=( const float &value );
     bool operator==( const fragment_cloud &that ) const;
-    /* Velocity is in m/sec. */
+
     float velocity;
-    /* Density is a fuzzy count of number of fragments per cubic meter (one square). */
+
     float density;
 };
 bool operator<( const fragment_cloud &us, const fragment_cloud &them );
@@ -31,4 +31,4 @@ fragment_cloud accumulate_fragment_cloud( const fragment_cloud &cumulative_cloud
         const fragment_cloud &current_cloud,
         const int &distance );
 
-#endif // CATA_SRC_FRAGMENT_CLOUD_H
+#endif

@@ -20,6 +20,6 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
                           const temp_crafting_inventory &inventory,
                           const std::function<bool( const item & )> &component_filter,
                           int batch, const deduped_requirement_data *deduped = nullptr );
-} // namespace a11y
+}
 
-#endif // CATA_SRC_A11Y_REQUIREMENTS_H
+#endif

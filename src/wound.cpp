@@ -46,23 +46,23 @@ namespace
 {
 generic_factory<wound_type> wound_type_factory( "wound" );
 
-// we'll store requirement_ids here and wait for requirements to load in, then we can actualize them
+
 std::multimap<wound_fix_id, std::pair<std::string, int>> reqs_temp_storage;
-} // namespace
+}
 
 void wound_type::load_wounds( const JsonObject &jo, const std::string &src )
 {
     wound_type_factory.load( jo, src );
 }
 
-/** @relates string_id */
+
 template<>
 const wound_type &string_id<wound_type>::obj() const
 {
     return wound_type_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<wound_type>::is_valid() const
 {
@@ -102,7 +102,7 @@ void wound_type::finalize()
 namespace
 {
 generic_factory<wound_fix> wound_fix_factory( "wound_fix" );
-} // namespace
+}
 
 void wound_fix::load_wound_fixes( const JsonObject &jo, const std::string &src )
 {
@@ -119,14 +119,14 @@ std::string wound_fix::get_description() const
     return description.translated();
 }
 
-/** @relates string_id */
+
 template<>
 const wound_fix &string_id<wound_fix>::obj() const
 {
     return wound_fix_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<wound_fix>::is_valid() const
 {
@@ -245,13 +245,13 @@ void wound_fix::load( const JsonObject &jo, const std::string_view & )
     if( jo.has_array( "requirements" ) ) {
         for( const JsonValue &jv : jo.get_array( "requirements" ) ) {
             if( jv.test_array() ) {
-                // array of 2 elements filled with [requirement_id, count]
+
                 const JsonArray &req = static_cast<JsonArray>( jv );
                 const std::string req_id = req.get_string( 0 );
                 const int req_amount = req.get_int( 1 );
                 reqs_temp_storage.emplace( id, std::make_pair( req_id, req_amount ) );
             } else if( jv.test_object() ) {
-                // defining single requirement inline
+
                 const JsonObject &req = static_cast<JsonObject>( jv );
                 const requirement_id req_id( "wound_fix_" + id.str() + "_inline_req" );
                 requirement_data::load_requirement( req, req_id );
@@ -271,28 +271,28 @@ const requirement_data &wound_fix::get_requirements() const
 bool wound_type::allowed_on_bodypart( bodypart_str_id bp_id ) const
 {
 
-    // doesn't have bp type we want
+
     for( const bp_type &bp_type : whitelist_body_part_types ) {
         if( !bp_id->has_type( bp_type ) ) {
             return false;
         }
     }
 
-    // has no flag we want
+
     for( const json_character_flag &bp_flag : whitelist_bp_with_flag ) {
         if( !bp_id->has_flag( bp_flag ) ) {
             return false;
         }
     }
 
-    // has type we do not want
+
     for( const bp_type &bp_type : blacklist_body_part_types ) {
         if( bp_id->has_type( bp_type ) ) {
             return false;
         }
     }
 
-    // has flag we do not want
+
     for( const json_character_flag &bp_flag : blacklist_bp_with_flag ) {
         if( bp_id->has_flag( bp_flag ) ) {
             return false;

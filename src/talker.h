@@ -31,15 +31,15 @@ enum class get_body_part_flags;
 namespace npc_factions
 {
 enum class relationship : int;
-} // namespace npc_factions
+}
 
 using bodytype_id = std::string;
 
-/*
- * Talker is an entity independent way of providing a participant in a dialogue.
- * Talker is a virtual abstract class and should never really be used.  Instead,
- * entity specific talker child classes such as character_talker should be used.
- */
+
+
+
+
+
 class const_talker
 {
     public:
@@ -53,7 +53,7 @@ class const_talker
         virtual std::unique_ptr<const_talker> const_clone() const {
             return std::make_unique<const_talker>();
         }
-        // virtual member accessor functions
+
         virtual Character const *get_const_character() const {
             return nullptr;
         }
@@ -80,7 +80,7 @@ class const_talker
             return nullptr;
         }
 
-        // identity and location
+
         virtual std::string disp_name() const {
             return "";
         }
@@ -118,7 +118,7 @@ class const_talker
             return "";
         }
 
-        // mandatory functions for starting a dialogue
+
         virtual bool will_talk_to_u( const Character &, bool ) const {
             return false;
         }
@@ -156,7 +156,7 @@ class const_talker
         virtual bool is_warm() const {
             return false;
         }
-        // stats, skills, traits, bionics, and magic
+
         virtual int get_artifact_resonance() const {
             return 0;
         }
@@ -328,14 +328,14 @@ class const_talker
             return {};
         }
 
-        // effects and values
+
         virtual bool has_effect( const efftype_id &, const bodypart_id & ) const {
             return false;
         }
         virtual effect get_effect( const efftype_id &, const bodypart_id & ) const {
             return effect::null_effect;
         }
-        virtual float get_limb_score( const limb_score_id & /*score*/, const bp_type & /*bp*/ ) const {
+        virtual float get_limb_score( const limb_score_id &, const bp_type & ) const {
             return 0.0;
         }
         virtual bool is_deaf() const {
@@ -360,7 +360,7 @@ class const_talker
             return nullptr;
         }
 
-        // inventory, buying, and selling
+
         virtual bool is_wearing( const itype_id & ) const {
             return false;
         }
@@ -370,7 +370,7 @@ class const_talker
         virtual bool has_charges( const itype_id &, int ) const {
             return false;
         }
-        // bool = match tool containing charges of itype_id
+
         virtual bool has_charges( const itype_id &, int, bool ) const {
             return false;
         }
@@ -413,7 +413,7 @@ class const_talker
             return false;
         }
 
-        // missions
+
         virtual std::vector<mission *> available_missions() const {
             return {};
         }
@@ -424,7 +424,7 @@ class const_talker
             return nullptr;
         }
 
-        // factions and alliances
+
         virtual faction *get_faction() const {
             return nullptr;
         }
@@ -444,12 +444,12 @@ class const_talker
             return false;
         }
 
-        // ai rules
+
         virtual bool has_ai_rule( const std::string &, const std::string & ) const {
             return false;
         }
 
-        // other descriptors
+
         virtual std::string get_job_description() const {
             return "";
         }
@@ -662,7 +662,7 @@ class const_talker
         virtual units::temperature_delta get_body_temp_delta() const {
             return 0_C_delta;
         }
-        virtual std::vector<bodypart_id> get_all_body_parts( get_body_part_flags /* flags */ ) const {
+        virtual std::vector<bodypart_id> get_all_body_parts( get_body_part_flags ) const {
             return std::vector<bodypart_id>();
         }
         virtual int get_part_hp_cur( const bodypart_id & ) const {
@@ -837,7 +837,7 @@ class talker: virtual public const_talker
         virtual std::list<item> use_charges( const itype_id &, int ) {
             return {};
         }
-        // bool = match tool containing charges of itype_id
+
         virtual std::list<item> use_charges( const itype_id &, int, bool ) {
             return {};
         }
@@ -941,4 +941,4 @@ class talker_cloner : virtual public B
             return std::make_unique<T>( static_cast<T const &>( *this ) );
         }
 };
-#endif // CATA_SRC_TALKER_H
+#endif

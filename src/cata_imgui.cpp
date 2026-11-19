@@ -46,8 +46,8 @@ struct pairs {
 
 ImVec4 impalette[256] = {};
 std::array<RGBTuple, color_loader<RGBTuple>::COLOR_NAMES_COUNT> rgbPalette;
-std::array<pairs, 100> colorpairs;   //storage for paired colors
-} // namespace
+std::array<pairs, 100> colorpairs;
+}
 
 static ImVec4 compute_color( uint8_t index )
 {
@@ -94,7 +94,7 @@ ImVec4 cataimgui::imvec4_from_color( const nc_color &color )
 namespace
 {
 std::vector<std::pair<int, ImTui::mouse_event>> imtui_events;
-} // namespace
+}
 
 cataimgui::client::client()
 {
@@ -118,16 +118,16 @@ cataimgui::client::~client()
 {
     ImTui_ImplNcurses_Shutdown();
     ImTui_ImplText_Shutdown();
-    // DestroyContext runs the internal Shutdown and frees the context;
-    // calling ImGui::Shutdown alone leaks the context created in the
-    // constructor.
+
+
+
     ImGui::DestroyContext();
 }
 
 void cataimgui::client::new_frame( int display_buffer_w, int display_buffer_h )
 {
-    // TUI layout is driven by the ncurses backend, not display-buffer
-    // pixel dims.
+
+
     ( void )display_buffer_w;
     ( void )display_buffer_h;
     ImTui_ImplNcurses_NewFrame( imtui_events );
@@ -139,8 +139,8 @@ void cataimgui::client::new_frame( int display_buffer_w, int display_buffer_h )
 
 void cataimgui::client::abort_frame()
 {
-    // EndFrame finalizes the drawlist without painting it. Drain
-    // cata_input_trail like end_frame() so events do not pile up.
+
+
     ImGui::EndFrame();
     ImGuiIO &io = ImGui::GetIO();
     for( const int &code : cata_input_trail ) {
@@ -176,10 +176,10 @@ void cataimgui::client::set_alloced_pair_count( short count )
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 void cataimgui::client::process_input( void *input, int display_buffer_w, int display_buffer_h,
-                                       int /*scaling_factor*/ )
+                                       int )
 {
-    // TUI input is in cell coordinates from ncurses; no display-buffer
-    // pixel scaling.
+
+
     ( void )display_buffer_w;
     ( void )display_buffer_h;
     if( !any_window_shown() ) {
@@ -206,7 +206,7 @@ void cataimgui::client::process_input( void *input, int display_buffer_w, int di
                     case MouseInput::RightButtonReleased:
                         new_mouse_event.bstate |= BUTTON3_RELEASED;
                         break;
-#if defined(BUTTON5_PRESSED) /* If curses version is prepared for a 5-button mouse, enable mousewheel */
+#if defined(BUTTON5_PRESSED)
                     case MouseInput::ScrollWheelUp:
                         new_mouse_event.bstate |= BUTTON4_PRESSED;
                         break;
@@ -222,7 +222,7 @@ void cataimgui::client::process_input( void *input, int display_buffer_w, int di
         } else {
             int ch = curses_input->get_first_input();
             if( ch != UNKNOWN_UNICODE ) {
-                if( ch > 127 && ch < 245 ) { // Values between 127 and 245 indicate UTF-8
+                if( ch > 127 && ch < 245 ) {
                     ch = utf8_wrapper( curses_input->text ).at( 0 );
                 }
                 imtui_events.emplace_back( ch, new_mouse_event );
@@ -250,11 +250,11 @@ template<>
 RGBTuple color_loader<RGBTuple>::from_rgb( const int r, const int g, const int b )
 {
     RGBTuple result;
-    // Blue
+
     result.Blue = b;
-    // Green
+
     result.Green = g;
-    // Red
+
     result.Red = r;
     return result;
 }
@@ -292,18 +292,18 @@ cataimgui::client::client( const SDL_Renderer_Ptr &sdl_renderer, const SDL_Windo
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigInputTrickleEventQueue = false;
 
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
 
-    // Setup Dear ImGui style
+
     ImGui::StyleColorsDark();
 
     ImGuiStyle &style = ImGui::GetStyle();
-    // Default cellPadding is {4, 2}. We reduce this to {3, 2}.
+
     ImGui::PushStyleVar( ImGuiStyleVar_CellPadding, ImVec2( 3, style.CellPadding.y ) );
 
     init_platform_backend();
@@ -361,8 +361,8 @@ void cataimgui::client::destroy_backend_device_objects() const
 #endif
 
 
-// Load all fonts that exist in typefaces list
-// - typefaces is a list of paths.
+
+
 static void load_font( ImGuiIO &io, const std::vector<font_config> &typefaces,
                        float font_size = 0.0f )
 {
@@ -379,7 +379,7 @@ static void load_font( ImGuiIO &io, const std::vector<font_config> &typefaces,
     auto it = std::begin( io_typefaces );
     for( ; it != std::end( io_typefaces ); ++it ) {
         if( is_bitmap_typeface( it->path ) ) {
-            // a pixel sheet is not a font file; the TTF faces after it still load
+
             continue;
         }
         if( !file_exist( it->path ) ) {
@@ -400,7 +400,7 @@ static void load_font( ImGuiIO &io, const std::vector<font_config> &typefaces,
 static void check_font( const ImFont *font )
 {
     if( !font || !font->IsLoaded() ) {
-        // we can’t use debugmsg or cata_fatal because they trigger a new ImGui frame
+
         // NOLINTNEXTLINE(cert-err33-c)
         fprintf( stderr,
                  "Failed to create font atlas!  Make sure that your chosen "
@@ -428,9 +428,9 @@ void cataimgui::client::load_fonts( UNUSED const Font_Ptr &gui_font,
 void cataimgui::add_cata_fonts( ImGuiIO &io, const std::vector<font_config> &gui_typefaces,
                                 const std::vector<font_config> &mono_typefaces, const bool cjk )
 {
-    // Glyphs bake lazily on first use; the merged unifont in
-    // ensure_unifont_loaded() supplies CJK / non-Latin coverage.
-    // Fonts[0] = gui, Fonts[1] = mono, Fonts[2] = gui 1.5x (non-CJK only)
+
+
+
     load_font( io, gui_typefaces );
     load_font( io, mono_typefaces );
     if( !cjk ) {
@@ -456,18 +456,18 @@ bool cataimgui::font_reload::apply( ImGuiIO &io, const bool cjk )
         return false;
     }
     pending_ = false;
-    // Clear also nulls FontDefault and the context's font, so nothing points at the old ones
+
     io.Fonts->Clear();
     add_cata_fonts( io, gui_typefaces_, mono_typefaces_, cjk );
-    // Clear leaves the old size in the style; 0 makes NewFrame take the new Fonts[0] size
+
     ImGui::GetStyle().FontSizeBase = 0.0f;
     return true;
 }
 
 cataimgui::client::~client()
 {
-    // Reverse-order teardown: renderer backend, platform backend, context.
-    // Skipping any one leaks that resource.
+
+
     shutdown_renderer_backend();
     shutdown_platform_backend();
     ImGui::DestroyContext();
@@ -482,7 +482,7 @@ struct FreeTypeTest {
     float           RasterizerMultiply = 1.0f;
     unsigned int    FreeTypeLoaderFlags = 0;
 
-    // Call _BEFORE_ NewFrame()
+
     bool PreNewFrame() {
         if( !WantRebuild ) {
             return false;
@@ -493,8 +493,8 @@ struct FreeTypeTest {
             ( static_cast<ImFontConfig *>( &atlas->Sources[n] ) )->RasterizerMultiply = RasterizerMultiply;
         }
 
-        // Allow for dynamic selection of the font loader.
-        // In real code you are likely to just define IMGUI_ENABLE_FREETYPE and never call SetFontLoader().
+
+
 #ifdef IMGUI_ENABLE_FREETYPE
         if( BuildMode == FontBuildMode_FreeType ) {
             atlas->SetFontLoader( ImGuiFreeType::GetFontLoader() );
@@ -512,7 +512,7 @@ struct FreeTypeTest {
         return true;
     }
 
-    // Call to draw UI
+
     void ShowFontsOptionsWindow() {
         ImFontAtlas *atlas = ImGui::GetIO().Fonts;
 
@@ -574,25 +574,25 @@ void cataimgui::client::new_frame( int display_buffer_w, int display_buffer_h )
 {
 #if 0 and not TUI
     if( freetype_test.PreNewFrame() ) {
-        // REUPLOAD FONT TEXTURE TO GPU
+
         ImGui_ImplSDLRenderer3_DestroyDeviceObjects();
         ImGui_ImplSDLRenderer3_CreateDeviceObjects();
     }
 #endif
     if( clear_screen && clear_sdl_window() ) {
-        // Keep the request armed if the clear was deferred by a queued recovery.
+
         clear_screen = false;
     }
     fonts_reloaded_this_frame_ = false;
-    // the rebuilt atlas is a new texture; the backend creates it and drops the old one
+
     fonts_reloaded_this_frame_ = font_reload_.apply( ImGui::GetIO(),
                                  get_option<bool>( "IMGUI_LOAD_CHINESE" ) );
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
 
-    // ImGui draws into display_buffer, whose size differs from the window under
-    // SCALING_FACTOR or android letterboxing. Prefer the caller's dims; fall
-    // back to the bound target's output size.
+
+
+
     {
         ImGuiIO &io = ImGui::GetIO();
         int output_w = 0;
@@ -617,8 +617,8 @@ void cataimgui::client::new_frame( int display_buffer_w, int display_buffer_h )
 void cataimgui::client::end_frame()
 {
     ImGui::Render();
-    // A watcher write can land after the outer-boundary drain passed but before
-    // this paint. The draw list is finalized; skip only the backend paint.
+
+
     if( !renderer_should_abort_frame() && unbind_sprite_shader() ) {
         ImGui_ImplSDLRenderer3_RenderDrawData( ImGui::GetDrawData(), sdl_renderer.get() );
     }
@@ -631,8 +631,8 @@ void cataimgui::client::end_frame()
 
 void cataimgui::client::abort_frame()
 {
-    // EndFrame finalizes the drawlist without painting it. Drain
-    // cata_input_trail like end_frame() so events do not pile up.
+
+
     ImGui::EndFrame();
     ImGuiIO &io = ImGui::GetIO();
     for( const int &code : cata_input_trail ) {
@@ -797,17 +797,17 @@ static void PushOrPopColor( std::string_view seg, int minimumColorStackSize )
             }
             break;
         case color_tag_parse_result::non_color_tag:
-            // Do nothing
+
             break;
     }
 }
 
-/**
- * Scrolls the current ImGui window by a scroll action
- *
- * Setting scroll needs to happen before drawing contents for page scroll to work properly
- * @param s an enum for the currently pending scroll action
- */
+
+
+
+
+
+
 void cataimgui::set_scroll( scroll &s )
 {
     int scroll_px_begin = ImGui::GetScrollY();
@@ -822,8 +822,8 @@ void cataimgui::set_scroll( scroll &s )
             scroll_px_begin = 0;
             break;
         case scroll::end:
-            // We can't rely on setting the next frame's scroll position with the current frame's window size. (We might have changed it!)
-            // So just set scroll to max and let imgui clamp us.
+
+
             scroll_px_begin = INT_MAX;
             break;
         case scroll::line_up:
@@ -982,7 +982,7 @@ cataimgui::window::~window()
             ImGui::GetIO().ClearInputKeys();
             GImGui->InputEventsQueue.resize( 0 );
 #ifdef TILES
-            // Removes leftover ImGui artifacts
+
             clear_screen = true;
 #endif
         }
@@ -1077,7 +1077,7 @@ void cataimgui::window::draw()
     bool handled_resize = false;
     if( is_bounds_changed() ) {
         cached_bounds = get_bounds();
-        // we want to make sure is_resized is able to be handled for at least a full frame
+
         handled_resize = true;
     }
     if( cached_bounds.x == -1 || cached_bounds.y == -1 ) {
@@ -1119,13 +1119,13 @@ void cataimgui::window::draw()
     }
 }
 
-/// <summary>
-/// A button tied to a string action. When the button is clicked, push the desired action to input_context to be returned the next time
-///  there is no input action
-/// </summary>
-/// <param name="action">The action id to be returned by the button</param>
-/// <param name="text">The button's text</param>
-/// <returns></returns>
+
+
+
+
+
+
+
 bool cataimgui::window::action_button( const std::string &action, const std::string &text )
 {
     if( ImGui::Button( text.c_str() ) ) {
@@ -1271,9 +1271,9 @@ bool cataimgui::BeginTabItem( const char *label, bool is_selected, bool *p_open,
     }
 }
 
-// Use the base terminal palette to reasonably color ImGui elements.
-// This might be useful to easily apply the color theme (chosen via
-// Color Manager, likely) to ImGui with minimal effort.
+
+
+
 static void inherit_base_colors()
 {
     ImGuiStyle &style = ImGui::GetStyle();
@@ -1323,7 +1323,7 @@ static void inherit_base_colors()
 static void load_imgui_style_file( const cata_path &style_path )
 {
     ImGuiStyle &style = ImGui::GetStyle();
-    // reset style first to unset colors
+
     ImGui::StyleColorsDark( &style );
 
     JsonValue jsin = json_loader::from_path( style_path );
@@ -1399,7 +1399,7 @@ static void load_imgui_style_file( const cata_path &style_path )
     for( const auto& [text_key, imgui_key] : key_options ) {
         if( joc.has_array( text_key ) ) {
             JsonArray jsarr = joc.get_array( text_key );
-            float alpha = 1.0; // default to full opacity if not specified explicitly
+            float alpha = 1.0;
             if( jsarr.has_float( 3 ) ) {
                 alpha = jsarr.get_float( 3 );
             }
@@ -1441,7 +1441,7 @@ void cataimgui::TextKeybinding( const input_context &ctxt,
     ImGui::TextColored( default_color, "[" );
     ImGui::SameLine( 0, 0 );
     ImGui::TextColored( color, "%s",
-                        // strlen(action) <= 1 // for non-action explicit keys
+
                         ( *action == 0 || *( action + 1 ) == 0 ) ?
                         action :
                         ctxt.get_desc( action, max_limit ).c_str() );

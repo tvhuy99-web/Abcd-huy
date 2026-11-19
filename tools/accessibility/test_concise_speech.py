@@ -53,8 +53,8 @@ class ConciseSpeechTest(unittest.TestCase):
             'msgstr "Bị chặn"',
             'msgstr "Có bẫy: %s"',
             'msgstr "Xe: %s"',
-            # The coordinates entry is translated now (was untranslated
-            # English); the concise Vietnamese form is asserted instead.
+
+
             'msgstr "Tọa độ. X %1$d, Y %2$d, Z %3$d."',
             'msgstr "Chưa rõ kết quả."',
             'msgstr "%s chảy máu nặng hơn."',
@@ -62,8 +62,7 @@ class ConciseSpeechTest(unittest.TestCase):
             self.assertIn(translation, self.po)
 
     def test_real_game_safety_warnings_stay_available(self):
-        # A shortened scan must not silence genuinely urgent events or
-        # change how irreversible operations are described.
+
         self.assertIn('if( part.bleeding > old->bleeding )', self.world)
         self.assertIn('announce_game_message( message, urgent );', self.world)
         self.assertIn("Delete the world", self.po)

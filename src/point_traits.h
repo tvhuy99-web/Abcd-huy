@@ -54,4 +54,4 @@ struct point_traits <
     }
 };
 
-#endif // CATA_SRC_POINT_TRAITS_H
+#endif

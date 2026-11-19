@@ -41,4 +41,4 @@ struct parameterized_build_reqs {
 build_reqs get_build_reqs_for_furn_ter_ids(
     const std::pair<std::map<ter_id, int>, std::map<furn_id, int>> &changed_ids );
 
-#endif // CATA_SRC_BUILD_REQS_H
+#endif

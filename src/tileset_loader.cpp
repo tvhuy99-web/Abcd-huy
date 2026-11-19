@@ -59,7 +59,7 @@ std::string get_ascii_tile_id( const uint32_t sym, const int FG, const int BG )
                           static_cast<char>( FG ), static_cast<char>( BG )
                         } );
 }
-} // namespace
+}
 
 static void get_tile_information( const cata_path &config_path, std::string &json_path,
                                   std::string &tileset_path, std::string &layering_path )
@@ -68,7 +68,7 @@ static void get_tile_information( const cata_path &config_path, std::string &jso
     const std::string default_tileset = PATH_INFO::defaulttilepng();
     const std::string default_layering = PATH_INFO::defaultlayeringjson();
 
-    // Get JSON and TILESET vars from config
+
     const auto reader = [&]( std::istream & fin ) {
         while( !fin.eof() ) {
             std::string sOption;
@@ -125,8 +125,8 @@ static SDL_Surface_Ptr apply_color_filter( const SDL_Surface_Ptr &original,
     for( int y = 0, ey = surf->h; y < ey; ++y ) {
         for( int x = 0, ex = surf->w; x < ex; ++x, ++pix ) {
             if( pix->a == 0x00 ) {
-                // This check significantly improves the performance since
-                // vast majority of pixels in the tilesets are completely transparent.
+
+
                 continue;
             }
             *pix = pixel_converter( *pix );
@@ -136,10 +136,10 @@ static SDL_Surface_Ptr apply_color_filter( const SDL_Surface_Ptr &original,
     return surf;
 }
 
-// Compute the tightest bounding box containing non-transparent pixels within
-// a sprite rect. The surface must be 32-bit RGBA (e.g. from create_surface_32).
-// Returns coordinates relative to the sprite rect origin. A fully transparent
-// sprite returns {0, 0, 0, 0}.
+
+
+
+
 static SDL_Rect compute_opaque_rect( const SDL_Surface_Ptr &surf, const SDL_Rect &rect )
 {
     int min_x = rect.w; // NOLINT(cata-combine-locals-into-point)
@@ -256,12 +256,12 @@ void tileset_cache::loader::create_textures_from_tile_atlas( const SDL_Surface_P
     cata_assert( targets.normal && targets.shadow && targets.night && targets.overexposed
                  && targets.memory && targets.silhouette );
 
-    // Compute per-sprite opaque bounds once from the unfiltered atlas.
-    // Color filter variants preserve the alpha channel, so rescanning is unnecessary.
-    // Blit into a 32-bit surface for format-safe pixel access. The normal atlas
-    // texture is uploaded from the same 32-bit surface so shader variants sample
-    // the same concrete RGBA pixels as the pre-baked variants; paletted fallback
-    // atlases are not reliable shader sources on every GPU backend.
+
+
+
+
+
+
     SDL_Surface_Ptr scan_surf = create_surface_32( tile_atlas->w, tile_atlas->h );
     throwErrorIf( BlitSurface( tile_atlas, nullptr, scan_surf, nullptr ) != 0,
                   "SDL_BlitSurface failed" );
@@ -269,7 +269,7 @@ void tileset_cache::loader::create_textures_from_tile_atlas( const SDL_Surface_P
     const rect_range<SDL_Rect> scan_range( sprite_width, sprite_height,
                                            point( tile_atlas->w / sprite_width,
                                                    tile_atlas->h / sprite_height ) );
-    // one entry per sprite of this chunk, however far down the atlas it sits
+
     const int chunk_cols = tile_atlas->w / sprite_width;
     std::vector<SDL_Rect> opaque_bounds( static_cast<size_t>( chunk_cols ) *
                                          ( tile_atlas->h / sprite_height ), SDL_Rect{ 0, 0, 0, 0 } );
@@ -278,7 +278,7 @@ void tileset_cache::loader::create_textures_from_tile_atlas( const SDL_Surface_P
             compute_opaque_rect( scan_surf, rect );
     }
 
-    /** perform color filter conversion here */
+
     using tiles_pixel_color_entry = std::tuple<std::vector<texture>*, std::string, bool>;
     std::array<tiles_pixel_color_entry, 6> tile_values_data = {{
             { std::make_tuple( targets.normal, "color_pixel_none", bake_plan.normal ) },
@@ -368,7 +368,7 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
 
     if( !layering_file.good() ) {
         has_layering = false;
-        //throw std::runtime_error(std::string("Failed to open layering info json: ") + layering_path);
+
     }
 
     dbg( D_INFO ) << "Attempting to Load JSON file " << json_path;
@@ -382,7 +382,7 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
     JsonObject config = ( *config_json ).get_object();
     config.allow_omitted_members();
 
-    // "tile_info" section must exist.
+
     if( !config.has_member( "tile_info" ) ) {
         config.throw_error( "\"tile_info\" missing" );
     }
@@ -400,22 +400,22 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
 
     if( precheck ) {
         config.allow_omitted_members();
-        // A precheck loads no textures; still record the generations so the
-        // metadata-only bundle is cache-fresh until the next renderer epoch.
+
+
         ts.set_upload_generations( renderer_instance_generation, gpu_textures_generation );
         return atlas_upload_interrupt::none;
     }
 
     ts.clear();
 
-    // Parse pass: record atlas descriptors and tile mappings, no GPU work.
-    // Texture upload happens later in upload_atlases.
+
+
     offset = 0;
     parse_atlases( config, tileset_root, img_path, pump_events );
 
-    // Load mod tilesets if available
+
     for( const mod_tileset &mts : all_mod_tilesets ) {
-        // Set sprite_id offset to separate from other tilesets.
+
         sprite_id_offset = offset;
         tileset_root = mts.get_base_path();
         json_path = mts.get_full_path();
@@ -436,7 +436,7 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
         JsonValue &mod_config_json = *mod_config_json_opt;
 
         const auto mark_visited = []( const JsonObject & jobj ) {
-            // These fields have been visited in load_mod_tileset
+
             jobj.get_string_array( "compatibility" );
         };
 
@@ -446,7 +446,7 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
                 if( mod_config.get_string( "type" ) == "mod_tileset" ) {
                     mark_visited( mod_config );
                     if( num_in_file == mts.num_in_file() ) {
-                        // visit this if it exists, it's used elsewhere
+
                         if( mod_config.has_member( "compatibility" ) ) {
                             mod_config.get_member( "compatibility" );
                         }
@@ -463,13 +463,13 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
         }
     }
 
-    // loop through all tile ids and eliminate empty/invalid things
+
     for( auto it = ts.tile_ids.begin(); it != ts.tile_ids.end(); ) {
-        // second is the tile_type describing that id
+
         tile_type &td = it->second;
         process_variations_after_loading( td.fg );
         process_variations_after_loading( td.bg );
-        // All tiles need at least foreground or background data, otherwise they are useless.
+
         if( td.bg.empty() && td.fg.empty() ) {
             dbg( D_ERROR ) << "tile " << it->first << " has no (valid) foreground nor background";
             ts.tile_ids.erase( it++ );
@@ -483,9 +483,9 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
                        << "' tile defined!";
     }
 
-    // When the tileset lacks ITEM_HIGHLIGHT, reserve the next free slot for
-    // the synthetic overlay. upload_atlases fills it on every upload, so the
-    // slot stays stable across device-reset replay.
+
+
+
     if( !ts.find_tile_type( ITEM_HIGHLIGHT ) ) {
         const int reserved_index = offset;
         ts.set_default_item_highlight_index( reserved_index );
@@ -496,13 +496,13 @@ atlas_upload_interrupt tileset_cache::loader::load( const std::string &tileset_i
 
     ts.tileset_id = tileset_id;
 
-    // set up layering data
+
     if( has_layering ) {
         JsonValue layering_json = json_loader::from_path( layering_path );
         JsonObject layer_config = layering_json.get_object();
         layer_config.allow_omitted_members();
 
-        // "variants" section must exist.
+
         if( !layer_config.has_member( "variants" ) ) {
             layer_config.throw_error( "\"variants\" missing" );
         }
@@ -524,9 +524,9 @@ void tileset_cache::loader::parse_atlases( const JsonObject &config,
         const cata_path &img_path, const bool pump_events )
 {
     if( config.has_array( "tiles-new" ) ) {
-        // new system, several entries
-        // When loading multiple tileset images this defines where
-        // the tiles from the most recently loaded image start from.
+
+
+
         for( const JsonObject tile_part_def : config.get_array( "tiles-new" ) ) {
             const cata_path tileset_image_path = tileset_root / tile_part_def.get_string( "file" );
             R = -1;
@@ -540,13 +540,13 @@ void tileset_cache::loader::parse_atlases( const JsonObject &config,
             }
             sprite_width = tile_part_def.get_int( "sprite_width", ts.tile_width );
             sprite_height = tile_part_def.get_int( "sprite_height", ts.tile_height );
-            // Now load the tile definitions for the loaded tileset image.
+
             sprite_offset.x = tile_part_def.get_int( "sprite_offset_x", 0 );
             sprite_offset.y = tile_part_def.get_int( "sprite_offset_y", 0 );
             sprite_offset_retracted.x = tile_part_def.get_int( "sprite_offset_x_retracted", sprite_offset.x );
             sprite_offset_retracted.y = tile_part_def.get_int( "sprite_offset_y_retracted", sprite_offset.y );
             sprite_pixelscale = tile_part_def.get_float( "pixelscale", 1.0 );
-            // Update maximum tile extent
+
             ts.max_tile_extent = half_open_rectangle<point> {
                 {
                     std::min( { ts.max_tile_extent.p_min.x, sprite_offset.x, sprite_offset_retracted.x } ),
@@ -558,15 +558,15 @@ void tileset_cache::loader::parse_atlases( const JsonObject &config,
                               sprite_height + std::max( sprite_offset.y, sprite_offset_retracted.y ) ),
                 }
             };
-            // First read the tileset image header to count tiles.
+
             dbg( D_INFO ) << "Attempting to Load Tileset file " << tileset_image_path;
             read_image_dimensions( tileset_image_path, R, G, B );
             parse_mappings( tile_part_def );
             if( tile_part_def.has_member( "ascii" ) ) {
                 load_ascii( tile_part_def );
             }
-            // Make sure the tile definitions of the next tileset image don't
-            // override the current ones.
+
+
             offset += size;
             if( pump_events ) {
                 inp_mngr.pump_events();
@@ -581,21 +581,21 @@ void tileset_cache::loader::parse_atlases( const JsonObject &config,
         R = -1;
         G = -1;
         B = -1;
-        // old system, no tile file path entry, only one array of tiles
+
         dbg( D_INFO ) << "Attempting to Load Tileset file " << img_path;
         read_image_dimensions( img_path, R, G, B );
         parse_mappings( config );
         offset += size;
     }
 
-    // allows a tileset to override the order of mutation images being applied to a character
+
     if( config.has_array( "overlay_ordering" ) ) {
         load_overlay_ordering_into_array( config, tileset_mutation_overlay_ordering );
     }
 
-    // offset should be the total number of sprites loaded from every tileset image
-    // eliminate any sprite references that are too high to exist
-    // also eliminate negative sprite references
+
+
+
 }
 
 void tileset_cache::loader::load_layers( const JsonObject &config )
@@ -617,7 +617,7 @@ void tileset_cache::loader::load_layers( const JsonObject &config )
                     debugmsg( "Layering data: %s not a valid furniture/terrain object", context );
                 }
             }
-            //currently, only one flag can be defined, and must be in an array
+
             else if( item.has_array( "context" ) ) {
                 context = item.get_array( "context" ).next_value().get_string();
             }
@@ -656,7 +656,7 @@ void tileset_cache::loader::load_layers( const JsonObject &config )
                                 total_weight += weight;
                             }
                         } else {
-                            //default if unprovided = item name
+
                             lcs.sprite.emplace( lcs.id, 1 );
                             total_weight = 1;
                         }
@@ -666,7 +666,7 @@ void tileset_cache::loader::load_layers( const JsonObject &config )
                         config.throw_error( "items configured incorrectly" );
                     }
                 }
-                // sort them based on layering so we can draw them correctly
+
                 std::sort( item_layers.begin(), item_layers.end(), []( const layer_context_sprites & a,
                 const layer_context_sprites & b ) {
                     return a.layer < b.layer;
@@ -713,9 +713,9 @@ void tileset_cache::loader::load_layers( const JsonObject &config )
 void tileset_cache::loader::process_variations_after_loading(
     weighted_int_list<std::vector<int>> &vs ) const
 {
-    // loop through all of the variations
+
     for( auto &v : vs ) {
-        // in a given variation, erase any invalid sprite ids
+
         v.first.erase(
             std::remove_if(
                 v.first.begin(),
@@ -726,7 +726,7 @@ void tileset_cache::loader::process_variations_after_loading(
         v.first.end()
         );
     }
-    // erase any variations with no valid sprite ids left
+
     vs.erase(
         std::remove_if(
             vs.begin(),
@@ -737,7 +737,7 @@ void tileset_cache::loader::process_variations_after_loading(
         ),
     vs.end()
     );
-    // populate the bookkeeping table used for selecting sprite variations
+
     vs.precalc();
 }
 
@@ -764,13 +764,13 @@ void tileset_cache::loader::load_ascii( const JsonObject &config )
 
 void tileset_cache::loader::load_ascii_set( const JsonObject &entry )
 {
-    // tile for ASCII char 0 is at `in_image_offset`,
-    // the other ASCII chars follow from there.
+
+
     const int in_image_offset = entry.get_int( "offset" );
     if( in_image_offset >= size ) {
         entry.throw_error_at( "offset", "invalid offset (out of range)" );
     }
-    // color, of the ASCII char. Can be -1 to indicate all/default colors.
+
     int FG = -1;
     const std::string scolor = entry.get_string( "color", "DEFAULT" );
     if( scolor == "BLACK" ) {
@@ -794,17 +794,17 @@ void tileset_cache::loader::load_ascii_set( const JsonObject &entry )
     } else {
         entry.throw_error_at( "color", "invalid color for ASCII" );
     }
-    // Add an offset for bold colors (ncurses has this bold attribute,
-    // this mimics it). bold does not apply to default color.
+
+
     if( FG != -1 && entry.get_bool( "bold", false ) ) {
         FG += 8;
     }
     const int base_offset = offset + in_image_offset;
-    // Finally load all 256 ASCII chars (actually extended ASCII)
+
     for( int ascii_char = 0; ascii_char < 256; ascii_char++ ) {
         const int index_in_image = ascii_char + in_image_offset;
         if( index_in_image < 0 || index_in_image >= size ) {
-            // Out of range is ignored for now.
+
             continue;
         }
         const std::string id = get_ascii_tile_id( ascii_char, FG, -1 );
@@ -814,47 +814,47 @@ void tileset_cache::loader::load_ascii_set( const JsonObject &entry )
         curr_tile.pixelscale = sprite_pixelscale;
         auto &sprites = *curr_tile.fg.add( std::vector<int>( {index_in_image + offset} ), 1 );
         switch( ascii_char ) {
-            // box bottom/top side (horizontal line)
+
             case LINE_OXOX_C:
                 sprites[0] = 196 + base_offset;
                 break;
-            // box left/right side (vertical line)
+
             case LINE_XOXO_C:
                 sprites[0] = 179 + base_offset;
                 break;
-            // box top left
+
             case LINE_OXXO_C:
                 sprites[0] = 218 + base_offset;
                 break;
-            // box top right
+
             case LINE_OOXX_C:
                 sprites[0] = 191 + base_offset;
                 break;
-            // box bottom right
+
             case LINE_XOOX_C:
                 sprites[0] = 217 + base_offset;
                 break;
-            // box bottom left
+
             case LINE_XXOO_C:
                 sprites[0] = 192 + base_offset;
                 break;
-            // box bottom north T (left, right, up)
+
             case LINE_XXOX_C:
                 sprites[0] = 193 + base_offset;
                 break;
-            // box bottom east T (up, right, down)
+
             case LINE_XXXO_C:
                 sprites[0] = 195 + base_offset;
                 break;
-            // box bottom south T (left, right, down)
+
             case LINE_OXXX_C:
                 sprites[0] = 194 + base_offset;
                 break;
-            // box X (left down up right)
+
             case LINE_XXXX_C:
                 sprites[0] = 197 + base_offset;
                 break;
-            // box bottom east T (left, down, up)
+
             case LINE_XOXX_C:
                 sprites[0] = 180 + base_offset;
                 break;
@@ -896,12 +896,12 @@ void tileset_cache::loader::parse_mappings( const JsonObject &config )
             bool t_rota = entry.get_bool( "rotates", t_multi );
             int t_h3d = entry.get_int( "height_3d", 0 );
             if( t_multi ) {
-                // fetch additional tiles
+
                 for( const JsonObject subentry : entry.get_array( "additional_tiles" ) ) {
                     const std::string s_id = subentry.get_string( "id" );
                     const std::string m_id = str_cat( t_id, "_", s_id );
                     tile_type &curr_subtile = load_tile( subentry, m_id );
-                    // a subtile takes its entry's anchor unless it names its own
+
                     curr_subtile.light_anchor = smooth_lighting::read_light_anchor(
                                                     subentry.has_member( "light_anchor" ) ? subentry : entry );
                     curr_subtile.offset = sprite_offset;
@@ -919,7 +919,7 @@ void tileset_cache::loader::parse_mappings( const JsonObject &config )
                     debugmsg( "(json-error)\n%s", err.what() );
                 }
             }
-            // write the information of the base tile to curr_tile
+
             curr_tile.multitile = t_multi;
             curr_tile.rotates = t_rota;
             curr_tile.height_3d = t_h3d;
@@ -930,16 +930,16 @@ void tileset_cache::loader::parse_mappings( const JsonObject &config )
                   " Tile Definitions: " << ts.tile_ids.size();
 }
 
-/**
- * Load a tile definition and add it to the @ref tileset::tile_ids map.
- * All loaded tiles go into one vector (@ref tileset::tile_values), their index in it is their id.
- * The JSON data (loaded here) contains tile ids relative to the associated image.
- * They are translated into global ids by adding the @p offset, which is the number of
- * previously loaded tiles (excluding the tiles from the associated image).
- * @param id The id of the new tile definition (which is the key in @ref tileset::tile_ids).
- * Any existing definition of the same id is overridden.
- * @return A reference to the loaded tile inside the @ref tileset::tile_ids map.
- */
+
+
+
+
+
+
+
+
+
+
 tile_type &tileset_cache::loader::load_tile( const JsonObject &entry, const std::string &id )
 {
     if( ts.find_tile_type( id ) ) {
@@ -957,11 +957,11 @@ void tileset_cache::loader::load_tile_spritelists( const JsonObject &entry,
         weighted_int_list<std::vector<int>> &vs,
         std::string_view objname ) const
 {
-    // json array indicates rotations or variations
+
     if( entry.has_array( objname ) ) {
         JsonArray g_array = entry.get_array( objname );
-        // int elements of array indicates rotations
-        // create one variation, populate sprite_ids with list of ints
+
+
         if( g_array.test_int() ) {
             std::vector<int> v;
             for( const int entry : g_array ) {
@@ -972,24 +972,24 @@ void tileset_cache::loader::load_tile_spritelists( const JsonObject &entry,
             }
             vs.add( v, 1 );
         }
-        // object elements of array indicates variations
-        // create one variation per object
+
+
         else if( g_array.test_object() ) {
             for( const JsonObject vo : g_array ) {
                 std::vector<int> v;
                 int weight = vo.get_int( "weight" );
-                // negative weight is invalid
+
                 if( weight < 0 ) {
                     vo.throw_error_at( objname, "Invalid weight for sprite variation (<0)" );
                 }
-                // int sprite means one sprite
+
                 if( vo.has_int( "sprite" ) ) {
                     const int sprite_id = vo.get_int( "sprite" ) + sprite_id_offset;
                     if( sprite_id >= 0 ) {
                         v.push_back( sprite_id );
                     }
                 }
-                // array sprite means rotations
+
                 else if( vo.has_array( "sprite" ) ) {
                     for( const int entry : vo.get_array( "sprite" ) ) {
                         const int sprite_id = entry + sprite_id_offset;
@@ -1007,7 +1007,7 @@ void tileset_cache::loader::load_tile_spritelists( const JsonObject &entry,
             }
         }
     }
-    // json int indicates a single sprite id
+
     else if( entry.has_int( objname ) && entry.get_int( objname ) >= 0 ) {
         vs.add( std::vector<int>( {entry.get_int( objname ) + sprite_id_offset} ), 1 );
     }
@@ -1032,10 +1032,10 @@ atlas_upload_interrupt tileset_cache::loader::upload_atlases( tileset &ts,
     const std::optional<int> highlight_idx = ts.get_default_item_highlight_index();
     const int highlight_extra = highlight_idx ? 1 : 0;
 
-    // Variant vectors size to the atlas tilecount; the synthetic highlight
-    // adds a slot only to the normal vector so the draw path's range check
-    // returns nullptr for variants at that index and falls back to normal. A
-    // variant the plan skips gets an empty vector, which reads the same way.
+
+
+
+
     std::vector<texture> cand_normal( total + highlight_extra );
     std::vector<texture> cand_shadow( plan.shadow ? total : 0 );
     std::vector<texture> cand_night( plan.night ? total : 0 );
@@ -1043,22 +1043,22 @@ atlas_upload_interrupt tileset_cache::loader::upload_atlases( tileset &ts,
     std::vector<texture> cand_memory( plan.memory ? total : 0 );
     std::vector<texture> cand_silhouette( plan.silhouette ? total : 0 );
 
-    // Candidates are built against this gate; on success they commit and destroy
-    // normally, on abnormal exit they are adopted into the graveyard (below).
+
+
     gpu_handle_graveyard candidate_graveyard;
     const atlas_replay_quarantine::gate abandon_gate = candidate_graveyard.current_gate();
 
-    // Any abnormal exit before commit -- interrupt return or exception -- routes
-    // the candidates into *quarantine so they never destroy against a dead
-    // renderer. Callers without a quarantine just destruct on the live renderer.
+
+
+
     bool committed = false;
     auto quarantine_candidates = [&]() {
         if( !quarantine ) {
             return;
         }
-        // Adopt every built candidate into the graveyard so its gated handles
-        // outlive the renderer teardown; the candidate vectors then drop their
-        // refs, leaving the graveyard the last owner.
+
+
+
         for( const std::vector<texture> *v : {
                  &cand_normal, &cand_shadow, &cand_night,
                  &cand_overexposed, &cand_memory, &cand_silhouette
@@ -1123,8 +1123,8 @@ atlas_upload_interrupt tileset_cache::loader::upload_atlases( tileset &ts,
                                SDL_Rect{ 0, 0, ts.tile_width, ts.tile_height } );
     }
 
-    // Final poll before publishing: a reset or loss observed after the
-    // highlight upload must not publish the candidates against a stale device.
+
+
     if( poll ) {
         const atlas_upload_interrupt interrupt = poll();
         if( interrupt != atlas_upload_interrupt::none ) {
@@ -1132,7 +1132,7 @@ atlas_upload_interrupt tileset_cache::loader::upload_atlases( tileset &ts,
         }
     }
 
-    // Commit candidates atomically so a partial upload is never observable.
+
     ts.tile_values = std::move( cand_normal );
     ts.shadow_tile_values = std::move( cand_shadow );
     ts.night_tile_values = std::move( cand_night );
@@ -1186,17 +1186,17 @@ atlas_upload_interrupt tileset_cache::loader::upload_one_atlas( const atlas_repl
     int max_tex_h = 0;
     throwErrorIf( !GetRendererMaxTextureSize( renderer, &max_tex_w, &max_tex_h ),
                   "GetRendererMaxTextureSize failed" );
-    // Software rendering stores textures as surfaces with run-length encoding, which makes
-    // extracting a part in the middle of the texture slow. Therefore this "simulates" that the
-    // renderer only supports one tile per texture.
+
+
+
     if( IsRendererSoftware( renderer ) ) {
         max_tex_w = desc.sprite_width;
         max_tex_h = desc.sprite_height;
     }
-    // for debugging only: force a very small maximal texture size, as to trigger
-    // splitting the tile atlas.
+
+
 #if 0
-    // +1 to check correct rounding
+
     max_tex_w = desc.sprite_width * 10 + 1;
     max_tex_h = desc.sprite_height * 20 + 1;
 #endif
@@ -1222,21 +1222,21 @@ atlas_upload_interrupt tileset_cache::loader::upload_one_atlas( const atlas_repl
                       "Maximal texture height is smaller than tile height" );
     }
 
-    // Number of tiles in each dimension that fits into a (maximal) SDL texture.
-    // If the tile atlas contains more than that, we have to split it.
+
+
     const int max_tile_xcount = max_tex_w / desc.sprite_width;
     const int max_tile_ycount = max_tex_h / desc.sprite_height;
-    // Range over the tile atlas, wherein each rectangle fits into the maximal
-    // SDL texture size. In other words: a range over the parts into which the
-    // tile atlas needs to be split.
+
+
+
     const rect_range<SDL_Rect> output_range(
         max_tile_xcount * desc.sprite_width,
         max_tile_ycount * desc.sprite_height,
         point( divide_round_up( tile_atlas->w, max_tex_w ),
                divide_round_up( tile_atlas->h, max_tex_h ) ) );
 
-    // Mirror the per-atlas state that create_textures_from_tile_atlas reads
-    // off the loader instance.
+
+
     sprite_width = desc.sprite_width;
     sprite_height = desc.sprite_height;
     offset = desc.atlas_offset;
@@ -1256,10 +1256,10 @@ atlas_upload_interrupt tileset_cache::loader::upload_one_atlas( const atlas_repl
         SDL_Surface_Ptr smaller_surf;
 
         if( is_contained( SDL_Rect{ 0, 0, tile_atlas->w, tile_atlas->h }, sub_rect ) ) {
-            // can use tile_atlas directly, it is completely contained in the output rectangle
+
         } else {
-            // Need a temporary surface that contains the parts of the tile atlas that fit
-            // into sub_rect. But doesn't always need to be as large as sub_rect.
+
+
             const int w = std::min( tile_atlas->w - sub_rect.x, sub_rect.w );
             const int h = std::min( tile_atlas->h - sub_rect.y, sub_rect.h );
             smaller_surf = ::create_surface_32( w, h );
@@ -1281,4 +1281,4 @@ atlas_upload_interrupt tileset_cache::loader::upload_one_atlas( const atlas_repl
     return atlas_upload_interrupt::none;
 }
 
-#endif // defined(TILES)
+#endif

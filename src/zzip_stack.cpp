@@ -29,7 +29,7 @@ std::shared_ptr<zzip_stack> zzip_stack::load( std::filesystem::path const &path,
     if( !assure_dir_exist( path ) ) {
         return nullptr;
     }
-    // We lazily load and populate entries to avoid unnecessary overhead on short reads.
+
     return std::shared_ptr<zzip_stack>( new zzip_stack{ path, dictionary_path } );
 }
 
@@ -112,7 +112,7 @@ std::shared_ptr<zzip_stack> zzip_stack::create_from_folder( std::filesystem::pat
     if( !assure_dir_exist( path ) ) {
         return nullptr;
     }
-    // Default everything to cold.
+
     std::filesystem::path zzip_filename = filename_of_temp( path, file_temp::cold );
     std::optional<zzip> z = zzip::create_from_folder( path / zzip_filename, folder, dictionary );
     if( !z ) {
@@ -131,7 +131,7 @@ std::shared_ptr<zzip_stack> zzip_stack::create_from_folder_with_files(
     if( !assure_dir_exist( path ) ) {
         return nullptr;
     }
-    // Default everything to cold.
+
     std::filesystem::path zzip_filename = filename_of_temp( path, file_temp::cold );
     std::optional<zzip> z = zzip::create_from_folder_with_files( path / zzip_filename, folder, files,
                             total_file_size, dictionary );
@@ -190,7 +190,7 @@ bool zzip_stack::delete_files( std::unordered_set<std::filesystem::path, std_fs_
 
 bool zzip_stack::compact( double bloat_factor )
 {
-    // preload entries from the stack.
+
     cold();
     warm();
     hot();
@@ -200,18 +200,18 @@ bool zzip_stack::compact( double bloat_factor )
         content_size += zzip_of_temp( temp ).get_entry_size( file );
     }
 
-    // Allocate approximately 1/2 of the bloat to the cold file.
-    // The other 1/2 divided evenly between hot and warm.
-    // So for a bloat factor of 3, the main file may double
-    // and each other by 50%.
+
+
+
+
     size_t cold_max_size = content_size * bloat_factor / 2.0;
     size_t warm_hot_max_size = cold_max_size / 2.0;
 
-    // First, copy unchanged files from warm to cold if warm is too full.
+
     std::vector<std::filesystem::path> files_to_demote;
     if( warm_->get_content_size() > warm_hot_max_size ) {
-        // We don't compact warm, we write cold entries down. Hot entries
-        // are kept in hot. We just delete warm entirely.
+
+
         for( std::filesystem::path const &entry : warm_->get_entries() ) {
             if( path_temp_map_[entry] == file_temp::warm ) {
                 files_to_demote.emplace_back( entry );
@@ -225,9 +225,9 @@ bool zzip_stack::compact( double bloat_factor )
         }
     }
 
-    // Then copy hot to warm.
+
     if( hot_->get_content_size() > warm_hot_max_size ) {
-        // Definitionally, all hot files are the most recent versions.
+
         files_to_demote = hot_->get_entries();
         if( !( warm_->copy_files( files_to_demote, *hot_ ) && hot_->clear() ) ) {
             return false;
@@ -237,7 +237,7 @@ bool zzip_stack::compact( double bloat_factor )
         }
     }
 
-    // Finally normal compact on cold.
+
     std::filesystem::path cold_path = path_ / filename_of_temp( path_, file_temp::cold );
     std::filesystem::path tmp_path = cold_path;
     tmp_path.concat( ".tmp" ); // NOLINT(cata-u8-path)
@@ -273,7 +273,7 @@ zzip &zzip_stack::hot() const
 zzip_stack::file_temp zzip_stack::temp_of_file( std::filesystem::path const &zzip_relative_path )
 const
 {
-    // Don't open all the zzips if we don't have to.
+
     auto end = path_temp_map_.end();
     decltype( end ) it;
     if( !cold_ ) {
@@ -305,7 +305,7 @@ zzip &zzip_stack::zzip_of_temp( zzip_stack::file_temp temp ) const
             return warm();
         }
         default: {
-            // default unknown to hot
+
             return hot();
         }
     }
@@ -336,7 +336,7 @@ std::filesystem::path zzip_stack::filename_of_temp( std::filesystem::path const 
 std::optional<zzip> zzip_stack::load_temp( file_temp temp ) const
 {
     if( temp == file_temp::unknown ) {
-        // default unknown to hot
+
         temp = file_temp::hot;
     }
 

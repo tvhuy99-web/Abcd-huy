@@ -95,8 +95,8 @@ mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float densi
         if( *maybe_args && !overmap_buffer.externally_set_args ) {
             mapgen_args_ = **maybe_args;
         } else {
-            // We are the first omt from this overmap_special to be generated,
-            // so now is the time to generate the arguments
+
+
             if( std::optional<overmap_special_id> s = overmap_buffer.overmap_special_at( over ) ) {
                 const overmap_special &special = **s;
                 mapgen_arguments internally_set_args = special.get_args( *this );
@@ -138,9 +138,9 @@ mapgendata::mapgendata( const mapgendata &other, const oter_id &other_id ) : map
 
     const int shift = ( rotation_delta + 4 ) % 4;
 
-    // The array of neighbors is actually logically more like two independent arrays smashed
-    // together, so we need to first rotate the cardinal directions section, and then the
-    // ordinal directions section. They both rotate the same direction.
+
+
+
     std::rotate( t_nesw.begin(), t_nesw.begin() + shift, t_nesw.begin() + 4 );
     std::rotate( t_nesw.begin() + 4, t_nesw.begin() + 4 + shift, t_nesw.end() );
 }
@@ -226,7 +226,7 @@ int &mapgendata::dir( int dir_in )
             return nw_fac;
         default:
             debugmsg( "Invalid direction for mapgendata::set_dir.  dir_in = %d", dir_in );
-            //return something just so the compiler doesn't freak out. Not really correct, though.
+
             return n_fac;
     }
 }
@@ -265,7 +265,7 @@ ter_id mapgendata::groundcover() const
 
 const oter_id &mapgendata::neighbor_at( om_direction::type dir ) const
 {
-    // TODO: De-uglify, implement proper conversion somewhere
+
     switch( dir ) {
         case om_direction::type::north:
             return north();
@@ -285,7 +285,7 @@ const oter_id &mapgendata::neighbor_at( om_direction::type dir ) const
 
 const oter_id &mapgendata::neighbor_at( direction dir ) const
 {
-    // TODO: De-uglify, implement proper conversion somewhere
+
     switch( dir ) {
         case direction::NORTH:
             return north();

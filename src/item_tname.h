@@ -15,9 +15,9 @@ template <typename T> struct enum_traits;
 
 namespace tname
 {
-// segments for item::tname()
-// Each element corresponds to a piece of information about an item and is displayed in the item's name
-// Each element is checked individually for stacking in item::stacks_with(), and all elements much stack for any 2 items to stack
+
+
+
 enum class segments : std::size_t {
     FAULTS = 0,
     DIRT,
@@ -64,17 +64,17 @@ enum class segments : std::size_t {
 
     last_segment,
 
-    // separate flags for TYPE
+
     VARIANT,
     COMPONENTS,
     CORPSE,
 
-    // separate flags for CONTENTS
+
     CONTENTS_FULL,
     CONTENTS_ABREV,
     CONTENTS_COUNT,
 
-    // separate flags for CATEGORY
+
     FOOD_PERISHABLE,
 
     last,
@@ -90,8 +90,8 @@ std::string print_segment( tname::segments segment, item const &it, unsigned int
 using tname_set = std::vector<tname::segments>;
 tname_set const &get_tname_set();
 
-#endif // CATA_IN_TOOL
-} // namespace tname
+#endif
+}
 
 template<>
 struct enum_traits<tname::segments> {
@@ -115,7 +115,7 @@ constexpr uint64_t tname_contents_bits =
     1ULL << static_cast<size_t>( tname::segments::CONTENTS_FULL ) |
     1ULL << static_cast<size_t>( tname::segments::CONTENTS_ABREV ) |
     1ULL << static_cast<size_t>( tname::segments::CONTENTS_COUNT );
-constexpr uint64_t tname_conditional_bits =    // TODO: fine grain?
+constexpr uint64_t tname_conditional_bits =
     1ULL << static_cast<size_t>( tname::segments::COMPONENTS ) |
     1ULL << static_cast<size_t>( tname::segments::TAGS ) |
     1ULL << static_cast<size_t>( tname::segments::VARS );
@@ -130,16 +130,16 @@ constexpr segment_bitset unprefixed_tname( default_tname_bits & ~tname_prefix_bi
 constexpr segment_bitset tname_sort_key( default_tname_bits & ~tname_unsortable_bits );
 constexpr segment_bitset tname_contents( tname_contents_bits );
 constexpr segment_bitset tname_conditional( tname_conditional_bits );
-// Name for an abstract base item of a given class, not any specific one.
-// Often used in crafting UI and similar.
-// For example in the sentence "To make some 'XL socks' I will need to cut up a 'blanket'",
-// when we don't care which color (read: variant) 'XL socks' we want or 'blanket' we have.
+
+
+
+
 constexpr segment_bitset base_item_name( base_item_name_bits );
-// Name of a specific item in the game world, carries the item identity, and will not
-// change in a normal playthrough except through exordinary means (e.g. via `iuse_transform`).
-// E.g. "XL green socks" (notably, not "|. XL green socks (filthy)")
+
+
+
 constexpr segment_bitset item_identity_name( base_item_name_bits | variant_bits );
 
-} // namespace tname
+}
 
-#endif // CATA_SRC_ITEM_TNAME_H
+#endif

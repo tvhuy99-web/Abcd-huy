@@ -14,21 +14,21 @@ class Creature;
 class item;
 struct map_data_common_t;
 
-/**
- * Get a function that returns true if the value matches the query.
- */
+
+
+
 template<typename T>
 std::function<bool( const T & )> filter_from_string( std::string filter,
         const std::function<std::function<bool( const T & )>( const std::string & )> &basic_filter )
 {
     if( filter.empty() ) {
-        // Variable without name prevents unused parameter warning
+
         return []( const T & ) {
             return true;
         };
     }
 
-    // remove curly braces (they only get in the way)
+
     if( filter.find( '{' ) != std::string::npos ) {
         filter.erase( std::remove( filter.begin(), filter.end(), '{' ), filter.end() );
     }
@@ -36,9 +36,9 @@ std::function<bool( const T & )> filter_from_string( std::string filter,
         filter.erase( std::remove( filter.begin(), filter.end(), '}' ), filter.end() );
     }
     if( filter.find( ',' ) != std::string::npos ) {
-        // functions which only one of which must return true
+
         std::vector<std::function<bool( const T & )> > functions;
-        // Functions that must all return true
+
         std::vector<std::function<bool( const T & )> > inv_functions;
         size_t comma = filter.find( ',' );
         while( !filter.empty() ) {
@@ -88,14 +88,14 @@ std::function<bool( const T & )> filter_from_string( std::string filter,
     return basic_filter( filter );
 }
 
-/**
- * Get a function that returns true if the item matches the query.
- */
+
+
+
 std::function<bool( const item & )> item_filter_from_string( const std::string &filter );
 
-/**
- * Get a function that returns true if the value matches the basic query (no commas or minuses).
- */
+
+
+
 std::function<bool( const item & )> basic_item_filter( std::string filter );
 
 std::function<bool( const Creature & )> creature_filter_from_string(
@@ -106,4 +106,4 @@ std::function<bool( const map_data_common_t & )> terfurn_filter_from_string(
     const std::string &filter );
 std::function<bool( const map_data_common_t & )> basic_terfurn_filter( std::string filter );
 
-#endif // CATA_SRC_ITEM_SEARCH_H
+#endif

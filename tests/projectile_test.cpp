@@ -57,12 +57,12 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
     map &here = get_map();
     creature_tracker &creatures = get_creature_tracker();
 
-    // Move the player out of the way of the test area
+
     get_player_character().setpos( here, tripoint_bub_ms{ 2, 2, 0 } );
 
-    // Ensure that a projectile fired from a gun can pass through a chain link fence
-    // First, set up a test area - three tiles in a row
-    // One on either side clear, with a chainlink fence in the middle
+
+
+
     std::vector<tripoint_bub_ms> range = {
         tripoint_bub_ms::zero,
         tripoint_bub_ms::zero + tripoint_rel_ms::east,
@@ -76,19 +76,19 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
         REQUIRE( here.is_transparent( pt ) );
     }
 
-    // Set an obstacle in the way, a chain fence
+
     here.ter_set( range[1], ter_id( "t_chainfence" ) );
 
-    // Create a gun to fire a projectile from
+
     item gun( itype_m1a );
     item mag( gun.magazine_default() );
     mag.ammo_set( itype_308, 5 );
     gun.put_in( mag, pocket_type::MAGAZINE_WELL );
 
-    // Check that a bullet with the correct amount of speed can through obstacles
+
     CHECK( projectile_end_point( range, gun, 1000, 3 ) == range[2] );
 
-    // But that a bullet without the correct amount cannot
+
     CHECK( projectile_end_point( range, gun, 10, 3 ) == range[0] );
 }
 
@@ -117,7 +117,7 @@ TEST_CASE( "liquid_projectiles_applies_effect", "[projectile_effect]" )
 
     REQUIRE( dummy.top_items_loc().empty() );
 
-    //Fire on naked NPC and check that it got the effect
+
     SECTION( "Naked NPC gets the effect" ) {
         player.fire_gun( here, dummy.pos_bub(), 100, *player.get_wielded_item() );
         CHECK( dummy.has_effect( effect_bile_stink ) );
@@ -125,7 +125,7 @@ TEST_CASE( "liquid_projectiles_applies_effect", "[projectile_effect]" )
 
     dummy.clear_effects();
 
-    //Fire on NPC with hazmat suit + gas mask and check that it didn't get the effect
+
     SECTION( "Hazmat NPC doesn't get the effect" ) {
         dummy.wear_item( hazmat );
         dummy.wear_item( item( itype_mask_gas ) );

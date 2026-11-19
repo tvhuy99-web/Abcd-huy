@@ -27,8 +27,7 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
                       self.surroundings)
 
     def test_logged_english_speech_has_exact_vietnamese_gettext_entries(self):
-        # Real speech leaks from Quick Play, fighting-style selection,
-        # crafting navigation and zone management in Android session logs.
+
         pairs = {
             "Preparing a new world.  Please wait.": "Đang chuẩn bị thế giới mới. Vui lòng chờ.",
             "Creating your character and starting the game.": "Đang tạo nhân vật và bắt đầu trò chơi.",

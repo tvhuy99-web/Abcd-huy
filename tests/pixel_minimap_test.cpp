@@ -24,16 +24,16 @@ static const ter_str_id ter_t_grass( "t_grass" );
 namespace
 {
 
-// Characterization suite: pins where pixel_minimap::draw paints.
+
 
 struct minimap_probe_fixture {
     minimap_probe_fixture() : available_( fx_.available() ) {
         if( !available_ ) {
             return;
         }
-        // The fixture window is 64x64 by default; grow it and verify, or
-        // the probes read outside the render output. The resize is
-        // deferred until the coordinator drains.
+
+
+
         renderer_recovery_test_support::set_scaling_and_resize_window( 1, 256, 256 );
         renderer_coordinator.drain_pending();
         int out_w = 0;
@@ -41,8 +41,8 @@ struct minimap_probe_fixture {
         GetRendererOutputSize( get_sdl_renderer(), &out_w, &out_h );
         available_ = out_w >= 242 && out_h >= 242;
 
-        // Left at zero the background is transparent and never reaches the
-        // target, so a probe cannot tell it from an unpainted pixel.
+
+
         pixel_minimap_r = 0x00;
         pixel_minimap_g = 0x00;
         pixel_minimap_b = 0xFF;
@@ -55,9 +55,9 @@ struct minimap_probe_fixture {
         map &here = get_map();
         here.invalidate_map_cache( 0 );
         here.build_map_cache( 0, true );
-        // set_time_to_day refreshes the visibility cache before the map
-        // cache is built, so on a fresh map it is BLANK everywhere but the
-        // player tile and the minimap skips those tiles.
+
+
+
         here.invalidate_visibility_cache();
         here.update_visibility_cache( 0 );
     }
@@ -66,8 +66,8 @@ struct minimap_probe_fixture {
         return available_;
     }
 
-    // Alpha is masked off: target alpha semantics vary by backend and the
-    // characterization only pins RGB.
+
+
     Uint32 probe_rgb( const point &px ) const {
         const SDL_Rect rect = { px.x, px.y, 1, 1 };
         Uint32 value = 0;
@@ -98,11 +98,11 @@ struct minimap_probe_fixture {
     restore_on_out_of_scope<int> restore_bg_a_{ pixel_minimap_a };
 };
 
-// 242x242 rect over the 121-tile window: tile size 2, no fit scaling, no
-// centering offset.
+
+
 constexpr SDL_Rect minimap_rect = { 0, 0, 242, 242 };
 
-} // namespace
+}
 
 TEST_CASE( "pixel_minimap_respects_caller_clip", "[tiles][pixel_minimap]" )
 {
@@ -160,7 +160,7 @@ TEST_CASE( "pixel_minimap_scale_to_fit_stays_inside_dest", "[tiles][pixel_minima
 
         WHEN( "the minimap draws" ) {
             minimap.draw( SDL_Rect{ 0, 0, 240, 80 }, get_player_character().pos_bub() );
-            // 121x121 native fitted into 240x80 -> 80x80 centered at x 80.
+
             THEN( "pixels outside the fitted rect keep the sentinel color" ) {
                 CHECK( fx.probe_rgb( point( 10, 40 ) )
                        == minimap_probe_fixture::rgb_of( sentinel ) );
@@ -175,4 +175,4 @@ TEST_CASE( "pixel_minimap_scale_to_fit_stays_inside_dest", "[tiles][pixel_minima
     }
 }
 
-#endif // TILES
+#endif

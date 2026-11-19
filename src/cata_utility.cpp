@@ -53,8 +53,8 @@ static double pow10( unsigned int n )
 
 double round_up( double val, unsigned int dp )
 {
-    // Some implementations of std::pow does not return the accurate result even
-    // for small powers of 10, so we use a specialized routine to calculate them.
+
+
     const double denominator = pow10( dp );
     return std::ceil( denominator * val ) / denominator;
 }
@@ -74,10 +74,10 @@ int divide_round_down( int a, int b )
 
 int modulo( int v, int m )
 {
-    // C++11: negative v and positive m result in negative v%m (or 0),
-    // but this is supposed to be mathematical modulo: 0 <= v%m < m,
+
+
     const int r = v % m;
-    // Adding m in that (and only that) case.
+
     return r >= 0 ? r : r + m;
 }
 
@@ -88,9 +88,9 @@ bool isBetween( int test, int down, int up )
 
 bool lcmatch( std::string_view str, std::string_view qry )
 {
-    // It will be quite common for the query string to be empty.  Anything will
-    // match in that case, so short-circuit and avoid the expensive
-    // conversions.
+
+
+
     if( qry.empty() ) {
         return true;
     }
@@ -99,17 +99,17 @@ bool lcmatch( std::string_view str, std::string_view qry )
     std::u32string u32_qry = utf8_to_utf32( qry );
     std::transform( u32_str.begin(), u32_str.end(), u32_str.begin(), u32_to_lowercase );
     std::transform( u32_qry.begin(), u32_qry.end(), u32_qry.begin(), u32_to_lowercase );
-    // First try match their lowercase forms
+
     if( u32_str.find( u32_qry ) != std::u32string::npos ) {
         return true;
     }
-    // Then try removing accents from str ONLY
+
     std::for_each( u32_str.begin(), u32_str.end(), remove_accent );
     if( u32_str.find( u32_qry ) != std::u32string::npos ) {
         return true;
     }
     if( use_pinyin_search ) {
-        // Finally, try to convert the string to pinyin and compare
+
         return pinyin::pinyin_match( u32_str, u32_qry );
     }
     return false;
@@ -154,9 +154,9 @@ bool match_include_exclude( std::string_view text, std::string filter )
     return found;
 }
 
-// --- Library functions ---
-// This stuff could be moved elsewhere, but there
-// doesn't seem to be a good place to put it right now.
+
+
+
 
 double logarithmic( double t )
 {
@@ -175,24 +175,24 @@ double logarithmic_range( int min, int max, int pos )
         return 0.0;
     }
 
-    // Anything beyond (min,max) gets clamped.
+
     if( pos <= min ) {
         return 1.0;
     } else if( pos >= max ) {
         return 0.0;
     }
 
-    // Normalize the pos to [0,1]
+
     double range = max - min;
     double unit_pos = ( pos - min ) / range;
 
-    // Scale and flip it to [+LOGI_CUTOFF,-LOGI_CUTOFF]
+
     double scaled_pos = LOGI_CUTOFF - 2 * LOGI_CUTOFF * unit_pos;
 
-    // Get the raw logistic value.
+
     double raw_logistic = logarithmic( scaled_pos );
 
-    // Scale the output to [0,1]
+
     return ( raw_logistic - LOGI_MIN ) / LOGI_RANGE;
 }
 
@@ -241,9 +241,9 @@ double clamp_to_width( double value, int width, int &scale, bool *out_truncated 
         *out_truncated = false;
     }
     if( value >= std::pow( 10.0, width ) ) {
-        // above the maximum number we can fit in the width without decimal
-        // show the biggest number we can without decimal
-        // flag as truncated
+
+
+
         value = std::pow( 10.0, width ) - 1.0;
         scale = 0;
         if( out_truncated != nullptr ) {
@@ -251,11 +251,11 @@ double clamp_to_width( double value, int width, int &scale, bool *out_truncated 
         }
     } else if( scale > 0 ) {
         for( int s = 1; s <= scale; s++ ) {
-            // 1 decimal separator + "s"
+
             int scale_width = 1 + s;
             if( width > scale_width && value >= std::pow( 10.0, width - scale_width ) ) {
-                // above the maximum number we can fit in the width with "s" decimals
-                // show this number with one less decimal than "s"
+
+
                 scale = s - 1;
                 break;
             }
@@ -277,17 +277,17 @@ float multi_lerp( const std::vector<std::pair<float, float>> &points, float x )
         return points.back().second;
     }
 
-    // How far are we along the way from last threshold to current one
+
     const float t = ( x - points[i - 1].first ) /
                     ( points[i].first - points[i - 1].first );
 
-    // Linear interpolation of values at relevant thresholds
+
     return ( t * points[i].second ) + ( ( 1 - t ) * points[i - 1].second );
 }
 
 void write_to_file( const std::string &path, const std::function<void( std::ostream & )> &writer )
 {
-    // Any of the below may throw. ofstream_wrapper will clean up the temporary path on its own.
+
     ofstream_wrapper fout( std::filesystem::u8path( path ), std::ios::binary );
     writer( fout.stream() );
     fout.close();
@@ -317,7 +317,7 @@ bool write_to_file( const std::string &path, const std::function<void( std::ostr
 
 void write_to_file( const cata_path &path, const std::function<void( std::ostream & )> &writer )
 {
-    // Any of the below may throw. ofstream_wrapper will clean up the temporary path on its own.
+
     ofstream_wrapper fout( path.get_unrelative_path(), std::ios::binary );
     writer( fout.stream() );
     fout.close();
@@ -358,7 +358,7 @@ ofstream_wrapper::~ofstream_wrapper()
     try {
         close();
     } catch( ... ) {
-        // ignored in destructor
+
     }
 }
 
@@ -418,7 +418,7 @@ std::string read_compressed_file_to_string( std::istream &fin )
     int ret;
     std::array<char, 32768> outbuffer;
 
-    // get the decompressed bytes blockwise using repeated calls to inflate
+
     do {
         zs.next_out = reinterpret_cast<Bytef *>( outbuffer.data() );
         zs.avail_out = sizeof( outbuffer );
@@ -434,7 +434,7 @@ std::string read_compressed_file_to_string( std::istream &fin )
 
     inflateEnd( &zs );
 
-    if( ret != Z_STREAM_END ) { // an error occurred that was not EOF
+    if( ret != Z_STREAM_END ) {
         std::ostringstream oss;
         oss << "Exception during zlib decompression: (" << ret << ") "
             << zs.msg;
@@ -443,7 +443,7 @@ std::string read_compressed_file_to_string( std::istream &fin )
     return outstring;
 }
 
-} // namespace
+}
 
 bool read_from_file( const cata_path &path, const std::function<void( std::istream & )> &reader )
 {
@@ -478,11 +478,11 @@ std::unique_ptr<std::istream> read_maybe_compressed_file( const std::string &pat
 
 static bool is_gzipped( std::ifstream &fin )
 {
-    // (byte1 == 0x1f) && (byte2 == 0x8b)
+
     std::array<char, 2> header;
     fin.read( header.data(), 2 );
     fin.clear();
-    fin.seekg( 0, std::ios::beg ); // reset read position
+    fin.seekg( 0, std::ios::beg );
 
     return ( header[0] == '\x1f' ) && ( header[1] == '\x8b' );
 }
@@ -575,18 +575,18 @@ bool read_from_file_json( const cata_path &path,
 bool read_from_file_optional( const std::string &path,
                               const std::function<void( std::istream & )> &reader )
 {
-    // Note: slight race condition here, but we'll ignore it. Worst case: the file
-    // exists and got removed before reading it -> reading fails with a message
-    // Or file does not exists, than everything works fine because it's optional anyway.
+
+
+
     return file_exist( path ) && read_from_file( path, reader );
 }
 
 bool read_from_file_optional( const std::filesystem::path &path,
                               const std::function<void( std::istream & )> &reader )
 {
-    // Note: slight race condition here, but we'll ignore it. Worst case: the file
-    // exists and got removed before reading it -> reading fails with a message
-    // Or file does not exists, than everything works fine because it's optional anyway.
+
+
+
     return file_exist( path ) && read_from_file( path, reader );
 }
 
@@ -720,7 +720,7 @@ Integer svto( std::string_view s )
 {
     Integer result = 0;
     const char *end = s.data() + s.size();
-    // from_chars takes a [first, last) pointer pair, not a null-terminated string.
+
     // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
     std::from_chars_result r = std::from_chars( s.data(), end, result );
     if( r.ptr != end ) {
@@ -736,7 +736,7 @@ std::vector<std::string> string_split( std::string_view string, char delim )
     std::vector<std::string> elems;
 
     if( string.empty() ) {
-        return elems; // Well, that was easy.
+        return elems;
     }
 
     std::stringstream ss( std::string{ string } );
@@ -756,45 +756,64 @@ template<>
 std::string io::enum_to_string<holiday>( holiday data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case holiday::none:             return "none";
-        case holiday::new_year:         return "new_year";
-        case holiday::easter:           return "easter";
-        case holiday::independence_day: return "independence_day";
-        case holiday::halloween:        return "halloween";
-        case holiday::thanksgiving:     return "thanksgiving";
-        case holiday::christmas:        return "christmas";
-            // *INDENT-ON*
+
+        case holiday::none:
+            return "none";
+        case holiday::new_year:
+            return "new_year";
+        case holiday::easter:
+            return "easter";
+        case holiday::independence_day:
+            return "independence_day";
+        case holiday::halloween:
+            return "halloween";
+        case holiday::thanksgiving:
+            return "thanksgiving";
+        case holiday::christmas:
+            return "christmas";
+
         case holiday::num_holiday:
             break;
     }
     cata_fatal( "Invalid holiday." );
 }
 
-/* compare against table of easter dates */
+
 static bool is_easter( int day, int month, int year )
 {
     if( month == 3 ) {
         switch( year ) {
-            // *INDENT-OFF*
-            case 2024: return day == 31;
-            case 2027: return day == 28;
-            default: break;
-            // *INDENT-ON*
+
+            case 2024:
+                return day == 31;
+            case 2027:
+                return day == 28;
+            default:
+                break;
+
         }
     } else if( month == 4 ) {
         switch( year ) {
-            // *INDENT-OFF*
-            case 2021: return day == 4;
-            case 2022: return day == 17;
-            case 2023: return day == 9;
-            case 2025: return day == 20;
-            case 2026: return day == 5;
-            case 2028: return day == 16;
-            case 2029: return day == 1;
-            case 2030: return day == 21;
-            default: break;
-            // *INDENT-ON*
+
+            case 2021:
+                return day == 4;
+            case 2022:
+                return day == 17;
+            case 2023:
+                return day == 9;
+            case 2025:
+                return day == 20;
+            case 2026:
+                return day == 5;
+            case 2028:
+                return day == 16;
+            case 2029:
+                return day == 1;
+            case 2030:
+                return day == 21;
+            default:
+                break;
+
         }
     }
     return false;
@@ -819,7 +838,7 @@ holiday get_holiday_from_time( std::time_t time, bool force_refresh )
     std::tm local_time;
     std::time_t current_time = time == 0 ? std::time( nullptr ) : time;
 
-    /* necessary to pass LGTM, as threadsafe version of localtime differs by platform */
+
 #if defined(_WIN32)
 
     errno_t err = localtime_s( &local_time, &current_time );
@@ -840,12 +859,12 @@ holiday get_holiday_from_time( std::time_t time, bool force_refresh )
         const int wday = local_time.tm_wday;
         const int year = local_time.tm_year + 1900;
 
-        /* check date against holidays */
+
         if( month == 1 && day == 1 ) {
             cached_holiday = holiday::new_year;
             return cached_holiday;
         }
-        // only run easter date calculation if currently March or April
+
         else if( ( month == 3 || month == 4 ) && is_easter( day, month, year ) ) {
             cached_holiday = holiday::easter;
             return cached_holiday;
@@ -853,7 +872,7 @@ holiday get_holiday_from_time( std::time_t time, bool force_refresh )
             cached_holiday = holiday::independence_day;
             return cached_holiday;
         }
-        // 13 days seems appropriate for Halloween
+
         else if( month == 10 && day >= 19 ) {
             cached_holiday = holiday::halloween;
             return cached_holiday;
@@ -861,7 +880,7 @@ holiday get_holiday_from_time( std::time_t time, bool force_refresh )
             cached_holiday = holiday::thanksgiving;
             return cached_holiday;
         }
-        // For the 12 days of Christmas, my true love gave to me...
+
         else if( month == 12 && ( day >= 14 && day <= 25 ) ) {
             cached_holiday = holiday::christmas;
             return cached_holiday;
@@ -895,14 +914,20 @@ template<>
 std::string io::enum_to_string<aggregate_type>( aggregate_type agg )
 {
     switch( agg ) {
-        // *INDENT-OFF*
-        case aggregate_type::FIRST:   return "first";
-        case aggregate_type::LAST:    return "last";
-        case aggregate_type::MIN:     return "min";
-        case aggregate_type::MAX:     return "max";
-        case aggregate_type::SUM:     return "sum";
-        case aggregate_type::AVERAGE: return "average";
-        // *INDENT-ON*
+
+        case aggregate_type::FIRST:
+            return "first";
+        case aggregate_type::LAST:
+            return "last";
+        case aggregate_type::MIN:
+            return "min";
+        case aggregate_type::MAX:
+            return "max";
+        case aggregate_type::SUM:
+            return "sum";
+        case aggregate_type::AVERAGE:
+            return "average";
+
         case aggregate_type::num_aggregate_types:
             break;
     }
@@ -911,7 +936,7 @@ std::string io::enum_to_string<aggregate_type>( aggregate_type agg )
 
 std::optional<double> svtod( std::string_view token, bool debugmsg_on_fail )
 {
-    // strtod requires a null-terminated string; copy through std::string.
+
     std::string token_owned( token );
     char *pEnd = nullptr;
     double const val = std::strtod( token_owned.c_str(), &pEnd );
@@ -920,7 +945,7 @@ std::optional<double> svtod( std::string_view token, bool debugmsg_on_fail )
     }
     char block = *pEnd;
     if( block == ',' || block == '.' ) {
-        // likely localized with a different locale
+
         std::string unlocalized = token_owned;
         unlocalized[pEnd - token_owned.data()] = block == ',' ? '.' : ',';
         return svtod( unlocalized );

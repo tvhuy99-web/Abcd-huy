@@ -18,7 +18,7 @@
 #include "translation.h"
 #include "type_id.h"
 
-// recipe_groups namespace
+
 
 namespace
 {
@@ -47,7 +47,7 @@ struct recipe_group_data {
 
 generic_factory<recipe_group_data> recipe_groups_data( "recipe group type" );
 
-} // namespace
+}
 
 void recipe_group_data::load( const JsonObject &jo, std::string_view )
 {

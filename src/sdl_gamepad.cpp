@@ -19,7 +19,7 @@
 namespace gamepad
 {
 
-// Normalized event and API constants
+
 static constexpr Uint32 CATA_CONTROLLERBUTTONDOWN    = SDL_EVENT_GAMEPAD_BUTTON_DOWN;
 static constexpr Uint32 CATA_CONTROLLERBUTTONUP      = SDL_EVENT_GAMEPAD_BUTTON_UP;
 static constexpr Uint32 CATA_CONTROLLERAXISMOTION    = SDL_EVENT_GAMEPAD_AXIS_MOTION;
@@ -69,16 +69,16 @@ static int error_margin = 2000;
 namespace
 {
 struct task_t {
-    // Millisecond timestamp from GetTicks(), not raw event timestamps.
+
     // Event timestamps are nanoseconds (Uint64); using GetTicks() keeps
-    // everything in a consistent millisecond timebase.
+
     uint32_t when;
     int button;
     int counter;
     int state;
     input_event_t type;
 };
-} // namespace
+}
 
 static constexpr int max_tasks           = max_buttons + max_sticks + max_triggers + 1;
 static constexpr int sticks_task_index   = max_buttons;
@@ -89,10 +89,10 @@ static std::array<task_t, max_tasks> all_tasks;
 static int repeat_delay = 400;
 static int repeat_interval = 50;
 
-// SDL related stuff
+
 static SDL_TimerID timer_id;
 static SDL_Gamepad *controller = nullptr;
-static SDL_JoystickID controller_id = 0; // 0 is the invalid instance ID
+static SDL_JoystickID controller_id = 0;
 
 static direction left_stick_dir = direction::NONE;
 static direction right_stick_dir = direction::NONE;
@@ -125,7 +125,7 @@ void init()
         task.counter = 0;
     }
 
-    // There is no separate timer subsystem to init; timers work without it.
+
     int ret = SDL_Init( SDL_INIT_GAMEPAD );
     if( !ret ) {
         printErrorIf( true, "Init gamepad+timer failed" );
@@ -195,7 +195,7 @@ static void send_input( int ibtn, input_event_t itype = input_event_t::gamepad )
 }
 
 
-// Helper to get ALT variant of a button code
+
 static int get_alt_button( int base_code )
 {
     switch( base_code ) {
@@ -234,7 +234,7 @@ static int get_alt_button( int base_code )
     }
 }
 
-// Convert direction to numpad key ('1'-'9')
+
 static int direction_to_num_key( direction dir )
 {
     switch( dir ) {
@@ -259,7 +259,7 @@ static int direction_to_num_key( direction dir )
     }
 }
 
-// Convert direction to radial joy event
+
 int direction_to_radial_joy( direction dir, int stick_idx )
 {
     if( dir == direction::NONE ) {
@@ -288,21 +288,21 @@ int direction_to_radial_joy( direction dir, int stick_idx )
     }
 }
 
-// Calculate 8-way direction from raw axis values using angle
+
 static direction angle_to_direction( const point &p )
 {
-    // atan2 returns angle in radians, with 0 pointing right (East)
-    // We want 0 to be North, so we use atan2(x, -y)
+
+
     double angle = std::atan2( static_cast<double>( p.x ), static_cast<double>( -p.y ) );
 
-    // Convert to degrees (0-360, with 0 = North, clockwise)
+
     double degrees = angle * 180.0 / M_PI;
     if( degrees < 0 ) {
         degrees += 360.0;
     }
 
-    // Each direction covers 45 degrees, centered on its cardinal/diagonal
-    // N: 337.5 - 22.5, NE: 22.5 - 67.5, E: 67.5 - 112.5, etc.
+
+
     if( degrees >= 337.5 || degrees < 22.5 ) {
         return direction::N;
     } else if( degrees >= 22.5 && degrees < 67.5 ) {
@@ -322,14 +322,14 @@ static direction angle_to_direction( const point &p )
     }
 }
 
-// Helper to send directional movement input
+
 static void send_direction_movement()
 {
     if( left_stick_dir == direction::NONE ) {
         return;
     }
 
-    // Convert direction to old-style JOY movement for keybinding lookup
+
     switch( left_stick_dir ) {
         case direction::N:
             send_input( JOY_LS_UP );
@@ -368,12 +368,12 @@ static bool handle_axis_event( SDL_Event &event )
 
     int axis = event.gaxis.axis;
     int value = event.gaxis.value;
-    // Use GetTicks() instead of event timestamps for consistent millisecond
+
     // timebase. Event timestamps are nanoseconds, not milliseconds.
     uint32_t now = GetTicks();
     bool direction_changed = false;
 
-    // check triggers
+
     int idx = one_of_two( triggers_axis, axis );
     if( idx >= 0 ) {
         int state = triggers_state[idx];
@@ -382,17 +382,17 @@ static bool handle_axis_event( SDL_Event &event )
         bool trigger_released = value < triggers_threshold - error_margin;
 
         if( idx == 1 ) {
-            // Right trigger (RT)
+
             if( !state && trigger_pressed ) {
                 triggers_state[idx] = 1;
-                // Check if direction is selected
+
                 if( left_stick_dir != direction::NONE ) {
-                    // Move in selected direction
+
                     send_direction_movement();
-                    // Schedule repeat for continuous movement
+
                     schedule_task( task, now + repeat_delay, -1, 1 );
                 } else {
-                    // No direction selected - send JOY_RT event (with ALT if held) and schedule repeat
+
                     int joy_code = alt_modifier_held ? get_alt_button( JOY_RT ) : JOY_RT;
                     send_input( joy_code );
                     schedule_task( task, now + repeat_delay, joy_code, 1 );
@@ -403,7 +403,7 @@ static bool handle_axis_event( SDL_Event &event )
                 cancel_task( task );
             }
         } else {
-            // Left trigger (LT)
+
             if( !state && trigger_pressed ) {
                 alt_modifier_held = true;
                 triggers_state[idx] = 1;
@@ -412,7 +412,7 @@ static bool handle_axis_event( SDL_Event &event )
                 triggers_state[idx] = 0;
                 alt_modifier_held = false;
 
-                // Trigger radial select on Alt release
+
                 if( radial_left_open && radial_left_last_dir != direction::NONE ) {
                     int joy_code = direction_to_radial_joy( radial_left_last_dir, 0 );
                     if( joy_code != -1 ) {
@@ -426,7 +426,7 @@ static bool handle_axis_event( SDL_Event &event )
                     }
                 }
 
-                // Reset radial menu states when LT is released
+
                 radial_left_open = false;
                 radial_right_open = false;
                 radial_left_last_dir = direction::NONE;
@@ -438,16 +438,16 @@ static bool handle_axis_event( SDL_Event &event )
         return false;
     }
 
-    // check sticks
+
     for( int i = 0; i < max_sticks; ++i ) {
         int axis_idx = one_of_two( sticks_axis[i], axis );
         if( axis_idx >= 0 ) {
-            // Get current values for both axes of this stick
+
             const point val(
                 get_controller_axis( sticks_axis[i][0] ),
                 get_controller_axis( sticks_axis[i][1] ) );
 
-            // Calculate magnitude (distance from center)
+
             double magnitude = std::sqrt( static_cast<double>( val.x ) * val.x +
                                           static_cast<double>( val.y ) * val.y );
 
@@ -470,36 +470,36 @@ static bool handle_axis_event( SDL_Event &event )
             }
 
             if( alt_modifier_held ) {
-                // When LT is held, sticks control radial menu state
+
                 direction &radial_last = ( i == 0 ) ? radial_left_last_dir : radial_right_last_dir;
                 bool &radial_open = ( i == 0 ) ? radial_left_open : radial_right_open;
                 bool &radial_other = ( i == 0 ) ? radial_right_open : radial_left_open;
 
-                // Only update direction when stick is deflected beyond threshold
+
                 if( dir != direction::NONE ) {
                     if( !radial_open || dir != radial_last || radial_other ) {
                         direction_changed = true;
                     }
                     radial_open = true;
-                    radial_other = false; // Mutually exclusive
+                    radial_other = false;
                     if( dir != radial_last ) {
                         radial_last = dir;
                     }
                 } else {
-                    // When stick is released just update the UI
+
                     if( radial_open ) {
                         direction_changed = true;
                     }
                 }
 
-                // Cancel any existing repeat tasks when entering radial mode
+
                 cancel_task( stick_task );
             } else {
                 int joy_code = -1;
                 input_event_t itype = input_event_t::gamepad;
 
                 if( i == 1 ) {
-                    // Right stick (i=1): Map to num keys in menu if the radial menu is not open, or JOY_R_* in gameplay
+
                     if( is_in_menu() ) {
                         if( !radial_right_open ) {
                             joy_code = direction_to_num_key( dir );
@@ -540,7 +540,7 @@ static bool handle_axis_event( SDL_Event &event )
                 if( dir == direction::NONE || joy_code == -1 ) {
                     cancel_task( stick_task );
                 } else if( dir != old_dir ) {
-                    // Only send input and schedule repeat if direction changed.
+
                     send_input( joy_code, itype );
                     schedule_task( stick_task, now + repeat_delay, joy_code, 1, itype );
                 }
@@ -557,14 +557,14 @@ static void handle_button_event( SDL_Event &event )
     uint32_t now = GetTicks();
 
     if( event.type == CATA_CONTROLLERBUTTONUP ) {
-        // Button released - only handle cleanup/task cancellation
+
         if( button < max_buttons ) {
             cancel_task( all_tasks[button] );
         }
         return;
     }
 
-    // Button pressed - determine which input to send
+
     int joy_code = -1;
     input_event_t input_type = input_event_t::gamepad;
 
@@ -630,9 +630,9 @@ static void handle_button_event( SDL_Event &event )
             }
             break;
 
-        // D-pad handling
-        // If in a menu, send keyboard arrow keys for navigation
-        // If in gameplay, send JOY_* codes for mapped actions
+
+
+
         case CATA_BUTTON_DPAD_UP:
             if( is_in_menu() && !alt_modifier_held ) {
                 joy_code = KEY_UP;
@@ -670,14 +670,14 @@ static void handle_button_event( SDL_Event &event )
             break;
     }
 
-    // Apply ALT modifier if held (only for non-keyboard inputs)
+
     if( joy_code != -1 && alt_modifier_held && input_type == input_event_t::gamepad ) {
         joy_code = get_alt_button( joy_code );
     }
 
     if( joy_code != -1 ) {
         send_input( joy_code, input_type );
-        // Only D-pad buttons repeat
+
         if( button >= CATA_BUTTON_DPAD_UP && button <= CATA_BUTTON_DPAD_RIGHT ) {
             schedule_task( all_tasks[button], now + repeat_delay, joy_code, 1, input_type );
         }
@@ -688,7 +688,7 @@ static void handle_device_event( SDL_Event &event )
 {
     if( event.type == CATA_CONTROLLERDEVICEADDED ) {
         if( controller == nullptr ) {
-            // The event carries the instance ID that SDL_OpenGamepad wants.
+
             controller = SDL_OpenGamepad( event.gdevice.which );
             if( controller ) {
                 controller_id = SDL_GetGamepadID( controller );
@@ -703,23 +703,23 @@ static void handle_device_event( SDL_Event &event )
     }
 }
 
-static void handle_scheduler_event( SDL_Event &/*event*/ )
+static void handle_scheduler_event( SDL_Event & )
 {
     uint32_t now = GetTicks();
     for( size_t i = 0; i < all_tasks.size(); ++i ) {
         gamepad::task_t &task = all_tasks[i];
         if( task.counter && task.when <= now ) {
-            // Check if this is the RT repeat task
+
             if( i == triggers_task_index + 1 && left_stick_dir != direction::NONE ) {
-                // RT continuous movement - send direction
+
                 send_direction_movement();
             } else if( i >= sticks_task_index && i < triggers_task_index ) {
-                // Stick repeat (sticks_task_index + i where i is stick index)
+
                 if( task.button != -1 ) {
                     send_input( task.button, task.type );
                 }
             } else if( task.button != -1 ) {
-                // Regular button repeat (including RT when no direction is held)
+
                 send_input( task.button, task.type );
             }
             task.counter += 1;
@@ -765,8 +765,8 @@ bool is_alt_held()
 
 bool is_in_menu()
 {
-    // If the UI stack has more than 1 element, it usually means a menu is open
-    // on top of the main game UI.
+
+
     return ui_adaptor::ui_stack_size() > 1;
 }
 
@@ -800,8 +800,8 @@ tripoint direction_to_offset( direction dir )
     }
 }
 
-// Event constants are normalized through the CATA_CONTROLLER* constants
-// defined at the top of this file.
+
+
 bool is_gamepad_event( const SDL_Event &event )
 {
     switch( event.type ) {
@@ -838,6 +838,6 @@ bool handle_event( SDL_Event &event )
     }
 }
 
-} // namespace gamepad
+}
 
-#endif // TILES
+#endif

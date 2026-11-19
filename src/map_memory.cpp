@@ -33,7 +33,7 @@ static constexpr int MM_SIZE = MAPSIZE * 2;
 
 #define dbg(x) DebugLog((x),D_MMAP) << __FILE__ << ":" << __LINE__ << ": "
 
-// Moved from coordinate_conversions.h to the only file using it.
+
 static tripoint_abs_sm mmr_to_sm_copy( const tripoint &p )
 {
     return tripoint_abs_sm( p.x * MM_REG_SIZE, p.y * MM_REG_SIZE, p.z );
@@ -51,10 +51,10 @@ static std::string find_region_filename( const tripoint &p )
 
 namespace
 {
-/**
- * Helper class for converting global sm coord into
- * global mm_region coord + sm coord within the region.
- */
+
+
+
+
 struct reg_coord_pair {
     tripoint reg;
     point_abs_sm sm_loc;
@@ -63,7 +63,7 @@ struct reg_coord_pair {
         reg = tripoint( sm_to_mmr_remain( sm_loc.x(), sm_loc.y() ), p.z() );
     }
 };
-} // namespace
+}
 
 mm_submap::mm_submap( bool make_valid ) : valid( make_valid ) {}
 
@@ -88,7 +88,7 @@ const memorized_tile &mm_submap::get_tile( const point_sm_ms &p ) const
 void mm_submap::set_tile( const point_sm_ms &p, const memorized_tile &value )
 {
     if( tiles.empty() ) {
-        // call 'reserve' first to force allocation of exact size
+
         tiles.reserve( SEEX * SEEY );
         tiles.resize( SEEX * SEEY, default_tile );
     }
@@ -302,13 +302,13 @@ bool map_memory::prepare_region( const tripoint_abs_ms &p1, const tripoint_abs_m
     cache_pos = sm_pos;
     cache_size = sm_size.raw();
     cached.clear();
-    // Loop through each z-level in vision range
+
     for( int z = std::max( sm_pos.z() - fov_3d_z_range, -OVERMAP_DEPTH );
          z <= std::min( sm_pos.z() + fov_3d_z_range, OVERMAP_HEIGHT ); z++ ) {
         cached[z].reserve( static_cast<std::size_t>( cache_size.x ) * cache_size.y );
         for( int dy = 0; dy < cache_size.y; dy++ ) {
             for( int dx = 0; dx < cache_size.x; dx++ ) {
-                // Store submap pointer in cache, categorized by z-level
+
                 const tripoint_abs_sm smpos( cache_pos.x() + dx, cache_pos.y() + dy, z );
                 cached[z].push_back( fetch_submap( smpos ) );
             }
@@ -332,8 +332,8 @@ shared_ptr_fast<mm_submap> map_memory::fetch_submap( const tripoint_abs_sm &sm_p
 
 shared_ptr_fast<mm_submap> map_memory::allocate_submap( const tripoint_abs_sm &sm_pos )
 {
-    // Since all save/load operations are done on regions of submaps,
-    // we need to allocate the whole region at once.
+
+
     shared_ptr_fast<mm_submap> ret;
     tripoint reg = reg_coord_pair( sm_pos ).reg;
 
@@ -395,7 +395,7 @@ shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint_abs_sm &sm_po
         } else {
 
             if( !read_from_file_optional_json( mm_dir / mm_filename, loader ) ) {
-                // Region not found
+
                 return nullptr;
             }
         }
@@ -477,8 +477,8 @@ bool map_memory::save( const tripoint_abs_ms &pos )
 
     dbg( D_INFO ) << "N submaps before save: " << submaps.size();
 
-    // Since mm_submaps are always allocated in regions,
-    // we are certain that each region will be filled.
+
+
     std::map<tripoint, mm_region> regions;
     for( auto &it : submaps ) {
         const reg_coord_pair p( it.first );
@@ -536,7 +536,7 @@ bool map_memory::save( const tripoint_abs_ms &pos )
 
         if( rect_reg.overlaps( rect_keep ) ) {
             dbg( D_INFO ) << "Keeping mm_region " << regp << " [" << regp_sm << "]";
-            // Put submaps back
+
             for( size_t y = 0; y < MM_REG_SIZE; y++ ) {
                 for( size_t x = 0; x < MM_REG_SIZE; x++ ) {
                     const tripoint_abs_sm p = regp_sm + tripoint( x, y, 0 );

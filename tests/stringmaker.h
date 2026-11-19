@@ -11,7 +11,7 @@
 template <typename T> class int_id;
 template <typename T> class string_id;
 
-// StringMaker specializations for Cata types for reporting via Catch2 macros
+
 
 class cata_variant;
 class item;
@@ -87,6 +87,6 @@ struct StringMaker<cuboid<Tripoint>> {
     }
 };
 
-} // namespace Catch
+}
 
-#endif // CATA_TESTS_STRINGMAKER_H
+#endif

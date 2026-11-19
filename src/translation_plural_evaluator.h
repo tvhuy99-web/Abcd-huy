@@ -121,6 +121,6 @@ class TranslationPluralRulesEvaluator
         ExprNode *root;
 };
 
-#endif // defined(LOCALIZE)
+#endif
 
-#endif // CATA_SRC_TRANSLATION_PLURAL_EVALUATOR_H
+#endif

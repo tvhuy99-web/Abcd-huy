@@ -159,7 +159,7 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn("GameActionHub.Entry entry = entries.get(hubIndex);", detail)
         self.assertIn("speakInlineDetail(details.toString());", detail)
         self.assertNotIn("showHubActionChoices();", detail)
-        # The explicit hold gesture still owns gesture assignment/favorites.
+
         context_menu = self.java.split("public void openContextActions() {", 1)[1].split(
             "private void closeContextActions()", 1
         )[0]

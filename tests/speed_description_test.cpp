@@ -20,11 +20,11 @@ speed_description_ID_THAT_DOES_NOT_EXIST( "ID_THAT_DOES_NOT_EXIST" );
 
 TEST_CASE( "monster_speed_description", "[monster][speed_description]" )
 {
-    /*
-     * A default character has a speed of 100 and a base move cost of 116
-     * That means their tiles per turn is 100 / 116 == 0.86206896551
-     * The tiles per turn ratio is monster_ratio / player_ratio
-     */
+
+
+
+
+
 
     auto get_speed_string = []( const mtype_id & mon_id ) {
         clear_avatar();
@@ -36,9 +36,9 @@ TEST_CASE( "monster_speed_description", "[monster][speed_description]" )
                );
     };
 
-    // while lambdas speed things up, in-case the check fails
-    // they don't give the line where the check failed
-    // so give the contributor as much info as possible when describing the cases
+
+
+
     auto make_test = [&get_speed_string]( const mtype_id & mon_id,
     const std::vector<std::string> &descriptions ) {
         std::string speed_string = get_speed_string( mon_id );
@@ -46,7 +46,7 @@ TEST_CASE( "monster_speed_description", "[monster][speed_description]" )
             const bool is_returned_string_is_inside_vector = std::find(
                         descriptions.begin(), descriptions.end(),
                         speed_string ) != descriptions.end();
-            // variable name will show up when error fails
+
             CHECK( is_returned_string_is_inside_vector );
         }
     };

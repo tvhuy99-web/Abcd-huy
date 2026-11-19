@@ -103,7 +103,7 @@ int talker_vehicle_const::get_unloaded_weight() const
 
 bool talker_vehicle_const::is_driven() const
 {
-    //When/if npcs can drive this will need updating
+
     return me_veh_const->player_in_control( get_map(), get_avatar() );
 }
 

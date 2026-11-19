@@ -11,129 +11,235 @@ template<>
 std::string enum_to_string<event_type>( event_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case event_type::activates_artifact: return "activates_artifact";
-        case event_type::activates_mininuke: return "activates_mininuke";
-        case event_type::administers_mutagen: return "administers_mutagen";
-        case event_type::angers_amigara_horrors: return "angers_amigara_horrors";
-        case event_type::avatar_enters_omt: return "avatar_enters_omt";
-        case event_type::avatar_moves: return "avatar_moves";
-        case event_type::avatar_dies: return "avatar_dies";
-        case event_type::awakes_dark_wyrms: return "awakes_dark_wyrms";
-        case event_type::becomes_wanted: return "becomes_wanted";
-        case event_type::broken_bone: return "broken_bone";
-        case event_type::broken_bone_mends: return "broken_bone_mends";
-        case event_type::buries_corpse: return "buries_corpse";
-        case event_type::camp_taken_over: return "camp_taken_over";
-        case event_type::causes_resonance_cascade: return "causes_resonance_cascade";
-        case event_type::character_consumes_item: return "character_consumes_item";
-        case event_type::character_dies: return "character_dies";
-        case event_type::character_eats_item: return "character_eats_item";
-        case event_type::character_effect_intensity_changed: return "character_effect_intensity_changed";
-        case event_type::character_casts_spell: return "character_casts_spell";
-        case event_type::character_finished_activity: return "character_finished_activity";
-        case event_type::character_forgets_spell: return "character_forgets_spell";
-        case event_type::character_gains_effect: return "character_gains_effect";
-        case event_type::character_gets_headshot: return "character_gets_headshot";
-        case event_type::character_heals_damage: return "character_heals_damage";
-        case event_type::character_kills_character: return "character_kills_character";
-        case event_type::character_kills_monster: return "character_kills_monster";
-        case event_type::character_learns_spell: return "character_learns_spell";
-        case event_type::character_loses_effect: return "character_loses_effect";
+
+        case event_type::activates_artifact:
+            return "activates_artifact";
+        case event_type::activates_mininuke:
+            return "activates_mininuke";
+        case event_type::administers_mutagen:
+            return "administers_mutagen";
+        case event_type::angers_amigara_horrors:
+            return "angers_amigara_horrors";
+        case event_type::avatar_enters_omt:
+            return "avatar_enters_omt";
+        case event_type::avatar_moves:
+            return "avatar_moves";
+        case event_type::avatar_dies:
+            return "avatar_dies";
+        case event_type::awakes_dark_wyrms:
+            return "awakes_dark_wyrms";
+        case event_type::becomes_wanted:
+            return "becomes_wanted";
+        case event_type::broken_bone:
+            return "broken_bone";
+        case event_type::broken_bone_mends:
+            return "broken_bone_mends";
+        case event_type::buries_corpse:
+            return "buries_corpse";
+        case event_type::camp_taken_over:
+            return "camp_taken_over";
+        case event_type::causes_resonance_cascade:
+            return "causes_resonance_cascade";
+        case event_type::character_consumes_item:
+            return "character_consumes_item";
+        case event_type::character_dies:
+            return "character_dies";
+        case event_type::character_eats_item:
+            return "character_eats_item";
+        case event_type::character_effect_intensity_changed:
+            return "character_effect_intensity_changed";
+        case event_type::character_casts_spell:
+            return "character_casts_spell";
+        case event_type::character_finished_activity:
+            return "character_finished_activity";
+        case event_type::character_forgets_spell:
+            return "character_forgets_spell";
+        case event_type::character_gains_effect:
+            return "character_gains_effect";
+        case event_type::character_gets_headshot:
+            return "character_gets_headshot";
+        case event_type::character_heals_damage:
+            return "character_heals_damage";
+        case event_type::character_kills_character:
+            return "character_kills_character";
+        case event_type::character_kills_monster:
+            return "character_kills_monster";
+        case event_type::character_learns_spell:
+            return "character_learns_spell";
+        case event_type::character_loses_effect:
+            return "character_loses_effect";
         case event_type::character_melee_attacks_character:
-                                                 return "character_melee_attacks_character";
+            return "character_melee_attacks_character";
         case event_type::character_melee_attacks_monster:
-                                                 return "character_melee_attacks_monster";
-        case event_type::character_radioactively_mutates: return "character_radioactively_mutates";
+            return "character_melee_attacks_monster";
+        case event_type::character_radioactively_mutates:
+            return "character_radioactively_mutates";
         case event_type::character_ranged_attacks_character:
-                                                 return "character_ranged_attacks_character";
+            return "character_ranged_attacks_character";
         case event_type::character_ranged_attacks_monster:
-                                                 return "character_ranged_attacks_monster";
-        case event_type::character_smashes_tile: return "character_smashes_tile";
-        case event_type::character_starts_activity: return "character_starts_activity";
-        case event_type::character_takes_damage: return "character_takes_damage";
-        case event_type::monster_takes_damage: return "monster_takes_damage";
-        case event_type::character_triggers_trap: return "character_triggers_trap";
-        case event_type::character_falls_asleep: return "character_falls_asleep";
-        case event_type::character_attempt_to_fall_asleep: return "character_attempt_to_fall_asleep";
-        case event_type::character_wakes_up: return "character_wakes_up";
-        case event_type::character_wears_item: return "character_wears_item";
-        case event_type::character_takeoff_item: return "character_takeoff_item";
-         case event_type::character_armor_destroyed: return "character_armor_destroyed";
-        case event_type::character_wields_item: return "character_wields_item";
-        case event_type::consumes_marloss_item: return "consumes_marloss_item";
-        case event_type::crosses_marloss_threshold: return "crosses_marloss_threshold";
-        case event_type::crosses_mutation_threshold: return "crosses_mutation_threshold";
-        case event_type::crosses_mycus_threshold: return "crosses_mycus_threshold";
-        case event_type::cuts_tree: return "cuts_tree";
-        case event_type::dermatik_eggs_hatch: return "dermatik_eggs_hatch";
-        case event_type::dermatik_eggs_injected: return "dermatik_eggs_injected";
-        case event_type::destroys_triffid_grove: return "destroys_triffid_grove";
-        case event_type::dies_from_asthma_attack: return "dies_from_asthma_attack";
-        case event_type::dies_from_drug_overdose: return "dies_from_drug_overdose";
-        case event_type::dies_from_bleeding: return "dies_from_bleeding";
-        case event_type::dies_from_hypovolemia: return "dies_from_hypovolemia";
-        case event_type::dies_from_redcells_loss: return "dies_from_redcells_loss";
-        case event_type::dies_of_infection: return "dies_of_infection";
-        case event_type::dies_of_starvation: return "dies_of_starvation";
-        case event_type::dies_of_thirst: return "dies_of_thirst";
-        case event_type::digs_into_lava: return "digs_into_lava";
-        case event_type::dimension_travel: return "dimension_travel";
-        case event_type::disarms_nuke: return "disarms_nuke";
-        case event_type::eats_sewage: return "eats_sewage";
-        case event_type::evolves_mutation: return "evolves_mutation";
-        case event_type::exhumes_grave: return "exhumes_grave";
-        case event_type::fails_to_install_cbm: return "fails_to_install_cbm";
-        case event_type::fails_to_remove_cbm: return "fails_to_remove_cbm";
-        case event_type::falls_asleep_from_exhaustion: return "falls_asleep_from_exhaustion";
-        case event_type::fuel_tank_explodes: return "fuel_tank_explodes";
-        case event_type::gains_addiction: return "gains_addiction";
-        case event_type::gains_mutation: return "gains_mutation";
-        case event_type::gains_proficiency: return "gains_proficiency";
-        case event_type::gains_skill_level: return "gains_skill_level";
-        case event_type::game_avatar_death: return "game_avatar_death";
-        case event_type::game_avatar_new: return "game_avatar_new";
-        case event_type::game_load: return "game_load";
-        case event_type::game_begin: return "game_begin";
-        case event_type::game_over: return "game_over";
-        case event_type::game_save: return "game_save";
-        case event_type::game_start: return "game_start";
-        case event_type::installs_cbm: return "installs_cbm";
-        case event_type::installs_faulty_cbm: return "installs_faulty_cbm";
-        case event_type::learns_martial_art: return "learns_martial_art";
-        case event_type::loses_addiction: return "loses_addiction";
-        case event_type::loses_mutation: return "loses_mutation";
-        case event_type::npc_becomes_hostile: return "npc_becomes_hostile";
-        case event_type::opens_portal: return "opens_portal";
-        case event_type::opens_spellbook: return "opens_spellbook";
-        case event_type::opens_temple: return "opens_temple";
-        case event_type::phase_move: return "phase_move";
-        case event_type::player_fails_conduct: return "player_fails_conduct";
-        case event_type::player_gets_achievement: return "player_gets_achievement";
-        case event_type::player_levels_spell: return "player_levels_spell";
-        case event_type::reads_book: return "reads_book";
-        case event_type::releases_subspace_specimens: return "releases_subspace_specimens";
-        case event_type::removes_cbm: return "removes_cbm";
-        case event_type::seals_hazardous_material_sarcophagus: return "seals_hazardous_material_sarcophagus";
-        case event_type::spellcasting_finish: return "spellcasting_finish";
-        case event_type::telefrags_creature: return "telefrags_creature";
-        case event_type::teleglow_teleports: return "teleglow_teleports";
-        case event_type::teleports_into_wall: return "teleports_into_wall";
-        case event_type::terminates_subspace_specimens: return "terminates_subspace_specimens";
-        case event_type::throws_up: return "throws_up";
-        case event_type::triggers_alarm: return "triggers_alarm";
-        case event_type::uses_debug_menu: return "uses_debug_menu";
-        case event_type::u_var_changed: return "u_var_changed";
-        case event_type::vehicle_moves: return "vehicle_moves";
-        case event_type::character_butchered_corpse: return "character_butchered_corpse";
-        // *INDENT-ON*
+            return "character_ranged_attacks_monster";
+        case event_type::character_smashes_tile:
+            return "character_smashes_tile";
+        case event_type::character_starts_activity:
+            return "character_starts_activity";
+        case event_type::character_takes_damage:
+            return "character_takes_damage";
+        case event_type::monster_takes_damage:
+            return "monster_takes_damage";
+        case event_type::character_triggers_trap:
+            return "character_triggers_trap";
+        case event_type::character_falls_asleep:
+            return "character_falls_asleep";
+        case event_type::character_attempt_to_fall_asleep:
+            return "character_attempt_to_fall_asleep";
+        case event_type::character_wakes_up:
+            return "character_wakes_up";
+        case event_type::character_wears_item:
+            return "character_wears_item";
+        case event_type::character_takeoff_item:
+            return "character_takeoff_item";
+        case event_type::character_armor_destroyed:
+            return "character_armor_destroyed";
+        case event_type::character_wields_item:
+            return "character_wields_item";
+        case event_type::consumes_marloss_item:
+            return "consumes_marloss_item";
+        case event_type::crosses_marloss_threshold:
+            return "crosses_marloss_threshold";
+        case event_type::crosses_mutation_threshold:
+            return "crosses_mutation_threshold";
+        case event_type::crosses_mycus_threshold:
+            return "crosses_mycus_threshold";
+        case event_type::cuts_tree:
+            return "cuts_tree";
+        case event_type::dermatik_eggs_hatch:
+            return "dermatik_eggs_hatch";
+        case event_type::dermatik_eggs_injected:
+            return "dermatik_eggs_injected";
+        case event_type::destroys_triffid_grove:
+            return "destroys_triffid_grove";
+        case event_type::dies_from_asthma_attack:
+            return "dies_from_asthma_attack";
+        case event_type::dies_from_drug_overdose:
+            return "dies_from_drug_overdose";
+        case event_type::dies_from_bleeding:
+            return "dies_from_bleeding";
+        case event_type::dies_from_hypovolemia:
+            return "dies_from_hypovolemia";
+        case event_type::dies_from_redcells_loss:
+            return "dies_from_redcells_loss";
+        case event_type::dies_of_infection:
+            return "dies_of_infection";
+        case event_type::dies_of_starvation:
+            return "dies_of_starvation";
+        case event_type::dies_of_thirst:
+            return "dies_of_thirst";
+        case event_type::digs_into_lava:
+            return "digs_into_lava";
+        case event_type::dimension_travel:
+            return "dimension_travel";
+        case event_type::disarms_nuke:
+            return "disarms_nuke";
+        case event_type::eats_sewage:
+            return "eats_sewage";
+        case event_type::evolves_mutation:
+            return "evolves_mutation";
+        case event_type::exhumes_grave:
+            return "exhumes_grave";
+        case event_type::fails_to_install_cbm:
+            return "fails_to_install_cbm";
+        case event_type::fails_to_remove_cbm:
+            return "fails_to_remove_cbm";
+        case event_type::falls_asleep_from_exhaustion:
+            return "falls_asleep_from_exhaustion";
+        case event_type::fuel_tank_explodes:
+            return "fuel_tank_explodes";
+        case event_type::gains_addiction:
+            return "gains_addiction";
+        case event_type::gains_mutation:
+            return "gains_mutation";
+        case event_type::gains_proficiency:
+            return "gains_proficiency";
+        case event_type::gains_skill_level:
+            return "gains_skill_level";
+        case event_type::game_avatar_death:
+            return "game_avatar_death";
+        case event_type::game_avatar_new:
+            return "game_avatar_new";
+        case event_type::game_load:
+            return "game_load";
+        case event_type::game_begin:
+            return "game_begin";
+        case event_type::game_over:
+            return "game_over";
+        case event_type::game_save:
+            return "game_save";
+        case event_type::game_start:
+            return "game_start";
+        case event_type::installs_cbm:
+            return "installs_cbm";
+        case event_type::installs_faulty_cbm:
+            return "installs_faulty_cbm";
+        case event_type::learns_martial_art:
+            return "learns_martial_art";
+        case event_type::loses_addiction:
+            return "loses_addiction";
+        case event_type::loses_mutation:
+            return "loses_mutation";
+        case event_type::npc_becomes_hostile:
+            return "npc_becomes_hostile";
+        case event_type::opens_portal:
+            return "opens_portal";
+        case event_type::opens_spellbook:
+            return "opens_spellbook";
+        case event_type::opens_temple:
+            return "opens_temple";
+        case event_type::phase_move:
+            return "phase_move";
+        case event_type::player_fails_conduct:
+            return "player_fails_conduct";
+        case event_type::player_gets_achievement:
+            return "player_gets_achievement";
+        case event_type::player_levels_spell:
+            return "player_levels_spell";
+        case event_type::reads_book:
+            return "reads_book";
+        case event_type::releases_subspace_specimens:
+            return "releases_subspace_specimens";
+        case event_type::removes_cbm:
+            return "removes_cbm";
+        case event_type::seals_hazardous_material_sarcophagus:
+            return "seals_hazardous_material_sarcophagus";
+        case event_type::spellcasting_finish:
+            return "spellcasting_finish";
+        case event_type::telefrags_creature:
+            return "telefrags_creature";
+        case event_type::teleglow_teleports:
+            return "teleglow_teleports";
+        case event_type::teleports_into_wall:
+            return "teleports_into_wall";
+        case event_type::terminates_subspace_specimens:
+            return "terminates_subspace_specimens";
+        case event_type::throws_up:
+            return "throws_up";
+        case event_type::triggers_alarm:
+            return "triggers_alarm";
+        case event_type::uses_debug_menu:
+            return "uses_debug_menu";
+        case event_type::u_var_changed:
+            return "u_var_changed";
+        case event_type::vehicle_moves:
+            return "vehicle_moves";
+        case event_type::character_butchered_corpse:
+            return "character_butchered_corpse";
+
         case event_type::num_event_types:
             break;
     }
     cata_fatal( "Invalid event_type" );
 }
 
-} // namespace io
+}
 
 namespace cata
 {
@@ -227,7 +333,7 @@ DEFINE_EVENT_FIELDS( character_butchered_corpse )
 DEFINE_EVENT_FIELDS( dimension_travel )
 DEFINE_EVENT_FIELDS( phase_move )
 
-} // namespace event_detail
+}
 
 template<event_type Type>
 static void get_fields_if_match( event_type type, event::fields_type &out )
@@ -276,4 +382,4 @@ cata_variant event::get_variant_or_void( const std::string &key ) const
     return it->second;
 }
 
-} // namespace cata
+}

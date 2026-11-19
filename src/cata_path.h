@@ -9,36 +9,36 @@
 
 #include <fmt/format.h>
 
-/**
- * One of the problems of filesystem paths is they lack contextual awareness
- * of 'where' they are. They're just a list of segments pointing into the
- * filesystem. There are cases where it's useful to have a path relative to
- * some logical root which isn't the actual filesystem root, and work with /
- * manipulate that path independently of the logical root.
- *
- * cata_path combines a logical root concept and an std::filesystem::path. The logical
- * root is an enum value containing well known cataclysm 'roots'. It only
- * exposes operator / for concatenating segments to the relative path.
- * The constructor requires passing a logical root value which can be queried,
- * and when (explicitly) converting to std::filesystem::path will prepend the logical root
- * with the relative path to give a final absolute path. Callers can know this
- * absolute path is relative to the logical root without having to perform any
- * further tests.
- *
- * Attempting to construct a path that 'escapes' the logical root will result
- * in a path rooted at the logical root, just like what happens if you try to
- * resolve '/../'.
- *
- * All string values are assumed to be utf-8 encoded, but std::filesystem::path values are
- * used as-is without checking for encoding, so std::filesystem::u8path should be used if the
- * path is utf-8 encoded.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class cata_path
 {
     public:
-        // All of these represent configurable filesystem locations for various pieces
-        // of data. The default locations may all be subfolders of `base`, but they can
-        // be overridden or default to other filesystem locations.
+
+
+
         enum class root_path {
             base,
             config,
@@ -46,8 +46,8 @@ class cata_path
             memorial,
             save,
             user,
-            unknown, // assumed relative to cwd, path is "."
-            // fun fact: std::filesystem::path{} / "foo" == "foo", no "/foo".
+            unknown,
+
         };
 
         cata_path() : logical_root_{ root_path::unknown } {}
@@ -62,9 +62,9 @@ class cata_path
         cata_path( cata_path && ) = default;
         cata_path &operator=( cata_path && ) = default;
 
-        // Returns an std::filesystem::path constructed by concatenating the 'actual' path
-        // value for the logical root with the relative path stored in this.
-        // path with root_path::unknown are returned as-is.
+
+
+
         inline std::filesystem::path get_unrelative_path() const {
             std::filesystem::path result = get_logical_root_path();
             result /= relative_path_;
@@ -79,17 +79,17 @@ class cata_path
             return logical_root_;
         }
 
-        // Returns the actual path to the logical root this cata_path is relative to.
+
         std::filesystem::path get_logical_root_path() const;
 
-        // Returns a direct reference to the relative path component. Useful for
-        // sanity checking the path eg. does not being with '..'.
+
+
         inline const std::filesystem::path &get_relative_path() const {
             return relative_path_;
         }
 
-        // Below are named-alike functions from std::filesystem::path which do similar things
-        // to this object.
+
+
 
         template<typename T>
         cata_path operator/( T &&segment ) const {
@@ -169,4 +169,4 @@ struct fmt::formatter<cata_path> : formatter<std::string_view> {
     auto format( const cata_path &path, fmt::format_context &ctx ) const -> decltype( ctx.out() );
 };
 
-#endif // CATA_SRC_CATA_PATH_H
+#endif

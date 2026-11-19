@@ -4,9 +4,9 @@
 
 class item;
 
-/*
- * statistics data for melee attacks, used for test purposes
- */
+
+
+
 struct melee_statistic_data {
     int attack_count = 0;
     int hit_count = 0;
@@ -26,6 +26,6 @@ melee_statistic_data get_stats();
 void clear_stats();
 int blocking_ability( const item &shield );
 extern melee_statistic_data melee_stats;
-} // namespace melee
+}
 
-#endif // CATA_SRC_MELEE_H
+#endif

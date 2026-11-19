@@ -52,7 +52,7 @@ item_location mdeath::normal( map *here, monster &z )
             sfx::play_variant_sound( "mon_death", "zombie_death", sfx::get_heard_volume( z.pos_bub() ) );
         }
 
-        //Currently it is possible to get multiple messages that a monster died.
+
         add_msg_if_player_sees( z, m_good, _( "The %s dies!" ), z.name() );
     }
 
@@ -62,7 +62,7 @@ item_location mdeath::normal( map *here, monster &z )
         const float corpse_damage = 2.5 * overflow_damage / max_hp;
         const bool pulverized = corpse_damage > 5 && overflow_damage > z.get_hp_max();
 
-        z.bleed( *here ); // leave some blood if we have to
+        z.bleed( *here );
 
         if( pulverized ) {
             return splatter( here, z );
@@ -78,9 +78,9 @@ static void scatter_chunks( map *here, const itype_id &chunk_name, int chunk_amt
                             int distance,
                             int pile_size = 1 )
 {
-    // can't have less than one item in a pile or it would cause an infinite loop
+
     pile_size = std::max( pile_size, 1 );
-    // can't have more items in a pile than total items
+
     pile_size = std::min( chunk_amt, pile_size );
     distance = std::abs( distance );
     const item chunk( chunk_name, calendar::turn );
@@ -102,9 +102,9 @@ static void scatter_chunks( map *here, const itype_id &chunk_name, int chunk_amt
             if( here->impassable( tarp ) ) {
                 here->bash( tarp, distance );
                 if( here->impassable( tarp ) ) {
-                    // Target is obstacle, not destroyed by bashing,
-                    // stop trajectory in front of it, if this is the first
-                    // point (e.g. wall adjacent to monster), don't drop anything on it
+
+
+
                     if( j > 0 ) {
                         tarp = traj[j - 1];
                     } else {
@@ -151,20 +151,20 @@ item_location mdeath::splatter( map *here, monster &z )
             here->add_splatter( type_blood, random_entry( area ) );
         }
     }
-    // 1% of the weight of the monster is the base, with overflow damage as a multiplier
+
     int gibbed_weight = rng( 0, std::round( to_gram( z.get_weight() ) / 100.0 *
                                             ( overflow_damage / max_hp + 1 ) ) );
     const int z_weight = to_gram( z.get_weight() );
-    // limit gibbing to 15%
+
     gibbed_weight = std::min( gibbed_weight, z_weight * 15 / 100 );
 
     if( gibbable ) {
         float overflow_ratio = overflow_damage / max_hp + 1.0f;
         int gib_distance = std::round( rng( 2, 4 ) );
         for( const harvest_entry &entry : *z.type->harvest ) {
-            // only flesh and bones survive.
+
             if( entry.type == harvest_drop_flesh || entry.type == harvest_drop_bone ) {
-                // the larger the overflow damage, the less you get
+
                 const int chunk_amt =
                     entry.mass_ratio / overflow_ratio / 10 *
                     z.get_weight() / item::find_type( itype_id( entry.drop ) )->weight;
@@ -180,12 +180,12 @@ item_location mdeath::splatter( map *here, monster &z )
             scatter_chunks( here, leftover_id, chunk_amount, z, gib_distance,
                             chunk_amount / ( gib_distance + 1 ) );
         }
-        // add corpse with gib flag
+
         item corpse = item::make_corpse( z.type->id, calendar::turn, z.unique_name, z.get_upgrade_time() );
         if( corpse.is_null() ) {
             return {};
         }
-        // Set corpse to damage that aligns with being pulped
+
         corpse.set_damage( 4000 );
         corpse.set_flag( json_flag_GIBBED );
         if( z.has_effect( effect_no_ammo ) ) {
@@ -206,7 +206,7 @@ void mdeath::disappear( monster &z )
 
 void mdeath::broken( map *here, monster &z )
 {
-    // Bail out if flagged (simulates eyebot flying away)
+
     if( z.no_corpse_quiet ) {
         return;
     }
@@ -216,11 +216,11 @@ void mdeath::broken( map *here, monster &z )
         item_id = z.type->broken_itype.str();
     } else {
         item_id = z.type->id.str();
-        //FIXME Remove hardcoded id manipulation
+
         if( item_id.compare( 0, 4, "mon_" ) == 0 ) {
             item_id.erase( 0, 4 );
         }
-        // make "broken_manhack", or "broken_eyebot", ...
+
         item_id.insert( 0, "broken_" );
     }
     item broken_mon( itype_id( item_id ), calendar::turn );
@@ -239,9 +239,9 @@ void mdeath::broken( map *here, monster &z )
                     if( attack.second->id == "gun" ) {
                         item gun = item( dynamic_cast<const gun_actor *>( attack.second.get() )->gun_type );
                         const ammotype at = item( ammo_entry.first ).ammo_type();
-                        // TODO(multimag): picks the first well-default whose mag accepts this
-                        // ammo type. Sibling wells with the same ammotype but different default
-                        // magazines collapse to the first match.
+
+
+
                         itype_id mag_id;
                         for( const itype_id &well_default : gun.magazines_default() ) {
                             if( well_default.is_null() ) {
@@ -277,7 +277,7 @@ void mdeath::broken( map *here, monster &z )
         }
     }
 
-    // TODO: make mdeath::splatter work for robots
+
     if( broken_mon.damage() >= broken_mon.max_damage() ) {
         add_msg_if_player_sees( z.pos_bub(), m_good, _( "The %s is destroyed!" ), z.name() );
     } else {
@@ -288,8 +288,8 @@ void mdeath::broken( map *here, monster &z )
 item_location make_mon_corpse( map *here, monster &z, int damageLvl )
 {
     item corpse = item::make_corpse( z.type->id, calendar::turn, z.unique_name, z.get_upgrade_time() );
-    // All corpses are at 37 C at time of death
-    // This may not be true but anything better would be way too complicated
+
+
     if( z.is_warm() ) {
         corpse.set_item_temperature( units::from_celsius( 37 ) );
     }

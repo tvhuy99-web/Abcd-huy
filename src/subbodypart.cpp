@@ -12,55 +12,55 @@ namespace
 
 generic_factory<sub_body_part_type> sub_body_part_factory( "sub body part" );
 
-// groups all the bodypart into a shared bucket
+
 std::unordered_map<sub_bodypart_str_id, std::vector<sub_bodypart_str_id>>
         combined_similar_sub_bodyparts;
 
-} // namespace
+}
 
-/**@relates string_id*/
+
 template<>
 bool string_id<sub_body_part_type>::is_valid() const
 {
     return sub_body_part_factory.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 bool int_id<sub_body_part_type>::is_valid() const
 {
     return sub_body_part_factory.is_valid( *this );
 }
 
-/**@relates string_id*/
+
 template<>
 const sub_body_part_type &string_id<sub_body_part_type>::obj() const
 {
     return sub_body_part_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const sub_body_part_type &int_id<sub_body_part_type>::obj() const
 {
     return sub_body_part_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const sub_bodypart_str_id &int_id<sub_body_part_type>::id() const
 {
     return sub_body_part_factory.convert( *this );
 }
 
-/**@relates string_id*/
+
 template<>
 sub_bodypart_id string_id<sub_body_part_type>::id() const
 {
     return sub_body_part_factory.convert( *this, sub_bodypart_id( 0 ) );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<sub_body_part_type>::int_id( const string_id<sub_body_part_type> &id ) : _id( id.id() ) {}
 
@@ -79,14 +79,14 @@ void sub_body_part_type::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "side", part_side );
     optional( jo, was_loaded, "name_multiple", name_multiple );
 
-    // turn off blindly copying-from to prevent accidental inconsistent opposites
+
     if( jo.has_string( "opposite" ) ) {
         mandatory( jo, was_loaded, "opposite", opposite );
     } else {
         opposite = id;
     }
 
-    // defaults to self
+
     optional( jo, was_loaded, "locations_under", locations_under, { id } );
     optional( jo, was_loaded, "similar_bodypart", similar_bodypart );
     optional( jo, was_loaded, "unarmed_damage", unarmed_damage );
@@ -104,11 +104,11 @@ void sub_body_part_type::finalize_all()
 
 void sub_body_part_type::finalize()
 {
-    // populate combined_similar_bodyparts
+
     if( similar_bodypart.has_value() ) {
-        // `head` is similar to `head_dragonfly`
+
         combined_similar_sub_bodyparts[similar_bodypart.value()].emplace_back( id );
-        // `head_dragonfly` is similar to `head`
+
         combined_similar_sub_bodyparts[id].emplace_back( similar_bodypart.value() );
     }
 }

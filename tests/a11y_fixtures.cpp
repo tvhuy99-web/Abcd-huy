@@ -47,8 +47,8 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
-// See a11y_fixtures.h for the guarantee each builder makes and the oracle it
-// serves. Written during the coding phase (phase 1): NOT compiled, NOT run.
+
+
 
 static const bionic_id bio_power_storage( "bio_power_storage" );
 
@@ -83,11 +83,11 @@ static const tripoint_bub_ms fixture_origin( 60, 60, 0 );
 namespace a11y_fixture
 {
 
-// clear_map_memory() invalidates every memory submap, and the
-// memorize_* API silently drops writes to invalid submaps. In real
-// play the region around the avatar is prepared as the map loads
-// (map::load / shift); fixtures must redo the same preparation after
-// every clear, over the whole area any fixture memorizes into.
+
+
+
+
+
 static void prepare_fixture_memory( avatar &who, map &here )
 {
     who.prepare_map_memory_region(
@@ -110,7 +110,7 @@ void reset_world_for_fixture()
     prepare_fixture_memory( who, get_map() );
 }
 
-// ------------------------------------------------------------------ F-01 --
+
 knowledge_pair_fixture build_knowledge_pair( const knowledge_variant variant )
 {
     reset_world_for_fixture();
@@ -120,31 +120,31 @@ knowledge_pair_fixture build_knowledge_pair( const knowledge_variant variant )
     knowledge_pair_fixture result;
     result.variant = variant;
     result.avatar_pos = fixture_origin;
-    // The wall column: known, identical in both variants.
+
     const int wall_x = fixture_origin.x() + 3;
-    // Secret positions east of the wall; the two variants swap the trap and
-    // mine rows and move the monster, so every secret differs.
+
+
     const bool is_a = variant == knowledge_variant::a;
     result.monster_pos = tripoint_bub_ms( fixture_origin.x() + 5,
                                           fixture_origin.y() + ( is_a ? -2 : 2 ), 0 );
     result.hidden_trap_pos = tripoint_bub_ms( fixture_origin.x() + 4,
                              fixture_origin.y() + ( is_a ? -5 : 5 ), 0 );
     result.mine_pos = tripoint_bub_ms( fixture_origin.x() + 6,
-                                      fixture_origin.y() + ( is_a ? 5 : -5 ), 0 );
+                                       fixture_origin.y() + ( is_a ? 5 : -5 ), 0 );
     result.crate_pos = tripoint_bub_ms( fixture_origin.x() + 5, fixture_origin.y(), 0 );
     result.crate_content = is_a ? itype_knife_combat : itype_bandages;
 
-    // Live ground, identical in both variants: flat grass, wall column,
-    // closed crate furniture on the crate tile.
+
+
     build_test_map( ter_id( "t_grass" ) );
     for( int y = fixture_origin.y() - 5; y <= fixture_origin.y() + 5; ++y ) {
         here.ter_set( tripoint_bub_ms( wall_x, y, 0 ), ter_id( "t_brick_wall" ) );
     }
     here.furn_set( result.crate_pos, furn_id( "f_crate_c" ) );
 
-    // Secrets, live only: monster behind the wall, buried trap, buried
-    // landmine, and the crate's content placed on the crate tile (the
-    // CONTAINER furniture is what a11y::observe_tile() gates on).
+
+
+
     spawn_test_monster( "mon_zombie", result.monster_pos );
     here.trap_set( result.hidden_trap_pos, trap_id( "tr_beartrap_buried" ) );
     here.trap_set( result.mine_pos, trap_id( "tr_landmine_buried" ) );
@@ -154,9 +154,9 @@ knowledge_pair_fixture build_knowledge_pair( const knowledge_variant variant )
     here.build_map_cache( 0, true );
     set_time_to_day();
 
-    // Known side, identical in both variants: memorize the whole rectangle
-    // (grass, the wall column as brick wall, the crate tile's decoration)
-    // through the avatar's own memory API, after the reset cleared it.
+
+
+
     for( int x = fixture_origin.x() - 5; x <= fixture_origin.x() + 6; ++x ) {
         for( int y = fixture_origin.y() - 5; y <= fixture_origin.y() + 5; ++y ) {
             const tripoint_bub_ms tile( x, y, 0 );
@@ -166,7 +166,7 @@ knowledge_pair_fixture build_knowledge_pair( const knowledge_variant variant )
     }
     who.memorize_decoration( here.get_abs( result.crate_pos ), "f_crate_c", 0, 0 );
 
-    // Fixture invariants the oracle relies on.
+
     REQUIRE( here.ter( result.crate_pos ) == ter_id( "t_grass" ) );
     REQUIRE( who.has_memory_at( here.get_abs( result.crate_pos ) ) );
     REQUIRE( who.get_memorized_tile( here.get_abs( result.crate_pos ) ).get_dec_id() ==
@@ -174,7 +174,7 @@ knowledge_pair_fixture build_knowledge_pair( const knowledge_variant variant )
     return result;
 }
 
-// ------------------------------------------------------------------ F-02 --
+
 pocket_tree_fixture build_pocket_tree()
 {
     reset_world_for_fixture();
@@ -187,8 +187,8 @@ pocket_tree_fixture build_pocket_tree()
     result.sealed_content = itype_water;
     result.loose_content = itype_knife_combat;
 
-    // Innermost first, exactly as item_pocket_test.cpp builds a sealed can:
-    // fill the sealable pocket, then seal it.
+
+
     item can( itype_test_can_drink );
     REQUIRE( can.put_in( item( itype_water ), pocket_type::CONTAINER ).success() );
     std::vector<item_pocket *> can_pockets = can.get_container_pockets();
@@ -212,7 +212,7 @@ pocket_tree_fixture build_pocket_tree()
     return result;
 }
 
-// ------------------------------------------------------------------ F-03 --
+
 two_sided_inventory_fixture build_two_sided_inventory()
 {
     reset_world_for_fixture();
@@ -227,11 +227,11 @@ two_sided_inventory_fixture build_two_sided_inventory()
     result.carried_item = itype_bandages;
     result.worn_item = itype_test_rock;
 
-    // Ground source (advanced_inventory_test.cpp places its ground item on
-    // the avatar's own tile).
+
+
     here.add_item_or_charges( result.ground_pos, item( itype_knife_combat ) );
 
-    // Vehicle source: shopping cart east of the avatar, item in its cargo.
+
     vehicle *cart = here.add_vehicle( vehicle_prototype_test_shopping_cart,
                                       result.vehicle_pos, 0_degrees, 0,
                                       veh_spawn_status::UNDAMAGED );
@@ -240,8 +240,8 @@ two_sided_inventory_fixture build_two_sided_inventory()
     REQUIRE( cargo );
     REQUIRE( cart->add_item( here, cargo->part(), item( itype_jeans ) ) );
 
-    // On-person sources: bandages carried directly; a rock inside the worn
-    // backpack's pocket.
+
+
     who.i_add( item( itype_bandages ) );
     item pack( itype_debug_backpack );
     REQUIRE( pack.put_in( item( itype_test_rock ), pocket_type::CONTAINER ).success() );
@@ -252,7 +252,7 @@ two_sided_inventory_fixture build_two_sided_inventory()
     return result;
 }
 
-// ------------------------------------------------------------------ F-04 --
+
 wound_fixture build_wound_fixture()
 {
     reset_world_for_fixture();
@@ -263,9 +263,9 @@ wound_fixture build_wound_fixture()
     result.bandage_item = itype_bandages;
     result.disinfectant_item = itype_disinfectant;
 
-    // Direct HP assignment (a11y_body_test.cpp mechanism): deterministic,
-    // no damage/wound rolls. 3/5 of max keeps the limb damaged but intact
-    // and bandageable.
+
+
+
     result.hp_max = who.get_part_hp_max( result.injured_part );
     REQUIRE( result.hp_max > 0 );
     result.hp_before = result.hp_max * 3 / 5;
@@ -280,7 +280,7 @@ wound_fixture build_wound_fixture()
     return result;
 }
 
-// ------------------------------------------------------------------ F-05 --
+
 combat_field_fixture build_combat_field()
 {
     reset_world_for_fixture();
@@ -295,12 +295,12 @@ combat_field_fixture build_combat_field()
     result.other_level_pos = tripoint_bub_ms( fixture_origin.x() + 6, fixture_origin.y(), 1 );
     result.aoe_spell = spell_test_spell_lava;
 
-    // Load submaps up to z = +1 as well (monster_stair_test.cpp clears
-    // with clear_map( -2, 2 ) for the same reason).
+
+
     clear_map( -2, 2 );
     build_test_map( ter_id( "t_grass" ) );
-    // Floor for the other-level target, built explicitly per z-level like
-    // monster_stair_test.cpp's build_tower().
+
+
     here.ter_set( result.other_level_pos, ter_id( "t_floor" ) );
     here.invalidate_map_cache( 0 );
     here.build_map_cache( 0, true );
@@ -314,17 +314,17 @@ combat_field_fixture build_combat_field()
     npc &ally = spawn_npc( result.ally_pos.xy(), "test_talker" );
     ally.set_attitude( NPCATT_FOLLOW );
 
-    // The empty tile stays empty: nothing is placed there on purpose.
+
     REQUIRE( here.i_at( result.empty_pos ).empty() );
 
     who.magic->learn_spell( spell_test_spell_lava, who, true );
     REQUIRE( who.magic->knows_spell( spell_test_spell_lava ) );
-    // test_spell_lava has min_aoe 4 in TEST_DATA magic.json: a real area.
+
     REQUIRE( who.magic->get_spell( spell_test_spell_lava ).aoe( who ) > 0 );
     return result;
 }
 
-// ------------------------------------------------------------------ F-06 --
+
 vehicle_fixture build_vehicle_fixture()
 {
     reset_world_for_fixture();
@@ -342,15 +342,15 @@ vehicle_fixture build_vehicle_fixture()
     REQUIRE( size( veh->get_all_parts() ) > 1 );
     REQUIRE( veh->fuel_left( here, itype_gasoline ) > 0 );
 
-    // Exactly one broken part: the engine, set to 0 HP directly.
+
     REQUIRE( !veh->engines.empty() );
     vehicle_part &engine = veh->part( veh->engines[0] );
     result.broken_part_name = engine.name( false );
     veh->set_hp( engine, 0, true );
     REQUIRE( engine.is_broken() );
 
-    // Cargo: fixed-order scan for the first cargo part (veh_at().cargo()),
-    // then two fixed items inside it.
+
+
     std::optional<vpart_reference> cargo;
     for( int dx = -4; dx <= 4 && !cargo; ++dx ) {
         for( int dy = -4; dy <= 4 && !cargo; ++dy ) {
@@ -370,7 +370,7 @@ vehicle_fixture build_vehicle_fixture()
     return result;
 }
 
-// ------------------------------------------------------------------ F-07 --
+
 zones_rules_fixture build_zones_and_rules()
 {
     reset_world_for_fixture();
@@ -387,8 +387,8 @@ zones_rules_fixture build_zones_and_rules()
     result.food_zone_end = here.get_abs( food_b );
     result.unsorted_zone_pos = here.get_abs( unsorted );
 
-    // zone_manager::add() with the argument shape of clzones_test.cpp's
-    // create_tile_zone() (its last argument is the add() silent flag).
+
+
     zone_manager &zm = zone_manager::get_manager();
     zm.clear();
     zm.add( "A11y Loot Food", zone_type_LOOT_FOOD, your_fac, false, true,
@@ -398,7 +398,7 @@ zones_rules_fixture build_zones_and_rules()
     REQUIRE( zm.has( zone_type_LOOT_FOOD, result.food_zone_start ) );
     REQUIRE( zm.has( zone_type_LOOT_UNSORTED, result.unsorted_zone_pos ) );
 
-    // Root rule stores: start empty, then one sample rule each.
+
     safemode &safe = get_safemode();
     safe.clear_character_rules();
     safe.add_rule( result.safemode_rule, Creature::Attitude::HOSTILE, 5,
@@ -413,7 +413,7 @@ zones_rules_fixture build_zones_and_rules()
     return result;
 }
 
-// ------------------------------------------------------------------ F-08 --
+
 camp_fixture build_faction_camp()
 {
     reset_world_for_fixture();
@@ -427,7 +427,7 @@ camp_fixture build_faction_camp()
     result.resident_pos = mid + tripoint_rel_ms{ 2, 0, 0 };
     result.food_kcal = 100;
 
-    // Camp placement copied from faction_camp_test.cpp's place_test_camp().
+
     here.add_camp( result.camp_omt, "faction_camp" );
     const std::optional<basecamp *> bcp = overmap_buffer.find_camp( result.camp_omt.xy() );
     REQUIRE( bcp );
@@ -436,18 +436,18 @@ camp_fixture build_faction_camp()
     camp.define_camp( result.camp_omt, "faction_base_bare_bones_NPC_camp_0", false );
     result.camp = &camp;
 
-    // Food and storage zones, as in faction_camp_test.cpp's first case.
+
     const tripoint_abs_ms zone_loc = here.get_abs( mid );
     mapgen_place_zone( zone_loc, zone_loc, zone_type_CAMP_FOOD, your_fac, {},
                        "food" );
     mapgen_place_zone( zone_loc, zone_loc, zone_type_CAMP_STORAGE, your_fac, {},
                        "storage" );
 
-    // Resident.
+
     npc &resident = spawn_npc( result.resident_pos.xy(), "test_talker" );
     resident.set_attitude( NPCATT_FOLLOW );
 
-    // Assigned work for the avatar (mission_test.cpp's pattern).
+
     mission::clear_all();
     who.reset_all_missions();
     mission *job = mission::reserve_new( mission_TEST_MISSION_FIND_ITEM,
@@ -459,8 +459,8 @@ camp_fixture build_faction_camp()
     job->assign( who );
     REQUIRE( !who.get_active_missions().empty() );
 
-    // Exact food supply: 100000 nutrients calories at turn_zero read back
-    // as exactly 100 kcal (faction_camp_test.cpp, camp_calorie_counting).
+
+
     faction *camp_faction = who.get_faction();
     REQUIRE( camp_faction != nullptr );
     camp_faction->empty_food_supply();
@@ -479,7 +479,7 @@ void clear_faction_camp( const camp_fixture &fixture )
     }
 }
 
-// ------------------------------------------------------------------ F-09 --
+
 abilities_fixture build_abilities()
 {
     reset_world_for_fixture();
@@ -494,32 +494,32 @@ abilities_fixture build_abilities()
     result.spellbook_item = itype_test_textbook_fabrication;
     result.spellbook_spell = spell_test_spell_lava.str();
 
-    // Installed bionic (bionics_test.cpp mechanism).
+
     who.add_bionic( bio_power_storage );
     REQUIRE( who.has_bionic( bio_power_storage ) );
 
-    // Uninstalled CBM item: the item type whose id matches the bionic id
-    // in data/json/items/bionics.json.
+
+
     who.i_add( item( result.uninstalled_cbm ) );
     REQUIRE( player_has_item_of_type( result.uninstalled_cbm ) );
 
-    // Known spell (magic_spell_test.cpp mechanism).
+
     who.magic->learn_spell( spell_test_spell_pew, who, true );
     REQUIRE( who.magic->knows_spell( spell_test_spell_pew ) );
 
-    // Spellbook PROP (limitation, also in FIXTURES.vi.md): no item in core
-    // data or TEST_DATA teaches a spell (searched data/json/items/book/
-    // and data/mods/TEST_DATA/books.json; DEBUG_spellbook belongs to the
-    // Magiclysm mod, which the test harness does not load by default). So
-    // the fixture carries a real BOOK item whose "spell_id" variable names
-    // the spell it stands for. An oracle must treat that variable as the
-    // fixture's declared teaching spell, not as engine spellbook data.
+
+
+
+
+
+
+
     item spellbook( itype_test_textbook_fabrication );
     spellbook.set_var( "spell_id", result.spellbook_spell );
     who.i_add( spellbook );
     REQUIRE( character_has_item_with_var_val( who, "spell_id", result.spellbook_spell ) );
 
-    // A computer really on the map (map::add_computer), with one option.
+
     computer *terminal = here.add_computer( result.computer_pos,
                                             "A11y Fixture Terminal", 0 );
     REQUIRE( terminal != nullptr );
@@ -530,14 +530,14 @@ abilities_fixture build_abilities()
     return result;
 }
 
-// ----------------------------------------------------------------- F-15 ---
+
 lifecycle_stage_fixture build_lifecycle_stage( const int stage )
 {
     REQUIRE( ( stage == 1 || stage == 2 ) );
-    // The isolation step: a fresh character state plus an explicitly
-    // cleared map memory, mirroring game.cpp's clear_map_memory() on
-    // session replacement. reset_world_for_fixture() already clears both;
-    // the extra clear_map_memory() call here is the fixture's contract.
+
+
+
+
     reset_world_for_fixture();
     map &here = get_map();
     avatar &who = get_avatar();
@@ -561,17 +561,17 @@ lifecycle_stage_fixture build_lifecycle_stage( const int stage )
 
     REQUIRE( who.has_memory_at( here.get_abs( result.known_marker_pos ) ) );
     REQUIRE( who.magic->knows_spell( result.known_spell ) );
-    // The other stage's knowledge must not leak into this stage.
+
     const spell_id other_spell = stage == 1 ? spell_test_spell_lava : spell_test_spell_pew;
     REQUIRE_FALSE( who.magic->knows_spell( other_spell ) );
     return result;
 }
 
-// ------------------------------------------------------------- minigames ---
+
 minesweeper_spec minesweeper_beginner_spec( const unsigned int seed )
 {
-    // Derivation from minesweeper_game::new_level() (Beginner branch and
-    // bomb loop) in src/iuse_software_minesweeper.cpp; see the header.
+
+
     minesweeper_spec result;
     result.seed = seed;
     rng_set_engine_seed( seed );
@@ -589,9 +589,9 @@ minesweeper_spec minesweeper_beginner_spec( const unsigned int seed )
 
 lightson_spec lightson_spec_for_seed( const unsigned int seed )
 {
-    // Derivation from lightson_game::new_level() + generate_change_coords()
-    // + reset_level()/toggle_lights_at() in src/iuse_software_lightson.cpp;
-    // see the header for the exact call order being replayed.
+
+
+
     lightson_spec result;
     result.seed = seed;
     rng_set_engine_seed( seed );
@@ -615,8 +615,8 @@ lightson_spec lightson_spec_for_seed( const unsigned int seed )
         result.change_coords.push_back( candidate );
     }
 
-    // reset_level(): all lights on, then each change coord toggles itself
-    // and its orthogonal neighbours.
+
+
     std::vector<bool> lit( static_cast<std::size_t>( cell_count ), true );
     const auto toggle = [&]( const point & p ) {
         if( p.x >= 0 && p.x < width && p.y >= 0 && p.y < height ) {
@@ -643,9 +643,9 @@ lightson_spec lightson_spec_for_seed( const unsigned int seed )
 
 sokoban_spec sokoban_level_one_spec()
 {
-    // Rows verbatim from data/raw/sokoban.txt (the first level, "; #1");
-    // coordinates read off them per the legend in
-    // sokoban_game::parse_level(). No seed exists in this game.
+
+
+
     sokoban_spec result;
     result.rows = {
         " #####",
@@ -667,8 +667,8 @@ sokoban_spec sokoban_level_one_spec()
 
 kitten_spec kitten_spec_for_seed( const unsigned int seed )
 {
-    // Geometry/counts only -- positions are not derivable from a seed
-    // without running the constructor's UI loop (see the header).
+
+
     kitten_spec result;
     result.seed = seed;
     return result;
@@ -676,8 +676,8 @@ kitten_spec kitten_spec_for_seed( const unsigned int seed )
 
 snake_spec snake_spec_for_board( const int width, const int height, const unsigned int seed )
 {
-    // Start state and first-fruit draw from snake_game::start_game() in
-    // src/iuse_software_snake.cpp, for the caller-declared board size.
+
+
     snake_spec result;
     result.board_size = point( width, height );
     result.head = point( width / 2, height / 2 );
@@ -691,4 +691,4 @@ snake_spec snake_spec_for_board( const int width, const int height, const unsign
     return result;
 }
 
-} // namespace a11y_fixture
+}

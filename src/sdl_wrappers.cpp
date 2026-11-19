@@ -38,7 +38,7 @@ void throwErrorIf( const bool condition, const char *const message )
 
 #if defined(TILES)
 
-// Helper to convert SDL_Rect* to SDL_FRect for the render functions.
+
 static SDL_FRect to_frect( const SDL_Rect &r )
 {
     return { static_cast<float>( r.x ), static_cast<float>( r.y ),
@@ -49,9 +49,9 @@ static SDL_FPoint to_fpoint( const SDL_Point &p )
     return { static_cast<float>( p.x ), static_cast<float>( p.y ) };
 }
 
-// Default texture scale quality applied by CreateTexture/CreateTextureFromSurface.
-// Per-texture rather than a global hint, so callers can override one texture
-// without disturbing the rest.
+
+
+
 static std::string g_default_texture_scale_quality = "nearest";
 
 static SDL_ScaleMode scale_quality_to_mode( const std::string &quality )
@@ -136,9 +136,9 @@ gpu_handle_graveyard::gpu_handle_graveyard()
 
 gpu_handle_graveyard::~gpu_handle_graveyard()
 {
-    // Never SDL_DestroyTexture at teardown -- the renderer may already be gone.
-    // Inline the poison-and-clear without abandon()'s gate re-arm: a make_shared
-    // in a (noexcept) destructor could terminate on bad_alloc.
+
+
+
     if( gate_ && !handles_.empty() ) {
         gate_->store( true );
     }
@@ -162,17 +162,17 @@ void gpu_handle_graveyard::adopt( std::shared_ptr<SDL_Texture> handle )
 
 void gpu_handle_graveyard::drain_live_renderer()
 {
-    // Gate stays clear, so clearing the handles runs each deleter
-    // (SDL_DestroyTexture) against the still-live renderer.
+
+
     handles_.clear();
     gate_ = std::make_shared<std::atomic<bool>>( false );
 }
 
 void gpu_handle_graveyard::abandon()
 {
-    // Poison the gate only when this graveyard owns handles: an empty one may
-    // share its gate with handles committed elsewhere (a successful upload),
-    // which must still destroy normally.
+
+
+
     if( gate_ && !handles_.empty() ) {
         gate_->store( true );
     }
@@ -319,16 +319,16 @@ scoped_render_target::scoped_render_target( const SDL_Renderer_Ptr &renderer,
         dbg( D_ERROR ) << "scoped_render_target: null renderer";
         return;
     }
-    // Already latched (or embargoed): renderer may be dangling after a LOST
-    // handover, so even SDL_GetRenderTarget is unsafe. Refuse before any SDL call.
+
+
     if( renderer_boundary_recovery_pending() ) {
         boundary_intact_ = false;
         return;
     }
     renderer_ = renderer.get();
     vp_ = vp;
-    // Flush the pass FIRST so an embargoed pass refuses before any SDL call;
-    // only then capture prior_target_ and switch.
+
+
     if( vp_ && !vp_->flush() ) {
         mark_boundary_lost();
         renderer_ = nullptr;
@@ -358,12 +358,12 @@ bool scoped_render_target::restore()
         return false;
     }
     if( renderer_boundary_recovery_pending() ) {
-        // Already latched; do not issue another SDL_SetRenderTarget.
+
         boundary_intact_ = false;
         return false;
     }
     if( vp_ && !vp_->flush() ) {
-        // Undefined shader-state bind: do not switch the target.
+
         dbg( D_ERROR ) << "scoped_render_target::restore: variant_pass flush failed";
         mark_boundary_lost();
         return false;
@@ -385,13 +385,13 @@ scoped_render_target::~scoped_render_target()
         return;
     }
     if( restore_attempted_ ) {
-        // Explicit restore already failed and logged; the caller chose to
-        // abort. Do not retry to avoid masking the original failure.
+
+
         return;
     }
     if( renderer_boundary_recovery_pending() ) {
-        // Another callsite latched recovery; suppress the implicit restore.
-        // The coordinator rebinds on rebuild.
+
+
         boundary_intact_ = false;
         return;
     }
@@ -403,20 +403,20 @@ bind_result permanent_render_target_bind( const SDL_Renderer_Ptr &renderer, SDL_
 {
     if( !renderer ) {
         dbg( D_ERROR ) << "permanent_render_target_bind: null renderer";
-        // No SDL call issued, so no embargo: pre-switch refusal.
+
         return bind_result::refused_pre_switch;
     }
     if( vp && !vp->flush() ) {
-        // Unsafe shader-state bind: do not switch the target. Latch recovery.
+
         renderer_boundary_signal_recovery_required();
         return bind_result::failed_in_switch;
     }
     const bool failed = printErrorIf( !SDL_SetRenderTarget( renderer.get(), target ),
                                       "SDL_SetRenderTarget failed" );
     if( failed ) {
-        // SDL may have mutated target state before failing; latch recovery.
-        // Callers with a quarantine path still see the bind_result and
-        // sequence their own teardown -- the latch is additive.
+
+
+
         renderer_boundary_signal_recovery_required();
     }
     return failed ? bind_result::failed_in_switch : bind_result::ok;
@@ -563,7 +563,7 @@ int BlitSurface( const SDL_Surface_Ptr &src, const SDL_Rect *const srcrect,
         dbg( D_ERROR ) << "Tried to blit to a null surface";
         return -1;
     }
-    // SDL_BlitSurface returns bool; this wrapper reports 0 for success.
+
     return SDL_BlitSurface( src.get(), srcrect, dst.get(), dstrect ) ? 0 : -1;
 }
 
@@ -661,7 +661,7 @@ Uint32 GetSurfacePixelFormat( const SDL_Surface_Ptr &surface )
         dbg( D_ERROR ) << "Tried to get pixel format of a null surface";
         return 0;
     }
-    // surface->format is the enum directly (no intermediate struct).
+
     return surface->format;
 }
 
@@ -830,14 +830,14 @@ bool HasEvent( const Uint32 type )
 
 void PushWakeEvent()
 {
-    // the Android insets hook can fire before SDL_main initializes SDL
+
     if( SDL_WasInit( SDL_INIT_EVENTS ) == 0 ) {
         return;
     }
     SDL_Event ev;
     SDL_zero( ev );
     ev.type = CATA_WAKE_EVENT;
-    // no logging: this runs on foreign threads, and a full queue wakes the waiter anyway
+
     static_cast<void>( SDL_PushEvent( &ev ) );
 }
 
@@ -969,7 +969,7 @@ SDL_Texture *GetRenderTarget( const SDL_Renderer_Ptr &renderer )
 
 uint32_t GetTicks()
 {
-    // SDL_GetTicks returns Uint64. The cast is safe for ~49 days of uptime.
+
     return static_cast<uint32_t>( SDL_GetTicks() );
 }
 
@@ -1107,7 +1107,7 @@ bool IsWindowEvent( const SDL_Event &ev )
 
 Uint32 GetWindowEventID( const SDL_Event &ev )
 {
-    // The window event type IS the top-level event type.
+
     return ev.type;
 }
 
@@ -1121,7 +1121,7 @@ SDL_Window_Ptr CreateGameWindow( const char *title, const int display, const int
                                  const Uint32 flags )
 {
     ( void )display;
-    // SDL_CreateWindow takes (title, w, h, flags) -- no position params.
+
     SDL_Window_Ptr result( SDL_CreateWindow( title, w, h, flags ) );
     printErrorIf( !result, "SDL_CreateWindow failed" );
     return result;
@@ -1196,11 +1196,11 @@ SDL_Renderer_Ptr CreateRenderer( const SDL_Window_Ptr &window, const char *drive
     } else if( driver_name && driver_name[0] != '\0' ) {
         name = driver_name;
     }
-    // Use the properties-based create path so the GPU renderer learns we can
-    // supply SPIR-V/DXIL/MSL shaders to SDL_GPURenderState; without these
-    // SDL.renderer.create.gpu.shaders_* booleans, custom GPURenderState may
-    // not wire its texture pipeline correctly even though SDL_GetGPURendererDevice
-    // returns a non-null device.
+
+
+
+
+
     SDL_PropertiesID props = SDL_CreateProperties();
     if( props == 0 ) {
         printErrorIf( true, "SDL_CreateProperties failed" );
@@ -1224,9 +1224,9 @@ SDL_Renderer_Ptr CreateRenderer( const SDL_Window_Ptr &window, const char *drive
 
 float GetFingerX( const SDL_Event &ev, const int windowWidth )
 {
-    // tfinger.x arrives in normalized [0..1] space.
-    // Multiply by the logical window width to land in window pixel units
-    // for shortcut hit-tests and joystick math.
+
+
+
     return ev.tfinger.x * windowWidth;
 }
 
@@ -1235,5 +1235,5 @@ float GetFingerY( const SDL_Event &ev, const int windowHeight )
     return ev.tfinger.y * windowHeight;
 }
 
-#endif // defined(TILES)
-#endif // defined(TILES) || defined(SDL_SOUND)
+#endif
+#endif

@@ -22,19 +22,19 @@ TEST_CASE( "countdown_action_triggering", "[item]" )
 
     SECTION( "countdown_point is in future" ) {
         grenade.countdown_point = calendar::turn + 10_seconds;
-        // Grenade does not explode
+
         CHECK( grenade.process( get_map(), nullptr, tripoint_bub_ms::zero ) == false );
     }
 
     SECTION( "countdown_point is in past" ) {
         grenade.countdown_point = calendar::turn - 10_seconds;
-        // Grenade explodes and is to be removed
+
         CHECK( grenade.process( get_map(), nullptr, tripoint_bub_ms::zero ) == true );
     }
 
     SECTION( "countdown_point is now" ) {
         grenade.countdown_point = calendar::turn;
-        // Grenade explodes and is to be removed
+
         CHECK( grenade.process( get_map(), nullptr, tripoint_bub_ms::zero ) == true );
     }
 }
@@ -46,16 +46,16 @@ TEST_CASE( "countdown_action_revert_to", "[item]" )
         test_item.active = true;
         test_item.countdown_point = calendar::turn;
 
-        // Is not deleted after coundown action
+
         CHECK( test_item.process( get_map(), nullptr, tripoint_bub_ms::zero ) == false );
 
-        // Turns into normal arrow
+
         CHECK( test_item.typeId() == itype_arrow_field_point_fletched );
 
-        // Is not active anymore
+
         CHECK_FALSE( test_item.active );
 
-        // Timer is gone
+
         CHECK( test_item.countdown_point == calendar::turn_max );
     }
 
@@ -64,16 +64,16 @@ TEST_CASE( "countdown_action_revert_to", "[item]" )
         test_item.active = true;
         test_item.countdown_point = calendar::turn;
 
-        // Is not deleted after coundown action
+
         CHECK( test_item.process( get_map(), nullptr, tripoint_bub_ms::zero ) == false );
 
-        // Turns into new armor type
+
         CHECK( test_item.typeId() == itype_migo_plate );
 
-        // Is still active
+
         CHECK( test_item.active );
 
-        // Has new timer
+
         CHECK( test_item.countdown_point == calendar::turn + 24_hours );
     }
 
@@ -82,16 +82,16 @@ TEST_CASE( "countdown_action_revert_to", "[item]" )
         test_item.active = true;
         test_item.countdown_point = calendar::turn;
 
-        // Is not deleted after coundown action
+
         CHECK( test_item.process( get_map(), nullptr, tripoint_bub_ms::zero ) == false );
 
-        // Turns into cheese
+
         CHECK( test_item.typeId() == itype_cheese_hard );
 
-        // Is still active
+
         CHECK( test_item.active );
 
-        // Timer is gone
+
         CHECK( test_item.countdown_point == calendar::turn_max );
     }
 }

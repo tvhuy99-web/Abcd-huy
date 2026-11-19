@@ -36,21 +36,15 @@ except ImportError:
     from gi.repository import Vips
 
 
-# variable for silent script run (no output to terminal)
 run_silent = True
 
-# variable for progress bar support (tqdm module dependency)
+
 no_tqdm = False
 
-# File name to ignore containing directory
+
 ignore_file = ".scratch"
 
 
-# progress bar setup
-# requires tqdm module, if not installed prompts
-# to ask permission to install it via PIP
-# it also can work without it, in 'CONCISE mode',
-# where output is limited to stages of processing
 def setup_progress_bar() -> str:
     global no_tqdm
     global tqdm
@@ -75,12 +69,12 @@ def setup_progress_bar() -> str:
                 from tqdm import tqdm
                 no_tqdm = False
                 return 'VERBOSE'
-            except ImportError:  # still no go, fall back to CONCISE mode
+            except ImportError:
                 print("Could not install/import TQDM module."
                       " Display in CONCISE mode instead.")
                 no_tqdm = True
                 return 'CONCISE'
-        else:  # fall back to CONCISE mode
+        else:
             print("Display is in CONCISE mode.")
             no_tqdm = True
             return 'CONCISE'
@@ -105,7 +99,7 @@ LOGGING_CONFIG = {
     },
     'handlers': {
         'default': {
-            'level': 'NOTSET',  # will be set later
+            'level': 'NOTSET',
             'formatter': 'standard',
             'class': 'logging.StreamHandler',
         },
@@ -320,8 +314,6 @@ class Tileset:
         }
         fallback_name = 'fallback.png'
 
-        # loop through tilesheets and parse all configs in subdirectories,
-        # create sheet images
         added_first_null = False
         for config in self.info[1:]:
             sheet = Tilesheet(self, config)
@@ -344,13 +336,12 @@ class Tileset:
                       end=' ' if no_tqdm else '\n', flush=True)
             if sheet_type != 'fallback':
                 sheet.walk_dirs()
-                # TODO: generate JSON first
-                # then create sheets if there are no errors
+
                 if no_tqdm and not run_silent:
                     print("done.", flush=True)
                 if not run_silent:
                     print("Saving output PNG...", end=' ', flush=True)
-                # write output PNGs
+
                 if not sheet.write_composite_png():
                     continue
                 if not run_silent:
@@ -359,18 +350,16 @@ class Tileset:
 
             typed_sheets[sheet_type].append(sheet)
 
-        # combine config data in the correct order
         sheet_configs = typed_sheets['main'] + typed_sheets['filler'] \
             + typed_sheets['fallback']
 
-        # prepare "tiles-new", but remember max index of each sheet in keys
         tiles_new_dict = dict()
 
         def create_tile_entries_for_unused(
             unused: list,
             fillers: bool,
         ) -> None:
-            # the list must be empty without use_all
+
             mode = unused if no_tqdm or run_silent else tqdm(unused)
             for unused_png in mode:
                 if unused_png in self.processed_ids:
@@ -425,7 +414,7 @@ class Tileset:
             sheet_entries = []
 
             for tile_entry in sheet.tile_entries:
-                # TODO: pop?
+
                 converted_tile_entry = tile_entry.convert()
                 if converted_tile_entry:
                     sheet_entries.append(converted_tile_entry)
@@ -464,7 +453,6 @@ class Tileset:
             fillers=True,
         )
 
-        # finalize "tiles-new" config
         tiles_new = list(tiles_new_dict.values())
 
         FALLBACK['file'] = fallback_name
@@ -482,7 +470,6 @@ class Tileset:
             'tiles-new': tiles_new
         }
 
-        # save the config
         write_to_json(tileset_confpath, output_conf, self.format_json)
         if no_tqdm and not run_silent:
             print("done.", flush=True)
@@ -585,7 +572,7 @@ class Tilesheet:
         def filtered_tree(excluded):
             for root, dirs, filenames in \
                     os.walk(self.subdir_path, followlinks=True):
-                # replace dirs in-place to prevent walking down excluded paths
+
                 dirs[:] = [
                     d
                     for d in dirs
@@ -709,7 +696,6 @@ class Tilesheet:
         if not self.sprites:
             return False
 
-        # count empty spaces in the last row
         self.tileset.pngnum += self.sprites_across - \
             ((len(self.sprites) % self.sprites_across) or self.sprites_across)
 
@@ -770,32 +756,27 @@ class TileEntry:
             )
             return None
 
-        # make sure entry_ids is a list
         if entry_ids:
             if not isinstance(entry_ids, list):
                 entry_ids = [entry_ids]
 
-        # convert fg value
         if fg_layer:
             entry['fg'] = list_or_first(self.convert_entry_layer(fg_layer))
         else:
-            # don't pop at the start because that affects order of the keys
+
             entry.pop('fg', None)
 
-        # convert bg value
         if bg_layer:
             entry['bg'] = list_or_first(self.convert_entry_layer(bg_layer))
         else:
-            # don't pop at the start because that affects order of the keys
+
             entry.pop('bg', None)
 
-        # recursively convert additional_tiles value
         additional_entries = entry.get('additional_tiles', [])
         for additional_entry in additional_entries:
-            # recursive part
+
             self.convert(additional_entry, f'{entry_ids[0]}_')
 
-        # remember processed IDs and remove duplicates
         for entry_id in entry_ids:
             full_id = f'{prefix}{entry_id}'
 
@@ -816,7 +797,6 @@ class TileEntry:
                         '%s encountered more than once, last time in %s',
                         full_id, self.filepath)
 
-        # return converted entry if there are new IDs
         if entry_ids:
             entry['id'] = list_or_first(entry_ids)
             return entry
@@ -833,10 +813,10 @@ class TileEntry:
         output = []
 
         if isinstance(entry_layer, list):
-            # "fg": [ "f_fridge_S", "f_fridge_W", "f_fridge_N", "f_fridge_E" ]
+
             for layer_part in entry_layer:
                 if isinstance(layer_part, dict):
-                    # weighted random variations
+
                     variations, valid = self.convert_random_variations(
                         layer_part.get('sprite'))
                     if valid:
@@ -847,7 +827,7 @@ class TileEntry:
                 else:
                     self.append_sprite_index(layer_part, output)
         else:
-            # "bg": "t_grass"
+
             self.append_sprite_index(entry_layer, output)
 
         return output
@@ -863,13 +843,13 @@ class TileEntry:
         converted_variations = []
 
         if isinstance(sprite_names, list):
-            # list of rotations
+
             converted_variations = []
             for sprite_name in sprite_names:
                 valid |= self.append_sprite_index(
                     sprite_name, converted_variations)
         else:
-            # single sprite
+
             valid = self.append_sprite_index(
                 sprite_names, converted_variations)
         return converted_variations, valid
@@ -912,7 +892,7 @@ def main() -> Union[int, ComposingException]:
     """
     Called when the script is executed directly
     """
-    # read arguments and initialize objects
+
     arg_parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -946,7 +926,7 @@ def main() -> Union[int, ComposingException]:
         help='Stop immediately after an error has occurred')
     arg_parser.add_argument(
         '--loglevel', dest='loglevel',
-        choices=['INFO', 'WARNING', 'ERROR'],  # 'DEBUG', 'CRITICAL'
+        choices=['INFO', 'WARNING', 'ERROR'],
         default='WARNING',
         help="set verbosity level")
     arg_parser.add_argument(
@@ -976,14 +956,13 @@ def main() -> Union[int, ComposingException]:
 
     if args_dict['feedback'] == 'VERBOSE':
         run_silent = False
-        args_dict['feedback'] = setup_progress_bar()  # may fallback to CONCISE
+        args_dict['feedback'] = setup_progress_bar()
 
     if args_dict['feedback'] == 'CONCISE':
         run_silent = False
         global no_tqdm
-        no_tqdm = True  # equal to concise display
+        no_tqdm = True
 
-    # compose the tileset
     try:
         tileset_worker = Tileset(
             source_dir=Path(args_dict.get('source_dir')),

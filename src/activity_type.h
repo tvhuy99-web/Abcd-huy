@@ -16,7 +16,7 @@ class player_activity;
 enum class distraction_type : int;
 template <typename T> struct enum_traits;
 
-/** @relates string_id */
+
 template<>
 const activity_type &string_id<activity_type>::obj() const;
 
@@ -32,7 +32,7 @@ struct enum_traits<based_on_type> {
     static constexpr based_on_type last = based_on_type::last;
 };
 
-/** A class that stores constant information that doesn't differ between activities of the same type */
+
 class activity_type
 {
     private:
@@ -87,19 +87,19 @@ class activity_type
         bool fetch_items_to_zone() const {
             return fetch_items_to_zone_;
         }
-        /**
-         * If true, player will refuel one adjacent fire if there is firewood spot adjacent.
-         */
+
+
+
         bool will_refuel_fires() const {
             return refuel_fires;
         }
-        /**
-         * If true, player will automatically consume from relevant auto-eat/drink zones during activity
-         */
+
+
+
         bool valid_auto_needs() const {
             return auto_needs;
         }
-        // If true, no message will be given when the npc completes the activity
+
         bool mute_npc_completion_message() const {
             return mute_npc_completion;
         }
@@ -107,14 +107,14 @@ class activity_type
             return activity_level;
         }
         void call_do_turn( player_activity *, Character * ) const;
-        /** Returns whether it had a finish function or not */
+
         bool call_finish( player_activity *, Character * ) const;
 
-        /** JSON stuff */
+
         void load( const JsonObject &jo );
         static void load_all( const JsonObject &jo );
         static void check_consistency();
         static void reset();
 };
 
-#endif // CATA_SRC_ACTIVITY_TYPE_H
+#endif

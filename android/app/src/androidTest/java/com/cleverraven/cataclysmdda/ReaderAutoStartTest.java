@@ -13,7 +13,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-/** Startup regression: prior voice testing must no longer gate the reader. */
+
 @RunWith(AndroidJUnit4.class)
 public class ReaderAutoStartTest {
     @Test

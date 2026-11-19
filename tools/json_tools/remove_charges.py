@@ -374,7 +374,7 @@ def adjust_item_group(jo, src):
             default = changes[0]
 
         if make_min:
-            # get_min must be called before get_max
+
             count_min = get_min(entry, "count")
             charges_min = get_min(entry, "charges")
             if charges_min < 0 and default > 1:
@@ -464,9 +464,7 @@ def adjust_recipe(jo, src):
 def gen_new(path, src, is_item=True):
     change = False
     new_datas = list()
-    # Having troubles with this script halting?
-    # Uncomment below to find the file it's halting on
-    #print(path)
+
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)
@@ -573,7 +571,6 @@ def collect_data(path, src):
                 recipes[src][jo["result"]] = recipe
 
 
-# collect item data with source
 json_path = os.path.join(args_dict["dir"], "json")
 for root, directories, filenames in os.walk(json_path):
     for filename in filenames:
@@ -593,7 +590,7 @@ for f in os.scandir(os.path.join(args_dict["dir"], "mods")):
                 path = os.path.join(root, filename)
                 collect_data(path, f.name)
 
-# adjust items
+
 for root, directories, filenames in os.walk(json_path):
     for filename in filenames:
         if not filename.endswith(".json"):
@@ -620,7 +617,7 @@ for f in os.scandir(os.path.join(args_dict["dir"], "mods")):
                         json.dump(new, jf, ensure_ascii=False)
                     format_json(path)
 
-# adjust itemgroups
+
 for root, directories, filenames in os.walk(json_path):
     for filename in filenames:
         if not filename.endswith(".json"):

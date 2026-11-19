@@ -10,9 +10,9 @@
 
 class computer;
 
-/*
- * Talker wrapper class for furniture
- */
+
+
+
 class talker_furniture_const: public const_talker_cloner<talker_furniture_const>
 {
     public:
@@ -27,7 +27,7 @@ class talker_furniture_const: public const_talker_cloner<talker_furniture_const>
         computer const *get_const_computer() const override {
             return me_comp;
         }
-        // identity and location
+
         std::string disp_name() const override;
         int posx( const map &here ) const override;
         int posy( const map &here ) const override;
@@ -66,4 +66,4 @@ class talker_furniture: public talker_furniture_const, public talker_cloner<talk
     private:
         computer *me_comp{};
 };
-#endif // CATA_SRC_TALKER_FURNITURE_H
+#endif

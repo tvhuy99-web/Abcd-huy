@@ -29,7 +29,7 @@ building_gen_pointer get_mapgen_cfunction( const std::string &ident );
 ter_str_id grass_or_dirt();
 ter_str_id clay_or_sand();
 
-// helper functions for mapgen.cpp, so that we can avoid having a massive switch statement (sorta)
+
 void mapgen_forest( mapgendata &dat );
 void mapgen_river_curved_not( mapgendata &dat );
 void mapgen_river_straight( mapgendata &dat );
@@ -39,7 +39,7 @@ void mapgen_lake_shore( mapgendata &dat );
 void mapgen_ocean_shore( mapgendata &dat );
 void mapgen_ravine_edge( mapgendata &dat );
 
-// Temporary wrappers
+
 void mremove_trap( map *m, const tripoint_bub_ms &, trap_id type );
 void mtrap_set( map *m, const tripoint_bub_ms &, trap_id type, bool avoid_creatures = false );
 void mtrap_set( tinymap *m, const point_omt_ms &, trap_id type, bool avoid_creatures = false );
@@ -47,12 +47,12 @@ void madd_field( map *m, const point_bub_ms &, field_type_id type, int intensity
 void mremove_fields( map *m, const tripoint_bub_ms & );
 
 mapgen_update_func add_mapgen_update_func( const JsonObject &jo, bool &defer );
-// Return contains the name of a colliding "vehicle" on failure.
+
 ret_val<void> run_mapgen_update_func(
     const update_mapgen_id &, const tripoint_abs_omt &omt_pos, const mapgen_arguments &,
     mission *miss = nullptr, bool cancel_on_collision = true, bool mirror_horizontal = false,
     bool mirror_vertical = false, int rotation = 0 );
-// Return contains the name of a colliding "vehicle" on failure.
+
 ret_val<void> run_mapgen_update_func( const update_mapgen_id &, mapgendata &dat,
                                       bool cancel_on_collision = true );
 void set_queued_points();
@@ -68,4 +68,4 @@ mapgen_parameters get_map_special_params( const std::string &mapgen_id );
 
 void resolve_regional_terrain_and_furniture( const mapgendata &dat, int z_offset = 0 );
 
-#endif // CATA_SRC_MAPGEN_FUNCTIONS_H
+#endif

@@ -9,45 +9,45 @@
 #include "debug_menu.h"
 #include "generic_factory.h"
 
-// for legacy reasons "monfaction::id" is called "name" in json
+
 static generic_factory<monfaction> faction_factory( "MONSTER_FACTION", "name" );
 
-/** @relates int_id */
+
 template<>
 const monfaction &int_id<monfaction>::obj() const
 {
     return faction_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<monfaction> &int_id<monfaction>::id() const
 {
     return faction_factory.convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<monfaction> string_id<monfaction>::id() const
 {
     return faction_factory.convert( *this, mfaction_id( 0 ) );
 }
 
-/** @relates string_id */
+
 template<>
 const monfaction &string_id<monfaction>::obj() const
 {
     return faction_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<monfaction>::is_valid() const
 {
     return faction_factory.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<monfaction>::int_id( const string_id<monfaction> &id ) : _id( id.id() ) {}
 
@@ -98,7 +98,7 @@ bool monfaction::detect_base_faction_cycle() const
 
     while( !cur->is_root() ) {
         parents_path.push_back( cur );
-        // cycle detected!
+
         if( parents.count( cur ) ) {
             debugmsg( "In MONSTER_FACTION '%s': detected a cycle in base_faction relations: %s",
             this -> id.str(), debug_menu::iterable_to_string( parents_path, " -> ", []( const auto & el ) {
@@ -116,18 +116,18 @@ void monfaction::inherit_parent_attitude_rec(
     std::set<mfaction_str_id> &processed,
     std::map<mfaction_str_id, mf_attitude> &child_attitudes ) const
 {
-    // already processed, just populate the return list and exit
+
     if( !processed.count( id ) ) {
         if( !is_root() ) {
             base_faction->inherit_parent_attitude_rec( processed, child_attitudes );
         }
-        // wish we had 'map::merge'
+
         for( const auto &ci : child_attitudes ) {
             attitude_map.emplace( ci.first, ci.second );
         }
     }
     for( const auto &att : attitude_map ) {
-        // child attitude settings overwrite those of a parent
+
         child_attitudes[att.first] = att.second;
     }
     processed.insert( id );
@@ -149,10 +149,10 @@ void monfaction::populate_attitude_vec() const
 
 void monfaction::finalize()
 {
-    // `detect_base_faction_cycle` detects a cycle that is formed by valid `base_faction` relations.
-    // it will produce a warning if cycle is detected
+
+
     if( detect_base_faction_cycle() ) {
-        // break the cycle
+
         base_faction = mfaction_str_id::NULL_ID();
     }
 }
@@ -169,14 +169,14 @@ void monfactions::finalize()
     faction_factory.finalize();
 
 
-    // adds attitudes_map collected from all `base_faction`
+
     std::set<mfaction_str_id> processed;
     for( const monfaction &f : faction_factory.get_all() ) {
         std::map<mfaction_str_id, mf_attitude> accum;
         f.inherit_parent_attitude_rec( processed, accum );
     }
 
-    // at this point all factions are loaded, populate the final attitude cache
+
     for( const monfaction &f : faction_factory.get_all() ) {
         f.populate_attitude_vec();
     }
@@ -204,7 +204,7 @@ void monfaction::load( const JsonObject &jo, std::string_view )
         attitude_map[mfac] = MFA_HATE;
     }
 
-    // by default faction is friendly to itself (don't overwrite if explicitly specified)
+
     attitude_map.emplace( id, MFA_FRIENDLY );
 }
 

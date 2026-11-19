@@ -50,7 +50,7 @@ static const efftype_id effect_weed_high( "weed_high" );
 namespace
 {
 
-// Scoped on the native game thread; never filters saved message history.
+
 thread_local int muted_combat_speech_depth = 0;
 
 struct game_message {
@@ -58,9 +58,9 @@ struct game_message {
     time_point timestamp_in_turns = calendar::turn_zero;
     int               timestamp_in_user_actions = 0; // NOLINT(cata-serialize)
     int               count = 1;
-    // number of times this message has been seen while it was in cooldown.
+
     unsigned cooldown_seen = 1; // NOLINT(cata-serialize)
-    // hide the message, because at some point it was in cooldown period.
+
     bool cooldown_hidden = false; // NOLINT(cata-serialize)
     game_message_type type = m_neutral;
 
@@ -84,9 +84,9 @@ struct game_message {
         return string_format( _( "%s x %d" ), message, count );
     }
 
-    /** Get whether or not a message should not be displayed (hidden) in the side bar because it's in a cooldown period.
-     * @returns `true` if the message should **not** be displayed, `false` otherwise.
-     */
+
+
+
     bool is_in_cooldown() const {
         return cooldown_hidden;
     }
@@ -101,15 +101,15 @@ struct game_message {
 
     nc_color get_color( const time_point &current ) const {
         if( is_new( current ) ) {
-            // color for new messages
+
             return msgtype_to_color( type, false );
 
         } else if( is_recent( current ) ) {
-            // color for slightly old messages
+
             return msgtype_to_color( type, true );
         }
 
-        // color for old messages
+
         return c_dark_gray;
     }
 
@@ -133,9 +133,9 @@ struct game_message {
 class messages_impl
 {
     public:
-        std::deque<game_message> messages;   // Messages to be printed
-        std::vector<game_message> cooldown_templates; // Message cooldown
-        time_point curmes = calendar::turn_zero; // The last-seen message.
+        std::deque<game_message> messages;
+        std::vector<game_message> cooldown_templates;
+        time_point curmes = calendar::turn_zero;
         bool active = true;
 
         bool has_undisplayed_messages() const {
@@ -146,7 +146,7 @@ class messages_impl
             return messages[messages.size() - i - 1];
         }
 
-        // coalesce recent like messages
+
         bool coalesce_messages( const game_message &m ) {
             if( messages.empty() ) {
                 return false;
@@ -161,7 +161,7 @@ class messages_impl
                 return false;
             }
 
-            // update the cooldown message timer due to coalescing
+
             const auto cooldown_it = std::find_if( cooldown_templates.begin(), cooldown_templates.end(),
             [&m]( game_message & am ) -> bool {
                 return m.message == am.message;
@@ -170,7 +170,7 @@ class messages_impl
                 cooldown_it->timestamp_in_turns = calendar::turn;
             }
 
-            // coalesce messages
+
             last_msg.count++;
             last_msg.timestamp_in_turns = calendar::turn;
             last_msg.timestamp_in_user_actions = g->get_user_action_counter();
@@ -221,9 +221,9 @@ class messages_impl
             return m;
         }
 
-        /** Check if the current message needs to be prevented (hidden) or not from being displayed in the side bar.
-         * @param message The message to be checked.
-         */
+
+
+
         void hide_message_in_cooldown( game_message &message ) {
             message.cooldown_hidden = false;
 
@@ -231,42 +231,42 @@ class messages_impl
                 return;
             }
 
-            // We look for **exactly the same** message string in the cooldown templates
-            // If there is one, this means the same message was already displayed.
+
+
             const auto cooldown_it = std::find_if( cooldown_templates.begin(), cooldown_templates.end(),
             [&message]( game_message & m_cooldown ) -> bool {
                 return m_cooldown.message == message.message;
             } );
             if( cooldown_it == cooldown_templates.end() ) {
-                // nothing found, not in cooldown.
+
                 return;
             }
 
-            // note: from this point the current message (`message`) has the same string than one of the active cooldown template messages (`cooldown_it`).
 
-            // check how much times this message has been seen during its cooldown.
-            // If it's only one time, then no need to hide it.
+
+
+
             if( cooldown_it->cooldown_seen == 1 ) {
                 return;
             }
 
-            // check if it's the message that started the cooldown timer.
+
             if( message.turn() == cooldown_it->turn() ) {
                 return;
             }
 
-            // current message turn.
+
             const int cm_turn = to_turn<int>( message.turn() );
-            // maximum range of the cooldown timer.
+
             const int max_cooldown_range = to_turn<int>( cooldown_it->turn() ) + message_cooldown;
-            // If the current message is in the cooldown range then hide it.
+
             if( cm_turn <= max_cooldown_range ) {
                 message.cooldown_hidden = true;
             }
         }
 
         void modify_msg_with_exclamations( std::string &msg, game_message_type const type ) {
-            // add smileys to messages if the player is high on weed
+
             Character *p_char = &get_player_character();
             if( !p_char->has_effect( effect_weed_high ) ) {
                 return;
@@ -274,33 +274,33 @@ class messages_impl
 
             const time_duration weed_dur = p_char->get_effect_dur( effect_weed_high );
             const float in_minutes = to_minutes<float>( weed_dur );
-            // we will now calculate how often smiley faces should appear in messages.
-            // Slowly rises. 0 at 0, 1 at 22.5, 2 at 45 mins. Asymptote at 3.
+
+
             const float max_per_msg = 3 - 3 / ( 1 + 0.001 * in_minutes * in_minutes );
-            //possible values for smiles_for_this_msg are 0,1,2,3.
+
             int smiles_for_this_msg = static_cast<int>( round( rng_normal( 0, max_per_msg ) ) );
 
-            // now insert the smiley face somewhere in the msg string. We want to avoid breaking up words, so we will only replace spaces.
-            // find all suitable locations for smiley. That is, end of message + all spaces (except after certain words)
+
+
             std::vector<size_t> smiley_locations;
-            // we also need to track space locations to extract words properly. Annoying but necessary.
+
             std::vector<size_t> space_locations;
 
-            // end of msg
+
             smiley_locations.push_back( msg.size() );
-            // now all spaces
+
             for( size_t j = 0; j < msg.size(); j++ ) {
                 if( msg[j] == ' ' ) {
                     bool wordskip = false;
-                    // fancy logic. It's weird if the smiley comes after "to" or "that" or "a". Let's try and skip words like those.
-                    // We skip all short words (<=3 letters), and all words in the forbidden_words array.
+
+
                     if( !space_locations.empty() ) {
                         const size_t prev_space = space_locations.back();
-                        // if prev_space is the previous char, skip
+
                         if( prev_space == j - 1 ) {
                             wordskip = true;
                         }
-                        // check that smiley_locations.back() did not return none
+
                         if( prev_space != std::string::npos ) {
                             const std::string word = msg.substr( prev_space, j - prev_space );
                             const std::array<std::string, 6> forbidden_words = { " that", " with", " this", " over", " your", " onto" };
@@ -315,7 +315,7 @@ class messages_impl
                             }
                         }
                     } else {
-                        // skip very first word
+
                         wordskip = true;
                     }
                     space_locations.push_back( j );
@@ -324,11 +324,11 @@ class messages_impl
                     }
                 }
             }
-            // first, check if smiles_for_this_msg == len(smiley_locations)
+
             if( smiles_for_this_msg >= static_cast<int>( smiley_locations.size() ) ) {
                 smiles_for_this_msg = static_cast<int>( smiley_locations.size() ) - 1;
             }
-            // then pick one at random
+
             for( int i = 0; i < smiles_for_this_msg; i++ ) {
                 const size_t smiley_location = random_entry_removed( smiley_locations );
                 std::string smiley_string = " :)";
@@ -338,17 +338,17 @@ class messages_impl
                     }
                 }
                 msg.insert( smiley_location, smiley_string );
-                //for( size_t j = 0; j < smiley_locations.size(); j++ ) {
-                // modernize-loop-convert. Use range-based for loop instead.
+
+
                 for( size_t &smil_loc : smiley_locations ) {
                     if( smil_loc > smiley_location ) {
-                        // we increment to account for the insertion of the smiley string
+
                         smil_loc += 3;
                     }
                 }
             }
 
-            // if we are *very* high, there will be a chance to finish a long message with an exclamation
+
             if( smiles_for_this_msg > 1 ) {
                 int woah_chance = static_cast<int>( 10 / smiles_for_this_msg );
                 if( msg.size() > 16 && one_in( woah_chance ) ) {
@@ -389,51 +389,51 @@ class messages_impl
             return result;
         }
 
-        /** Refresh the cooldown timers, removing elapsed ones and making new ones if needed.
-         * @param message The current message that needs to be checked.
-         * @param flags Flags pertaining to the message.
-         */
+
+
+
+
         void refresh_cooldown( const game_message &message, const game_message_flags flags ) {
-            // is cooldown used? (also checks for messages arriving here at game initialization: we don't care about them).
+
             if( message_cooldown <= 0 || message.turn() <= calendar::turn_zero ) {
                 return;
             }
 
-            // housekeeping: remove any cooldown message with an expired cooldown time from the cooldown queue.
+
             const time_point now = calendar::turn;
             for( auto it = cooldown_templates.begin(); it != cooldown_templates.end(); ) {
-                // number of turns elapsed since the cooldown started.
+
                 const int turns = to_turns<int>( now - it->turn() );
                 if( turns >= message_cooldown ) {
-                    // time elapsed! remove it.
+
                     it = cooldown_templates.erase( it );
                 } else {
                     ++it;
                 }
             }
 
-            // do not hide messages which bypasses cooldown.
+
             if( ( flags & gmf_bypass_cooldown ) != 0 ) {
                 return;
             }
 
-            // Is the message string already in the cooldown queue?
-            // If it's not we must put it in the cooldown queue now, otherwise just increment the number of times we have seen it.
+
+
             const auto cooldown_message_it = std::find_if( cooldown_templates.begin(),
             cooldown_templates.end(), [&message]( game_message & cooldown_message ) -> bool {
                 return cooldown_message.message == message.message;
             } );
             if( cooldown_message_it == cooldown_templates.end() ) {
-                // push current message to cooldown message templates.
+
                 cooldown_templates.emplace_back( message );
             } else {
-                // increment the number of time we have seen this message.
+
                 cooldown_message_it->cooldown_seen++;
             }
         }
 };
 
-// Messages object.
+
 messages_impl player_messages;
 
 void announce_message( const std::optional<game_message> &message )
@@ -452,9 +452,10 @@ bool message_exceeds_ttl( const game_message &message )
            message.timestamp_in_user_actions + message_ttl <= g->get_user_action_counter();
 }
 
-} //namespace
+}
 
-Messages::mute_combat_speech::mute_combat_speech( const bool mute ) : muted( mute && a11y::enabled() )
+Messages::mute_combat_speech::mute_combat_speech( const bool mute ) : muted( mute &&
+            a11y::enabled() )
 {
     if( muted ) {
         ++muted_combat_speech_depth;
@@ -510,11 +511,11 @@ void Messages::add_msg( const game_message_params &params, std::string msg )
 
 void Messages::add_msg_silent( const game_message_params &params, std::string msg )
 {
-    // add_msg_string appends to the log and returns the message for the
-    // normal channel to speak; discarding the return keeps the entry in
-    // Messages::recent_messages() without speaking it. Coalescing and
-    // cooldown-hiding still apply to the log entry itself, exactly as
-    // they do for a spoken message.
+
+
+
+
+
     static_cast<void>( player_messages.add_msg_string( std::move( msg ), params ) );
 }
 
@@ -539,7 +540,7 @@ bool Messages::has_undisplayed_messages()
     return player_messages.has_undisplayed_messages();
 }
 
-// Returns pairs of message log type id and untranslated name
+
 static const std::vector<std::pair<game_message_type, const char *>> &msg_type_and_names()
 {
     static const std::vector<std::pair<game_message_type, const char *>> type_n_names = {
@@ -554,7 +555,7 @@ static const std::vector<std::pair<game_message_type, const char *>> &msg_type_a
     return type_n_names;
 }
 
-// Get message type from translated name, returns true if name is a valid translated name
+
 static bool msg_type_from_name( game_message_type &type, const std::string &name )
 {
     for( const auto &p : msg_type_and_names() ) {
@@ -590,33 +591,33 @@ class dialog
         const nc_color bracket_color;
         const nc_color filter_help_color;
 
-        // border_width padding_width         border_width
-        //      v           v                     v
-        //
-        //      | 12 seconds Never mind. x 2      |
-        //
-        //       '-----v---' '---------v---------'
-        //        time_width       msg_width
+
+
+
+
+
+
+
         static constexpr int border_width = 1;
         static constexpr int padding_width = 1;
         int time_width = 0;
         int msg_width = 0;
 
-        size_t max_lines = 0; // Max number of lines the window can show at once
+        size_t max_lines = 0;
 
         int w_x = 0;
         int w_y = 0;
         int w_width = 0;
-        int w_height = 0; // Main window position
-        catacurses::window w; // Main window
+        int w_height = 0;
+        catacurses::window w;
 
         int w_fh_x = 0;
         int w_fh_y = 0;
         int w_fh_width = 0;
-        int w_fh_height = 0; // Filter help window position
-        catacurses::window w_filter_help; // Filter help window
+        int w_fh_height = 0;
+        catacurses::window w_filter_help;
 
-        std::vector<std::string> help_text; // Folded filter help text
+        std::vector<std::string> help_text;
 
         string_input_popup filter;
         bool filtering = false;
@@ -624,20 +625,20 @@ class dialog
 
         input_context ctxt;
 
-        // Message indices and folded strings
+
         std::vector<std::pair<size_t, std::string>> folded_all;
-        // Indices of filtered messages
+
         std::vector<size_t> folded_filtered;
 
-        size_t offset = 0; // Index of the first printed message
+        size_t offset = 0;
 
         bool canceled = false;
         bool errored = false;
 
         bool first_init = true;
 };
-} // namespace
-} // namespace Messages
+}
+}
 
 Messages::dialog::dialog()
     : border_color( BORDER_COLOR ), filter_color( c_white ),
@@ -652,11 +653,11 @@ void Messages::dialog::init( ui_adaptor &ui )
     const int right_panel_width = panel_manager::get_manager().get_width_right();
     w_height = TERMY;
     w_y = 0;
-    // try to center and not obscure sidebar
+
     w_x = std::max( left_panel_width, right_panel_width );
     w_width = TERMX - 2 * w_x;
     if( w_width < w_height * 3 ) {
-        // try not to obscure sidebar
+
         w_x = left_panel_width;
         w_width = TERMX - left_panel_width - right_panel_width;
     }
@@ -676,8 +677,8 @@ void Messages::dialog::init( ui_adaptor &ui )
         ctxt.register_action( "SCROLL_UP" );
         ctxt.register_action( "SCROLL_DOWN" );
 
-        // Calculate time string display width. The translated strings are expected to
-        // be aligned, so we choose an arbitrary duration here to calculate the width.
+
+
         time_width = utf8_width( to_string_clipped( 1_turns, clipped_align::right ) );
     }
 
@@ -690,7 +691,7 @@ void Messages::dialog::init( ui_adaptor &ui )
     msg_width = w_width - border_width * 2 - time_width - padding_width;
     max_lines = static_cast<size_t>( w_height - border_width * 2 );
 
-    // Initialize filter help text and window
+
     w_fh_width = w_width;
     w_fh_x = w_x;
     help_text = filter_help_text( w_fh_width - border_width * 2 );
@@ -698,11 +699,11 @@ void Messages::dialog::init( ui_adaptor &ui )
     w_fh_y = w_y + w_height - w_fh_height;
     w_filter_help = catacurses::newwin( w_fh_height, w_fh_width, point( w_fh_x, w_fh_y ) );
 
-    // Initialize filter input
+
     filter.window( w_filter_help, point( border_width + 2, w_fh_height - 1 ),
                    w_fh_width - border_width - 2 );
 
-    // Initialize folded messages
+
     folded_all.clear();
     folded_filtered.clear();
     const size_t msg_count = size();
@@ -736,7 +737,7 @@ void Messages::dialog::show()
     .viewport_size( max_lines )
     .apply( w );
 
-    // Range of window lines to print
+
     size_t line_from = 0;
     size_t line_to;
     if( offset < folded_filtered.size() ) {
@@ -746,13 +747,13 @@ void Messages::dialog::show()
     }
 
     if( !log_from_top ) {
-        // Always print from new to old
+
         std::swap( line_from, line_to );
     }
     std::string prev_time_str;
     bool printing_range = false;
     for( size_t line = line_from; line != line_to; ) {
-        // Decrement here if printing from bottom to get the correct line number
+
         if( !log_from_top ) {
             --line;
         }
@@ -763,22 +764,22 @@ void Messages::dialog::show()
 
         nc_color col = msgtype_to_color( msg.type, false );
 
-        // Print current line
+
         print_colored_text( w, point( border_width + time_width + padding_width, border_width + line ),
                             col, col, folded_all[folded_filtered[folded_ind]].second );
 
-        // Generate aligned time string
+
         const time_point msg_time = msg.timestamp_in_turns;
         const std::string time_str = to_string_clipped( calendar::turn - msg_time, clipped_align::right );
 
         if( time_str != prev_time_str ) {
-            // Time changed, print time string
+
             prev_time_str = time_str;
             right_print( w, border_width + line, border_width + msg_width + padding_width,
                          time_color, time_str );
             printing_range = false;
         } else {
-            // Print line brackets to mark ranges of time
+
             if( printing_range ) {
                 const size_t last_line = log_from_top ? line - 1 : line + 1;
                 mvwputch( w, point( border_width + time_width - 1, border_width + last_line ), bracket_color,
@@ -789,7 +790,7 @@ void Messages::dialog::show()
             printing_range = true;
         }
 
-        // Decrement for !log_from_top is done at the beginning
+
         if( log_from_top ) {
             ++line;
         }
@@ -797,7 +798,7 @@ void Messages::dialog::show()
 
     if( filtering ) {
         wnoutrefresh( w );
-        // Print the help text
+
         werase( w_filter_help );
         draw_border( w_filter_help, border_color );
         for( size_t line = 0; line < help_text.size(); ++line ) {
@@ -810,8 +811,8 @@ void Messages::dialog::show()
                    " >" );
         wnoutrefresh( w_filter_help );
 
-        // This line is preventing this method from being const
-        filter.query( false, true ); // Draw only
+
+        filter.query( false, true );
     } else {
         if( filter_str.empty() ) {
             mvwprintz( w, point( border_width, w_height - 1 ), border_color,
@@ -827,7 +828,7 @@ void Messages::dialog::show()
 
 void Messages::dialog::do_filter( const std::string &filter_str )
 {
-    // Split the search string into type and text
+
     bool has_type_filter = false;
     game_message_type filter_type = m_neutral;
     std::string filter_text;
@@ -839,7 +840,7 @@ void Messages::dialog::do_filter( const std::string &filter_str )
         filter_text = filter_str;
     }
 
-    // Start filtering the log
+
     folded_filtered.clear();
     for( size_t folded_ind = 0; folded_ind < folded_all.size(); ) {
         const size_t msg_ind = folded_all[folded_ind].first;
@@ -847,7 +848,7 @@ void Messages::dialog::do_filter( const std::string &filter_str )
         const bool match = ( !has_type_filter || filter_type == msg.type ) &&
                            ci_find_substr( remove_color_tags( msg.get_with_count() ), filter_text ) >= 0;
 
-        // Always advance the index, but only add to filtered list if the original message matches
+
         for( ; folded_ind < folded_all.size() && folded_all[folded_ind].first == msg_ind; ++folded_ind ) {
             if( match ) {
                 folded_filtered.emplace_back( folded_ind );
@@ -855,7 +856,7 @@ void Messages::dialog::do_filter( const std::string &filter_str )
         }
     }
 
-    // Reset view
+
     if( log_from_top || max_lines > folded_filtered.size() ) {
         offset = 0;
     } else {
@@ -917,11 +918,11 @@ void Messages::dialog::input()
 void Messages::dialog::reader_update( a11y::screen_scope &reader )
 {
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Message log" ) );
-    // The messages the dialog currently displays, in its own display
-    // order and under its own filter: folded_filtered holds one entry
-    // per folded line, so keep the first line of each message and read
-    // the message itself (with the same relative time the dialog
-    // prints), never a folded fragment.
+
+
+
+
+
     std::vector<std::string> entries;
     std::unordered_set<size_t> seen;
     for( const size_t folded_ind : folded_filtered ) {
@@ -934,13 +935,13 @@ void Messages::dialog::reader_update( a11y::screen_scope &reader )
                                      clipped_align::right );
         entries.push_back( time_str + " " + msg.get_with_count() );
     }
-    // Publish at most the newest 500 of the filtered sequence (R21.4).
-    // The engine history itself is already bounded by the MESSAGE_LIMIT
-    // option (default 255), so this only bites for very large custom
-    // limits; the summary always speaks both counts and the filter is
-    // the way to narrow further. "Newest" is the end of the display
-    // sequence when the log grows downward (log_from_top) and its
-    // start otherwise.
+
+
+
+
+
+
+
     static constexpr size_t max_published_messages = 500;
     const size_t total = entries.size();
     if( total > max_published_messages ) {
@@ -965,10 +966,10 @@ void Messages::dialog::reader_update( a11y::screen_scope &reader )
                   + " " + summary;
     }
     snapshot.summary = summary;
-    // One paragraph per message (blank-line separated) so the document
-    // reader navigates message by message and keeps its place across
-    // redraws; a single-newline join would collapse the whole history
-    // into one paragraph.
+
+
+
+
     std::string text;
     for( const std::string &entry : entries ) {
         if( !text.empty() ) {
@@ -1002,15 +1003,15 @@ void Messages::dialog::run()
         show();
     } );
 
-    // R20.4: this dialog is shown as part of the death sequence (and
-    // from the message-history command) but had no reader adapter, so
-    // the reader could neither read the log nor leave the screen.
-    // Publish it like other text screens: the log as a document plus
-    // the dialog's own commands (scroll/filter/quit) as command nodes.
-    // Filtering itself still goes through the existing filter popup
-    // and its own adapter.
+
+
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "MESSAGE_LOG",
-    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
 
@@ -1039,11 +1040,11 @@ std::vector<std::string> Messages::dialog::filter_help_text( int width )
     std::string type_text;
     const auto &type_list = msg_type_and_names();
     for( auto it = type_list.begin(); it != type_list.end(); ++it ) {
-        // Skip m_debug outside debug mode (but allow searching for it)
+
         if( debug_mode || it->first != m_debug ) {
             const std::string &col_name = get_all_colors().get_name( msgtype_to_color( it->first ) );
             auto next_it = std::next( it );
-            // Skip m_debug outside debug mode
+
             if( !debug_mode && next_it != type_list.end() && next_it->first == m_debug ) {
                 next_it = std::next( next_it );
             }
@@ -1099,8 +1100,8 @@ void Messages::display_messages( const catacurses::window &ipk_target, const int
                 if( line > bottom ) {
                     break;
                 }
-                // Redrawing line to ensure new messages similar to previous
-                // messages will not be missed by screen readers
+
+
                 wredrawln( ipk_target, line, 1 );
                 nc_color col_out = col;
                 print_colored_text( ipk_target, point( left, line++ ), col_out, col, folded );
@@ -1118,7 +1119,7 @@ void Messages::display_messages( const catacurses::window &ipk_target, const int
             }
 
             if( m.is_in_cooldown() ) {
-                // message is still (or was at some point) into a cooldown period.
+
                 continue;
             }
 
@@ -1132,8 +1133,8 @@ void Messages::display_messages( const catacurses::window &ipk_target, const int
             const auto folded_rend = folded_strings.rend();
             for( auto string_iter = folded_strings.rbegin();
                  string_iter != folded_rend && line >= top; ++string_iter, line-- ) {
-                // Redrawing line to ensure new messages similar to previous
-                // messages will not be missed by screen readers
+
+
                 wredrawln( ipk_target, line, 1 );
                 nc_color col_out = col;
                 print_colored_text( ipk_target, point( left, line ), col_out, col, *string_iter );
@@ -1154,7 +1155,7 @@ void add_msg( const game_message_params &params, std::string msg )
     Messages::add_msg( params, std::move( msg ) );
 }
 
-// msg argument will not expand name place holders
+
 void add_msg_if_player_sees( const tripoint_bub_ms &target, std::string msg )
 {
     const map &here = get_map();

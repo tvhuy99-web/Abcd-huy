@@ -80,7 +80,7 @@ static monster *spawn_zombie_at_range( const int range )
 {
     return g->place_critter_at( mon_zombie, main_npc_start_tripoint + tripoint( range, 0, 0 ) );
 }
-} // namespace npc_attack_setup
+}
 
 TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
 {
@@ -91,7 +91,7 @@ TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
     clear_vehicles();
     scoped_weather_override sunny_weather( weather_sunny );
     npc &main_npc = npc_attack_setup::respawn_main_npc();
-    // Allied NPC for behavior testing purposes
+
     main_npc.set_fac( faction_your_followers );
 
     GIVEN( "There is a zombie 1 tile away" ) {
@@ -176,7 +176,7 @@ TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
 
             REQUIRE( wear_success );
 
-            // If the flag gets removed from power armor, some other item with the flag will need to replace it.
+
             REQUIRE( main_npc.worn_with_flag( flag_COMBAT_TOGGLEABLE ) );
 
             WHEN( "NPC has a battery for their armor" ) {
@@ -189,7 +189,7 @@ TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
 
                 THEN( "NPC activates their exoskeleton successfully" ) {
 
-                    // target is not exposed, so regen_ai_cache is used to have the npc re-assess threat and store the target.
+
                     main_npc.regen_ai_cache();
                     main_npc.method_of_attack();
                     CHECK( main_npc.is_wearing( itype_combat_exoskeleton_medium_on ) );
@@ -213,10 +213,10 @@ TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
             std::optional<std::list<item>::iterator> wear_success = main_npc.wear_item( headlamp );
             REQUIRE( wear_success );
 
-            // If the flag gets added, some other item without the flag will need to replace it.
+
             REQUIRE( !main_npc.worn_with_flag( flag_COMBAT_TOGGLEABLE ) );
 
-            // This test is to ensure NPCs do not randomly activate items in their inventory.
+
             THEN( "NPC does not activate their headlamp" ) {
                 main_npc.regen_ai_cache();
                 main_npc.method_of_attack();
@@ -318,7 +318,7 @@ TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
             REQUIRE( wear_success );
 
             THEN( "NPC deactivates their exoskeleton. " ) {
-                // This is somewhat cheating, but going up one level is testing all of npc::move.
+
                 main_npc.cleanup_on_no_danger();
 
                 CHECK( !main_npc.is_wearing( itype_combat_exoskeleton_medium_on ) );
@@ -327,7 +327,3 @@ TEST_CASE( "NPC_faces_zombies", "[npc_attack]" )
         }
     }
 }
-
-// TODO: Add scenarios for:
-// - NPCs carrying a mix of weapons
-// - NPCs trying to shoot through allies

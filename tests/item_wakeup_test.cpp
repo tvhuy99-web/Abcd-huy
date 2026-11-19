@@ -56,7 +56,7 @@ std::vector<fire_record> &fire_log()
 }
 
 void dummy_handler( item &it, item_wakeup_kind kind, time_point now,
-                    const item_location &/*loc*/ )
+                    const item_location & )
 {
     fire_log().push_back( fire_record{ it.uid().get_value(), kind, now } );
 }
@@ -81,7 +81,7 @@ item_locator_hint hint_unknown()
     return item_locator_hint{};
 }
 
-}  // namespace
+}
 
 
 TEST_CASE( "item_wakeup_lifecycle_basic", "[item_wakeup][lifecycle]" )
@@ -205,8 +205,8 @@ TEST_CASE( "item_wakeup_fires_in_time_order", "[item_wakeup][firing]" )
 
     mgr.process( t2 );
     REQUIRE( fire_log().size() == 2 );
-    // Handlers receive `now`, not the original wakeup time, so uid order is
-    // the contract: earlier-scheduled wakeups dispatch first.
+
+
     CHECK( fire_log()[0].uid == uid_a );
     CHECK( fire_log()[1].uid == uid_b );
 }
@@ -227,10 +227,10 @@ TEST_CASE( "item_wakeup_same_pass_reschedule_does_not_double_fire",
 
     item_wakeup_manager *mgr_ptr = nullptr;
     auto rescheduling_handler = []( item & it, item_wakeup_kind kind, time_point now,
-    const item_location & /*loc*/ ) {
+    const item_location & ) {
         fire_log().push_back( fire_record{ it.uid().get_value(), kind, now } );
-        // Item handler reschedules itself for "now"; this MUST NOT fire again
-        // in the same process pass.
+
+
         get_item_wakeups().schedule_or_update( it.uid().get_value(), now,
                                                item_wakeup_kind::ready_check, hint_unknown() );
     };
@@ -245,7 +245,7 @@ TEST_CASE( "item_wakeup_same_pass_reschedule_does_not_double_fire",
 
     mgr.process( t );
     CHECK( fire_log().size() == 1 );
-    // Re-scheduled entry remains pending until the next process pass.
+
     CHECK( mgr_ptr->is_scheduled( uid, item_wakeup_kind::ready_check ) );
     mgr.clear();
     clear_test_wakeup_handlers();
@@ -283,8 +283,8 @@ TEST_CASE( "item_wakeup_default_enumerate_is_empty", "[item_wakeup][rebuild]" )
 
 TEST_CASE( "item_wakeup_rebuild_schedules_from_item", "[item_wakeup][rebuild]" )
 {
-    // Default-enumerate is empty, so rebuild_for_item must cancel any
-    // pre-existing entry for the item's uid.
+
+
     clear_map();
     avatar &u = get_avatar();
     map &here = get_map();
@@ -362,8 +362,8 @@ TEST_CASE( "item_wakeup_resolve_falls_back_to_loaded_map", "[item_wakeup][resolv
                                   item( itype_test_wakeup_dummy, calendar::turn ) );
     const int64_t uid = on_map.uid().get_value();
 
-    // Hint is wrong (points to origin, item is at elsewhere).  Map fallback
-    // should still resolve via reality-bubble scan.
+
+
     item_location loc = find_item_by_uid( uid, hint_for_map( here.get_abs( origin ) ) );
     REQUIRE( loc );
     CHECK( loc.get_item()->uid().get_value() == uid );
@@ -378,7 +378,7 @@ TEST_CASE( "item_wakeup_wrong_hint_falls_back_to_avatar", "[item_wakeup][resolve
     REQUIRE( placed );
     const int64_t uid = placed->uid().get_value();
 
-    // Hint says map, but item is in inventory.  Fallback should find it.
+
     item_location loc = find_item_by_uid( uid,
                                           hint_for_map( tripoint_abs_ms{ 1, 1, 0 } ) );
     REQUIRE( loc );
@@ -579,7 +579,7 @@ TEST_CASE( "item_wakeup_dump_is_sorted_deterministically", "[item_wakeup][diag]"
 
     std::vector<scheduled_wakeup_info> d = mgr.dump();
     REQUIRE( d.size() == 4 );
-    // Sorted by (when, uid, kind)
+
     CHECK( d[0].uid == 2 );
     CHECK( d[0].kind == item_wakeup_kind::alarm );
     CHECK( d[1].uid == 2 );
@@ -651,15 +651,15 @@ TEST_CASE( "item_wakeup_no_registered_handler_is_noop",
 
 namespace
 {
-std::vector<desired_wakeup> dummy_enumerator( const item &/*it*/,
-        const item_location &/*loc*/ )
+std::vector<desired_wakeup> dummy_enumerator( const item &,
+        const item_location & )
 {
     return {
         desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 5_minutes },
         desired_wakeup{ item_wakeup_kind::fail_check, calendar::turn_zero + 10_minutes },
     };
 }
-}  // namespace
+}
 
 TEST_CASE( "item_wakeup_rebuild_schedules_from_producer", "[item_wakeup][rebuild]" )
 {
@@ -699,7 +699,7 @@ TEST_CASE( "item_wakeup_rebuild_updates_existing_when", "[item_wakeup][rebuild]"
     const int64_t uid = on_map.uid().get_value();
 
     item_wakeup_manager mgr;
-    // Pre-existing entry with a different time.
+
     mgr.schedule_or_update( uid, calendar::turn_zero + 1_minutes,
                             item_wakeup_kind::ready_check,
                             hint_for_map( here.get_abs( origin ) ) );
@@ -786,7 +786,7 @@ TEST_CASE( "item_wakeup_resolve_vehicle_stale_part_index_uses_mount",
 
     vehicle_hint vh;
     vh.cargo_square = here.get_abs( veh->bub_part_pos( here, cargo_part ) );
-    // Deliberately wrong part_index but valid mount_offset.
+
     vh.part_index = veh->part_count() + 100;
     vh.mount_offset = saved_mount;
     item_locator_hint hint;
@@ -830,7 +830,7 @@ TEST_CASE( "item_wakeup_resolve_vehicle_moved_uses_loaded_scan",
     REQUIRE( added.has_value() );
     const int64_t uid = ( *added )->uid().get_value();
 
-    // Move the vehicle one tile so the saved cargo_square no longer matches.
+
     here.displace_vehicle( *veh, tripoint_rel_ms{ 1, 0, 0 } );
 
     vehicle_hint vh;
@@ -851,8 +851,8 @@ TEST_CASE( "item_wakeup_resolve_off_bubble_returns_invalid",
            "[item_wakeup][resolve]" )
 {
     clear_map();
-    // tripoint_abs_ms far from the reality bubble origin.  inbounds() must
-    // reject it; resolution returns invalid without crashing.
+
+
     const tripoint_abs_ms far_away{ 1000000, 1000000, 0 };
     item_location loc = find_item_by_uid( 12345, hint_for_map( far_away ) );
     CHECK_FALSE( loc );
@@ -999,8 +999,8 @@ std::vector<location_record> &location_log()
     return log;
 }
 
-void location_capturing_handler( item &it, item_wakeup_kind /*kind*/,
-                                 time_point /*now*/, const item_location &loc )
+void location_capturing_handler( item &it, item_wakeup_kind,
+                                 time_point, const item_location &loc )
 {
     location_record r;
     r.uid = it.uid().get_value();
@@ -1010,7 +1010,7 @@ void location_capturing_handler( item &it, item_wakeup_kind /*kind*/,
     }
     location_log().push_back( r );
 }
-}  // namespace
+}
 
 TEST_CASE( "item_wakeup_handler_observes_resolved_location",
            "[item_wakeup][location]" )
@@ -1047,7 +1047,7 @@ TEST_CASE( "item_wakeup_enumerator_observes_resolved_location",
 {
     static std::vector<tripoint_abs_ms> seen_locs;
     seen_locs.clear();
-    auto loc_enumerator = []( const item & /*it*/, const item_location & loc )
+    auto loc_enumerator = []( const item &, const item_location & loc )
     -> std::vector<desired_wakeup> {
         if( loc )
         {
@@ -1081,7 +1081,7 @@ TEST_CASE( "item_wakeup_enumerator_observes_resolved_location",
 TEST_CASE( "item_wakeup_map_load_reconciles_dropped_entries",
            "[item_wakeup][reconcile]" )
 {
-    auto reconcile_enumerator = []( const item & /*it*/, const item_location & /*loc*/ )
+    auto reconcile_enumerator = []( const item &, const item_location & )
     -> std::vector<desired_wakeup> {
         return {
             desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },
@@ -1105,7 +1105,7 @@ TEST_CASE( "item_wakeup_map_load_reconciles_dropped_entries",
     mgr.clear();
     REQUIRE_FALSE( mgr.is_scheduled( uid, item_wakeup_kind::ready_check ) );
 
-    here.load( here.get_abs_sub(), /*update_vehicles=*/false, /*pump_events=*/false );
+    here.load( here.get_abs_sub(), false, false );
 
     CHECK( mgr.is_scheduled( uid, item_wakeup_kind::ready_check ) );
     if( mgr.is_scheduled( uid, item_wakeup_kind::ready_check ) ) {
@@ -1120,7 +1120,7 @@ TEST_CASE( "item_wakeup_map_load_reconciles_dropped_entries",
 TEST_CASE( "item_wakeup_shift_reconciles_dropped_entries",
            "[item_wakeup][reconcile][shift]" )
 {
-    auto enumerator = []( const item & /*it*/, const item_location & /*loc*/ )
+    auto enumerator = []( const item &, const item_location & )
     -> std::vector<desired_wakeup> {
         return {
             desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },
@@ -1155,7 +1155,7 @@ TEST_CASE( "item_wakeup_shift_reconciles_dropped_entries",
 TEST_CASE( "item_wakeup_map_load_recurses_into_containers",
            "[item_wakeup][reconcile][container]" )
 {
-    auto enumerator = []( const item & /*it*/, const item_location & /*loc*/ )
+    auto enumerator = []( const item &, const item_location & )
     -> std::vector<desired_wakeup> {
         return {
             desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },
@@ -1182,7 +1182,7 @@ TEST_CASE( "item_wakeup_map_load_recurses_into_containers",
     const int64_t inner_uid = placed_box.all_items_top().front()->uid().get_value();
 
     mgr.clear();
-    here.load( here.get_abs_sub(), /*update_vehicles=*/false, /*pump_events=*/false );
+    here.load( here.get_abs_sub(), false, false );
 
     CHECK( mgr.is_scheduled( inner_uid, item_wakeup_kind::ready_check ) );
 

@@ -20,13 +20,13 @@ constexpr std::array<direction, 4> diagonal_dirs = {
     direction::down_right, direction::down_left, direction::up_left, direction::up_right
 };
 
-// half a straight slice, clamped so a diagonal slice never goes negative
+
 float half_width( const float straight_width )
 {
     return std::clamp( straight_width, 0.0f, 90.0f ) * 0.5f;
 }
 
-} // namespace
+}
 
 direction classify( const float dx, const float dy, const float deadzone,
                     const float straight_width )
@@ -35,7 +35,7 @@ direction classify( const float dx, const float dy, const float deadzone,
         return direction::none;
     }
     const float degrees = std::atan2( dy, dx ) * 180.0f / static_cast<float>( M_PI );
-    // each quarter turn starts at the first edge of its straight slice
+
     const float turned = std::fmod( degrees + half_width( straight_width ) + 360.0f, 360.0f );
     const int quarter = std::min( 3, static_cast<int>( turned / 90.0f ) );
     const float within = turned - quarter * 90.0f;
@@ -70,7 +70,7 @@ float speed_fraction( const float dist, const float deadzone, const float range 
 
 float octagon_radius( const float degrees, const float apothem )
 {
-    // angle from the center of the nearest flat side
+
     const float from_side = std::fmod( std::fmod( degrees, 45.0f ) + 45.0f + 22.5f, 45.0f ) - 22.5f;
     return apothem / std::cos( from_side * static_cast<float>( M_PI ) / 180.0f );
 }
@@ -78,7 +78,7 @@ float octagon_radius( const float degrees, const float apothem )
 std::vector<float> band_angles( const float start, const float end )
 {
     std::vector<float> angles = { start };
-    // corners are halfway between straight and diagonal
+
     const int first_corner = static_cast<int>( std::ceil( ( start - 22.5f ) / 45.0f ) );
     for( int k = first_corner; k * 45.0f + 22.5f < end; ++k ) {
         const float corner = k * 45.0f + 22.5f;
@@ -97,4 +97,4 @@ bool is_bare_context( const std::vector<std::string> &actions )
     } );
 }
 
-} // namespace touch_joystick
+}

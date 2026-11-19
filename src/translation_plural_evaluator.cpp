@@ -15,7 +15,7 @@ using ExprTokenType = TranslationPluralRulesEvaluator::ExprTokenType;
 using Token = TranslationPluralRulesEvaluator::ExprToken;
 using ExprNode = TranslationPluralRulesEvaluator::ExprNode;
 
-// Workaround to GCC 5.5 not being able to hash an enum class of primitive underlying type
+
 namespace std
 {
 template<> struct hash<ExprTokenType> {
@@ -23,7 +23,7 @@ template<> struct hash<ExprTokenType> {
         return static_cast<std::size_t>( token );
     }
 };
-} // namespace std
+}
 
 std::string TranslationPluralRulesEvaluator::ExprTokenTypeToString( ExprTokenType token )
 {
@@ -463,4 +463,4 @@ TranslationPluralRulesEvaluator::~TranslationPluralRulesEvaluator()
     DisposeExprTree();
 }
 
-#endif // defined(LOCALIZE)
+#endif

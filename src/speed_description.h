@@ -38,7 +38,7 @@ class speed_description
         std::vector<std::pair<speed_description_id, mod_id>> src;
         bool was_loaded = false;
 
-        // Always sorted with highest value first
+
         std::vector<speed_description_value> values_;
 };
 
@@ -63,4 +63,4 @@ class speed_description_value
         std::vector<translation> descriptions_;
 };
 
-#endif // CATA_SRC_SPEED_DESCRIPTION_H
+#endif

@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
 
-# This script is intended to help monitor macOS market share to help us decide
-# when it is reasonable to drop support for a particular version.
-#
-# The expected input file is a CSV-formatted data file downloaded from
-# https://gs.statcounter.com/os-version-market-share/macos/desktop/worldwide
-#
-# The output shows cumulative market share by increasing version number for
-# each month in the input data.  The range of versions is limited to make the
-# output more reasonable, but the cumulative tally does include smaller
-# versions not listed.
-#
-# See also doc/c++/COMPILER_SUPPORT.md
 
 import csv
 import re
@@ -36,8 +24,8 @@ replacement = {
     'macOS Ventura': (13, 7),
     'macOS Monterey': (12, 7),
     'macOS 11': (11, 7),
-    # webkit#216593: Apple are incorrectly reporting all macOS releases
-    # since Catalina 10.15 as Catalina 10.15
+
+
     'macOS 19': (10, 15),
     'macOS Catalina': (10, 15),
     'macOS Mojave': (10, 14),

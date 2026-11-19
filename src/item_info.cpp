@@ -131,8 +131,8 @@ static const vitamin_id vitamin_human_flesh_vitamin( "human_flesh_vitamin" );
 static const std::string flag_NO_DISPLAY( "NO_DISPLAY" );
 
 
-// sorts with localized_compare, and enumerates entries, if more than \p max entries
-// the rest are abbreviated into " and %d more"
+
+
 static std::string enumerate_lcsorted_with_limit( const std::vector<std::string> &v,
         const int max = 5 )
 {
@@ -150,7 +150,7 @@ static std::string enumerate_lcsorted_with_limit( const std::vector<std::string>
     return string_format( max == 1 ? _( "%s and %d more" ) : _( "%s, and %d more" ), res, more );
 }
 
-// TODO: Get rid of, handle multiple types gracefully
+
 static int get_ranged_pierce( const common_ranged_data &ranged )
 {
     if( ranged.damage.empty() ) {
@@ -160,26 +160,26 @@ static int get_ranged_pierce( const common_ranged_data &ranged )
     return ranged.damage.damage_units.front().res_pen;
 }
 
-// Generates a long-form description of the freshness of the given rottable food item.
-// NB: Doesn't check for non-rottable!
+
+
 static std::string get_freshness_description( const item &food_item )
 {
-    // So, skilled characters looking at food that is neither super-fresh nor about to rot
-    // can guess its age as one of {quite fresh,midlife,past midlife,old soon}, and also
-    // guess about how long until it spoils.
+
+
+
     const double rot_progress = food_item.get_relative_rot();
     const time_duration shelf_life = food_item.get_shelf_life();
     time_duration time_left = shelf_life - ( shelf_life * rot_progress );
 
-    // Correct for an estimate that exceeds shelf life -- this happens especially with
-    // fresh items.
+
+
     if( time_left > shelf_life ) {
         time_left = shelf_life;
     }
 
     Character &player_character = get_player_character();
     if( food_item.is_fresh() ) {
-        // Fresh food is assumed to be obviously so regardless of skill.
+
         if( player_character.can_estimate_rot() ) {
             return string_format( _( "* This food looks as <good>fresh</good> as it can be.  "
                                      "It still has <info>%s</info> until it spoils." ),
@@ -188,7 +188,7 @@ static std::string get_freshness_description( const item &food_item )
             return _( "* This food looks as <good>fresh</good> as it can be." );
         }
     } else if( food_item.is_going_bad() ) {
-        // Old food likewise is assumed to be fairly obvious.
+
         if( player_character.can_estimate_rot() ) {
             return string_format( _( "* This food looks <bad>old</bad>.  "
                                      "It's just <info>%s</info> from becoming inedible." ),
@@ -200,12 +200,12 @@ static std::string get_freshness_description( const item &food_item )
     }
 
     if( !player_character.can_estimate_rot() ) {
-        // Unskilled characters only get a hint that more information exists...
+
         return _( "* This food looks <info>fine</info>.  If you were more skilled in "
                   "cooking or survival, you might be able to make a better estimation." );
     }
 
-    // Otherwise, a skilled character can determine the below options:
+
     if( rot_progress < 0.3 ) {
         //~ here, %s is an approximate time span, e.g., "over 2 weeks" or "about 1 season"
         return string_format( _( "* This food looks <good>quite fresh</good>.  "
@@ -251,7 +251,7 @@ static void insert_separation_line( std::vector<iteminfo> &info )
 }
 
 void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                       bool /* debug */ ) const
+                       bool ) const
 {
     if( debug_mode && parts->test( iteminfo_parts::BASE_MOD_SRC ) ) {
         info.emplace_back( "BASE", get_origin( type->src ) );
@@ -301,20 +301,20 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
             item_vars.find( "description" );
         const std::optional<translation> snippet = SNIPPET.get_snippet_by_id( snip_id );
         if( snippet.has_value() ) {
-            // Just use the dynamic description
+
             info.emplace_back( "DESCRIPTION", snippet.value().translated() );
 
-            // only ever do the effect for a snippet the first time you see it
+
             if( !get_avatar().has_seen_snippet( snip_id ) ) {
-                // Have looked at the item so call the on examine EOC for the snippet
+
                 const std::optional<talk_effect_t> examine_effect = SNIPPET.get_EOC_by_id( snip_id );
                 if( examine_effect.has_value() ) {
-                    // activate the effect
+
                     dialogue d( get_talker_for( get_avatar() ), nullptr );
                     examine_effect.value().apply( d );
                 }
 
-                //note that you have seen the snippet
+
                 get_avatar().add_snippet( snip_id );
             }
         } else if( idescription != item_vars.end() ) {
@@ -346,7 +346,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     insert_separation_line( info );
 
     if( parts->test( iteminfo_parts::BASE_REQUIREMENTS ) ) {
-        // Display any minimal stat or skill requirements for the item
+
         std::vector<std::string> req;
         if( get_min_str() > 0 ) {
             int min_str = 0;
@@ -385,7 +385,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 }
 
-void item::debug_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /* batch */,
+void item::debug_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                        bool debug ) const
 {
     if( debug && parts->test( iteminfo_parts::BASE_DEBUG ) ) {
@@ -622,7 +622,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
 
     auto format_vitamin = [&]( const std::pair<vitamin_id, int> &v, bool display_vitamins ) {
         const bool is_vitamin = v.first->type() == vitamin_type::VITAMIN;
-        // only display vitamins that we actually require
+
         if( player_character.vitamin_rate( v.first ) == 0_turns || v.second == 0 ||
             display_vitamins != is_vitamin || v.first->has_flag( flag_NO_DISPLAY ) ) {
             return std::string();
@@ -712,7 +712,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
                            _( "* This food is <bad>tainted</bad> and will poison you." ) );
     }
 
-    ///\EFFECT_SURVIVAL >=3 allows detection of poisonous food
+
     if( food_item->has_flag( flag_HIDDEN_POISON ) &&
         player_character.get_greater_skill_or_knowledge_level( skill_survival ) >= 3 &&
         parts->test( iteminfo_parts::FOOD_POISON ) ) {
@@ -721,7 +721,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
                               "<bad>poisonous</bad>." ) );
     }
 
-    ///\EFFECT_SURVIVAL >=5 allows detection of hallucinogenic food
+
     if( food_item->has_flag( flag_HIDDEN_HALLU ) &&
         player_character.get_greater_skill_or_knowledge_level( skill_survival ) >= 5 &&
         parts->test( iteminfo_parts::FOOD_HALLUCINOGENIC ) ) {
@@ -734,7 +734,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
 }
 
 void item::rot_info( const item *const food_item, std::vector<iteminfo> &info,
-                     const iteminfo_query *const parts, const int /*batch*/, const bool /*debug*/ ) const
+                     const iteminfo_query *const parts, const int, const bool ) const
 {
     Character &player_character = get_player_character();
 
@@ -786,8 +786,8 @@ void item::rot_info( const item *const food_item, std::vector<iteminfo> &info,
     }
 }
 
-void item::magazine_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
-                          bool /*debug*/ ) const
+void item::magazine_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                          bool ) const
 {
     if( !is_magazine() || has_flag( flag_NO_RELOAD ) || is_tool() ) {
         return;
@@ -909,10 +909,10 @@ static std::string ammo_by_barrel_info( const islot_ammo &ammo )
     return info;
 }
 
-void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /* batch */,
-                      bool /* debug */ ) const
+void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                      bool ) const
 {
-    // Skip this section for guns and items without ammo data
+
     if( is_gun() || !has_ammo_data() ||
         !parts->test( iteminfo_parts::AMMO_REMAINING_OR_TYPES ) ) {
         return;
@@ -936,7 +936,7 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
             const int pellet_damage = ammo.shot_damage.total_damage();
 
             if( parts->test( iteminfo_parts::AMMO_DAMAGE_PELLETS ) && pellets ) {
-                // if shotshell, ammo_damage is your point blank damage, and anything further is pellets x damage of a single pellet
+
                 info.emplace_back( "AMMO", _( "Point blank damage" ), ": <num>",
                                    iteminfo::no_flags, ammo_damage );
                 info.emplace_back( "AMMO", "damage_per_pellet", _( "<num> per pellet" ),
@@ -1013,7 +1013,7 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
     }
     if( parts->test( iteminfo_parts::AMMO_FX_RECOVER ) ) {
         if( ammo.recovery_chance == 0 ) {
-            // do nothing
+
         } else if( ammo.recovery_chance <= 25 ) {
             fx.emplace_back( _( "Stands a <bad>very low</bad> chance of remaining intact once fired." ) );
         } else if( ammo.recovery_chance <= 50 ) {
@@ -1043,30 +1043,30 @@ std::string item::print_compatible_mags_or_flags() const
 {
     std::string display = _( "<bold>Compatible magazines</bold>:" );
 
-    // check magazines
+
     std::set<itype_id> mag_compatible = magazine_compatible();
     if( !mag_compatible.empty() ) {
         std::set<std::string> compat;
         std::string mag_names;
 
-        // if variants are on…
+
         if( get_option<bool>( "SHOW_GUN_VARIANTS" ) ) {
             for( const itype_id &i : mag_compatible ) {
                 const std::set<std::string> all_variant_names = i->all_variant_names();
-                // and magazine actually has variants…
+
                 if( !all_variant_names.empty() ) {
                     for( const std::string &variant_name : all_variant_names ) {
-                        // print variant names
+
                         compat.insert( variant_name );
                     }
                 } else {
-                    // otherwise print the name of the magazine itself
+
                     compat.insert( item::nname( i ) );
                 }
             }
             mag_names = enumerate_as_string( compat );
         } else {
-            // print just item names if variants are turned off
+
             const std::vector<itype_id> compat_sorted = sorted_lex( mag_compatible );
             mag_names = enumerate_as_string( compat_sorted,
             []( const itype_id & id ) {
@@ -1076,7 +1076,7 @@ std::string item::print_compatible_mags_or_flags() const
         display += _( "\n<bold>Types</bold>: " ) + mag_names;
     }
 
-    // check flags
+
     const std::set<flag_id> flag_restrictions = contents.magazine_flag_restrictions();
     if( !flag_restrictions.empty() ) {
         const std::string flag_names = enumerate_as_string( flag_restrictions,
@@ -1091,14 +1091,14 @@ std::string item::print_compatible_mags_or_flags() const
 
 
 void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminfo_query *parts,
-                     int /* batch */, bool /* debug */ ) const
+                     int, bool ) const
 {
     const std::string space = "  ";
     const islot_gun &gun = *mod->type->gun;
     const Skill &skill = *mod->gun_skill();
 
-    // many statistics are dependent upon loaded ammo
-    // if item is unloaded (or is RELOAD_AND_SHOOT) shows approximate stats using default ammo
+
+
     const item *loaded_mod = mod;
     item tmp;
     const itype *curammo = nullptr;
@@ -1139,10 +1139,10 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         if( !default_ammo.is_null() ) {
             tmp.ammo_set( default_ammo );
         } else if( !tmp.magazine_default().is_null() ) {
-            // clear out empty magazines so put_in below doesn't error
+
             for( item *i : tmp.contents.all_items_top() ) {
                 if( i->is_magazine() ) {
-                    // item_location hack warning!
+
                     item_location( get_player_character(), &tmp ).remove_item( *i );
                     tmp.on_contents_changed();
                 }
@@ -1154,7 +1154,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         }
         loaded_mod = &tmp;
         curammo = loaded_mod->ammo_data();
-        // TODO: Should this be .is_null(), rather than comparing to "none"?
+
         if( loaded_mod == nullptr || loaded_mod->typeId().str() == "none" ||
             curammo == nullptr ) {
             if( magazine_current() ) {
@@ -1180,7 +1180,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     } else {
         curammo = loaded_mod->ammo_data();
         if( curammo == nullptr ) {
-            // Defensive: has_ammo_data() above should have covered this branch.
+
             return;
         }
     }
@@ -1190,7 +1190,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 
     if( mod->ammo_required() ) {
-        // some names are not shown, so no need to translate them
+
 
         const int gun_damage = loaded_mod->gun_damage( true, false ).total_damage();
 
@@ -1199,7 +1199,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         const int pellet_damage = loaded_mod->gun_damage( true, true ).total_damage();
 
         if( parts->test( iteminfo_parts::GUN_DAMAGE_PELLETS ) && pellets ) {
-            // if shotgun, gun_damage is your point blank damage, and anything further is pellets x damage of a single pellet
+
             info.emplace_back( "GUN", colorize( _( "Point blank damage" ), c_bold ) + ": ", "<num>",
                                iteminfo::no_flags, gun_damage );
             info.emplace_back( "GUN", "damage_per_pellet", _( "<num> per pellet" ),
@@ -1245,7 +1245,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
                            max_gun_range );
     }
 
-    // TODO: This doesn't cover multiple damage types
+
 
     int ammo_pierce = 0;
     if( mod->ammo_required() ) {
@@ -1269,7 +1269,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
     info.back().bNewLine = true;
 
-    // if effective sight dispersion differs from actual sight dispersion display both
+
     std::pair<int, int> disp = mod->sight_dispersion( player_character );
     const int eff_disp = disp.second;
     const int point_shooting_limit = player_character.point_shooting_limit( *mod );
@@ -1322,7 +1322,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
     if( parts->test( iteminfo_parts::GUN_CURRENT_LOUDNESS ) ) {
         const bool is_default_fire_mode = loaded_mod->gun_current_mode().tname() == "DEFAULT";
-        //if empty, use the temporary gun loaded with default ammo
+
         const item::sound_data data = ( mod->ammo_required() &&
                                         !mod->has_ammo_data() ) ? tmp.gun_noise( is_default_fire_mode ) : loaded_mod->gun_noise(
                                           is_default_fire_mode );
@@ -1390,8 +1390,8 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
     if( parts->test( iteminfo_parts::AMMO_REMAINING ) ) {
         if( mod->uses_firing_requirements() ) {
-            // One Ammunition entry per loaded pocket so multimag siblings
-            // do not collapse into a single misleading line.
+
+
             std::vector<std::string> loaded_lines;
             for( const item_pocket *p : mod->get_pockets(
             []( const item_pocket & q ) {
@@ -1459,7 +1459,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 
     if( mod->uses_firing_requirements() && parts->test( iteminfo_parts::AMMO_TO_FIRE ) ) {
-        // Per-mode draw shows the player which wells fire together.
+
         const std::map<gun_mode_id, gun_mode> modes = mod->gun_all_modes();
         std::set<gun_mode_id> printed;
         for( const std::pair<const gun_mode_id, gun_mode> &m : modes ) {
@@ -1481,12 +1481,12 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
         for( const aim_type &type : player_character.get_aim_types( *mod ) ) {
-            // Nameless and immediate aim levels don't get an entry.
+
             if( type.name.empty() || type.threshold == static_cast<int>( MAX_RECOIL ) ) {
                 continue;
             }
-            // For item comparison to work correctly each info object needs a
-            // distinct tag per aim type.
+
+
             const std::string tag = "GUN_" + type.name;
             info.emplace_back( tag, string_format( "<info>%s</info>", type.name ) );
             int max_dispersion = player_character.get_weapon_dispersion( *loaded_mod ).max();
@@ -1536,7 +1536,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             mod_str += string_format( "<color_cyan># </color>%s:", elem.first.name() );
 
             for( const item *gmod : gunmods() ) {
-                if( gmod->type->gunmod->location == elem.first ) { // if mod for this location
+                if( gmod->type->gunmod->location == elem.first ) {
                     mod_str +=
                         string_format( "\n    <stat>[</stat><color_light_green>● </color><stat>%s]</stat>",
                                        gmod->tname( 1, false ) );
@@ -1567,8 +1567,8 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 }
 
-void item::gunmod_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /* batch */,
-                        bool /* debug */ ) const
+void item::gunmod_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                        bool ) const
 {
     if( !is_gunmod() ) {
         return;
@@ -1693,7 +1693,7 @@ void item::gunmod_info( std::vector<iteminfo> &info, const iteminfo_query *parts
     insert_separation_line( info );
 
     if( parts->test( iteminfo_parts::GUNMOD_USEDON ) ) {
-        std::set<std::string> used_on_translated; // uses set to prune duplicates
+        std::set<std::string> used_on_translated;
         for( const gun_type_type &gtt : mod.usable ) {
             used_on_translated.emplace( string_format( "<info>%s</info>", gtt.name() ) );
         }
@@ -1747,7 +1747,7 @@ static bool armor_encumb_header_info( const item &it, std::vector<iteminfo> &inf
     }
     if( sizing_matters ) {
         const item::sizing sizing_level = it.get_sizing( player_character );
-        //If we have the wrong size, we do not fit so alert the player
+
         if( sizing_level == item::sizing::human_sized_small_char ) {
             format = _( " <bad>(too big)</bad>" );
         } else if( sizing_level == item::sizing::big_sized_small_char ) {
@@ -1800,7 +1800,7 @@ bool item::armor_full_protection_info( std::vector<iteminfo> &info,
             if( covered.empty() ) {
                 continue;
             }
-            // pick representative before consolidate() which mutates the vector
+
             sub_bodypart_id representative = covered.front();
             std::set<translation, localized_comparator> to_print = body_part_type::consolidate( covered );
             std::string coverage = _( "<bold>Protection for</bold>:" );
@@ -1818,7 +1818,7 @@ bool item::armor_full_protection_info( std::vector<iteminfo> &info,
         if( divider_needed ) {
             insert_separation_line( info );
         }
-        //right now all eligible gunmods (shoulder_strap, belt_clip) have the is_armor flag and use the torso
+
         info.emplace_back( "ARMOR", _( "Torso:" ) + space, "",
                            iteminfo::no_flags | iteminfo::lower_is_better, get_avg_encumber( get_avatar() ) );
 
@@ -1873,7 +1873,7 @@ std::string item::layer_to_string( layer_level data )
 }
 
 void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                                  int /*batch*/, bool /*debug*/, const sub_bodypart_id &sbp ) const
+                                  int, bool, const sub_bodypart_id &sbp ) const
 {
     if( !is_armor() && !is_pet_armor() ) {
         return;
@@ -1885,11 +1885,11 @@ void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_qu
         std::string bp_cat = string_format( "ARMOR" );
         std::string layering;
 
-        // get the layers this bit of the armor covers if its unique compared to the rest of the armor
+
         for( const layer_level &ll : get_layer( sbp ) ) {
             layering += string_format( "<stat>%s</stat>. ", item::layer_to_string( ll ) );
         }
-        // remove extra space from the end
+
         if( !layering.empty() ) {
             layering.pop_back();
         }
@@ -1922,9 +1922,9 @@ void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_qu
 
         bool printed_any = false;
 
-        // gather all the protection data
-        // the rolls are basically a perfect hit for protection and a
-        // worst possible
+
+
+
         resistances worst_res = resistances( *this, false, 99, sbp );
         resistances best_res = resistances( *this, false, 0, sbp );
         resistances median_res = resistances( *this, false, 50, sbp );
@@ -1932,7 +1932,7 @@ void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_qu
         int percent_best = 100;
         int percent_worst = 0;
         const armor_portion_data *portion = portion_for_bodypart( sbp );
-        // if there isn't a portion this is probably pet armor
+
         if( portion ) {
             percent_best = portion->best_protection_chance;
             percent_worst = portion->worst_protection_chance;
@@ -2000,7 +2000,7 @@ void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_qu
         }
         info.emplace_back( bp_cat, protection_table, info_flags );
 
-        // if we haven't printed any armor data acknowledge that
+
         if( !printed_any ) {
             info.emplace_back( bp_cat, string_format( "%s%s", space, _( "Negligible Protection" ) ) );
         }
@@ -2023,7 +2023,7 @@ void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_qu
     }
 }
 void item::armor_material_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                                int /*batch*/, bool /*debug*/, const sub_bodypart_id &sbp ) const
+                                int, bool, const sub_bodypart_id &sbp ) const
 {
     if( !is_armor() && !is_pet_armor() ) {
         return;
@@ -2047,7 +2047,7 @@ void item::armor_material_info( std::vector<iteminfo> &info, const iteminfo_quer
 }
 
 void item::armor_attribute_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                                 int /*batch*/, bool /*debug*/, const sub_bodypart_id &sbp ) const
+                                 int, bool, const sub_bodypart_id &sbp ) const
 {
     if( !is_armor() && !is_pet_armor() ) {
         return;
@@ -2100,7 +2100,7 @@ void item::pet_armor_protection_info( std::vector<iteminfo> &info,
 
 namespace
 {
-// simple struct used for organizing encumbrance in an ordered set
+
 struct armor_encumb_data {
     int encumb;
     int encumb_max;
@@ -2123,7 +2123,7 @@ bool operator<( const armor_encumb_data &lhs, const armor_encumb_data &rhs )
 {
     return lhs.encumb < rhs.encumb;
 }
-} // namespace
+}
 
 void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                        bool debug ) const
@@ -2138,8 +2138,8 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     const bool show_bodygraph = get_option<bool>( "ITEM_BODYGRAPH" ) &&
                                 parts->test( iteminfo_parts::ARMOR_BODYGRAPH );
 
-    // Filter displayed body parts to the viewing character's actual anatomy.
-    // A human sees "arms", a feathered-arm mutant sees "feathered arms", etc.
+
+
     const Character &viewer = get_player_character();
     body_part_set viewer_parts;
     viewer_parts.fill( viewer.get_all_body_parts() );
@@ -2155,7 +2155,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         std::string coverage = _( "<bold>Covers</bold>:" );
 
         if( covered.empty() && covers_anything ) {
-            // Viewer has none of the covered parts -- show unfiltered with annotation
+
             covered = get_covered_sub_body_parts();
             std::set<translation, localized_comparator> to_print = body_part_type::consolidate( covered );
             for( const translation &entry : to_print ) {
@@ -2177,23 +2177,23 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 
     if( parts->test( iteminfo_parts::ARMOR_RIGIDITY ) && ( is_rigid() || is_ablative() ) ) {
-        // if the item has no armor data it doesn't cover that part
+
         const islot_armor *armor = find_armor_data();
         if( armor != nullptr ) {
             if( armor->rigid ) {
                 std::string coverage = _( "<bold>This armor is rigid</bold>." );
                 info.emplace_back( "ARMOR", coverage );
             } else {
-                // only some parts are rigid
+
                 std::string coverage = _( "<bold>Rigid Locations</bold>:" );
                 std::set<sub_bodypart_id> covered;
-                // if ablative check if there are hard plates in locations
+
                 if( armor->ablative ) {
-                    // if item has ablative armor we should check those too.
+
                     for( const item_pocket *pocket : get_container_pockets() ) {
-                        // if the pocket is ablative and not empty we should use its values
+
                         if( pocket->get_pocket_data()->ablative && !pocket->empty() ) {
-                            // get the contained plate
+
                             const item &ablative_armor = pocket->front();
                             for( const armor_portion_data &entry : ablative_armor.find_armor_data()->sub_data ) {
                                 if( entry.rigid ) {
@@ -2231,14 +2231,14 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 
     if( parts->test( iteminfo_parts::ARMOR_RIGIDITY ) && is_comfortable() ) {
-        // if the item has no armor data it doesn't cover that part
+
         const islot_armor *armor = find_armor_data();
         if( armor != nullptr ) {
             if( armor->comfortable ) {
                 std::string coverage = _( "<bold>This armor is comfortable</bold>." );
                 info.emplace_back( "ARMOR", coverage );
             } else {
-                // only some parts are comfortable
+
                 std::string coverage = _( "<bold>Comfortable Locations</bold>:" );
                 std::vector<sub_bodypart_id> covered;
                 for( const armor_portion_data &entry : armor->sub_data ) {
@@ -2270,7 +2270,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 limb_groups[portion->coverage].emplace_back( bp );
             }
         }
-        // keep on one line if only 1 entry
+
         if( limb_groups.size() == 1 ) {
             info.emplace_back( "ARMOR", _( "<bold>Total Coverage</bold>" ), iteminfo::no_newline );
         } else {
@@ -2299,7 +2299,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
 
             limb_groups[encumbrance].emplace_back( bp );
         }
-        // keep on one line if only 1 entry
+
         if( limb_groups.size() == 1 ) {
             info.emplace_back( "ARMOR", _( "<bold>Encumbrance</bold>" ), iteminfo::no_newline );
         } else {
@@ -2313,20 +2313,20 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 coverage += string_format( _( " The <info>%s</info>." ), entry );
             }
 
-            //encumbrance_info = string_format( "%d", entry.first.encumb );
+
 
             // NOLINTNEXTLINE(cata-translate-string-literal)
             info.emplace_back( "ARMOR", space, "", iteminfo::no_newline | iteminfo::lower_is_better,
                                entry.first.encumb );
 
-            // if it has a max value
+
             if( entry.first.encumb != entry.first.encumb_max ) {
                 std::string when_full_message = _( ", When full" ) + space;
                 info.emplace_back( "ARMOR", when_full_message, "", iteminfo::no_newline | iteminfo::lower_is_better,
                                    entry.first.encumb_max );
             }
 
-            // if it has a min value
+
             if( entry.first.encumb != entry.first.encumb_min ) {
                 std::string when_empty_message = _( ", When empty" ) + space;
                 info.emplace_back( "ARMOR", when_empty_message, "",
@@ -2341,7 +2341,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         for( const bodypart_str_id &bp : display_parts ) {
             limb_groups[get_warmth( bp )].emplace_back( bp );
         }
-        // keep on one line if only 1 entry
+
         if( limb_groups.size() == 1 ) {
             info.emplace_back( "ARMOR", _( "<bold>Warmth</bold>" ), iteminfo::no_newline );
         } else {
@@ -2366,7 +2366,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 limb_groups[portion->breathability].emplace_back( bp );
             }
         }
-        // keep on one line if only 1 entry
+
         if( limb_groups.size() == 1 ) {
             info.emplace_back( "ARMOR", _( "<bold>Breathability</bold>" ), iteminfo::no_newline );
         } else {
@@ -2390,7 +2390,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         if( is_power_armor() || type->get_id() == itype_rm13_armor ) {
             item tmp = *this;
 
-            //no need to clutter the ui with inactive versions when the armor is already active
+
             if( !( active || ( type->tool && type->tool->power_draw > 0_W ) ) ) {
                 bool print_prot = true;
                 if( parts->test( iteminfo_parts::ARMOR_PROTECTION ) ) {
@@ -2426,7 +2426,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         }
     }
 
-    // Whatever the last entry was, we want a newline at this point
+
     info.back().bNewLine = true;
 
     if( show_bodygraph ) {
@@ -2434,7 +2434,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
 
         auto bg_cb = [this]( const bodygraph_part * bgp, const std::string & sym ) {
             if( !bgp ) {
-                return sym;  // it's " "
+                return sym;
             }
             std::set<sub_bodypart_id> grp{ bgp->sub_bodyparts.begin(), bgp->sub_bodyparts.end() };
             for( const bodypart_id &bid : bgp->bodyparts ) {
@@ -2471,7 +2471,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
 }
 
 void item::animal_armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                              int /*batch*/, bool /*debug*/ ) const
+                              int, bool ) const
 {
     if( !is_pet_armor() ) {
         return;
@@ -2479,8 +2479,8 @@ void item::animal_armor_info( std::vector<iteminfo> &info, const iteminfo_query 
     pet_armor_protection_info( info, parts );
 }
 
-void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
-                           bool /*debug*/ ) const
+void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                           bool ) const
 {
     if( !is_armor() ) {
         return;
@@ -2631,8 +2631,8 @@ void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *pa
     }
 }
 
-void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /* batch */,
-                      bool /* debug */ ) const
+void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                      bool ) const
 {
     if( !is_book() ) {
         return;
@@ -2641,7 +2641,7 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
     insert_separation_line( info );
     const islot_book &book = *type->book;
     avatar &player_character = get_avatar();
-    // Some things about a book you CAN tell by it's cover.
+
     if( !book.skill && !type->can_use( "MA_MANUAL" ) && parts->test( iteminfo_parts::BOOK_SUMMARY ) &&
         player_character.studied_all_recipes( *type ) ) {
         info.emplace_back( "BOOK", _( "Just for fun." ) );
@@ -2748,7 +2748,7 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
             std::vector<std::string> unlearnable_recipe_list;
             for( const islot_book::recipe_with_description_t &elem : book.recipes ) {
                 const bool knows_it = player_character.knows_recipe( elem.recipe );
-                // If the player knows it, they recognize it even if it's not clearly stated.
+
                 if( elem.is_hidden() && !knows_it ) {
                     continue;
                 }
@@ -2758,8 +2758,8 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
                     const char *const format = can_learn ? "<dark>%s</dark>" : "<color_brown>%s</color>";
                     practice_recipe_list.emplace_back( string_format( format, elem.recipe->result_name() ) );
                 } else if( knows_it ) {
-                    // In case the recipe is known, but has a different name in the book, use the
-                    // real name to avoid confusing the player.
+
+
                     known_recipe_list.emplace_back( string_format( "<bold>%s</bold>", elem.recipe->result_name() ) );
                 } else if( !can_learn ) {
                     unlearnable_recipe_list.emplace_back( string_format( "<color_brown>%s</color>", elem.name() ) );
@@ -2815,8 +2815,8 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
     }
 }
 
-void item::battery_info( std::vector<iteminfo> &info, const iteminfo_query * /*parts*/,
-                         int /*batch*/, bool /*debug*/ ) const
+void item::battery_info( std::vector<iteminfo> &info, const iteminfo_query *,
+                         int, bool ) const
 {
     if( !is_vehicle_battery() ) {
         return;
@@ -2837,8 +2837,8 @@ void item::battery_info( std::vector<iteminfo> &info, const iteminfo_query * /*p
     info.emplace_back( "BATTERY", info_string );
 }
 
-void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
-                      bool /*debug*/ ) const
+void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                      bool ) const
 {
     avatar &player_character = get_avatar();
 
@@ -2888,7 +2888,7 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         }
     }
 
-    // UPS, rechargeable power cells, and bionic power
+
     if( has_flag( flag_USE_UPS ) && parts->test( iteminfo_parts::DESCRIPTION_RECHARGE_UPSMODDED ) ) {
         info.emplace_back( "DESCRIPTION",
                            _( "* This tool has been modified to use a <info>universal "
@@ -2914,12 +2914,12 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
     } else if( has_flag( flag_BURNOUT ) && parts->test( iteminfo_parts::TOOL_BURNOUT ) ) {
         int percent_left = 0;
         if( has_ammo_data() ) {
-            // Candle items that use ammo instead of charges
-            // The capacity should never be zero but clang complains about it
+
+
             percent_left = 100 * ammo_remaining( ) / std::max( ammo_capacity( ammo_data()->ammo->type ),
                            1 );
         } else if( type->maximum_charges() > 0 ) {
-            // Candle items that use charges instead of ammo
+
             percent_left = 100 * ammo_remaining( ) / type->maximum_charges();
         }
 
@@ -2955,8 +2955,8 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         info.emplace_back( "DESCRIPTION", compat );
     }
 
-    //TODO: REMOVE THIS
-    // Display e-ink tablet copied recipes from SD cards
+
+
     const std::set<recipe_id> saved_recipes = get_saved_recipes();
     if( !saved_recipes.empty() ) {
         std::vector<std::string> known_recipe_list;
@@ -2969,8 +2969,8 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
             const bool knows_it = player_character.knows_recipe( r );
             const bool can_learn = player_character.get_skill_level( r->skill_used ) >= r->difficulty;
 
-            // In case the recipe is known, but has a different name in the item, use the
-            // real name to avoid confusing the player.
+
+
             const std::string name = r->result_name();
 
             if( knows_it ) {
@@ -3028,7 +3028,7 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         }
     }
 
-    // Display e-ink tablet ebook recipes
+
     if( is_estorage() && !is_broken_on_active() && is_browsed() ) {
         std::vector<std::string> known_recipe_list;
         std::vector<std::string> learnable_recipe_list;
@@ -3042,14 +3042,14 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
                 const bool knows_it = player_character.knows_recipe( elem.recipe );
                 const bool can_learn = player_character.get_skill_level( elem.recipe->skill_used ) >=
                                        elem.skill_level;
-                // If the player knows it, they recognize it even if it's not clearly stated.
+
                 if( elem.is_hidden() && !knows_it ) {
                     continue;
                 }
 
-                // In case the recipe is known, but has a different name in the book, use the
-                // real name to avoid confusing the player.
-                const std::string name = elem.recipe->result_name( /*decorated=*/true );
+
+
+                const std::string name = elem.recipe->result_name( true );
 
                 if( knows_it ) {
                     std::string recipe_formated = "<bold>" + name + "</bold>";
@@ -3126,7 +3126,7 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 }
 
 void item::actions_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                         int /*batch*/, bool /*debug*/ ) const
+                         int, bool ) const
 {
 
     const std::map<std::string, use_function> &use_methods = type->use_methods;
@@ -3141,8 +3141,8 @@ void item::actions_info( std::vector<iteminfo> &info, const iteminfo_query *part
     info.emplace_back( "DESCRIPTION", string_format( _( "<bold>Actions</bold>: %s" ), actions ) );
 }
 
-void item::component_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
-                           bool /*debug*/ ) const
+void item::component_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                           bool ) const
 {
     if( components.empty() || !parts->test( iteminfo_parts::DESCRIPTION_COMPONENTS_MADEFROM ) ) {
         return;
@@ -3163,9 +3163,9 @@ static void enchantment_info_helper( const item &it,
                                      std::vector<std::string> &inactive )
 {
     for( const enchantment &ench : it.get_defined_enchantments() ) {
-        // only check conditions matching the given type
+
         if( ench.active_conditions.first == type ) {
-            // if a description is provided use that
+
             if( !ench.description.empty() ) {
                 std::string info;
                 if( !ench.name.empty() ) {
@@ -3186,16 +3186,16 @@ static void enchantment_info_helper( const item &it,
                         break;
                     case enchantment::condition::DIALOG_CONDITION:
                     case enchantment::condition::NUM_CONDITION:
-                        // skip for dialog conditions
+
                         break;
                 }
             }
         }
     }
     for( const enchant_cache &ench : it.get_proc_enchantments() ) {
-        // only check conditions matching the given type
+
         if( ench.active_conditions.first == type ) {
-            // if a description is provided use that
+
             if( !ench.description.empty() ) {
                 std::string info;
                 if( !ench.name.empty() ) {
@@ -3216,7 +3216,7 @@ static void enchantment_info_helper( const item &it,
                         break;
                     case enchantment::condition::DIALOG_CONDITION:
                     case enchantment::condition::NUM_CONDITION:
-                        // skip for dialog conditions
+
                         break;
                 }
             }
@@ -3250,15 +3250,15 @@ static void enchantment_info_printer( std::vector<iteminfo> &info,
 }
 
 void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                             int /*batch*/, bool /*debug*/ ) const
+                             int, bool ) const
 {
     if( !parts->test( iteminfo_parts::DESCRIPTION_ENCHANTMENTS ) ) {
         return;
     }
     insert_separation_line( info );
-    // if the item has relic data and the item is mundane show some details
+
     if( type->relic_data ) {
-        // check WIELD
+
         std::vector<std::string> always;
         std::vector<std::string> active;
         std::vector<std::string> inactive;
@@ -3290,7 +3290,7 @@ void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query *
 }
 
 void item::repair_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                        int /*batch*/, bool /*debug*/ ) const
+                        int, bool ) const
 {
     if( !parts->test( iteminfo_parts::DESCRIPTION_REPAIREDWITH ) ) {
         return;
@@ -3322,7 +3322,7 @@ void item::repair_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 }
 
 void item::disassembly_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                             int /*batch*/, bool /*debug*/ ) const
+                             int, bool ) const
 {
     if( !components.empty() && parts->test( iteminfo_parts::DESCRIPTION_COMPONENTS_MADEFROM ) ) {
         return;
@@ -3376,10 +3376,10 @@ void item::disassembly_info( std::vector<iteminfo> &info, const iteminfo_query *
     }
 }
 
-void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
-                           bool /*debug*/ ) const
+void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                           bool ) const
 {
-    // Inline function to emplace a given quality (and its level) onto the info vector
+
     auto name_quality = [&info]( const std::pair<quality_id, int> &q ) {
         std::string str;
         if( q.first == qual_JACK || q.first == qual_LIFT ) {
@@ -3398,12 +3398,12 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
         info.emplace_back( "QUALITIES", "", str );
     };
 
-    // List all qualities of this item granted by its item type
+
     const bool has_any_qualities = !type->qualities.empty() || !type->charged_qualities.empty();
     if( parts->test( iteminfo_parts::QUALITIES ) && has_any_qualities ) {
         insert_separation_line( info );
-        // List all inherent (unconditional) qualities
-        // Helper to extract level-only pairs for display from item_quality maps
+
+
         const auto to_level_pairs = []( const std::map<quality_id, itype::item_quality> &qmap ) {
             std::map<quality_id, int> result;
             for( const auto &e : qmap ) {
@@ -3418,10 +3418,10 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
                 name_quality( q );
             }
         }
-        // Tools with "charged_qualities" defined may have additional qualities when charged.
-        // List them, and show whether there is enough charge to use those qualities.
+
+
         if( !type->charged_qualities.empty() && needs_charges_to_use() ) {
-            // Use ammo_sufficient() with player character to include bionic/UPS power
+
             if( ammo_sufficient( &get_player_character() ) ) {
                 info.emplace_back( "QUALITIES", "", _( "<good>Has enough charges</good> for qualities:" ) );
             } else if( uses_firing_requirements() ) {
@@ -3440,7 +3440,7 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
         }
     }
 
-    // Accumulate and list all qualities of items contained within this item
+
     if( parts->test( iteminfo_parts::QUALITIES_CONTAINED ) &&
     contents.has_any_with( []( const item & e ) {
     return !e.type->qualities.empty();
@@ -3463,8 +3463,8 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
     }
 }
 
-void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
-                        bool /*debug*/ ) const
+void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
+                        bool ) const
 {
     if( !is_bionic() ) {
         return;
@@ -3515,7 +3515,7 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
     }
     insert_separation_line( info );
 
-    // TODO refactor these almost identical blocks
+
     if( !bid->encumbrance.empty() ) {
         info.emplace_back( "DESCRIPTION", _( "<bold>Encumbrance</bold>:" ),
                            iteminfo::no_newline );
@@ -3559,8 +3559,8 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 }
 
 void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                              int /*batch*/,
-                              bool /*debug*/ ) const
+                              int,
+                              bool ) const
 {
     const std::string space = "  ";
 
@@ -3633,7 +3633,7 @@ void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query 
             info.emplace_back( "BASE", ( stam_pct ? _( "about " ) : _( "less than " ) ), "",
                                iteminfo::no_newline | iteminfo::is_decimal | iteminfo::lower_is_better,
                                ( stam_pct > 0.1 ? stam_pct : 0.1 ) );
-            // xgettext:no-c-format
+
             info.emplace_back( "BASE", _( "% stamina to swing." ), "" );
         }
 
@@ -3665,7 +3665,7 @@ void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query 
         }
     }
 
-    // display which martial arts styles character can use with this weapon
+
     if( parts->test( iteminfo_parts::DESCRIPTION_APPLICABLEMARTIALARTS ) ) {
         const std::string valid_styles = player_character.martial_arts_data->enumerate_known_styles(
                                              typeId() );
@@ -3691,7 +3691,7 @@ void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query 
         }
     }
 
-    ///\EFFECT_MELEE >2 allows seeing melee damage stats on weapons
+
     if( ( player_character.get_skill_level( skill_melee ) >= 3 &&
           ( !dmg_types.empty() || get_to_hit() > 0 ) ) || debug_mode ) {
         bodypart_id bp = bodypart_id( "torso" );
@@ -3706,7 +3706,7 @@ void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query 
         if( parts->test( iteminfo_parts::DESCRIPTION_MELEEDMG ) ) {
             info.emplace_back( "DESCRIPTION", _( "<bold>Average melee damage</bold>:" ) );
         }
-        // Chance of critical hit
+
         if( parts->test( iteminfo_parts::DESCRIPTION_MELEEDMG_CRIT ) ) {
             info.emplace_back( "DESCRIPTION",
                                string_format( _( "Critical hit chance <neutral>%d%% - %d%%</neutral>" ),
@@ -3719,8 +3719,8 @@ void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query 
             for( const damage_info_order &dio : damage_info_order::get_all(
                      damage_info_order::info_type::MELEE ) ) {
                 if( non_crit.type_damage( dio.dmg_type ) > 0 || crit.type_damage( dio.dmg_type ) > 0 ) {
-                    // NOTE: Using "BASE" instead of "DESCRIPTION", so numerical formatting will work
-                    // (output.cpp:format_item_info does not interpolate <num> for DESCRIPTION info)
+
+
                     info.emplace_back( "BASE", string_format( _( "%s: " ),
                                        uppercase_first_letter( dio.dmg_type->name.translated() ) ),
                                        "<num>", iteminfo::no_newline, non_crit.type_damage( dio.dmg_type ) );
@@ -3732,7 +3732,7 @@ void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query 
                 }
             }
         }
-        // Moves
+
         if( parts->test( iteminfo_parts::DESCRIPTION_MELEEDMG_MOVES ) ) {
             info.emplace_back( "BASE", _( "Adjusted moves per attack: " ), "<num>",
                                iteminfo::lower_is_better, attack_cost );
@@ -3771,7 +3771,7 @@ std::vector<std::pair<const item *, int>> get_item_duplicate_counts(
 
 
 void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                          bool /*debug*/ ) const
+                          bool ) const
 {
     if( ( toolmods().empty() && gunmods().empty() && contents.empty() ) ||
         !parts->test( iteminfo_parts::DESCRIPTION_CONTENTS ) ) {
@@ -3780,7 +3780,7 @@ void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *par
     const std::string space = "  ";
 
     for( const item *mod : is_gun() ? gunmods() : toolmods() ) {
-        // mod_str = "(Integrated) Mod: %mod_name% (%mod_location%) "
+
         std::string mod_str;
         if( mod->is_irremovable() ) {
             mod_str = _( "Integrated mod: " );
@@ -3808,7 +3808,7 @@ void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *par
             info.emplace_back( "DESCRIPTION", _( "<bold>Contents of this item</bold>:" ) );
             contents_header = true;
         } else {
-            // Separate items with a blank line
+
             info.emplace_back( "DESCRIPTION", space );
         }
 
@@ -3886,13 +3886,13 @@ void item::properties_info( std::vector<iteminfo> &info, const iteminfo_query *p
     }
 
     if( parts->test( iteminfo_parts::DESCRIPTION_FLAGS ) ) {
-        // concatenate base and acquired flags...
+
         cata::flat_set<flag_id> flags;
         flags.insert( get_flags().begin(), get_flags().end() );
         flags.insert( type->get_flags().begin(), type->get_flags().end() );
         flags.insert( inherited_tags_cache.begin(), inherited_tags_cache.end() );
 
-        // ...and display those which have an info description
+
         for( const flag_id &e : sorted_lex( flags ) ) {
             const json_flag &f = e.obj();
             if( !f.info().empty() ) {
@@ -3983,10 +3983,10 @@ void item::properties_info( std::vector<iteminfo> &info, const iteminfo_query *p
     }
 }
 
-// Cache for can_craft in final_info.
+
 static std::unordered_map<const recipe *, bool> can_craft_recipe_cache;
 static time_point cache_valid_turn;
-// Craftability changes within a turn, which the turn stamp alone cannot see.
+
 static uint64_t cache_valid_reservation_generation = 0;
 
 static bool can_craft_recipe( const recipe *r, const temp_crafting_inventory &crafting_inv )
@@ -4008,7 +4008,7 @@ static bool can_craft_recipe( const recipe *r, const temp_crafting_inventory &cr
 }
 
 void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                       bool /* debug */ ) const
+                       bool ) const
 {
     if( is_null() ) {
         return;
@@ -4045,8 +4045,8 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                     rec.simple_requirements().get_components();
                 int lot_size = 0;
 
-                // Making the assumption that milling only uses a single type of input product. Support for mixed products would require additional logic.
-                // We also make the assumption that this is the only relevant input, so if lubricants etc. was to be added more logic would be needed.
+
+
                 for( const std::vector<item_comp> &component : components ) {
                     for( const item_comp &comp : component ) {
                         if( comp.type == this->typeId() ) {
@@ -4148,9 +4148,9 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         }
     }
 
-    // Does the item fit into any armor?
+
     std::vector<std::reference_wrapper<const item>> armor_containers;
-    auto /*std::vector<item>::const_iterator*/ [begin, end] =
+    auto [begin, end] =
         item_controller->get_armor_containers( volume() );
     for( std::vector<item>::const_iterator iter = begin; iter != end; ++iter ) {
         if( iter->can_contain_directly( *this ).success() ) {
@@ -4163,7 +4163,7 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         const bool too_many_items = armor_containers.size() > 100;
         std::vector<std::string> armor_containers_str;
         for( const item &it : armor_containers ) {
-            // This sorts the green worn items in front of others, as '<' sorts before 'a', 'B' etc.
+
             if( player_character.is_wearing( it.type->get_id() ) ) {
                 armor_containers_str.emplace_back( string_format( "<good>%s</good>", it.type->nname( 1 ) ) );
             } else if( !too_many_items ) {
@@ -4230,7 +4230,7 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         info.emplace_back( "DESCRIPTION", ntext );
     }
 
-    // Price and barter value
+
     const int price_preapoc = price( false ) * batch;
     const int price_postapoc = price( true ) * batch;
     if( parts->test( iteminfo_parts::BASE_PRICE ) ) {
@@ -4246,9 +4246,9 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                            static_cast<double>( price_postapoc ) / 100 );
     }
 
-    // Recipes using this item as an ingredient
+
     if( parts->test( iteminfo_parts::DESCRIPTION_APPLICABLE_RECIPES ) ) {
-        // with the inventory display allowing you to select items, showing the things you could make with contained items could be confusing.
+
         const itype_id &tid = typeId();
         const temp_crafting_inventory &crafting_inv = player_character.crafting_inventory();
         const recipe_subset &available_recipe_subset = player_character.get_group_available_recipes();
@@ -4258,14 +4258,14 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         if( item_recipes.empty() ) {
             info.emplace_back( "DESCRIPTION", _( "You know of nothing you could craft with it." ) );
         } else {
-            // no inventory-backed item or power changes in this loop, so query caches hold
+
             temp_crafting_inventory::query_cache_scope cache_scope;
             std::vector<std::string> crafts;
             crafts.reserve( item_recipes.size() );
             for( const recipe *r : item_recipes ) {
                 const bool can_make = can_craft_recipe( r, crafting_inv );
-                // Endarken recipes that can't be crafted with the survivor's inventory
-                const std::string name = r->result_name( /* decorated = */ true );
+
+                const std::string name = r->result_name( true );
                 crafts.emplace_back( can_make ? name : string_format( "<dark>%s</dark>", name ) );
             }
             const std::string recipes = enumerate_lcsorted_with_limit( crafts, 15 );
@@ -4277,12 +4277,12 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         const ret_val<void> can_wear = player_character.can_wear( *this, true );
         if( !can_wear.success() ) {
             insert_separation_line( info );
-            // can_wear returns a translated string
+
             info.emplace_back( "DESCRIPTION", string_format( "<bad>%s</bad>", can_wear.str() ) );
         }
     }
 
-    // Vehicle parts or appliances using this item as a component
+
     if( parts->test( iteminfo_parts::DESCRIPTION_VEHICLE_PARTS ) ) {
         const itype_id tid = typeId();
         std::vector<vpart_info> vparts;
@@ -4306,13 +4306,13 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 } );
 
                 if( is_duplicate || !predicate( vp ) ) {
-                    continue; // skip part variants, they have same part names
+                    continue;
                 }
 
                 const bool can_install = player_character.meets_skill_requirements( vp.install_skills );
                 const std::string name = vp.name();
 
-                // Endarken parts that can't be installed with the character's skills
+
                 result_parts.emplace_back( can_install ? name : string_format( "<dark>%s</dark>", name ) );
             }
 
@@ -4340,9 +4340,9 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 }
 
-void item::ascii_art_info( std::vector<iteminfo> &info, const iteminfo_query * /* parts */,
-                           int  /* batch */,
-                           bool /* debug */ ) const
+void item::ascii_art_info( std::vector<iteminfo> &info, const iteminfo_query *,
+                           int,
+                           bool ) const
 {
     if( is_null() ) {
         return;
@@ -4384,8 +4384,8 @@ std::vector<iteminfo> item::get_info( const iteminfo_query *parts, int batch ) c
         debug_info( info, parts, batch, debug );
     }
 
-    // Different items might want to present the info blocks in different order, depending on what
-    // they consider more relevant.
+
+
     std::vector<std::string> all_info_blocks = {"big_block_of_stuff", "contents", "melee_combat_info", "footer"};
     std::vector<std::string> prio_info_blocks = { };
     item_category_id my_cat_id = get_category_shallow().id;
@@ -4424,7 +4424,7 @@ std::vector<iteminfo> item::get_info( const iteminfo_query *parts, int batch ) c
             if( is_gun() ) {
                 gun = this;
                 const gun_mode aux = gun_current_mode();
-                // if we have an active auxiliary gunmod display stats for this instead
+
                 if( aux && aux->is_gunmod() && aux->is_gun() &&
                     parts->test( iteminfo_parts::DESCRIPTION_AUX_GUNMOD_HEADER ) ) {
                     gun = &*aux;
@@ -4447,7 +4447,7 @@ std::vector<iteminfo> item::get_info( const iteminfo_query *parts, int batch ) c
             component_info( info, parts, batch, debug );
             qualities_info( info, parts, batch, debug );
 
-            // Uses for item (bandaging quality, holster capacity, grenade activation)
+
             if( parts->test( iteminfo_parts::DESCRIPTION_USE_METHODS ) ) {
                 for( const std::pair<const std::string, use_function> &method : type->use_methods ) {
                     insert_separation_line( info );
@@ -4583,7 +4583,7 @@ iteminfo vol_to_info( const std::string &type, const std::string &left,
 }
 
 iteminfo weight_to_info( const std::string &type, const std::string &left,
-                         const units::mass &weight, int /* decimal_places */, bool lower_is_better )
+                         const units::mass &weight, int, bool lower_is_better )
 {
     iteminfo::flags f = iteminfo::no_newline;
     if( lower_is_better ) {

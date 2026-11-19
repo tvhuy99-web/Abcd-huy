@@ -101,8 +101,8 @@ bool confirm_realtime_progression_for_accessibility()
     const std::string action = query_popup()
                                .context( "YESNOQUIT" )
                                .message( "%s", _( "Real-time turns are enabled.  Monsters may act periodically while you listen, "
-                                            "read menus, or prepare an action.  Yes keeps them enabled, No turns them "
-                                            "off and saves the setting, and Quit returns to the main menu." ) )
+                                         "read menus, or prepare an action.  Yes keeps them enabled, No turns them "
+                                         "off and saves the setting, and Quit returns to the main menu." ) )
                                .option( "YES" ).option( "NO" ).option( "QUIT" )
                                .cursor( 2 )
                                .query().action;
@@ -121,14 +121,14 @@ bool confirm_realtime_progression_for_accessibility()
     return true;
 }
 
-// The generic Delete/Reset prompts in world_tab name neither the world nor
-// what is lost. When the reader is on, state the consequences in full
-// (R07.1); query_yn already defaults its cursor to No.
+
+
+
 bool confirm_world_removal_for_reader( const std::string &worldname, size_t save_count,
                                        bool delete_world )
 {
     const std::string saves = string_format( n_gettext( "%lu save", "%lu saves", save_count ),
-                                save_count );
+                              save_count );
     if( delete_world ) {
         return query_yn( string_format(
                              _( "Delete the world \"%1$s\" permanently?  This deletes the world folder and all %2$s inside it. This cannot be undone." ),
@@ -138,7 +138,7 @@ bool confirm_world_removal_for_reader( const std::string &worldname, size_t save
                          _( "Reset the world \"%1$s\"? This removes all %2$s inside it and regenerates the world.  Its settings and mod list are kept.  This cannot be undone." ),
                          worldname, saves ) );
 }
-} // namespace
+}
 
 std::string main_menu::queued_world_to_load;
 std::string main_menu::queued_save_id_to_load;
@@ -170,28 +170,28 @@ static std::vector<std::string> game_settings_items()
 
 static void activate_game_settings_choice( const int choice, const bool in_game )
 {
-    if( choice == 0 ) {        /// Options
+    if( choice == 0 ) {
         get_options().show( in_game );
-    } else if( choice == 1 ) { /// Keybindings
+    } else if( choice == 1 ) {
         input_context ctxt_default = get_default_mode_input_context();
         ctxt_default.display_menu();
-    } else if( choice == 2 ) { /// Autopickup
+    } else if( choice == 2 ) {
         get_auto_pickup().show();
-    } else if( choice == 3 ) { /// Safemode
+    } else if( choice == 3 ) {
         get_safemode().show();
-    } else if( choice == 4 ) { /// Colors
+    } else if( choice == 4 ) {
         all_colors.show_gui();
     } else if( choice == 5 ) {
         style_picker picker;
         picker.show();
-    } else if( choice == 6 ) { /// ImGui demo
+    } else if( choice == 6 ) {
         if( a11y::enabled() ) {
-            // This developer-only visual demonstration has
-            // no semantic controls. Do not strand readers on
-            // a silent ImGui canvas. The explanatory text
-            // below has no Vietnamese translation yet (STT
-            // 174: both catalogs lack these strings), so at
-            // least the only action reads in Vietnamese.
+
+
+
+
+
+
             uilist accessible_demo( _( "ImGui demonstration" ), {} );
             accessible_demo.text = _(
                                        "This developer demonstration does not provide accessible game controls.  "
@@ -203,16 +203,16 @@ static void activate_game_settings_choice( const int choice, const bool in_game 
             demo.run();
         }
 #if defined(__ANDROID__)
-    } else if( choice == 7 ) { // Native Android TTS settings
+    } else if( choice == 7 ) {
         a11y::android::open_tts_settings();
-    } else if( choice == 8 ) { // Native game sound settings
+    } else if( choice == 8 ) {
         a11y::android::open_sound_settings(
             get_option<int>( "MUSIC_VOLUME" ),
             get_option<int>( "SOUND_EFFECT_VOLUME" ),
             get_option<bool>( "SOUND_ENABLED" ) );
-    } else if( choice == 9 ) { // Native accessibility preferences
+    } else if( choice == 9 ) {
         a11y::android::open_accessibility_settings();
-    } else if( choice == 10 ) { // Native backup and restore controls
+    } else if( choice == 10 ) {
         a11y::android::open_backup_restore();
 #endif
     }
@@ -242,7 +242,7 @@ void main_menu::on_error()
     sfx::play_variant_sound( "menu_error", "default", 100 );
 }
 
-//CJK characters have a width of 2, etc
+
 static int utf8_width_notags( const char *s )
 {
     int len = strlen( s );
@@ -392,25 +392,25 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
 
     point top_left( bottom_left + point( 0, -( sub_opts.size() + 1 ) ) );
 
-    // If sel2 somehow outgrew the options vector, clamp it back.
+
     sel2 = std::min<int>( sel2, sub_opts.size() );
 
     int height = sub_opts.size();
     if( top_left.y < 0 ) {
-        // Options don't fit screen. Decrease height till they do.
+
         height += top_left.y;
         top_left.y = 0;
 
-        // Calculate an offset from which to draw the options
+
         if( sel2 - 1 < sub_opt_off ) {
-            // Trying to go below the showed options, decrease our offset
+
             sub_opt_off = sel2;
         } else if( sel2 + 1 > sub_opt_off + height ) {
-            // We are going over the list the other way around - increase offset
+
             sub_opt_off = sel2 - height + 1;
         }
     } else {
-        // Options fit the screen, no offset required.
+
         sub_opt_off = 0;
     }
 
@@ -418,7 +418,7 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
     werase( w_sub );
     draw_border( w_sub, c_white );
 
-    // Print as many options as decided previously, starting from the index sub_opt_offset
+
     for( int y = 0; y < height; y++ ) {
         int opt_index = sub_opt_off + y;
         bool is_selection = sel2 == opt_index;
@@ -443,14 +443,14 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
 {
     main_menu_button_map.clear();
 
-    // Clear Lines
+
     werase( w_open );
 
-    // Define window size
+
     int window_width = getmaxx( w_open );
     int window_height = getmaxy( w_open );
 
-    // Draw horizontal line
+
     mvwhline( w_open, point( 1, window_height - 4 ), c_white, LINE_OXOX, window_width - 2 );
 
     if( iSel == getopt( main_menu_opts::NEWCHAR ) ) {
@@ -552,8 +552,8 @@ void main_menu::init_windows()
         return;
     }
 
-    // main window should also expand to use available display space.
-    // expanding to evenly use up half of extra space, for now.
+
+
     extra_w = ( ( TERMX - FULL_SCREEN_WIDTH ) / 2 ) - 1;
     int extra_h = ( ( TERMY - FULL_SCREEN_HEIGHT ) / 2 ) - 1;
     extra_w = ( extra_w > 0 ? extra_w : 0 );
@@ -561,23 +561,23 @@ void main_menu::init_windows()
     const int total_w = FULL_SCREEN_WIDTH + extra_w;
     const int total_h = FULL_SCREEN_HEIGHT + extra_h;
 
-    // position of window within main display
+
     const point p0( ( TERMX - total_w ) / 2, ( TERMY - total_h ) / 2 );
 
     w_open = catacurses::newwin( total_h, total_w, p0 );
 
     menu_offset.y = total_h - 3;
-    // note: if iMenuOffset is changed,
-    // please update MOTD and credits to indicate how long they can be.
+
+
 
     LAST_TERM = point( TERMX, TERMY );
 }
 
 void main_menu::init_strings()
 {
-    // ASCII Art
+
     mmenu_title = load_file( PATH_INFO::title( current_holiday ), _( "Cataclysm: Dark Days Ahead" ) );
-    // MOTD
+
     auto motd = load_file( PATH_INFO::motd(), _( "No message today." ) );
 
     mmenu_motd.clear();
@@ -587,7 +587,7 @@ void main_menu::init_strings()
     mmenu_motd = colorize( mmenu_motd, c_light_red );
     mmenu_motd_len = foldstring( mmenu_motd, FULL_SCREEN_WIDTH - 2 ).size();
 
-    // Credits
+
     mmenu_credits.clear();
     read_from_file_optional( PATH_INFO::credits(), [&]( std::istream & stream ) {
         std::string line;
@@ -603,7 +603,7 @@ void main_menu::init_strings()
     }
     mmenu_credits_len = foldstring( mmenu_credits, FULL_SCREEN_WIDTH - 2 ).size();
 
-    // fill menu with translated menu items
+
     vMenuItems.clear();
     vMenuItems.emplace_back( pgettext( "Main Menu", "<M|m>OTD" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "<N|n>ew Game" ) );
@@ -620,12 +620,12 @@ void main_menu::init_strings()
     vMenuItems.emplace_back( pgettext( "Main Menu", "<D|d>ebug Log" ) );
 #endif
 
-    // new game menu items
+
     vNewGameSubItems.clear();
     vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "C<u|U>stom Character" ) );
     vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "<P|p>reset Character" ) );
     vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "<R|r>andom Character" ) );
-    if( !MAP_SHARING::isSharing() ) { // "Play Now" function doesn't play well together with shared maps
+    if( !MAP_SHARING::isSharing() ) {
         vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game",
                                        "Play Now!  (<D|d>efault Scenario)" ) );
         vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "Play N<o|O>w!" ) );
@@ -646,7 +646,7 @@ void main_menu::init_strings()
         vNewGameHotkeys.push_back( get_hotkeys( item ) );
     }
 
-    // determine hotkeys from translated menu item text
+
     vMenuHotkeys.clear();
     for( const std::string &item : vMenuItems ) {
         vMenuHotkeys.push_back( get_hotkeys( item ) );
@@ -722,7 +722,7 @@ void main_menu::load_char_templates()
 
 bool main_menu::opening_screen()
 {
-    // set holiday based on local system time
+
     current_holiday = get_holiday_from_time();
 
     if( music::get_music_id() != music::music_id::title ) {
@@ -746,13 +746,13 @@ bool main_menu::opening_screen()
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
 
-    // for mouse selection
+
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SCROLL_UP" );
     ctxt.register_action( "SCROLL_DOWN" );
 
-    // for the menu shortcuts
+
     ctxt.register_action( "ANY_INPUT" );
     bool start = false;
     bool load_game = false;
@@ -762,7 +762,7 @@ bool main_menu::opening_screen()
 
     int sel_line = 0;
 
-    // Make [Load Game] the default cursor position if there's game save available
+
     if( !world_generator->get_all_worlds().empty() ) {
         std::vector<std::string> worlds = world_generator->all_worldnames();
         last_world_pos = world_generator->get_world_index( world_generator->last_world_name );
@@ -818,20 +818,22 @@ bool main_menu::opening_screen()
     EM_ASM( window.dispatchEvent( new Event( 'menuready' ) ); );
 #endif
 
-    // The visual menu overlays a submenu under nine persistent top-level
-    // tabs. For the screen reader, these are *separate navigation levels*:
-    // publishing both at once makes the five New Game modes unreachable.
+
+
+
     bool reader_submenu_open = false;
     a11y::screen_scope reader( &ctxt, "MAIN_MENU",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
             if( reader_submenu_open ) {
                 reader_submenu_open = false;
                 return "TIMEOUT";
             }
             return "QUIT";
         }
-        for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
+        for( std::size_t i = 0; i < vMenuItems.size(); ++i )
+        {
             if( intent.node == "tab:" + std::to_string( i ) ) {
                 if( sel1 != static_cast<int>( i ) ) {
                     reader_submenu_open = false;
@@ -850,8 +852,8 @@ bool main_menu::opening_screen()
                       ) {
                         return "CONFIRM";
                     }
-                    // Selecting a category enters its own accessible page;
-                    // don't implicitly execute the highlighted sub-choice.
+
+
                     const bool has_children = sel1 == getopt( main_menu_opts::NEWCHAR ) ||
                                               sel1 == getopt( main_menu_opts::SETTINGS ) ||
                                               sel1 == getopt( main_menu_opts::WORLD ) ||
@@ -868,16 +870,30 @@ bool main_menu::opening_screen()
                 return "TIMEOUT";
             }
         }
-        if( !reader_submenu_open ) {
+        if( !reader_submenu_open )
+        {
             return std::nullopt;
         }
         const std::string prefix = "item:" + std::to_string( sel1 ) + ':';
         int count = 0;
-        if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) { count = vNewGameSubItems.size(); }
-        if( sel1 == getopt( main_menu_opts::SETTINGS ) ) { count = vSettingsSubItems.size(); }
-        if( sel1 == getopt( main_menu_opts::LOADCHAR ) ) { count = world_generator->get_all_worlds().size(); }
-        if( sel1 == getopt( main_menu_opts::WORLD ) ) { count = world_generator->get_all_worlds().size() + 1; }
-        for( int i = 0; i < count; ++i ) {
+        if( sel1 == getopt( main_menu_opts::NEWCHAR ) )
+        {
+            count = vNewGameSubItems.size();
+        }
+        if( sel1 == getopt( main_menu_opts::SETTINGS ) )
+        {
+            count = vSettingsSubItems.size();
+        }
+        if( sel1 == getopt( main_menu_opts::LOADCHAR ) )
+        {
+            count = world_generator->get_all_worlds().size();
+        }
+        if( sel1 == getopt( main_menu_opts::WORLD ) )
+        {
+            count = world_generator->get_all_worlds().size() + 1;
+        }
+        for( int i = 0; i < count; ++i )
+        {
             if( intent.node == prefix + std::to_string( i ) ) {
                 sel2 = i;
                 sel_line = 0;
@@ -915,8 +931,12 @@ bool main_menu::opening_screen()
                 }
             }
             std::vector<std::string> items;
-            if( reader_submenu_open && sel1 == getopt( main_menu_opts::NEWCHAR ) ) { items = vNewGameSubItems; }
-            if( reader_submenu_open && sel1 == getopt( main_menu_opts::SETTINGS ) ) { items = vSettingsSubItems; }
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::NEWCHAR ) ) {
+                items = vNewGameSubItems;
+            }
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::SETTINGS ) ) {
+                items = vSettingsSubItems;
+            }
             if( reader_submenu_open && sel1 == getopt( main_menu_opts::WORLD ) ) {
                 items.emplace_back( _( "Create New World" ) );
             }
@@ -938,7 +958,7 @@ bool main_menu::opening_screen()
                     node.detail = remove_color_tags( vNewGameHints[i] );
                     if( i == 3 || i == 4 ) {
                         node.detail += " " + std::string( _(
-                                               "Creates a NEW character.  To continue a saved character, choose Load Game." ) );
+                                                              "Creates a NEW character.  To continue a saved character, choose Load Game." ) );
                     }
                 }
                 if( sel1 == getopt( main_menu_opts::WORLD ) && i == 0 ) {
@@ -971,7 +991,8 @@ bool main_menu::opening_screen()
                 body.id = "document:" + std::to_string( sel1 );
                 body.role = "document";
                 body.label = _( "Read this text" );
-                body.detail = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd : mmenu_credits );
+                body.detail = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
+                                                 mmenu_credits );
                 snapshot.nodes.push_back( std::move( body ) );
             }
             reader.update( std::move( snapshot ), true );
@@ -979,7 +1000,7 @@ bool main_menu::opening_screen()
         std::string action = ctxt.handle_input();
         input_event sInput = ctxt.get_raw_input();
 
-        // check automatic menu shortcuts
+
         bool match = false;
         for( int i = 0; static_cast<size_t>( i ) < vMenuHotkeys.size() && !match; ++i ) {
             for( const std::string &hotkey : vMenuHotkeys[i] ) {
@@ -1023,7 +1044,7 @@ bool main_menu::opening_screen()
             }
         }
 
-        // handle mouse click
+
         if( action == "SELECT" || action == "MOUSE_MOVE" ) {
             std::optional<point> coord = ctxt.get_coordinates_text( catacurses::stdscr );
             for( const auto &it : main_menu_button_map ) {
@@ -1063,7 +1084,7 @@ bool main_menu::opening_screen()
             }
         }
 
-        // also check special keys
+
         if( action == "QUIT" ) {
 #if !defined(EMSCRIPTEN)
             if( query_yn( _( "Really quit?" ) ) ) {
@@ -1105,7 +1126,7 @@ bool main_menu::opening_screen()
                     max_item_count = world_generator->get_all_worlds().size();
                     break;
                 case main_menu_opts::WORLD:
-                    // extra 1 = "Create New World"
+
                     max_item_count = world_generator->get_all_worlds().size() + 1;
                     break;
                 case main_menu_opts::NEWCHAR:
@@ -1172,7 +1193,7 @@ bool main_menu::opening_screen()
                             world_generator->set_active_world( nullptr );
                         } );
                         g->gamemode = get_special_game( special_game_type::TUTORIAL );
-                        // check world
+
                         WORLD *world = world_generator->make_new_world( special_game_type::TUTORIAL );
                         if( world == nullptr ) {
                             break;
@@ -1247,7 +1268,7 @@ bool main_menu::new_character_tab()
     }
 
     avatar &pc = get_avatar();
-    // Preset character templates
+
     if( sel2 == 1 ) {
         if( templates.empty() ) {
             on_error();
@@ -1282,8 +1303,8 @@ bool main_menu::new_character_tab()
                     const std::string deleted_template = templates[opt_val];
                     templates.erase( templates.begin() + opt_val );
                     if( a11y::enabled() ) {
-                        // A successful delete otherwise announces nothing;
-                        // the failure case already has its popup above.
+
+
                         popup( _( "Template \"%s\" deleted." ), deleted_template );
                     }
                 }
@@ -1328,15 +1349,15 @@ bool main_menu::new_character_tab()
                 return false;
             }
         }
-    } else { ///Non-template options
+    } else {
         on_out_of_scope cleanup( [&pc]() {
             pc = avatar();
             world_generator->set_active_world( nullptr );
         } );
         g->gamemode = nullptr;
-        // First load the mods, this is done by
-        // loading the world.
-        // Pick a world, suppressing prompts if it's "play now" mode.
+
+
+
         const bool is_play_now = sel2 == 3 || sel2 == 4;
         if( a11y::enabled() && is_play_now ) {
             const bool has_saves = std::any_of( world_generator->get_all_worlds().begin(),
@@ -1348,8 +1369,8 @@ bool main_menu::new_character_tab()
                                             "To resume, use Load Game.  Create another new character?" ) ) ) {
                 return false;
             }
-            // Quick Play can spend a long time generating a world without a
-            // menu snapshot. Confirm activation before the loading UI appears.
+
+
             a11y::android::announce( "A11Y_LOADING:" +
                                      std::string( _( "Preparing a new world.  Please wait." ) ), 1 );
         }
@@ -1426,7 +1447,7 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         cache_mod_ids.push_back( mod.str() );
     }
     blueprint_cache::begin( ( world->folder_path() /
-                             ( savegame.base_path() + ".loadcache" ) ).get_unrelative_path(),
+                              ( savegame.base_path() + ".loadcache" ) ).get_unrelative_path(),
                             getVersionString(), cache_mod_ids,
                             ( world->folder_path() / PATH_INFO::worldoptions() ).get_unrelative_path() );
 #endif
@@ -1438,9 +1459,9 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
 #endif
         debugmsg( "Error: %s", err.what() );
         if( a11y::enabled() ) {
-            // R20.1: a failed load must speak and must offer a way back.
-            // Nothing about the save is touched here; returning false lets
-            // the main menu loop offer another save or world.
+
+
+
             popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded because the "
                       "world could not be prepared.  The save was not changed, overwritten, or "
                       "deleted.  You can try another save or world from the main menu." ),
@@ -1471,12 +1492,12 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
     blueprint_cache::clear();
 #endif
     if( a11y::enabled() ) {
-        // game::load fails silently (or through debugmsg) for a damaged,
-        // missing or incompatible character save. Name the save, state
-        // that it was left untouched, and name the recovery path: the
-        // caller returns to the load list / main menu, where another save
-        // can be chosen. No save data is overwritten or deleted on this
-        // path.
+
+
+
+
+
+
         popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded.  It may be "
                   "damaged, missing, or from an incompatible version.  The save was not "
                   "changed, overwritten, or deleted.  You can choose another save or return "
@@ -1505,11 +1526,11 @@ static std::optional<std::chrono::seconds> get_playtime_from_save( const WORLD *
     return pt_seconds;
 }
 
-// R20.1: the save file's own modification time, formatted for the reader
-// list. This is filesystem data about the exact file the engine would
-// load (plain or zzip-compressed); when neither file exists or the time
-// cannot be read, there is nothing truthful to publish and the result
-// is empty.
+
+
+
+
+
 static std::string get_save_last_saved_text( const WORLD *world, const save_t &save )
 {
     const cata_path folder = world->folder_path();
@@ -1526,7 +1547,7 @@ static std::string get_save_last_saved_text( const WORLD *world, const save_t &s
     if( ec ) {
         return std::string();
     }
-    // Same file-time to system-time conversion as tgz_archiver uses.
+
     const std::time_t when = std::chrono::system_clock::to_time_t(
                                  std::chrono::time_point_cast<std::chrono::system_clock::duration>(
                                      mtime - std::filesystem::file_time_type::clock::now() +
@@ -1545,15 +1566,15 @@ static std::string get_save_last_saved_text( const WORLD *world, const save_t &s
     return buffer;
 }
 
-// R20.1: delete one character's save files inside its world folder. The
-// set removed is the one the engine itself treats as belonging to the
-// character: every file whose name starts with the save's base path
-// (the same prefix game::move_save_to_graveyard uses for a dead
-// character: .sav/.sav.zzip, .sav.log, .pt, .sav.shortcuts, ...), plus
-// the diary file, which is named from save_id + "_diary" instead of the
-// save prefix. World files, other characters' saves, and files outside
-// the world folder (memorials, achievements) are not touched. Returns
-// true only when the loadable save file itself is gone afterwards.
+
+
+
+
+
+
+
+
+
 static bool delete_character_save_files( const WORLD *world, const save_t &save )
 {
     const cata_path folder = world->folder_path();
@@ -1585,12 +1606,12 @@ bool main_menu::load_character_tab( const std::string &worldname )
         return false;
     }
 
-    // With the reader on, selecting a save opens a Load/Delete/Cancel
-    // choice first (R20.1): browsing never loads, loading is its own
-    // confirmation, and deleting one save is a separate confirmation
-    // that names the save. The list is rebuilt after a deletion so the
-    // reader never acts on a stale entry. With the reader off the
-    // original one-step list is kept exactly as it was.
+
+
+
+
+
+
     while( true ) {
         uilist mmenu;
         mmenu.title = string_format( _( "Load character from \"%s\"" ), worldname );
@@ -1608,13 +1629,13 @@ bool main_menu::load_character_tab( const std::string &worldname )
                 playtime_str = string_format( "<color_c_light_blue>[%02d:%02d:%02d]</color>",
                                               pt_hrs, pt_min, static_cast<int>( pt_sec ) );
             }
-            // TODO: Replace this API to allow adding context without an empty description.
+
             mmenu.entries.emplace_back( opt_val++, true, MENU_AUTOASSIGN, save_str, "", playtime_str );
             if( a11y::enabled() ) {
-                // Reader-only details from the same engine data the list
-                // itself uses: the world, the recorded play time (or the
-                // fact that none was recorded) and the save file's own
-                // modification time when it can be read.
+
+
+
+
                 std::string details = string_format( _( "World: %s." ), worldname );
                 if( playtime ) {
                     std::chrono::seconds::rep tmp_sec = playtime->count();
@@ -1665,9 +1686,9 @@ bool main_menu::load_character_tab( const std::string &worldname )
                 savegames.erase( savegames.begin() + opt_val );
                 popup( _( "Save for \"%s\" deleted." ), chosen.decoded_name() );
             } else {
-                // The entry stays in the list: claiming a deletion that
-                // did not happen would strand the reader with a save
-                // they believe is gone.
+
+
+
                 popup( _( "The save for \"%s\" could not be deleted completely, so it has not been removed from the list." ),
                        chosen.decoded_name() );
             }
@@ -1680,7 +1701,7 @@ bool main_menu::load_character_tab( const std::string &worldname )
 
 void main_menu::world_tab( const std::string &worldname )
 {
-    // Create world
+
     if( sel2 == 0 ) {
         WORLD *world = world_generator->make_new_world();
         // NOLINTNEXTLINE(cata-use-localized-sorting)
@@ -1706,20 +1727,22 @@ void main_menu::world_tab( const std::string &worldname )
         return;
     }
 
-    // Returns false when the world folder (delete) or its saves (reset)
-    // survived the removal, so the caller can report the failure instead
-    // of the unconditional success popup. delete_world itself
-    // reports nothing, and its signature cannot change here.
+
+
+
+
     auto clear_world = [this, &worldname]( bool do_delete ) -> bool {
         // NOLINTNEXTLINE(cata-use-localized-sorting)
-        if( last_world_pos > 0 && worldname <= world_generator->all_worldnames()[last_world_pos] ) {
+        if( last_world_pos > 0 && worldname <= world_generator->all_worldnames()[last_world_pos] )
+        {
             last_world_pos--;
         }
         const WORLD *world = world_generator->get_world( worldname );
         const std::filesystem::path folder = world != nullptr
-                                             ? world->folder_path().get_unrelative_path()
-                                             : std::filesystem::path();
-        if( folder.empty() ) {
+        ? world->folder_path().get_unrelative_path()
+        : std::filesystem::path();
+        if( folder.empty() )
+        {
             return false;
         }
         world_generator->delete_world( worldname, do_delete );
@@ -1727,22 +1750,25 @@ void main_menu::world_tab( const std::string &worldname )
         MAPBUFFER.clear();
         overmap_buffer.clear();
         std::error_code ec;
-        if( do_delete ) {
+        if( do_delete )
+        {
             const bool gone = !std::filesystem::exists( folder, ec );
             if( ec || !gone ) {
                 return false;
             }
-            sel2 = 0; // reset to create world selection
+            sel2 = 0;
             return true;
         }
-        // Reset keeps the folder by design, but only options, the mod
-        // list and compression dictionaries may remain. Any other file
-        // means the saves were not actually removed.
-        if( !std::filesystem::exists( folder, ec ) ) {
+
+
+
+        if( !std::filesystem::exists( folder, ec ) )
+        {
             return false;
         }
         for( std::filesystem::recursive_directory_iterator it( folder, ec ), end;
-             !ec && it != end; it.increment( ec ) ) {
+             !ec && it != end; it.increment( ec ) )
+        {
             if( !it->is_regular_file( ec ) ) {
                 continue;
             }
@@ -1758,14 +1784,14 @@ void main_menu::world_tab( const std::string &worldname )
     };
 
     switch( opt_val ) {
-        case 0: // Active World Mods
+        case 0:
             world_generator->show_active_world_mods(
                 world_generator->get_world( worldname )->active_mod_order );
             break;
-        case 1: // Copy World settings
+        case 1:
             world_generator->make_new_world( true, worldname );
             break;
-        case 2: // Character to Template
+        case 2:
             if( load_character_tab( worldname ) ) {
                 avatar &pc = get_avatar();
                 pc.setID( character_id(), true );
@@ -1777,13 +1803,13 @@ void main_menu::world_tab( const std::string &worldname )
                 load_char_templates();
             }
             break;
-        case 3: // Toggle save compression
+        case 3:
             if( world_generator->get_world( worldname )->has_compression_enabled() ) {
                 if( query_yn( _( "Disable save compression?" ) ) ) {
                     const bool changed = world_generator->get_world( worldname )
                                          ->set_compression_enabled( false );
                     if( a11y::enabled() ) {
-                        // The toggle otherwise gives the reader no result.
+
                         popup( changed ? _( "Save compression disabled for world \"%s\"." )
                                : _( "Save compression could not be changed for world \"%s\"." ),
                                worldname );
@@ -1801,7 +1827,7 @@ void main_menu::world_tab( const std::string &worldname )
                 }
             }
             break;
-        case 4: { // Delete World
+        case 4: {
             WORLD *world = world_generator->get_world( worldname );
             const size_t save_count = world != nullptr ? world->world_saves.size() : 0;
             const bool confirmed = a11y::enabled()
@@ -1816,7 +1842,7 @@ void main_menu::world_tab( const std::string &worldname )
             }
             break;
         }
-        case 5: { // Reset World
+        case 5: {
             WORLD *world = world_generator->get_world( worldname );
             const size_t save_count = world != nullptr ? world->world_saves.size() : 0;
             const bool confirmed = a11y::enabled()
@@ -1826,7 +1852,7 @@ void main_menu::world_tab( const std::string &worldname )
                 const bool reset = clear_world( false );
                 if( a11y::enabled() ) {
                     popup( reset ? _( "World \"%s\" reset.  All of its saves were removed." )
-                         : _( "World \"%s\" could not be reset." ), worldname );
+                           : _( "World \"%s\" could not be reset." ), worldname );
                 }
             }
             break;

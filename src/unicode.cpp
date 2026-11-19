@@ -6,56 +6,56 @@
 #include <utility>
 #include <vector>
 
-// https://en.wikipedia.org/wiki/Unicode_block
+
 static const std::vector<std::pair<uint32_t, uint32_t>> cjk_or_emoji_ranges = {
-    { 0x1100, 0x11FF }, // Hangul Jamo
-    { 0x2600, 0x26FF }, // Miscellaneous Symbols
-    { 0x2700, 0x27BF }, // Dingbats
-    { 0x2E80, 0x2EFF }, // CJK Radicals Supplement
-    { 0x2F00, 0x2FDF }, // Kangxi Radicals
-    { 0x2FF0, 0x2FFF }, // Ideographic Description Characters
-    { 0x3000, 0x303F }, // CJK Symbols and Punctuation
-    { 0x3040, 0x309F }, // Hiragana
-    { 0x30A0, 0x30FF }, // Katakana
-    { 0x3100, 0x312F }, // Bopomofo
-    { 0x3130, 0x318F }, // Hangul Compatibility Jamo
-    { 0x3190, 0x319F }, // Kanbun
-    { 0x31A0, 0x31BF }, // Bopomofo Extended
-    { 0x31C0, 0x31EF }, // CJK Strokes
-    { 0x31F0, 0x31FF }, // Katakana Phonetic Extensions
-    { 0x3200, 0x32FF }, // Enclosed CJK Letters and Months
-    { 0x3300, 0x33FF }, // CJK Compatibility
-    { 0x3400, 0x4DBF }, // CJK Unified Ideographs Extension A
-    { 0x4DC0, 0x4DFF }, // Yijing Hexagram Symbols
-    { 0x4E00, 0x9FFF }, // CJK Unified Ideographs
-    { 0xA960, 0xA97F }, // Hangul Jamo Extended-A
-    { 0xAC00, 0xD7AF }, // Hangul Syllables
-    { 0xD7B0, 0xD7FF }, // Hangul Jamo Extended-B
-    { 0xF900, 0xFAFF }, // CJK Compatibility Ideographs
-    { 0xFE30, 0xFE4F }, // CJK Compatibility Forms
-    { 0x1AFF0, 0x1AFFF }, // Kana Extended-B
-    { 0x1B000, 0x1B0FF }, // Kana Supplement
-    { 0x1B100, 0x1B12F }, // Kana Extended-A
-    { 0x1B130, 0x1B16F }, // Small Kana Extension
-    { 0x1F000, 0x1F02F }, // Mahjong Tiles
-    { 0x1F030, 0x1F09F }, // Domino Tiles
-    { 0x1F0A0, 0x1F0FF }, // Playing Cards
-    { 0x1F100, 0x1F1FF }, // Enclosed Alphanumeric Supplement
-    { 0x1F200, 0x1F2FF }, // Enclosed Ideographic Supplement
-    { 0x1F300, 0x1F5FF }, // Miscellaneous Symbols and Pictographs
-    { 0x1F600, 0x1F64F }, // Emoticons
-    { 0x1F650, 0x1F67F }, // Ornamental Dingbats
-    { 0x1F680, 0x1F6FF }, // Transport and Map Symbols
-    { 0x1F700, 0x1F77F }, // Alchemical Symbols
-    { 0x1F900, 0x1F9FF }, // Supplemental Symbols and Pictographs
-    { 0x1FA70, 0x1FAFF }, // Symbols and Pictographs Extended-A
-    { 0x20000, 0x2A6DF }, // CJK Unified Ideographs Extension B
-    { 0x2A700, 0x2B73F }, // CJK Unified Ideographs Extension C
-    { 0x2B740, 0x2B81F }, // CJK Unified Ideographs Extension D
-    { 0x2B820, 0x2CEAF }, // CJK Unified Ideographs Extension E
-    { 0x2CEB0, 0x2EBEF }, // CJK Unified Ideographs Extension F
-    { 0x2F800, 0x2FA1F }, // CJK Compatibility Ideographs Supplement
-    { 0x30000, 0x3134F }, // CJK Unified Ideographs Extension G
+    { 0x1100, 0x11FF },
+    { 0x2600, 0x26FF },
+    { 0x2700, 0x27BF },
+    { 0x2E80, 0x2EFF },
+    { 0x2F00, 0x2FDF },
+    { 0x2FF0, 0x2FFF },
+    { 0x3000, 0x303F },
+    { 0x3040, 0x309F },
+    { 0x30A0, 0x30FF },
+    { 0x3100, 0x312F },
+    { 0x3130, 0x318F },
+    { 0x3190, 0x319F },
+    { 0x31A0, 0x31BF },
+    { 0x31C0, 0x31EF },
+    { 0x31F0, 0x31FF },
+    { 0x3200, 0x32FF },
+    { 0x3300, 0x33FF },
+    { 0x3400, 0x4DBF },
+    { 0x4DC0, 0x4DFF },
+    { 0x4E00, 0x9FFF },
+    { 0xA960, 0xA97F },
+    { 0xAC00, 0xD7AF },
+    { 0xD7B0, 0xD7FF },
+    { 0xF900, 0xFAFF },
+    { 0xFE30, 0xFE4F },
+    { 0x1AFF0, 0x1AFFF },
+    { 0x1B000, 0x1B0FF },
+    { 0x1B100, 0x1B12F },
+    { 0x1B130, 0x1B16F },
+    { 0x1F000, 0x1F02F },
+    { 0x1F030, 0x1F09F },
+    { 0x1F0A0, 0x1F0FF },
+    { 0x1F100, 0x1F1FF },
+    { 0x1F200, 0x1F2FF },
+    { 0x1F300, 0x1F5FF },
+    { 0x1F600, 0x1F64F },
+    { 0x1F650, 0x1F67F },
+    { 0x1F680, 0x1F6FF },
+    { 0x1F700, 0x1F77F },
+    { 0x1F900, 0x1F9FF },
+    { 0x1FA70, 0x1FAFF },
+    { 0x20000, 0x2A6DF },
+    { 0x2A700, 0x2B73F },
+    { 0x2B740, 0x2B81F },
+    { 0x2B820, 0x2CEAF },
+    { 0x2CEB0, 0x2EBEF },
+    { 0x2F800, 0x2FA1F },
+    { 0x30000, 0x3134F },
 };
 
 static bool compare_range_end( const std::pair<uint32_t, uint32_t> &range,
@@ -74,32 +74,32 @@ bool is_cjk_or_emoji( const uint32_t ch )
 
 char32_t u32_to_lowercase( const char32_t ch )
 {
-    // Reference: https://en.wikibooks.org/wiki/Unicode/Character_reference/0000-0FFF
-    if( ( 0x41 <= ch && ch <= 0x5a ) // A - Z
-        || ( 0xc0 <= ch && ch <= 0xd6 ) // accented latin
-        || ( 0xd8 <= ch && ch <= 0xde ) // accented latin
-        || ( 0x391 <= ch && ch <= 0x3a1 ) // greek Α - Ρ
-        || ( 0x3a3 <= ch && ch <= 0x3a9 ) // greek Σ - Ω
-        || ( 0x410 <= ch && ch <= 0x42f ) ) { // cyrillic А - cyrillic Я
+
+    if( ( 0x41 <= ch && ch <= 0x5a )
+        || ( 0xc0 <= ch && ch <= 0xd6 )
+        || ( 0xd8 <= ch && ch <= 0xde )
+        || ( 0x391 <= ch && ch <= 0x3a1 )
+        || ( 0x3a3 <= ch && ch <= 0x3a9 )
+        || ( 0x410 <= ch && ch <= 0x42f ) ) {
         return ch + 0x20;
     } else if( 0x400 <= ch && ch <= 0x40f ) {
-        // cyrillic Ѐ - cyrillic Џ
+
         return ch + 0x50;
-    } else if( ch == 0x178 ) { // latin Ÿ
+    } else if( ch == 0x178 ) {
         return 0xff;
-    } else if( ch == 0x1e9e ) { // latin capital letter sharp s
+    } else if( ch == 0x1e9e ) {
         return 0x00df;
-    } else if( ( 0x100 <= ch && ch <= 0x136 ) // latin Ā - latin Ķ
-               || ( 0x14a <= ch && ch <= 0x176 ) // latin Ŋ - latin Ŷ
-               || ( 0x460 <= ch && ch <= 0x480 ) // cyrillic Ѡ - cyrillic Ҁ
-               || ( 0x490 <= ch && ch <= 0x4be )  // cyrillic Ґ - cyrillic Ҿ
-               || ( 0x4d0 <= ch && ch <= 0x52e ) ) { // cyrillic Ӑ - cyrillic Ԯ
+    } else if( ( 0x100 <= ch && ch <= 0x136 )
+               || ( 0x14a <= ch && ch <= 0x176 )
+               || ( 0x460 <= ch && ch <= 0x480 )
+               || ( 0x490 <= ch && ch <= 0x4be )
+               || ( 0x4d0 <= ch && ch <= 0x52e ) ) {
         if( ( ch & 1 ) == 0 ) {
             return ch + 1;
         }
-    } else if( ( 0x139 <= ch && ch <= 0x147 ) // latin Ĺ - latin Ň
-               || ( 0x179 <= ch && ch <= 0x17d ) // latin Ź - latin Ž
-               || ( 0x4c1 <= ch && ch <= 0x4cb ) ) { // cyrillic Ӂ - cyrillic Ӌ
+    } else if( ( 0x139 <= ch && ch <= 0x147 )
+               || ( 0x179 <= ch && ch <= 0x17d )
+               || ( 0x4c1 <= ch && ch <= 0x4cb ) ) {
         if( ( ch & 1 ) == 1 ) {
             return ch + 1;
         }
@@ -109,34 +109,34 @@ char32_t u32_to_lowercase( const char32_t ch )
 
 char32_t u32_to_uppercase( const char32_t ch )
 {
-    // Reference: https://en.wikibooks.org/wiki/Unicode/Character_reference/0000-0FFF
-    if( ( 0x61 <= ch && ch <= 0x7a ) // a - z
-        || ( 0xe0 <= ch && ch <= 0xf6 ) // accented latin
-        || ( 0xf8 <= ch && ch <= 0xfe ) // accented latin
-        || ( 0x3b1 <= ch && ch <= 0x3c1 ) // greek α - ρ
-        || ( 0x3c3 <= ch && ch <= 0x3c9 ) // greek σ - ω
-        || ( 0x430 <= ch && ch <= 0x44f ) ) { // cyrillic а - cyrillic я
+
+    if( ( 0x61 <= ch && ch <= 0x7a )
+        || ( 0xe0 <= ch && ch <= 0xf6 )
+        || ( 0xf8 <= ch && ch <= 0xfe )
+        || ( 0x3b1 <= ch && ch <= 0x3c1 )
+        || ( 0x3c3 <= ch && ch <= 0x3c9 )
+        || ( 0x430 <= ch && ch <= 0x44f ) ) {
         return ch - 0x20;
-    } else if( 0x450 <= ch && ch <= 0x45f ) { // cyrillic ѐ - cyrillic џ
+    } else if( 0x450 <= ch && ch <= 0x45f ) {
         return ch - 0x50;
-    } else if( ch == 0xff ) { // latin ÿ
+    } else if( ch == 0xff ) {
         return 0x178;
     } else if( ch == 0x00df ) {
-        // latin small letter sharp s
+
         return 0x1e9e;
-    } else if( ch == 0x3c2 ) { // greek final sigma
+    } else if( ch == 0x3c2 ) {
         return 0x3a3;
-    } else if( ( 0x101 <= ch && ch <= 0x137 ) // latin ā - latin ķ
-               || ( 0x14b <= ch && ch <= 0x177 ) // latin ŋ - latin ŷ
-               || ( 0x461 <= ch && ch <= 0x481 ) // cyrillic ѡ - cyrillic ҁ
-               || ( 0x491 <= ch && ch <= 0x4bf )  // cyrillic ґ - cyrillic ҿ
-               || ( 0x4d1 <= ch && ch <= 0x52f ) ) { // cyrillic ӑ - cyrillic ԯ
+    } else if( ( 0x101 <= ch && ch <= 0x137 )
+               || ( 0x14b <= ch && ch <= 0x177 )
+               || ( 0x461 <= ch && ch <= 0x481 )
+               || ( 0x491 <= ch && ch <= 0x4bf )
+               || ( 0x4d1 <= ch && ch <= 0x52f ) ) {
         if( ( ch & 1 ) == 1 ) {
             return ch - 1;
         }
-    } else if( ( 0x13a <= ch && ch <= 0x148 ) // latin Ĺ - latin Ň
-               || ( 0x17a <= ch && ch <= 0x17e ) // latin ź - latin ž
-               || ( 0x4c2 <= ch && ch <= 0x4cc ) ) { // cyrillic ӂ - cyrillic ӌ
+    } else if( ( 0x13a <= ch && ch <= 0x148 )
+               || ( 0x17a <= ch && ch <= 0x17e )
+               || ( 0x4c2 <= ch && ch <= 0x4cc ) ) {
         if( ( ch & 1 ) == 0 ) {
             return ch - 1;
         }
@@ -174,8 +174,8 @@ void remove_accent( char32_t &ch )
 
 bool u32_isspace( const char32_t ch )
 {
-    // Reference: ISO/IEC 30112 WD10 page 30
-    // https://www.open-std.org/JTC1/SC35/WG5/docs/30112d10.pdf
+
+
     return ( 0x09U <= ch && ch <= 0x0DU ) || ch == 0x20U || ch == 0x1680U || ch == 0x180EU ||
            ( 0x2000U <= ch && ch <= 0x2006U ) || ( 0x2008U <= ch && ch <= 0x200AU ) || ch == 0x2028U ||
            ch == 0x2029U || ch == 0x205FU || ch == 0x3000U;
@@ -183,8 +183,8 @@ bool u32_isspace( const char32_t ch )
 
 bool u32_ispunct( const char32_t ch )
 {
-    // Reference: ISO/IEC 30112 WD10 page 30-31
-    // https://www.open-std.org/JTC1/SC35/WG5/docs/30112d10.pdf
+
+
     return ( 0x0021 <= ch && ch <= 0x002F ) ||
            ( 0x003A <= ch && ch <= 0x0040 ) ||
            ( 0x005B <= ch && ch <= 0x0060 ) ||

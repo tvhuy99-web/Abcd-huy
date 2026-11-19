@@ -51,8 +51,8 @@ class StaticStringIdConstantsCheck : public ClangTidyCheck
         bool any_wrong_names_ = false;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_STATICSTRINGIDCONSTANTSCHECK_H
+#endif

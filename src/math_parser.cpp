@@ -61,7 +61,7 @@ constexpr std::optional<double> get_constant( std::string_view token )
 
 std::optional<double> get_number( std::string_view token )
 {
-    // FIXME: port to std::from_chars once double conversion is supported
+
     std::istringstream conv( std::string{ token } );
     conv.imbue( std::locale::classic() );
     std::optional<double> ret;
@@ -120,27 +120,36 @@ struct parse_state {
     enum class expect : int {
         oper = 0,
         operand,
-        identifier, // like operand but without brackets
-        lparen,  // operand alias used for functions
+        identifier,
+        lparen,
         rparen,
         lbracket,
         rbracket,
         string,
-        eof,     // oper alias used for EOF
+        eof,
     };
     static constexpr std::string_view expect_to_string( expect e ) {
         switch( e ) {
-            // *INDENT-OFF*
-            case expect::oper: return "operator";
-            case expect::operand: return "operand";
-            case expect::identifier: return "identifier";
-            case expect::lparen: return "left parenthesis";
-            case expect::rparen: return "right parenthesis";
-            case expect::lbracket: return "left bracket";
-            case expect::rbracket: return "right bracket";
-            case expect::string: return "string delimiter";
-            case expect::eof: return "EOF";
-            // *INDENT-ON*
+
+            case expect::oper:
+                return "operator";
+            case expect::operand:
+                return "operand";
+            case expect::identifier:
+                return "identifier";
+            case expect::lparen:
+                return "left parenthesis";
+            case expect::rparen:
+                return "right parenthesis";
+            case expect::lbracket:
+                return "left bracket";
+            case expect::rbracket:
+                return "right bracket";
+            case expect::string:
+                return "string delimiter";
+            case expect::eof:
+                return "EOF";
+
         }
         return "cookies";
     }
@@ -260,7 +269,7 @@ template<typename T>
 constexpr bool v_is_static = std::is_same_v<double, std::decay_t<T>> ||
                              std::is_same_v<std::string, std::decay_t<T>>;
 
-} // namespace
+}
 
 func::func( std::vector<thingie> &&params_, math_func::f_t f_ ) : params( params_ ),
     f( f_ ) {}
@@ -687,7 +696,7 @@ void math_exp::math_exp_impl::parse_id( std::string_view token )
 void math_exp::math_exp_impl::parse_bin_op( pbin_op const &op, std::string_view pos )
 {
     if( op->symbol == ":" && !arity.empty() && arity.top().type == arity_t::type_t::ternary ) {
-        // insert a pair of parens to help resolve nested ternaries like 0?0?-1:-2:1
+
         parse_rparen( pos );
     }
     state.validate( parse_state::expect::oper );
@@ -840,8 +849,8 @@ void math_exp::math_exp_impl::new_func()
             {
                 output.emplace( std::in_place_type_t<func_jmath>(), std::move( params ), v );
             },
-            // TODO: LAMBDA_NORETURN_CLANG21x1 can be replaced with [[noreturn]] once we switch to C++23 on all compilers
-            []( auto /* v */ ) LAMBDA_NORETURN_CLANG21x1
+
+            []( auto ) LAMBDA_NORETURN_CLANG21x1
             {
                 throw math::internal_error( "Internal func error.  That's all we know." );
             },
@@ -978,10 +987,10 @@ void math_exp::math_exp_impl::new_oper()
             type = math_type_t::assign;
             output.emplace( std::in_place_type_t<ass_oper>(), lhs, mhs, rhs, v->f );
         },
-        // TODO: LAMBDA_NORETURN_CLANG21x1 can be replaced with [[noreturn]] once we switch to C++23 on all compilers
-        []( auto /* v */ ) LAMBDA_NORETURN_CLANG21x1
+
+        []( auto ) LAMBDA_NORETURN_CLANG21x1
         {
-            // we should never get here due to paren validation
+
             throw math::internal_error( "Internal oper error.  That's all we know." );
         }
     },
@@ -1018,7 +1027,7 @@ std::string math_exp::math_exp_impl::error( std::string_view str, std::string_vi
 {
     std::ptrdiff_t offset =
         std::max<std::ptrdiff_t>( 0, parse_position.data() - str.data() );
-    // center the problematic token on screen if the expression is too long
+
     if( offset > 80 ) {
         str.remove_prefix( offset - 40 );
         offset = 40;
@@ -1062,8 +1071,8 @@ math_exp &math_exp::operator=( math_exp const &other )
 }
 math_exp::math_exp() = default;
 math_exp::~math_exp() = default;
-math_exp::math_exp( math_exp &&/* other */ ) noexcept = default;
-math_exp &math_exp::operator=( math_exp &&/* other */ )  noexcept = default;
+math_exp::math_exp( math_exp && ) noexcept = default;
+math_exp &math_exp::operator=( math_exp && )  noexcept = default;
 
 double math_exp::eval( const_dialogue const &d ) const
 {

@@ -2,8 +2,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
-// input.h must be include *before* the ncurses header. The latter has some macro
-// defines that clash with the constants defined in input.h (e.g. KEY_UP).
+
+
 #include "input.h"
 #include "point.h"
 #include "translations.h"
@@ -12,8 +12,8 @@
 #include "sound_backend.h"
 #endif
 
-// ncurses can define some functions as macros, but we need those identifiers
-// to be unchanged by the preprocessor, as we use them as function names.
+
+
 #define NCURSES_NOMACROS
 #if !defined(__APPLE__)
 #define NCURSES_WIDECHAR 1
@@ -52,10 +52,10 @@
 
 std::unique_ptr<cataimgui::client> imclient;
 
-static void curses_check_result( const int result, const int expected, const char *const /*name*/ )
+static void curses_check_result( const int result, const int expected, const char *const )
 {
     if( result != expected ) {
-        // TODO: debug message
+
     }
 }
 
@@ -71,7 +71,7 @@ int get_window_height()
 
 catacurses::window catacurses::newwin( const int nlines, const int ncols, const point &begin )
 {
-    // TODO: check for errors
+
     ::WINDOW *const w = ::newwin( nlines, ncols, begin.y, begin.x );
     return catacurses::window( std::shared_ptr<void>( w, []( void *const w ) {
         ::curses_check_result( ::delwin( static_cast<::WINDOW *>( w ) ), OK, "delwin" );
@@ -300,8 +300,8 @@ void catacurses::curs_set( const int visibility )
     curses_check_result( ::curs_set( visibility ), OK, "curs_set" );
 }
 
-// As long as these assertions hold, we can just case base_color into short and
-// forward the result to ncurses init_pair. Otherwise we would have to translate them.
+
+
 static_assert( catacurses::black == COLOR_BLACK,
                "black must have the same value as COLOR_BLACK (from ncurses)" );
 static_assert( catacurses::red == COLOR_RED,
@@ -346,11 +346,11 @@ void catacurses::resizeterm()
     }
 }
 
-// init_interface is defined in another cpp file, depending on build type:
-// wincurse.cpp for Windows builds without SDL and sdltiles.cpp for SDL builds.
+
+
 void catacurses::init_interface()
 {
-    // ::endwin will free the pointer returned by ::initscr
+
     stdscr = window( std::shared_ptr<void>( ::initscr(), []( void *const ) { } ) );
     if( !stdscr ) {
         throw std::runtime_error( "initscr failed" );
@@ -361,24 +361,24 @@ void catacurses::init_interface()
         throw std::runtime_error( "null newscr" );
     }
 #endif
-    // our curses wrapper does not support changing this behavior, ncurses must
-    // behave exactly like the wrapper, therefore:
-    noecho();  // Don't echo keypresses
-    cbreak();  // C-style breaks (e.g. ^C to SIGINT)
-    keypad( stdscr.get<::WINDOW>(), true ); // Numpad is numbers
+
+
+    noecho();
+    cbreak();
+    keypad( stdscr.get<::WINDOW>(), true );
 #if !defined(USE_PDCURSES)
-    set_escdelay( 10 ); // Make Escape actually responsive
+    set_escdelay( 10 );
 #endif
-    // TODO: error checking
+
     start_color();
     imclient = std::make_unique<cataimgui::client>();
     init_colors();
 #if !defined(__CYGWIN__)
-    // ncurses mouse registration
+
     mouseinterval( 0 );
     mousemask( ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr );
-    // Sometimes the TERM variable is not set properly and mousemask won't turn on mouse pointer events.
-    // The below line tries to force the mouse pointer events to be turned on anyway. ImTui misbehaves without them.
+
+
     printf( "\033[?1003h\n" );
 #endif
 
@@ -402,7 +402,7 @@ void input_manager::pump_events()
         return;
     }
 
-    // Handle all events, but ignore any keypress
+
     int key = ERR;
     bool resize = false;
     const int prev_timeout = input_timeout;
@@ -421,12 +421,12 @@ void input_manager::pump_events()
     previously_pressed_key = 0;
 }
 
-// there isn't a portable way to get raw key code on curses,
-// ignoring preferred keyboard mode
-input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyboard_mode*/ )
+
+
+input_event input_manager::get_input_event( const keyboard_mode )
 {
     if( test_mode ) {
-        // input should be skipped in caller's code
+
         throw std::runtime_error( "input_manager::get_input_event called in test mode" );
     }
 
@@ -434,19 +434,19 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
     input_event rval;
     do {
         previously_pressed_key = 0;
-        // flush any output
+
         catacurses::doupdate();
         key = getch();
         if( key != ERR ) {
             int newch;
-            // Clear the buffer of characters that match the one we're going to act on.
+
             const int prev_timeout = input_timeout;
             set_timeout( 0 );
             do {
                 newch = wgetch( stdscr );
             } while( newch != ERR && newch == key );
             set_timeout( prev_timeout );
-            // If we read a different character than the one we're going to act on, re-queue it.
+
             if( newch != ERR && newch != key ) {
                 ungetch( newch );
             }
@@ -458,7 +458,7 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
             } else {
                 rval.type = input_event_t::error;
             }
-            // ncurses mouse handling
+
         } else if( key == KEY_RESIZE ) {
             catacurses::resizeterm();
         } else if( key == KEY_MOUSE ) {
@@ -472,7 +472,7 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
                     rval.add_input( MouseInput::LeftButtonPressed );
                 } else if( event.bstate & BUTTON3_CLICKED || event.bstate & BUTTON3_RELEASED ) {
                     rval.add_input( MouseInput::RightButtonReleased );
-                    // If curses version is prepared for a 5-button mouse, enable mousewheel
+
 #if defined(BUTTON5_PRESSED)
                 } else if( event.bstate & BUTTON4_PRESSED ) {
                     rval.add_input( MouseInput::ScrollWheelUp );
@@ -482,7 +482,7 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
                 } else {
                     rval.add_input( MouseInput::Move );
                     if( input_timeout > 0 ) {
-                        // Mouse movement seems to clear ncurses timeout
+
                         set_timeout( input_timeout );
                     }
                 }
@@ -490,15 +490,15 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
                 rval.type = input_event_t::error;
             }
         } else {
-            if( key == 127 ) { // == Unicode DELETE
+            if( key == 127 ) {
                 previously_pressed_key = KEY_BACKSPACE;
                 return input_event( KEY_BACKSPACE, input_event_t::keyboard_char );
             }
             rval.type = input_event_t::keyboard_char;
             rval.text.append( 1, static_cast<char>( key ) );
-            // Read the UTF-8 sequence (if any)
+
             if( key < 127 ) {
-                // Single byte sequence
+
             } else if( 194 <= key && key <= 223 ) {
                 rval.text.append( 1, static_cast<char>( getch() ) );
             } else if( 224 <= key && key <= 239 ) {
@@ -509,25 +509,25 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
                 rval.text.append( 1, static_cast<char>( getch() ) );
                 rval.text.append( 1, static_cast<char>( getch() ) );
             } else {
-                // Other control character, etc. - no text at all, return an event
-                // without the text property
+
+
                 previously_pressed_key = key;
                 input_event tmp_event( key, input_event_t::keyboard_char );
                 imclient->process_input( &tmp_event );
                 return tmp_event;
             }
-            // Now we have loaded an UTF-8 sequence (possibly several bytes)
-            // but we should only return *one* key, so return the code point of it.
+
+
             const uint32_t cp = UTF8_getch( rval.text );
             if( cp == UNKNOWN_UNICODE ) {
-                // Invalid UTF-8 sequence, this should never happen, what now?
-                // Maybe return any error instead?
+
+
                 previously_pressed_key = key;
                 return input_event( key, input_event_t::keyboard_char );
             }
             previously_pressed_key = cp;
-            // for compatibility only add the first byte, not the code point
-            // as it would  conflict with the special keys defined by ncurses
+
+
             rval.add_input( key );
         }
         imclient->process_input( &rval );
@@ -539,7 +539,7 @@ input_event input_manager::get_input_event( const keyboard_mode /*preferred_keyb
 void input_manager::set_timeout( const int delay )
 {
     timeout( delay );
-    // Use this to determine when curses should return a input_event_t::timeout event.
+
     input_timeout = delay;
 }
 
@@ -578,7 +578,7 @@ void check_encoding(); // NOLINT(cata-static-declarations,misc-use-internal-link
 
 void ensure_term_size()
 {
-    // do not use ui_adaptor here to avoid re-entry
+
     const int minHeight = EVEN_MINIMUM_TERM_HEIGHT;
     const int minWidth = EVEN_MINIMUM_TERM_WIDTH;
 
@@ -603,7 +603,7 @@ void ensure_term_size()
                             minWidth, minHeight, TERMX, TERMY );
         }
         catacurses::refresh();
-        // do not use input_manager or input_context here to avoid re-entry
+
         getch();
         TERMY = getmaxy( catacurses::stdscr );
         TERMX = getmaxx( catacurses::stdscr );
@@ -613,14 +613,14 @@ void ensure_term_size()
 // NOLINTNEXTLINE(cata-static-declarations)
 void check_encoding()
 {
-    // Check whether LC_CTYPE supports the UTF-8 encoding
-    // and show a warning if it doesn't
+
+
 #if defined(_WIN32)
     if( CP_UTF8 != GetConsoleOutputCP() ) {
 #else
     if( std::strcmp( nl_langinfo( CODESET ), "UTF-8" ) != 0 ) {
 #endif
-        // do not use ui_adaptor here to avoid re-entry
+
         int key = ERR;
         do {
             const char *unicode_error_msg =
@@ -630,7 +630,7 @@ void check_encoding()
             const int maxx = getmaxx( catacurses::stdscr );
             fold_and_print( catacurses::stdscr, point::zero, maxx, c_white, unicode_error_msg );
             catacurses::refresh();
-            // do not use input_manager or input_context here to avoid re-entry
+
             key = getch();
         } while( key == KEY_RESIZE || key == KEY_MOUSE );
     }
@@ -639,7 +639,7 @@ void check_encoding()
 // NOLINTNEXTLINE(cata-use-string_view): signature mirrors sdltiles/wincurse impls
 void set_title( const std::string & )
 {
-    // curses does not seem to have a portable way of setting the window title.
+
 }
 
 #pragma GCC diagnostic pop

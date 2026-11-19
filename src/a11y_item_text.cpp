@@ -11,12 +11,12 @@
 
 namespace a11y
 {
-/**
- * Spoken item names must not contain the visual durability/burn glyph.
- * Keep all other meaningful item-name segments, and supply the underlying
- * condition explicitly from the item. This is shared by both ordinary
- * visible tile observations and the explicit unrestricted reader scan.
- */
+
+
+
+
+
+
 std::string spoken_item_name( const item &it )
 {
     std::string name = remove_color_tags( it.tname( 1, false ) );
@@ -37,10 +37,10 @@ std::string spoken_item_name( const item &it )
     }
     return name;
 }
-// Long original descriptions must not be precomputed while scrolling a
-// list. Announce only on a validated reader intent. A single Java event
-// cannot exceed the JNI speech limit; multi-part data is framed so Java can
-// reassemble it BEFORE placing it in the bounded TTS queue.
+
+
+
+
 void announce_full_detail_text( const std::string &full )
 {
     if( full.empty() ) {
@@ -61,8 +61,8 @@ void announce_full_detail_text( const std::string &full )
             if( boundary != std::string::npos && boundary > begin + max_chunk / 2 ) {
                 end = boundary + 1;
             } else {
-                // Never split a Vietnamese UTF-8 character across JNI
-                // strings when there is no whitespace in the interval.
+
+
                 while( end > begin &&
                        ( static_cast<unsigned char>( full[end] ) & 0xc0 ) == 0x80 ) {
                     --end;
@@ -78,9 +78,9 @@ void announce_full_detail_text( const std::string &full )
     }
 }
 
-// The actual item, not a guessed type, supplies its full facts: melee and
-// ranged damage, magazine, ammunition, armor, food, books, tools, etc.
-// Context is the already visible location/status, never an extra action.
+
+
+
 void announce_full_item_info( const item &it, const std::string_view context )
 {
     const std::string full = spoken_item_name( it ) +
@@ -88,4 +88,4 @@ void announce_full_item_info( const item &it, const std::string_view context )
                              "\n" + remove_color_tags( it.info( true ) );
     announce_full_detail_text( full );
 }
-} // namespace a11y
+}

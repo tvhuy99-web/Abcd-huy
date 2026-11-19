@@ -28,19 +28,19 @@ namespace std
 {
 template <>
 struct hash<talk_topic_enum> {
-    // Operator overload required by std API.
+
     std::size_t operator()( const talk_topic_enum &k ) const noexcept {
-        return k; // the most trivial hash of them all
+        return k;
     }
 };
-} // namespace std
+}
 
 std::string convert_talk_topic( talk_topic_enum const old_value )
 {
     static const std::unordered_map<talk_topic_enum, std::string> talk_topic_enum_mapping = { {
-            // This macro creates the appropriate new names (as string) for each enum value, so one does not
-            // have to repeat so much (e.g. 'WRAP(TALK_ARSONIST)' instead of '{ TALK_ARSONIST, "TALK_ARSONIST" }')
-            // It also ensures that each name is exactly as the name of the enum value.
+
+
+
 #define WRAP(value) { value, #value }
             WRAP( TALK_NONE ),
             WRAP( TALK_DONE ),
@@ -186,55 +186,55 @@ std::string convert_talk_topic( talk_topic_enum const old_value )
     return iter->second;
 }
 
-// player_activity.h
+
 void player_activity::deserialize_legacy_type( int legacy_type, activity_id &dest )
 {
     static const std::vector< activity_id > legacy_map = {
         activity_id::NULL_ID(),
         ACT_RELOAD,
-        activity_id::NULL_ID(), // ACT_READ is an actor now
-        activity_id::NULL_ID(), // ACT_GAME is an actor now
-        activity_id::NULL_ID(), // ACT_WAIT is an actor now
-        activity_id::NULL_ID(), // ACT_CRAFT is an actor now
-        activity_id::NULL_ID(), // ACT_LONGCRAFT is deprecated
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
         ACT_DISASSEMBLE,
         ACT_BUTCHER,
-        activity_id::NULL_ID(), // ACT_LONGSALVAGE is an actor now
-        activity_id::NULL_ID(), // ACT_FORAGE is an actor now
-        activity_id::NULL_ID(), // ACT_BUILD is an actor now
-        activity_id::NULL_ID(), // ACT_VEHICLE is an actor now
-        activity_id::NULL_ID(), // ACT_REFILL_VEHICLE is deprecated
-        activity_id::NULL_ID(), // ACT_TRAIN is an actor now
-        activity_id::NULL_ID(), // ACT_WAIT_WEATHER is an actor now
-        activity_id::NULL_ID(), // ACT_FIRSTAID is an actor now
-        activity_id::NULL_ID(), // ACT_FISH is an actor now
-        activity_id::NULL_ID(), // ACT_PICKAXE is an actor now
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
         ACT_BURROW,
         ACT_PULP,
-        activity_id::NULL_ID(), // ACT_VIBE is an actor now
-        activity_id::NULL_ID(), // ACT_MAKE_ZLAVE is deprecated
-        activity_id::NULL_ID(), // ACT_DROP is an actor now
-        activity_id::NULL_ID(), // ACT_STASH is an actor now
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
         ACT_PICKUP,
         ACT_MOVE_ITEMS,
-        activity_id::NULL_ID(), // ACT_ADV_INVENTORY is uistate.open_menu now
-        activity_id::NULL_ID(), // ACT_ARMOR_LAYERS is uistate.open_menu now
-        activity_id::NULL_ID(), // ACT_START_FIRE is an actor now
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
         ACT_OPEN_GATE,
         ACT_FILL_LIQUID,
         ACT_HOTWIRE_CAR,
         ACT_AIM,
-        activity_id::NULL_ID(), // ACT_ATM is an actor now
-        activity_id::NULL_ID(), // ACT_START_ENGINES is an actor now
-        activity_id::NULL_ID(), // ACT_OXYTORCH is an actor now
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
         ACT_CRACKING,
         ACT_REPAIR_ITEM,
-        activity_id::NULL_ID(), // ACT_MEND_ITEM is an actor now
-        activity_id::NULL_ID(), // ACT_GUNMOD_ADD
-        activity_id::NULL_ID(), // ACT_WAIT_NPC is an actor now
-        activity_id::NULL_ID(), // ACT_CLEAR_RUBBLE
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
+        activity_id::NULL_ID(),
         ACT_MEDITATE,
-        activity_id::NULL_ID() // NUM_ACTIVITIES
+        activity_id::NULL_ID()
     };
 
     if( legacy_type < 0 || static_cast<size_t>( legacy_type ) >= legacy_map.size() ) {

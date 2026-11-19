@@ -1,9 +1,9 @@
 package com.cleverraven.cataclysmdda;
 
-/** Serial-thread token gate shared by the Android driver and host-side tests.
- *  No callbacks from a replaced engine or cancelled utterance may complete a
- *  newer request, including one with the same caller-provided label.
- */
+
+
+
+
 final class SpeechSession {
     private long generation;
     private long sequence;

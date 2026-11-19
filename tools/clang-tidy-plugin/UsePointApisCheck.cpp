@@ -67,7 +67,7 @@ static bool doFunctionsMatch( const FunctionDecl *Callee, const FunctionDecl *Ot
     if( OtherCallee->getNumParams() != ExpectedNumParams ) {
         return false;
     }
-    // Check that arguments match up as expected
+
     unsigned int CalleeParamI = 0;
     unsigned int OtherCalleeParamI = 0;
 
@@ -84,9 +84,9 @@ static bool doFunctionsMatch( const FunctionDecl *Callee, const FunctionDecl *Ot
             }
             CalleeParamI += NumCoordParams - 1;
         } else {
-            // Compare the types as strings because if e.g. the two overloads
-            // are function templates then the tmplate parameters will be
-            // different types.
+
+
+
             if( CalleeParam->getType().getLocalUnqualifiedType().getAsString() !=
                 OtherCalleeParam->getType().getLocalUnqualifiedType().getAsString() ) {
                 return false;
@@ -120,8 +120,8 @@ static void CheckCall( UsePointApisCheck &Check, const MatchFinder::MatchResult 
         return Call ? Call->getArg( Arg ) : ConstructorCall->getArg( Arg );
     };
 
-    // For operator() and operator= calls there is an extra 'this' argument that doesn't
-    // correspond to any parameter, so we need to skip over it.
+
+
     unsigned int SkipArgs = 0;
     if( Callee->getOverloadedOperator() == OO_Call ||
         Callee->getOverloadedOperator() == OO_Subscript ||
@@ -173,16 +173,16 @@ static void CheckCall( UsePointApisCheck &Check, const MatchFinder::MatchResult 
     const unsigned int NumCoordParams = ZArg ? 3 : 2;
 
     if( MaxArg - MinArg != NumCoordParams - 1 ) {
-        // This means that the parameters are not contiguous, which means we
-        // can't be sure we know what's going on.
+
+
         return;
     }
 
     const FunctionDecl *ContainingFunction = getContainingFunction(
                 Result, Call ? static_cast<const Expr *>( Call ) : ConstructorCall );
 
-    // Look for another overload of the called function with a point parameter
-    // in the right spot.
+
+
 
     const FunctionDecl *NewCallee = nullptr;
     const DeclContext *Context = Callee->getDeclContext();
@@ -215,11 +215,11 @@ static void CheckCall( UsePointApisCheck &Check, const MatchFinder::MatchResult 
     }
 
     if( !NewCallee ) {
-        // No new overload available; no replacement to suggest
+
         return;
     }
 
-    // Construct replacement text
+
     std::string Replacement =
         ( "point( " + getText( Result, XArg ) + ", " + getText( Result, YArg ) ).str();
     if( ZArg ) {
@@ -227,12 +227,12 @@ static void CheckCall( UsePointApisCheck &Check, const MatchFinder::MatchResult 
     }
     Replacement += " )";
 
-    // Construct range to be replaced
+
     while( isa<CXXDefaultArgExpr>( GetCallArg( MaxArg ) ) ) {
         --MaxArg;
         if( MaxArg == UINT_MAX ) {
-            // We underflowed; that means every argument was defaulted.  In
-            // this case, we don't want to change the call at all
+
+
             return;
         }
     }
@@ -257,4 +257,4 @@ void UsePointApisCheck::check( const MatchFinder::MatchResult &Result )
     CheckCall( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

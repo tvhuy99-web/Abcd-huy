@@ -33,19 +33,19 @@ static const vpart_location_id vpart_location_structure( "structure" );
 
 static void clear_game_and_set_ramp( const int transit_x, bool use_ramp, bool up )
 {
-    // Set to turn 0 to prevent solars from producing power
+
     calendar::turn = calendar::turn_zero;
     clear_map_without_vision();
     clear_vehicles();
 
     Character &player_character = get_player_character();
-    // Move player somewhere safe
+
     REQUIRE_FALSE( player_character.in_vehicle );
 
     map &here = get_map();
     build_test_map( ter_id( "t_pavement" ) );
-    // build_test_map only clears items on z=0; clear the z-levels
-    // the ramp setup touches so stray items don't blow out tires.
+
+
     clear_items( -1 );
     clear_items( 1 );
     if( use_ramp ) {
@@ -54,11 +54,11 @@ static void clear_game_and_set_ramp( const int transit_x, bool use_ramp, bool up
         const int highx = transit_x + ( up ? 0 : 1 );
         const int lowx = transit_x + ( up ? 1 : 0 );
 
-        // up   z1    ......  rdh  rDl
-        //      z0            rUh  rul .................
-        // down z0            rDl  rdh .................
-        //      z-1   ......  rdl  rUh
-        //                    60   61
+
+
+
+
+
         for( int y = 0; y < SEEY * MAPSIZE; y++ ) {
             for( int x = 0; x < transit_x; x++ ) {
                 const int mid = up ? upper_zlevel : lower_zlevel;
@@ -87,10 +87,10 @@ static void clear_game_and_set_ramp( const int transit_x, bool use_ramp, bool up
     here.build_map_cache( 0, true );
 }
 
-// Algorithm goes as follows:
-// Clear map and create a ramp
-// Spawn a vehicle
-// Drive it over the ramp, and confirm that the vehicle changes z-levels
+
+
+
+
 static void ramp_transition_angled( const vproto_id &veh_id, const units::angle angle,
                                     const int transition_x, bool use_ramp, bool up )
 {
@@ -156,7 +156,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
         vpts.clear();
         here.vehmove();
         CHECK( veh.velocity == target_velocity );
-        // If the vehicle starts skidding, the effects become random and test is RUINED
+
         REQUIRE( !veh.skidding );
         for( const tripoint_abs_ms &pos : veh.get_points() ) {
             REQUIRE( here.ter( here.get_bub( pos ) ) );
@@ -224,7 +224,7 @@ static std::vector<std::string> ramp_vehs_to_test = {{
     }
 };
 
-// I'd like to do this in a single loop, but that doesn't work for some reason
+
 TEST_CASE( "vehicle_ramp_test_59", "[vehicle][ramp]" )
 {
     for( const std::string &veh : ramp_vehs_to_test ) {
@@ -252,7 +252,7 @@ static void level_out( const vproto_id &veh_id, const bool drop_pos )
 
     const tripoint_bub_ms map_starting_point( 60, 60, start_z );
 
-    // Make sure the avatar is out of the way
+
     Character &player_character = get_player_character();
     player_character.setpos( here, map_starting_point + point( 5, 5 ) );
     vehicle *veh_ptr = here.add_vehicle( veh_id, map_starting_point, 180_degrees, 1,

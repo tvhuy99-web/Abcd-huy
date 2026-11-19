@@ -56,101 +56,101 @@ namespace mapdata
 generic_factory<ter_t> terrain_data( "terrain" );
 generic_factory<furn_t> furniture_data( "furniture" );
 
-} // namespace mapdata
+}
 
 using namespace mapdata;
 
-/** @relates int_id */
+
 template<>
 inline bool int_id<ter_t>::is_valid() const
 {
     return terrain_data.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const ter_t &int_id<ter_t>::obj() const
 {
     return terrain_data.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<ter_t> &int_id<ter_t>::id() const
 {
     return terrain_data.convert( *this );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<ter_t> string_id<ter_t>::id() const
 {
     return terrain_data.convert( *this, t_null );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<ter_t>::int_id( const string_id<ter_t> &id ) : _id( id.id() )
 {
 }
 
-/** @relates string_id */
+
 template<>
 const ter_t &string_id<ter_t>::obj() const
 {
     return terrain_data.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<ter_t>::is_valid() const
 {
     return terrain_data.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 bool int_id<furn_t>::is_valid() const
 {
     return furniture_data.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const furn_t &int_id<furn_t>::obj() const
 {
     return furniture_data.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<furn_t> &int_id<furn_t>::id() const
 {
     return furniture_data.convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<furn_t>::is_valid() const
 {
     return furniture_data.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const furn_t &string_id<furn_t>::obj() const
 {
     return furniture_data.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<furn_t> string_id<furn_t>::id() const
 {
     return furniture_data.convert( *this, f_null );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<furn_t>::int_id( const string_id<furn_t> &id ) : _id( id.id() )
 {
@@ -193,157 +193,296 @@ namespace io
 template<>
 std::string enum_to_string<ter_furn_flag>( ter_furn_flag data )
 {
-    // see mapdata.h for commentary
-    switch( data ) {
-        // *INDENT-OFF*
-        case ter_furn_flag::TFLAG_TRANSPARENT: return "TRANSPARENT";
-        case ter_furn_flag::TFLAG_FLAMMABLE: return "FLAMMABLE";
-        case ter_furn_flag::TFLAG_REDUCE_SCENT: return "REDUCE_SCENT";
-        case ter_furn_flag::TFLAG_SWIMMABLE: return "SWIMMABLE";
-        case ter_furn_flag::TFLAG_SUPPORTS_ROOF: return "SUPPORTS_ROOF";
-        case ter_furn_flag::TFLAG_MINEABLE: return "MINEABLE";
-        case ter_furn_flag::TFLAG_NOITEM: return "NOITEM";
-        case ter_furn_flag::TFLAG_NO_SIGHT: return "NO_SIGHT";
-        case ter_furn_flag::TFLAG_NO_SCENT: return "NO_SCENT";
-        case ter_furn_flag::TFLAG_SEALED: return "SEALED";
-        case ter_furn_flag::TFLAG_ALLOW_FIELD_EFFECT: return "ALLOW_FIELD_EFFECT";
-        case ter_furn_flag::TFLAG_LIQUID: return "LIQUID";
-        case ter_furn_flag::TFLAG_COLLAPSES: return "COLLAPSES";
-        case ter_furn_flag::TFLAG_FLAMMABLE_ASH: return "FLAMMABLE_ASH";
-        case ter_furn_flag::TFLAG_DESTROY_ITEM: return "DESTROY_ITEM";
-        case ter_furn_flag::TFLAG_INDOORS: return "INDOORS";
-        case ter_furn_flag::TFLAG_LIQUIDCONT: return "LIQUIDCONT";
-        case ter_furn_flag::TFLAG_FIRE_CONTAINER: return "FIRE_CONTAINER";
-        case ter_furn_flag::TFLAG_FLAMMABLE_HARD: return "FLAMMABLE_HARD";
-        case ter_furn_flag::TFLAG_SUPPRESS_SMOKE: return "SUPPRESS_SMOKE";
-        case ter_furn_flag::TFLAG_SHARP: return "SHARP";
-        case ter_furn_flag::TFLAG_DIGGABLE: return "DIGGABLE";
-        case ter_furn_flag::TFLAG_ROUGH: return "ROUGH";
-        case ter_furn_flag::TFLAG_UNSTABLE: return "UNSTABLE";
-        case ter_furn_flag::TFLAG_WALL: return "WALL";
-        case ter_furn_flag::TFLAG_DEEP_WATER: return "DEEP_WATER";
-        case ter_furn_flag::TFLAG_SHALLOW_WATER: return "SHALLOW_WATER";
-        case ter_furn_flag::TFLAG_WATER_CUBE: return "WATER_CUBE";
-        case ter_furn_flag::TFLAG_CURRENT: return "CURRENT";
-        case ter_furn_flag::TFLAG_HARVESTED: return "HARVESTED";
-        case ter_furn_flag::TFLAG_PERMEABLE: return "PERMEABLE";
-        case ter_furn_flag::TFLAG_THIN_ICE: return "THIN_ICE";
-        case ter_furn_flag::TFLAG_THICK_ICE: return "THICK_ICE";
-        case ter_furn_flag::TFLAG_SWIM_UNDER: return "SWIM_UNDER";
-        case ter_furn_flag::TFLAG_AUTO_WALL_SYMBOL: return "AUTO_WALL_SYMBOL";
-        case ter_furn_flag::TFLAG_CONNECT_WITH_WALL: return "CONNECT_WITH_WALL";
-        case ter_furn_flag::TFLAG_CLIMBABLE: return "CLIMBABLE";
-        case ter_furn_flag::TFLAG_GOES_DOWN: return "GOES_DOWN";
-        case ter_furn_flag::TFLAG_GOES_UP: return "GOES_UP";
-        case ter_furn_flag::TFLAG_NO_FLOOR: return "NO_FLOOR";
-        case ter_furn_flag::TFLAG_ALLOW_ON_OPEN_AIR: return "ALLOW_ON_OPEN_AIR";
-        case ter_furn_flag::TFLAG_SEEN_FROM_ABOVE: return "SEEN_FROM_ABOVE";
-        case ter_furn_flag::TFLAG_RAMP_DOWN: return "RAMP_DOWN";
-        case ter_furn_flag::TFLAG_RAMP_UP: return "RAMP_UP";
-        case ter_furn_flag::TFLAG_RAMP: return "RAMP";
-        case ter_furn_flag::TFLAG_HIDE_PLACE: return "HIDE_PLACE";
-        case ter_furn_flag::TFLAG_BLOCK_WIND: return "BLOCK_WIND";
-        case ter_furn_flag::TFLAG_FLAT: return "FLAT";
-        case ter_furn_flag::TFLAG_RAIL: return "RAIL";
-        case ter_furn_flag::TFLAG_THIN_OBSTACLE: return "THIN_OBSTACLE";
-        case ter_furn_flag::TFLAG_SMALL_PASSAGE: return "SMALL_PASSAGE";
-        case ter_furn_flag::TFLAG_Z_TRANSPARENT: return "Z_TRANSPARENT";
-        case ter_furn_flag::TFLAG_SUN_ROOF_ABOVE: return "SUN_ROOF_ABOVE";
-        case ter_furn_flag::TFLAG_FUNGUS: return "FUNGUS";
-        case ter_furn_flag::TFLAG_LOCKED: return "LOCKED";
-        case ter_furn_flag::TFLAG_PICKABLE: return "PICKABLE";
-        case ter_furn_flag::TFLAG_WINDOW: return "WINDOW";
-        case ter_furn_flag::TFLAG_DOOR: return "DOOR";
-        case ter_furn_flag::TFLAG_SHRUB: return "SHRUB";
-        case ter_furn_flag::TFLAG_YOUNG: return "YOUNG";
-        case ter_furn_flag::TFLAG_PLANT: return "PLANT";
-        case ter_furn_flag::TFLAG_FISHABLE: return "FISHABLE";
-        case ter_furn_flag::TFLAG_TREE: return "TREE";
-        case ter_furn_flag::TFLAG_PLOWABLE: return "PLOWABLE";
-        case ter_furn_flag::TFLAG_ORGANIC: return "ORGANIC";
-        case ter_furn_flag::TFLAG_CONSOLE: return "CONSOLE";
-        case ter_furn_flag::TFLAG_PLANTABLE: return "PLANTABLE";
-        case ter_furn_flag::TFLAG_GROWTH_HARVEST: return "GROWTH_HARVEST";
-        case ter_furn_flag::TFLAG_GROWTH_OVERGROWN: return "GROWTH_OVERGROWN";
-        case ter_furn_flag::TFLAG_MOUNTABLE: return "MOUNTABLE";
-        case ter_furn_flag::TFLAG_RAMP_END: return "RAMP_END";
-        case ter_furn_flag::TFLAG_FLOWER: return "FLOWER";
-        case ter_furn_flag::TFLAG_CAN_SIT: return "CAN_SIT";
-        case ter_furn_flag::TFLAG_FLAT_SURF: return "FLAT_SURF";
-        case ter_furn_flag::TFLAG_BUTCHER_EQ: return "BUTCHER_EQ";
-        case ter_furn_flag::TFLAG_GROWTH_SEED: return "GROWTH_SEED";
-        case ter_furn_flag::TFLAG_GROWTH_SEEDLING: return "GROWTH_SEEDLING";
-        case ter_furn_flag::TFLAG_GROWTH_MATURE: return "GROWTH_MATURE";
-        case ter_furn_flag::TFLAG_WORKOUT_ARMS: return "WORKOUT_ARMS";
-        case ter_furn_flag::TFLAG_WORKOUT_LEGS: return "WORKOUT_LEGS";
-        case ter_furn_flag::TFLAG_TRANSLOCATOR: return "TRANSLOCATOR";
-        case ter_furn_flag::TFLAG_TRANSLOCATOR_GREATER: return "TRANSLOCATOR_GREATER";
-        case ter_furn_flag::TFLAG_AUTODOC: return "AUTODOC";
-        case ter_furn_flag::TFLAG_AUTODOC_COUCH: return "AUTODOC_COUCH";
-        case ter_furn_flag::TFLAG_OPENCLOSE_INSIDE: return "OPENCLOSE_INSIDE";
-        case ter_furn_flag::TFLAG_SALT_WATER: return "SALT_WATER";
-        case ter_furn_flag::TFLAG_PLACE_ITEM: return "PLACE_ITEM";
-        case ter_furn_flag::TFLAG_BARRICADABLE_WINDOW_CURTAINS: return "BARRICADABLE_WINDOW_CURTAINS";
-        case ter_furn_flag::TFLAG_CLIMB_SIMPLE: return "CLIMB_SIMPLE";
-        case ter_furn_flag::TFLAG_NANOFAB_TABLE: return "NANOFAB_TABLE";
-        case ter_furn_flag::TFLAG_ROAD: return "ROAD";
-        case ter_furn_flag::TFLAG_TINY: return "TINY";
-        case ter_furn_flag::TFLAG_SHORT: return "SHORT";
-        case ter_furn_flag::TFLAG_NOCOLLIDE: return "NOCOLLIDE";
-        case ter_furn_flag::TFLAG_BARRICADABLE_DOOR: return "BARRICADABLE_DOOR";
-        case ter_furn_flag::TFLAG_BARRICADABLE_DOOR_DAMAGED: return "BARRICADABLE_DOOR_DAMAGED";
-        case ter_furn_flag::TFLAG_BARRICADABLE_DOOR_REINFORCED: return "BARRICADABLE_DOOR_REINFORCED";
-        case ter_furn_flag::TFLAG_USABLE_FIRE: return "USABLE_FIRE";
-        case ter_furn_flag::TFLAG_CONTAINER: return "CONTAINER";
-        case ter_furn_flag::TFLAG_NO_PICKUP_ON_EXAMINE: return "NO_PICKUP_ON_EXAMINE";
-        case ter_furn_flag::TFLAG_RUBBLE: return "RUBBLE";
-        case ter_furn_flag::TFLAG_DIGGABLE_CAN_DEEPEN: return "DIGGABLE_CAN_DEEPEN";
-        case ter_furn_flag::TFLAG_PIT_FILLABLE: return "PIT_FILLABLE";
-        case ter_furn_flag::TFLAG_DIFFICULT_Z: return "DIFFICULT_Z";
-        case ter_furn_flag::TFLAG_ALIGN_WORKBENCH: return "ALIGN_WORKBENCH";
-        case ter_furn_flag::TFLAG_NO_SPOIL: return "NO_SPOIL";
-        case ter_furn_flag::TFLAG_EASY_DECONSTRUCT: return "EASY_DECONSTRUCT";
-        case ter_furn_flag::TFLAG_LADDER: return "LADDER";
-        case ter_furn_flag::TFLAG_ALARMED: return "ALARMED";
-        case ter_furn_flag::TFLAG_CHOCOLATE: return "CHOCOLATE";
-        case ter_furn_flag::TFLAG_SIGN: return "SIGN";
-        case ter_furn_flag::TFLAG_SIGN_ALWAYS: return "SIGN_ALWAYS";
-        case ter_furn_flag::TFLAG_DONT_REMOVE_ROTTEN: return "DONT_REMOVE_ROTTEN";
-        case ter_furn_flag::TFLAG_BLOCKSDOOR: return "BLOCKSDOOR";
-        case ter_furn_flag::TFLAG_SMALL_HIDE: return "SMALL_HIDE";
-        case ter_furn_flag::TFLAG_NO_SELF_CONNECT: return "NO_SELF_CONNECT";
-        case ter_furn_flag::TFLAG_BURROWABLE: return "BURROWABLE";
-        case ter_furn_flag::TFLAG_MURKY: return "MURKY";
-        case ter_furn_flag::TFLAG_AMMOTYPE_RELOAD: return "AMMOTYPE_RELOAD";
-        case ter_furn_flag::TFLAG_TRANSPARENT_FLOOR: return "TRANSPARENT_FLOOR";
-        case ter_furn_flag::TFLAG_ELEVATOR: return "ELEVATOR";
-        case ter_furn_flag::TFLAG_ACTIVE_GENERATOR: return "ACTIVE_GENERATOR";
-        case ter_furn_flag::TFLAG_TRANSLUCENT: return "TRANSLUCENT";
-        case ter_furn_flag::TFLAG_NO_FLOOR_WATER: return "NO_FLOOR_WATER";
-        case ter_furn_flag::TFLAG_GRAZABLE: return "GRAZABLE";
-        case ter_furn_flag::TFLAG_GRAZER_INEDIBLE: return "GRAZER_INEDIBLE";
-        case ter_furn_flag::TFLAG_BROWSABLE: return "BROWSABLE";
-        case ter_furn_flag::TFLAG_SINGLE_SUPPORT: return "SINGLE_SUPPORT";
-        case ter_furn_flag::TFLAG_CLIMB_ADJACENT: return "CLIMB_ADJACENT";
-        case ter_furn_flag::TFLAG_FLOATS_IN_AIR: return "FLOATS_IN_AIR";
-        case ter_furn_flag::TFLAG_HARVEST_REQ_CUT1: return "HARVEST_REQ_CUT1";
-        case ter_furn_flag::TFLAG_NATURAL_UNDERGROUND: return "NATURAL_UNDERGROUND";
-        case ter_furn_flag::TFLAG_WIRED_WALL: return "WIRED_WALL";
-        case ter_furn_flag::TFLAG_MON_AVOID_STRICT: return "MON_AVOID_STRICT";
-        case ter_furn_flag::TFLAG_REGION_PSEUDO: return "REGION_PSEUDO";
-        case ter_furn_flag::TFLAG_PHASE_BACK: return "PHASE_BACK";
-        case ter_furn_flag::TFLAG_ONE_DIMENSIONAL_X: return "ONE_DIMENSIONAL_X";
-        case ter_furn_flag::TFLAG_ONE_DIMENSIONAL_Y: return "ONE_DIMENSIONAL_Y";
-        case ter_furn_flag::TFLAG_ONE_DIMENSIONAL_Z: return "ONE_DIMENSIONAL_Z";
 
-        // *INDENT-ON*
+    switch( data ) {
+
+        case ter_furn_flag::TFLAG_TRANSPARENT:
+            return "TRANSPARENT";
+        case ter_furn_flag::TFLAG_FLAMMABLE:
+            return "FLAMMABLE";
+        case ter_furn_flag::TFLAG_REDUCE_SCENT:
+            return "REDUCE_SCENT";
+        case ter_furn_flag::TFLAG_SWIMMABLE:
+            return "SWIMMABLE";
+        case ter_furn_flag::TFLAG_SUPPORTS_ROOF:
+            return "SUPPORTS_ROOF";
+        case ter_furn_flag::TFLAG_MINEABLE:
+            return "MINEABLE";
+        case ter_furn_flag::TFLAG_NOITEM:
+            return "NOITEM";
+        case ter_furn_flag::TFLAG_NO_SIGHT:
+            return "NO_SIGHT";
+        case ter_furn_flag::TFLAG_NO_SCENT:
+            return "NO_SCENT";
+        case ter_furn_flag::TFLAG_SEALED:
+            return "SEALED";
+        case ter_furn_flag::TFLAG_ALLOW_FIELD_EFFECT:
+            return "ALLOW_FIELD_EFFECT";
+        case ter_furn_flag::TFLAG_LIQUID:
+            return "LIQUID";
+        case ter_furn_flag::TFLAG_COLLAPSES:
+            return "COLLAPSES";
+        case ter_furn_flag::TFLAG_FLAMMABLE_ASH:
+            return "FLAMMABLE_ASH";
+        case ter_furn_flag::TFLAG_DESTROY_ITEM:
+            return "DESTROY_ITEM";
+        case ter_furn_flag::TFLAG_INDOORS:
+            return "INDOORS";
+        case ter_furn_flag::TFLAG_LIQUIDCONT:
+            return "LIQUIDCONT";
+        case ter_furn_flag::TFLAG_FIRE_CONTAINER:
+            return "FIRE_CONTAINER";
+        case ter_furn_flag::TFLAG_FLAMMABLE_HARD:
+            return "FLAMMABLE_HARD";
+        case ter_furn_flag::TFLAG_SUPPRESS_SMOKE:
+            return "SUPPRESS_SMOKE";
+        case ter_furn_flag::TFLAG_SHARP:
+            return "SHARP";
+        case ter_furn_flag::TFLAG_DIGGABLE:
+            return "DIGGABLE";
+        case ter_furn_flag::TFLAG_ROUGH:
+            return "ROUGH";
+        case ter_furn_flag::TFLAG_UNSTABLE:
+            return "UNSTABLE";
+        case ter_furn_flag::TFLAG_WALL:
+            return "WALL";
+        case ter_furn_flag::TFLAG_DEEP_WATER:
+            return "DEEP_WATER";
+        case ter_furn_flag::TFLAG_SHALLOW_WATER:
+            return "SHALLOW_WATER";
+        case ter_furn_flag::TFLAG_WATER_CUBE:
+            return "WATER_CUBE";
+        case ter_furn_flag::TFLAG_CURRENT:
+            return "CURRENT";
+        case ter_furn_flag::TFLAG_HARVESTED:
+            return "HARVESTED";
+        case ter_furn_flag::TFLAG_PERMEABLE:
+            return "PERMEABLE";
+        case ter_furn_flag::TFLAG_THIN_ICE:
+            return "THIN_ICE";
+        case ter_furn_flag::TFLAG_THICK_ICE:
+            return "THICK_ICE";
+        case ter_furn_flag::TFLAG_SWIM_UNDER:
+            return "SWIM_UNDER";
+        case ter_furn_flag::TFLAG_AUTO_WALL_SYMBOL:
+            return "AUTO_WALL_SYMBOL";
+        case ter_furn_flag::TFLAG_CONNECT_WITH_WALL:
+            return "CONNECT_WITH_WALL";
+        case ter_furn_flag::TFLAG_CLIMBABLE:
+            return "CLIMBABLE";
+        case ter_furn_flag::TFLAG_GOES_DOWN:
+            return "GOES_DOWN";
+        case ter_furn_flag::TFLAG_GOES_UP:
+            return "GOES_UP";
+        case ter_furn_flag::TFLAG_NO_FLOOR:
+            return "NO_FLOOR";
+        case ter_furn_flag::TFLAG_ALLOW_ON_OPEN_AIR:
+            return "ALLOW_ON_OPEN_AIR";
+        case ter_furn_flag::TFLAG_SEEN_FROM_ABOVE:
+            return "SEEN_FROM_ABOVE";
+        case ter_furn_flag::TFLAG_RAMP_DOWN:
+            return "RAMP_DOWN";
+        case ter_furn_flag::TFLAG_RAMP_UP:
+            return "RAMP_UP";
+        case ter_furn_flag::TFLAG_RAMP:
+            return "RAMP";
+        case ter_furn_flag::TFLAG_HIDE_PLACE:
+            return "HIDE_PLACE";
+        case ter_furn_flag::TFLAG_BLOCK_WIND:
+            return "BLOCK_WIND";
+        case ter_furn_flag::TFLAG_FLAT:
+            return "FLAT";
+        case ter_furn_flag::TFLAG_RAIL:
+            return "RAIL";
+        case ter_furn_flag::TFLAG_THIN_OBSTACLE:
+            return "THIN_OBSTACLE";
+        case ter_furn_flag::TFLAG_SMALL_PASSAGE:
+            return "SMALL_PASSAGE";
+        case ter_furn_flag::TFLAG_Z_TRANSPARENT:
+            return "Z_TRANSPARENT";
+        case ter_furn_flag::TFLAG_SUN_ROOF_ABOVE:
+            return "SUN_ROOF_ABOVE";
+        case ter_furn_flag::TFLAG_FUNGUS:
+            return "FUNGUS";
+        case ter_furn_flag::TFLAG_LOCKED:
+            return "LOCKED";
+        case ter_furn_flag::TFLAG_PICKABLE:
+            return "PICKABLE";
+        case ter_furn_flag::TFLAG_WINDOW:
+            return "WINDOW";
+        case ter_furn_flag::TFLAG_DOOR:
+            return "DOOR";
+        case ter_furn_flag::TFLAG_SHRUB:
+            return "SHRUB";
+        case ter_furn_flag::TFLAG_YOUNG:
+            return "YOUNG";
+        case ter_furn_flag::TFLAG_PLANT:
+            return "PLANT";
+        case ter_furn_flag::TFLAG_FISHABLE:
+            return "FISHABLE";
+        case ter_furn_flag::TFLAG_TREE:
+            return "TREE";
+        case ter_furn_flag::TFLAG_PLOWABLE:
+            return "PLOWABLE";
+        case ter_furn_flag::TFLAG_ORGANIC:
+            return "ORGANIC";
+        case ter_furn_flag::TFLAG_CONSOLE:
+            return "CONSOLE";
+        case ter_furn_flag::TFLAG_PLANTABLE:
+            return "PLANTABLE";
+        case ter_furn_flag::TFLAG_GROWTH_HARVEST:
+            return "GROWTH_HARVEST";
+        case ter_furn_flag::TFLAG_GROWTH_OVERGROWN:
+            return "GROWTH_OVERGROWN";
+        case ter_furn_flag::TFLAG_MOUNTABLE:
+            return "MOUNTABLE";
+        case ter_furn_flag::TFLAG_RAMP_END:
+            return "RAMP_END";
+        case ter_furn_flag::TFLAG_FLOWER:
+            return "FLOWER";
+        case ter_furn_flag::TFLAG_CAN_SIT:
+            return "CAN_SIT";
+        case ter_furn_flag::TFLAG_FLAT_SURF:
+            return "FLAT_SURF";
+        case ter_furn_flag::TFLAG_BUTCHER_EQ:
+            return "BUTCHER_EQ";
+        case ter_furn_flag::TFLAG_GROWTH_SEED:
+            return "GROWTH_SEED";
+        case ter_furn_flag::TFLAG_GROWTH_SEEDLING:
+            return "GROWTH_SEEDLING";
+        case ter_furn_flag::TFLAG_GROWTH_MATURE:
+            return "GROWTH_MATURE";
+        case ter_furn_flag::TFLAG_WORKOUT_ARMS:
+            return "WORKOUT_ARMS";
+        case ter_furn_flag::TFLAG_WORKOUT_LEGS:
+            return "WORKOUT_LEGS";
+        case ter_furn_flag::TFLAG_TRANSLOCATOR:
+            return "TRANSLOCATOR";
+        case ter_furn_flag::TFLAG_TRANSLOCATOR_GREATER:
+            return "TRANSLOCATOR_GREATER";
+        case ter_furn_flag::TFLAG_AUTODOC:
+            return "AUTODOC";
+        case ter_furn_flag::TFLAG_AUTODOC_COUCH:
+            return "AUTODOC_COUCH";
+        case ter_furn_flag::TFLAG_OPENCLOSE_INSIDE:
+            return "OPENCLOSE_INSIDE";
+        case ter_furn_flag::TFLAG_SALT_WATER:
+            return "SALT_WATER";
+        case ter_furn_flag::TFLAG_PLACE_ITEM:
+            return "PLACE_ITEM";
+        case ter_furn_flag::TFLAG_BARRICADABLE_WINDOW_CURTAINS:
+            return "BARRICADABLE_WINDOW_CURTAINS";
+        case ter_furn_flag::TFLAG_CLIMB_SIMPLE:
+            return "CLIMB_SIMPLE";
+        case ter_furn_flag::TFLAG_NANOFAB_TABLE:
+            return "NANOFAB_TABLE";
+        case ter_furn_flag::TFLAG_ROAD:
+            return "ROAD";
+        case ter_furn_flag::TFLAG_TINY:
+            return "TINY";
+        case ter_furn_flag::TFLAG_SHORT:
+            return "SHORT";
+        case ter_furn_flag::TFLAG_NOCOLLIDE:
+            return "NOCOLLIDE";
+        case ter_furn_flag::TFLAG_BARRICADABLE_DOOR:
+            return "BARRICADABLE_DOOR";
+        case ter_furn_flag::TFLAG_BARRICADABLE_DOOR_DAMAGED:
+            return "BARRICADABLE_DOOR_DAMAGED";
+        case ter_furn_flag::TFLAG_BARRICADABLE_DOOR_REINFORCED:
+            return "BARRICADABLE_DOOR_REINFORCED";
+        case ter_furn_flag::TFLAG_USABLE_FIRE:
+            return "USABLE_FIRE";
+        case ter_furn_flag::TFLAG_CONTAINER:
+            return "CONTAINER";
+        case ter_furn_flag::TFLAG_NO_PICKUP_ON_EXAMINE:
+            return "NO_PICKUP_ON_EXAMINE";
+        case ter_furn_flag::TFLAG_RUBBLE:
+            return "RUBBLE";
+        case ter_furn_flag::TFLAG_DIGGABLE_CAN_DEEPEN:
+            return "DIGGABLE_CAN_DEEPEN";
+        case ter_furn_flag::TFLAG_PIT_FILLABLE:
+            return "PIT_FILLABLE";
+        case ter_furn_flag::TFLAG_DIFFICULT_Z:
+            return "DIFFICULT_Z";
+        case ter_furn_flag::TFLAG_ALIGN_WORKBENCH:
+            return "ALIGN_WORKBENCH";
+        case ter_furn_flag::TFLAG_NO_SPOIL:
+            return "NO_SPOIL";
+        case ter_furn_flag::TFLAG_EASY_DECONSTRUCT:
+            return "EASY_DECONSTRUCT";
+        case ter_furn_flag::TFLAG_LADDER:
+            return "LADDER";
+        case ter_furn_flag::TFLAG_ALARMED:
+            return "ALARMED";
+        case ter_furn_flag::TFLAG_CHOCOLATE:
+            return "CHOCOLATE";
+        case ter_furn_flag::TFLAG_SIGN:
+            return "SIGN";
+        case ter_furn_flag::TFLAG_SIGN_ALWAYS:
+            return "SIGN_ALWAYS";
+        case ter_furn_flag::TFLAG_DONT_REMOVE_ROTTEN:
+            return "DONT_REMOVE_ROTTEN";
+        case ter_furn_flag::TFLAG_BLOCKSDOOR:
+            return "BLOCKSDOOR";
+        case ter_furn_flag::TFLAG_SMALL_HIDE:
+            return "SMALL_HIDE";
+        case ter_furn_flag::TFLAG_NO_SELF_CONNECT:
+            return "NO_SELF_CONNECT";
+        case ter_furn_flag::TFLAG_BURROWABLE:
+            return "BURROWABLE";
+        case ter_furn_flag::TFLAG_MURKY:
+            return "MURKY";
+        case ter_furn_flag::TFLAG_AMMOTYPE_RELOAD:
+            return "AMMOTYPE_RELOAD";
+        case ter_furn_flag::TFLAG_TRANSPARENT_FLOOR:
+            return "TRANSPARENT_FLOOR";
+        case ter_furn_flag::TFLAG_ELEVATOR:
+            return "ELEVATOR";
+        case ter_furn_flag::TFLAG_ACTIVE_GENERATOR:
+            return "ACTIVE_GENERATOR";
+        case ter_furn_flag::TFLAG_TRANSLUCENT:
+            return "TRANSLUCENT";
+        case ter_furn_flag::TFLAG_NO_FLOOR_WATER:
+            return "NO_FLOOR_WATER";
+        case ter_furn_flag::TFLAG_GRAZABLE:
+            return "GRAZABLE";
+        case ter_furn_flag::TFLAG_GRAZER_INEDIBLE:
+            return "GRAZER_INEDIBLE";
+        case ter_furn_flag::TFLAG_BROWSABLE:
+            return "BROWSABLE";
+        case ter_furn_flag::TFLAG_SINGLE_SUPPORT:
+            return "SINGLE_SUPPORT";
+        case ter_furn_flag::TFLAG_CLIMB_ADJACENT:
+            return "CLIMB_ADJACENT";
+        case ter_furn_flag::TFLAG_FLOATS_IN_AIR:
+            return "FLOATS_IN_AIR";
+        case ter_furn_flag::TFLAG_HARVEST_REQ_CUT1:
+            return "HARVEST_REQ_CUT1";
+        case ter_furn_flag::TFLAG_NATURAL_UNDERGROUND:
+            return "NATURAL_UNDERGROUND";
+        case ter_furn_flag::TFLAG_WIRED_WALL:
+            return "WIRED_WALL";
+        case ter_furn_flag::TFLAG_MON_AVOID_STRICT:
+            return "MON_AVOID_STRICT";
+        case ter_furn_flag::TFLAG_REGION_PSEUDO:
+            return "REGION_PSEUDO";
+        case ter_furn_flag::TFLAG_PHASE_BACK:
+            return "PHASE_BACK";
+        case ter_furn_flag::TFLAG_ONE_DIMENSIONAL_X:
+            return "ONE_DIMENSIONAL_X";
+        case ter_furn_flag::TFLAG_ONE_DIMENSIONAL_Y:
+            return "ONE_DIMENSIONAL_Y";
+        case ter_furn_flag::TFLAG_ONE_DIMENSIONAL_Z:
+            return "ONE_DIMENSIONAL_Z";
+
+
         case ter_furn_flag::NUM_TFLAG_FLAGS:
             break;
     }
     cata_fatal( "Invalid ter_furn_flag" );
 }
 
-} // namespace io
+}
 
 static std::unordered_map<std::string, connect_group> ter_connects_map;
 
@@ -360,7 +499,7 @@ void connect_group::load( const JsonObject &jo )
     result.id = connect_group_id( jo.get_string( "id" ) );
     result.index = ter_connects_map.find( result.id.str() ) == ter_connects_map.end() ?
                    ter_connects_map.size() : ter_connects_map[result.id.str()].index;
-    // Check index overflow for bitsets
+
     if( result.index >= NUM_TERCONN ) {
         debugmsg( "Exceeded current maximum of %d connection groups.  Increase NUM_TERCONN to allow for more groups!",
                   NUM_TERCONN );
@@ -450,7 +589,7 @@ void map_fd_bash_info::load( const JsonObject &jo, const bool was_loaded,
 
 std::string map_common_bash_info::potential_bash_items( const map_data_common_t &ter_furn ) const
 {
-    //TODO: Add a descriptive indicator of vaguely how hard it is to bash?
+
 
     std::string ret;
     if( !ter_furn.base_item.is_null() && drop_group == Item_spawn_data_EMPTY_GROUP ) {
@@ -525,7 +664,7 @@ std::string map_common_deconstruct_info::potential_deconstruct_items( const map_
                    _( "\nYou feel you might also learn something about <color_cyan>%s</color>." ),
                    skill->id.obj().name() );
     }
-    // Remove extra newline
+
     if( !ret.empty() && ret.back() == '\n' ) {
         ret.pop_back();
     }
@@ -716,7 +855,7 @@ void map_data_common_t::examine( Character &you, const tripoint_bub_ms &examp ) 
         return;
     }
 
-    // skip uilist query if only 1 option
+
     if( examine_actor.size() + examine_func.size() == 1 ) {
         if( examine_actor.size() == 1 ) {
             examine_actor.front()->call( you, examp );
@@ -726,8 +865,8 @@ void map_data_common_t::examine( Character &you, const tripoint_bub_ms &examp ) 
         return;
     }
 
-    // if NPC, pick the very first option
-    // TODO, but i have no idea how to approach it for generic use cases
+
+
     if( you.is_npc() ) {
         if( examine_actor.size() > 0 ) {
             examine_actor.front()->call( you, examp );
@@ -785,7 +924,7 @@ void map_data_common_t::load_symbol_color( const JsonObject &jo, const std::stri
     } else if( has_color ) {
         load_season_array( jo, "color", context, no_copy_symbol_color,
         color_, []( std::string_view str ) {
-            // has to use a lambda because of default params
+
             return color_from_string( str );
         } );
     } else if( has_bgcolor ) {
@@ -865,19 +1004,19 @@ std::vector<std::string> furn_t::extended_description() const
     std::vector<std::string> tmp = map_data_common_t::extended_description();
     ret.insert( ret.end(), tmp.begin(), tmp.end() );
 
-    // If this furniture has a crafting pseudo item, check for tool qualities and print them
+
     if( !crafting_pseudo_item.is_empty() ) {
         const item pseudo( crafting_pseudo_item );
         std::vector<iteminfo_parts> quality_part = { iteminfo_parts::QUALITIES };
         const iteminfo_query quality_query( quality_part );
         std::vector<iteminfo> info_vec;
         pseudo.qualities_info( info_vec, &quality_query, 1, false );
-        // A bit of cargo-culting here, pre-imgui printing code was adapted
-        // to split string with line breaks into single-line strings
+
+
         std::string quality_string = format_item_info( info_vec, {} );
         size_t strpos = 0;
         while( ( strpos = quality_string.find( '\n' ) ) != std::string::npos ) {
-            // \n character is skipped
+
             ret.emplace_back( quality_string.substr( 0, strpos ) );
             quality_string.erase( 0, strpos + 1 );
         }
@@ -912,8 +1051,8 @@ std::vector<std::string> map_data_common_t::extended_description() const
         tmp.emplace_back( "--" );
         int player_skill = get_player_character().get_greater_skill_or_knowledge_level( skill_survival );
         tmp.emplace_back( _( "You could harvest the following things from it:" ) );
-        // Group them by identical ids to avoid repeating same blocks of data
-        // First, invert the mapping: season->id to id->seasons
+
+
         std::multimap<harvest_id, season_type> identical_harvest;
         for( size_t season = SPRING; season <= WINTER; season++ ) {
             const auto &hv = harvest_by_season[season];
@@ -923,15 +1062,15 @@ std::vector<std::string> map_data_common_t::extended_description() const
 
             identical_harvest.insert( std::make_pair( hv, static_cast<season_type>( season ) ) );
         }
-        // Now print them in order of seasons
-        // TODO: Highlight current season
+
+
         for( size_t season = SPRING; season <= WINTER; season++ ) {
             const auto range = identical_harvest.equal_range( harvest_by_season[season] );
             if( range.first == range.second ) {
                 continue;
             }
 
-            // List the seasons first
+
             std::string seasons = enumerate_as_string( range.first, range.second,
             []( const std::pair<harvest_id, season_type> &pr ) {
                 if( pr.second == season_of_year( calendar::turn ) ) {
@@ -942,11 +1081,11 @@ std::vector<std::string> map_data_common_t::extended_description() const
             } );
             seasons += ":";
             tmp.emplace_back( seasons );
-            // List the drops
-            // They actually describe what player can get from it now, so it isn't spoily
-            // TODO: Allow spoily listing of everything
+
+
+
             tmp.emplace_back( range.first->first.obj().describe( player_skill ) );
-            // Remove the range from the multimap so that it isn't listed twice
+
             identical_harvest.erase( range.first, range.second );
         }
     }
@@ -957,7 +1096,7 @@ std::vector<std::string> map_data_common_t::extended_description() const
         tmp.emplace_back( _( "Can be <color_green>cut down</color> with the right tools." ) );
     }
 
-    // todo: generalize, copied from map::features which combines terrain and furniture info
+
     std::string result;
     const auto add = [&]( const std::string & text ) {
         if( !result.empty() ) {
@@ -1008,7 +1147,7 @@ void finalize_furniture( )
 
 void load_terrain( const JsonObject &jo, const std::string &src )
 {
-    if( terrain_data.empty() ) { // TODO: This shouldn't live here
+    if( terrain_data.empty() ) {
         terrain_data.insert( null_terrain_t() );
     }
     terrain_data.load( jo, src );
@@ -1041,7 +1180,7 @@ void map_data_common_t::unset_flag( const std::string &flag )
 {
     if( auto it_flag = flags.find( flag ); it_flag != flags.end() ) {
         flags.erase( it_flag );
-    } //else return false?
+    }
     std::optional<ter_furn_flag> f = io::string_to_enum_optional<ter_furn_flag>( flag );
     if( f.has_value() ) {
         bitflags.reset( f.value() );
@@ -1055,7 +1194,7 @@ void map_data_common_t::unset_flags()
 {
     flags.clear();
     bitflags.reset();
-    transparent = false; //?
+    transparent = false;
 }
 
 void map_data_common_t::set_connect_groups( const std::vector<std::string> &connect_groups_vec )
@@ -1158,18 +1297,22 @@ template<>
 std::string enum_to_string<season_type>( season_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case season_type::SPRING: return "spring";
-        case season_type::SUMMER: return "summer";
-        case season_type::AUTUMN: return "autumn";
-        case season_type::WINTER: return "winter";
-        // *INDENT-ON*
+
+        case season_type::SPRING:
+            return "spring";
+        case season_type::SUMMER:
+            return "summer";
+        case season_type::AUTUMN:
+            return "autumn";
+        case season_type::WINTER:
+            return "winter";
+
         case season_type::NUM_SEASONS:
             break;
     }
     cata_fatal( "Invalid season_type" );
 }
-} // namespace io
+}
 
 static std::map<std::string, cata::clone_ptr<iexamine_actor>> examine_actors;
 
@@ -1239,11 +1382,11 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
             }
         }
     } else if( was_loaded && has_any_harvest( harvest_by_season ) ) {
-        // Explicitly don't inherit harvest_by_season so _harvested versions don't need to override it
+
         harvest_by_season.fill( harvest_id::NULL_ID() );
     }
 
-    // this certainly need some cleanup, leverage it to generic factory or something
+
     if( jo.has_member( "examine_action" ) ) {
         examine_func.clear();
         examine_actor.clear();
@@ -1259,10 +1402,10 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
         examine_actor.emplace_back( a );
     } else if( jo.has_array( "examine_action" ) ) {
         for( JsonValue jov : jo.get_array( "examine_action" ) ) {
-            // if string, examine_func
+
             if( jov.test_string() ) {
                 examine_func.emplace_back( iexamine_functions_from_string( jov.get_string() ) );
-            } else { // object, examine_actor
+            } else {
                 JsonObject data = jov.get_object();
                 cata::clone_ptr<iexamine_actor> a = iexamine_actor_from_jsobj( data );
                 optional( data, was_loaded, "name", a->name );
@@ -1324,7 +1467,7 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "curtain_transform", curtain_transform );
     int legacy_floor_bedding_warmth = units::to_legacy_bodypart_temp_delta(
-                                          floor_bedding_warmth ); //TODO: Should be in map_data_common_t::load?
+                                          floor_bedding_warmth );
     optional( jo, was_loaded, "floor_bedding_warmth", legacy_floor_bedding_warmth, 0 );
     floor_bedding_warmth = units::from_legacy_bodypart_temp_delta( legacy_floor_bedding_warmth );
 
@@ -1374,7 +1517,7 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "allowed_template_ids", allowed_template_id );
 
-    // Doesn't make any sense to inherit
+
     optional( jo, false, "open", open, ter_str_id::NULL_ID() );
     optional( jo, false, "close", close, ter_str_id::NULL_ID() );
     optional( jo, false, "transforms_into", transforms_into, ter_str_id::NULL_ID() );
@@ -1383,7 +1526,7 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "lockpick_result", lockpick_result, ter_str_id::NULL_ID() );
 
-    // Phase-change fields
+
     if( jo.has_array( "phase_targets" ) ) {
         JsonArray ja = jo.get_array( "phase_targets" );
         for( const JsonValue v : ja ) {
@@ -1399,7 +1542,7 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
         JsonArray ja = jo.get_array( "phase_temps" );
         for( const JsonValue v : ja ) {
             if( v.test_number() ) {
-                // Interpret numeric values as degrees Celsius in JSON
+
                 phase_temps.emplace_back( units::from_celsius( v.get_float() ) );
             } else if( v.test_string() ) {
                 const std::string s = v.get_string();
@@ -1417,15 +1560,15 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "phase_method", phase_method );
 
-    // Validate phase arrays: `phase_temps` must contain exactly one less
-    // entry than `phase_targets`.
+
+
     if( !phase_targets.empty() ) {
         if( phase_temps.size() != phase_targets.size() - 1 ) {
             jo.throw_error( "phase_temps must contain exactly one less entry than phase_targets" );
         }
     }
     oxytorch = cata::make_value<activity_data_ter>();
-    if( jo.has_object( "oxytorch" ) ) { //TODO: Make overwriting these with eg "oxytorch": { } work while still allowing overwriting single values
+    if( jo.has_object( "oxytorch" ) ) {
         oxytorch->load( jo.get_object( "oxytorch" ) );
     }
 
@@ -1449,7 +1592,7 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
         if( !bash_loaded ) {
             bash.emplace();
         }
-        //TODO: Make overwriting these with "bash": { } works while still allowing overwriting single values ie for "ter_set"
+
         bash->load( jo.get_object( "bash" ), bash_loaded, "terrain " + id.str() );
     }
     if( jo.has_object( "deconstruct" ) ) {
@@ -1479,7 +1622,7 @@ void map_ter_bash_info::check( const std::string &id ) const
 {
     map_common_bash_info::check( id );
     if( str_max != -1 ) {
-        if( ter_set.is_empty() ) { // Some tiles specify t_null explicitly
+        if( ter_set.is_empty() ) {
             debugmsg( "bash result terrain of %s is undefined/empty", id );
         }
         if( !ter_set.is_valid() ) {
@@ -1541,9 +1684,9 @@ void ter_t::check() const
 
     if( !base_item.is_null() && bash.has_value() &&
         bash.value().drop_group != Item_spawn_data_EMPTY_GROUP ) {
-        // in the future, maybe, if base_item would be used more widely,
-        // there would be a reason to not error about it or make some boolean to permit it
-        // but right now let's treat it as a bug
+
+
+
         debugmsg( R"(terrain %s defines "bash"->"items", but "item" is presented, which is unnecessary - bash result would be picked from %s uncrafting recipe.)",
                   id.c_str(), base_item.c_str() );
     }
@@ -1557,15 +1700,15 @@ void ter_t::check() const
         debugmsg( "invalid transforms_into %s for %s", transforms_into.c_str(), id.c_str() );
     }
 
-    // Validate open/close transforms
+
     if( !open.is_valid() ) {
         debugmsg( "invalid terrain %s for opening %s", open.c_str(), id.c_str() );
     }
     if( !close.is_valid() ) {
         debugmsg( "invalid terrain %s for closing %s", close.c_str(), id.c_str() );
     }
-    // Check transition consistency for opening/closing terrain. Has an obvious
-    // exception for locked terrains - those aren't expected to be locked again
+
+
     if( open && open->close && open->close != id && !has_flag( ter_furn_flag::TFLAG_LOCKED ) ) {
         debugmsg( "opening terrain %s for %s doesn't reciprocate", open.c_str(), id.c_str() );
     }
@@ -1573,7 +1716,7 @@ void ter_t::check() const
         debugmsg( "closing terrain %s for %s doesn't reciprocate", close.c_str(), id.c_str() );
     }
 
-    // Validate curtain transforms
+
     if( has_examine( iexamine::curtains ) && !has_curtains() ) {
         debugmsg( "%s is a curtain, but has no curtain_transform", id.c_str() );
     }
@@ -1584,7 +1727,7 @@ void ter_t::check() const
         debugmsg( "%s has invalid curtain transform target %s", id.c_str(), curtain_transform.c_str() );
     }
 
-    // Validate generic transforms
+
     if( transforms_into && transforms_into == id ) {
         debugmsg( "%s transforms_into itself", id.c_str() );
     }

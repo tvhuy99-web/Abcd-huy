@@ -52,7 +52,7 @@ static trait_replacement trait_migration_remove{ std::nullopt, std::nullopt, tru
 namespace
 {
 generic_factory<mutation_branch> trait_factory( "trait" );
-} // namespace
+}
 
 std::vector<dream> dreams;
 std::map<mutation_category_id, std::vector<trait_id> > mutations_category;
@@ -384,11 +384,11 @@ void mutation_branch::load( const JsonObject &jo, std::string_view src )
 
     for( JsonArray pair : jo.get_array( "vitamins_absorb_multi" ) ) {
         std::map<vitamin_id, double> vit;
-        // fill the inner map with vitamins
+
         for( JsonArray vitamins : pair.get_array( 1 ) ) {
             vit.emplace( vitamin_id( vitamins.get_string( 0 ) ), vitamins.get_float( 1 ) );
         }
-        // assign the inner vitamin map to the material_id key
+
         vitamin_absorb_multi.emplace( material_id( pair.get_string( 0 ) ), vit );
     }
 
@@ -530,7 +530,7 @@ void mutation_branch::load( const JsonObject &jo, std::string_view src )
     for( JsonObject ao : jo.get_array( "armor" ) ) {
         std::set<std::string> ignored_by_resist = { "part_types", "parts" };
         const resistances res = load_resistances_instance( ao, ignored_by_resist );
-        // Set damage resistances for all body parts of the specified type(s)
+
         for( const std::string &type_string : ao.get_tags( "part_types" ) ) {
             for( const body_part_type &bp : body_part_type::get_all() ) {
                 if( type_string == "ALL" ) {
@@ -540,7 +540,7 @@ void mutation_branch::load( const JsonObject &jo, std::string_view src )
                 }
             }
         }
-        // Set damage resistances for specific body parts
+
         for( const std::string &part_string : ao.get_tags( "parts" ) ) {
             armor[bodypart_str_id( part_string )] += res;
         }
@@ -611,12 +611,12 @@ std::string mutation_branch::desc( const std::string &variant ) const
 static bool has_cyclic_dependency( const trait_id &mid, std::vector<trait_id> already_visited )
 {
     if( contains_trait( already_visited, mid ) ) {
-        return true; // Circular dependency was found.
+        return true;
     }
 
     already_visited.push_back( mid );
 
-    // Perform Depth-first search
+
     for( const trait_id &current_mutation : mid->prereqs ) {
         if( has_cyclic_dependency( current_mutation->id, already_visited ) ) {
             return true;
@@ -649,7 +649,7 @@ static void check_consistency( const std::vector<trait_id> &mvec, const trait_id
             debugmsg( "mutation %s refers to undefined %s %s", mid.c_str(), what.c_str(), m.c_str() );
         }
 
-        // TODO: The context check here is gross but this is throwing false positives on #81278 that I don't know how to check for in a better way and I can't repro a crash even if the mutation doesn't cancel cancelling itself it just makes the UI a bit unintuitive
+
         if( m == mid && what != "cancels" ) {
             debugmsg( "mutation %s refers to itself in %s context.  The program will crash if the player gains this mutation.",
                       mid.c_str(), what.c_str() );
@@ -689,7 +689,7 @@ void mutation_branch::check_consistency()
         if( s_id && !s_id.value().is_valid() ) {
             debugmsg( "mutation %s refers to undefined scent type %s", mid.c_str(), s_id.value().c_str() );
         }
-        // Suppress these onload warnings for overlapping mods
+
         for( const trait_id &replacement : mdata.replacements ) {
             const mutation_branch &rdata = replacement.obj();
             bool suppressed = rdata.src.back().second != trait_source && !basegame_trait;
@@ -773,7 +773,7 @@ void mutation_branch::check_consistency()
             }
         }
 
-        // We need to display active mutations in the UI.
+
         if( mdata.activated && !mdata.player_display ) {
             debugmsg( "mutation %s is not displayed but set as active" );
         }
@@ -935,11 +935,11 @@ bool mutation_branch::trait_is_blacklisted( const trait_id &tid )
 
 void mutation_branch::load_trait_migration( const JsonObject &jo )
 {
-    // First, load the target
+
     trait_id target;
     jo.read( "id", target );
 
-    // Then, populate the replacement
+
     trait_replacement replacement;
 
     if( jo.has_string( "proficiency" ) ) {
@@ -981,8 +981,8 @@ void mutation_branch::finalize_all()
         for( const mutation_category_id &cat : branch.category ) {
             mutations_category[cat].emplace_back( branch.id );
         }
-        // Don't include dummy mutations for the ANY category, since they have a very specific use case
-        // Otherwise, the system will prioritize them
+
+
         if( !branch.dummy ) {
             mutations_category[mutation_category_ANY].emplace_back( branch.id );
         }
@@ -1009,11 +1009,11 @@ void mutation_branch::load_trait_group( const JsonObject &jsobj )
 static Trait_group &make_group_or_throw( const trait_group::Trait_group_tag &gid,
         bool is_collection )
 {
-    // NOTE: If the gid is already in the map, emplace will just return an iterator to it
+
     auto found = ( is_collection
                    ? trait_groups.emplace( gid, make_shared_fast<Trait_group_collection>( 100 ) )
                    : trait_groups.emplace( gid, make_shared_fast<Trait_group_distribution>( 100 ) ) ).first;
-    // Evidently, making the collection/distribution separation better has made the code for this check worse.
+
     if( is_collection ) {
         if( dynamic_cast<Trait_group_distribution *>( found->second.get() ) ) {
             throw std::runtime_error( string_format(
@@ -1034,13 +1034,13 @@ void mutation_branch::load_trait_group( const JsonArray &entries,
     Trait_group &tg = make_group_or_throw( gid, is_collection );
 
     for( const JsonValue entry : entries ) {
-        // Backwards-compatibility with old format ["TRAIT", 100]
+
         if( entry.test_array() ) {
             JsonArray subarr = entry.get_array();
 
             trait_id id( subarr.get_string( 0 ) );
             tg.add_entry( std::make_unique<Single_trait_creator>( id, "", subarr.get_int( 1 ) ) );
-            // Otherwise load new format {"trait": ... } or {"group": ...}
+
         } else {
             JsonObject subobj = entry.get_object();
             add_entry( tg, subobj );
@@ -1058,7 +1058,7 @@ void mutation_branch::load_trait_group( const JsonObject &jsobj,
 
     Trait_group &tg = make_group_or_throw( gid, subtype == "collection" || subtype == "old" );
 
-    // TODO: (sm) Looks like this makes the new code backwards-compatible with the old format. Great if so!
+
     if( subtype == "old" ) {
         for( JsonArray pair : jsobj.get_array( "traits" ) ) {
             tg.add_trait_entry( trait_id( pair.get_string( 0 ) ), "", pair.get_int( 1 ) );
@@ -1066,7 +1066,7 @@ void mutation_branch::load_trait_group( const JsonObject &jsobj,
         return;
     }
 
-    // TODO: (sm) Taken from item_factory.cpp almost verbatim. Ensure that these work!
+
     if( jsobj.has_member( "entries" ) ) {
         for( JsonObject subobj : jsobj.get_array( "entries" ) ) {
             add_entry( tg, subobj );

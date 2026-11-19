@@ -74,11 +74,12 @@ void iteminfo_window::execute()
     }
 
     a11y::screen_scope reader( &ctxt, "item-info",
-    [this]( const a11y::semantic_intent &intent ) {
+    [this]( const a11y::semantic_intent & intent ) {
         return a11y::registered_intent( ctxt, intent );
     } );
     if( a11y::enabled() ) {
-        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, remove_color_tags( data.get_item_name() ) );
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           remove_color_tags( data.get_item_name() ) );
         snapshot.summary = remove_color_tags( data.get_type_name() );
         a11y::append_document( snapshot, "item:information", _( "Item info" ),
                                format_item_info( data.get_item_display(), data.get_item_compare() ) );
@@ -107,7 +108,7 @@ void iteminfo_window::execute()
             break;
         }
 
-        // mouse click on x to close leads here
+
         if( !get_is_open() ) {
             break;
         }

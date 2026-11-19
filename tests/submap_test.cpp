@@ -7,7 +7,7 @@
 
 TEST_CASE( "submap_rotation", "[submap]" )
 {
-    // Corners are labelled starting from the upper-left one, clockwise.
+
     constexpr point_sm_ms corner_1{};
     constexpr point_sm_ms corner_2 = { SEEX - 1, 0 };
     constexpr point_sm_ms corner_3 = { SEEX - 1, SEEY - 1 };

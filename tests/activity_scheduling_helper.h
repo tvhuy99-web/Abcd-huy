@@ -73,14 +73,14 @@ class sleep_schedule : public schedule
 
 class tasklist
 {
-        // The tasks we have yet to do, and how long
-        // The first member is a pointer because we need to preserve the virtual
-        // class that it's pointing to
-        // It will _never_ be nullptr
+
+
+
+
         std::vector<std::pair<const schedule *, time_duration>> tasks;
-        // How long we've been on the current task
+
         time_duration advanced = 0_seconds;
-        // The current task's index
+
         size_t cursor = 0;
 
     public:
@@ -113,8 +113,8 @@ struct weariness_events {
         void log( int old_level, int new_level, const time_duration &when,
                   int new_weariness, int new_threshold, int intake, int tracker );
 
-        // Return the first time a transition between `from` and `to` occurs, in minutes
-        // if around = 0_seconds or equivalent, otherwise return the time closest to around
+
+
         int transition_minutes( int from, int to, const time_duration &around ) const;
 
         bool have_weary_decrease() const;
@@ -126,4 +126,4 @@ struct weariness_events {
 
 weariness_events do_activity( tasklist tasks, bool do_clear_avatar = true );
 
-#endif // CATA_TESTS_ACTIVITY_SCHEDULING_HELPER_H
+#endif

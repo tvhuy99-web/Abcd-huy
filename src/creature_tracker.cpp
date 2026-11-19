@@ -73,15 +73,15 @@ bool creature_tracker::add( const shared_ptr_fast<monster> &critter_ptr )
     map *here = &get_map();
     monster &critter = *critter_ptr;
 
-    if( critter.type->id.is_null() ) { // Don't want to spawn null monsters o.O
+    if( critter.type->id.is_null() ) {
         return false;
     }
 
     if( const shared_ptr_fast<monster> existing_mon_ptr = find( critter.pos_abs() ) ) {
-        // We can spawn stuff on hallucinations, but we need to kill them first
+
         if( existing_mon_ptr->is_hallucination() ) {
             existing_mon_ptr->die( here, nullptr );
-            // But don't remove - that would change the monster order and could segfault
+
         } else if( critter.is_hallucination() ) {
             return false;
         } else {
@@ -110,8 +110,8 @@ bool creature_tracker::update_pos( const monster &critter, const tripoint_abs_ms
     map &here = get_map();
 
     if( critter.is_dead() ) {
-        // find ignores dead critters anyway, changing their position in the
-        // monsters_by_location map is useless.
+
+
         remove_from_location_map( critter );
         return true;
     }
@@ -136,11 +136,11 @@ bool creature_tracker::update_pos( const monster &critter, const tripoint_abs_ms
         monsters_by_location[new_pos] = *iter;
         return true;
     } else {
-        // We're changing the x/y/z coordinates of a zombie that hasn't been added
-        // to the game yet. `add` will update monsters_by_location for us.
+
+
         debugmsg( "update_zombie_pos: no %s at %s (moving to %s)",
                   critter.disp_name(), old_pos.to_string_writable(), new_pos.to_string_writable() );
-        // Rebuild cache in case the monster actually IS in the game, just bugged
+
         rebuild_cache();
         return false;
     }
@@ -154,8 +154,8 @@ void creature_tracker::remove_from_location_map( const monster &critter )
         return;
     }
 
-    // When it's not in the map at its current location, it might still be there under,
-    // another location, so look for it.
+
+
     const auto iter = std::find_if( monsters_by_location.begin(), monsters_by_location.end(),
     [&]( const decltype( monsters_by_location )::value_type & v ) {
         return v.second.get() == &critter;
@@ -229,10 +229,10 @@ void creature_tracker::swap_positions( monster &first, monster &second )
         invalidate_reachability_cache();
     }
 
-    // Either of them may be invalid!
+
     const auto first_iter = monsters_by_location.find( first.pos_abs() );
     const auto second_iter = monsters_by_location.find( second.pos_abs() );
-    // implied: first_iter != second_iter
+
 
     shared_ptr_fast<monster> first_ptr;
     if( first_iter != monsters_by_location.end() ) {
@@ -245,13 +245,13 @@ void creature_tracker::swap_positions( monster &first, monster &second )
         second_ptr = second_iter->second;
         monsters_by_location.erase( second_iter );
     }
-    // implied: (first_ptr != second_ptr) or (first_ptr == nullptr && second_ptr == nullptr)
+
 
     const tripoint_abs_ms temp = second.pos_abs();
     second.spawn( first.pos_abs() );
     first.spawn( temp );
 
-    // If the pointers have been taken out of the list, put them back in.
+
     if( first_ptr ) {
         monsters_by_location[first.pos_abs()] = first_ptr;
     }
@@ -263,11 +263,11 @@ void creature_tracker::swap_positions( monster &first, monster &second )
 bool creature_tracker::kill_marked_for_death()
 {
     map &here = get_map();
-    // Important: `Creature::die` must not be called after creature objects (NPCs, monsters) have
-    // been removed, the dying creature could still have a pointer (the killer) to another creature.
+
+
     bool monster_is_dead = false;
-    // Copy the list so we can iterate the copy safely *and* add new monsters from within monster::die
-    // This happens for example with blob monsters (they split into two smaller monsters).
+
+
     const auto copy = monsters_list;
     for( const shared_ptr_fast<monster> &mon_ptr : copy ) {
         cata_assert( mon_ptr );
@@ -287,7 +287,7 @@ bool creature_tracker::kill_marked_for_death()
 
 void creature_tracker::remove_dead()
 {
-    // Can't use game::all_monsters() as it would not contain *dead* monsters.
+
     for( auto iter = monsters_list.begin(); iter != monsters_list.end(); ) {
         monster *const critter = iter->get();
         if( critter->is_dead() ) {
@@ -313,13 +313,13 @@ T *creature_tracker::creature_at( const tripoint_abs_ms &p, bool allow_hallucina
         if( !allow_hallucination && mon_ptr->is_hallucination() ) {
             return nullptr;
         }
-        // if we wanted to check for an NPC / player / avatar,
-        // there is sometimes a monster AND an NPC/player there at the same time.
-        // because the NPC/player etc may be riding that monster.
-        // so only return the monster if we were actually looking for a monster.
-        // otherwise, keep looking for the rider.
-        // creature_at<creature> or creature_at() with no template will still default to returning monster first,
-        // which is ok for the occasions where that happens.
+
+
+
+
+
+
+
         if( !mon_ptr->has_effect( effect_ridden ) || ( std::is_same_v<T, monster> ||
                 std::is_same_v<T, Creature> || std::is_same_v<T, const monster> ||
                 std::is_same_v<T, const Creature> ) ) {
@@ -341,11 +341,11 @@ T *creature_tracker::creature_at( const tripoint_abs_ms &p, bool allow_hallucina
     return nullptr;
 }
 
-/** This is lazily evaluated on demand. Each creature in a zone is visited
- * as it flood fills, then the zone number is incremented. At the end all creatures in
- * the same zone will have the same zone number assigned, which can be used to have creatures in
- * different zones ignore each other very cheaply.
- */
+
+
+
+
+
 void creature_tracker::flood_fill_zone( const Creature &origin )
 {
     if( dirty_ ) {
@@ -355,12 +355,12 @@ void creature_tracker::flood_fill_zone( const Creature &origin )
         dirty_ = false;
     }
 
-    // This check insures we only flood fill when the target monster has an uninitialized zone,
-    // or if it has a zone from last turn.  In other words it only triggers on
-    // the first monster in a zone each turn. We can detect this because the sign
-    // of the zone numbers changes on every invalidation.
+
+
+
+
     int old_zone = origin.get_reachable_zone();
-    // Compare with zone_tick == old_zone && old_zone != 0
+
     if( old_zone * zone_tick_ > 0 ) {
         return;
     }

@@ -70,22 +70,22 @@ static const itype_id itype_tommygun( "tommygun" );
 static const itype_id itype_usp_9mm( "usp_9mm" );
 static const itype_id itype_vac_sealer( "vac_sealer" );
 
-// Functions:
-// - item::ammo_types
-//
-// TODO:
-// - ammo_type
-// - common_ammo_default
-// - ammo_sort_name
 
-// item::ammo_types returns the ammo types an item may *contain*, which is distinct from the ammo
-// types an item may *use*.
-//
-// Only magazines have ammo_types().
-//
-// Tools, tool mods, and (all other item types?) have empty ammo_types()
 
-// Return true if the given item has non-empty ammo_types
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static bool has_ammo_types( const item &it )
 {
     return !it.ammo_types().empty();
@@ -93,21 +93,21 @@ static bool has_ammo_types( const item &it )
 
 TEST_CASE( "ammo_types", "[ammo][ammo_types]" )
 {
-    // Only a few kinds of item have ammo_types:
-    // - Items with type=MAGAZINE (including batteries as well as gun magazines)
-    // - Tools/weapons with magazine_integral (pocket_data has a MAGAZINE rather than MAGAZINE_WELL)
+
+
+
 
     SECTION( "items with MAGAZINE pockets have ammo_types" ) {
-        // Batteries are magazines
+
         REQUIRE( item( itype_light_battery_cell ).is_magazine() );
         REQUIRE( item( itype_battery_car ).is_magazine() );
 
-        // Tool batteries
+
         CHECK( has_ammo_types( item( itype_light_battery_cell ) ) );
         CHECK( has_ammo_types( item( itype_medium_battery_cell ) ) );
         CHECK( has_ammo_types( item( itype_heavy_battery_cell ) ) );
         CHECK( has_ammo_types( item( itype_heavy_plus_battery_cell ) ) );
-        // Vehicle batteries
+
         CHECK( has_ammo_types( item( itype_battery_car ) ) );
         CHECK( has_ammo_types( item( itype_battery_motorbike ) ) );
         CHECK( has_ammo_types( item( itype_large_storage_battery ) ) );
@@ -117,7 +117,7 @@ TEST_CASE( "ammo_types", "[ammo][ammo_types]" )
             CHECK( item( itype_battery_car ).ammo_types().count( ammo_battery ) == 1 );
         }
 
-        // Gun magazines
+
         REQUIRE( item( itype_belt40mm ).is_magazine() );
         REQUIRE( item( itype_akmag10 ).is_magazine() );
 
@@ -155,15 +155,15 @@ TEST_CASE( "ammo_types", "[ammo][ammo_types]" )
     }
 
     SECTION( "TOOL items with NO pockets have ammo_types" ) {
-        // NOTE: Fish trap is a TOOL with "ammo", but no "pocket_data", so an implicit MAGAZINE
-        // pocket is added by Item_factory::check_and_create_magazine_pockets on JSON load.
-        // This item would be considered needing data migration to an explicit MAGAZINE pocket.
+
+
+
         REQUIRE( item( itype_fish_trap ).magazine_integral() );
 
         CHECK( has_ammo_types( item( itype_fish_trap ) ) );
     }
 
-    // These items have NO ammo_types:
+
 
     SECTION( "GUN items with MAGAZINE_WELL pockets also have ammo_types" ) {
         REQUIRE_FALSE( item( itype_m1911 ).magazine_integral() );
@@ -189,12 +189,12 @@ TEST_CASE( "ammo_types", "[ammo][ammo_types]" )
         REQUIRE( item( itype_38_special ).is_ammo() );
         REQUIRE( item( itype_sinew ).is_ammo() );
 
-        // Ammo for guns
+
         CHECK_FALSE( has_ammo_types( item( itype_38_special ) ) );
         CHECK_FALSE( has_ammo_types( item( itype_reloaded_308 ) ) );
         CHECK_FALSE( has_ammo_types( item( itype_bp_9mmfmj ) ) );
         CHECK_FALSE( has_ammo_types( item( itype_44magnum ) ) );
-        // Not for guns but classified as ammo
+
         CHECK_FALSE( has_ammo_types( item( itype_sinew ) ) );
         CHECK_FALSE( has_ammo_types( item( itype_nail ) ) );
         CHECK_FALSE( has_ammo_types( item( itype_rock ) ) );
@@ -209,10 +209,10 @@ TEST_CASE( "ammo_types", "[ammo][ammo_types]" )
     }
 }
 
-// The same items with no ammo_types, also have no ammo_default.
+
 TEST_CASE( "ammo_default", "[ammo][ammo_default]" )
 {
-    // TOOLMOD type, and TOOL type items with MAGAZINE_WELL pockets have no ammo_default
+
     SECTION( "items without ammo_default" ) {
         item flashlight( itype_flashlight );
         item med_mod( itype_magazine_battery_medium_mod );
@@ -221,15 +221,15 @@ TEST_CASE( "ammo_default", "[ammo][ammo_default]" )
         CHECK( med_mod.ammo_default().is_null() );
     }
 
-    // MAGAZINE type, and TOOL/GUN items with integral MAGAZINE pockets do have ammo_default
+
     SECTION( "items with ammo_default" ) {
-        // MAGAZINE type items
+
         item battery( itype_light_battery_cell );
         item glockmag( itype_glockmag );
         CHECK( battery.ammo_default() == itype_battery );
         CHECK( glockmag.ammo_default() == itype_9mm );
 
-        // TOOL type items with integral magazines
+
         item sewing_kit( itype_sewing_kit );
         item needle( itype_needle_bone );
         item fishtrap( itype_fish_trap );
@@ -237,11 +237,11 @@ TEST_CASE( "ammo_default", "[ammo][ammo_default]" )
         CHECK( needle.ammo_default() == itype_thread );
         CHECK( fishtrap.ammo_default() == itype_fish_bait );
 
-        // GUN type items with integral magazine
+
         item slingshot( itype_slingshot );
         item colt( itype_colt_army );
         CHECK( slingshot.ammo_default() == itype_pebble );
-        // Revolver ammo is "44paper" but default ammunition type is "44army"
+
         CHECK( colt.ammo_default() == itype_44army );
     }
 }
@@ -321,8 +321,8 @@ TEST_CASE( "battery_energy_test", "[ammo][energy][item]" )
     }
 
     SECTION( "Non-integer drain from battery" ) {
-        // Battery charge is in mJ now, so check for precise numbers.
-        // 4.5 kJ drain is 4.5 kJ drain
+
+
         REQUIRE( test_battery.energy_remaining( nullptr ) == 56_kJ );
         units::energy consumed = test_battery.energy_consume( 4500_J, tripoint_bub_ms::zero, nullptr );
         CHECK( test_battery.energy_remaining( nullptr ) == 51.5_kJ );
@@ -330,7 +330,7 @@ TEST_CASE( "battery_energy_test", "[ammo][energy][item]" )
     }
 
     SECTION( "Tiny Non-integer drain from battery" ) {
-        // Make sure lots of tiny discharges sum up as expected.
+
         REQUIRE( test_battery.energy_remaining( nullptr ) == 56_kJ );
         for( int i = 0; i < 133; ++i ) {
             units::energy consumed = test_battery.energy_consume( 2_J, tripoint_bub_ms::zero, nullptr );

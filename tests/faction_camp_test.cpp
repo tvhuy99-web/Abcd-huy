@@ -87,7 +87,7 @@ TEST_CASE( "camp_calorie_counting", "[camp]" )
         item_components made_of;
         made_of.add( test_100_kcal );
         made_of.add( test_100_kcal );
-        // Setting the actual components. This will return 185 unless it's actually made up of two 100kcal components!
+
         test_200_kcal.components = made_of;
         tripoint_bub_ms zone_local = m.get_bub( zone_loc );
         m.i_clear( zone_local );
@@ -118,7 +118,7 @@ TEST_CASE( "camp_calorie_counting", "[camp]" )
         REQUIRE( camp_faction->food_supply().kcal() == 100 );
         REQUIRE( camp_faction->food_supply().get_vitamin( vitamin_mutant_toxin ) == 100 );
         REQUIRE( camp_faction->food_supply().get_vitamin( vitamin_mutagen ) == 200 );
-        // Now withdraw 15% of the total calories, this should also draw out 15% of the stored vitamins.
+
         test_camp->camp_food_supply( -15 );
         CHECK( camp_faction->food_supply().kcal() == 85 );
         CHECK( camp_faction->food_supply().get_vitamin( vitamin_mutant_toxin ) == 85 );
@@ -128,7 +128,7 @@ TEST_CASE( "camp_calorie_counting", "[camp]" )
     WHEN( "a larder with perishable food passes the expiry date" ) {
         restore_on_out_of_scope restore_calendar_turn( calendar::turn );
         camp_faction->empty_food_supply();
-        // non-perishable food
+
         std::map<time_point, nutrients> added_food;
         added_food[calendar::turn_zero].calories = 100000;
         added_food[calendar::turn_zero].set_vitamin( vitamin_mutant_toxin, 100 );
@@ -139,9 +139,9 @@ TEST_CASE( "camp_calorie_counting", "[camp]" )
         REQUIRE( camp_faction->food_supply().get_vitamin( vitamin_mutant_toxin ) == 100 );
         REQUIRE( camp_faction->food_supply().get_vitamin( vitamin_mutagen ) == 200 );
 
-        // remove non-perishable from added
+
         added_food.erase( added_food.begin() );
-        // perishable food
+
         added_food[calendar::turn + 7_days].calories = 150000;
         added_food[calendar::turn + 7_days].set_vitamin( vitamin_mutant_toxin, 200 );
         added_food[calendar::turn + 7_days].set_vitamin( vitamin_mutagen, 100 );
@@ -151,7 +151,7 @@ TEST_CASE( "camp_calorie_counting", "[camp]" )
         REQUIRE( camp_faction->food_supply().get_vitamin( vitamin_mutant_toxin ) == 300 );
         REQUIRE( camp_faction->food_supply().get_vitamin( vitamin_mutagen ) == 300 );
 
-        // advance time
+
         calendar::turn += 14_days;
 
         CHECK( camp_faction->food_supply().kcal() == 100 );
@@ -178,7 +178,7 @@ TEST_CASE( "camp_calorie_counting", "[camp]" )
     overmap_buffer.clear_camps( this_omt.xy() );
 }
 
-// player-owned camp of the given type at mid-map; caller removes it with clear_camps
+
 static basecamp &place_test_camp( std::string_view camp_type, tripoint_abs_omt &camp_omt )
 {
     map &here = get_map();
@@ -318,4 +318,3 @@ TEST_CASE( "camp_upgrade_offers_follow_the_camp_storage", "[camp]" )
         }
     }
 }
-// TODO: Tests for: Check calorie display at various activity levels, camp crafting works as expected (consumes inputs, returns outputs+byproducts, costs calories)

@@ -33,7 +33,7 @@ template<typename Point>
 constexpr size_t mdarray_default_size = mdarray_default_size_impl<Point>::value;
 
 template<typename T, typename Point, size_t DimX, size_t DimY>
-// Suppressions due to a clang-tidy bug
+
 // NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 class mdarray_impl_2d
 {
@@ -94,8 +94,8 @@ class mdarray_impl_2d
             }
         }
     private:
-        // TODO: in C++17 array::operator[] becomes constexpr and we can use
-        // std::array here
+
+
         // NOLINTNEXTLINE(modernize-avoid-c-arrays)
         column_type data_[DimX];
 };
@@ -103,7 +103,7 @@ class mdarray_impl_2d
 template<typename T, typename Point, size_t DimX = mdarray_default_size<Point>,
          size_t DimY = mdarray_default_size<Point>>
 class mdarray : public std::conditional_t <
-// TODO: 3D version not yet implemented
+
     Point::dimension == 2, mdarray_impl_2d<T, Point, DimX, DimY>, void >
 {
     private:
@@ -117,6 +117,6 @@ class mdarray : public std::conditional_t <
         using base::base;
 };
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_MDARRAY_H
+#endif

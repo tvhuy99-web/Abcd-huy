@@ -25,16 +25,16 @@ namespace
 {
 generic_factory<harvest_drop_type> harvest_drop_type_factory( "harvest_drop_type" );
 generic_factory<harvest_list> harvest_list_factory( "harvest_list" );
-} //namespace
+}
 
-/** @relates string_id */
+
 template<>
 const harvest_drop_type &string_id<harvest_drop_type>::obj() const
 {
     return harvest_drop_type_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<harvest_drop_type>::is_valid() const
 {
@@ -62,14 +62,14 @@ translation harvest_drop_type::dissect_msg( bool succeeded ) const
                succeeded ? msg_dissect_success : msg_dissect_fail ).value_or( translation() );
 }
 
-/** @relates string_id */
+
 template<>
 const harvest_list &string_id<harvest_list>::obj() const
 {
     return harvest_list_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<harvest_list>::is_valid() const
 {
@@ -183,7 +183,7 @@ class harvest_entry_reader : public generic_typed_reader<harvest_entry_reader>
             return ret;
         }
 };
-} // namespace
+}
 
 void harvest_list::finalize()
 {
@@ -227,19 +227,19 @@ void harvest_list::check_consistency()
         auto error_func = [&]( const harvest_entry & entry ) {
             std::string errorlist;
             if( entry.type.is_null() ) {
-                // Type id is null
+
                 if( item::type_is_defined( itype_id( entry.drop ) ) ) {
                     return errorlist;
                 }
                 errorlist += "null type";
             } else if( !entry.type.is_valid() ) {
-                // Type id is invalid
+
                 errorlist += "invalid type \"" + entry.type.str() + "\"";
             } else if( ( entry.type->is_item_group() &&
                          !item_group::group_is_defined( item_group_id( entry.drop ) ) ) ||
                        ( !entry.type->is_item_group() && !item::type_is_defined( itype_id( entry.drop ) ) ) ) {
-                // Specified as item_group but no such group exists, or
-                // specified as single itype but no such itype exists
+
+
                 errorlist += entry.drop;
             }
             return errorlist;
@@ -296,7 +296,7 @@ std::string harvest_list::describe( int at_skill ) const
         } else {
             max_f = en.max;
         }
-        // TODO: Avoid repetition here by making a common harvest drop function
+
         int max_drops = std::min<int>( en.max, std::round( std::max( 0.0f, max_f ) ) );
         int min_drops = std::max<int>( 0.0f, std::round( std::min( min_f, max_f ) ) );
         if( max_drops <= 0 ) {
@@ -305,7 +305,7 @@ std::string harvest_list::describe( int at_skill ) const
 
         std::string ss;
         ss += "<bold>" + item::nname( itype_id( en.drop ), max_drops ) + "</bold>";
-        // If the number is unspecified, just list the type
+
         if( max_drops >= 1000 && min_drops <= 0 ) {
             return ss;
         }

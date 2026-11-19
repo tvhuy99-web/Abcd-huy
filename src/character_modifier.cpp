@@ -35,16 +35,16 @@ namespace
 
 generic_factory<character_modifier> character_modifier_factory( "character modifier" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const character_modifier &string_id<character_modifier>::obj() const
 {
     return character_modifier_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<character_modifier>::is_valid() const
 {
@@ -162,9 +162,9 @@ void character_modifier::load( const JsonObject &jo, std::string_view )
     }
 }
 
-// Scores
 
-// the total of the manipulator score in the best limb group
+
+
 float Character::manipulator_score( const std::map<bodypart_str_id, bodypart> &body,
                                     bp_type type, int override_encumb, int override_wounds ) const
 {
@@ -196,7 +196,7 @@ float Character::manipulator_score( const std::map<bodypart_str_id, bodypart> &b
         } );
         for( const std::pair<bodypart, float> &id : part.second ) {
             float local_mul = 1.0f;
-            // Calculate local effect modifiers
+
             if( local_effect ) {
                 for( const effect &local : get_effects_from_bp( id.first.get_id() ) ) {
                     if( local.has_flag( flag_EFFECT_LIMB_SCORE_MOD_LOCAL ) ) {
@@ -233,18 +233,18 @@ float Character::get_limb_score( const limb_score_id &score, const bp_type &bp,
 {
     int skill = -1;
     float effect_mul = 1.0f;
-    // Check for any global limb score modifier
+
     for( const effect &eff : get_effects_with_flag( flag_EFFECT_LIMB_SCORE_MOD ) ) {
         effect_mul *= eff.get_limb_score_mod( score, resists_effect( eff ) );
     }
-    // manipulator/swim scores are treated a little special for now
+
     if( score == limb_score_manip ) {
         return manipulator_score( body, bp, override_encumb, override_wounds ) * effect_mul;
     } else if( score == limb_score_swim ) {
         skill = round( get_skill_level( skill_swimming ) );
     }
     float total = 0.0f;
-    // Avoid call has_flag() in a loop to improve performance
+
     bool cache_flag_EFFECT_LIMB_SCORE_MOD_LOCAL = has_flag( flag_EFFECT_LIMB_SCORE_MOD_LOCAL );
     for( const std::pair<const bodypart_str_id, bodypart> &id : body ) {
         float mod = 0.0f;
@@ -257,7 +257,7 @@ float Character::get_limb_score( const limb_score_id &score, const bp_type &bp,
         if( cache_flag_EFFECT_LIMB_SCORE_MOD_LOCAL ) {
             for( const effect &local : get_effects_from_bp( id.first ) ) {
                 float local_mul = 1.0f;
-                // Second filter to only apply the local effects at this step (non-local modifiers are already calulated)
+
                 if( local.has_flag( flag_EFFECT_LIMB_SCORE_MOD_LOCAL ) ) {
                     local_mul = local.get_limb_score_mod( score, resists_effect( local ) );
                     mod *= local_mul;
@@ -275,7 +275,7 @@ float Character::get_limb_score( const limb_score_id &score, const bp_type &bp,
     return std::max( 0.0f, total * effect_mul );
 }
 
-// Modifiers
+
 
 static float aim_speed_skill_modifier( const Character &c, const skill_id &gun_skill )
 {
@@ -296,15 +296,15 @@ static float aim_speed_dex_modifier( const Character &c, const skill_id & )
 
 static float move_mode_move_cost_modifier( const Character &c, const skill_id & )
 {
-    // Both walk and run speed drop to half their maximums as stamina approaches 0.
-    // Convert stamina to a float first to allow for decimal place carrying
+
+
     return c.move_mode->move_speed_mult();
 }
 
 static float stamina_move_cost_modifier( const Character &c, const skill_id & )
 {
-    // Both walk and run speed drop to half their maximums as stamina approaches 0.
-    // Convert stamina to a float first to allow for decimal place carrying
+
+
     return ( static_cast<float>( c.get_stamina() ) / c.get_stamina_max() + 1 ) / 2;
 }
 
@@ -334,12 +334,12 @@ static float call_builtin( const std::string &builtin, const Character &c, const
     return ( iter->second )( c, skill );
 }
 
-// Generally for cost mods: mod = min( max_val, ( nominator / limb_score ) - subtractor )
-// for melee attack roll:   mod = max( min_val, limb_score )
-// for straight limb_score: nominator == 0, subtractor == 0, max_val == 0, min_val == 0
+
+
+
 float character_modifier::modifier( const Character &c, const skill_id &skill ) const
 {
-    // use builtin to calculate modifier
+
     if( !builtin.empty() ) {
         return call_builtin( builtin, c, skill );
     }
@@ -367,7 +367,7 @@ float character_modifier::modifier( const Character &c, const skill_id &skill ) 
         }
     }
 
-    // score == 0
+
     if( score < std::numeric_limits<float>::epsilon() ) {
         return min_val > std::numeric_limits<float>::epsilon() ? min_val :
                max_val > std::numeric_limits<float>::epsilon() ? max_val : 0.0f;

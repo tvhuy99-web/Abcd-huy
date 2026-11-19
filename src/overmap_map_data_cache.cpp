@@ -10,13 +10,13 @@
 #include "generic_factory.h"
 #include "string_id.h"
 
-// "Placeholder map data" is a set of map_data_summary objects that are used when
-// we don't need to have precise data, so that we don't bloat memory and saves.
+
+
 
 namespace
 {
 generic_factory<map_data_summary> placeholder_map_data( "placeholder map data" );
-} // namespace
+}
 
 template<>
 const map_data_summary &string_id<map_data_summary>::obj() const
@@ -48,11 +48,11 @@ void map_data_placeholders::finalize()
 std::shared_ptr<const map_data_summary> map_data_placeholders::get_ptr(
     string_id<map_data_summary> id )
 {
-    // placeholder_map_data owns the placeholder entries, but overmap::layer[].map_cache ALSO holds
-    // a bunch of shared_ptrs that will reference these entries, and we don't want them
-    // deallocating when an overmap is destructed. It's set up this way because we want
-    // overmap::layer[].map_cache to eventually own references to non-placeholder map_data_summary
-    // entries and deallocate them without having explicit lifetime code.
+
+
+
+
+
     std::shared_ptr<const map_data_summary> dummy{ nullptr };
     return std::shared_ptr<const map_data_summary> { dummy, &id.obj() };
 }
@@ -75,7 +75,7 @@ void map_data_summary::load( const JsonObject &jo, const std::string_view & )
                     passable.set( idx, true );
                     break;
                 default:
-                    debugmsg( "Unknown value %c in map data placeholder", elem ); // error
+                    debugmsg( "Unknown value %c in map data placeholder", elem );
             }
             ++idx;
         }

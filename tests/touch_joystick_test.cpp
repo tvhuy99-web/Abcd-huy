@@ -10,7 +10,7 @@
 
 using touch_joystick::direction;
 
-// offset of a touch at the given angle, clockwise from +x with y down
+
 static void offset_at( const float degrees, const float radius, float &dx, float &dy )
 {
     const float radians = degrees * static_cast<float>( M_PI ) / 180.0f;
@@ -18,7 +18,7 @@ static void offset_at( const float degrees, const float radius, float &dx, float
     dy = radius * std::sin( radians );
 }
 
-// straight slice widths: the slope 0.5 and 2 split, a wider one, and four directions only
+
 static constexpr float slope_split_width = 53.13f;
 static constexpr float wide_width = 55.0f;
 static constexpr float four_way = 90.0f;
@@ -34,7 +34,7 @@ static direction classify_at( const float degrees, const float straight_width )
 TEST_CASE( "touch_joystick_deadzone", "[touch_joystick]" )
 {
     CHECK( touch_joystick::classify( 0.0f, 0.0f, 10.0f, wide_width ) == direction::none );
-    // edge is still inside the deadzone
+
     CHECK( touch_joystick::classify( 6.0f, 8.0f, 10.0f, wide_width ) == direction::none );
     CHECK( touch_joystick::classify( 6.0f, 8.1f, 10.0f, wide_width ) != direction::none );
 }
@@ -108,7 +108,7 @@ TEST_CASE( "touch_joystick_highlight_matches_input", "[touch_joystick]" )
             const direction dir = classify_at( degrees, straight_width );
             REQUIRE( dir != direction::none );
             const std::pair<float, float> slice = touch_joystick::wedge( dir, straight_width );
-            // bring angle into slice's turn
+
             float angle = degrees;
             if( angle >= slice.second ) {
                 angle -= 360.0f;
@@ -139,7 +139,7 @@ TEST_CASE( "touch_joystick_octagon_geometry", "[touch_joystick]" )
                    Approx( 10.0f / std::cos( 22.5f * static_cast<float>( M_PI ) / 180.0f ) ) );
             CHECK( touch_joystick::octagon_radius( -22.5f, 10.0f ) ==
                    Approx( touch_joystick::octagon_radius( 22.5f, 10.0f ) ) );
-            // between a corner and the next side the radius follows that side
+
             CHECK( touch_joystick::octagon_radius( 30.0f, 10.0f ) ==
                    Approx( 10.0f / std::cos( 15.0f * static_cast<float>( M_PI ) / 180.0f ) ) );
             CHECK( touch_joystick::octagon_radius( 40.0f, 10.0f ) ==

@@ -39,53 +39,53 @@ struct sub_body_part_type {
 
     bool was_loaded = false;
 
-    // name of the sub part
+
     translation name;
 
     translation name_multiple;
 
     side part_side = side::BOTH;
 
-    // the body part this belongs to
+
     string_id<body_part_type> parent;
 
-    // this flags that the sub location
-    // is in addition to the normal limb
-    // parts. Currently used for torso for
-    // hanging locations.
+
+
+
+
     bool secondary = false;
 
-    // the maximum coverage value for this part
-    // if something entirely covered this part it
-    // would have this value
+
+
+
     int max_coverage = 0;
 
-    // the locations that are under this location
-    // used with secondary locations to define what sublocations
-    // exist below them for things like discomfort
+
+
+
     std::vector<sub_bodypart_str_id> locations_under;
 
-    // These subparts act like this limb for armor coverage
-    // TODO: Coverage/Encumbrance multiplier
+
+
     std::optional<sub_bodypart_str_id> similar_bodypart;
-    // Unarmed damage when this subpart is our contact area
+
     damage_instance unarmed_damage;
 
     static void load_bp( const JsonObject &jo, const std::string &src );
 
     void load( const JsonObject &jo, std::string_view src );
 
-    // combine matching body part strings together for printing
+
     static std::vector<translation> consolidate( std::vector<sub_bodypart_id> &covered );
 
     std::vector<sub_bodypart_str_id> get_all_combined_similar_sub_bodyparts() const;
 
-    // Clears all bps
+
     static void reset();
-    // Post-load finalization
+
     static void finalize_all();
 
     void finalize();
 };
 
-#endif // CATA_SRC_SUBBODYPART_H
+#endif

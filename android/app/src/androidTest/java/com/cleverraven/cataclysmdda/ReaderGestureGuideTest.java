@@ -16,7 +16,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 
-/** The same guide is reused without changing any gameplay bindings. */
+
 @RunWith(AndroidJUnit4.class)
 public final class ReaderGestureGuideTest {
     private static ReaderSnapshot screen(String category) throws Exception {

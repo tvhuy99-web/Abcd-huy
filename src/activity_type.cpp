@@ -16,10 +16,10 @@
 #include "translations.h"
 #include "type_id.h"
 
-// activity_type functions
+
 static std::map< activity_id, activity_type > activity_type_all;
 
-/** @relates string_id */
+
 template<>
 const activity_type &string_id<activity_type>::obj() const
 {
@@ -44,11 +44,14 @@ template<>
 std::string enum_to_string<based_on_type>( based_on_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case based_on_type::TIME: return "time";
-        case based_on_type::SPEED: return "speed";
-        case based_on_type::NEITHER: return "neither";
-        // *INDENT-ON*
+
+        case based_on_type::TIME:
+            return "time";
+        case based_on_type::SPEED:
+            return "speed";
+        case based_on_type::NEITHER:
+            return "neither";
+
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
     }
@@ -58,32 +61,51 @@ template<>
 std::string enum_to_string<distraction_type>( distraction_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case distraction_type::noise: return "noise";
-        case distraction_type::pain: return "pain";
-        case distraction_type::attacked: return "attacked";
-        case distraction_type::hostile_spotted_far: return "hostile_spotted_far";
-        case distraction_type::hostile_spotted_near: return "hostile_spotted_near";
-        case distraction_type::talked_to: return "talked_to";
-        case distraction_type::asthma: return "asthma";
-        case distraction_type::motion_alarm: return "motion_alarm";
-        case distraction_type::weather_change: return "weather_change";
-        case distraction_type::portal_storm_popup: return "portal_storm_popup";
-        case distraction_type::eoc: return "eoc";
-        case distraction_type::dangerous_field: return "dangerous_field";
-        case distraction_type::hunger: return "hunger";
-        case distraction_type::thirst: return "thirst";
-        case distraction_type::temperature: return "temperature";
-        case distraction_type::mutation: return "mutation";
-        case distraction_type::oxygen: return "oxygen";
-        case distraction_type::withdrawal: return "withdrawal";
-        case distraction_type::craft_step_complete: return "craft_step_complete";
-        // *INDENT-ON*
+
+        case distraction_type::noise:
+            return "noise";
+        case distraction_type::pain:
+            return "pain";
+        case distraction_type::attacked:
+            return "attacked";
+        case distraction_type::hostile_spotted_far:
+            return "hostile_spotted_far";
+        case distraction_type::hostile_spotted_near:
+            return "hostile_spotted_near";
+        case distraction_type::talked_to:
+            return "talked_to";
+        case distraction_type::asthma:
+            return "asthma";
+        case distraction_type::motion_alarm:
+            return "motion_alarm";
+        case distraction_type::weather_change:
+            return "weather_change";
+        case distraction_type::portal_storm_popup:
+            return "portal_storm_popup";
+        case distraction_type::eoc:
+            return "eoc";
+        case distraction_type::dangerous_field:
+            return "dangerous_field";
+        case distraction_type::hunger:
+            return "hunger";
+        case distraction_type::thirst:
+            return "thirst";
+        case distraction_type::temperature:
+            return "temperature";
+        case distraction_type::mutation:
+            return "mutation";
+        case distraction_type::oxygen:
+            return "oxygen";
+        case distraction_type::withdrawal:
+            return "withdrawal";
+        case distraction_type::craft_step_complete:
+            return "craft_step_complete";
+
         default:
             cata_fatal( "Invalid distraction_type in enum_to_string" );
     }
 }
-}  // namespace io
+}
 
 void activity_type::load( const JsonObject &jo )
 {
@@ -109,7 +131,7 @@ void activity_type::load_all( const JsonObject &jo )
 {
     activity_type result;
     result.load( jo );
-    // FIXME: use generic factory
+
     result.was_loaded = true;
 
     if( activity_type_all.count( result.id_ ) ) {
@@ -164,7 +186,7 @@ bool activity_type::call_finish( player_activity *act, Character *you ) const
     const auto &pair = activity_handlers::finish_functions.find( id_ );
     if( pair != activity_handlers::finish_functions.end() ) {
         pair->second( act, you );
-        // kill activity sounds at finish
+
         sfx::end_activity_sounds();
         return true;
     }

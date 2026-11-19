@@ -9,7 +9,7 @@ namespace
 
 generic_factory<morale_type_data> morale_data( "morale type" );
 
-} // namespace
+}
 
 template<>
 const morale_type_data &morale_type::obj() const
@@ -60,8 +60,8 @@ std::string morale_type_data::describe( const itype *it ) const
     if( it ) {
         return string_format( text.translated(), it->nname( 1 ) );
     } else {
-        // if `msg` contains conversion specification (e.g. %s) but `it` is nullptr,
-        // `string_format` will return an error message
+
+
         return string_format( text.translated() );
     }
 }

@@ -27,7 +27,7 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertIn("reader_detail_open = true;", loop)
         self.assertIn("reader_detail_recipe = current[line]->ident().str();", loop)
         self.assertIn("reader_detail_quantity = manual_batch;", loop)
-        # Nested recipe groups still expand in place on activate.
+
         self.assertIn('return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";', loop)
 
     def test_detail_screen_focus_order(self):
@@ -141,9 +141,7 @@ class CraftingDetailScreenTest(unittest.TestCase):
                           'intent.node == "craft:detail:quantity"')
         self.assertIn("manual_batch = reader_detail_quantity;", confirm)
         self.assertIn('return "CONFIRM";', confirm)
-        # No new result announcement on confirm: the game's own messages
-        # already cover the outcome; the player re-checks them with the
-        # game-wide two-finger double-tap.
+
         self.assertNotIn("announce", confirm)
 
     def test_back_closes_detail_instead_of_the_menu(self):
@@ -218,9 +216,7 @@ class ConstructionDetailScreenTest(unittest.TestCase):
 
 class DetailScreenSharedTest(unittest.TestCase):
     def test_requirement_labels_stay_in_sync_but_crafting_groups_are_local(self):
-        # Keep shared inventory counts and Available/Missing wording in sync.
-        # Crafting intentionally adds numbered requirement headings; the
-        # construction screen retains its existing ungrouped presentation.
+
         craft = _region(CRAFT, "static int reader_requirement_have(",
                         "static void append_reader_requirement_nodes(")
         construction = _region(CONSTRUCTION, "static int reader_requirement_have(",

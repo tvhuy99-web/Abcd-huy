@@ -61,7 +61,7 @@ bool string_id<MOD_INFORMATION>::is_valid() const
 std::string MOD_INFORMATION::name() const
 {
     if( name_.empty() ) {
-        // "No name" gets confusing if many mods have no name
+
         //~ name of a mod that has no name entry, (%s is the mods identifier)
         return string_format( _( "No name (%s)" ), ident.c_str() );
     } else {
@@ -69,7 +69,7 @@ std::string MOD_INFORMATION::name() const
     }
 }
 
-// These accessors are to delay the initialization of the strings in the respective containers until after gettext is initialized.
+
 const std::vector<std::pair<std::string, translation>> &get_mod_list_categories()
 {
     static const std::vector<std::pair<std::string, translation>> mod_list_categories = {
@@ -209,7 +209,7 @@ void mod_manager::refresh_mod_list()
 
 bool mod_manager::set_default_mods( const mod_id &ident )
 {
-    // can't use string_id::is_valid as the global mod_manger instance does not exist yet
+
     const auto iter = mod_map.find( ident );
     if( iter == mod_map.end() ) {
         return false;
@@ -223,7 +223,7 @@ bool mod_manager::set_default_mods( const mod_id &ident )
 void mod_manager::load_mods_from( const cata_path &path )
 {
     if( !dir_exist( path.get_unrelative_path() ) ) {
-        return; // don't try to enumerate non-existing directories
+        return;
     }
     for( cata_path &mod_file : get_files_from_path( MOD_SEARCH_FILE, path, true ) ) {
         load_mod_info( mod_file );
@@ -233,16 +233,16 @@ void mod_manager::load_mods_from( const cata_path &path )
 void mod_manager::load_modfile( const JsonObject &jo, const cata_path &path )
 {
     if( !jo.has_string( "type" ) || jo.get_string( "type" ) != "MOD_INFO" ) {
-        // Ignore anything that is not a mod-info
+
         jo.allow_omitted_members();
         return;
     }
 
     const mod_id m_ident( jo.get_string( "id" ) );
-    // can't use string_id::is_valid as the global mod_manger instance does not exist yet
+
     if( mod_map.count( m_ident ) > 0 ) {
-        // TODO: change this to make unique ident for the mod
-        // (instead of discarding it?)
+
+
         debugmsg( "there is already a mod with ident %s", m_ident.c_str() );
         return;
     }
@@ -311,7 +311,7 @@ bool mod_manager::set_default_mods( const t_mod_list &mods )
 {
     default_mods = mods;
     return write_to_file( PATH_INFO::mods_user_default(), [&]( std::ostream & fout ) {
-        JsonOut json( fout, true ); // pretty-print
+        JsonOut json( fout, true );
         json.start_object();
         json.member( "type", "MOD_INFO" );
         json.member( "id", "user:default" );
@@ -329,7 +329,7 @@ bool mod_manager::copy_mod_contents( const t_mod_list &mods_to_copy,
                                      const cata_path &output_base_path )
 {
     if( mods_to_copy.empty() ) {
-        // nothing to copy, so technically we succeeded already!
+
         return true;
     }
     std::vector<std::string> search_extensions;
@@ -346,14 +346,14 @@ bool mod_manager::copy_mod_contents( const t_mod_list &mods_to_copy,
     for( size_t i = 0; i < mods_to_copy.size(); ++i ) {
         const MOD_INFORMATION &mod = *mods_to_copy[i];
 
-        // now to get all of the json files inside of the mod and get them ready to copy
+
         auto input_files = get_files_from_path( ".json", mod.path, true, true );
         auto input_dirs  = get_directories_with( search_extensions, mod.path, true );
 
         cata_path mod_base_path = mod.path;
 
         if( input_files.empty() && mod.path.get_relative_path().filename().u8string() == MOD_SEARCH_FILE ) {
-            // Self contained mod, all data is inside the modinfo.json file
+
             input_files.push_back( mod.path );
             mod_base_path = mod.path.parent_path();
         }
@@ -362,7 +362,7 @@ bool mod_manager::copy_mod_contents( const t_mod_list &mods_to_copy,
             continue;
         }
 
-        // create needed directories
+
         // NOLINTNEXTLINE(cata-translate-string-literal)
         const cata_path cur_mod_dir = output_base_path / string_format( "mod_%05d", i + 1 );
 
@@ -382,7 +382,7 @@ bool mod_manager::copy_mod_contents( const t_mod_list &mods_to_copy,
             dir_to_make.pop();
         }
 
-        // trim file paths from full length down to just /data forward
+
         for( cata_path &input_file : input_files ) {
             cata_path output_path = cur_mod_dir / ( input_file.get_relative_path().lexically_relative(
                     mod_base_path.get_relative_path() ) );
@@ -397,16 +397,16 @@ void mod_manager::load_mod_info( const cata_path &info_file_path )
     const cata_path main_path = info_file_path.parent_path();
     read_from_file_optional_json( info_file_path, [&]( const JsonValue & jsin ) {
         if( jsin.test_object() ) {
-            // find type and dispatch single object
+
             JsonObject jo = jsin.get_object();
             load_modfile( jo, main_path );
         } else if( jsin.test_array() ) {
-            // find type and dispatch each object until array close
+
             for( JsonObject jo : jsin.get_array() ) {
                 load_modfile( jo, main_path );
             }
         } else {
-            // not an object or an array?
+
             jsin.throw_error( "expected array or object" );
         }
     } );
@@ -424,13 +424,13 @@ void mod_manager::save_mods_list( const WORLD *world ) const
     }
     const cata_path path = get_mods_list_file( world );
     if( world->active_mod_order.empty() ) {
-        // If we were called from load_mods_list to prune the list,
-        // and it's empty now, delete the file.
+
+
         remove_file( path.get_unrelative_path() );
         return;
     }
     write_to_file( path, [&]( std::ostream & fout ) {
-        JsonOut json( fout, true ); // pretty-print
+        JsonOut json( fout, true );
         json.write( world->active_mod_order );
     }, _( "list of mods" ) );
 }
@@ -494,7 +494,7 @@ void mod_manager::check_mods_list( WORLD *world ) const
             }
         }
     }
-    // If we migrated or the player chose to remove a mod, overwrite the mod list.
+
     if( changed ) {
         save_mods_list( world );
     }

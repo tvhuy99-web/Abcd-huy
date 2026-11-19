@@ -105,7 +105,7 @@ void export_interpreted_noise(
     testfile << width << " " << height << std::endl;
     testfile << "255" << std::endl;
 
-    // invert swaps what is empty and what is full
+
     const int full = invert ? 0 : 255;
     const int empty = invert ? 255 : 0;
     for( int y = 0; y < height; y++ ) {
@@ -122,4 +122,4 @@ void export_interpreted_noise(
     testfile.close();
 }
 
-} // namespace om_debug
+}

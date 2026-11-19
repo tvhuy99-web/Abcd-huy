@@ -10,7 +10,7 @@
 
 #if defined(__linux__)
 #include <unistd.h>
-#endif // __linux__
+#endif
 
 #if defined(_WIN32)
 #include "platform_win.h"
@@ -109,13 +109,13 @@ void MAP_SHARING::setDefaults()
 
 void ofstream_wrapper::open( const std::ios::openmode mode )
 {
-    // Create a *unique* temporary path. No other running program should
-    // use this path. If the file exists, it must be of a *former* program
-    // instance and can safely be deleted.
+
+
+
     temp_path = path;
     std::ostringstream suffix;
-    // Some locale may insert unwanted thousands separators,
-    // which may not be in utf-8 encoding, so imbue with the classic locale.
+
+
     suffix.imbue( std::locale::classic() );
 #if defined(__linux__)
     suffix << "." << getpid() << ".temp";
@@ -124,7 +124,7 @@ void ofstream_wrapper::open( const std::ios::openmode mode )
     suffix << "." << GetCurrentProcessId() << ".temp";
     temp_path += std::filesystem::u8path( suffix.str() );
 #else
-    // TODO: exclusive I/O for other systems
+
     temp_path += std::filesystem::u8path( ".temp" );
 #endif
     if( !is_lexically_valid( temp_path ) ) {
@@ -152,8 +152,8 @@ void ofstream_wrapper::close()
     bool failed = file_stream.fail();
     file_stream.close();
     if( failed ) {
-        // Remove the incomplete or otherwise faulty file (if possible).
-        // Failures from it are ignored as we can't really do anything about them.
+
+
         std::error_code ec;
         std::filesystem::remove( temp_path, ec );
         throw std::runtime_error( "writing to file failed" );
@@ -161,7 +161,7 @@ void ofstream_wrapper::close()
     std::error_code ec2;
     std::filesystem::rename( temp_path, path, ec2 );
     if( ec2 ) {
-        // Leave the temp path, so the user can move it if possible.
+
         throw std::runtime_error( "moving temporary file \"" + temp_path.u8string() + "\" failed" );
     }
 

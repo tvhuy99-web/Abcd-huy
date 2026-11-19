@@ -52,7 +52,7 @@ static item_action nullaction;
 static std::optional<input_event> key_bound_to( const input_context &ctxt,
         const item_action_id &act )
 {
-    const std::vector<input_event> keys = ctxt.keys_bound_to( act, /*maximum_modifier_count=*/1 );
+    const std::vector<input_event> keys = ctxt.keys_bound_to( act, 1 );
     if( keys.empty() ) {
         return std::nullopt;
     } else {
@@ -70,11 +70,11 @@ class actmenu_cb : public uilist_callback
         explicit actmenu_cb( const action_map &acm ) : am( acm ) { }
         ~actmenu_cb() override = default;
 
-        bool key( const input_context &ctxt, const input_event &event, int /*idx*/,
-                  uilist * /*menu*/ ) override {
+        bool key( const input_context &ctxt, const input_event &event, int,
+                  uilist * ) override {
             const std::string &action = ctxt.input_to_action( event );
-            // Don't write a message if unknown command was sent
-            // Only when an inexistent tool was selected
+
+
             const auto itemless_action = am.find( action );
             if( itemless_action != am.end() ) {
                 popup( _( "You do not have an item that can perform this action." ) );
@@ -83,7 +83,7 @@ class actmenu_cb : public uilist_callback
             return false;
         }
 };
-} // namespace
+}
 
 item_action_generator::item_action_generator() = default;
 
@@ -130,13 +130,13 @@ item_action_map item_action_generator::map_actions_to_items( Character &you,
         const std::vector<item *> &pseudos, const bool use_player_inventory ) const
 {
     std::set< item_action_id > unmapped_actions;
-    for( const auto &ia_ptr : item_actions ) { // Get ids of wanted actions
+    for( const auto &ia_ptr : item_actions ) {
         unmapped_actions.insert( ia_ptr.first );
     }
 
     item_action_map candidates;
     std::vector< item * > items;
-    // Default behavior
+
     if( use_player_inventory ) {
         items = you.inv_dump();
         items.reserve( items.size() + pseudos.size() );
@@ -152,8 +152,8 @@ item_action_map item_action_generator::map_actions_to_items( Character &you,
         }
 
         for( const item_action_id &use : unmapped_actions ) {
-            // Actually used item can be different from the "outside item"
-            // For example, sheathed knife
+
+
             item *actual_item = i->get_usable_item( use );
             if( actual_item == nullptr ) {
                 continue;
@@ -169,18 +169,18 @@ item_action_map item_action_generator::map_actions_to_items( Character &you,
                 continue;
             }
 
-            // Don't try to remove 'irremovable' toolmods
+
             if( actual_item->is_toolmod() && use == item_action_TOOLMOD_ATTACH &&
                 actual_item->has_flag( json_flag_IRREMOVABLE ) ) {
                 continue;
             }
 
-            // Prevent drinking frozen liquids that have specific use actions (ex: ALCOHOL)
+
             if( actual_item->is_frozen_liquid() ) {
                 continue;
             }
 
-            // Add to usable items if it needs less charges per use or has less charges
+
             auto found = candidates.find( use );
             bool better = false;
             if( found == candidates.end() ) {
@@ -188,11 +188,11 @@ item_action_map item_action_generator::map_actions_to_items( Character &you,
             } else {
                 if( actual_item->expected_cost_per_use( use ) >
                     found->second->expected_cost_per_use( use ) ) {
-                    continue; // Other item consumes less charges
+                    continue;
                 }
 
-                // For heterogeneous-resource multimag tools, raw ammo_remaining
-                // sums across pocket flavors and isn't a meaningful comparator.
+
+
                 map &here = get_map();
                 const int actual_remaining =
                     actual_item->uses_firing_requirements()
@@ -203,7 +203,7 @@ item_action_map item_action_generator::map_actions_to_items( Character &you,
                     ? found->second->tool_uses_remaining( here, &you )
                     : found->second->ammo_remaining();
                 if( found_remaining > actual_remaining ) {
-                    better = true; // Items with less charges preferred
+                    better = true;
                 }
             }
 
@@ -280,7 +280,7 @@ void game::item_action_menu( item_location loc )
     bool use_player_inventory = false;
     if( !loc ) {
         use_player_inventory = true;
-        // Ugly const_cast because the menu needs non-const pointers
+
         std::vector<const item *> pseudo_items = get_player_character().get_pseudo_items();
         pseudos.reserve( pseudo_items.size() );
         for( const item *pseudo : pseudo_items ) {
@@ -324,14 +324,14 @@ void game::item_action_menu( item_location loc )
     };
 
     std::vector<std::tuple<item_action_id, std::string, std::string, std::string>> menu_items;
-    // Sorts menu items by action.
+
     using Iter = decltype( menu_items )::iterator;
     const auto sort_menu = []( Iter from, Iter to ) {
         std::sort( from, to, []( const auto & lhs, const auto & rhs ) {
             return std::get<1>( lhs ).compare( std::get<1>( rhs ) ) < 0;
         } );
     };
-    // Add mapped actions to the menu vector.
+
     std::transform( iactions.begin(), iactions.end(), std::back_inserter( menu_items ),
     []( const std::pair<item_action_id, item *> &elem ) {
         std::string ss = elem.second->display_name();
@@ -354,21 +354,21 @@ void game::item_action_menu( item_location loc )
             return std::make_tuple( errstring, std::string( "NO USE FUNCTION" ), ss, std::string() );
         }
     } );
-    // Sort mapped actions.
+
     sort_menu( menu_items.begin(), menu_items.end() );
     if( !loc ) {
-        // Add unmapped but binded actions to the menu vector.
+
         for( const auto &elem : item_actions ) {
             if( key_bound_to( ctxt, elem.first ).has_value() && !assigned_action( elem.first ) ) {
                 menu_items.emplace_back( elem.first, gen.get_action_name( elem.first ), "-", std::string() );
             }
         }
     }
-    // Sort unmapped actions.
+
     auto iter = menu_items.begin();
     std::advance( iter, iactions.size() );
     sort_menu( iter, menu_items.end() );
-    // Fill the menu.
+
     for( const auto &elem : menu_items ) {
         std::string ss;
         ss += std::get<1>( elem );

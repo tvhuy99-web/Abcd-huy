@@ -15,18 +15,18 @@ import android.os.Vibrator;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Optional sound and vibration cues for reader events (R21.2).
- *
- * Optional audio cues duplicate warnings or outcomes that are also spoken.
- * These packaged accessibility cues are off by default and never replace
- * the externally downloaded gameplay soundpack.
- *
- * The spoken channel is owned by ReaderSpeechQueue; this class owns
- * only the SoundPool and the Vibrator. Playback failure is reported to
- * the listener once per instance so the owner can say so out loud
- * instead of failing silently.
- */
+
+
+
+
+
+
+
+
+
+
+
+
 public final class ReaderCuePlayer {
     public static final String BLOCKED = "blocked";
     public static final String DANGER = "danger";
@@ -35,7 +35,7 @@ public final class ReaderCuePlayer {
     public static final String REJECTED = "rejected";
 
     public interface Listener {
-        /** A cue could not be played (load failure, no vibrator). */
+
         void onCueUnavailable();
     }
 
@@ -65,12 +65,12 @@ public final class ReaderCuePlayer {
     private final Listener listener;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Map<String, Long> lastPlayed = new HashMap<>();
-    /** sampleId → raw resource id, for loads still in flight. */
+
     private final Map<Integer, Integer> pendingLoads = new HashMap<>();
     private SoundPool pool;
     private AudioManager audioManager;
     private AudioFocusRequest focusRequest;
-    /** One shared instance: the legacy abandon call matches by identity. */
+
     private final AudioManager.OnAudioFocusChangeListener legacyFocusListener = change -> { };
     private Runnable abandonFocus;
     private boolean loadFailed;
@@ -83,7 +83,7 @@ public final class ReaderCuePlayer {
         this.listener = listener;
     }
 
-    /** Play the named cue if the user enabled its channel. Unknown names are ignored. */
+
     public void play(String name) {
         if (closed) {
             return;
@@ -149,7 +149,7 @@ public final class ReaderCuePlayer {
     }
 
     private Integer findLoaded(int rawId) {
-        // SoundPool sample ids are per load() call; remember them by raw id.
+
         for (Map.Entry<Integer, Integer> entry : loadedSamples.entrySet()) {
             if (entry.getValue() == rawId) {
                 return entry.getKey();
@@ -158,7 +158,7 @@ public final class ReaderCuePlayer {
         return null;
     }
 
-    /** sampleId → raw resource id, for samples that finished loading. */
+
     private final Map<Integer, Integer> loadedSamples = new HashMap<>();
 
     private void startSound(int sampleId) {
@@ -166,9 +166,9 @@ public final class ReaderCuePlayer {
             return;
         }
         if (!requestCueFocus()) {
-            // Another app holds the audio (for example a call): skip the
-            // tone rather than talk over it. The spoken equivalent and
-            // the haptic pattern are unaffected.
+
+
+
             ReaderDiagnostics.get().count("cue_focus_denied");
             return;
         }

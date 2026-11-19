@@ -20,13 +20,13 @@
 #include "json.h"
 #include "path_info.h"
 
-// The font-configuration values modifiable by the user.
+
 struct font_config {
-    // Path to the font file.
+
     std::string path;
-    // The type of hinting to apply.
+
     std::optional<ImGuiFreeTypeLoaderFlags> hinting = std::nullopt;
-    // In practice, antialiasing will be ignored when hinting is set to FontHint::Bitmap.
+
     bool antialiasing = true;
 
     font_config() = default;
@@ -39,7 +39,7 @@ struct font_config {
                  const bool antialiasing ) : path( std::move( path ) ), hinting( hinting ),
         antialiasing( antialiasing ) {}
 
-    // Returns the font flags that should be passed to an ImFontConfig.
+
     unsigned int imgui_config() const;
 
     void deserialize( const JsonObject &jo );
@@ -49,7 +49,7 @@ struct font_config {
 extern void ensure_unifont_loaded( std::vector<font_config> &font_list );
 extern void ensure_unifont_loaded( std::vector<std::string> &font_list );
 
-// whether typeface path is a bitmap sheet, which only draws at its own cell size
+
 bool is_bitmap_typeface( std::string_view path );
 
 class font_loader
@@ -75,10 +75,10 @@ class font_loader
         void save( const cata_path &path ) const;
 
     public:
-        /// @throws std::exception upon any kind of error.
+
         void load();
 };
 
-#endif // TILES
+#endif
 
-#endif // CATA_SRC_FONT_LOADER_H
+#endif

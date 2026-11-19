@@ -81,13 +81,13 @@ static bool TestForVehicleTeleportCollision( vehicle &veh, map &here, map *dest,
 static void HandlePassengers( vehicle &veh, map &here, const tripoint_abs_ms &dp, bool &need_update,
                               int &z_change )
 {
-    // record every passenger and pet inside
+
     std::vector<rider_data> riders = veh.get_riders();
 
-    // Move passengers and pets
+
     bool complete = false;
     creature_tracker &creatures = get_creature_tracker();
-    // loop until everyone has moved or for each passenger
+
     for( size_t i = 0; !complete && i < riders.size(); i++ ) {
         complete = true;
         for( rider_data &r : riders ) {
@@ -114,18 +114,18 @@ static void HandlePassengers( vehicle &veh, map &here, const tripoint_abs_ms &dp
             }
             const vehicle_part &veh_part = veh.part( prt );
 
-            tripoint_rel_ms next_pos; // defaults to 0,0,0
+            tripoint_rel_ms next_pos;
             next_pos = veh_part.precalc[1];
 
-            // Place passenger on the new part location
+
             tripoint_bub_ms psgp( here.get_bub( dp ) + next_pos );
-            // someone is in the way so try again
+
             if( creatures.creature_at( psgp ) ) {
                 complete = false;
                 continue;
             }
             if( psg->is_avatar() ) {
-                // If passenger is you, we need to update the map
+
                 need_update = true;
                 z_change = psgp.z() - part_pos.z();
             }
@@ -140,7 +140,7 @@ static void CleanUpAfterVehicleTeleport( vehicle &veh, map &here, const tripoint
         std::set<int> &smzs, const tripoint_bub_ms &src )
 {
 
-    veh.zones_dirty = true; // invalidate zone positions
+    veh.zones_dirty = true;
 
     for( int vsmz : smzs ) {
         here.on_vehicle_moved( dp.z() + vsmz );
@@ -193,7 +193,7 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
                   abs_ms.to_string() );
         return false;
     }
-    //The teleportee is dimensionally anchored so nothing happens
+
     if( !force && !force_safe && p && ( p->worn_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ||
                                         p->has_effect_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ||
                                         p->has_effect_with_flag( json_flag_TELEPORT_LOCK ) ) ) {
@@ -208,8 +208,8 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
     map tm;
     map *dest = &here;
     tripoint_bub_ms dest_target = target;
-    // Track whether we reloaded the map for the avatar so we can restore it
-    // if the teleport fails (otherwise pos_bub() goes out of bounds).
+
+
     bool map_reloaded_for_avatar = false;
     tripoint_abs_omt original_omt;
     if( !here.inbounds( target ) ) {
@@ -231,13 +231,13 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
         }
     };
 
-    //handles teleporting into solids.
+
     if( dest->impassable( dest_target ) ) {
         if( force || force_safe ) {
             std::vector<tripoint_bub_ms> nearest_points = closest_points_first( dest_target, 5 );
             nearest_points.erase( nearest_points.begin() );
-            //TODO: Swap for this once #75961 merges
-            //std::vector<tripoint_bub_ms> nearest_points = closest_points_first( dest_target, 1, 5 );
+
+
             for( tripoint_bub_ms p : nearest_points ) {
                 if( dest->passable_through( p ) ) {
                     dest_target = p;
@@ -264,27 +264,27 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
             critter.check_dead_state( &here );
         }
     }
-    //update pos
+
     abs_ms = dest->get_abs( dest_target );
     target = here.get_bub( abs_ms );
-    //handles telefragging other creatures
+
     int tfrag_attempts = 5;
     bool collision = false;
     int collision_angle = 0;
 
     if( force_safe ) {
-        // creature_at<Creature> doesn't seem to function for NPCs when teleporting far distances.
+
         if( get_creature_tracker().creature_at<Creature>( abs_ms ) != nullptr ) {
             bool found_new_spot = false;
             std::vector<tripoint_abs_ms> nearest_points = closest_points_first( abs_ms, 5 );
             nearest_points.erase( nearest_points.begin() );
-            //TODO: Swap for this once #75961 merges
-            //std::vector<tripoint_abs_ms> nearest_points = closest_points_first( abs_ms, 1, 5 );
 
-            // get nearest safe point and teleport there instead
+
+
+
             for( tripoint_abs_ms p : nearest_points ) {
-                // If point is not inbounds, ignore if spot is passible or not.  Creatures in impassable terrain will be automatically teleported out in their turn.
-                // some way of validating terrain passability out of bounds would be superior, however.
+
+
                 if( ( !dest->inbounds( here.get_bub( p ) ) || dest->passable_through( here.get_bub( p ) ) ) &&
                     get_creature_tracker().creature_at<Creature>( p ) == nullptr ) {
                     found_new_spot = true;
@@ -305,7 +305,7 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
         }
     } else {
         while( Creature *const poor_soul = get_creature_tracker().creature_at<Creature>( abs_ms ) ) {
-            //Fail if we run out of telefrag attempts
+
             if( tfrag_attempts-- < 1 ) {
                 if( p && display_message ) {
                     p->add_msg_player_or_npc( m_warning, _( "You flicker." ), _( "<npcname> flickers." ) );
@@ -315,7 +315,7 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
                 restore_map_on_failure();
                 return false;
             }
-            //if the thing that was going to be teleported into has a dimensional anchor, break out early and don't teleport.
+
             if( poor_soul->as_character() &&
                 ( poor_soul->as_character()->worn_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ||
                   poor_soul->as_character()->has_effect_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ) ) {
@@ -324,7 +324,7 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
                 return false;
             }
             if( force ) {
-                //this should only happen through debug menu, so this won't affect the player.
+
                 poor_soul->apply_damage( nullptr, bodypart_id( "torso" ), 9999 );
                 poor_soul->check_dead_state( &here );
             } else if( safe ) {
@@ -334,7 +334,7 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
                 restore_map_on_failure();
                 return false;
             } else if( !collision ) {
-                //we passed all the conditions needed for a teleport accident, so handle messages for teleport accidents here
+
                 const bool poor_soul_is_u = poor_soul->is_avatar();
                 if( poor_soul_is_u && display_message ) {
                     add_msg( m_bad, _( "You're blasted with strange energy!" ) );
@@ -354,18 +354,18 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
                                      critter.disp_name(), poor_soul->disp_name() );
                         }
                     }
-                    //once collision this if block shouldn't run so everything here should only happen once
+
                     collision = true;
-                    //determine a random angle to throw the thing it teleported into, then fling it.
+
                     collision_angle = rng( 0, 360 );
                     g->fling_creature( poor_soul, units::from_degrees( collision_angle - 180 ), 40, false, true );
-                    //spawn a mostly cosmetic explosion for flair.
+
                     explosion_handler::explosion( &critter, target, 10 );
-                    //if it was grabbed, it isn't anymore.
+
                     for( const effect &grab : poor_soul->get_effects_with_flag( json_flag_GRAB ) ) {
                         poor_soul->remove_effect( grab.get_id() );
                     }
-                    //apply a bunch of damage to it
+
                     std::vector<bodypart_id> target_bdpts = poor_soul->get_all_body_parts(
                             get_body_part_flags::only_main );
                     for( const bodypart_id &bp_id : target_bdpts ) {
@@ -379,11 +379,11 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
         }
     }
     critter.move_to( abs_ms );
-    //there was a collision with a creature at some point, so handle that.
+
     if( collision ) {
-        //throw the thing that teleported in the opposite direction as the thing it teleported into.
+
         g->fling_creature( &critter, units::from_degrees( collision_angle - 180 ), 40, false, true );
-        //do a bunch of damage to it too.
+
         std::vector<bodypart_id> target_bdpts = critter.get_all_body_parts(
                 get_body_part_flags::only_main );
         for( const bodypart_id &bp_id : target_bdpts ) {
@@ -393,7 +393,7 @@ bool teleport::teleport_to_point( Creature &critter, tripoint_bub_ms target, boo
         }
         critter.check_dead_state( &here );
     }
-    //player and npc exclusive teleporting effects
+
     if( p && add_teleglow ) {
         p->add_effect( effect_teleglow, 30_minutes );
     }
@@ -457,13 +457,13 @@ bool teleport::teleport_vehicle( vehicle &veh, const tripoint_abs_ms &dp, bool f
             break;
         }
     }
-    // Once forced teleportation is specified, collision test is skipped.
+
     if( !force && !TestForVehicleTeleportCollision( veh, here, dest, dp ) ) {
         return false;
     }
     here.memory_clear_vehicle_points( veh );
 
-    // Need old coordinates to check for remote control
+
     const bool remote = veh.remote_controlled( player_character );
 
     HandlePassengers( veh, here, dp, need_update, z_change );
@@ -487,8 +487,8 @@ bool teleport::teleport_vehicle( vehicle &veh, const tripoint_abs_ms &dp, bool f
     }
     if( need_update ) {
         g->update_map( player_character );
-        // update_map invalidates bubble coordinates if it shifts the map.
-        // We don't need to refetch dp because the z coordinate isn't affected by a shift.
+
+
         src = veh.pos_bub( here );
     }
     dest->add_vehicle_to_cache( &veh );
@@ -496,7 +496,7 @@ bool teleport::teleport_vehicle( vehicle &veh, const tripoint_abs_ms &dp, bool f
     if( z_change || src.z() != dp.z() ) {
         if( z_change ) {
             g->vertical_move( z_change, true );
-            // vertical moves can flush the caches, so make sure we're still in the cache
+
             dest->add_vehicle_to_cache( &veh );
         }
         dest->update_vehicle_list( dst_submap, dp.z() );
@@ -504,10 +504,10 @@ bool teleport::teleport_vehicle( vehicle &veh, const tripoint_abs_ms &dp, bool f
     }
 
     if( remote ) {
-        // Has to be after update_map or coordinates won't be valid
+
         g->setremoteveh( &veh );
     }
-    // Cables on vehicle need to translate to new postion to keep connection working
+
     veh.translate_cables( pos_abs_offset );
     CleanUpAfterVehicleTeleport( veh, here, dp, smzs, src );
     return true;

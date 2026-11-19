@@ -19,8 +19,8 @@ class time_duration;
 namespace talk_function
 {
 
-// anything that can be taught with training_activity_actor
-// only one of the given IDs should ever have contents
+
+
 struct teach_domain {
     skill_id skill;
     matype_id style;
@@ -88,18 +88,18 @@ void end_conversation( npc & );
 void insult_combat( npc & );
 void reveal_stats( npc & );
 void drop_items_in_place( npc &p );
-void follow( npc & );                // p becomes a member of your_followers
-void follow_only( npc & );           // p starts following you
-void deny_follow( npc & );           // p gets "asked_to_follow"
-void deny_lead( npc & );             // p gets "asked_to_lead"
-void deny_equipment( npc & );        // p gets "asked_for_item"
-void deny_train( npc & );            // p gets "asked_to_train"
-void deny_personal_info( npc & );    // p gets "asked_personal_info"
-void hostile( npc & );               // p turns hostile to u
+void follow( npc & );
+void follow_only( npc & );
+void deny_follow( npc & );
+void deny_lead( npc & );
+void deny_equipment( npc & );
+void deny_train( npc & );
+void deny_personal_info( npc & );
+void hostile( npc & );
 void flee( npc & );
-void leave( npc & );                 // p becomes indifferent
+void leave( npc & );
 void stop_following( npc & );
-void stranger_neutral( npc & );      // p is now neutral towards you
+void stranger_neutral( npc & );
 
 bool drop_stolen_item( item &cur_item, npc &p );
 
@@ -119,7 +119,7 @@ void start_training_npc( npc & );
 void start_training_seminar( npc &p );
 void start_training_gen( Character &teacher, std::vector<Character *> &students, teach_domain &d );
 
-// used for NPC camps
+
 void distribute_food_auto( npc &p );
 
 void wake_up( npc & );
@@ -130,7 +130,7 @@ void clear_overrides( npc &p );
 void pick_style( npc &p );
 void do_craft( npc & );
 void do_disassembly( npc &p );
-} // namespace talk_function
+}
 
 time_duration calc_skill_training_time_char( const Character &teacher, const Character &student,
         const skill_id &skill );
@@ -157,4 +157,4 @@ std::vector<int> npcs_select_menu( const std::vector<Character *> &npc_list,
                                    const std::string &prompt,
                                    const std::function<bool( const Character * )> &exclude_func );
 
-#endif // CATA_SRC_NPCTALK_H
+#endif

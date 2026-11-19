@@ -48,8 +48,7 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertGreater(menu.index('menu.add( _( "Gesture guide" ) )'),
                            menu.index("a11y_manual_drive = !a11y_manual_drive;"))
         self.assertIn(".keep_menu_open()", menu)
-        # The guide title is adaptive now: autonomous driving gets its own
-        # title, manual driving keeps the original one.
+
         self.assertIn('guide.title = is_autodriving ? _( "Gesture guide: autonomous driving" ) :', menu)
         self.assertIn('_( "Gesture guide: driving" );', menu)
         self.assertIn("guide.addentry( index++, true, 0, line );", menu)
@@ -70,8 +69,7 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("static final int OPEN_GESTURE_GUIDE = 11;", HUB)
 
     def test_combat_menu_guide_uses_actual_combat_gestures(self):
-        # Long-hold enters the existing combat menu. Its final help row
-        # must describe combat, not the hub's browsing gestures.
+
         guide = CTRL.split("private void openGestureGuide()", 1)[1].split(
             "private String gestureGuideSpeech()", 1
         )[0]
@@ -93,8 +91,6 @@ class ContextGestureGuideContracts(unittest.TestCase):
                       "a11yGuideWalkNorth", "a11yGuideWalkSouth",
                       "a11yGuideCombatEnemy", "a11yGuideCombatMenu"):
             self.assertIn("R.string." + label, GUIDE)
-        # The existing guide already has the eight combat directions, item
-        # commands and two-finger movement. No new gesture binding is added.
 
     def test_inventory_pocket_actions_keep_existing_options(self):
         self.assertIn("R.string.a11yPocketOpen, R.string.a11yPocketOtherActions,", CTRL)
@@ -166,8 +162,7 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("R.string.a11yGuideDrivePause", GUIDE)
 
     def test_character_creator_steps_have_their_native_two_finger_up_action(self):
-        # The native creator uses six distinct step categories, plus
-        # an independent summary and a separate calendar dialog.
+
         self.assertIn('category.startsWith("character-creator-step-")', GUIDE)
         for step in range(3, 7):
             self.assertIn('"character-creator-step-' + str(step) + '".equals(category)', GUIDE)

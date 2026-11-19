@@ -68,16 +68,16 @@ namespace
 
 generic_factory<faction_mission> faction_mission_factory( "faction_mission" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const faction_mission &string_id<faction_mission>::obj() const
 {
     return faction_mission_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<faction_mission>::is_valid() const
 {
@@ -91,21 +91,27 @@ template<>
 std::string enum_to_string<risk_diff_level>( risk_diff_level data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case risk_diff_level::NONE: return "NONE";
-        case risk_diff_level::VERY_LOW: return "VERY_LOW";
-        case risk_diff_level::LOW: return "LOW";
-        case risk_diff_level::MEDIUM: return "MEDIUM";
-        case risk_diff_level::HIGH: return "HIGH";
-        case risk_diff_level::VERY_HIGH: return "VERY_HIGH";
-        // *INDENT-ON*
+
+        case risk_diff_level::NONE:
+            return "NONE";
+        case risk_diff_level::VERY_LOW:
+            return "VERY_LOW";
+        case risk_diff_level::LOW:
+            return "LOW";
+        case risk_diff_level::MEDIUM:
+            return "MEDIUM";
+        case risk_diff_level::HIGH:
+            return "HIGH";
+        case risk_diff_level::VERY_HIGH:
+            return "VERY_HIGH";
+
         case risk_diff_level::NUM_RISK_DIFF_LEVELS:
             break;
     }
     cata_fatal( "Invalid risk_diff_level" );
 }
 
-} // namespace io
+}
 
 
 void faction_mission::load_faction_missions( const JsonObject &jo, const std::string &src )
@@ -118,7 +124,7 @@ void faction_mission::reset()
     faction_mission_factory.reset();
 }
 
-///Format the string as a list item, e.g. "> foo"
+
 static std::string desc_list_item( const std::string &item )
 {
     return string_format( _( "> %s" ), item );

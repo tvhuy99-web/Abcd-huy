@@ -66,10 +66,10 @@ static units::energy parse_energy_quantity( const std::string &json )
 
 TEST_CASE( "energy_parsing_from_JSON", "[units]" )
 {
-    CHECK_THROWS( parse_energy_quantity( "\"\"" ) ); // empty string
-    CHECK_THROWS( parse_energy_quantity( "27" ) ); // not a string at all
-    CHECK_THROWS( parse_energy_quantity( "\"    \"" ) ); // only spaces
-    CHECK_THROWS( parse_energy_quantity( "\"27\"" ) ); // no energy unit
+    CHECK_THROWS( parse_energy_quantity( "\"\"" ) );
+    CHECK_THROWS( parse_energy_quantity( "27" ) );
+    CHECK_THROWS( parse_energy_quantity( "\"    \"" ) );
+    CHECK_THROWS( parse_energy_quantity( "\"27\"" ) );
 
     CHECK( parse_energy_quantity( "\"1 mJ\"" ) == 1_mJ );
     CHECK( parse_energy_quantity( "\"1 J\"" ) == 1_J );
@@ -90,10 +90,10 @@ static units::power parse_power_quantity( const std::string &json )
 
 TEST_CASE( "power_parsing_from_JSON", "[units]" )
 {
-    CHECK_THROWS( parse_power_quantity( "\"\"" ) ); // empty string
-    CHECK_THROWS( parse_power_quantity( "27" ) ); // not a string at all
-    CHECK_THROWS( parse_power_quantity( "\"    \"" ) ); // only spaces
-    CHECK_THROWS( parse_power_quantity( "\"27\"" ) ); // no energy unit
+    CHECK_THROWS( parse_power_quantity( "\"\"" ) );
+    CHECK_THROWS( parse_power_quantity( "27" ) );
+    CHECK_THROWS( parse_power_quantity( "\"    \"" ) );
+    CHECK_THROWS( parse_power_quantity( "\"27\"" ) );
 
     CHECK( parse_power_quantity( "\"1 mW\"" ) == 1_mW );
     CHECK( parse_power_quantity( "\"1 W\"" ) == 1_W );
@@ -114,10 +114,10 @@ static time_duration parse_time_duration( const std::string &json )
 
 TEST_CASE( "time_duration_parsing_from_JSON", "[units]" )
 {
-    CHECK_THROWS( parse_time_duration( "\"\"" ) ); // empty string
-    CHECK_THROWS( parse_time_duration( "27" ) ); // not a string at all
-    CHECK_THROWS( parse_time_duration( "\"    \"" ) ); // only spaces
-    CHECK_THROWS( parse_time_duration( "\"27\"" ) ); // no time unit
+    CHECK_THROWS( parse_time_duration( "\"\"" ) );
+    CHECK_THROWS( parse_time_duration( "27" ) );
+    CHECK_THROWS( parse_time_duration( "\"    \"" ) );
+    CHECK_THROWS( parse_time_duration( "\"27\"" ) );
 
     CHECK( parse_time_duration( "\"1 turns\"" ) == 1_turns );
     CHECK( parse_time_duration( "\"1 minutes\"" ) == 1_minutes );
@@ -130,30 +130,30 @@ TEST_CASE( "time_duration_parsing_from_JSON", "[units]" )
            1_hours - 4_days );
 }
 
-// convert_length and length_units work in tandem to give a succinct expression of length in
-// imperial or metric units, based on whether the length is evenly divisible by the natural
-// units in each system (millimeter|centimeter|meter|kilometer, or inch|foot|yard|mile)
-//
-// convert_length takes a units::length, and returns an integer number of the most appropriate
-// measurement unit for the configured DISTANCE_UNITS option, based on whether the length is evenly
-// divisible by that unit.
-//
-// length_units returns the corresponding unit string for that measurement ("mm", "in.", "ft" etc.)
-//
-// Thus, together they prefer (say) "15 cm" over "150 mm", and "2 m" over "200 cm" for metric units,
-// or "2 ft" over "24 in.", and "1 yd" over "36 in.", and "1 mi" over "5280 ft" for imperial units.
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "convert_length", "[units][convert][length]" )
 {
     SECTION( "imperial length" ) {
         override_option opt_imperial( "DISTANCE_UNITS", "imperial" );
 
-        // Converting metric to imperial is always gonna be a bit messy.
-        // Different compilers may have slightly different edge conditions.
-        // For instance 254 mm is 10 inches on clang, but only 9 inches on MinGW.
-        // Values are fudged slightly (by 1 mm) to make the tests less likely to fail.
+
+
+
+
         SECTION( "non-multiples of 12 inches expressed in inches" ) {
-            // 1 inch == 25.4 mm
+
             CHECK( convert_length( 26_mm ) == 1 );
             CHECK( length_units( 26_mm ) == "in." );
             CHECK( convert_length( 255_mm ) == 10 );
@@ -162,21 +162,21 @@ TEST_CASE( "convert_length", "[units][convert][length]" )
             CHECK( length_units( 2541_mm ) == "in." );
         }
         SECTION( "multiples of 12 inches expressed in feet" ) {
-            // 12 inches == 304.8 mm
+
             CHECK( convert_length( 305_mm ) == 1 );
             CHECK( length_units( 305_mm ) == "ft" );
             CHECK( convert_length( 610_mm ) == 2 );
             CHECK( length_units( 610_mm ) == "ft" );
         }
         SECTION( "multiples of 36 inches expressed in yards" ) {
-            // 1 yard == 914.4 mm
+
             CHECK( convert_length( 915_mm ) == 1 );
             CHECK( length_units( 915_mm ) == "yd" );
             CHECK( convert_length( 1830_mm ) == 2 );
             CHECK( length_units( 1830_mm ) == "yd" );
         }
         SECTION( "multiples of 63360 inches expressed in miles" ) {
-            // 1 mile == 1,609,344 mm
+
             CHECK( convert_length( 1609345_mm ) == 1 );
             CHECK( length_units( 1609345_mm ) == "mi" );
         }
@@ -220,8 +220,8 @@ TEST_CASE( "convert_length", "[units][convert][length]" )
     }
 }
 
-// convert_volume takes an integer number of milliliters, and returns equivalent floating-point
-// number of cups, liters, or quarts, depending on the configured VOLUME_UNITS option (c, l, or qt)
+
+
 TEST_CASE( "convert_volume", "[units][convert][volume]" )
 {
     SECTION( "convert to metric cups" ) {
@@ -245,18 +245,18 @@ TEST_CASE( "convert_volume", "[units][convert][volume]" )
     }
 }
 
-// convert_weight takes a units::mass weight, and returns equivalent floating-point number of
-// kilograms or pounds, depending on the configured USE_METRIC_WEIGHTS option (kg or lbs).
+
+
 TEST_CASE( "convert_weight", "[units][convert][weight]" )
 {
-    // Kilograms (metric)
+
     override_option opt_kg( "USE_METRIC_WEIGHTS", "kg" );
     CHECK( convert_weight( 100_gram ) == Approx( 0.1f ) );
     CHECK( convert_weight( 500_gram ) == Approx( 0.5f ) );
     CHECK( convert_weight( 1000_gram ) == Approx( 1.0f ) );
     CHECK( convert_weight( 5000_gram ) == Approx( 5.0f ) );
 
-    // Pounds (imperial)
+
     override_option opt_lbs( "USE_METRIC_WEIGHTS", "lbs" );
     const double g_per_lb = 453.6;
     CHECK( convert_weight( 100_gram ) == Approx( 100.0f / g_per_lb ) );
@@ -264,23 +264,23 @@ TEST_CASE( "convert_weight", "[units][convert][weight]" )
     CHECK( convert_weight( 5000_gram ) == Approx( 5000.0f / g_per_lb ) );
 }
 
-// convert_velocity takes an integer in "internal units", and returns a floating-point number based
-// on configured USE_METRIC_SPEEDS (mph, km/h, or t/t).
-//
-// For "km/h", return value is in different units depending on whether it is VEHICLE or WIND speed.
+
+
+
+
 TEST_CASE( "convert_velocity", "[units][convert][velocity]" )
 {
-    // 100 internal units == 1 mph, for both VEHICLE and WIND type
+
     override_option opt_mph( "USE_METRIC_SPEEDS", "mph" );
     CHECK( convert_velocity( 100, VU_VEHICLE ) == Approx( 1.0f ) );
     CHECK( convert_velocity( 100, VU_WIND ) == Approx( 1.0f ) );
 
-    // Tiles-per-turn == 1/4 of mph for both VEHICLE and WIND type
+
     override_option opt_tpt( "USE_METRIC_SPEEDS", "t/t" );
     CHECK( convert_velocity( 100, VU_VEHICLE ) == Approx( 0.25f ) );
     CHECK( convert_velocity( 100, VU_WIND ) == Approx( 0.25f ) );
 
-    // For metric velocity, VEHICLE speed uses km/h, while WIND speed uses meters/sec
+
     override_option opt_kph( "USE_METRIC_SPEEDS", "km/h" );
     CHECK( convert_velocity( 100, VU_VEHICLE ) == Approx( 1.609f ) );
     CHECK( convert_velocity( 100, VU_WIND ) == Approx( 0.447f ) );
@@ -294,10 +294,10 @@ static units::angle parse_angle( const std::string &json )
 
 TEST_CASE( "angle_parsing_from_JSON", "[units]" )
 {
-    CHECK_THROWS( parse_angle( "\"\"" ) ); // empty string
-    CHECK_THROWS( parse_angle( "27" ) ); // not a string at all
-    CHECK_THROWS( parse_angle( "\"    \"" ) ); // only spaces
-    CHECK_THROWS( parse_angle( "\"27\"" ) ); // no time unit
+    CHECK_THROWS( parse_angle( "\"\"" ) );
+    CHECK_THROWS( parse_angle( "27" ) );
+    CHECK_THROWS( parse_angle( "\"    \"" ) );
+    CHECK_THROWS( parse_angle( "\"27\"" ) );
 
     CHECK( parse_angle( "\"1 rad\"" ) == 1_radians );
     CHECK( parse_angle( "\"1 °\"" ) == 1_degrees );

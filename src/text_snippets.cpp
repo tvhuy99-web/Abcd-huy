@@ -113,7 +113,7 @@ void snippet_library::reload_names( const cata_path &path )
             { "world", { false, &snippets_by_category["<world_name>"], nullptr, nullptr } },
         };
 
-        // First clear previously loaded names
+
         for( const std::pair<const std::string, usage_info> &kv : usages ) {
             const usage_info &use = kv.second;
             if( use.gendered ) {
@@ -165,7 +165,7 @@ void snippet_library::reload_names( const cata_path &path )
             }
         }
 
-        // Add fallback in case no name was loaded
+
         for( const std::pair<const std::string, usage_info> &kv : usages ) {
             const usage_info &use = kv.second;
             if( use.gendered ) {
@@ -189,7 +189,7 @@ void snippet_library::clear_snippets()
     hash_to_id_migration = std::nullopt;
     snippets_by_category.clear();
     snippets_by_id.clear();
-    // Needed by world creation etc
+
     reload_names( PATH_INFO::names() );
 }
 
@@ -276,10 +276,10 @@ snippet_id snippet_library::random_id_from_category( const std::string &cat ) co
     if( weight_sum == 0 ) {
         return snippet_id::NULL_ID();
     }
-    // uniform_int_distribution always returns zero when the random engine is
-    // cata_default_random_engine aka std::minstd_rand0 and the seed is small,
-    // so std::mt19937 is used instead. This engine is deterministically seeded,
-    // so acceptable.
+
+
+
+
     // NOLINTNEXTLINE(cata-determinism)
     std::mt19937 generator( rng_bits() );
     std::uniform_int_distribution<uint64_t> dis( 0, weight_sum - 1 );
@@ -310,10 +310,10 @@ std::optional<translation> snippet_library::random_from_category( const std::str
     if( weight_sum == 0 ) {
         return std::nullopt;
     }
-    // uniform_int_distribution always returns zero when the random engine is
-    // cata_default_random_engine aka std::minstd_rand0 and the seed is small,
-    // so std::mt19937 is used instead. This engine is deterministically seeded,
-    // so acceptable.
+
+
+
+
     // NOLINTNEXTLINE(cata-determinism)
     std::mt19937 generator( seed );
     std::uniform_int_distribution<uint64_t> dis( 0, weight_sum - 1 );

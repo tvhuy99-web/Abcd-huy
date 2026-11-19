@@ -121,4 +121,4 @@ enum_bitset<E> operator|( const enum_bitset<E> &lhs, const enum_bitset<E> &rhs )
     return ret;
 }
 
-#endif // CATA_SRC_ENUM_BITSET_H
+#endif

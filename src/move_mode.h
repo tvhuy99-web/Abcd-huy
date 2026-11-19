@@ -48,9 +48,9 @@ class move_mode
 
         bool _stop_hauling = false;
 
-        // Mutable because I couldn't figure out how to set this after it had been loaded
-        // Which was necessary, because I needed to know the values of the other ones
-        // before I could set it
+
+
+
         mutable move_mode_id cycle_to;
         mutable move_mode_id cycle_back;
         move_mode_type _type = move_mode_type::WALKING;
@@ -79,7 +79,7 @@ class move_mode
 
         move_mode() = default;
 
-        // name: walk, run, crouch, prone
+
         std::string name() const;
         std::string change_message( bool success, steed_type steed ) const;
         std::string prepare_message( steed_type steed ) const;
@@ -105,11 +105,11 @@ class move_mode
         bool stop_hauling() const;
         move_mode_type type() const;
 
-        // Const because it's modifying a mutable
+
         void set_cycle( const move_mode_id &mode ) const;
         void set_cycle_back( const move_mode_id &mode ) const;
 };
 
 const std::vector<move_mode_id> &move_modes_by_speed();
 
-#endif // CATA_SRC_MOVE_MODE_H
+#endif

@@ -24,25 +24,25 @@ namespace auto_pickup
 {
 std::list<std::pair<item_location, int>> select_items(
         const std::vector<item_stack::iterator> &from, const tripoint_bub_ms &location );
-/**
- * The currently-active set of auto-pickup rules, in a form that allows quick lookup.
- * When this is filled, items that match a rule are stored with  rule_state::WHITELISTED or rule_state::BLACKLISTED.
- * Unmatched items may be cached as rule_state::NONE.
- */
+
+
+
+
+
 class cache : public std::unordered_map<std::string, rule_state>
 {
     public:
-        /// Defines whether this cache has been filled.
+
         bool ready = false;
 
-        /// Temporary data used while filling the cache.
+
         std::unordered_map<std::string, const itype *> temp_items;
 };
 
-/**
- * A single entry in the list of auto pickup entries @ref rule_list.
- * The data contained can be edited by the player and determines what to pick/ignore.
- */
+
+
+
+
 class rule
 {
     public:
@@ -61,9 +61,9 @@ class rule
         void test_pattern() const;
 };
 
-/**
- * A list of rules. This is primarily a container with a few convenient functions (like saving/loading).
- */
+
+
+
 class rule_list : public std::vector<rule>
 {
     public:
@@ -164,8 +164,8 @@ class npc_settings : public base_settings
         bool empty() const;
 };
 
-} // namespace auto_pickup
+}
 
 auto_pickup::player_settings &get_auto_pickup();
 
-#endif // CATA_SRC_AUTO_PICKUP_H
+#endif

@@ -82,7 +82,7 @@ std::string body_part_names( const std::vector<bodypart_id> &parts )
             }
         }
         if( duplicate ) {
-            //Do nothing
+
         } else if( can_be_consolidated ) {
             std::replace( names.begin(), names.end(), opposite_part, part_group );
         } else {
@@ -112,7 +112,7 @@ mid_pane_status draw_mid_pane( const catacurses::window &w_sort_middle,
     const item_penalties penalties = c.worn.get_item_penalties( worn_item_it, c, bp );
     std::vector<std::string> mid_pane_text;
     mid_pane_text.reserve(
-        40 ); //Assume 10 for properties, 15 for protection, 5 for layering, 10 for encumbrance
+        40 );
     std::vector<std::string> temp_text;
     temp_text.reserve( 40 );
 
@@ -244,21 +244,21 @@ std::vector<std::string> clothing_properties(
     std::vector<std::string> props;
     bodypart_id used_bp = bp;
 
-    // catch all for items that aren't armor
+
     if( !worn_item.find_armor_data() ) {
         props.push_back( string_format( "<color_c_red>%s</color>",
                                         _( "Item provides no protection" ) ) );
         return props;
     }
     if( bp == bodypart_str_id::NULL_ID() ) {
-        // if the armor has no protection data
+
         if( worn_item.find_armor_data()->sub_data.empty() ) {
             props.push_back( string_format( "<color_c_red>%s</color>",
                                             _( "Item provides no protection" ) ) );
             return props;
         }
 
-        // if there is only one data entry for the armor
+
         if( worn_item.find_armor_data()->sub_data.size() > 1 ) {
             props.push_back( string_format( "<color_c_red>%s</color>",
                                             _( "Armor is nonuniform.  Specify a limb to get armor data" ) ) );
@@ -354,9 +354,9 @@ std::vector<std::string> clothing_protection( const item &worn_item, const int w
         return prot;
     }
 
-    // if bp is null its gonna be impossible to really get good info
+
     if( bp == bodypart_str_id::NULL_ID() ) {
-        // if we have exactly one entry for armor we can use that data
+
         if( worn_item.find_armor_data()->sub_data.size() == 1 ) {
             used_bp = *worn_item.get_covered_body_parts().begin();
         } else {
@@ -364,9 +364,9 @@ std::vector<std::string> clothing_protection( const item &worn_item, const int w
         }
     }
 
-    // prebuild and calc some values
-    // the rolls are basically a perfect hit for protection and a
-    // worst possible and a median hit
+
+
+
     resistances worst_res = resistances( worn_item, false, 99, used_bp );
     resistances best_res = resistances( worn_item, false, 0, used_bp );
     resistances median_res = resistances( worn_item, false, 50, used_bp );
@@ -374,7 +374,7 @@ std::vector<std::string> clothing_protection( const item &worn_item, const int w
     int percent_best = 100;
     int percent_worst = 0;
     const armor_portion_data *portion = worn_item.portion_for_bodypart( used_bp );
-    // if there isn't a portion this is probably pet armor
+
     if( portion ) {
         percent_best = portion->best_protection_chance;
         percent_worst = portion->worst_protection_chance;
@@ -413,7 +413,7 @@ std::vector<std::string> clothing_flags_description( const item &worn_item, cons
     std::vector<std::string> description_stack;
     std::vector<std::string> current_description;
 
-    //Handle flag_FIT and flag_VARSIZE as a special case
+
     if( worn_item.has_flag( flag_FIT ) ) {
         current_description = foldstring( _( "It fits you well." ), width );
         description_stack.insert( description_stack.end(), current_description.begin(),
@@ -424,7 +424,7 @@ std::vector<std::string> clothing_flags_description( const item &worn_item, cons
                                   current_description.end() );
     }
 
-    //Handle all other flags:
+
     const std::vector<std::pair<flag_id, std::string>> flag_descriptions = {
         { flag_HOOD, translate_marker( "It has a hood." ) },
         { flag_POCKETS, translate_marker( "It has pockets." ) },
@@ -448,9 +448,9 @@ std::vector<std::string> clothing_flags_description( const item &worn_item, cons
     return description_stack;
 }
 
-} //namespace
+}
 
-// Figure out encumbrance penalties this clothing is involved in
+
 item_penalties outfit::get_item_penalties( std::list<item>::const_iterator worn_item_it,
         const Character &c, const bodypart_id &_bp )
 {
@@ -470,7 +470,7 @@ item_penalties outfit::get_item_penalties( std::list<item>::const_iterator worn_
 
         std::set<std::string> bad_items_within;
 
-        // if no subparts do the old way
+
         if( bp->sub_parts.empty() ) {
             std::vector<layer_level> layer = worn_item_it->get_layer( bp );
             bool first_integrated = true;
@@ -537,9 +537,9 @@ item_penalties outfit::get_item_penalties( std::list<item>::const_iterator worn_
         }
     }
 
-    // We intersect all the lists_of_bad_items_within so that if there is one
-    // common bad item we're wearing this one over it can be mentioned in the
-    // message explaining the penalty.
+
+
+
     while( lists_of_bad_items_within.size() > 1 ) {
         std::set<std::string> intersection_of_first_two;
         std::set_intersection(
@@ -588,15 +588,15 @@ static void draw_grid( const catacurses::window &w, int left_pane_w, int mid_pan
     mvwvline( w, point( left_pane_w + 1, 3 ), 0, win_h - 4 );
     mvwvline( w, point( left_pane_w + mid_pane_w + 2, 3 ), 0, win_h - 4 );
 
-    // intersections
-    mvwaddch( w, point( 0, 2 ), LINE_XXXO ); // '|-'
-    mvwaddch( w, point( win_w - 1, 2 ), LINE_XOXX ); // '-|'
-    mvwaddch( w, point( left_pane_w + 1, encumb_top - 1 ), LINE_XXXO ); // '|-'
-    mvwaddch( w, point( left_pane_w + mid_pane_w + 2, encumb_top - 1 ), LINE_XOXX ); // '-|'
-    mvwaddch( w, point( left_pane_w + 1, 2 ), LINE_OXXX ); // '^|^'
-    mvwaddch( w, point( left_pane_w + 1, win_h - 1 ), LINE_XXOX ); // '_|_'
-    mvwaddch( w, point( left_pane_w + mid_pane_w + 2, 2 ), LINE_OXXX ); // '^|^'
-    mvwaddch( w, point( left_pane_w + mid_pane_w + 2, win_h - 1 ), LINE_XXOX ); // '_|_'
+
+    mvwaddch( w, point( 0, 2 ), LINE_XXXO );
+    mvwaddch( w, point( win_w - 1, 2 ), LINE_XOXX );
+    mvwaddch( w, point( left_pane_w + 1, encumb_top - 1 ), LINE_XXXO );
+    mvwaddch( w, point( left_pane_w + mid_pane_w + 2, encumb_top - 1 ), LINE_XOXX );
+    mvwaddch( w, point( left_pane_w + 1, 2 ), LINE_OXXX );
+    mvwaddch( w, point( left_pane_w + 1, win_h - 1 ), LINE_XXOX );
+    mvwaddch( w, point( left_pane_w + mid_pane_w + 2, 2 ), LINE_OXXX );
+    mvwaddch( w, point( left_pane_w + mid_pane_w + 2, win_h - 1 ), LINE_XXOX );
     wattroff( w, BORDER_COLOR );
 
     wnoutrefresh( w );
@@ -604,16 +604,16 @@ static void draw_grid( const catacurses::window &w, int left_pane_w, int mid_pan
 
 namespace
 {
-// Reader adapter for the armor layering screen (R09.4).
-//
-// Turn cost: browsing, focusing an item, switching tabs and the
-// MOVE_ARMOR pick-up / put-down selection below are in-screen operations
-// and cost no turns -- the handler only synchronizes tabindex,
-// leftListIndex and selected, then returns "TIMEOUT" or "MOVE_ARMOR" to
-// the original loop. EQUIP_ARMOR, EQUIP_ARMOR_HERE and REMOVE_ARMOR are
-// likewise returned to that loop, so equipping and removing still go
-// through the engine activities -- and the original warnings and
-// confirmation popups -- exactly as on the keyboard path.
+
+
+
+
+
+
+
+
+
+
 struct armor_layers_reader {
     public:
         armor_layers_reader( input_context &ctxt_arg, Character &guy_arg,
@@ -624,9 +624,9 @@ struct armor_layers_reader {
             ctxt( ctxt_arg ), guy( guy_arg ), worn( worn_arg ),
             armor_cat( armor_cat_arg ), tabindex( tabindex_arg ),
             leftListIndex( leftListIndex_arg ), selected( selected_arg ),
-            screen( &ctxt_arg, "armor-layers", [this]( const a11y::semantic_intent &intent ) {
-                return handle( intent );
-            } ) {
+            screen( &ctxt_arg, "armor-layers", [this]( const a11y::semantic_intent & intent ) {
+            return handle( intent );
+        } ) {
         }
 
         void update() {
@@ -636,8 +636,8 @@ struct armor_layers_reader {
             snapshot.title = _( "Sort Armor" );
             snapshot.summary = tab_bp == bodypart_str_id::NULL_ID() ? _( "All" ) :
                                body_part_name_as_heading( tab_bp, 1 );
-            // One tab per armor_cat entry, "All" (NULL_ID) included, in
-            // armor_cat order -- the same order PREV_TAB / NEXT_TAB walk.
+
+
             for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
                 const bodypart_id &bp = armor_cat[i];
                 a11y::semantic_node node;
@@ -653,8 +653,8 @@ struct armor_layers_reader {
                 }
                 snapshot.nodes.push_back( std::move( node ) );
             }
-            // Worn items of the current tab, in worn order, which is the
-            // real layer order (innermost first), as in the left pane.
+
+
             const int focus_index = shown.empty() ? -1 :
                                     std::clamp( leftListIndex, 0,
                                                 static_cast<int>( shown.size() ) - 1 );
@@ -673,8 +673,8 @@ struct armor_layers_reader {
                 }
                 snapshot.nodes.push_back( std::move( node ) );
             }
-            // Encumbrance per body part. armor_cat holds exactly one
-            // NULL_ID ("All") entry, hence the -1 in the total.
+
+
             int part_position = 0;
             const int part_total = static_cast<int>( armor_cat.size() ) - 1;
             for( const bodypart_id &bp : armor_cat ) {
@@ -685,9 +685,9 @@ struct armor_layers_reader {
                 node.id = encumbrance_node_id( bp );
                 node.role = "status";
                 node.label = body_part_name( bp );
-                // Character::encumb() is the same unitless final value
-                // the original encumbrance pane prints for a body part;
-                // there is no unit in the source data.
+
+
+
                 node.value = string_format( "%d", guy.encumb( bp ) );
                 node.detail = string_format( _( "Encumbrance: %d" ), guy.encumb( bp ) );
                 node.actions = { "focus" };
@@ -695,9 +695,9 @@ struct armor_layers_reader {
                 node.total = part_total;
                 snapshot.nodes.push_back( std::move( node ) );
             }
-            // Commands last, from the shared builder: they act on the
-            // highlighted item, so the focus synchronization above is
-            // what makes them hit the item the reader is on.
+
+
+
             a11y::semantic_snapshot commands =
                 a11y::command_snapshot( ctxt, _( "Sort Armor" ) );
             snapshot.nodes.insert( snapshot.nodes.end(),
@@ -728,9 +728,9 @@ struct armor_layers_reader {
             return armor_cat[tabindex];
         }
 
-        // The list the left pane shows for the current tab, rebuilt
-        // exactly as on_redraw builds tmp_worn: every worn item for
-        // "All", only the items covering the tab's body part otherwise.
+
+
+
         std::vector<std::list<item>::iterator> displayed_items() {
             std::vector<std::list<item>::iterator> shown;
             if( tabindex < 0 || tabindex >= static_cast<int>( armor_cat.size() ) ) {
@@ -745,10 +745,10 @@ struct armor_layers_reader {
             return shown;
         }
 
-        // Stable node ID for one worn item. std::list iterators survive
-        // the splices and sorts of the original loop, so the iterator is
-        // the item's identity for the life of this screen; the displayed
-        // index is never used as identity.
+
+
+
+
         std::string binding_id( const std::list<item>::iterator &worn_it ) {
             for( const item_binding &binding : bindings ) {
                 if( binding.worn_it == worn_it ) {
@@ -762,7 +762,7 @@ struct armor_layers_reader {
         std::string item_detail( const item &worn_item, const bodypart_id &tab_bp,
                                  int display_index ) const {
             std::string detail;
-            const auto append_line = [&detail]( const std::string &line ) {
+            const auto append_line = [&detail]( const std::string & line ) {
                 if( line.empty() ) {
                     return;
                 }
@@ -781,17 +781,17 @@ struct armor_layers_reader {
             if( !covered.empty() ) {
                 append_line( string_format( _( "Covers: %s" ), body_part_names( covered ) ) );
             }
-            // a sided item's current side was invisible here,
-            // so the reader could not say which side it is on before
-            // offering CHANGE_SIDE. BOTH means no side is set; omit the
-            // line rather than guessing one.
+
+
+
+
             if( worn_item.is_sided() && worn_item.get_side() != side::BOTH ) {
                 append_line( string_format( _( "Side: %s." ),
                                             worn_item.get_side() == side::LEFT ? _( "left" ) : _( "right" ) ) );
             }
             if( tab_bp == bodypart_str_id::NULL_ID() ) {
-                // No single body part on the "All" tab: publish the
-                // item's average encumbrance across its portions.
+
+
                 append_line( string_format( _( "Encumbrance: %d" ),
                                             worn_item.get_avg_encumber( guy ) ) );
             } else {
@@ -809,9 +809,9 @@ struct armor_layers_reader {
         }
 
         std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
-            // Tabs: activation jumps straight to that tab (browsing, no
-            // turn cost); it is not the original loop's wrapping
-            // NEXT_TAB / PREV_TAB.
+
+
+
             for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
                 if( intent.node != tab_node_id( armor_cat[i] ) ) {
                     continue;
@@ -820,10 +820,10 @@ struct armor_layers_reader {
                     tabindex = static_cast<int>( i );
                     leftListIndex = 0;
                     selected = -1;
-                    // the new tab's first item is what the
-                    // reader focuses next, not the tab name -- announce
-                    // the tab itself. Same msgid as the keyboard-path
-                    // tab switch in the loop below.
+
+
+
+
                     if( a11y::enabled() ) {
                         const bodypart_id &new_tab = armor_cat[i];
                         guy.add_msg_if_player( m_info, _( "Tab: %s." ),
@@ -836,7 +836,7 @@ struct armor_layers_reader {
                     return "TIMEOUT";
                 }
             }
-            // Encumbrance status nodes are read-only.
+
             for( const bodypart_id &bp : armor_cat ) {
                 if( bp != bodypart_str_id::NULL_ID() &&
                     intent.node == encumbrance_node_id( bp ) &&
@@ -844,12 +844,12 @@ struct armor_layers_reader {
                     return "TIMEOUT";
                 }
             }
-            // Items: re-resolve the binding at intent time (R03). The
-            // stored iterator is only an identity -- the item must still
-            // be in worn and in the tab displayed right now, and the
-            // cursor index is recomputed against that current list.
+
+
+
+
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
-            [&intent]( const item_binding &b ) {
+            [&intent]( const item_binding & b ) {
                 return b.id == intent.node;
             } );
             if( binding != bindings.end() &&
@@ -873,14 +873,14 @@ struct armor_layers_reader {
                 if( intent.action == "read_detail" ) {
                     a11y::announce_full_item_info( **found,
                                                    item_detail( **found, current_tab(),
-                                                   static_cast<int>( std::distance( shown.begin(), found ) ) ) );
+                                                           static_cast<int>( std::distance( shown.begin(), found ) ) ) );
                     return "TIMEOUT";
                 }
                 leftListIndex = static_cast<int>( std::distance( shown.begin(), found ) );
-                // Focus only synchronizes the original cursor. Activation
-                // also toggles the pick-up-for-reordering mode through
-                // the original MOVE_ARMOR branch: the move itself, and
-                // its integrated-armor warning, stay there.
+
+
+
+
                 return intent.action == "activate" ? std::optional<std::string>( "MOVE_ARMOR" ) :
                        std::optional<std::string>( "TIMEOUT" );
             }
@@ -898,13 +898,13 @@ struct armor_layers_reader {
         std::size_t serial = 0;
         a11y::screen_scope screen;
 };
-} // namespace
+}
 
 void outfit::sort_armor( Character &guy )
 {
-    // FIXME: get_all_body_parts() doesn't return a sorted list
-    //        and bodypart_id is not compatible with std::sort()
-    //        so let's use a dirty hack
+
+
+
     cata::flat_set<bodypart_id> armor_cat;
     for( const bodypart_id &it : guy.get_all_body_parts() ) {
         armor_cat.insert( it );
@@ -936,9 +936,9 @@ void outfit::sort_armor( Character &guy )
 
     std::vector<std::list<item>::iterator> tmp_worn;
 
-    // Layout window
+
     catacurses::window w_sort_armor;
-    // Subwindows (between lines)
+
     catacurses::window w_sort_cat;
     catacurses::window w_sort_left;
     catacurses::window w_sort_middle;
@@ -1006,16 +1006,16 @@ void outfit::sort_armor( Character &guy )
     mid_pane.header_lines = 1;
 
     ui.on_redraw( [&]( ui_adaptor & ui ) {
-        // Create ptr list of items to display
+
         tmp_worn.clear();
         const bodypart_id &bp = armor_cat[ tabindex ];
         if( bp == bodypart_str_id::NULL_ID() ) {
-            // All
+
             for( auto it = worn.begin(); it != worn.end(); ++it ) {
                 tmp_worn.push_back( it );
             }
         } else {
-            // bp_*
+
             for( auto it = worn.begin(); it != worn.end(); ++it ) {
                 if( it->covers( bp ) ) {
                     tmp_worn.push_back( it );
@@ -1035,7 +1035,7 @@ void outfit::sort_armor( Character &guy )
             leftListOffset = leftListIndex + 1 - leftListLines;
         }
 
-        // Ensure leftListIndex is in bounds
+
         int new_index_upper_bound = std::max( 0, leftListSize - 1 );
         leftListIndex = std::min( leftListIndex, new_index_upper_bound );
 
@@ -1047,7 +1047,7 @@ void outfit::sort_armor( Character &guy )
         werase( w_sort_right );
         werase( w_encumb );
 
-        // top bar
+
         std::string header_title = _( "Sort Armor" );
         wprintz( w_sort_cat, c_white, header_title );
         std::string temp = bp == bodypart_str_id::NULL_ID() ?  _( "All" ) : body_part_name_as_heading( bp,
@@ -1065,14 +1065,14 @@ void outfit::sort_armor( Character &guy )
                          ctxt.get_desc( "USAGE_HELP" ),
                          ctxt.get_desc( "HELP_KEYBINDINGS" ) ), getmaxx( w_sort_cat ) - keyhint_offset ) );
 
-        // Left header
+
         std:: string storage_header = string_format( _( "Storage (%s)" ), volume_units_abbr() );
         trim_and_print( w_sort_left, point::zero, left_w - utf8_width( storage_header ) - 1, c_light_gray,
                         _( "(Innermost)" ) );
         right_print( w_sort_left, 0, 0, c_light_gray, storage_header );
-        // Left list
+
         const int max_drawindex = std::min( leftListSize - leftListOffset, leftListLines );
-        int storage_character_allowance = 5; //Sufficient for " x.yz", will increase if necessary
+        int storage_character_allowance = 5;
         for( int drawindex = 0; drawindex < max_drawindex; drawindex++ ) {
             int itemindex = leftListOffset + drawindex;
 
@@ -1081,7 +1081,7 @@ void outfit::sort_armor( Character &guy )
             }
 
             std::string worn_armor_name = tmp_worn[itemindex]->tname();
-            // Get storage capacity in user's preferred units
+
             units::volume worn_armor_capacity = tmp_worn[itemindex]->get_volume_capacity();
             double worn_armor_storage = convert_volume( units::to_milliliter( worn_armor_capacity ) );
             std::string storage_string = string_format( "%.2f", worn_armor_storage );
@@ -1093,13 +1093,13 @@ void outfit::sort_armor( Character &guy )
                 get_item_penalties( tmp_worn[itemindex], guy, bp );
 
             const int offset_x = ( itemindex == selected ) ? 4 : 3;
-            // Show armor name and storage capacity (if any)
+
             trim_and_print( w_sort_left, point( offset_x, drawindex + 1 ),
                             left_w - offset_x - storage_character_allowance,
                             penalties.color_for_stacking_badness(), worn_armor_name );
 
             if( worn_armor_storage > 0 ) {
-                // two digits, accurate to 1% of preferred storage unit
+
                 right_print( w_sort_left, drawindex + 1, 0, c_light_gray, storage_string );
             }
 
@@ -1113,22 +1113,22 @@ void outfit::sort_armor( Character &guy )
             trim_and_print( w_sort_left, point( 0, 1 ), left_w, c_light_blue, _( "<empty>" ) );
         }
 
-        // Left footer
+
         mvwprintz( w_sort_left, point( 0, cont_h - 1 ), c_light_gray, _( "(Outermost)" ) );
 
-        scrollbar() //Left list scrollbar at far left
+        scrollbar()
         .offset_x( 0 )
-        .offset_y( 4 ) //Header allowance
+        .offset_y( 4 )
         .content_size( leftListSize )
         .viewport_pos( leftListOffset )
         .viewport_size( cont_h - 2 )
         .apply( w_sort_armor );
 
-        // Items stats
+
         if( leftListSize > 0 ) {
             draw_mid_pane( w_sort_middle, tmp_worn[leftListIndex], guy, bp, mid_pane );
-            scrollbar() //Mid pane scrollbar
-            .offset_x( left_w + 1 ) //On left of mid pane
+            scrollbar()
+            .offset_x( left_w + 1 )
             .offset_y( 4 + mid_pane.header_lines )
             .content_size( mid_pane.size )
             .viewport_pos( mid_pane.offset )
@@ -1144,7 +1144,7 @@ void outfit::sort_armor( Character &guy )
         guy.print_encumbrance( ui, w_encumb, -1,
                                ( leftListSize > 0 ) ? &*tmp_worn[leftListIndex] : nullptr );
 
-        // Right header
+
         std::string encumbrance_header = _( "Encumbrance" );
         trim_and_print( w_sort_right, point::zero, right_w - utf8_width( encumbrance_header ) - 1,
                         c_light_gray,
@@ -1158,7 +1158,7 @@ void outfit::sort_armor( Character &guy )
         };
 
         cata::flat_set<bodypart_id> rl;
-        // Right list
+
         rightListSize = 0;
         for( const bodypart_id &cover : armor_cat ) {
             if( cover == bodypart_str_id::NULL_ID() ) {
@@ -1176,7 +1176,7 @@ void outfit::sort_armor( Character &guy )
         }
         int pos = 1;
         int curr = 0;
-        int encumbrance_char_allowance = 4; //Enough for " 99+", will increase if necessary
+        int encumbrance_char_allowance = 4;
         int item_name_offset = 2;
         for( const bodypart_id &cover : rl ) {
             if( cover == bodypart_str_id::NULL_ID() ) {
@@ -1205,19 +1205,19 @@ void outfit::sort_armor( Character &guy )
                 curr++;
             }
         }
-        scrollbar() //Right list scrollbar (on left side of right list)
+        scrollbar()
         .offset_x( 2 + left_w + middle_w )
-        .offset_y( 4 ) //Header allowance
+        .offset_y( 4 )
         .content_size( rightListSize )
         .viewport_pos( rightListOffset )
         .viewport_size( cont_h - 2 )
         .apply( w_sort_armor );
 
-        // Right footer
+
         mvwprintz( w_sort_right, point( 0, cont_h - 1 ), c_light_gray, _( "(Outermost)" ) );
 
-        // F5
-        wnoutrefresh( w_sort_armor ); // Required to show scrollbars
+
+        wnoutrefresh( w_sort_armor );
         wnoutrefresh( w_sort_cat );
         wnoutrefresh( w_sort_left );
         wnoutrefresh( w_sort_middle );
@@ -1230,13 +1230,13 @@ void outfit::sort_armor( Character &guy )
     bool exit = false;
     while( !exit ) {
         if( guy.is_avatar() ) {
-            // Totally hoisted this from advanced_inv
+
             if( player_character.get_moves() < 0 ) {
                 do_return_entry();
                 return;
             }
         } else {
-            // Player is sorting NPC's armor here
+
             if( rl_dist( player_character.pos_bub(), guy.pos_bub() ) > 1 ) {
                 guy.add_msg_if_npc( m_bad, _( "%s is too far to sort armor." ), guy.get_name() );
                 return;
@@ -1253,11 +1253,11 @@ void outfit::sort_armor( Character &guy )
         }
         const std::string action = ctxt.handle_input();
         if( guy.is_npc() && action == "ASSIGN_INVLETS" ) {
-            // It doesn't make sense to assign invlets to NPC items
+
             continue;
         }
 
-        // Helper function for moving items in the list
+
         auto shift_selected_item = [&]() {
             if( selected >= 0 ) {
                 std::list<item>::iterator to = tmp_worn[leftListIndex];
@@ -1320,8 +1320,8 @@ void outfit::sort_armor( Character &guy )
             tabindex = inc_clamp_wrap( tabindex, action == "RIGHT" || action == "NEXT_TAB", tabcount );
             leftListIndex = leftListOffset = 0;
             selected = -1;
-            // announce the new tab; the reader focuses the
-            // tab's first item next, which never says the tab name.
+
+
             if( a11y::enabled() ) {
                 const bodypart_id &new_tab = armor_cat[tabindex];
                 guy.add_msg_if_player( m_info, _( "Tab: %s." ),
@@ -1338,10 +1338,10 @@ void outfit::sort_armor( Character &guy )
             }
         } else if( action == "MOVE_ARMOR" && leftListIndex < leftListSize ) {
             if( selected >= 0 ) {
-                // putting the item down ends the carry; confirm
-                // the final position. (Dragging itself already announces
-                // "Armor layer changed" on every move via
-                // shift_selected_item().)
+
+
+
+
                 if( a11y::enabled() ) {
                     guy.add_msg_if_player( m_info, _( "%1$s placed at position %2$d of %3$d." ),
                                            tmp_worn[leftListIndex]->tname(), leftListIndex + 1,
@@ -1352,8 +1352,8 @@ void outfit::sort_armor( Character &guy )
                 item &item_to_check = *tmp_worn[leftListIndex];
                 if( !item_to_check.has_flag( flag_INTEGRATED ) ) {
                     selected = leftListIndex;
-                    // picking the item up starts the carry;
-                    // until now it was silent.
+
+
                     if( a11y::enabled() ) {
                         guy.add_msg_if_player( m_info, _( "Picked up %s for reordering." ),
                                                item_to_check.tname() );
@@ -1370,12 +1370,12 @@ void outfit::sort_armor( Character &guy )
                                                        tmp_worn[leftListIndex]->color_in_inventory() ) ) ) {
                     item &swapped = *tmp_worn[leftListIndex];
                     const std::string swapped_name = swapped.tname();
-                    // change_side() itself only says the side
-                    // was swapped, never which side it is on now; the
-                    // rigid / one-per-layer failures are silent too.
+
+
+
                     if( guy.change_side( swapped ) ) {
-                        // swap_side() toggles LEFT <-> RIGHT; from BOTH
-                        // it stays BOTH, so only name a definite side.
+
+
                         if( a11y::enabled() && swapped.get_side() != side::BOTH ) {
                             guy.add_msg_if_player( m_info,
                                                    swapped.get_side() == side::LEFT ?
@@ -1396,9 +1396,9 @@ void outfit::sort_armor( Character &guy )
                 } else {
                     tmp_worn[leftListIndex]->unset_flag( json_flag_HIDDEN );
                 }
-                // hiding / showing was completely silent; the
-                // "Hidden." line only appears when the item is focused
-                // again afterwards.
+
+
+
                 if( a11y::enabled() ) {
                     const item &toggled = *tmp_worn[leftListIndex];
                     guy.add_msg_if_player( m_info,
@@ -1419,9 +1419,9 @@ void outfit::sort_armor( Character &guy )
             }
             );
             guy.calc_encumbrance();
-            // sorting was silent; confirm it and name the new
-            // innermost item so the player hears the new order's start
-            // without re-browsing the whole list.
+
+
+
             if( a11y::enabled() ) {
                 if( worn.empty() ) {
                     guy.add_msg_if_player( m_info, _( "Armor sorted by layer." ) );
@@ -1432,24 +1432,24 @@ void outfit::sort_armor( Character &guy )
             }
         } else if( action == "EQUIP_ARMOR" ) {
             mid_pane.offset = 0;
-            // filter inventory for all items that are armor/clothing
+
             item_location loc = game_menus::inv::wear( guy );
-            // only equip if something valid selected!
+
             if( loc ) {
-                // store the item name just in case obtain() fails
+
                 const std::string item_name = loc->display_name();
                 item_location obtained = loc.obtain( guy );
                 if( obtained ) {
-                    // wear the item
+
                     std::optional<std::list<item>::iterator> new_equip_it =
                         guy.wear( obtained );
                     if( new_equip_it ) {
                         const bodypart_id &bp = armor_cat[tabindex];
                         if( tabindex == num_of_parts || ( **new_equip_it ).covers( bp ) ) {
-                            // Set ourselves up to be pointing at the new item
-                            // TODO: This doesn't work yet because we don't save our
-                            // state through other activities, but that's a thing
-                            // that would be nice to do.
+
+
+
+
                             leftListIndex =
                                 std::count_if( worn.begin(), *new_equip_it,
                             [&]( const item & i ) {
@@ -1457,7 +1457,7 @@ void outfit::sort_armor( Character &guy )
                             } );
                         }
                     } else if( guy.is_npc() ) {
-                        // TODO: Pass the reason here
+
                         popup( _( "Can't put this on!" ) );
                     }
                 } else {
@@ -1466,30 +1466,30 @@ void outfit::sort_armor( Character &guy )
             }
         } else if( action == "EQUIP_ARMOR_HERE" ) {
             mid_pane.offset = 0;
-            // filter inventory for all items that are armor/clothing
+
             item_location loc = game_menus::inv::wear( guy, armor_cat[tabindex] );
-            // only equip if something valid selected!
+
             if( loc ) {
-                // store the item name just in case obtain() fails
+
                 const std::string item_name = loc->display_name();
                 item_location obtained = loc.obtain( guy );
                 if( obtained ) {
-                    // wear the item
+
                     std::optional<std::list<item>::iterator> new_equip_it =
                         guy.wear( obtained );
                     if( new_equip_it && !tmp_worn.empty() ) {
-                        // save iterator to cursor's position
+
                         std::list<item>::iterator cursor_it = tmp_worn[leftListIndex];
                         item &item_to_check = *cursor_it;
                         if( item_to_check.has_flag( flag_INTEGRATED ) ) {
-                            // prevent adding under integrated armor
+
                             popup( _( "Can't put this on under your integrated armor!" ) );
                         } else {
-                            // reorder `worn` vector to place new item at cursor
+
                             worn.splice( cursor_it, worn, *new_equip_it );
                         }
                     } else if( guy.is_npc() && !tmp_worn.empty() ) {
-                        // TODO: Pass the reason here
+
                         popup( _( "Can't put this on!" ) );
                     }
                 } else {
@@ -1498,16 +1498,16 @@ void outfit::sort_armor( Character &guy )
             }
         } else if( action == "REMOVE_ARMOR" ) {
             mid_pane.offset = 0;
-            // query (for now)
+
             if( leftListIndex < leftListSize ) {
                 if( player_character.query_yn( _( "Remove selected armor?" ) ) ) {
                     do_return_entry();
 
-                    //create an item_location for player::takeoff to handle.
+
                     item &item_for_takeoff = *tmp_worn[leftListIndex];
                     item_location loc_for_takeoff = item_location( guy, &item_for_takeoff );
 
-                    // remove the item, asking to drop it if necessary
+
                     guy.takeoff( loc_for_takeoff );
                     return;
                 }
@@ -1516,8 +1516,8 @@ void outfit::sort_armor( Character &guy )
             if( leftListIndex < leftListSize ) {
                 item &item_to_toggle = *tmp_worn[leftListIndex];
                 item_to_toggle.set_favorite( !item_to_toggle.is_favorite );
-                // the favorite toggle was silent. Same msgids
-                // as the advanced-inventory toggle.
+
+
                 if( a11y::enabled() ) {
                     guy.add_msg_if_player( m_info,
                                            item_to_toggle.is_favorite ? _( "%s is now a favorite." ) :
@@ -1526,9 +1526,9 @@ void outfit::sort_armor( Character &guy )
                 }
             }
         } else if( action == "ASSIGN_INVLETS" ) {
-            // prompt first before doing this (yes, yes, more popups...)
+
             if( query_yn( _( "Reassign inventory letters for armor?" ) ) ) {
-                // Start with last armor (the most unimportant one?)
+
                 auto iiter = inv_chars.rbegin();
                 auto witer = worn.rbegin();
                 while( witer != worn.rend() && iiter != inv_chars.rend() ) {

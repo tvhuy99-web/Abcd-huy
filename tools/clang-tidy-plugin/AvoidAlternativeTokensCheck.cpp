@@ -58,18 +58,18 @@ static void CheckOperator( AvoidAlternativeTokensCheck &Check,
     }
 
     if( operatorString.empty() ) {
-        // This happens when the operator is inside a macro expansion
+
         return;
     }
 
     if( Replacement == "!=" && operatorString != "not_eq" ) {
-        // This happens in the compiler-generated code inside a forach loop and
-        // in some other generated code
+
+
         return;
     }
 
     if( Replacement == "!" && operatorString != "not" ) {
-        // This happens in some compiler-generated code
+
         return;
     }
 
@@ -83,4 +83,4 @@ void AvoidAlternativeTokensCheck::check( const MatchFinder::MatchResult &Result 
     CheckOperator( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

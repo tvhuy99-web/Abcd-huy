@@ -76,7 +76,7 @@ dest_t _get_shuffled_point_set( std::unordered_set<tripoint_abs_ms> const &set )
     return ret;
 }
 
-// returns true if item wasn't placed
+
 bool _to_map( item const &it, map &here, tripoint_bub_ms const &dpoint_here )
 {
     if( here.can_put_items_ter_furn( dpoint_here ) &&
@@ -98,7 +98,7 @@ bool _to_veh( item const &it, std::optional<vpart_reference> const &vp )
     return true;
 }
 
-} // namespace
+}
 
 void add_fallback_zone( npc &guy )
 {

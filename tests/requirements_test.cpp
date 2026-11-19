@@ -131,10 +131,10 @@ TEST_CASE( "triple_overlap_3", "[requirement]" )
         { { itype_rock, 1 }, { itype_yarn, 1 } },
         { { itype_soap, 1 }, { itype_yarn, 1 } }
     }, {
-        // These results are not ideal.  Two of them are equivalent and
-        // another two could be merged.  But they are correct, and that
-        // seems good enough for now.  I don't anticipate any real recipes
-        // being as complicated to resolve as this one.
+
+
+
+
         { { { itype_soap, 1 } }, { { itype_rock, 1 } }, { { itype_yarn, 1 } } },
         { { { itype_soap, 1 } }, { { itype_yarn, 2 } } },
         { { { itype_rock, 1 }, { itype_yarn, 1 } }, { { itype_soap, 2 } } },
@@ -292,9 +292,9 @@ TEST_CASE( "requirement_checks_follow_their_actor_mode", "[requirement]" )
         standard_npc guy( "ModeTester" );
 
         THEN( "the actor decides which tier is reachable" ) {
-            // The hammerspace avatar satisfies the first tier; the bare NPC falls
-            // through to the fastest-tier fallback, so the pairs differ.  Depends on
-            // the "default" ladder carrying more than one speed tier.
+
+
+
             const std::pair<float, requirement_id> for_avatar =
                 butchery_requirements_default.obj().get_fastest_requirements(
                     &u, empty_inv, creature_size::medium, butcher_type::FULL );

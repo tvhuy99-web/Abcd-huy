@@ -67,7 +67,7 @@ struct sound_effect_resource {
     };
     std::unique_ptr<sound_backend::sfx_audio, deleter> chunk;
 };
-} // namespace
+}
 
 static int add_sfx_path( const std::string &path );
 
@@ -81,20 +81,20 @@ struct sound_effect {
     sound_effect( int volume, const std::string &path )
         : volume( volume ), resource_id( add_sfx_path( path ) ) {}
 };
-} // namespace
+}
 
-// Sound effects are primarily keyed by id
-// They support a variety of optional 'variations', such as:
-// - arbitrary variant string
-// - season
-// - indoors/outdoors
-// - nighttime/daytime
-// Each of the variations is optional if unspecified. Certain lookup
-// functions attempt to find a best matching sound effect and fall back
-// to default values if a variant is not found. This can be modelled as
-// a multi level lookup, in effect.
-// Variants always fall back to their default value, never an opposing value.
-// So if a nighttime sfx is requested, a daytime sfx cannot fulfill it.
+
+
+
+
+
+
+
+
+
+
+
+
 namespace
 {
 
@@ -134,7 +134,7 @@ enum class sfx_in_or_out : uint8_t {
     COUNT,
 };
 
-// This is encoded as an optional bool in json, so we cheat a little and accept -1 for 'not set'
+
 sfx_in_or_out in_or_out_from_int( int value )
 {
     int adjusted = value + 1;
@@ -152,7 +152,7 @@ enum class sfx_time_of_day : uint8_t {
     COUNT,
 };
 
-// This is encoded as an optional bool in json, so we cheat a little and accept -1 for 'not set'
+
 sfx_time_of_day tod_from_int( int value )
 {
     int adjusted = value + 1;
@@ -163,7 +163,7 @@ sfx_time_of_day tod_from_int( int value )
     return static_cast<sfx_time_of_day>( adjusted );
 }
 
-// Fun but ugly template time.
+
 template<typename Map, typename Key>
 const std::vector<sound_effect> *find_sfx( const Map &c, Key &&k )
 {
@@ -234,7 +234,7 @@ int bool_or( const std::optional<bool> &opt, int defl )
     return opt.has_value() ? opt.value() : defl;
 }
 
-} // namespace
+}
 
 namespace
 {
@@ -286,7 +286,7 @@ struct sfx_resources_t {
 };
 
 struct music_playlist {
-    // list of filenames relative to the soundpack location
+
     struct entry {
         std::string file;
         int volume;
@@ -297,8 +297,8 @@ struct music_playlist {
     music_playlist() : shuffle( false ) {
     }
 };
-} // namespace
-/** The music we're currently playing. */
+}
+
 static sound_backend::music_source *current_music = nullptr;
 static int current_music_track_volume = 0;
 static std::string current_playlist;
@@ -322,11 +322,11 @@ static bool check_sound( const int volume = 1 )
 
 static bool is_time_slowed();
 
-static const int audio_rate = 44100; // samples per second
+static const int audio_rate = 44100;
 
-/**
- * Attempt to initialize an audio device.  Returns false if initialization fails.
- */
+
+
+
 bool init_sound()
 {
     if( sound_init_success ) {
@@ -396,7 +396,7 @@ static void play_music_file( const std::string &filename, int volume )
     sound_backend::set_music_finished_cb( musicFinished );
 }
 
-/** Callback called when we finish playing music. */
+
 void musicFinished()
 {
     if( test_mode ) {
@@ -423,10 +423,10 @@ void musicFinished()
         return;
     }
 
-    // Load the next file to play.
+
     absolute_playlist_at++;
 
-    // Wrap around if we reached the end of the playlist.
+
     if( absolute_playlist_at >= list.entries.size() ) {
         absolute_playlist_at = 0;
     }
@@ -439,7 +439,7 @@ void musicFinished()
 
 void play_music( std::string_view playlist )
 {
-    // Don't interrupt playlist that's already playing.
+
     if( playlist == current_playlist ) {
         return;
     } else {
@@ -459,8 +459,8 @@ void play_music( std::string_view playlist )
         playlist_indexes.push_back( i );
     }
     if( list.shuffle ) {
-        // Son't need to worry about the determinism check here because it only
-        // affects audio, not game logic.
+
+
         // NOLINTNEXTLINE(cata-determinism)
         static cata_default_random_engine eng = cata_default_random_engine(
                 std::chrono::steady_clock::now().time_since_epoch().count() );
@@ -512,9 +512,9 @@ void update_music_volume()
     }
 }
 
-// Resolve the cached SFX handle for a resource id, loading on first use.
-// Backend::load_sfx returns a silent-fallback handle on failure, so the
-// return is always non-null once the slot is initialized.
+
+
+
 static sound_backend::sfx_audio *get_sfx_resource( int resource_id )
 {
     sound_effect_resource &resource = sfx_resources.resource[ resource_id ];
@@ -548,7 +548,7 @@ void sfx::load_sound_effects( const JsonObject &jsobj )
     }
     sfx_args key = {
         jsobj.get_string( "id" ),
-        "", // actual variant string is filled in the variant loop
+        "",
         jsobj.get_string( "season", "" ),
         std::nullopt,
         std::nullopt,
@@ -586,7 +586,7 @@ void sfx::load_sound_effect_preload( const JsonObject &jsobj )
     for( JsonObject aobj : jsobj.get_array( "preload" ) ) {
         sfx_args preload_key = {
             aobj.get_string( "id" ),
-            "", // actual variant string is filled in the variant loop
+            "",
             aobj.get_string( "season", "" ),
             std::nullopt,
             std::nullopt,
@@ -634,8 +634,8 @@ void sfx::load_playlist( const JsonObject &jsobj )
     }
 }
 
-// Returns a random sound effect matching given id and variant, but with fallback to "default" variants.
-// May still return `nullptr`
+
+
 static const sound_effect *find_random_effect( const std::string &id, const std::string &variant,
         const std::string &season, const std::optional<bool> &is_indoors,
         const std::optional<bool> &is_night )
@@ -658,8 +658,8 @@ bool sfx::has_variant_sound( std::string_view id, std::string_view variant,
                                is_indoors, is_night ) != nullptr;
 }
 
-// Returns a sound effect matching given id and variant.
-// Unlike has_variant_sound(), this doesn't fallback to "default" variants.
+
+
 bool sfx::has_exact_variant_sound( std::string_view id, std::string_view variant,
                                    std::string_view season, const std::optional<bool> &is_indoors,
                                    const std::optional<bool> &is_night )
@@ -678,9 +678,9 @@ static bool is_time_slowed()
     if( g == nullptr || g->uquit != QUIT_NO ) {
         return false;
     }
-    // if the player have significantly more moves than their speed, they probably used an artifact/CBM to slow time.
-    // I checked; the only things that increase a player's # of moves is spells/cbms that slow down time (and also unit tests) so this should work.
-    // Would get_speed_base() be better?
+
+
+
     return std::max( get_avatar().get_speed(), 100 ) * 2 < get_avatar().get_moves();
 }
 
@@ -774,10 +774,10 @@ void sfx::play_ambient_variant_sound( std::string_view id, std::string_view vari
     sound_backend::sfx_audio *effect_to_play = get_sfx_resource( selected_sound_effect.resource_id );
     const bool is_pitched = pitch > 0;
 
-    // Ambient sounds use a two-stage volume scale: the AMBIENT_SOUND_VOLUME
-    // pre-multiply followed by the standard effect-level multiply.
-    // Composed formula:
-    //   effect.volume^2 * AMBIENT_SOUND_VOLUME * SOUND_EFFECT_VOLUME * volume / 1e8
+
+
+
+
     volume = selected_sound_effect.volume * get_option<int>( "AMBIENT_SOUND_VOLUME" ) * volume /
              ( 100 * 100 );
 
@@ -797,7 +797,7 @@ void load_soundset()
     std::string current_soundpack = get_option<std::string>( "SOUNDPACKS" );
     cata_path soundpack_path;
 
-    // Get current soundpack and its directory path.
+
     if( current_soundpack.empty() ) {
         dbg( D_ERROR ) << "Soundpack not set in options or empty.";
         soundpack_path = default_path;
@@ -822,7 +822,7 @@ void load_soundset()
         debugmsg( "failed to load sounds: %s", err.what() );
     }
 
-    // Preload sound effects
+
     for( const sfx_args &preload : sfx_preload ) {
         const std::vector<sound_effect> *find_result = sfx_resources.sound_effects.find( preload );
         if( find_result != sfx_resources.sound_effects.end() ) {
@@ -832,15 +832,15 @@ void load_soundset()
         }
     }
 
-    // Memory of unique_paths no longer required, swap with locally scoped unordered_map
-    // to force deallocation of resources.
+
+
     {
         unique_paths.clear();
         std::unordered_map<std::string, int> t_swap;
         unique_paths.swap( t_swap );
     }
-    // Memory of sfx_preload no longer required, swap with locally scoped vector
-    // to force deallocation of resources.
+
+
     {
         sfx_preload.clear();
         std::vector<sfx_args> t_swap;
@@ -848,7 +848,7 @@ void load_soundset()
     }
 }
 
-// capitalized to mirror cata_tiles::InitSDL()
+
 void initSDLAudioOnly()
 {
     const int ret = SDL_Init( SDL_INIT_AUDIO );
@@ -858,4 +858,4 @@ void initSDLAudioOnly()
     }
 }
 
-#endif // SDL_SOUND
+#endif

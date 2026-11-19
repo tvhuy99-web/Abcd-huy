@@ -45,13 +45,13 @@ int &scope_depth()
     return depth;
 }
 
-// Changes when the outermost scope opens and closes, so caches never outlive their scope.
+
 uint64_t &current_epoch()
 {
     static uint64_t epoch = 0;
     return epoch;
 }
-} // namespace
+}
 
 temp_crafting_inventory::query_cache_scope::query_cache_scope()
 {
@@ -241,7 +241,7 @@ void temp_crafting_inventory::add_all_ref( const read_only_visitable &v )
 
 void temp_crafting_inventory::add_all_ref( const Character &guy )
 {
-    // we are getting item_location here which requires non-const
+
     Character &non_const_guy = const_cast<Character &>( guy );
     if( guy.is_armed() ) {
         add_item_loc( non_const_guy.get_wielded_item() );
@@ -325,14 +325,14 @@ void temp_crafting_inventory::form_from_map( map *here, const tripoint_bub_ms &o
         const Character *pl,
         bool clear_path )
 {
-    // Populate a grid of spots that can be reached
-    // If we need a clear path we care about the reachability of points
+
+
     if( clear_path ) {
         const std::vector<tripoint_bub_ms> &reachable_pts = here->reachable_flood_steps( origin, range );
         form_from_map( *here, reachable_pts, pl );
     } else {
         std::vector<tripoint_bub_ms> reachable_pts;
-        // Fill reachable points with points_in_radius
+
         tripoint_range<tripoint_bub_ms> in_radius = here->points_in_radius( origin, range );
         for( const tripoint_bub_ms &p : in_radius ) {
             reachable_pts.emplace_back( p );
@@ -357,16 +357,16 @@ void temp_crafting_inventory::form_from_map( map &m, std::vector<tripoint_bub_ms
 
     std::set<vehicle *> vehicles_found;
     for( const tripoint_bub_ms &p : pts ) {
-        // only this tile's pseudo tools, not its items, fire or cargo. not the union
-        // with craft sites, or a craft would hide the bench it stands on
+
+
         const bool pseudo_tools_reserved =
             get_craft_reservations().provider_tile_reserved( m.get_abs( p ) );
         const ter_id &t = m.ter( p );
-        // a temporary hack while trees are terrain
+
         if( !pseudo_tools_reserved && t->has_flag( ter_furn_flag::TFLAG_TREE ) ) {
             add_pseudo_item( itype_butchery_tree_pseudo );
         }
-        // Another terrible hack, as terrain can't provide pseudo items, and construction can't do multi-step furniture
+
         ter_id brick_oven( "t_brick_oven" );
         if( !pseudo_tools_reserved && t == brick_oven ) {
             add_pseudo_item( itype_brick_oven_pseudo );
@@ -378,17 +378,17 @@ void temp_crafting_inventory::form_from_map( map &m, std::vector<tripoint_bub_ms
             if(
                 pseudo_id->has_flag( flag_NEEDS_SUNLIGHT ) &&
                 !tile_has_sufficient_sunlight( m, p ) ) {
-                // Not enough sunlight for this tool
+
             } else {
                 item &furn_item = add_pseudo_item( fo.crafting_pseudo_item );
                 for( const itype *ammo : fo.crafting_ammo_item_types() ) {
                     if( furn_item.has_pocket_type( pocket_type::MAGAZINE ) ) {
-                        // NOTE: This only works if the pseudo item has a MAGAZINE pocket, not a MAGAZINE_WELL!
+
                         const bool using_ammotype = fo.has_flag( ter_furn_flag::TFLAG_AMMOTYPE_RELOAD );
                         int amount = 0;
                         itype_id ammo_id = ammo->get_id();
-                        // Some furniture can consume more than one item type.
-                        // This might be redundant now that we iterate over the ammotypes.
+
+
                         if( using_ammotype ) {
                             amount = count_charges_in_list( &ammo->ammo->type, m.i_at( p ), ammo_id );
                         } else {
@@ -405,13 +405,13 @@ void temp_crafting_inventory::form_from_map( map &m, std::vector<tripoint_bub_ms
         if( m.accessible_items( p ) ) {
             map_stack items_here = m.i_at( p );
             for( item &i : items_here ) {
-                // if it's *the* player requesting this from from map inventory
-                // then don't allow items owned by another faction to be factored into recipe components etc.
+
+
                 if( pl && !i.is_owned_by( *pl, true ) ) {
                     continue;
                 }
-                // crafting query walks the whole tree under each entry, so a container holding
-                // a reserved provider is hidden with it. before the liquid count too
+
+
                 if( craft_reservation::contains_reserved( i ) ) {
                     continue;
                 }
@@ -424,18 +424,18 @@ void temp_crafting_inventory::form_from_map( map &m, std::vector<tripoint_bub_ms
                 }
             }
         }
-        // Kludges for now!
+
         if( m.has_nearby_fire( p, 0 ) ) {
             item &fire = add_pseudo_item( itype_fire );
             fire.charges = 1;
         }
-        // Handle any water from map sources.
+
         item water = m.liquid_from( p );
         if( !water.is_null() ) {
             add_pseudo_item( water );
         }
 
-        // keg-kludge
+
         if( f->has_examine( iexamine::keg ) ) {
             map_stack liq_contained = m.i_at( p );
             for( item &i : liq_contained ) {
@@ -445,7 +445,7 @@ void temp_crafting_inventory::form_from_map( map &m, std::vector<tripoint_bub_ms
             }
         }
 
-        // form from vehicle
+
         if( optional_vpart_position vp = m.veh_at( p ) ) {
             vp->form_inventory( m, *this, vehicles_found );
         }

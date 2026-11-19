@@ -26,7 +26,7 @@ template<typename T> struct weighted_int_list;
 namespace
 {
 generic_factory<ter_furn_transform> ter_furn_transform_factory( "ter_furn_transform" );
-} // namespace
+}
 
 template<>
 const ter_furn_transform &string_id<ter_furn_transform>::obj() const

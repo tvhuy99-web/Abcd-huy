@@ -4,21 +4,21 @@
 
 #include "filesystem.h"
 
-/**
- * Wrapper around std::ofstream that handles error checking and throws on errors.
- *
- * Use like a normal ofstream: the stream is opened in the constructor and
- * closed via @ref close. Both functions check for success and throw std::exception
- * upon any error (e.g. when opening failed or when the stream is in an error state when
- * being closed).
- * Use @ref stream (or the implicit conversion) to access the output stream and to write
- * to it.
- *
- * @note: The stream is closed in the destructor, but no exception is throw from it. To
- * ensure all errors get reported correctly, you should always call `close` explicitly.
- *
- * @note: This uses exclusive I/O.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class ofstream_wrapper
 {
     private:
@@ -42,4 +42,4 @@ class ofstream_wrapper
         void close();
 };
 
-#endif // CATA_SRC_OFSTREAM_WRAPPER_H
+#endif

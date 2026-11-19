@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-# Posts review comments with suggestion blocks for each diff hunk.
-#
-# Requires environment variables (set by the workflow):
-#   GITHUB_REPOSITORY  - e.g. "CleverRaven/Cataclysm-DDA"
-#   GH_TOKEN           - GitHub token for API access
 
 import base64
 import json
@@ -51,7 +46,7 @@ def main():
 
     pr_number = read_one_line("pr_number.txt")
     commit_sha = read_one_line("commit_sha.txt")
-    comment = read_file("comment.txt")  # Keep as bytes for base64 encode later
+    comment = read_file("comment.txt")
 
     if not all([token, repo_name, pr_number, commit_sha, comment]):
         print("Missing required inputs -- skipping comment posting.",
@@ -121,11 +116,9 @@ def parse_hunks(diff: list[str], i: int) -> tuple[list[list[dict]], int]:
     hunks = []
     end = len(diff)
     while i < end and (header := diff[i]).startswith("@@ -"):
-        # The offset is the first integer in the line, after the "@@ -" part,
-        # before a comma if there is a comma, but split by something that's
-        # not there just returns the original string.
+
         offset = int(header[4:].split(' ', 1)[0].split(',')[0])
-        assert offset > 0  # it's always 1 indexed
+        assert offset > 0
 
         hunk, i = parse_hunk(diff, i + 1, offset)
         hunks.append(hunk)
@@ -133,9 +126,6 @@ def parse_hunks(diff: list[str], i: int) -> tuple[list[list[dict]], int]:
     return hunks, i
 
 
-# Returns a list of 'chunks' which indicate a series of lines which are either
-# context, deletions, or additions. Context and deletions include the 1 indexed
-# offset they start at.
 def parse_hunk(diff: list[str], i: int, offset: int):
     chunks = []
     end = len(diff)
@@ -161,11 +151,6 @@ def parse_hunk(diff: list[str], i: int, offset: int):
 
 
 def hunk_to_suggestions(hunks: list[dict[str, any]]):
-    # We want to trim away excess context. Ideally the diff is generated with
-    # -U1, but just in case, we split large context pieces into smaller ones.
-    # "Large" meaning anything > 3 lines is split into two single line
-    # contexts, for the first and last lines in the hunk. That also inserts
-    # a hunk boundary.
 
     trimmed_hunks = []
     trimmed_hunk = []
@@ -193,19 +178,6 @@ def hunk_to_suggestions(hunks: list[dict[str, any]]):
     if trimmed_hunk:
         trimmed_hunks.append(trimmed_hunk)
 
-    # Now coalesce hunks into suggestions. Each hunk in trimmed hunks should
-    # have:
-    # optional leading context
-    # additions and/or deletions
-    #   optional internal context (1-2 lines each)
-    #   more additions and/or deletions
-    # optional trailing context
-    # - If there is internal context or deletions, we drop the leading and
-    #   trailing context
-    # - otherwise we use the leading context as the suggestions anchor
-    # - or the trailing context if there is no leading context
-    # We assume we aren't dealing with an empty file that only has an addition.
-
     suggestions = []
 
     for hunk in trimmed_hunks:
@@ -217,7 +189,7 @@ def hunk_to_suggestions(hunks: list[dict[str, any]]):
             leading_context = hunk[0]
             hunk = hunk[1:]
         if len(hunk) == 0:
-            # Bare suggestion hunk, maybe vestigial split context.
+
             continue
         if hunk[-1]["type"] == ' ':
             trailing_context = hunk[-1]
@@ -241,9 +213,9 @@ def hunk_to_suggestions(hunks: list[dict[str, any]]):
                 lines += chunk["lines"]
 
         if lines and not start:
-            # Purely added lines between context
+
             if not leading_context and not trailing_context:
-                # Not dealing with a pure addition to an empty file.
+
                 continue
             if leading_context:
                 lines = leading_context["lines"] + lines
@@ -255,10 +227,9 @@ def hunk_to_suggestions(hunks: list[dict[str, any]]):
                 to = start + trailing_context["length"]
 
         if not start or not to:
-            # Euhm, guess we had no suggestion?
+
             continue
 
-        # `to` is exclusive
         to -= 1
 
         suggestions.append({
@@ -275,14 +246,12 @@ def post_suggestions(
         file_suggestions: dict[str, list[dict]],
         comment_marker: str,
         comment_text: str,
-        pr,  # PullRequest
-        commit,  # Commit
+        pr,
+        commit,
 ):
     from github import GithubException
     """Post review comments with suggestion blocks for each hunk."""
     print("::group::Posting suggestions")
-
-    # Delete stale comments from previous runs.
 
     for comment in pr.get_review_comments():
         if comment_marker in comment.body:

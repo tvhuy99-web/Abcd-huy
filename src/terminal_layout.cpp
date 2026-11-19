@@ -127,4 +127,4 @@ point present_size( const point &buffer, const point &bounds, const int scale )
                   bounds.y );
 }
 
-} // namespace terminal_layout
+}

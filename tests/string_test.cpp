@@ -66,11 +66,11 @@ TEST_CASE( "trim_by_length", "[string_trimming]" )
     CHECK( trim_by_length( "MRE 主菜（鸡肉意大利香蒜沙司通心粉）（新鲜）",
                            36 ) == "MRE 主菜（鸡肉意大利香蒜沙司通心粉…" );
 
-    // Check handling of empty strings
+
     CHECK( trim_by_length( "", 5 ).empty() );
 
-    // Check handling of invalid widths ( <= 0).
-    // A debugmsg should be output to tell the player (and programmer) that something has gone wrong
+
+
     CHECK( capture_debugmsg_during( [&]() {
         trim_by_length( "", 0 );
     } ) == "Unable to trim string '' to width 0.  Returning empty string." );
@@ -81,18 +81,18 @@ TEST_CASE( "trim_by_length", "[string_trimming]" )
         trim_by_length( "test string", -2 );
     } ) == "Unable to trim string 'test string' to width -2.  Returning empty string." );
 
-    // Check trimming at color tag breaks
-    /* Note: Due to trim_by_length() doing things one color tag segment at a time, color tags
-     * will only appear on the ellipsis if at least one character from the tagged segment is
-     * printed. In the keybinding case below, this makes perfect sense, since we don't want
-     * to say that the ellipsis is the keybinding.  In other cases, this behaviour is debatable */
+
+
+
+
+
     const std::string keybinding_hint = "Press [<color_yellow>?</color>] to change keybindings.";
     CHECK( trim_by_length( keybinding_hint, 6 ) == "Press…" );
     CHECK( trim_by_length( keybinding_hint, 7 ) == "Press …" );
     CHECK( trim_by_length( keybinding_hint, 8 ) == "Press […" );
     CHECK( trim_by_length( keybinding_hint, 9 ) == "Press [<color_yellow>?</color>…" );
 
-    // Test a very long string with multiple sets of color tags
+
     const std::string jelly_string =
         "Gather <color_light_blue>80 cattail stalks</color> from the swamp and bring "
         "them back to <color_light_red>learn how to craft cattail jelly</color>.  ";
@@ -101,7 +101,7 @@ TEST_CASE( "trim_by_length", "[string_trimming]" )
                            63 ) == "Gather <color_light_blue>80 cattail stalks</color> from the swamp and bring them back to…" );
     CHECK( trim_by_length( jelly_string, 98 ) == jelly_string );
 
-    // Check trimming at color tag breaks with wide characters
+
     const std::string tagged_MRE_name =
         "MRE <color_green>主菜</color>（鸡肉意大利香蒜沙司通心粉）（新鲜）";
     CHECK( trim_by_length( tagged_MRE_name, 5 ) == "MRE …" );
@@ -110,13 +110,13 @@ TEST_CASE( "trim_by_length", "[string_trimming]" )
     CHECK( trim_by_length( tagged_MRE_name, 8 ) == "MRE <color_green>主…</color>" );
     CHECK( trim_by_length( tagged_MRE_name, 9 ) == "MRE <color_green>主菜</color>…" );
 
-    // Check trimming of wide-character strings that are fully color-tagged
+
     CHECK( trim_by_length( "<color_white_green>休閒區</color>",
                            1 ) == "<color_white_green>…</color>" );
     CHECK( trim_by_length( "<color_white_green>休閒區</color>",
                            3 ) == "<color_white_green>休…</color>" );
 
-    // Check handling of cyrillic text
+
     const std::string cyrillic_text =
         "У меню <color_light_cyan>Збирання</color> натисніть:";
     CHECK( trim_by_length( cyrillic_text, 2 ) == "У…" );

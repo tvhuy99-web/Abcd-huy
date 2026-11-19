@@ -25,7 +25,7 @@ std::optional<glyph_shelf_packer::placement> glyph_shelf_packer::plan( const int
     p.next = cursor_;
     const int new_page = static_cast<int>( pages_.size() );
     if( width > page_size_ ) {
-        // own page; the regular shelf continues where it was
+
         p.at = slot{ new_page, point::zero };
         p.page_w = next_power_of_two( width );
         p.page_h = next_power_of_two( cell_height_ );

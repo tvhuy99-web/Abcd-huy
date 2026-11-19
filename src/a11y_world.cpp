@@ -99,10 +99,10 @@ struct monitored_status {
     int sleepiness = 0;
     int pain = 0;
     int stamina = 0;
-    // R10.4: dimensions the game never writes to the message log, so the
-    // status monitor is their only spoken channel. Temperature is tracked
-    // on both sides of comfortable because the sidebar word is two-sided;
-    // morale uses the same total the morale screen prints as a number.
+
+
+
+
     int temp_cold = 0;
     int temp_heat = 0;
     int morale_risk = 0;
@@ -120,13 +120,13 @@ struct monitored_status {
 
 std::optional<monitored_status> previous_status;
 
-// R10.4 alert bookkeeping for this session only. The cooldown stops a
-// scalar level that flaps around a threshold from being re-announced on
-// every crossing; a strictly worse level, or reaching the key's urgent
-// level, always bypasses it. The history is what the world snapshot
-// publishes as "Recent status alerts"; both are cleared by
-// reset_status_monitor(), which replace_game_session() and the lifecycle
-// synchronisation already call on load / character change (R08 epoch).
+
+
+
+
+
+
+
 struct status_alert_record {
     std::string key;
     std::string text;
@@ -163,27 +163,49 @@ void record_status_alert( const std::string &key, const int level, const std::st
 
 int hunger_severity( const std::string &text )
 {
-    if( text == _( "Hungry" ) ) { return 1; }
-    if( text == _( "Near starving" ) ) { return 2; }
-    if( text == _( "Starving!" ) ) { return 3; }
-    if( text == _( "Famished" ) ) { return 4; }
+    if( text == _( "Hungry" ) ) {
+        return 1;
+    }
+    if( text == _( "Near starving" ) ) {
+        return 2;
+    }
+    if( text == _( "Starving!" ) ) {
+        return 3;
+    }
+    if( text == _( "Famished" ) ) {
+        return 4;
+    }
     return 0;
 }
 
 int thirst_severity( const int thirst )
 {
-    if( thirst > 520 ) { return 4; }
-    if( thirst > 240 ) { return 3; }
-    if( thirst > 80 ) { return 2; }
-    if( thirst > 40 ) { return 1; }
+    if( thirst > 520 ) {
+        return 4;
+    }
+    if( thirst > 240 ) {
+        return 3;
+    }
+    if( thirst > 80 ) {
+        return 2;
+    }
+    if( thirst > 40 ) {
+        return 1;
+    }
     return 0;
 }
 
 int sleepiness_severity( const int sleepiness )
 {
-    if( sleepiness >= static_cast<int>( sleepiness_levels::EXHAUSTED ) ) { return 3; }
-    if( sleepiness >= static_cast<int>( sleepiness_levels::DEAD_TIRED ) ) { return 2; }
-    if( sleepiness >= static_cast<int>( sleepiness_levels::TIRED ) ) { return 1; }
+    if( sleepiness >= static_cast<int>( sleepiness_levels::EXHAUSTED ) ) {
+        return 3;
+    }
+    if( sleepiness >= static_cast<int>( sleepiness_levels::DEAD_TIRED ) ) {
+        return 2;
+    }
+    if( sleepiness >= static_cast<int>( sleepiness_levels::TIRED ) ) {
+        return 1;
+    }
     return 0;
 }
 
@@ -198,12 +220,24 @@ monitored_status current_status()
     result.sleepiness_text = display::sleepiness_text_color( viewer ).first;
     result.sleepiness = sleepiness_severity( viewer.get_sleepiness() );
     result.temp_text = display::temp_text_color( viewer ).first;
-    if( result.temp_text == _( "Freezing!" ) ) { result.temp_cold = 3; }
-    if( result.temp_text == _( "Very cold!" ) ) { result.temp_cold = 2; }
-    if( result.temp_text == _( "Chilly" ) ) { result.temp_cold = 1; }
-    if( result.temp_text == _( "Scorching!" ) ) { result.temp_heat = 3; }
-    if( result.temp_text == _( "Very hot!" ) ) { result.temp_heat = 2; }
-    if( result.temp_text == _( "Warm" ) ) { result.temp_heat = 1; }
+    if( result.temp_text == _( "Freezing!" ) ) {
+        result.temp_cold = 3;
+    }
+    if( result.temp_text == _( "Very cold!" ) ) {
+        result.temp_cold = 2;
+    }
+    if( result.temp_text == _( "Chilly" ) ) {
+        result.temp_cold = 1;
+    }
+    if( result.temp_text == _( "Scorching!" ) ) {
+        result.temp_heat = 3;
+    }
+    if( result.temp_text == _( "Very hot!" ) ) {
+        result.temp_heat = 2;
+    }
+    if( result.temp_text == _( "Warm" ) ) {
+        result.temp_heat = 1;
+    }
     const int morale = viewer.get_morale_level();
     result.morale_risk = morale <= -100 ? 3 : morale <= -50 ? 2 : morale < 0 ? 1 : 0;
     result.morale_text = string_format( _( "Morale %d" ), morale );
@@ -280,20 +314,24 @@ semantic_node button( std::string id, std::string label, const std::string_view 
 
 std::string relative_name( const point &delta )
 {
-    if( delta.x == 0 && delta.y == 0 ) { return _( "Current tile" ); }
+    if( delta.x == 0 && delta.y == 0 ) {
+        return _( "Current tile" );
+    }
     std::string result;
     if( delta.y != 0 ) {
         result += string_format( delta.y < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( delta.y ) );
     }
     if( delta.x != 0 ) {
-        if( !result.empty() ) { result += ", "; }
+        if( !result.empty() ) {
+            result += ", ";
+        }
         result += string_format( delta.x < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( delta.x ) );
     }
     return result;
 }
 
-// Position relative to the avatar: relative_name for the horizontal part,
-// plus the level difference when the tile is on another level.
+
+
 std::string relative_position_name( const tripoint &delta )
 {
     std::string result = relative_name( delta.xy() );
@@ -323,37 +361,77 @@ bool has_noteworthy_information( const tile_observation &tile )
 
 int noteworthy_priority( const tile_observation &tile )
 {
-    if( !tile.known_traps.empty() ) { return 0; }
-    if( !tile.seen_creatures.empty() ) { return 1; }
-    if( !tile.special_perceptions.empty() ) { return 2; }
-    if( !tile.fields.empty() ) { return 3; }
-    if( tile.impassable ) { return 4; }
-    if( tile.route_feature ) { return 5; }
-    if( !tile.heard_marker.empty() ) { return 6; }
-    if( !tile.vehicle.empty() ) { return 7; }
-    if( !tile.seen_items.empty() ) { return 8; }
-    if( !tile.furniture.empty() ) { return 9; }
+    if( !tile.known_traps.empty() ) {
+        return 0;
+    }
+    if( !tile.seen_creatures.empty() ) {
+        return 1;
+    }
+    if( !tile.special_perceptions.empty() ) {
+        return 2;
+    }
+    if( !tile.fields.empty() ) {
+        return 3;
+    }
+    if( tile.impassable ) {
+        return 4;
+    }
+    if( tile.route_feature ) {
+        return 5;
+    }
+    if( !tile.heard_marker.empty() ) {
+        return 6;
+    }
+    if( !tile.vehicle.empty() ) {
+        return 7;
+    }
+    if( !tile.seen_items.empty() ) {
+        return 8;
+    }
+    if( !tile.furniture.empty() ) {
+        return 9;
+    }
     return 10;
 }
 
 std::string noteworthy_category( const tile_observation &tile )
 {
-    if( !tile.known_traps.empty() ) { return _( "Known trap" ); }
-    if( !tile.seen_creatures.empty() ) { return _( "Visible creature" ); }
-    if( !tile.special_perceptions.empty() ) { return _( "Special perception" ); }
-    if( !tile.fields.empty() ) { return _( "Visible field" ); }
-    if( tile.impassable ) { return _( "Visible obstacle" ); }
-    if( tile.route_feature ) { return _( "Known route feature" ); }
-    if( !tile.heard_marker.empty() ) { return _( "Approximate sound marker" ); }
-    if( !tile.vehicle.empty() ) { return _( "Visible vehicle" ); }
-    if( !tile.seen_items.empty() ) { return _( "Visible items" ); }
-    if( !tile.furniture.empty() ) { return _( "Known furniture" ); }
+    if( !tile.known_traps.empty() ) {
+        return _( "Known trap" );
+    }
+    if( !tile.seen_creatures.empty() ) {
+        return _( "Visible creature" );
+    }
+    if( !tile.special_perceptions.empty() ) {
+        return _( "Special perception" );
+    }
+    if( !tile.fields.empty() ) {
+        return _( "Visible field" );
+    }
+    if( tile.impassable ) {
+        return _( "Visible obstacle" );
+    }
+    if( tile.route_feature ) {
+        return _( "Known route feature" );
+    }
+    if( !tile.heard_marker.empty() ) {
+        return _( "Approximate sound marker" );
+    }
+    if( !tile.vehicle.empty() ) {
+        return _( "Visible vehicle" );
+    }
+    if( !tile.seen_items.empty() ) {
+        return _( "Visible items" );
+    }
+    if( !tile.furniture.empty() ) {
+        return _( "Known furniture" );
+    }
     return _( "Noteworthy information" );
 }
 
-// Speak a short, useful event when entering an interesting tile. Ordinary
-// floor tiles stay silent. Use only the already observed information: never
-// reveal items hidden inside a closed container or invisible hazards.
+
+
+
 std::string short_tile_alert( const tile_observation &tile )
 {
     if( !tile.known_traps.empty() ) {
@@ -402,9 +480,9 @@ std::string player_status()
 {
     const avatar &viewer = get_avatar();
     std::string result = display::time_string( viewer );
-    // The native sidebar uses an empty label for neutral statuses. Spoken
-    // summaries must not say "Hunger: . Pain: ." or invent a severity;
-    // keep only readings the game actually supplies.
+
+
+
     const auto append_if_present = [&result]( const char *heading, const std::string_view reading ) {
         const std::string clean = remove_color_tags( reading );
         if( !clean.empty() ) {
@@ -415,13 +493,14 @@ std::string player_status()
     append_if_present( _( "Thirst: %s" ), display::thirst_text_color( viewer ).first );
     append_if_present( _( "Sleepiness: %s" ), display::sleepiness_text_color( viewer ).first );
     append_if_present( _( "Pain: %s" ), display::pain_text_color( viewer ).first );
-    const int stamina = viewer.get_stamina_max() > 0 ? 100 * viewer.get_stamina() / viewer.get_stamina_max() : 0;
+    const int stamina = viewer.get_stamina_max() > 0 ? 100 * viewer.get_stamina() /
+                        viewer.get_stamina_max() : 0;
     result += ". " + string_format( _( "Stamina: %d%%" ), stamina );
-    // R10.1: the remaining sidebar facts. Temperature and weariness are
-    // published by the game as words (their colors only repeat severity),
-    // morale as the same total the morale screen prints, and effect names
-    // are exactly the ones the character sheet's EFFECTS tab lists. No
-    // exact hit points or other unpublished numbers are added here.
+
+
+
+
+
     result += ". " + string_format( _( "Temperature: %s" ),
                                     display::temp_text_color( viewer ).first );
     result += ". " + string_format( _( "Morale: %d" ), viewer.get_morale_level() );
@@ -441,11 +520,11 @@ std::string player_status()
     }
     result += ". " + string_format( _( "Effects: %s" ),
                                     effect_names.empty() ? _( "none" ) : effect_names );
-    // R11.1: safe mode is a game-side state (the global game's safe_mode,
-    // the same value avatar_action::move checks before a melee attack);
-    // this file otherwise reaches the game only through get_avatar() /
-    // get_map(), so read it from g exactly as avatar_action.cpp does. An
-    // unrecognised value is omitted rather than guessed at.
+
+
+
+
+
     if( g ) {
         std::string safe_mode_name;
         switch( g->safe_mode ) {
@@ -475,15 +554,15 @@ std::string player_status()
                               && driven_vehicle->player_in_control( get_map(), viewer );
     if( driven_vehicle && ( remote_driver || local_driver ) ) {
         vehicle *veh = driven_vehicle;
-        // R15.4: one published source for the driving state, extending
-        // the azimuth/cruise text the sidebar itself prints. The mode
-        // distinguishes sitting at the controls from remote control
-        // (vehicle_driven returns the remotely controlled vehicle
-        // first); fuel and battery are the sidebar's own percentages;
-        // engine strain is the verbal equivalent of the color the
-        // cruise text is drawn in, from the same strain value and the
-        // same bands display.cpp uses (none up to 0, then low, moderate
-        // and high at 0.2 / 0.4).
+
+
+
+
+
+
+
+
+
         result += ". " + string_format( _( "Vehicle: %s" ), veh->name );
         result += ". " + std::string( remote_driver ? _( "Remote control" ) :
                                       _( "Driving" ) );
@@ -512,13 +591,13 @@ std::string player_status()
             const bool at_controls = static_cast<bool>(
                                          vp->part_with_feature( "CONTROLS", true ) );
             result += " " + std::string( at_controls ?
-                                        _( "At the driver's controls. Not yet driving." ) :
-                                        _( "Not at the driver's controls." ) );
+                                         _( "At the driver's controls. Not yet driving." ) :
+                                         _( "Not at the driver's controls." ) );
         }
     }
     return remove_color_tags( result );
 }
-} // namespace
+}
 
 void reset_status_monitor()
 {
@@ -551,12 +630,12 @@ void announce_status_changes()
                     current.pain, 2, 7, urgent );
     add_transition( changes, "stamina", _( "Stamina" ), current.stamina_text, previous_status->stamina,
                     current.stamina, 2, 3, urgent );
-    // Temperature, morale and weariness have no game-log channel at all:
-    // without these transitions they would only ever change silently in
-    // the sidebar (temperature and weariness as words whose color carries
-    // the severity, morale as an ASCII face). Thresholds: cold/heat level
-    // 2 ("Very cold!"/"Very hot!"), morale risk level 1 (total below 0,
-    // the same total the morale screen prints), weariness level 2.
+
+
+
+
+
+
     add_transition( changes, "temp_cold", _( "Temperature (cold)" ), current.temp_text,
                     previous_status->temp_cold, current.temp_cold, 2, 3, urgent );
     add_transition( changes, "temp_heat", _( "Temperature (heat)" ), current.temp_text,
@@ -567,7 +646,7 @@ void announce_status_changes()
                     previous_status->weariness, current.weariness, 2, 99, urgent );
     for( const bodypart_status &part : current.bodyparts ) {
         const auto old = std::find_if( previous_status->bodyparts.begin(), previous_status->bodyparts.end(),
-        [&part]( const bodypart_status &entry ) {
+        [&part]( const bodypart_status & entry ) {
             return entry.id == part.id;
         } );
         if( old == previous_status->bodyparts.end() ) {
@@ -614,16 +693,18 @@ void announce_status_changes()
     if( !changes.empty() ) {
         std::string message;
         for( const std::string &change : changes ) {
-            if( !message.empty() ) { message += ". "; }
+            if( !message.empty() ) {
+                message += ". ";
+            }
             message += change;
         }
         announce_game_message( message, urgent );
-        // The same warning, written to the game message log so the
-        // two-finger double-tap recap can re-read it anywhere. Silent
-        // on purpose: the warning was just spoken live above, so a plain
-        // add_msg here would speak it a second time, and announce_message()
-        // would let combat mute swallow urgent warnings. The direct live
-        // path above is unchanged and is never combat-muted.
+
+
+
+
+
+
         Messages::add_msg_silent( urgent ? m_warning : m_info, message );
     }
 }
@@ -643,9 +724,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                    camera_offset->y, 0 ) : tripoint_rel_ms( 0, 0, 0 );
     const tripoint_bub_ms avatar_origin = get_avatar().pos_bub( get_map() );
     const tripoint_bub_ms origin = avatar_origin + offset;
-    // The explore cursor is a reading position relative to the avatar. While
-    // it is active the nearby scan is centered on the cursor; on another
-    // level only map memory may be read, exactly like the vertical scan.
+
+
+
     const tripoint_bub_ms scan_origin = explore_active ? avatar_origin + *explore_cursor : origin;
     const bool cursor_on_other_level = explore_active && explore_cursor->z() != 0;
     const auto observe_scan_tile = [&]( const tripoint_bub_ms & position ) {
@@ -653,8 +734,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     };
     const tile_observation current_tile = observe_tile( origin );
     semantic_node here = document( "world:here", _( "Current tile" ), describe_tile( current_tile ) );
-    // Native classification, not a language-specific substring heuristic:
-    // only noteworthy terrain should interrupt movement with short speech.
+
+
     const bool noteworthy_here = has_noteworthy_information( current_tile );
     here.role = noteworthy_here ? "alert" : "document";
     here.value = current_tile.terrain;
@@ -663,13 +744,14 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     }
     if( camera_offset ) {
         here.label = _( "Death camera center" );
-        result.summary = _( "Death camera is active.  Use Look to inspect the view, move or center the camera, "
-                            "or accept your fate to finish watching." );
+        result.summary =
+            _( "Death camera is active.  Use Look to inspect the view, move or center the camera, "
+               "or accept your fate to finish watching." );
     }
     result.nodes.push_back( std::move( here ) );
-    // A separate, read-only location node lets Android distinguish two
-    // consecutive noteworthy tiles with identical descriptions. This never
-    // appears in the automatic spoken alert, so footsteps remain quiet.
+
+
+
     const tripoint_abs_ms avatar_position = get_avatar().pos_abs();
     semantic_node location = document( "world:tile_position", _( "Current position" ), "" );
     location.value = string_format( "%d,%d,%d",
@@ -677,9 +759,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     location.actions = { "focus" };
     result.nodes.push_back( std::move( location ) );
     for( int distance = 1; distance <= scan_depth; ++distance ) {
-        for( const int dz : { distance, -distance } ) {
+        for( const int dz : {
+                 distance, -distance
+             } ) {
             const tile_observation vertical = observe_memory_tile(
-                    scan_origin + tripoint_rel_ms( 0, 0, dz ) );
+                                                  scan_origin + tripoint_rel_ms( 0, 0, dz ) );
             std::string id;
             if( distance == 1 ) {
                 id = dz > 0 ? "world:above" : "world:below";
@@ -692,24 +776,26 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.value = vertical.source == observation_source::unknown ? _( "Unknown" ) :
                          vertical.terrain;
             if( vertical.source == observation_source::remembered ) {
-                if( !vertical.furniture.empty() ) { node.value += ". " + vertical.furniture; }
+                if( !vertical.furniture.empty() ) {
+                    node.value += ". " + vertical.furniture;
+                }
                 node.value += ". " + std::string( _( "Remembered" ) );
             }
             result.nodes.push_back( std::move( node ) );
         }
     }
-    // Both shortcuts read the exact same captured turn. Avoid computing
-    // the fairly detailed health/effects summary twice per footstep.
+
+
     const std::string status_summary = player_status();
     result.nodes.push_back( document( "world:status", _( "Character status" ), status_summary ) );
 
-    // The vehicle mode is owned by the native game state, never inferred
-    // from a translated status string on Android. A passenger may inspect
-    // the vehicle, but only its actual driver may steer or sound the horn.
+
+
+
     const avatar &vehicle_reader = get_avatar();
     if( vehicle_reader.in_vehicle ) {
         const optional_vpart_position seated = get_map().veh_at(
-                    vehicle_reader.pos_bub( get_map() ) );
+                vehicle_reader.pos_bub( get_map() ) );
         if( seated ) {
             vehicle &veh = seated->vehicle();
             const bool local_driver = vehicle_reader.controlling_vehicle
@@ -736,8 +822,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             controls.enabled = local_driver;
             controls.actions = { "focus" };
             result.nodes.push_back( std::move( controls ) );
-            // Available before native driver control is taken. Android uses
-            // this when switching modes; normal passenger restrictions remain.
+
+
             result.nodes.push_back( button( "reader:vehicle:begin",
                                             _( "Take vehicle controls" ), "" ) );
             if( local_driver ) {
@@ -754,8 +840,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             }
 
             const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
-            // Respect the selected vehicle-speed units, but spell out the
-            // abbreviation for Vietnamese speech output.
+
+
             const std::string game_speed_units = velocity_units( VU_VEHICLE );
             const std::string spoken_speed_units =
                 game_speed_units == "mph" ? _( "miles per hour" ) :
@@ -776,19 +862,19 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             std::string vehicle_detail = string_format( _( "Vehicle: %s." ), veh.name );
             if( local_driver ) {
                 vehicle_detail += " " + std::string( veh.a11y_manual_drive ?
-                                                   _( "Driving mode: Manual." ) :
-                                                   _( "Driving mode: Automatic." ) );
+                                                     _( "Driving mode: Manual." ) :
+                                                     _( "Driving mode: Automatic." ) );
             }
             vehicle_detail += " " + std::string( veh.engine_on ? _( "Engine running." ) :
-                                                _( "Engine stopped." ) );
+                                                 _( "Engine stopped." ) );
             vehicle_detail += " " + string_format( _( "Direction: %s." ),
-                                                 veh.face.to_string_azimuth_from_north() );
-            // Report the requested steering angle separately. Turning the
-            // wheel does not rotate the vehicle body until it moves.
+                                                   veh.face.to_string_azimuth_from_north() );
+
+
             tileray desired_heading;
             desired_heading.init( veh.turn_dir );
             vehicle_detail += " " + string_format( _( "Requested heading: %s." ),
-                                                 desired_heading.to_string_azimuth_from_north() );
+                                                   desired_heading.to_string_azimuth_from_north() );
             vehicle_detail += " " + speed;
             if( local_driver ) {
                 const std::string fuel = display::vehicle_fuel_percent_text_color(
@@ -804,7 +890,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             }
             if( local_driver ) {
                 const int safe_speed = static_cast<int>( std::lround(
-                        convert_velocity( veh.safe_velocity( get_map() ), VU_VEHICLE ) ) );
+                                           convert_velocity( veh.safe_velocity( get_map() ), VU_VEHICLE ) ) );
                 vehicle_detail += " " + string_format(
                                       _( "Calculated safe speed: %1$d %2$s." ),
                                       safe_speed, velocity_units( VU_VEHICLE ) );
@@ -827,7 +913,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 }
                 if( total_wheels > 0 ) {
                     vehicle_detail += " " + string_format( _( "Intact wheels: %1$d of %2$d." ),
-                                                         intact_wheels, total_wheels );
+                                                           intact_wheels, total_wheels );
                 }
                 if( !veh.engines.empty() ) {
                     int intact_engines = 0;
@@ -837,8 +923,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                         }
                     }
                     vehicle_detail += " " + string_format( _( "Intact engines: %1$d of %2$d." ),
-                                                         intact_engines,
-                                                         static_cast<int>( veh.engines.size() ) );
+                                                           intact_engines,
+                                                           static_cast<int>( veh.engines.size() ) );
                 }
             }
             if( veh.skidding ) {
@@ -855,29 +941,37 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                                   _( "No obstacle found along the checked reverse path." ) :
                                                   _( "No blocking obstacle detected along the checked forward path." ) );
             vehicle_detail += " " + road;
-            // A steering gesture must speak where the car is ACTUALLY facing.
-            // The selected steering target can differ until the next physics
-            // movement, so never announce it as the body's current heading.
-            // Keep the short compass name free of degrees or extra prompts.
-            const auto spoken_heading = []( const units::angle &direction ) {
+
+
+
+
+            const auto spoken_heading = []( const units::angle & direction ) {
                 const int degrees = ( static_cast<int>( std::lround(
-                                          to_degrees( direction + 90_degrees ) ) ) % 360 + 360 ) % 360;
+                        to_degrees( direction + 90_degrees ) ) ) % 360 + 360 ) % 360;
                 switch( ( ( degrees + 22 ) / 45 ) % 8 ) {
-                    case 0: return std::string( _( "north" ) );
-                    case 1: return std::string( _( "northeast" ) );
-                    case 2: return std::string( _( "east" ) );
-                    case 3: return std::string( _( "southeast" ) );
-                    case 4: return std::string( _( "south" ) );
-                    case 5: return std::string( _( "southwest" ) );
-                    case 6: return std::string( _( "west" ) );
-                    default: return std::string( _( "northwest" ) );
+                    case 0:
+                        return std::string( _( "north" ) );
+                    case 1:
+                        return std::string( _( "northeast" ) );
+                    case 2:
+                        return std::string( _( "east" ) );
+                    case 3:
+                        return std::string( _( "southeast" ) );
+                    case 4:
+                        return std::string( _( "south" ) );
+                    case 5:
+                        return std::string( _( "southwest" ) );
+                    case 6:
+                        return std::string( _( "west" ) );
+                    default:
+                        return std::string( _( "northwest" ) );
                 }
             };
             std::string heading_report = spoken_heading( veh.face.dir() );
             if( local_driver ) {
-                // Only add an explanation when the native vehicle state
-                // identifies a specific reason steering cannot take effect.
-                // Do not mistake an ordinary pending turn for a failed turn.
+
+
+
                 const float steering = veh.steering_effectiveness( get_map() );
                 if( veh.is_on_ramp ) {
                     heading_report += ". " + std::string(
@@ -894,16 +988,16 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                     heading_report += ". " + std::string(
                                           _( "Warning: vehicle is skidding; steering may not respond." ) );
                 } else if( veh.velocity == 0 && veh.turn_dir != veh.face.dir() ) {
-                    // The wheel was turned, but a stationary vehicle's body
-                    // cannot rotate until native movement physics advances.
+
+
                     heading_report += ". " + std::string(
                                           _( "Vehicle is stationary. Its heading will change when it moves." ) );
                 }
             }
             result.nodes.push_back( document( "reader:vehicle:heading",
                                               _( "Direction" ), heading_report ) );
-            // One-finger condition swipe is a short spoken health summary.
-            // The full detail remains available in the native vehicle menu.
+
+
             std::string brief_condition = veh.engine_on ?
                                           _( "Engine running." ) : _( "Engine stopped." );
             if( local_driver ) {
@@ -945,8 +1039,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                               _( "Vehicle condition summary" ), brief_condition ) );
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
-            // A typed native engine state allows the reader to announce
-            // actual ON/OFF changes, not merely attempted ignition.
+
+
             if( veh.has_part( "ENGINE" ) ) {
                 semantic_node engine_state;
                 engine_state.id = "reader:vehicle:engine-state";
@@ -968,8 +1062,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 result.nodes.push_back( button( "reader:vehicle:pause",
                                                 veh.a11y_drive_paused ?
                                                 _( "Resume driving" ) : _( "Pause driving" ), "" ) );
-                // Keep direction selection separate from requested speed.
-                // These buttons are validated again on the native game thread.
+
+
                 result.nodes.push_back( button( "reader:vehicle:forward",
                                                 _( "Select forward driving" ), "" ) );
                 result.nodes.push_back( button( "reader:vehicle:reverse",
@@ -1004,11 +1098,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                              character.get_str(), character.get_dex(),
                              character.get_int(), character.get_per() );
     character_details += " " + status_summary;
-    // Blank labels mean neutral need states, not unavailable statistics.
-    // Speak them only in this requested full character read. Keep the
-    // short status summary unchanged to avoid repetitive live alerts.
+
+
+
     const auto append_neutral_need = [&character_details]( const char *label,
-                                     const std::string_view current ) {
+    const std::string_view current ) {
         if( current.empty() ) {
             character_details += " " + string_format( label, _( "Normal" ) ) + ".";
         }
@@ -1017,9 +1111,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     append_neutral_need( _( "Thirst: %s" ), display::thirst_text_color( character ).first );
     append_neutral_need( _( "Sleepiness: %s" ), display::sleepiness_text_color( character ).first );
 
-    // Every number below comes from the existing game state. Nutrition is
-    // a genuine percent of healthy calorie reserves; never invent hunger,
-    // thirst or sleepiness percentages.
+
+
+
     character_details += " " + string_format( _( "Energy reserves: %d%%" ),
                          static_cast<int>( std::lround( 100.0f * character.get_kcal_percent() ) ) ) + ".";
     const std::string mood = remove_color_tags( display::morale_face_color( character ).first );
@@ -1028,8 +1122,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     }
     character_details += " " + string_format( _( "Focus: %d" ), character.get_focus() ) + ".";
     character_details += " " + string_format( _( "Speed: %d" ), character.get_speed() ) + ".";
-    // The current moves counter can be negative. It does not mean
-    // "number of moves already spent" or "maximum moves this turn".
+
+
     character_details += " " + string_format( _( "Movement points: %d" ),
                          character.get_moves() ) + ".";
     character_details += " " + string_format( _( "Flat-ground move cost: %d" ),
@@ -1043,8 +1137,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                          display::activity_text_color( character ).first ) + ".";
     character_details += " " + string_format( _( "Activity penalty: %s" ),
                          display::activity_malus_str( character ) ) + ".";
-    // The player's existing local sound volume meter, not an invented
-    // noise system or a percentage.
+
+
     character_details += " " + string_format( _( "Sound level: %d" ), character.volume ) + ".";
     const std::string held_item = remove_color_tags( character.weapname_simple() );
     if( !held_item.empty() ) {
@@ -1053,9 +1147,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( document( "world:character_detail", _( "Character information" ),
                                       character_details ) );
     if( !status_alert_history.empty() ) {
-        // Session alert history (R10.4): the last status transitions the
-        // monitor announced, newest last, with approximate ages. This is a
-        // reading node only; it never re-announces anything by itself.
+
+
+
         std::string history;
         const std::size_t first = status_alert_history.size() > 10 ?
                                   status_alert_history.size() - 10 : 0;
@@ -1077,7 +1171,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     const avatar &viewer = get_avatar();
     if( viewer.has_effect( effect_sleep ) ) {
         semantic_node activity_node = document( "world:activity", _( "Current activity" ),
-                                               _( "Sleeping.  The game will continue until you wake up." ) );
+                                                _( "Sleeping.  The game will continue until you wake up." ) );
         activity_node.role = "status";
         activity_node.value = _( "Sleeping.  The game will continue until you wake up." );
         result.nodes.push_back( std::move( activity_node ) );
@@ -1085,7 +1179,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         const player_activity &current = viewer.activity;
         const std::optional<std::string> progress = current.get_progress_message( viewer );
         std::string summary = progress.value_or( current.get_verb().translated() );
-        if( summary.empty() ) { summary = _( "Ongoing activity." ); }
+        if( summary.empty() ) {
+            summary = _( "Ongoing activity." );
+        }
         summary = remove_color_tags( summary );
         std::string description = summary;
         if( current.is_interruptible_with_kb() ) {
@@ -1142,17 +1238,17 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         node.actions = { "focus", "activate" };
         result.nodes.push_back( std::move( node ) );
     }
-    // Two-finger double-tap is a spoken recap: the newest event must be
-    // first, so players hear what just happened without waiting through
-    // older messages. Leave the game's underlying chronological log alone.
+
+
+
     std::string recent;
     const auto messages = Messages::recent_messages( 12 );
     for( auto it = messages.rbegin(); it != messages.rend(); ++it ) {
         recent += it->first + ": " + it->second + ". ";
     }
     result.nodes.push_back( document( "world:messages", _( "Recent messages" ), recent ) );
-    // A small explicit command surface lets Android multi-finger gestures
-    // request live information without trusting coordinates from Java.
+
+
     result.nodes.push_back( button( "reader:scan:north", _( "Scan 30 tiles north" ), "" ) );
     result.nodes.push_back( button( "reader:scan:south", _( "Scan 30 tiles south" ), "" ) );
     result.nodes.push_back( button( "reader:scan:west", _( "Scan 30 tiles west" ), "" ) );
@@ -1160,8 +1256,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );
     result.nodes.push_back( button( "reader:pickup_here", _( "Pick up here" ), "" ) );
     result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );
-    // Nearby observations are read-only. A tile selection never walks, attacks
-    // or constructs a route. Direction commands below use the normal engine.
+
+
     struct nearby_tile_node {
         int priority = 0;
         int distance = 0;
@@ -1171,7 +1267,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     for( int distance = 1; distance <= scan_radius; ++distance ) {
         for( int dy = -distance; dy <= distance; ++dy ) {
             for( int dx = -distance; dx <= distance; ++dx ) {
-                if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
+                if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) {
+                    continue;
+                }
                 const a11y::tile_observation tile = observe_scan_tile( scan_origin + tripoint_rel_ms( dx, dy, 0 ) );
                 const bool include = filter == world_scan_filter::all ||
                                      ( filter == world_scan_filter::known &&
@@ -1179,7 +1277,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                          !tile.special_perceptions.empty() || !tile.heard_marker.empty() ) ) ||
                                      ( filter == world_scan_filter::noteworthy && has_noteworthy_information( tile ) ) ||
                                      ( filter == world_scan_filter::heard && !tile.heard_marker.empty() );
-                if( !include ) { continue; }
+                if( !include ) {
+                    continue;
+                }
                 const std::string direction = relative_name( point( dx, dy ) );
                 semantic_node node = document( "tile:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                                direction, describe_tile( tile ) );
@@ -1195,9 +1295,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             }
         }
     }
-    std::stable_sort( nearby_nodes.begin(), nearby_nodes.end(), []( const nearby_tile_node &lhs,
-    const nearby_tile_node &rhs ) {
-        if( lhs.priority != rhs.priority ) { return lhs.priority < rhs.priority; }
+    std::stable_sort( nearby_nodes.begin(), nearby_nodes.end(), []( const nearby_tile_node & lhs,
+    const nearby_tile_node & rhs ) {
+        if( lhs.priority != rhs.priority ) {
+            return lhs.priority < rhs.priority;
+        }
         return lhs.distance < rhs.distance;
     } );
     for( std::size_t i = 0; i < nearby_nodes.size(); ++i ) {
@@ -1205,10 +1307,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         nearby_nodes[i].node.total = nearby_nodes.size();
         result.nodes.push_back( std::move( nearby_nodes[i].node ) );
     }
-    // Explore mode: a read-only cursor the reader can move without moving the
-    // avatar. Every explore intent is handled locally by the reader plumbing
-    // in handle_action; none of these nodes ever reach the game engine, so
-    // exploring costs no moves and no game time.
+
+
+
+
     if( !explore_active ) {
         result.nodes.push_back( button( "explore:enter", _( "Explore mode" ),
                                         _( "Move a read-only cursor away from your character to inspect distant tiles.  "
@@ -1230,7 +1332,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             _( "Moves only the explore cursor.  Your character does not move and no game time passes." );
         for( int dy = -1; dy <= 1; ++dy ) {
             for( int dx = -1; dx <= 1; ++dx ) {
-                if( dx == 0 && dy == 0 ) { continue; }
+                if( dx == 0 && dy == 0 ) {
+                    continue;
+                }
                 result.nodes.push_back( button(
                                             "explore:dir:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                             string_format( _( "Move explore cursor: %s" ), relative_name( point( dx, dy ) ) ),
@@ -1245,9 +1349,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                         _( "Returns the explore cursor to your character's tile." ) ) );
         result.nodes.push_back( button( "explore:exit", _( "Exit explore mode" ),
                                         _( "Returns the scan to your character." ) ) );
-        // Jump targets are computed around the avatar on the avatar's own
-        // level, independently of where the cursor currently is, so a jump
-        // always lands on a tile noteworthy from the character's position.
+
+
+
         struct jump_candidate {
             int priority = 0;
             int distance = 0;
@@ -1257,13 +1361,17 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         for( int distance = 1; distance <= scan_radius; ++distance ) {
             for( int dy = -distance; dy <= distance; ++dy ) {
                 for( int dx = -distance; dx <= distance; ++dx ) {
-                    if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
+                    if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) {
+                        continue;
+                    }
                     const a11y::tile_observation tile = observe_tile( avatar_origin + tripoint_rel_ms( dx, dy, 0 ) );
-                    if( !has_noteworthy_information( tile ) ) { continue; }
+                    if( !has_noteworthy_information( tile ) ) {
+                        continue;
+                    }
                     semantic_node node = button(
                                              "explore:jump:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                              string_format( _( "%1$s: %2$s" ), noteworthy_category( tile ),
-                                                     relative_name( point( dx, dy ) ) ),
+                                                            relative_name( point( dx, dy ) ) ),
                                              describe_tile( tile ) );
                     jumps.push_back( { noteworthy_priority( tile ), distance, std::move( node ) } );
                 }
@@ -1271,17 +1379,21 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         std::stable_sort( jumps.begin(), jumps.end(), []( const jump_candidate & lhs,
         const jump_candidate & rhs ) {
-            if( lhs.priority != rhs.priority ) { return lhs.priority < rhs.priority; }
+            if( lhs.priority != rhs.priority ) {
+                return lhs.priority < rhs.priority;
+            }
             return lhs.distance < rhs.distance;
         } );
-        if( jumps.size() > 24 ) { jumps.resize( 24 ); }
+        if( jumps.size() > 24 ) {
+            jumps.resize( 24 );
+        }
         for( jump_candidate &jump : jumps ) {
             result.nodes.push_back( std::move( jump.node ) );
         }
     }
-    // Let map swipes use the native direction keys even while on board.
-    // Passengers can walk to the driver's controls, like walking indoors;
-    // the game itself determines how a direction behaves when in control.
+
+
+
     result.swipe_movement_allowed = !explore_active
                                     && !camera_offset.has_value()
                                     && !viewer.is_dead_state()
@@ -1291,11 +1403,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                     && !viewer.has_destination()
                                     && !viewer.has_destination_activity()
                                     && !viewer.has_effect( effect_sleep );
-    // Eight-direction combat gestures use the same engine rules as the
-    // corresponding native keys. A gun fires; otherwise normal movement
-    // bumps into monsters for melee, interacts with NPCs, or walks into
-    // empty space. No hostile-only restriction or forced standstill.
-    // The existing eligibility gate prevents use in incompatible modes.
+
+
+
+
+
     constexpr std::array<point, 8> combat_steps = {
         point::north, point::north_east, point::east, point::south_east,
         point::south, point::south_west, point::west, point::north_west
@@ -1324,10 +1436,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     aim_toggle.enabled = result.swipe_movement_allowed;
     result.nodes.push_back( std::move( aim_toggle ) );
     for( const std::pair<std::string, std::string> &command : {
-                std::pair<std::string, std::string>{ "reader:combat:weapon-next", _( "Next weapon" ) },
-                { "reader:combat:weapon-prev", _( "Previous weapon" ) },
-                { "reader:combat:reload", _( "Reload wielded gun" ) }
-            } ) {
+    std::pair<std::string, std::string> { "reader:combat:weapon-next", _( "Next weapon" ) },
+    { "reader:combat:weapon-prev", _( "Previous weapon" ) },
+    { "reader:combat:reload", _( "Reload wielded gun" ) }
+         } ) {
         semantic_node node = button( command.first, command.second,
                                      _( "Uses the native weapon and ammunition rules.  No walking." ) );
         node.enabled = result.swipe_movement_allowed;
@@ -1339,8 +1451,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         result.nodes.push_back( std::move( node ) );
     }
-    // Read the actual wielded item without activating it or using ammo.
-    // A right-left one-finger gesture speaks this read-only status node.
+
+
     const item_location wielded = viewer.get_wielded_item();
     std::string weapon_report;
     if( !wielded ) {
@@ -1353,14 +1465,14 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     }
     result.nodes.push_back( document( "reader:combat:weapon-status",
                                       _( "Wielded weapon" ), weapon_report ) );
-    // Names, hostility, distance and health come exclusively from the
-    // game's visible/targetable creature set. Never reveal hidden enemies.
+
+
     std::vector<Creature *> enemies = viewer.get_targetable_creatures( 16, false );
-    enemies.erase( std::remove_if( enemies.begin(), enemies.end(), [&]( const Creature *enemy ) {
+    enemies.erase( std::remove_if( enemies.begin(), enemies.end(), [&]( const Creature * enemy ) {
         return enemy == nullptr || enemy == &viewer ||
                enemy->attitude_to( viewer ) != Creature::Attitude::HOSTILE;
     } ), enemies.end() );
-    std::sort( enemies.begin(), enemies.end(), [&]( const Creature *first, const Creature *second ) {
+    std::sort( enemies.begin(), enemies.end(), [&]( const Creature * first, const Creature * second ) {
         return rl_dist( viewer.pos_bub(), first->pos_bub() ) <
                rl_dist( viewer.pos_bub(), second->pos_bub() );
     } );
@@ -1389,8 +1501,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.id == "reset_move" || node.id == "open_movement" ||
             node.id == "toggle_run" || node.id == "toggle_crouch" ||
             node.id == "toggle_prone" ) {
-            // All reader screens obtain the selected movement mode from
-            // command_snapshot(); only world-specific detail belongs here.
+
+
             node.detail = string_format( _( "Now: %1$s. Selected: %2$s." ),
                                          active_mode, chosen_mode );
         } else if( node.id == "auto_travel_mode" ) {
@@ -1421,8 +1533,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.detail = _( "Opens a spoken list of visible, nearby objects.  "
                              "Browse freely; selecting an object uses the original game action." );
         } else if( node.id == "smash" && viewer.controlling_vehicle ) {
-            // When driving, the native Smash key engages the handbrake.
-            // The contextual menu must never call that "Smash".
+
+
             node.label = _( "Apply handbrake" );
             node.detail = _( "Apply the vehicle handbrake.  This is not an attack." );
         } else if( node.id == "open" || node.id == "close" || node.id == "smash" ) {
@@ -1469,9 +1581,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         result.nodes.push_back( std::move( node ) );
     }
 
-    // Only the second comprehensive-menu group consumes these hidden
-    // capabilities. Other hubs and the engine's original actions stay intact.
-    // All checks run on the game thread after visibility has been updated.
+
+
+
     {
         map &nearby_map = get_map();
         const tripoint_bub_ms player_pos = viewer.pos_bub( nearby_map );
@@ -1530,7 +1642,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         if( viewer.is_hauling() ) {
             offer( "haul_toggle", "" );
         }
-        // Native Smash is repurposed as the handbrake while driving.
+
         if( viewer.controlling_vehicle ) {
             offer( "smash", "" );
         }
@@ -1571,8 +1683,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                     offer( "pickup_all", hint );
                     offer( "haul", hint );
                     offer( "haul_toggle", hint );
-                    // Loot is a zone-based activity. The game still checks whether
-                    // suitable zones and items are available when launched.
+
+
                     offer( "loot", hint );
                     if( target == player_pos ) {
                         offer( "reader:pickup_here", hint );
@@ -1617,11 +1729,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             }
         }
         for( const std::string id : {
-                    "interact", "open", "close", "examine", "examine_and_pickup",
-                    "reader:pickup_here", "pickup", "pickup_all", "chat",
-                    "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
-                    "butcher", "loot", "control_vehicle", "smash"
-                } ) {
+                 "interact", "open", "close", "examine", "examine_and_pickup",
+                 "reader:pickup_here", "pickup", "pickup_all", "chat",
+                 "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
+                 "butcher", "loot", "control_vehicle", "smash"
+             } ) {
             semantic_node marker;
             marker.id = "reader:nearby:available:" + id;
             marker.role = "status";
@@ -1638,8 +1750,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     return result;
 }
 
-// Deliberately bypass observe_tile() and its visibility/memory restrictions:
-// this explicit assistive scan reveals the live map, even behind walls.
+
+
 unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
 {
     unrestricted_tile tile;
@@ -1666,12 +1778,12 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
     const optional_vpart_position vehicle = here.veh_at( position );
     if( vehicle ) {
         tile.vehicle = remove_color_tags( vehicle->vehicle().name );
-        // The list only read the vehicle name, so the player had to walk
-        // up to a wreck and examine it to learn it cannot be driven.
-        // State whether a working (unbroken, available) controls part
-        // exists, using strings that are already translated. This text
-        // travels with the name into the tile alert, the linear scan,
-        // the tile detail and the surroundings list.
+
+
+
+
+
+
         bool has_controls = false;
         for( const vpart_reference &part :
              vehicle->vehicle().get_avail_parts( VPFLAG_CONTROLS ) ) {
@@ -1688,15 +1800,16 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
         } else if( !usable_engine ) {
             tile.vehicle += " " + std::string( _( "Cannot start: no usable engine." ) );
         } else {
-            // Usable controls and engine are necessary, not sufficient:
-            // damaged wheels, fuel, ownership and terrain can still block driving.
-            tile.vehicle += " " + std::string( _( "Controls and engine available; driving is not guaranteed." ) );
+
+
+            tile.vehicle += " " + std::string(
+                                _( "Controls and engine available; driving is not guaranteed." ) );
         }
         if( vehicle->vehicle().is_locked ) {
             tile.vehicle += " " + std::string( _( "Vehicle locked." ) );
         }
         tile.vehicle += " " + std::string( vehicle->vehicle().engine_on ?
-                                          _( "Engine running." ) : _( "Engine stopped." ) );
+                                           _( "Engine running." ) : _( "Engine stopped." ) );
     }
     std::map<std::string, int> counts;
     for( const item &obj : here.i_at( position ) ) {
@@ -1712,24 +1825,24 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
     return tile;
 }
 
-// Project the actual vehicle footprint forward with the game's existing
-// native predictor. Examine current map entities directly; neither visual
-// range nor the avatar's line of sight is used for collision assistance.
+
+
+
 std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         const bool reverse )
 {
-    // Look through the true map, including positions behind walls or beyond
-    // visual range. Extend the path beyond the braking threshold and past
-    // the car's own body, including when backing up.
+
+
+
     const int horizon = std::clamp( 20 + std::abs( veh.velocity ) / 400, 20, 60 );
     const units::angle desired_delta = normalize( veh.turn_dir - veh.face.dir() +
-                                      ( reverse ? 180_degrees : 0_degrees ) );
+                                       ( reverse ? 180_degrees : 0_degrees ) );
     std::set<point_abs_ms> projected = veh.immediate_path( &here, desired_delta,
-                                        horizon, reverse );
-    // The native straight-ahead predictor begins at the present bumper.
-    // During a steering turn, the far corners can swing into a nearby
-    // obstacle that lies outside that ray. Include the rotated footprint
-    // at the requested heading, even when the vehicle has barely moved.
+                                       horizon, reverse );
+
+
+
+
     if( veh.turn_dir != veh.face.dir() ) {
         const point_rel_ms pivot = veh.pivot_point( here );
         for( int i = 0; i < veh.part_count(); ++i ) {
@@ -1744,8 +1857,8 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         }
     }
     std::optional<vehicle_obstacle> nearest;
-    // Measure the gap to the closest actual vehicle body tile. The vehicle
-    // origin may lie many tiles behind the front of a bus or a large truck.
+
+
     std::vector<point_bub_ms> body_tiles;
     for( int i = 0; i < veh.part_count(); ++i ) {
         const vehicle_part &part = veh.part( i );
@@ -1753,16 +1866,16 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
             body_tiles.push_back( veh.bub_part_pos( here, i ).xy() );
         }
     }
-    const auto clearance = [&body_tiles, horizon]( const point_bub_ms &target ) {
+    const auto clearance = [&body_tiles, horizon]( const point_bub_ms & target ) {
         int closest = horizon;
         for( const point_bub_ms &body : body_tiles ) {
             closest = std::min( closest, static_cast<int>( rl_dist( body, target ) ) );
         }
         return std::max( 1, closest );
     };
-    // Use the native pathfinder's physical obstacle classification.
-    // Loose ground items do not stop real vehicle motion and must not
-    // trigger a false automatic-braking warning.
+
+
+
     const vehicle_autodrive::mobility_profile mobility{
         veh.valid_wheel_config( here ), veh.can_float( here ),
         veh.has_sufficient_rotorlift( here ), true
@@ -1776,9 +1889,9 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
             vehicle_autodrive::classify_tile( veh, here, tile, driver, mobility );
         if( blocker == vehicle_autodrive::tile_blocker::none ||
             blocker == vehicle_autodrive::tile_blocker::map_boundary ) {
-            // A map-bubble edge is a streaming boundary, not a physical
-            // wall. Native movement shifts/loads the bubble before entering
-            // new squares. Only real obstacles may trigger reader braking.
+
+
+
             continue;
         }
         std::string label;
@@ -1823,9 +1936,9 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
 
 void announce_linear_scan( const point &delta )
 {
-    // Map and Drive share this read-only scan. Drive supplies a direction
-    // relative to the physical vehicle heading; Map supplies a cardinal one.
-    // A diagonal ray also visits exactly one tile at each distance.
+
+
+
     if( ( delta.x == 0 && delta.y == 0 ) ||
         std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1 ) {
         return;
@@ -1833,22 +1946,22 @@ void announce_linear_scan( const point &delta )
     constexpr int scan_range = 30;
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
-    // Do not repeat the vehicle the character is sitting in for every
-    // occupied tile of its own body. Other vehicles still count.
+
+
     const optional_vpart_position seated = here.veh_at( origin );
-    // A large car occupies several map tiles, but is one noteworthy object.
+
     std::set<const vehicle *> announced_vehicles;
     std::string spoken;
     for( int distance = 1; distance <= scan_range; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( tripoint( distance * delta, 0 ) );
         if( !here.inbounds( pos ) ) {
-            // The loaded map is finite: never invent contents beyond it.
+
             break;
         }
         const unrestricted_tile tile = scan_unrestricted_tile( pos );
         std::vector<std::string> details;
-        // Hazards and blocked passages are useful. Ordinary terrain such
-        // as road, dirt and floor is deliberately never spoken by itself.
+
+
         for( const std::string &trap : tile.traps ) {
             details.push_back( string_format( _( "Trap: %s" ), trap ) );
         }
@@ -1864,7 +1977,7 @@ void announce_linear_scan( const point &delta )
                    here.has_flag( ter_furn_flag::TFLAG_GOES_UP, pos ) ||
                    here.has_flag( ter_furn_flag::TFLAG_GOES_DOWN, pos ) ||
                    here.has_flag( ter_furn_flag::TFLAG_DOOR, pos ) ) {
-            // Read the actual obstacle, stair or door name, not "floor".
+
             details.push_back( tile.terrain );
         }
         const optional_vpart_position found_vehicle = here.veh_at( pos );
@@ -1872,8 +1985,8 @@ void announce_linear_scan( const point &delta )
             ( !get_avatar().in_vehicle || !seated ||
               &found_vehicle->vehicle() != &seated->vehicle() ) &&
             announced_vehicles.insert( &found_vehicle->vehicle() ).second ) {
-            // The verbose drivability diagnosis remains available in the
-            // detailed tile view; a scan only needs the vehicle name.
+
+
             details.push_back( remove_color_tags( found_vehicle->vehicle().name ) );
         }
         for( const std::string &name : tile.items ) {
@@ -1910,10 +2023,10 @@ void announce_vehicle_relative_scan( const std::string &relative )
         !seat->vehicle().player_in_control( here, driver ) ) {
         return;
     }
-    // Use the eight octants of the PHYSICAL car, including diagonals.
-    // Both normal Drive and Explore Places autodrive use this one mapper.
+
+
     const int degrees = ( static_cast<int>( std::lround(
-                              to_degrees( seat->vehicle().face.dir() + 90_degrees ) ) )
+            to_degrees( seat->vehicle().face.dir() + 90_degrees ) ) )
                           % 360 + 360 ) % 360;
     const int facing = ( ( degrees + 22 ) / 45 ) % 8;
     int offset = 0;
@@ -1935,9 +2048,9 @@ void announce_vehicle_relative_scan( const std::string &relative )
 
 void announce_area_transition()
 {
-    // Game thread only. The absolute overmap tile is independent of map
-    // bubble shifts: walking across an internal submap boundary is not
-    // itself a new area. Reset across world loads/lifecycle generations.
+
+
+
     static std::uint64_t previous_epoch = 0;
     static std::optional<tripoint_abs_omt> previous_tile;
     static std::string previous_area;
@@ -1953,7 +2066,7 @@ void announce_area_transition()
     }
     const om_vision_level vision = overmap_buffer.seen( omt );
     if( vision == om_vision_level::unseen ) {
-        // Never announce unseen terrain. Recheck when the observer learns it.
+
         return;
     }
     const oter_id &terrain = overmap_buffer.ter_existing( omt );
@@ -1964,9 +2077,9 @@ void announce_area_transition()
     if( area.empty() ) {
         return;
     }
-    // Only a *named overmap area change* is reported, never each tile,
-    // submap boundary or repeated overmap cell of the same name. Driving
-    // uses a distinct low-priority channel so normal chatter stays silent.
+
+
+
     const avatar &traveler = get_avatar();
     if( previous_tile && !previous_area.empty() && area != previous_area ) {
         const std::string spoken = string_format( _( "Entering area: %s." ), area );
@@ -1977,7 +2090,7 @@ void announce_area_transition()
         }
 #if defined(__ANDROID__)
         a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
-                "from=" + previous_area + " to=" + area );
+                                         "from=" + previous_area + " to=" + area );
 #endif
     }
     previous_tile = omt;
@@ -1989,14 +2102,14 @@ void announce_player_coordinates()
     const avatar &viewer = get_avatar();
     const tripoint_abs_ms pos = viewer.pos_abs();
     const std::string coordinates = string_format( _( "Coordinates.  X %1$d. Y %2$d. Z %3$d." ),
-                                            pos.x(), pos.y(), pos.z() );
-    // Speak the known overmap place first. Never reveal undiscovered
-    // terrain when the current overmap location has not been seen.
+                                    pos.x(), pos.y(), pos.z() );
+
+
     std::string spoken = string_format( _( "Area: %1$s. %2$s" ), _( "Unknown" ), coordinates );
 
-    // The overmap already names forests, roads, buildings and other areas.
-    // Use exactly what the character knows; never expose an unseen terrain
-    // or generate new overmap data merely to announce coordinates.
+
+
+
     const tripoint_abs_omt omt = viewer.pos_abs_omt();
     const om_vision_level vision = overmap_buffer.seen( omt );
     if( vision != om_vision_level::unseen ) {
@@ -2008,8 +2121,8 @@ void announce_player_coordinates()
             }
         }
     }
-    // Native lighting classification at the player's actual tile. Use
-    // the lightmap, never the brighter general outdoor sky level.
+
+
     const lit_level light = get_map().light_at( viewer.pos_bub() );
     std::string lighting;
     switch( light ) {
@@ -2032,12 +2145,12 @@ void announce_player_coordinates()
     spoken += " " + string_format( _( "Lighting: %s" ), lighting ) + ".";
     spoken += " " + string_format( _( "Weather: %s" ),
                                    display::weather_text_color( viewer ).first ) + ".";
-    // Exact with a watch, approximate if the sky is visible, otherwise
-    // unavailable. The native display routine already enforces this.
+
+
     const std::string game_time = display::time_string( viewer );
     spoken += " " + string_format( _( "Time: %s" ),
                                    game_time == _( "???" ) ? _( "Unknown" ) : game_time ) + ".";
-    // Three-finger location is a deliberate query, even during driving.
+
     a11y::android::announce( "A11Y_QUERY:" + spoken, 1 );
 }
 
@@ -2061,7 +2174,9 @@ semantic_snapshot activity_snapshot( const input_context &context )
     if( viewer.activity ) {
         const player_activity &activity = viewer.activity;
         current.label = remove_color_tags( activity.get_verb().translated() );
-        if( current.label.empty() ) { current.label = _( "Current activity" ); }
+        if( current.label.empty() ) {
+            current.label = _( "Current activity" );
+        }
         const std::optional<std::string> progress = activity.get_progress_message( viewer );
         current.value = remove_color_tags( progress.value_or( current.label ) );
         if( activity.is_interruptible_with_kb() ) {
@@ -2080,27 +2195,30 @@ semantic_snapshot activity_snapshot( const input_context &context )
         interruption.detail = _( "The game will ask before canceling." );
     }
     current.detail = interruption.value;
-    if( !interruption.detail.empty() ) { current.detail += ". " + interruption.detail; }
-    // R10.3: coarse progress only. The engine itself publishes a percent
-    // for move-based activities (get_progress_message), computed from
-    // moves_total/moves_left; quantising that same percent down to whole
-    // tens means the snapshot content -- and therefore the reader's
-    // revision and any re-reading -- changes at most ten times over a
-    // long activity instead of on every tick. The word "about" keeps the
-    // published value honest about the quantisation.
+    if( !interruption.detail.empty() ) {
+        current.detail += ". " + interruption.detail;
+    }
+
+
+
+
+
+
+
     std::optional<semantic_node> progress_node;
     if( viewer.activity && viewer.activity.moves_total > 0 ) {
         const int percent = std::max( 0, std::min( 100,
-                                  ( viewer.activity.moves_total - viewer.activity.moves_left ) * 100 /
-                                  viewer.activity.moves_total ) );
+                                      ( viewer.activity.moves_total - viewer.activity.moves_left ) * 100 /
+                                      viewer.activity.moves_total ) );
         const int coarse = percent / 10 * 10;
         progress_node = document( "activity:progress", _( "Progress" ),
                                   string_format( _( "About %d%% complete." ), coarse ) );
         progress_node->value = std::to_string( coarse );
     }
     if( get_option<float>( "TURN_DURATION" ) > 0.005f ) {
-        const std::string realtime_warning = _( "Real-time turns are enabled.  The world may continue to update while you "
-                                                "listen to this activity screen." );
+        const std::string realtime_warning =
+            _( "Real-time turns are enabled.  The world may continue to update while you "
+               "listen to this activity screen." );
         result.summary = realtime_warning;
         current.detail += ". " + result.summary;
     }
@@ -2112,17 +2230,17 @@ semantic_snapshot activity_snapshot( const input_context &context )
 
     if( viewer.activity && viewer.activity.id() == activity_id( "ACT_AUTODRIVE" ) &&
         viewer.in_vehicle && viewer.controlling_vehicle ) {
-        // Publish the same live vehicle documents during autonomous travel.
-        // This marker allows Android to show Drive (not a separate activity
-        // mode); no swipe control is sent to the pathfinder.
+
+
+
         result.nodes.push_back( document( "activity:autodrive",
-                                _( "Autonomous destination driving" ),
-                                _( "The car drives itself. Double tap to pause or resume. "
-                                   "Switch to Map to cancel the trip." ) ) );
+                                          _( "Autonomous destination driving" ),
+                                          _( "The car drives itself. Double tap to pause or resume. "
+                                             "Switch to Map to cancel the trip." ) ) );
         semantic_snapshot car = world_snapshot( context, 1, 1, world_scan_filter::all );
         const std::vector<std::string> allowed = {
-            // The native Drive snapshot needs a real world focus row to
-            // remain in the existing one-finger/two-finger reading context.
+
+
             "world:here", "reader:vehicle:seat", "reader:vehicle:driver",
             "reader:vehicle:speed", "reader:vehicle:summary",
             "reader:vehicle:engine-state", "reader:vehicle:heading", "reader:vehicle:road",
@@ -2144,7 +2262,8 @@ semantic_snapshot activity_snapshot( const input_context &context )
     };
     a11y::semantic_snapshot commands = command_snapshot( context, result.title );
     for( semantic_node &node : commands.nodes ) {
-        if( std::find( supported_actions.begin(), supported_actions.end(), node.id ) == supported_actions.end() ) {
+        if( std::find( supported_actions.begin(), supported_actions.end(),
+                       node.id ) == supported_actions.end() ) {
             continue;
         }
         if( node.id == "pause" && viewer.activity && !viewer.activity.is_interruptible_with_kb() &&
@@ -2159,4 +2278,4 @@ semantic_snapshot activity_snapshot( const input_context &context )
     }
     return result;
 }
-} // namespace a11y
+}

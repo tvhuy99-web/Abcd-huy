@@ -35,18 +35,18 @@ class scenario
         translation _description_female;
         translation _start_name;
 
-        bool blacklist = false; // If true, professions is a blacklist.
-        bool extra_professions = false; // If true, professions add to default professions.
-        std::vector<string_id<profession>> professions; // as specified in JSON, verbatim
+        bool blacklist = false;
+        bool extra_professions = false;
+        std::vector<string_id<profession>> professions;
 
-        // White/blacklist of hobbies that can be selected with this scenario
+
         std::set<string_id<profession>> hobby_exclusion;
         bool hobbies_whitelist = true;
 
-        /**
-         * @ref permitted_professions populates this vector on the first call, which takes
-         * a bit of work. On subsequent calls, this vector is returned.
-        */
+
+
+
+
         mutable std::vector<string_id<profession>> cached_permitted_professions;
         mutable std::vector<string_id<profession>> cached_permitted_hobbies;
 
@@ -56,14 +56,14 @@ class scenario
         std::vector<start_location_id> _allowed_locs;
         point_rel_om origin_offset = point_rel_om::zero;
         int _point_cost = 0;
-        std::set<std::string> flags; // flags for some special properties of the scenario
+        std::set<std::string> flags;
         map_extra_id _map_extra;
         std::vector<mission_type_id> _missions;
         std::vector<effect_on_condition_id> _eoc;
 
-        // does this scenario require a specific achiement to unlock
+
         std::optional<achievement_id> _requirement;
-        // does this scenario require the requirement even when metaprogression is disabled?
+
         bool hard_requirement = false;
 
         bool reveal_locale = true;
@@ -83,23 +83,23 @@ class scenario
         bool scenario_traits_conflict_with_profession_traits( const profession &p ) const;
 
     public:
-        //these three aren't meant for external use, but had to be made public regardless
+
         scenario();
         static void load_scenario( const JsonObject &jo, const std::string &src );
 
-        // these should be the only ways used to get at scenario
-        static const scenario *generic(); // points to the generic, default profession
-        // return a random scenario, weighted for use w/ random character creation
+
+        static const scenario *generic();
+
         static const scenario *weighted_random();
         static const std::vector<scenario> &get_all();
 
-        // clear scenario map, every scenario pointer becomes invalid!
+
         static void reset();
 
         static void finalize_all();
         static void check_all();
 
-        /** Check that item definitions are valid */
+
         void check() const;
 
         const string_id<scenario> &ident() const;
@@ -141,26 +141,26 @@ class scenario
         bool has_map_extra() const;
         const map_extra_id &get_map_extra() const;
         const point_rel_om &get_origin_offset() const;
-        /**
-         * Returns "All", "Limited", or "Almost all" (translated)
-         * This is used by newcharacter.cpp
-        */
+
+
+
+
         std::string prof_count_str() const;
 
-        // Is this scenario blacklisted?
+
         bool scen_is_blacklisted() const;
 
-        /** Such as a seasonal start, fiery start, surrounded start, etc. */
+
         bool has_flag( const std::string &flag ) const;
 
-        /**
-         * Do you have the necessary achievement state
-         */
+
+
+
         ret_val<void> can_pick() const;
 
-        /**
-         * Do you have the points to afford swapping to this scenario
-         */
+
+
+
         ret_val<void> can_afford( const scenario &current_scenario, int points ) const;
 
         const std::vector<mission_type_id> &missions() const;
@@ -174,7 +174,7 @@ struct scenario_sorter {
     bool sort_by_points = true;
     bool male = false;
     bool cities_enabled = false;
-    /** @related player */
+
     bool operator()( const scenario *a, const scenario *b ) const;
 };
 
@@ -192,4 +192,4 @@ void reset_scenarios_blacklist();
 const scenario *get_scenario();
 void set_scenario( const scenario *new_scenario );
 
-#endif // CATA_SRC_SCENARIO_H
+#endif

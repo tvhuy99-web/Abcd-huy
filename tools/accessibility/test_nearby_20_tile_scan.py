@@ -26,8 +26,7 @@ class NearbySquareScanTests(unittest.TestCase):
                       code)
         self.assertIn("here.inbounds( position )", code)
         self.assertNotIn("closest_points_first(", code)
-        # 41x41 positions, including four corners, center, and each cardinal
-        # endpoint: this is not a circular radius or 20 output entries.
+
         coords = {
             (x, y)
             for radius in range(21)
@@ -53,8 +52,7 @@ class NearbySquareScanTests(unittest.TestCase):
             "static bool noteworthy_nearby_feature(", 1
         )[1].split("void surroundings_menu::execute_accessible()", 1)[0])
         self.assertIn("noteworthy_nearby_feature( terrain, position )", s)
-        # Mundane terrain remains filtered, but a locker without special
-        # flags is still a meaningful furniture object.
+
         self.assertIn("!tile.furniture.empty()", self.reader)
         self.assertNotIn("noteworthy_nearby_feature( furniture, position )",
                          self.reader)
@@ -76,8 +74,7 @@ class NearbySquareScanTests(unittest.TestCase):
     def test_short_spoken_entries_no_preamble(self):
         code = self.reader
         self.assertIn('snapshot.title = _( "Nearby" );', code)
-        # Category and total count are announced once on entry/change,
-        # never appended to every focused target's spoken name.
+
         self.assertIn("snapshot.summary = filtered.empty() ?", code)
         self.assertIn('_( "%1$s. %2$d entries." )', code)
         self.assertIn('_( "%s. No entries." )', code)

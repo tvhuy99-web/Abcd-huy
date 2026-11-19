@@ -20,7 +20,7 @@ const std::vector<move_mode_id> &move_modes_by_speed()
 namespace
 {
 generic_factory<move_mode> move_mode_factory( "move_mode" );
-} // namespace
+}
 
 template<>
 const move_mode &move_mode_id::obj() const
@@ -46,7 +46,7 @@ void move_mode::load_move_mode( const JsonObject &jo, const std::string &src )
     move_mode_factory.load( jo, src );
 }
 
-void move_mode::load( const JsonObject &jo, std::string_view/*src*/ )
+void move_mode::load( const JsonObject &jo, std::string_view )
 {
     mandatory( jo, was_loaded, "character", _letter, unicode_codepoint_from_symbol_reader );
     mandatory( jo, was_loaded, "name",  _name );
@@ -102,14 +102,14 @@ void move_mode::finalize_all()
         move_modes_sorted.emplace_back( mode.ident() );
     }
 
-    // Sort it fastest to slowest
+
     auto stamina_sorter = [&]( const move_mode_id & lhs, const move_mode_id & rhs ) {
         return lhs->move_speed_mult() < rhs->move_speed_mult();
     };
 
     std::sort( move_modes_sorted.begin(), move_modes_sorted.end(), stamina_sorter );
 
-    // Cycle to the move mode above ours
+
     for( size_t i = move_modes_sorted.size(); i > 0; --i ) {
         const move_mode &curr = *move_modes_sorted[i - 1];
         if( i == move_modes_sorted.size() ) {
@@ -119,7 +119,7 @@ void move_mode::finalize_all()
         }
     }
 
-    // Cycle to the move mode below ours
+
     for( size_t i = move_modes_sorted.size(); i > 0; --i ) {
         const move_mode &curr = *move_modes_sorted[i - 1];
         if( i == 1 ) {

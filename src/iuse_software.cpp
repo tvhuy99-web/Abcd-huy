@@ -18,7 +18,7 @@ bool play_videogame( const std::string &function_name,
 {
     if( function_name.empty() ) {
         score = 15;
-        return true; // generic game
+        return true;
     }
     if( function_name == "robot_finds_kitten" ) {
         robot_finds_kitten findkitten;
@@ -69,11 +69,11 @@ bool play_videogame( const std::string &function_name,
         return true;
     } else {
         score = -5;
-        /* morale/activity workaround >.> */
+
         game_data["end_message"] = string_format(
                                        _( "You struggle to get '%s' working, and finally give up to play minesweeper." ),
                                        function_name );
-        // TODO: better messages in morale system //  game_data["moraletype"]="morale_game_software_problem";
+
         return false;
     }
 }

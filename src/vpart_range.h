@@ -13,13 +13,13 @@
 class vehicle;
 enum class part_status_flag : int;
 
-/**
- * Exposes (multiple) parts of one vehicle as @ref vpart_reference.
- * Uses an arbitrary @ref range_type to supply
- * - the vehicle reference,
- * - information which parts should be iterated over (and which
- *   should be skipped).
- */
+
+
+
+
+
+
+
 template<typename range_type>
 class vehicle_part_iterator
 {
@@ -110,19 +110,19 @@ template<class T>
 struct std::iterator_traits<vehicle_part_iterator<T>> {
     using difference_type = size_t;
     using value_type = vpart_reference;
-    // TODO: maybe change into random access iterator? This requires adding
-    // more operators to the iterator, which may not be efficient.
+
+
     using reference = const vpart_reference &;
     using pointer = const vpart_reference *;
     using iterator_category = std::forward_iterator_tag;
 };
 
-/**
- * The generic range, it misses the `bool contained(size_t)` function that is
- * required by the iterator class. You need to derive from it and implement
- * that function. It uses the curiously recurring template pattern (CRTP),
- * so use your derived range class as @ref range_type.
- */
+
+
+
+
+
+
 template<typename range_type>
 class generic_vehicle_part_range
 {
@@ -134,7 +134,7 @@ class generic_vehicle_part_range
         explicit generic_vehicle_part_range( ::vehicle &v, bool with_fake = false ) : vehicle_( &v ),
             with_fake_( with_fake ) { }
 
-        // Templated because see top of file.
+
         template<typename T = ::vehicle>
         size_t part_count() const {
             if( with_fake_ ) {
@@ -172,7 +172,7 @@ class generic_vehicle_part_range
         }
 };
 
-/** A range that contains all parts of the vehicle. */
+
 class vehicle_part_range : public generic_vehicle_part_range<vehicle_part_range>
 {
     public:
@@ -194,7 +194,7 @@ class vehicle_part_with_fakes_range : public
         bool matches( size_t part ) const;
 };
 
-/** A range that contains parts that have a given feature and (optionally) are not broken. */
+
 template<typename feature_type>
 class vehicle_part_with_feature_range : public
     generic_vehicle_part_range<vehicle_part_with_feature_range<feature_type>>
@@ -211,4 +211,4 @@ class vehicle_part_with_feature_range : public
         bool matches( size_t part ) const;
 };
 
-#endif // CATA_SRC_VPART_RANGE_H
+#endif

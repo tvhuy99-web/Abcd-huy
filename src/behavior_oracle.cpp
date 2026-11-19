@@ -17,7 +17,7 @@ status_t return_running( const oracle_t *, std::string_view )
     return status_t::running;
 }
 
-// Just a little helper to make populating predicate_map slightly less gross.
+
 static std::function < status_t( const oracle_t *, std::string_view ) >
 make_function( status_t ( character_oracle_t::* fun )( std::string_view ) const )
 {
@@ -87,4 +87,4 @@ score_predicate_map = {{
     }
 };
 
-} // namespace behavior
+}

@@ -46,17 +46,17 @@ string_input_popup::~string_input_popup() = default;
 
 void string_input_popup::create_window()
 {
-    titlesize = utf8_width( remove_color_tags( _title ) ); // Occupied horizontal space
+    titlesize = utf8_width( remove_color_tags( _title ) );
     if( _max_length <= 0 ) {
         _max_length = _width;
     }
-    // 2 for border (top and bottom) and 1 for the input text line.
+
     w_height = 2 + 1;
 
-    // |"w_width = width + titlesize (this text) + 5": _____  |
+
     w_width = FULL_SCREEN_WIDTH;
     if( _width <= 0 ) {
-        _width = std::max( 5, FULL_SCREEN_WIDTH - titlesize - 5 ); // Default if unspecified
+        _width = std::max( 5, FULL_SCREEN_WIDTH - titlesize - 5 );
     } else {
         _width = std::min( FULL_SCREEN_WIDTH - 20, _width );
         w_width = _width + titlesize + 5;
@@ -64,7 +64,7 @@ void string_input_popup::create_window()
 
     title_split = { _title };
     if( w_width > FULL_SCREEN_WIDTH ) {
-        // Out of horizontal space- wrap the title
+
         titlesize = FULL_SCREEN_WIDTH - _width - 5;
         w_width = FULL_SCREEN_WIDTH;
 
@@ -87,7 +87,7 @@ void string_input_popup::create_window()
             w_height = TERMY;
         }
     }
-    // length of title + border (left) + space
+
     _startx = titlesize + 1;
 
     if( _max_length <= 0 ) {
@@ -212,7 +212,7 @@ void string_input_popup::update_input_history( utf8_wrapper &ret, bool up )
         } else if( _hist_str_ind == 0 ) {
             _session_str_entered = ret.str();
 
-            //avoid showing the same result twice (after reopen filter window without reset)
+
             if( hist.size() > 1 && _session_str_entered == hist.back() ) {
                 _hist_str_ind += 1;
             }
@@ -221,7 +221,7 @@ void string_input_popup::update_input_history( utf8_wrapper &ret, bool up )
         if( _hist_str_ind == 1 ) {
             ret = _session_str_entered;
             _position = ret.length();
-            //show initial string entered and 'return'
+
             _hist_str_ind = 0;
             return;
         } else if( _hist_str_ind == 0 ) {
@@ -254,23 +254,23 @@ void string_input_popup::draw( ui_adaptor *const ui, const utf8_wrapper &ret,
     }
 
     const int scrmax = _endx - _startx;
-    // remove the scrolled out of view part from the input string
+
     const utf8_wrapper ds( ret.substr_display( shift, scrmax ) );
     int start_x_edit = _startx;
-    // Clear the line
+
     mvwprintw( w_title_and_entry, point( _startx, _starty ), std::string( std::max( 0, scrmax ),
                ' ' ) );
-    // Print the whole input string in default color
+
     mvwprintz( w_title_and_entry, point( _startx, _starty ), _string_color, "%s", ds.c_str() );
     size_t sx = ds.display_width();
-    // Print the cursor in its own color
+
     point cursor_pos;
     if( _position >= 0 && static_cast<size_t>( _position ) < ret.length() ) {
         utf8_wrapper cursor = ret.substr( _position, 1 );
         size_t a = _position;
         while( a > 0 && cursor.display_width() == 0 ) {
-            // A combination code point, move back to the earliest
-            // non-combination code point
+
+
             a--;
             cursor = ret.substr( a, _position - a + 1 );
         }
@@ -283,21 +283,21 @@ void string_input_popup::draw( ui_adaptor *const ui, const utf8_wrapper &ret,
         cursor_pos = point( _startx + sx, _starty );
         mvwprintz( w_title_and_entry, cursor_pos, _cursor_color, " " );
         start_x_edit += sx;
-        sx++; // don't override trailing ' '
+        sx++;
     } else {
         cursor_pos = point( _startx + sx, _starty );
         mvwprintz( w_title_and_entry, cursor_pos, _cursor_color, "_" );
         start_x_edit += sx;
-        sx++; // don't override trailing '_'
+        sx++;
     }
     if( static_cast<int>( sx ) < scrmax ) {
-        // could be scrolled out of view when the cursor is at the start of the input
+
         size_t l = scrmax - sx;
         if( _max_length > 0 ) {
             if( ret.display_width() >= static_cast<size_t>( _max_length ) ) {
-                l = 0; // no more input possible!
+                l = 0;
             } else if( _position == static_cast<int>( ret.length() ) ) {
-                // one '_' is already printed, formatted as cursor
+
                 l = std::min<size_t>( l, _max_length - ret.display_width() - 1 );
             } else {
                 l = std::min<size_t>( l, _max_length - ret.display_width() );
@@ -317,15 +317,15 @@ void string_input_popup::draw( ui_adaptor *const ui, const utf8_wrapper &ret,
     if( ui ) {
         ui->set_cursor( w_title_and_entry, cursor_pos );
     } else {
-        // This ensures the cursor is set last for calling UIs to record and set
-        // for screen readers and IME preview
+
+
         move_cursor_and_refresh = std::make_unique<on_out_of_scope>( [&]() {
             wmove( w_title_and_entry, cursor_pos );
             wnoutrefresh( w_title_and_entry );
         } );
     }
 
-    //Draw scrolling description
+
     if( !custom_window && desc_view_ptr ) {
         desc_view_ptr->draw( _desc_color );
         wnoutrefresh( w_description );
@@ -427,15 +427,19 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
     if( !draw_only ) {
         reader = std::make_unique<a11y::screen_scope>( ctxt, "STRING_INPUT",
         [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-            if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+            if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) )
+            {
                 return "TEXT.QUIT";
             }
-            if( intent.node == "confirm" && intent.action == "activate" ) {
+            if( intent.node == "confirm" && intent.action == "activate" )
+            {
                 return "TEXT.CONFIRM";
             }
-            if( intent.node == "text" && intent.action == "set_text" ) {
+            if( intent.node == "text" && intent.action == "set_text" )
+            {
                 const utf8_wrapper replacement( intent.value );
-                bool valid = _max_length <= 0 || replacement.display_width() <= static_cast<std::size_t>( _max_length );
+                bool valid = _max_length <= 0 ||
+                replacement.display_width() <= static_cast<std::size_t>( _max_length );
                 for( const char32_t cp : utf8_to_utf32( intent.value ) ) {
                     if( _only_digits ? !( cp == '-' || ( cp >= '0' && cp <= '9' ) ) : mk_wcwidth( cp ) < 0 ) {
                         valid = false;
@@ -475,7 +479,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         } else {
             width_to_cursor_end += 1;
         }
-        // starts scrolling when the cursor is this far from the start or end
+
         const size_t scroll_width = std::min( 10, scrmax / 5 );
         if( ret.display_width() < static_cast<size_t>( scrmax ) ) {
             shift = 0;
@@ -487,8 +491,8 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         const utf8_wrapper text_before_start = ret.substr_display( 0, shift );
         const size_t width_before_start = text_before_start.display_width();
         if( width_before_start != static_cast<size_t>( shift ) ) {
-            // This prevents a multi-cell character from been split, which is not possible
-            // instead scroll a cell further to make that character disappear completely
+
+
             const size_t width_at_start = ret.substr( text_before_start.length(), 1 ).display_width();
             shift = width_before_start + width_at_start;
         }
@@ -505,7 +509,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
         if( reader ) {
             reader->update( a11y::text_snapshot( remove_color_tags( _title ),
-                            remove_color_tags( _description ), ret.str(), _only_digits ) );
+                                                 remove_color_tags( _description ), ret.str(), _only_digits ) );
         }
         const std::string action = ctxt->handle_input();
         const input_event ev = ctxt->get_raw_input();
@@ -527,7 +531,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         }
 
         if( desc_view_ptr && desc_view_ptr->handle_navigation( action, *ctxt ) ) {
-            // NO FURTHER ACTION REQUIRED
+
         } else if( action == "TEXT.QUIT" ) {
 #if defined(__ANDROID__)
             if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
@@ -597,8 +601,8 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             }
         } else if( action == "TEXT.PASTE" || action == "TEXT.INPUT_FROM_FILE"
                    || ( action == "ANY_INPUT" && !ev.text.empty() ) ) {
-            // paste, input from file, or text input
-            // bail out early if already at length limit
+
+
             if( _max_length <= 0 || ret.display_width() < static_cast<size_t>( _max_length ) ) {
                 std::string entered;
                 if( action == "TEXT.PASTE" ) {
@@ -621,7 +625,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
                     int width = ret.display_width();
                     while( len > 0 ) {
                         const uint32_t ch = UTF8_getch( &str, &len );
-                        // Use mk_wcwidth to filter out control characters
+
                         if( _only_digits ? ch == '-' || isdigit( ch ) : mk_wcwidth( ch ) >= 0 ) {
                             const int newwidth = mk_wcwidth( ch );
                             if( _max_length <= 0 || width + newwidth <= _max_length ) {
@@ -653,7 +657,7 @@ string_input_popup &string_input_popup::window( const catacurses::window &w, con
         int endx )
 {
     if( !custom_window && this->w_full ) {
-        // default window already created
+
         return *this;
     }
     this->w_title_and_entry = w;

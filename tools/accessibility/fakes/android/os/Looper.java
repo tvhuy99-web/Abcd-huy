@@ -3,7 +3,7 @@ package android.os;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-/** Deterministic serial looper for host tests, not Android emulation. */
+
 public final class Looper {
     static final class Task {
         final long time;
@@ -27,9 +27,9 @@ public final class Looper {
         return MAIN;
     }
 
-    // Host speech tests dispatch all callbacks on this one deterministic
-    // looper. AndroidSpeech.cancel() now checks the calling looper before
-    // cancelling immediately; expose the matching Android API in the fake.
+
+
+
     public static Looper myLooper() {
         return MAIN;
     }

@@ -7,11 +7,11 @@ import android.os.Handler;
 import android.os.Looper;
 import java.util.Arrays;
 
-/**
- * Optional, independent item and creature sonar across eight compass rays.
- * Each direction gets a separate time slot; stereo pan and north/south pitch
- * distinguish the headings without interrupting TTS or changing game audio.
- */
+
+
+
+
+
 final class AlignmentSonarPlayer implements AutoCloseable {
     static final int MAX_DISTANCE = 16;
     static final int DIRECTIONS = 8;
@@ -41,7 +41,7 @@ final class AlignmentSonarPlayer implements AutoCloseable {
             }
             final int heading = direction;
             direction = (direction + 1) % DIRECTIONS;
-            // Both categories play independently, including on one ray.
+
             if (creaturesEnabled && creatureLoaded && creatures[heading] > 0) {
                 play(creatureSound, creatures[heading], heading, 0);
             }
@@ -71,8 +71,8 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         itemSound = pool.load(app, R.raw.a11y_item_beep, 1);
     }
 
-    /** Enable each existing sample independently. Disabled categories
-     * stop immediately, including any SoundPool stream still playing. */
+
+
     void setChannels(boolean creaturesOn, boolean itemsOn) {
         if (closed || (creaturesEnabled == creaturesOn && itemsEnabled == itemsOn)) {
             return;
@@ -101,7 +101,7 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         }
     }
 
-    /** Menus, paused/hidden Activities and disabled readers stop the sonar. */
+
     void setWorldActive(boolean active) {
         if (closed || worldActive == active) { return; }
         worldActive = active;
@@ -109,7 +109,7 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         refresh();
     }
 
-    /** Nearest visible distance per type per compass ray, as reported by C++. */
+
     void updateTargets(int[] nearbyCreatures, int[] nearbyItems) {
         if (closed || !enabled || nearbyCreatures == null || nearbyItems == null
                 || nearbyCreatures.length != DIRECTIONS || nearbyItems.length != DIRECTIONS) {
@@ -141,8 +141,8 @@ final class AlignmentSonarPlayer implements AutoCloseable {
 
     private void play(int sample, int distance, int heading, int category) {
         final float gain = volumeAt(distance);
-        // N is bright/center, S low/center, East and West pan.
-        // Diagonal headings blend pan with pitch.
+
+
         float left = gain;
         float right = gain;
         switch (heading) {
@@ -159,7 +159,7 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         streams[heading * 2 + category] = pool.play(sample, left, right, 1, 0, rate);
     }
 
-    /** 16 tiles = soft; 1 tile = loud (maximum 90% sample gain). */
+
     static float volumeAt(int distance) {
         final int d = Math.max(1, Math.min(MAX_DISTANCE, distance));
         return 0.10f + (MAX_DISTANCE - d) * (0.80f / (MAX_DISTANCE - 1));

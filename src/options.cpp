@@ -44,13 +44,13 @@
 
 #if defined(__ANDROID__)
 #include <jni.h>
-#include "sdl_wrappers.h" // for GetAndroidJNIEnv(), GetAndroidActivity()
+#include "sdl_wrappers.h"
 #include "terminal_layout.h"
 #endif
 
 #if defined(TILES)
 #include "cata_tiles.h"
-#endif // TILES
+#endif
 
 #if defined(__ANDROID__)
 #include <jni.h>
@@ -62,24 +62,24 @@
 #include <sstream>
 #include <string>
 
-std::map<std::string, cata_path> TILESETS; // All found tilesets: <name, tileset_dir>
-std::map<std::string, cata_path> SOUNDPACKS; // All found soundpacks: <name, soundpack_dir>
+std::map<std::string, cata_path> TILESETS;
+std::map<std::string, cata_path> SOUNDPACKS;
 
 namespace
 {
 
 generic_factory<option_slider> option_slider_factory( "option slider" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const option_slider &string_id<option_slider>::obj() const
 {
     return option_slider_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<option_slider>::is_valid() const
 {
@@ -201,15 +201,15 @@ int option_slider::random_level() const
     return rng( 0, _levels.size() - 1 );
 }
 
-// Map from old option name to pair of <new option name and map of old option value to new option value>
-// Options and values not listed here will not be changed.
+
+
 static const std::map<std::string, std::pair<std::string, std::map<std::string, std::string>>>
 &get_migrated_options()
 {
     static const std::map<std::string, std::pair<std::string, std::map<std::string, std::string>>> opt
     = {
         {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } },
-        {"MONSTER_UPGRADE_FACTOR", { "EVOLUTION_INVERSE_MULTIPLIER", {} }} //TODO: Remove after stable after world option reserialising is added, value migration done in migrateOptionValue instead
+        {"MONSTER_UPGRADE_FACTOR", { "EVOLUTION_INVERSE_MULTIPLIER", {} }}
     };
     return opt;
 }
@@ -225,7 +225,7 @@ options_manager::options_manager()
     pages_.emplace_back( "general", to_translation( "General" ) );
     pages_.emplace_back( "interface", to_translation( "Interface" ) );
     pages_.emplace_back( "graphics", to_translation( "Graphics" ) );
-    // when sharing maps only admin is allowed to change these.
+
     if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isAdmin() ) {
         pages_.emplace_back( "world_default", to_translation( "World Defaults" ) );
         pages_.emplace_back( "debug", to_translation( "Debug" ) );
@@ -236,13 +236,13 @@ options_manager::options_manager()
 #endif
 
     enable_json( "DEFAULT_REGION" );
-    // to allow class based init_data functions to add values to a 'string' type option, add:
-    //   enable_json("OPTION_KEY_THAT_GETS_STRING_ENTRIES_ADDED_VIA_JSON");
-    // then, in the my_class::load_json (or post-json setup) method:
-    //   get_options().add_value("OPTION_KEY_THAT_GETS_STRING_ENTRIES_ADDED_VIA_JSON", "thisvalue");
+
+
+
+
 }
 
-static const std::string blank_value( 1, 001 ); // because "" might be valid
+static const std::string blank_value( 1, 001 );
 
 void options_manager::enable_json( const std::string &lvar )
 {
@@ -253,7 +253,7 @@ void options_manager::add_retry( const std::string &lvar, const::std::string &lv
 {
     std::map<std::string, std::string>::const_iterator it = post_json_verify.find( lvar );
     if( it != post_json_verify.end() && it->second == blank_value ) {
-        // initialized with impossible value: valid
+
         post_json_verify[ lvar ] = lval;
     }
 }
@@ -266,12 +266,12 @@ void options_manager::add_value( const std::string &lvar, const std::string &lva
         auto ot = options.find( lvar );
         if( ot != options.end() && ot->second.sType == "string_select" ) {
             for( auto &vItem : ot->second.vItems ) {
-                if( vItem.first == lval ) { // already in
+                if( vItem.first == lval ) {
                     return;
                 }
             }
             ot->second.vItems.emplace_back( lval, lvalname );
-            // our value was saved, then set to default, so set it again.
+
             if( it->second == lval ) {
                 options[ lvar ].setValue( lval );
             }
@@ -283,7 +283,7 @@ void options_manager::add_value( const std::string &lvar, const std::string &lva
 void options_manager::addOptionToPage( const std::string &name, const std::string &page )
 {
     Page &p = find_page( page );
-    // Don't add duplicate options to the page
+
     for( const PageItem &i : p.items_ ) {
         if( i.type == ItemType::Option && i.data == name ) {
             debugmsg( "Option with id '%s' already assigned.", page );
@@ -317,7 +317,7 @@ static options_manager::cOpt::COPT_VALUE_TYPE get_value_type( const std::string 
     return result != vt_map.end() ? result->second : options_manager::cOpt::CVT_UNKNOWN;
 }
 
-//add hidden external option with value
+
 void options_manager::add_external( const std::string &sNameIn, const std::string &sPageIn,
                                     const std::string &sType )
 {
@@ -349,7 +349,7 @@ void options_manager::add_external( const std::string &sNameIn, const std::strin
             thisOpt.fStep = 1;
             break;
         default:
-            // all other type-specific values have default constructors
+
             break;
     }
 
@@ -357,7 +357,7 @@ void options_manager::add_external( const std::string &sNameIn, const std::strin
     options[sNameIn] = thisOpt;
 }
 
-//add string select option
+
 void options_manager::add( const std::string &sNameIn, const std::string &sPageIn,
                            const translation &sMenuTextIn, const translation &sTooltipIn,
                            const std::vector<id_and_option> &sItemsIn, std::string sDefaultIn,
@@ -376,7 +376,7 @@ void options_manager::add( const std::string &sNameIn, const std::string &sPageI
     thisOpt.vItems = sItemsIn;
 
     if( thisOpt.getItemPos( sDefaultIn ) == -1 ) {
-        // If this assertion fails, it means there's no valid selections for your option. That is pretty bad!
+
         cata_assert( !thisOpt.vItems.empty() );
         sDefaultIn = thisOpt.vItems[0].first;
     }
@@ -389,7 +389,7 @@ void options_manager::add( const std::string &sNameIn, const std::string &sPageI
     options[sNameIn] = thisOpt;
 }
 
-//add string input option
+
 void options_manager::add( const std::string &sNameIn, const std::string &sPageIn,
                            const translation &sMenuTextIn, const translation &sTooltipIn,
                            const std::string &sDefaultIn, const int iMaxLengthIn,
@@ -415,7 +415,7 @@ void options_manager::add( const std::string &sNameIn, const std::string &sPageI
     options[sNameIn] = thisOpt;
 }
 
-//add bool option
+
 void options_manager::add( const std::string &sNameIn, const std::string &sPageIn,
                            const translation &sMenuTextIn, const translation &sTooltipIn,
                            const bool bDefaultIn, copt_hide_t opt_hide )
@@ -439,7 +439,7 @@ void options_manager::add( const std::string &sNameIn, const std::string &sPageI
     options[sNameIn] = thisOpt;
 }
 
-//add int option
+
 void options_manager::add( const std::string &sNameIn, const std::string &sPageIn,
                            const translation &sMenuTextIn, const translation &sTooltipIn,
                            const int iMinIn, int iMaxIn, int iDefaultIn,
@@ -477,7 +477,7 @@ void options_manager::add( const std::string &sNameIn, const std::string &sPageI
     options[sNameIn] = thisOpt;
 }
 
-//add int map option
+
 void options_manager::add( const std::string &sNameIn, const std::string &sPageIn,
                            const translation &sMenuTextIn, const translation &sTooltipIn,
                            const std::vector<int_and_option> &mIntValuesIn,
@@ -517,7 +517,7 @@ void options_manager::add( const std::string &sNameIn, const std::string &sPageI
     options[sNameIn] = thisOpt;
 }
 
-//add float option
+
 void options_manager::add( const std::string &sNameIn, const std::string &sPageIn,
                            const translation &sMenuTextIn, const translation &sTooltipIn,
                            const float fMinIn, float fMaxIn, float fDefaultIn,
@@ -566,7 +566,7 @@ void options_manager::add_option_group( const std::string &page_id,
                                         const std::function<void( const std::string & )> &entries )
 {
     if( !adding_to_group_.empty() ) {
-        // Nested groups are not allowed
+
         debugmsg( "Tried to create option group '%s' from within group '%s'.",
                   group.id_, adding_to_group_ );
         return;
@@ -664,7 +664,7 @@ bool options_manager::cOpt::checkPrerequisite() const
     return isPrerequisiteFulfilled;
 }
 
-//helper functions
+
 bool options_manager::cOpt::is_hidden() const
 {
     switch( hide ) {
@@ -679,14 +679,14 @@ bool options_manager::cOpt::is_hidden() const
 #endif
 
         case COPT_CURSES_HIDE: // NOLINT(bugprone-branch-clone)
-#if !defined(TILES) // If not defined, it's the curses interface.
+#if !defined(TILES)
             return true;
 #else
             return false;
 #endif
 
         case COPT_POSIX_CURSES_HIDE:
-            // Check if we on windows and using wincurses.
+
 #if defined(TILES) || defined(_WIN32)
             return false;
 #else
@@ -694,7 +694,7 @@ bool options_manager::cOpt::is_hidden() const
 #endif
 
         case COPT_NO_SOUND_HIDE:
-#if !defined(SDL_SOUND) // If not defined, we have no sound support.
+#if !defined(SDL_SOUND)
             return true;
 #else
             return false;
@@ -703,7 +703,7 @@ bool options_manager::cOpt::is_hidden() const
         case COPT_ALWAYS_HIDE:
             return true;
     }
-    // Make compiler happy, this is unreachable.
+
     return false;
 }
 
@@ -969,7 +969,7 @@ int options_manager::cOpt::getMaxLength() const
     return 0;
 }
 
-//set to next item
+
 void options_manager::cOpt::setNext()
 {
     if( sType == "string_select" ) {
@@ -1012,7 +1012,7 @@ void options_manager::cOpt::setNext()
     }
 }
 
-//set to previous item
+
 void options_manager::cOpt::setPrev()
 {
     if( sType == "string_select" ) {
@@ -1050,7 +1050,7 @@ void options_manager::cOpt::setPrev()
     }
 }
 
-//set value
+
 void options_manager::cOpt::setValue( float fSetIn )
 {
     if( sType != "float" ) {
@@ -1063,7 +1063,7 @@ void options_manager::cOpt::setValue( float fSetIn )
     }
 }
 
-//set value
+
 void options_manager::cOpt::setValue( int iSetIn )
 {
     if( sType != "int" ) {
@@ -1076,7 +1076,7 @@ void options_manager::cOpt::setValue( int iSetIn )
     }
 }
 
-//set value
+
 void options_manager::cOpt::setValue( const std::string &sSetIn )
 {
     if( sType == "string_select" ) {
@@ -1091,7 +1091,7 @@ void options_manager::cOpt::setValue( const std::string &sSetIn )
         bSet = sSetIn == "True" || sSetIn == "true" || sSetIn == "T" || sSetIn == "t";
 
     } else if( sType == "int" ) {
-        // Some integer values are stored with a '%', e.g. "100%".
+
         std::string without_percent = sSetIn;
         if( string_ends_with( without_percent, "%" ) ) {
             without_percent.erase( without_percent.end() - 1 );
@@ -1137,12 +1137,12 @@ void options_manager::cOpt::setValue( const std::string &sSetIn )
     }
 }
 
-/** Fill a mapping with values.
- * Scans all directories in @p dirname directory for
- * a file named @p filename.
- * All found values added to resource_option as name, resource_dir.
- * Furthermore, it builds possible values list for cOpt class.
- */
+
+
+
+
+
+
 static std::vector<options_manager::id_and_option> build_resource_list(
     std::map<std::string, std::string> &resource_option, const std::string &operation_name,
     const std::string &dirname, const std::string &filename )
@@ -1157,13 +1157,13 @@ static std::vector<options_manager::id_and_option> build_resource_list(
         read_from_file( resource_dir + slash_filename, [&]( std::istream & fin ) {
             std::string resource_name;
             std::string view_name;
-            // should only have 2 values inside it, otherwise is going to only load the last 2 values
+
             while( !fin.eof() ) {
                 std::string sOption;
                 fin >> sOption;
 
                 if( sOption.empty() || sOption[0] == '#' ) {
-                    getline( fin, sOption );    // Empty line or comment, chomp it
+                    getline( fin, sOption );
                 } else {
                     if( sOption.find( "NAME" ) != std::string::npos ) {
                         resource_name.clear();
@@ -1199,7 +1199,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
 
     resource_option.clear();
     if( !dir_exist( dirname.get_unrelative_path() ) ) {
-        return resource_names; // don't try to enumerate non-existing directories
+        return resource_names;
     }
     const auto resource_dirs = get_directories_with( filename, dirname, true );
 
@@ -1207,13 +1207,13 @@ static std::vector<options_manager::id_and_option> build_resource_list(
         read_from_file( resource_dir / filename, [&]( std::istream & fin ) {
             std::string resource_name;
             std::string view_name;
-            // should only have 2 values inside it, otherwise is going to only load the last 2 values
+
             while( !fin.eof() ) {
                 std::string sOption;
                 fin >> sOption;
 
                 if( sOption.empty() || sOption[0] == '#' ) {
-                    getline( fin, sOption );  // Empty line or comment, chomp it
+                    getline( fin, sOption );
                 } else {
                     if( sOption.find( "NAME" ) != std::string::npos ) {
                         resource_name.clear();
@@ -1246,23 +1246,23 @@ void options_manager::search_resource(
     const std::vector<std::string> &search_paths, const std::string &resource_name,
     const std::string &resource_filename )
 {
-    // Clear the result containers.
+
     storage.clear();
     option_list.clear();
 
-    // Loop through each search path and add its resources.
+
     for( const std::string &search_path : search_paths ) {
-        // Get the resource list from the search path.
+
         std::map<std::string, std::string> resources;
         std::vector<id_and_option> resource_names = build_resource_list( resources, resource_name,
                 search_path, resource_filename );
 
-        // Add any new resources from this path to the result containers.
-        // First, add to the resource mapping.
+
+
         storage.insert( resources.begin(), resources.end() );
-        // Next, add to the option list.
+
         for( const id_and_option &name : resource_names ) {
-            // Only add if not a duplicate.
+
             if( std::find( option_list.begin(), option_list.end(), name ) == option_list.end() ) {
                 option_list.emplace_back( name );
             }
@@ -1275,23 +1275,23 @@ void options_manager::search_resource(
     const std::vector<cata_path> &search_paths, const std::string &resource_name,
     const std::string &resource_filename )
 {
-    // Clear the result containers.
+
     storage.clear();
     option_list.clear();
 
-    // Loop through each search path and add its resources.
+
     for( const cata_path &search_path : search_paths ) {
-        // Get the resource list from the search path.
+
         std::map<std::string, cata_path> resources;
         std::vector<id_and_option> resource_names = build_resource_list( resources, resource_name,
                 search_path, resource_filename );
 
-        // Add any new resources from this path to the result containers.
-        // First, add to the resource mapping.
+
+
         storage.insert( resources.begin(), resources.end() );
-        // Next, add to the option list.
+
         for( const id_and_option &name : resource_names ) {
-            // Only add if not a duplicate.
+
             if( std::find( option_list.begin(), option_list.end(), name ) == option_list.end() ) {
                 option_list.emplace_back( name );
             }
@@ -1309,13 +1309,13 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
                      PATH_INFO::tileset_conf() );
 
 
-    // Portrait packs must contain the string "Portrait" (case-sensitive) somewhere in their ID.
-    // I would like this check to be less dumb, but we're working with only a std::string here.
+
+
     for( auto iter = result.begin(); iter != result.end(); ) {
 
-        // hack: If we have only one option left always keep that, skipping validity checks.
-        // This is an error if it happens ingame, but for CI we need to pass *something*, even if it doesn't really *work*.
-        // CI doesn't care about drawing tiles. It just needs something to fill in the option.
+
+
+
         if( result.size() == 1 ) {
             break;
         }
@@ -1342,7 +1342,7 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
     search_resource( SOUNDPACKS, result, { PATH_INFO::user_sound(), PATH_INFO::data_sound() },
                      "soundpack", PATH_INFO::soundpack_conf() );
 
-    // Select default built-in sound pack
+
     if( result.empty() ) {
         result.emplace_back( "Menu_Sound_Test", to_translation( "Menu_Sound_Test" ) );
     }
@@ -1361,9 +1361,9 @@ std::unordered_set<std::string> options_manager::get_langs_with_translation_file
         dir = dir.substr( begin, end - begin );
     } );
     return std::unordered_set<std::string>( lang_dirs.begin(), lang_dirs.end() );
-#else // !LOCALIZE
+#else
     return std::unordered_set<std::string>();
-#endif // LOCALIZE
+#endif
 }
 
 std::vector<options_manager::id_and_option> options_manager::get_lang_options()
@@ -1765,18 +1765,22 @@ void options_manager::add_options_general()
 
         std::vector<id_and_option> const soundpacks = build_soundpacks_list();
         const bool has_black_edition = std::any_of( soundpacks.begin(), soundpacks.end(),
-        []( const id_and_option & option ) { return option.first == "Bl@ck Edition soundpack"; } );
+        []( const id_and_option & option ) {
+            return option.first == "Bl@ck Edition soundpack";
+        } );
         const bool has_otopack = std::any_of( soundpacks.begin(), soundpacks.end(),
-        []( const id_and_option & option ) { return option.first == "otopack"; } );
+        []( const id_and_option & option ) {
+            return option.first == "otopack";
+        } );
         add( "SOUNDPACKS", page_id, to_translation( "Choose soundpack" ),
              to_translation( "Choose the soundpack you want to use.  Requires restart." ),
              soundpacks, has_black_edition ? "Bl@ck Edition soundpack" : ( has_otopack ? "otopack" : (
-                 std::any_of( soundpacks.begin(), soundpacks.end(),
+                         std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) {
             return option.first == "CC-Sounds";
         } )  ? "CC-Sounds" : "basic" ) ),
         COPT_NO_SOUND_HIDE
-           ); // populate the options dynamically
+           );
 
         get_option( "SOUNDPACKS" ).setPrerequisite( "SOUND_ENABLED" );
 
@@ -2031,7 +2035,7 @@ void options_manager::add_options_interface()
 
         add( "SCREEN_READER_MODE", page_id, to_translation( "Screen reader mode" ),
              to_translation( "On supported UI screens, tweaks display of text to optimize for screen readers.  Targeted towards using the open-source screen reader 'orca' using curses for display." ),
-             // See doc/USER_INTERFACE_AND_ACCESSIBILITY.md for testing and implementation notes
+
              false
            );
     } );
@@ -2040,50 +2044,50 @@ void options_manager::add_options_interface()
 
     add( "DIAG_MOVE_WITH_MODIFIERS_MODE", "interface",
          to_translation( "Diagonal movement with cursor keys and modifiers" ),
-         /*
-         Possible modes:
 
-         # None
 
-         # Mode 1: Numpad Emulation
 
-         * Press and keep holding Ctrl
-         * Press and release ↑ to set it as the modifier (until Ctrl is released)
-         * Press and release → to get the move ↑ + → = ↗ i.e. just like pressing and releasing 9
-         * Holding → results in repeated ↗, so just like holding 9
-         * If I press any other direction, they are similarly modified by ↑, both for single presses and while holding.
 
-         # Mode 2: CW/CCW
 
-         * `Shift` + `Cursor Left` -> `7` = `Move Northwest`;
-         * `Shift` + `Cursor Right` -> `3` = `Move Southeast`;
-         * `Shift` + `Cursor Up` -> `9` = `Move Northeast`;
-         * `Shift` + `Cursor Down` -> `1` = `Move Southwest`.
 
-         and
 
-         * `Ctrl` + `Cursor Left` -> `1` = `Move Southwest`;
-         * `Ctrl` + `Cursor Right` -> `9` = `Move Northeast`;
-         * `Ctrl` + `Cursor Up` -> `7` = `Move Northwest`;
-         * `Ctrl` + `Cursor Down` -> `3` = `Move Southeast`.
 
-         # Mode 3: L/R Tilt
 
-         * `Shift` + `Cursor Left` -> `7` = `Move Northwest`;
-         * `Ctrl` + `Cursor Left` -> `3` = `Move Southeast`;
-         * `Shift` + `Cursor Right` -> `9` = `Move Northeast`;
-         * `Ctrl` + `Cursor Right` -> `1` = `Move Southwest`.
 
-         # Mode 4: Diagonal Lock
 
-         * Holding Ctrl or Shift locks movement to diagonal only
-         * This ensures that pressing ↑ + → will results in ↗ and not ↑ or →
-         * Reject input if it doesn't make sense
-         * Example 1: Press → while holding Shift and ↑ results in ↗
-         * Example 2: Press → while holding Shift, ↑ and ← results in input rejection
-         * Example 3: Press → while holding Shift and ← results in input rejection
 
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
          to_translation( "Allows diagonal movement with cursor keys using CTRL and SHIFT modifiers.  Diagonal movement action keys are taken from keybindings, so you need these to be configured.  See the movement category in the help menu for full descriptions of the options." ),
     {
         { "none", to_translation( "None" ) },
@@ -2315,13 +2319,13 @@ void options_manager::add_options_interface()
 void options_manager::add_options_graphics()
 {
 #if defined(__ANDROID__)
-    // grid and cell follow screen and Android text size option
+
     constexpr copt_hide_t terminal_size_hide = COPT_ALWAYS_HIDE;
     constexpr copt_hide_t font_size_hide = COPT_ALWAYS_HIDE;
 #else
     constexpr copt_hide_t terminal_size_hide = COPT_POSIX_CURSES_HIDE;
 #if defined(TILES)
-    // the font options exist only with tiles
+
     constexpr copt_hide_t font_size_hide = COPT_CURSES_HIDE;
 #endif
 #endif
@@ -2491,7 +2495,7 @@ void options_manager::add_options_graphics()
              false, COPT_CURSES_HIDE
            );
     } );
-#endif // TILES
+#endif
 
     add_empty_line();
 
@@ -2514,7 +2518,7 @@ void options_manager::add_options_graphics()
         add( "TILES", page_id, to_translation( "Choose tileset" ),
              to_translation( "Choose the tileset you want to use." ),
              build_tilesets_list(), "UltimateCataclysm", COPT_CURSES_HIDE
-           ); // populate the options dynamically
+           );
 
         add( "USE_DISTANT_TILES", page_id, to_translation( "Use separate tileset for far" ),
              to_translation( "If true, when very zoomed out you will use a separate tileset." ),
@@ -2524,7 +2528,7 @@ void options_manager::add_options_graphics()
         add( "DISTANT_TILES", page_id, to_translation( "Choose distant tileset" ),
              to_translation( "Choose the tileset you want to use for far zoom." ),
              build_tilesets_list(), "UltimateCataclysm", COPT_CURSES_HIDE
-           ); // populate the options dynamically
+           );
 
         add( "CREATURE_OVERLAY_ICONS", page_id, to_translation( "Show overlay icons over creatures" ),
              to_translation( "If true, show overlay icons over creatures such as effects, move mode and whether creatures can see the player." ),
@@ -2534,12 +2538,12 @@ void options_manager::add_options_graphics()
         add( "SWAP_ZOOM", page_id, to_translation( "Zoom Threshold" ),
              to_translation( "Choose when you should swap tileset (lower is more zoomed out)." ),
              1, 4, 2, COPT_CURSES_HIDE
-           ); // populate the options dynamically
+           );
 
         add( "PORTRAIT_TILES", page_id, to_translation( "Choose portrait pack" ),
              to_translation( "Choose the tileset you want to use for NPC or player portraits." ),
-             build_tilesets_list( /*bool only_portraits=*/ true ), "MshockXottoplus_Portraits", COPT_CURSES_HIDE
-           ); // populate the options dynamically
+             build_tilesets_list( true ), "MshockXottoplus_Portraits", COPT_CURSES_HIDE
+           );
 
         get_option( "TILES" ).setPrerequisite( "USE_TILES" );
         get_option( "PORTRAIT_TILES" ).setPrerequisite( "USE_TILES" );
@@ -2556,7 +2560,7 @@ void options_manager::add_options_graphics()
         get_option( "USE_OVERMAP_TILES" ).setPrerequisite( "USE_TILES" );
 
         std::vector<options_manager::id_and_option> om_tilesets = build_tilesets_list();
-        // filter out iso tilesets from overmap tilesets
+
         om_tilesets.erase( std::remove_if( om_tilesets.begin(), om_tilesets.end(), []( const auto & it ) {
             static const std::string iso_suffix = "_iso";
             const std::string &id = it.first;
@@ -2567,7 +2571,7 @@ void options_manager::add_options_graphics()
         add( "OVERMAP_TILES", page_id, to_translation( "Choose overmap tileset" ),
              to_translation( "Choose the overmap tileset you want to use." ),
              om_tilesets, "Larwick Overmap", COPT_CURSES_HIDE
-           ); // populate the options dynamically
+           );
 
         get_option( "OVERMAP_TILES" ).setPrerequisite( "USE_OVERMAP_TILES" );
     } );
@@ -2741,11 +2745,11 @@ void options_manager::add_options_graphics()
              display_list.front().first, COPT_CURSES_HIDE );
 #endif
 
-#if !defined(__ANDROID__) || !defined(__EMSCRIPTEN__) // Android and Emscripten are always fullscreen
+#if !defined(__ANDROID__) || !defined(__EMSCRIPTEN__)
         add( "FULLSCREEN", page_id, to_translation( "Fullscreen" ),
              to_translation( "Starts Cataclysm in one of the fullscreen modes.  Requires restart." ),
         { { "no", to_translation( "No" ) }, { "maximized", to_translation( "Maximized" ) }, { "fullscreen", to_translation( "Fullscreen" ) }, { "windowedbl", to_translation( "Windowed borderless" ) } },
-        // Borderless window is bad for debugging in Visual Studio
+
 #if defined(_MSC_VER)
         "maximized", COPT_CURSES_HIDE
 #else
@@ -2756,7 +2760,7 @@ void options_manager::add_options_graphics()
 
 #if !defined(__ANDROID__)
 #   if !defined(TILES)
-        // No renderer selection in non-TILES mode
+
         add( "RENDERER", page_id, to_translation( "Renderer" ),
         to_translation( "Set which renderer to use.  Requires restart." ), { { "software", to_translation( "software" ) } },
         "software", COPT_CURSES_HIDE );
@@ -2771,9 +2775,9 @@ void options_manager::add_options_graphics()
             }
         }
 #   endif
-        // Renderer selection is driven through SDL_HINT_RENDER_DRIVER; the
-        // saved RENDERER value is ignored at startup but the option ID is
-        // retained so configs from existing worlds still parse.
+
+
+
         add( "RENDERER", page_id, to_translation( "Renderer" ),
              to_translation( "Set which renderer to use.  Requires restart." ), renderer_list,
              default_renderer, COPT_ALWAYS_HIDE );
@@ -2786,15 +2790,15 @@ void options_manager::add_options_graphics()
 #else
         add( "SOFTWARE_RENDERING", page_id, to_translation( "Software rendering" ),
              to_translation( "Use software renderer instead of graphics card acceleration.  Requires restart." ),
-             // take default setting from pre-game settings screen - important as both software + hardware rendering have issues with specific devices
+
              android_get_default_setting( "Software rendering", false ),
              COPT_CURSES_HIDE
            );
 #endif
 
-        // The renderer is hidden and the software fallback is automatic, so
-        // this option is hidden too; the ID is retained so existing configs
-        // still parse.
+
+
+
         add( "FRAMEBUFFER_ACCEL", page_id, to_translation( "Software framebuffer acceleration" ),
              to_translation( "If true, use hardware acceleration for the framebuffer when using software rendering.  Requires restart." ),
              false, COPT_ALWAYS_HIDE
@@ -2804,11 +2808,11 @@ void options_manager::add_options_graphics()
         get_option( "FRAMEBUFFER_ACCEL" ).setPrerequisite( "SOFTWARE_RENDERING" );
 #endif
 
-        // Color-modulated textures replaced RenderFillRect with a stretched
-        // 1x1 texture. The renderer now batches fills efficiently and the
-        // texture path blends differently, so the saved value is ignored at
-        // startup and the option is hidden; the ID is retained so existing
-        // configs still parse.
+
+
+
+
+
         add( "USE_COLOR_MODULATED_TEXTURES", page_id, to_translation( "Use color modulated textures" ),
              to_translation( "If true, tries to use color modulated textures to speed-up ASCII drawing.  Requires restart." ),
              false, COPT_ALWAYS_HIDE
@@ -2853,8 +2857,8 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    // These optiosn are purposefully and permanently hidden. It can only be modified through the sliders when creating a new world.
-    // As such there is no name or description to show, those are blanked.
+
+
     add( "SPAWN_DENSITY", "world_default", translation(), translation(), 0.0, 50.0, 1.0, 0.1,
          COPT_ALWAYS_HIDE
        );
@@ -3055,7 +3059,7 @@ void options_manager::add_options_android()
     [&]( const std::string & page_id ) {
         add( "ANDROID_TRAP_BACK_BUTTON", page_id, to_translation( "Trap Back button" ),
              to_translation( "If true, the back button will NOT back out of the app and will be passed to the application as SDL_SCANCODE_AC_BACK.  Requires restart." ),
-             // take default setting from pre-game settings screen - important as there are issues with Back button on Android 9 with specific devices
+
              android_get_default_setting( "Trap Back button", true )
            );
 
@@ -3338,19 +3342,19 @@ void options_manager::add_options_android()
 }
 
 #if defined(TILES)
-// Helper method to isolate #ifdeffed tiles code.
+
 static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_changed, bool ingame )
 {
     if( used_tiles_changed ) {
-        // Disable UIs below to avoid accessing the tile context during loading.
+
         ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
-        //try and keep SDL calls limited to source files that deal specifically with them
+
         try {
             closetilecontext->reinit();
             closetilecontext->load_tileset( get_option<std::string>( "TILES" ),
-                                            /*precheck=*/false, /*force=*/false,
-                                            /*pump_events=*/true, /*terrain=*/false );
-            //game_ui::init_ui is called when zoom is changed
+                                            false, false,
+                                            true, false );
+
             g->reset_zoom();
             g->mark_main_ui_adaptor_resize();
             closetilecontext->do_tile_loading_report();
@@ -3365,9 +3369,9 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
                     fartilecontext->reinit();
                 }
                 fartilecontext->load_tileset( get_option<std::string>( "DISTANT_TILES" ),
-                                              /*precheck=*/false, /*force=*/false,
-                                              /*pump_events=*/true, /*terrain=*/false );
-                //game_ui::init_ui is called when zoom is changed
+                                              false, false,
+                                              true, false );
+
                 g->reset_zoom();
                 g->mark_main_ui_adaptor_resize();
                 fartilecontext->do_tile_loading_report();
@@ -3380,9 +3384,9 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
         try {
             portrait_tilecontext->reinit();
             portrait_tilecontext->load_tileset( get_option<std::string>( "PORTRAIT_TILES" ),
-                                                /*precheck=*/false, /*force=*/false,
-                                                /*pump_events=*/true, /*terrain=*/true );
-            //game_ui::init_ui is called when zoom is changed
+                                                false, false,
+                                                true, true );
+
             g->reset_zoom();
             g->mark_main_ui_adaptor_resize();
         } catch( const std::exception &err ) {
@@ -3392,9 +3396,9 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
         try {
             overmap_tilecontext->reinit();
             overmap_tilecontext->load_tileset( get_option<std::string>( "OVERMAP_TILES" ),
-                                               /*precheck=*/false, /*force=*/false,
-                                               /*pump_events=*/true, /*terrain=*/true );
-            //game_ui::init_ui is called when zoom is changed
+                                               false, false,
+                                               true, true );
+
             g->reset_zoom();
             g->mark_main_ui_adaptor_resize();
             overmap_tilecontext->do_tile_loading_report();
@@ -3411,7 +3415,7 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
 static void refresh_tiles( bool, bool, bool )
 {
 }
-#endif // TILES
+#endif
 
 static void draw_borders_external(
     const catacurses::window &w, int horizontal_level, const std::set<int> &vert_lines,
@@ -3420,12 +3424,12 @@ static void draw_borders_external(
     if( !world_options_only ) {
         draw_border( w, BORDER_COLOR, _( "Options" ) );
     }
-    // intersections
+
     wattron( w, BORDER_COLOR );
-    mvwaddch( w, point( 0, horizontal_level ), LINE_XXXO ); // |-
-    mvwaddch( w, point( getmaxx( w ) - 1, horizontal_level ), LINE_XOXX ); // -|
+    mvwaddch( w, point( 0, horizontal_level ), LINE_XXXO );
+    mvwaddch( w, point( getmaxx( w ) - 1, horizontal_level ), LINE_XOXX );
     for( const int &x : vert_lines ) {
-        mvwaddch( w, point( x + 1, getmaxy( w ) - 1 ), LINE_XXOX ); // _|_
+        mvwaddch( w, point( x + 1, getmaxy( w ) - 1 ), LINE_XXOX );
     }
     wattroff( w, BORDER_COLOR );
     wnoutrefresh( w );
@@ -3434,9 +3438,9 @@ static void draw_borders_external(
 static void draw_borders_internal( const catacurses::window &w, std::set<int> &vert_lines )
 {
     wattron( w, BORDER_COLOR );
-    mvwhline( w, point::zero, LINE_OXOX, getmaxx( w ) ); // -
+    mvwhline( w, point::zero, LINE_OXOX, getmaxx( w ) );
     for( const int &x : vert_lines ) {
-        mvwaddch( w, point( x, 0 ), LINE_OXXX ); // -.-
+        mvwaddch( w, point( x, 0 ), LINE_OXXX );
     }
     wattroff( w, BORDER_COLOR );
     wnoutrefresh( w );
@@ -3488,7 +3492,7 @@ options_manager::PageItem::fmt_tooltip( const std::string &group_id,
 
 namespace
 {
-/** String with color */
+
 struct string_col {
     std::string s;
     nc_color col;
@@ -3496,7 +3500,7 @@ struct string_col {
     string_col() : col( c_black ) { }
     string_col( const std::string &s, nc_color col ) : s( s ), col( col ) { }
 };
-} // namespace
+}
 
 std::string options_manager::show( bool ingame, const bool world_options_only, bool with_tabs )
 {
@@ -3504,7 +3508,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         return p.id_ == "world_default";
     } ) - pages_.begin();
 
-    // temporary alias so the code below does not need to be changed
+
     options_container &OPTIONS = options;
     options_container &ACTIVE_WORLD_OPTIONS = world_options.has_value() ?
             *world_options.value() :
@@ -3529,9 +3533,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
     int iStartPos = 0;
 
     std::unordered_map<std::string, bool> groups_state;
-    groups_state.emplace( "", true ); // Non-existent group
+    groups_state.emplace( "", true );
     for( const Group &g : groups_ ) {
-        // Start collapsed
+
         groups_state.emplace( g.id_, false );
     }
 
@@ -3546,7 +3550,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
     }
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    // for mouse selection
+
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SCROLL_UP" );
@@ -3565,28 +3569,30 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         reader_target_kind kind;
         int page = 0;
         int line = 0;
-        // Option name for form targets, group id for group targets (R02.3).
+
         std::string data{};
     };
     std::unordered_map<std::string, reader_target> reader_targets;
-    // Unapplied form drafts, keyed by the option row's node ID (R02.3). A
-    // draft lives only in this screen's state: leaving the options screen
-    // drops it, and the applied option value changes solely through the
-    // "apply" intent below (or the screen's original editing flow).
+
+
+
+
     std::unordered_map<std::string, std::string> reader_drafts;
     bool recalc_startpos = false;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, world_options_only ? "world-options" : "OPTIONS",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, world_options_only ? "world-options" : "OPTIONS",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
-        // Tree and form intents (R02.1/R02.3) are structural: they never
+
         // fall through to the focus/activate handling below, and a draft
-        // intent never changes the applied option value by itself.
-        if( selected.kind == reader_target_kind::group ) {
+
+        if( selected.kind == reader_target_kind::group )
+        {
             const bool expand = intent.action == "expand" || intent.action == "open_tree";
             if( expand || intent.action == "collapse" ) {
                 if( groups_state[selected.data] == expand ) {
@@ -3600,7 +3606,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 return "A11Y_INTERNAL_OPTIONS_FOCUS";
             }
         }
-        if( selected.kind == reader_target_kind::option ) {
+        if( selected.kind == reader_target_kind::option )
+        {
             if( intent.action == "set_value" || intent.action == "select_choice" ) {
                 reader_drafts[intent.node] = intent.value;
                 return "A11Y_INTERNAL_OPTIONS_FOCUS";
@@ -3622,17 +3629,17 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                     reader_drafts.erase( draft );
                     return std::nullopt;
                 }
-                // The runtime already validated this draft against the
-                // published field domain before the intent reached here.
+
+
                 if( found->second.getType() == "string_input" ) {
-                    // The original editor (string_input_popup, reached via
-                    // cOpt::setNext) enforces the option's maximum length
-                    // itself and stores the edited text verbatim, while
-                    // cOpt::setValue( std::string ) would silently truncate
-                    // by bytes. Mirror the editor: refuse an over-long
-                    // draft (the builder flags it as a field error and it
-                    // stays unapplied) and store an in-domain draft
-                    // exactly as entered.
+
+
+
+
+
+
+
+
                     const int max_length = found->second.getMaxLength();
                     if( max_length > 0 &&
                         utf8_width( draft->second ) > max_length ) {
@@ -3650,11 +3657,13 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 return "A11Y_INTERNAL_OPTIONS_FOCUS";
             }
         }
-        if( selected.kind == reader_target_kind::world_mods_tab ) {
+        if( selected.kind == reader_target_kind::world_mods_tab )
+        {
             return intent.action == "activate" ? std::optional<std::string>( "PREV_TAB" ) :
                    std::nullopt;
         }
-        if( selected.kind == reader_target_kind::page ) {
+        if( selected.kind == reader_target_kind::page )
+        {
             if( intent.action != "focus" && intent.action != "activate" ) {
                 return std::nullopt;
             }
@@ -3673,17 +3682,20 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             recalc_startpos = true;
             return "A11Y_INTERNAL_OPTIONS_FOCUS";
         }
-        if( intent.action != "focus" && intent.action != "activate" ) {
+        if( intent.action != "focus" && intent.action != "activate" )
+        {
             return std::nullopt;
         }
         iCurrentPage = selected.page;
         iCurrentLine = selected.line;
         iStartPos = 0;
         recalc_startpos = true;
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             return "A11Y_INTERNAL_OPTIONS_FOCUS";
         }
-        switch( selected.kind ) {
+        switch( selected.kind )
+        {
             case reader_target_kind::option:
             case reader_target_kind::group:
                 return "CONFIRM";
@@ -3704,7 +3716,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = world_options_only ? _( "World options" ) : _( "Options" );
-        snapshot.summary = _( "Focus an option to hear its current value and description. Use previous or next value to change it, or activate to open its editor. The game's normal options flow handles saving when applicable." );
+        snapshot.summary =
+            _( "Focus an option to hear its current value and description. Use previous or next value to change it, or activate to open its editor. The game's normal options flow handles saving when applicable." );
 
         if( world_options_only && with_tabs ) {
             a11y::semantic_node mods_tab;
@@ -3744,10 +3757,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         const Page &current_page = pages_[iCurrentPage];
         const options_container &current_options = ( ingame || world_options_only ) &&
                 iCurrentPage == iWorldOptPage ? ACTIVE_WORLD_OPTIONS : OPTIONS;
-        // Tree root for this page's rows (R02.1): pages and the worldgen
-        // options tab are depth 0, group headers depth 1, options depth 2
-        // (or 1 when ungrouped) and value adjustments hang under their row.
-        // Without tabs no root node is published, so rows root at depth 0.
+
+
+
+
         const bool tree_root_published = !world_options_only || with_tabs;
         const std::string tree_root_id = world_options_only ? "options:worldgen:options" :
                                          "options:page:" + std::to_string( iCurrentPage );
@@ -3788,10 +3801,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             row.position = static_cast<int>( snapshot.nodes.size() + 1 );
             row.selected = static_cast<int>( i ) == iCurrentLine;
             if( item.type == ItemType::GroupHeader ) {
-                // A collapsible world-options GROUP is not a boolean option.
-                // Read it as a group, not "unchecked checkbox, collapsed,
-                // collapsed". The tree's native expanded state is spoken
-                // once by the reader. Keep other options screens unchanged.
+
+
+
+
                 if( world_options_only ) {
                     row.role = "button";
                     row.label = string_format( _( "Options group: %s" ),
@@ -3803,8 +3816,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                     row.checked = groups_state[item.data];
                 }
                 row.detail = remove_color_tags( item.fmt_tooltip( item.group, current_options ) );
-                // Tree node (R02.1): expanding/collapsing goes through the
-                // dedicated intents in the handler, not a gameplay action.
+
+
                 row.parent_id = tree_root_published ? tree_root_id : "";
                 row.depth = group_depth;
                 row.expanded = groups_state[item.data];
@@ -3826,30 +3839,30 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             row.enabled = prerequisite_met;
             row.detail = remove_color_tags( item.fmt_tooltip( item.group, current_options ) );
             if( type == "string_input" && option.getMaxLength() > 0 ) {
-                // The original editor enforces this limit while typing
-                // without ever stating it; publish it so the limit is
-                // known before a draft is entered (R19.4).
+
+
+
                 row.detail += string_format( _( " Maximum length: %d characters." ),
                                              option.getMaxLength() );
             }
             if( !prerequisite_met ) {
                 row.disabled_reason = _( "The prerequisite for this option is not met." );
             }
-            // Tree placement (R02.1) and form contract (R02.3). The applied
-            // value stays in "value" as display text; the raw applied value,
-            // the domain and any unapplied draft travel as form metadata.
+
+
+
             const auto header = group_header_ids.find( item.group );
             const bool grouped = !item.group.empty() && header != group_header_ids.end();
             row.parent_id = grouped ? header->second :
                             tree_root_published ? tree_root_id : "";
             row.depth = grouped ? group_depth + 1 : group_depth;
             row.expanded = true;
-            // An int_map option's domain is the discrete mIntValues set,
-            // not a contiguous range: publish it as a choice field over
-            // exactly that set (R19.4). As an "int" field without a range
-            // it previously accepted any integer draft, and
-            // cOpt::setValue then silently reset out-of-set values to
-            // the default instead of applying what was drafted.
+
+
+
+
+
+
             row.field_type = type == "bool" ? "bool" :
                              type == "int_map" ? "choice" :
                              type == "int" ? "int" :
@@ -3884,10 +3897,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 probe.value = draft->second;
                 std::string error_code;
                 if( !a11y::validate_intent_value( row, probe, error_code ) ) {
-                    // Defense in depth: the runtime already rejected invalid
-                    // drafts, but a draft can go stale if the domain changes
-                    // while the screen is open. The reason is published as
-                    // localized text, never as the internal code.
+
+
+
+
                     row.field_error = error_code == "not_a_number" ? _( "The draft is not a number." ) :
                                       error_code == "value_out_of_range" ? _( "The draft is outside the allowed range." ) :
                                       error_code == "value_step_mismatch" ? _( "The draft does not match the allowed step." ) :
@@ -3897,10 +3910,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 if( row.field_error.empty() && type == "string_input" &&
                     option.getMaxLength() > 0 &&
                     utf8_width( draft->second ) > option.getMaxLength() ) {
-                    // The text contract carries no length field, so an
-                    // over-long draft is flagged here and refused by the
-                    // apply handler instead of being truncated silently
-                    // (R19.4).
+
+
+
+
                     row.field_error = _( "The draft is longer than the maximum length." );
                 }
             }
@@ -3908,7 +3921,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                                     reader_target{ reader_target_kind::option, iCurrentPage, static_cast<int>( i ), item.data } );
             snapshot.nodes.push_back( std::move( row ) );
 
-            for( const bool next : { false, true } ) {
+            for( const bool next : {
+                     false, true
+                 } ) {
                 const std::string adjustment_id = row_id + ( next ? ":next" : ":previous" );
                 a11y::semantic_node adjustment;
                 adjustment.id = adjustment_id;
@@ -3917,7 +3932,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 adjustment.value = option.getValueName();
                 adjustment.enabled = prerequisite_met;
                 adjustment.detail = next ? _( "Activate to select the next value." ) :
-                                   _( "Activate to select the previous value." );
+                                    _( "Activate to select the previous value." );
                 adjustment.parent_id = row_id;
                 adjustment.depth = row.depth + 1;
                 adjustment.expanded = true;
@@ -3932,10 +3947,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
         }
 
-        // Cross-field constraints (R02.3): an option whose prerequisite is
-        // another option published on this same page names that field's
-        // node as a dependency. Prerequisites on other pages cannot be
-        // referenced and stay expressed by enabled/disabled_reason only.
+
+
+
+
         for( a11y::semantic_node &node : snapshot.nodes ) {
             if( node.field_type.empty() ) {
                 continue;
@@ -3953,16 +3968,18 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 if( entry.second.kind == reader_target_kind::option &&
                     entry.second.data == prerequisite && entry.first != node.id &&
                     std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
-                [&entry]( const a11y::semantic_node & candidate ) { return candidate.id == entry.first; } ) ) {
+                [&entry]( const a11y::semantic_node & candidate ) {
+                return candidate.id == entry.first;
+            } ) ) {
                     node.depends_on.push_back( entry.first );
                     break;
                 }
             }
         }
 
-        // Tree sibling sets (R02.1): position/total of a tree node count its
-        // siblings under the same parent in the published set, and
-        // has_children reflects children actually published.
+
+
+
         {
             std::unordered_map<std::string, int> sibling_totals;
             for( const a11y::semantic_node &node : snapshot.nodes ) {
@@ -3979,9 +3996,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 node.total = sibling_totals[node.parent_id];
                 node.has_children = sibling_totals.count( node.id ) != 0;
             }
-            // A collapsed group still has children in the tree even though
-            // none are published; has_children describes the tree, while
-            // expanded describes what is currently published.
+
+
+
             for( a11y::semantic_node &node : snapshot.nodes ) {
                 const auto target = reader_targets.find( node.id );
                 if( target != reader_targets.end() &&
@@ -3991,8 +4008,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
         }
 
-        // Tree content already has sibling positions. Count command nodes
-        // only within their own command list, never across the page.
+
+
         const size_t content_count = snapshot.nodes.size();
         auto commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
@@ -4000,14 +4017,16 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         }
         snapshot.focus = "options:line:" + std::to_string( iCurrentPage ) + ":" +
                          std::to_string( iCurrentLine );
-        if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(), [&]( const a11y::semantic_node &node ) {
+        if( std::none_of( snapshot.nodes.begin(),
+        snapshot.nodes.end(), [&]( const a11y::semantic_node & node ) {
         return node.id == snapshot.focus;
-        } ) ) {
+    } ) ) {
             snapshot.focus = world_options_only && with_tabs ? "options:worldgen:options" :
-                            "options:page:" + std::to_string( iCurrentPage );
-            if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(), [&]( const a11y::semantic_node &node ) {
+                             "options:page:" + std::to_string( iCurrentPage );
+            if( std::none_of( snapshot.nodes.begin(),
+            snapshot.nodes.end(), [&]( const a11y::semantic_node & node ) {
             return node.id == snapshot.focus;
-            } ) ) {
+        } ) ) {
                 snapshot.focus = snapshot.nodes.empty() ? std::string() : snapshot.nodes.front().id;
             }
         }
@@ -4031,8 +4050,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
     const auto init_windows = [&]( ui_adaptor & ui ) {
         recalc_startpos = true;
 #if !defined(__ANDROID__)
-        // desktop window resize rewrites TERMINAL_X/Y; keep that out of change
-        // detection. android never writes them back on resize
+
+
         if( OPTIONS.find( "TERMINAL_X" ) != OPTIONS.end() ) {
             if( OPTIONS_OLD.find( "TERMINAL_X" ) != OPTIONS_OLD.end() ) {
                 OPTIONS_OLD["TERMINAL_X"] = OPTIONS["TERMINAL_X"];
@@ -4098,7 +4117,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         const Page &page = pages_[iCurrentPage];
         const std::vector<PageItem> &page_items = page.items_;
 
-        // Cache visible entries
+
         std::vector<int> visible_items;
         visible_items.reserve( page_items.size() );
         int curr_line_visible = 0;
@@ -4126,7 +4145,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
         }
 
-        // Format name & value strings for given entry
+
         const auto fmt_name_value = [&]( const PageItem & it, bool is_selected )
         -> std::pair<string_col, string_col> {
             const char *IN_GROUP_PREFIX = ": ";
@@ -4169,7 +4188,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
         };
 
-        // Draw separation lines
+
         wattron( w_options, BORDER_COLOR );
         for( const int &x : vert_lines ) {
             mvwvline( w_options, point( x, 0 ), LINE_XOXO, iContentHeight );
@@ -4177,24 +4196,24 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         wattroff( w_options, BORDER_COLOR );
 
         if( recalc_startpos ) {
-            // Update scroll position
+
             calcStartPos( iStartPos, curr_line_visible, iContentHeight,
                           static_cast<int>( visible_items.size() ) );
         }
 
-        // where the column with the names starts
+
         const size_t name_col = 5;
-        // where the column with the values starts
+
         const size_t value_col = 62;
-        // 2 for the space between name and value column, 3 for the ">> "
+
         const size_t name_width = value_col - name_col - 2 - 3;
         const size_t value_width = getmaxx( w_options ) - value_col;
-        //Draw options
+
         for( int i = iStartPos;
              i < iStartPos + ( iContentHeight > static_cast<int>( visible_items.size() ) ?
                                static_cast<int>( visible_items.size() ) : iContentHeight ); i++ ) {
 
-            int line_pos = i - iStartPos; // Current line position in window.
+            int line_pos = i - iStartPos;
 
             mvwprintz( w_options, point( 1, line_pos ), c_white, "%d", visible_items[i] + 1 );
 
@@ -4226,7 +4245,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
 
         wnoutrefresh( w_options_border );
 
-        //Draw Tabs
+
         int tab_x = 0;
         if( !world_options_only ) {
             mvwprintz( w_options_header, point( 7, 0 ), c_white, "" );
@@ -4328,7 +4347,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 }
             }
 #if defined(__ANDROID__)
-            // the grid reads live options, so an edit shows at once
+
             request_terminal_relayout();
 #endif
         };
@@ -4356,7 +4375,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             sel_worldgen_tab = 1;
             std::optional<point> coord = ctxt.get_coordinates_text( w_options_border );
             if( world_options_only && with_tabs && coord.has_value() ) {
-                // worldgen tabs
+
                 found_opt = run_for_point_in<size_t, point>( worldgen_tab_map, *coord,
                 [&sel_worldgen_tab]( const std::pair<size_t, inclusive_rectangle<point>> &p ) {
                     sel_worldgen_tab = p.first;
@@ -4367,7 +4386,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
             coord = ctxt.get_coordinates_text( w_options_header );
             if( !found_opt && coord.has_value() ) {
-                // option category tabs
+
                 bool new_val = false;
                 const int psize = pages_.size();
                 found_opt = run_for_point_in<int, point>( opt_tab_map, *coord,
@@ -4386,7 +4405,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
             coord = ctxt.get_coordinates_text( w_options );
             if( !found_opt && coord.has_value() ) {
-                // option lines
+
                 const int psize = page_items.size();
                 found_opt = run_for_point_in<int, point>( opt_line_map, *coord,
                 [&iCurrentLine, &psize]( const std::pair<int, inclusive_rectangle<point>> &p ) {
@@ -4472,7 +4491,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                     break;
                 }
                 case ItemType::BlankLine: {
-                    // Should never happen
+
                     break;
                 }
                 default:
@@ -4483,7 +4502,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         }
     }
 
-    //Look for changes
+
     bool options_changed = false;
     bool world_options_changed = false;
     bool lang_changed = false;
@@ -4579,8 +4598,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
     }
 #elif defined(__ANDROID__)
     ( void ) terminal_size_changed;
-    // grid follows live options, which may hold unsaved edits while the menu is
-    // open; re-lay out from the kept options on every exit
+
+
     request_terminal_relayout();
 #else
     ( void ) terminal_size_changed;
@@ -4624,7 +4643,7 @@ void options_manager::deserialize( const JsonArray &ja )
     for( JsonObject joOptions : ja ) {
         joOptions.allow_omitted_members();
 
-        // yay hardcoded list! remove after 0.J
+
         std::vector<std::string> removed_options = { "DISTANCE_INITIAL_VISIBILITY", "FOV_3D_Z_RANGE", "SAFEMODE",
                                                      "INITIAL_STAT_POINTS", "INITIAL_TRAIT_POINTS", "INITIAL_SKILL_POINTS", "MAX_TRAIT_POINTS",
                                                      "SKILL_TRAINING_SPEED", "PROFICIENCY_TRAINING_SPEED", "CITY_SPACING", "CITY_SIZE", "NPC_SPAWNTIME"
@@ -4633,7 +4652,7 @@ void options_manager::deserialize( const JsonArray &ja )
         const std::string name = migrateOptionName( joOptions.get_string( "name" ) );
 
         if( std::find( removed_options.begin(), removed_options.end(), name ) != removed_options.end() ) {
-            continue; // option was removed so we just don't do anything here.
+            continue;
         }
         const std::string value = migrateOptionValue( joOptions.get_string( "name" ),
                                   joOptions.get_string( "value" ) );
@@ -4652,7 +4671,7 @@ std::string options_manager::migrateOptionName( const std::string &name ) const
 std::string options_manager::migrateOptionValue( const std::string &name,
         const std::string &val ) const
 {
-    //TODO: Remove after stable after world option reserialising is added
+
     if( name == "MONSTER_UPGRADE_FACTOR" ) {
         const float new_value = svtod( val ).value_or( 4.0 ) / 4.0f;
         std::ostringstream ssTemp;
@@ -4674,12 +4693,12 @@ std::string options_manager::migrateOptionValue( const std::string &name,
 
 void options_manager::update_options_cache()
 {
-    // cache to global due to heavy usage.
+
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
     use_tiles = ::get_option<bool>( "USE_TILES" );
 
-    // Since these are external options they aren't loaded before the first time
-    // update_options_cache is called, so they're conditionally loaded.
+
+
     if( ::has_option( "PLAYER_MAX_STR_VALUE" ) ) {
         character_max_str = ::get_option<int>( "PLAYER_MAX_STR_VALUE" );
     }
@@ -4702,7 +4721,7 @@ void options_manager::update_options_cache()
     prevent_occlusion_max_dist = ::get_option<float>( "PREVENT_OCCLUSION_MAX_DIST" );
     show_creature_overlay_icons = ::get_option<bool>( "CREATURE_OVERLAY_ICONS" );
 
-    // if the tilesets are identical don't duplicate
+
     use_far_tiles = ::get_option<bool>( "USE_DISTANT_TILES" ) ||
                     ::get_option<std::string>( "TILES" ) == ::get_option<std::string>( "DISTANT_TILES" );
     use_tiles_overmap = ::get_option<bool>( "USE_OVERMAP_TILES" );
@@ -4746,16 +4765,16 @@ void options_manager::load()
     } );
 
 #if defined(LOCALIZE)
-    // This fork starts in Vietnamese on every launch, including for users
-    // whose existing options.json was saved with English selected.
-    // Language changes made in the settings menu still work until restart.
+
+
+
     if( get_langs_with_translation_files().count( "vi" ) != 0 ) {
         get_option( "USE_LANG" ).setValue( "vi" );
     }
 #endif
 
-    // Use the soundpack installed by Android before the native engine starts.
-    // Migrate the previous auto-downloaded Otopack, but preserve other choices.
+
+
     if( SOUNDPACKS.find( "Bl@ck Edition soundpack" ) != SOUNDPACKS.end() &&
         ( get_option( "SOUNDPACKS" ).getValue() == "basic" ||
           get_option( "SOUNDPACKS" ).getValue() == "Menu_Sound_Test" ||
@@ -4789,16 +4808,16 @@ options_manager::cOpt &options_manager::get_option( const std::string &name )
         return nullopt;
     }
     if( !world_options.has_value() ) {
-        // Global options contains the default for new worlds, which is good enough here.
+
         return opt->second;
     }
     std::unordered_map<std::string, cOpt>::iterator wopt = ( *world_options )->find( name );
     if( wopt == ( *world_options )->end() ) {
         if( opt->second.getPage() != "world_default" ) {
-            // Requested a non-world option, deliver it.
+
             return opt->second;
         }
-        // May be a new option and an old world - import default from global options.
+
         cOpt &new_world_option = ( **world_options )[name];
         new_world_option = opt->second;
         return new_world_option;

@@ -36,17 +36,17 @@ void UnusedStaticsCheck::check( const MatchFinder::MatchResult &Result )
 
     const SourceManager &SM = *Result.SourceManager;
 
-    // Ignore cases in header files
+
     if( !SM.isInMainFile( ThisDecl->getBeginLoc() ) ) {
         return;
     }
 
-    // Ignore cases that are not the first declaration
+
     if( ThisDecl->getPreviousDecl() ) {
         return;
     }
 
-    // Ignore cases that are not static linkage
+
     Linkage Lnk = ThisDecl->getFormalLinkage();
     if( Lnk != Linkage::Internal && Lnk != Linkage::UniqueExternal ) {
         return;
@@ -55,7 +55,7 @@ void UnusedStaticsCheck::check( const MatchFinder::MatchResult &Result )
     SourceLocation DeclLoc = ThisDecl->getBeginLoc();
     SourceLocation ExpansionLoc = SM.getFileLoc( DeclLoc );
     if( DeclLoc != ExpansionLoc ) {
-        // We are inside a macro expansion
+
         return;
     }
 
@@ -73,4 +73,4 @@ void UnusedStaticsCheck::onEndOfTranslationUnit()
     }
 }
 
-} // namespace clang::tidy::cata
+}

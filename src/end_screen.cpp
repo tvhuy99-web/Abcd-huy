@@ -22,7 +22,7 @@
 #include "generic_factory.h"
 #include "imgui/imgui_stdlib.h"
 #include "input_context.h"
-#include "npc.h" // for parse_tags()! Why!
+#include "npc.h"
 #include "talker.h"
 #include "ui_manager.h"
 
@@ -31,7 +31,7 @@ static const ascii_art_id ascii_art_ascii_tombstone( "ascii_tombstone" );
 namespace
 {
 generic_factory<end_screen> end_screen_factory( "end_screen" );
-} // namespace
+}
 
 template<>
 const end_screen &string_id<end_screen>::obj()const
@@ -73,14 +73,16 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
     ctxt.set_timeout( 50 );
     end_screen_ui_impl p_impl;
     a11y::screen_scope reader( &ctxt, "end_screen",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        // The end screen is complete only after Continue. Back must never
-        // strand a screen-reader user with an unsupported cancel receipt.
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+
+
         if( intent.action == "cancel" ||
-            ( intent.action == "activate" && intent.node == "end:continue" ) ) {
+            ( intent.action == "activate" && intent.node == "end:continue" ) )
+        {
             return "TEXT.CONFIRM";
         }
-        if( intent.action == "set_text" && intent.node == "end:last_words" ) {
+        if( intent.action == "set_text" && intent.node == "end:last_words" )
+        {
             p_impl.text = intent.value;
             return "TIMEOUT";
         }
@@ -91,7 +93,7 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
         ui_manager::redraw_invalidated();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                    ctxt, actually_dead ? _( "Your character has died" ) : _( "The End" ) );
+                                                   ctxt, actually_dead ? _( "Your character has died" ) : _( "The End" ) );
             snapshot.summary = p_impl.accessibility_description;
             a11y::append_document( snapshot, "end:details", _( "End-screen details" ),
                                    p_impl.accessibility_description );
@@ -104,9 +106,9 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
                 last_words.actions = { "focus", "set_text" };
                 snapshot.nodes.push_back( std::move( last_words ) );
             }
-            // A primary action, not an auxiliary command hidden behind
-            // a hold gesture. Browsing to this button never advances
-            // the death sequence; activation and Back do.
+
+
+
             a11y::semantic_node continue_button;
             continue_button.id = "end:continue";
             continue_button.role = "button";
@@ -136,7 +138,7 @@ void end_screen_ui_impl::draw_controls()
     std::string input_label;
     std::vector<std::pair<std::pair<int, int>, std::string>> added_info;
 
-    //Sort end_screens in order of decreasing priority
+
     std::vector<end_screen> sorted_screens = end_screen::get_all();
     std::sort( sorted_screens.begin(), sorted_screens.end(), []( end_screen const & a,
     end_screen const & b ) {

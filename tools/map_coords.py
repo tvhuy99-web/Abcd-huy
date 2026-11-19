@@ -208,15 +208,12 @@ Coordinate: \"x'(0->179) y'(0->179)\" or \"x'(0->179) y'(0->179) z\"
 
         retInfo = False
 
-        # .map file pattern
         if re.match(r"^-?\d+\.-?\d+\.-?\d+\.map$", args.format):
             retInfo = info_file(args.format)
 
-        # .map folder pattern
         elif re.match(r"^-?\d+\.-?\d+\.-?\d+$", args.format):
             info_folder(args.format)
 
-        # map coordinate pattern
         elif re.match(
             r"^-?\d'(\d{0,2}|1[0-7]\d)\s+-?\d+'(\d{0,2}|1[0-7]\d)(\s+-?\d+)?$",
             args.format,

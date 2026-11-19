@@ -63,7 +63,7 @@ struct eoc_math {
     std::shared_ptr<math_exp> exp;
 
     void from_json( const JsonObject &jo, std::string_view member, math_type_t type_ );
-    // needed for value_or_var. assumes math_type_t = ret. use from_json() instead of this
+
     void deserialize( JsonValue const &jsin );
 
     template<typename D>
@@ -124,7 +124,7 @@ struct value_or_var_pair {
 
 template<typename T>
 struct string_mutator {
-    std::function<T( const_dialogue const &/* d */ )> ret_func;
+    std::function<T( const_dialogue const & )> ret_func;
 
     T operator()( const_dialogue const &d ) const {
         return ret_func( d );
@@ -172,4 +172,4 @@ struct talk_effect_fun_t {
         }
 };
 
-#endif // CATA_SRC_DIALOGUE_HELPERS_H
+#endif

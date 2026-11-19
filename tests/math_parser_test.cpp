@@ -54,7 +54,7 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.parse( "50" ) );
     CHECK( testexp.eval( d ) == Approx( 50 ) );
 
-    // binary
+
     CHECK( testexp.parse( "50 + 2" ) );
     CHECK( testexp.eval( d ) == Approx( 52 ) );
     CHECK( testexp.parse( "50 + 2 * 3" ) );
@@ -67,13 +67,13 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.eval( d ) == Approx( 114 ) );
     CHECK( testexp.parse( "50 % 3" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
-    // boolean
+
     CHECK( testexp.parse( "1 > 2" ) );
     CHECK( testexp.eval( d ) == Approx( 0 ) );
     CHECK( testexp.parse( "(1 <= 2) * 3" ) );
     CHECK( testexp.eval( d ) == Approx( 3 ) );
 
-    // unary
+
     CHECK( testexp.parse( "-50" ) );
     CHECK( testexp.eval( d ) == Approx( -50 ) );
     CHECK( testexp.parse( "+50" ) );
@@ -88,16 +88,16 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.eval( d ) == Approx( 9 ) );
     CHECK( testexp.parse( "-3^-2" ) );
     CHECK( testexp.eval( d ) == Approx( std::pow( -3, -2 ) ) );
-    CHECK( testexp.parse( "2++3" ) ); // equivalent to 2+(+3)
+    CHECK( testexp.parse( "2++3" ) );
     CHECK( testexp.eval( d ) == Approx( 5 ) );
-    CHECK( testexp.parse( "2+-3" ) ); // equivalent to 2+(-3)
+    CHECK( testexp.parse( "2+-3" ) );
     CHECK( testexp.eval( d ) == Approx( -1 ) );
     CHECK( testexp.parse( "!1" ) );
     CHECK( testexp.eval( d ) == Approx( 0 ) );
     CHECK( testexp.parse( "!(1 == 0)" ) );
     CHECK( testexp.eval( d ) == Approx( 1 ) );
 
-    //ternary
+
     CHECK( testexp.parse( "0?1:2" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
     CHECK( testexp.parse( "0==0?1:2" ) );
@@ -121,10 +121,10 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.parse( "1==1?2:(3?4:5)" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
 
-    // functions
-    CHECK( testexp.parse( "_test_()" ) ); // nullary test function
-    CHECK( testexp.parse( "max()" ) ); // variadic called with zero arguments
-    CHECK( testexp.parse( "clamp( 1, 2, 3 )" ) ); // arguments passed in the right order 🤦
+
+    CHECK( testexp.parse( "_test_()" ) );
+    CHECK( testexp.parse( "max()" ) );
+    CHECK( testexp.parse( "clamp( 1, 2, 3 )" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
     CHECK( testexp.parse( "sin(1)" ) );
     CHECK( testexp.eval( d ) == Approx( std::sin( 1.0 ) ) );
@@ -143,11 +143,11 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.parse( "cos( sin( min( 1 + 2, -50 ) ) )" ) );
     CHECK( testexp.eval( d ) == Approx( std::cos( std::sin( std::min( 1 + 2, -50 ) ) ) ) );
 
-    // whitespace
+
     CHECK( testexp.parse( "       50              +  (  2 *                3 ) ^                2             " ) );
     CHECK( testexp.eval( d ) == Approx( 86 ) );
 
-    // constants
+
     CHECK( testexp.parse( "π" ) );
     CHECK( testexp.eval( d ) == Approx( math_constants::pi_v ) );
     CHECK( testexp.parse( "pi" ) );
@@ -155,16 +155,16 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.parse( "e^2" ) );
     CHECK( testexp.eval( d ) == Approx( std::pow( math_constants::e_v, 2 ) ) );
 
-    // from https://raw.githubusercontent.com/ArashPartow/math-parser-benchmark-project/master/bench_expr_complete.txt
+
     CHECK( testexp.parse( "((((((((5+7)*7.123)-3)-((5+7)-(7.123*3)))-((5*(7-(7.123*3)))/((5*7)+(7.123+3))))-((((5+7)-(7.123*3))+((5/7)+(7.123+3)))+(((5*7)+(7.123+3))*((5/7)/(7.123-3)))))-(((((5/7)-(7.321/3))*((5-7)+(7.321+3)))*(((5-7)-(7.321+3))+((5-7)*(7.321/3))))*((((5-7)+(7.321+3))-((5*7)*(7.321+3)))-(((5-7)*(7.321/3))/(5+((7/7.321)+3)))))))" ) );
     CHECK( testexp.eval( d ) == Approx( 87139.7243098 ) );
 
-    // locale-independent decimal point
+
     CHECK( testexp.parse( "2 * 1.5" ) );
     CHECK( testexp.eval( d ) == Approx( 3 ) );
     CHECK( testexp.parse( "2 * .5" ) );
     CHECK( testexp.eval( d ) == Approx( 1 ) );
-    // E-notation
+
     CHECK( testexp.parse( ".5e1" ) );
     CHECK( testexp.eval( d ) == Approx( .5e1 ) );
     CHECK( testexp.parse( ".5e1+1" ) );
@@ -174,51 +174,51 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     CHECK( testexp.parse( "1.5e-10+1" ) );
     CHECK( testexp.eval( d ) == Approx( 1.5e-10 + 1 ) );
 
-    // nan and inf
+
     CHECK( testexp.parse( "1 / 0" ) );
     CHECK( std::isinf( testexp.eval( d ) ) );
     CHECK( testexp.parse( "-1 ^ 0.5" ) );
     CHECK( std::isnan( testexp.eval( d ) ) );
 
-    // diag functions. _test_diag adds up all the (kw)args except for "test_unused_kwarg"
-    CHECK( testexp.parse( "_test_diag_(1, 2, 3*4)" ) ); // mixed arg types
+
+    CHECK( testexp.parse( "_test_diag_(1, 2, 3*4)" ) );
     CHECK( testexp.eval( d ) == Approx( 15 ) );
-    CHECK( testexp.parse( "_test_diag_('1+2*3:() sin(1)')" ) ); // string with token delimiters
-    CHECK( testexp.parse( "_test_diag_(sin(pi), _test_diag_(1))" ) ); // composition
+    CHECK( testexp.parse( "_test_diag_('1+2*3:() sin(1)')" ) );
+    CHECK( testexp.parse( "_test_diag_(sin(pi), _test_diag_(1))" ) );
     CHECK( testexp.eval( d ) == Approx( 1 ) );
-    CHECK( testexp.parse( "_test_diag_(1, 2, '1':2, '3':4)" ) );  // kwargs after positional
+    CHECK( testexp.parse( "_test_diag_(1, 2, '1':2, '3':4)" ) );
     CHECK( testexp.eval( d ) == Approx( 9 ) );
-    CHECK( testexp.parse( "_test_diag_('1':2)" ) );  // double kwarg
+    CHECK( testexp.parse( "_test_diag_('1':2)" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
-    CHECK( testexp.parse( "_test_diag_('1':3.5*sin(pi/2))" ) );  // sub-expression kwarg
+    CHECK( testexp.parse( "_test_diag_('1':3.5*sin(pi/2))" ) );
     CHECK( testexp.eval( d ) == Approx( 3.5 ) );
-    CHECK( testexp.parse( "_test_diag_('1':0==0?1:2)" ) );  // ternary kwarg
+    CHECK( testexp.parse( "_test_diag_('1':0==0?1:2)" ) );
     CHECK( testexp.eval( d ) == Approx( 1 ) );
-    CHECK( testexp.parse( "_test_diag_('1':2*_test_diag_('2':3))" ) );  // kwarg composition
+    CHECK( testexp.parse( "_test_diag_('1':2*_test_diag_('2':3))" ) );
     CHECK( testexp.eval( d ) == Approx( 6 ) );
-    CHECK( testexp.parse( "_test_diag_([1,2,2+1])" ) );  // array arg
+    CHECK( testexp.parse( "_test_diag_([1,2,2+1])" ) );
     CHECK( testexp.eval( d ) == Approx( 6 ) );
-    CHECK( testexp.parse( "_test_diag_([1,1+1,3], 'blorg': [3+1,5,6])" ) );  // array kwarg
+    CHECK( testexp.parse( "_test_diag_([1,1+1,3], 'blorg': [3+1,5,6])" ) );
     CHECK( testexp.eval( d ) == Approx( 21 ) );
-    CHECK( testexp.parse( "_test_str_len_(['1','2'], '1': ['one','two'])" ) );  // str array
+    CHECK( testexp.parse( "_test_str_len_(['1','2'], '1': ['one','two'])" ) );
     CHECK( testexp.eval( d ) == Approx( 8 ) );
-    CHECK( testexp.parse( "_test_str_len_(['don\\'t'])" ) );  // escaped quote
+    CHECK( testexp.parse( "_test_str_len_(['don\\'t'])" ) );
     CHECK( testexp.eval( d ) == Approx( 5 ) );
-    CHECK( testexp.parse( "_test_diag_([1,2,3], 'blorg': [4,5,_test_diag_([6,7,8], '2':[9])])" ) );  // yo dawg
+    CHECK( testexp.parse( "_test_diag_([1,2,3], 'blorg': [4,5,_test_diag_([6,7,8], '2':[9])])" ) );
     CHECK( testexp.eval( d ) == Approx( 45 ) );
-    CHECK( testexp.parse( "_test_diag_([[0,-1],[2,0],[3,4]])" ) );  // nested arrays
+    CHECK( testexp.parse( "_test_diag_([[0,-1],[2,0],[3,4]])" ) );
     CHECK( testexp.parse( "_test_diag_([[0,-1],[2,0],[3,(3+1)]])" ) );
     CHECK( testexp.eval( d ) == Approx( 8 ) );
-    CHECK( testexp.parse( "_test_diag_([],1)" ) );  // empty array
+    CHECK( testexp.parse( "_test_diag_([],1)" ) );
     CHECK( testexp.eval( d ) == Approx( 1 ) );
-    CHECK( testexp.parse( "_test_diag_([0?1:2,3,1?4:5])" ) );  // ternaries in array
+    CHECK( testexp.parse( "_test_diag_([0?1:2,3,1?4:5])" ) );
     CHECK( testexp.eval( d ) == Approx( 9 ) );
-    CHECK( testexp.parse( "_test_str_len_((['1','2']))" ) ); // pointless parens
+    CHECK( testexp.parse( "_test_str_len_((['1','2']))" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
-    CHECK( testexp.parse( "_test_str_len_((['1',('2')]))" ) ); // pointless parens
+    CHECK( testexp.parse( "_test_str_len_((['1',('2')]))" ) );
     CHECK( testexp.eval( d ) == Approx( 2 ) );
 
-    // dot operator
+
     get_globals().set_global_value( "mytripoint", tripoint_abs_ms{ 1, 2, 3 } );
     CHECK( testexp.parse( "mytripoint.x" ) );
     CHECK( testexp.eval( d ) == Approx( 1 ) );
@@ -230,7 +230,7 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
     testexp.eval( d );
     CHECK( get_globals().get_global_value( "mytripoint" ).tripoint().z() == 4 );
 
-    // failed validation
+
     // NOLINTNEXTLINE(readability-function-cognitive-complexity): false positive
     std::string dmsg = capture_debugmsg_during( [&testexp, &d]() {
         CHECK_FALSE( testexp.parse( "2+" ) );
@@ -248,14 +248,14 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
         CHECK_FALSE( testexp.parse( "]" ) );
         CHECK_FALSE( testexp.parse( "()" ) );
         CHECK_FALSE( testexp.parse( "[]" ) );
-        CHECK_FALSE( testexp.parse( "[2]" ) ); // not diag function
+        CHECK_FALSE( testexp.parse( "[2]" ) );
         CHECK_FALSE( testexp.parse( "(2+2))" ) );
         CHECK_FALSE( testexp.parse( "(2+2^)" ) );
         CHECK_FALSE( testexp.parse( "((2+2)" ) );
         CHECK_FALSE( testexp.parse( "(2+2,3)" ) );
-        CHECK_FALSE( testexp.parse( "sin(1,2)" ) ); // too many arguments
-        CHECK_FALSE( testexp.parse( "rng(1)" ) );   // not enough arguments
-        CHECK_FALSE( testexp.parse( "rng(1,[2,3])" ) );   // not diag function
+        CHECK_FALSE( testexp.parse( "sin(1,2)" ) );
+        CHECK_FALSE( testexp.parse( "rng(1)" ) );
+        CHECK_FALSE( testexp.parse( "rng(1,[2,3])" ) );
         CHECK_FALSE( testexp.parse( "sin((1+2,3))" ) );
         CHECK_FALSE( testexp.parse( "sin(1" ) );
         CHECK_FALSE( testexp.parse( "sin" ) );
@@ -266,12 +266,12 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
         CHECK_FALSE( testexp.parse( "_test_(1)" ) );
         CHECK_FALSE( testexp.parse( "'string'" ) );
         CHECK_FALSE( testexp.parse( "('wrong')" ) );
-        CHECK_FALSE( testexp.parse( "_test_diag_('wr'ong')" ) ); // stray ' inside string
-        CHECK_FALSE( testexp.parse( "_test_diag_('wrong)" ) ); // unterminated string
-        CHECK_FALSE( testexp.parse( "_test_diag_('1'+'2')" ) );  // no string operators (yet)
-        CHECK_FALSE( testexp.parse( "_test_diag_(1:'2')" ) );    // kwarg key is not string
-        CHECK_FALSE( testexp.parse( "_test_diag_('1':'2', 3)" ) ); // positional after kwargs
-        CHECK_FALSE( testexp.parse( "_test_diag_('test_unused_kwarg': 'mustfail')" ) ); // unused kwarg
+        CHECK_FALSE( testexp.parse( "_test_diag_('wr'ong')" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_('wrong)" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_('1'+'2')" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_(1:'2')" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_('1':'2', 3)" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_('test_unused_kwarg': 'mustfail')" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_('1':'2':)" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_('1':'2':'3')" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_(:)" ) );
@@ -283,16 +283,16 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
         CHECK_FALSE( testexp.parse( "_test_diag_(2])" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_(2+])" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_(['1','':'1')" ) );
-        CHECK_FALSE( testexp.parse( "_test_diag_([1,2))" ) ); // mismatched brackets
-        CHECK_FALSE( testexp.parse( "_test_diag_([1,2]*2)" ) ); // no operators support arrays (yet)
+        CHECK_FALSE( testexp.parse( "_test_diag_([1,2))" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_([1,2]*2)" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_(-[1,2])" ) );
-        CHECK_FALSE( testexp.parse( "_test_diag_([1,2]?1:2)" ) ); // array can't be condition for ternary
-        CHECK_FALSE( testexp.parse( "_test_diag_(1?2:[2,3])" ) ); // no arrays in ternaries (yet)
+        CHECK_FALSE( testexp.parse( "_test_diag_([1,2]?1:2)" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_(1?2:[2,3])" ) );
         CHECK_FALSE( testexp.parse( "_test_diag_(1?[2,3]:4)" ) );
-        CHECK_FALSE( testexp.parse( "_test_diag_(['blorg':3])" ) ); // no kwargs in arrays
-        CHECK_FALSE( testexp.parse( "_test_diag_(1?'a':1:'b':2)" ) ); // no kwargs in ternaries
-        CHECK_FALSE( testexp.parse( "sin('1':'2')" ) ); // no kwargs in math functions (yet?)
-        CHECK( testexp.parse( "_test_str_len_('fail')" ) );  // expected array at runtime
+        CHECK_FALSE( testexp.parse( "_test_diag_(['blorg':3])" ) );
+        CHECK_FALSE( testexp.parse( "_test_diag_(1?'a':1:'b':2)" ) );
+        CHECK_FALSE( testexp.parse( "sin('1':'2')" ) );
+        CHECK( testexp.parse( "_test_str_len_('fail')" ) );
         bool expected_array = false;
         try {
             testexp.eval( d );
@@ -302,7 +302,7 @@ TEST_CASE( "math_parser_parsing", "[math_parser]" )
         }
         CHECK( expected_array );
         CHECK_FALSE( testexp.parse( "'1':'2'" ) );
-        CHECK_FALSE( testexp.parse( "2 2*2" ) ); // missing operator
+        CHECK_FALSE( testexp.parse( "2 2*2" ) );
         CHECK_FALSE( testexp.parse( "2+++2" ) );
         CHECK_FALSE( testexp.parse( "1=2" ) );
         CHECK_FALSE( testexp.parse( "1===2" ) );
@@ -411,7 +411,7 @@ TEST_CASE( "math_parser_dialogue_integration", "[math_parser]" )
     math_exp testexp;
     global_variables &globvars = get_globals();
 
-    // reading scoped variables
+
     globvars.set_global_value( "x", 100 );
     CHECK( testexp.parse( "x" ) );
     CHECK( testexp.eval( d ) == Approx( 100 ) );
@@ -442,9 +442,9 @@ TEST_CASE( "math_parser_dialogue_integration", "[math_parser]" )
     CHECK( testexp.parse( "has_var(_ctx)?19:20" ) );
     CHECK( testexp.eval( d ) == Approx( 19 ) );
 
-    // wrong arg type
+
     std::string dmsg = capture_debugmsg_during( [&testexp, &d]() {
-        CHECK( testexp.parse( "_test_diag_( '3' )" ) ); // this function doesn't support strings
+        CHECK( testexp.parse( "_test_diag_( '3' )" ) );
         bool expected_string = false;
         try {
             testexp.eval( d );
@@ -454,14 +454,14 @@ TEST_CASE( "math_parser_dialogue_integration", "[math_parser]" )
             CAPTURE( what );
         }
         CHECK( expected_string );
-        CHECK_FALSE( testexp.parse( "val( 'stamina' )" ) ); // invalid scope for this function
-        CHECK_FALSE( testexp.parse( "_test_str_len_([]) = 2" ) ); // dialogue function cannot assign
+        CHECK_FALSE( testexp.parse( "val( 'stamina' )" ) );
+        CHECK_FALSE( testexp.parse( "_test_str_len_([]) = 2" ) );
     } );
-    // reading scoped values with u_val shim
+
     CHECK( testexp.parse( "u_val('stamina')" ) );
     CHECK( testexp.eval( d ) == get_avatar().get_stamina() );
 
-    // units test
+
     CHECK( testexp.parse( "time('1 m')" ) );
     CHECK( testexp.eval( d ) == 60 );
     CHECK( testexp.parse( "time('1 m', 'unit':'minutes')" ) );
@@ -469,12 +469,12 @@ TEST_CASE( "math_parser_dialogue_integration", "[math_parser]" )
     CHECK( testexp.parse( "energy('25 kJ')" ) );
     CHECK( testexp.eval( d ) == 25000000 );
 
-    // evaluating string variables in dialogue functions
+
     globvars.set_global_value( "someskill", "survival" );
     CHECK( testexp.parse( "_test_str_len_([someskill])" ) );
     CHECK( testexp.eval( d ) == 8 );
 
-    // assignment to scoped variables
+
     CHECK( testexp.parse( "u_testvar = 159" ) );
     testexp.eval( d );
     CHECK( get_avatar().get_value( "testvar" ) == 159 );
@@ -513,18 +513,18 @@ TEST_CASE( "math_parser_dialogue_integration", "[math_parser]" )
     testexp.eval( d );
     CHECK( d.get_value( "testvar" ) == 1 );
 
-    // assignment to scoped values with u_val shim
+
     CHECK( testexp.parse( "u_val('stamina') = 459" ) );
     testexp.eval( d );
     CHECK( get_avatar().get_stamina() == 459 );
 
-    // event_statistic lookup
-    // Other tests may already have recorded wake-ups.
+
+
     const int wake_ups = get_stats().value_of( event_statistic_num_avatar_wake_ups ).get<int>();
     CHECK( testexp.parse( "event_statistic('num_avatar_wake_ups')" ) );
     CHECK( testexp.eval( d ) == wake_ups );
 
-    // invalid event_statistic should throw
+
     CHECK( testexp.parse( "event_statistic('nonexistent_stat_blorg')" ) );
     CHECK_THROWS_AS( testexp.eval( d ), math::exception );
 

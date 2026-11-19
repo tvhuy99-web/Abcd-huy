@@ -16,16 +16,16 @@
 #include <windows.h>
 #endif
 
-/**
- * Return a locale specific path, or if there is no path for the current
- * locale, return the default path.
- * @param path The local path is based on that value.
- * @param extension File name extension, is automatically added to the path
- * of the translated file. Can be empty, but must otherwise include the
- * initial '.', e.g. ".json"
- * @param fallback The path of the fallback filename.
- * It is used if no translated file can be found.
- */
+
+
+
+
+
+
+
+
+
+
 static std::string find_translated_file( const std::string &path, const std::string &extension,
         const std::string &fallback );
 static cata_path find_translated_file( const cata_path &base_path, const std::string &extension,
@@ -62,7 +62,7 @@ static cata_path options_path_value;
 static cata_path savedir_path_value;
 static cata_path user_dir_path_value;
 
-// Get the given env var, or abort the program if it is not set
+
 static const char *getenv_or_abort( const char *name )
 {
     const char *result = getenv( name );
@@ -84,7 +84,7 @@ void PATH_INFO::init_user_dir( std::string dir )
         const char *user_dir;
 #if defined(_WIN32)
         user_dir = getenv_or_abort( "LOCALAPPDATA" );
-        // On Windows userdir without dot
+
         dir = std::string( user_dir ) + "/cataclysm-dda/";
 #elif defined(MACOSX)
         user_dir = getenv_or_abort( "HOME" );
@@ -108,11 +108,11 @@ void PATH_INFO::init_user_dir( std::string dir )
 
 void PATH_INFO::set_standard_filenames()
 {
-    // Special: data_dir and gfx_dir
+
     std::string prefix;
     cata_path prefix_path;
 
-    // Data is always relative to itself. Also, the base path might not be writeable.
+
     datadir_path_value = cata_path{ cata_path::root_path::data, std::filesystem::path{} };
 
     if( !base_path_value.empty() ) {
@@ -127,7 +127,7 @@ void PATH_INFO::set_standard_filenames()
 #endif
     } else {
         datadir_value = "data/";
-        // Base path is empty here but everything else is still relative to base, which is empty.
+
         prefix_path = base_path_path_value;
     }
 
@@ -136,13 +136,13 @@ void PATH_INFO::set_standard_filenames()
     langdir_value = prefix + "lang/mo/";
     langdir_path_value = prefix_path / "lang" / "mo";
 
-    // Shared dirs
 
-    // Shared files
+
+
     motd_value = datadir_value + "motd/" + "en.motd";
 
     savedir_value = user_dir_value + "save/";
-    // Special: savedir is always relative to itself even if in the user dir location.
+
     savedir_path_value = cata_path{ cata_path::root_path::save, std::filesystem::path{} };
     memorialdir_value = user_dir_value + "memorial/";
     memorialdir_path_value = user_dir_path_value / "memorial";
@@ -539,11 +539,11 @@ void PATH_INFO::set_datadir( const std::string &datadir )
 {
     datadir_value = datadir;
     datadir_path_value = cata_path{ cata_path::root_path::data, std::filesystem::path{} };
-    // Shared dirs
+
     gfxdir_value = datadir_value + "gfx/";
     gfxdir_path_value = datadir_path_value / "gfx";
 
-    // Shared files
+
     motd_value = datadir_value + "motd/" + "en.motd";
     motd_path_value = datadir_path_value / "motd" / "en.motd";
 }

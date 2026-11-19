@@ -37,7 +37,7 @@ std::vector<fault_id> all_of_type( const std::string &type );
 
 const fault_id &random_of_type( const std::string &type );
 const fault_id &random_of_type_item_has( const item &it, const std::string &type );
-} // namespace faults
+}
 
 enum class fault_severity : int {
     none,
@@ -57,20 +57,20 @@ class fault_fix
     public:
         fault_fix_id id = fault_fix_id::NULL_ID();
         translation name;
-        translation success_msg; // message to print on applying successfully
+        translation success_msg;
         time_duration time = 0_seconds;
-        std::map<std::string, diag_value> set_variables; // item vars applied to item
-        // item vars adjustment(s) applied to item via multiplication;
+        std::map<std::string, diag_value> set_variables;
+
         std::map<std::string, double> adjust_variables_multiply;
-        std::map<skill_id, int> skills; // map of skill_id to required level
-        std::set<fault_id> faults_removed; // which faults are removed on applying
-        std::set<fault_id> faults_added; // which faults are added on applying
-        int mod_damage = 0; // mod_damage with this value is called on item applied to
-        int mod_degradation = 0; // mod_degradation with this value is called on item applied to
+        std::map<skill_id, int> skills;
+        std::set<fault_id> faults_removed;
+        std::set<fault_id> faults_added;
+        int mod_damage = 0;
+        int mod_degradation = 0;
         std::map<proficiency_id, float>
-        time_save_profs; // map of proficiency_id and the time saving for posessing it
+        time_save_profs;
         std::map<flag_id, float>
-        time_save_flags; // map of flag_id and the time saving for the mendee item posessing it
+        time_save_flags;
 
         const requirement_data &get_requirements() const;
 
@@ -78,7 +78,7 @@ class fault_fix
     private:
         void load( const JsonObject &jo, std::string_view src );
         void check() const;
-        bool was_loaded = false; // used by generic_factory
+        bool was_loaded = false;
         friend class generic_factory<fault_fix>;
         friend class fault;
         shared_ptr_fast<requirement_data> requirements = make_shared_fast<requirement_data>();
@@ -89,7 +89,7 @@ class fault
     public:
         fault_id id = fault_id::NULL_ID();
         std::string name() const;
-        std::string type() const; // use a set of types?
+        std::string type() const;
         std::string description() const;
         std::string item_prefix() const;
         std::string item_suffix() const;
@@ -97,13 +97,13 @@ class fault
         std::string color() const;
         fault_severity severity() const;
         double price_mod() const;
-        // having this faults adds this much of temporary (will be removed when fault is fixed) degradation
+
         int degradation_mod() const;
-        // Damage applied when fault is applied.
+
         int instant_damage() const;
-        // int is additive (default 0), float is multiplier (default 1)
+
         std::vector<std::tuple<int, float, damage_type_id>> melee_damage_mod() const;
-        // int is additive (default 0), float is multiplier (default 1)
+
         std::vector<std::tuple<int, float, damage_type_id>> armor_mod() const;
         bool affected_by_degradation() const;
         double encumb_mod_flat() const;
@@ -118,14 +118,14 @@ class fault
     private:
         void load( const JsonObject &jo, std::string_view );
         void check() const;
-        bool was_loaded = false; // used by generic_factory
+        bool was_loaded = false;
         friend class generic_factory<fault>;
         friend class fault_fix;
 
         std::string type_;
         translation name_;
         translation description_;
-        translation item_prefix_; // prefix added to affected item's name
+        translation item_prefix_;
         translation item_suffix_;
         translation message_;
         std::string color_;
@@ -143,7 +143,7 @@ class fault
         std::vector<std::tuple<int, float, damage_type_id>> armor_mod_;
         int encumbrance_mod_flat_ = 0;
         float encumbrance_mod_mult_ = 1.f;
-        // todo add tool_quality_mod_; axe with no handle won't axe
+
         bool affected_by_degradation_ = false;
 
 };
@@ -161,4 +161,4 @@ class fault_group
         weighted_int_list<fault_id> fault_weighted_list;
 };
 
-#endif // CATA_SRC_FAULT_H
+#endif

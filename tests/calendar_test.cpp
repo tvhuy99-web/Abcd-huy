@@ -65,7 +65,7 @@ TEST_CASE( "months_and_days_over_time", "[calendar]" )
         days[i] = static_cast<weekdays>( i );
     }
 
-    // jan, feb, first 19 days of mar
+
     size_t date_idx = 31 + 30 + 20;
     std::pair<month, int> month_day = month_and_day( calendar::turn_zero );
     REQUIRE( month_day.first == month::MARCH );
@@ -74,7 +74,7 @@ TEST_CASE( "months_and_days_over_time", "[calendar]" )
     CAPTURE( month_and_day( calendar::start_of_game ).second );
     REQUIRE( date[date_idx] == month_and_day( calendar::start_of_game ) );
 
-    // game starts on a thursday
+
     restore_on_out_of_scope restore_game_start( calendar::start_of_game );
     calendar::start_of_game = calendar::turn_zero;
     size_t day_idx = static_cast<size_t>( weekdays::THURSDAY );
@@ -82,7 +82,7 @@ TEST_CASE( "months_and_days_over_time", "[calendar]" )
 
     time_point turn = calendar::turn_zero;
     int years_since_cataclysm = 0;
-    // ensure it's correct for the next ten years
+
     for( int i = 0; i <= 364 * 10; ++i ) {
         date_idx = ( date_idx + 1 ) % date.size();
         day_idx = ( day_idx + 1 ) % days.size();
@@ -113,7 +113,7 @@ TEST_CASE( "seasons_over_time", "[calendar]" )
     } );
     CAPTURE( season_length_days );
     calendar::set_season_length( season_length_days );
-    // to match the other test
+
     restore_on_out_of_scope restore_game_start( calendar::start_of_game );
     calendar::start_of_game = calendar::turn_zero;
 
@@ -123,7 +123,7 @@ TEST_CASE( "seasons_over_time", "[calendar]" )
     REQUIRE( season_of_year( turn ) == SPRING );
 
     int years_since_cataclysm = 0;
-    // next ten years
+
     for( int i = 0; i <= season_length_days * 4 * 10; ++i ) {
         turn += 1_days;
         int day = day_of_season<int>( turn );

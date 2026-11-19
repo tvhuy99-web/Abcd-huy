@@ -213,11 +213,11 @@ static void without_sleep( Character &you, int sleep_deprivation );
 static void from_tourniquet( Character &you );
 static void from_nyctophobia( Character &you );
 static void from_artifact_resonance( Character &you, int amt );
-} // namespace suffer
+}
 
 static float addiction_scaling( float at_min, float at_max, float add_lvl )
 {
-    // Not addicted
+
     if( add_lvl < MIN_ADDICTION_LEVEL ) {
         return 1.0f;
     }
@@ -249,10 +249,10 @@ void suffer::water_damage( Character &you )
 void suffer::mutation_power( Character &you, const trait_id &mut_id )
 {
     if( you.get_cost_timer( mut_id ) > 0_turns ) {
-        // Not ready to consume cost yet, the timer ticks on
+
         you.mod_cost_timer( mut_id, -1_turns );
     } else {
-        // Ready to consume cost: pay the power cost and reset timer
+
         if( mut_id->cooldown > 0_turns ) {
             you.set_cost_timer( mut_id, mut_id->cooldown - 1_turns );
         }
@@ -263,12 +263,12 @@ void suffer::mutation_power( Character &you, const trait_id &mut_id )
                                        you.mutation_name( mut_id ) );
                 you.deactivate_mutation( mut_id );
             } else {
-                // does not directly modify hunger, but burns kcal
+
                 you.mod_stored_kcal( -mut_id->cost );
             }
         }
         if( mut_id->thirst ) {
-            // Well into Dehydrated
+
             if( you.get_thirst() >= 260 ) {
                 you.add_msg_if_player( m_warning,
                                        _( "You're too dehydrated to keep your %s going." ),
@@ -279,7 +279,7 @@ void suffer::mutation_power( Character &you, const trait_id &mut_id )
             }
         }
         if( mut_id->sleepiness ) {
-            // Exhausted
+
             if( you.get_sleepiness() >= sleepiness_levels::EXHAUSTED ) {
                 you.add_msg_if_player( m_warning,
                                        _( "You're too exhausted to keep your %s going." ),
@@ -290,7 +290,7 @@ void suffer::mutation_power( Character &you, const trait_id &mut_id )
             }
         }
         if( mut_id->mana ) {
-            // no enough mana
+
             if( you.magic->available_mana() < mut_id->cost ) {
                 you.add_msg_if_player( m_warning,
                                        _( "You don't have enough mana to keep your %s going." ),
@@ -302,7 +302,7 @@ void suffer::mutation_power( Character &you, const trait_id &mut_id )
         }
 
         if( mut_id->stamina ) {
-            // no enough stamina
+
             if( you.get_stamina() < mut_id->cost ) {
                 you.add_msg_if_player( m_warning,
                                        _( "You don't have enough stamina to keep your %s going." ),
@@ -313,7 +313,7 @@ void suffer::mutation_power( Character &you, const trait_id &mut_id )
             }
         }
 
-        // if you haven't deactivated then run the EOC
+
         for( const effect_on_condition_id &eoc : mut_id->processed_eocs ) {
             dialogue d( get_talker_for( you ), nullptr );
             d.set_value( "this", mut_id.str() );
@@ -352,21 +352,21 @@ void suffer::while_underwater( Character &you )
 
 void suffer::while_grabbed( Character &you )
 {
-    // If you're grabbed you can't move around effectively, triggering the check
-    // TODO: crowd crush without grabs
-    // Count the number of monsters who can shove you
-    // TODO: expand the search area - use the same logic as GROUP_BASH?
+
+
+
+
     map &here = get_map();
     creature_tracker &creatures = get_creature_tracker();
     int crowd = 0;
     int impassable_ter = 0;
-    // This looks scary, but it's really just casting the enum to an integer. So medium size characters == 3.
+
     int your_size = static_cast<std::underlying_type_t<creature_size>>( you.get_size() );
     int crush_grabs_req = your_size - 1;
-    // minimum of 1 grabber required
+
     crush_grabs_req = std::max( 1, crush_grabs_req );
 
-    for( auto&& dest : here.points_in_radius( you.pos_bub(), 1, 0 ) ) { // *NOPAD*
+    for( auto &&dest : here.points_in_radius( you.pos_bub(), 1, 0 ) ) {
         const monster *const mon = creatures.creature_at<monster>( dest );
         if( mon && mon->has_flag( mon_flag_GROUP_BASH ) ) {
             crowd++;
@@ -381,24 +381,24 @@ void suffer::while_grabbed( Character &you )
     add_msg_debug( debugmode::DF_CHARACTER,
                    "Crowd pressure sum: character size requires %d grabbers, found %d ", crush_grabs_req, crowd );
 
-    // if we aren't near enough monsters with GROUP_BASH we won't suffocate
+
     if( crowd < crush_grabs_req ) {
         return;
     }
 
-    // if you don't need to breathe, you can't suffocate from being crushed
+
     if( you.has_flag( json_flag_SUFFOCATION_IMMUNE ) ) {
         return;
     }
 
-    // Getting crushed against the wall counts as a monster
+
     if( impassable_ter ) {
         you.add_msg_if_player( m_bad, _( "You're crushed against the walls!" ) );
         crowd += impassable_ter;
     }
 
     if( crowd == crush_grabs_req ) {
-        // only a chance to lose breath at minimum grabs
+
         you.oxygen -= rng( 0, 1 );
     } else if( crowd <= crush_grabs_req * 2 ) {
         you.oxygen -= 1;
@@ -408,13 +408,13 @@ void suffer::while_grabbed( Character &you )
         you.oxygen -= 2;
     }
 
-    // a few warnings before starting to take damage
+
     if( you.oxygen <= 5 ) {
         you.add_msg_if_player( m_bad, _( "You're suffocating!" ) );
         if( uistate.distraction_oxygen && you.is_avatar() ) {
             g->cancel_activity_or_ignore_query( distraction_type::oxygen, _( "You're suffocating!" ) );
         }
-        // your characters chest is being crushed and you are dying
+
         you.apply_damage( nullptr, you.get_random_body_part_of_type( bp_type::torso ), rng( 1,
                           4 ) );
     } else if( you.oxygen <= 15 ) {
@@ -442,7 +442,7 @@ void suffer::from_addictions( Character &you )
             cur_addiction.run_effect( you );
         }
         cur_addiction.sated -= 1_turns;
-        // Higher intensity addictions heal faster
+
         if( cur_addiction.sated - 10_minutes * cur_addiction.intensity < timer ) {
             if( cur_addiction.intensity <= 2 ) {
                 you.rem_addiction( cur_addiction.type );
@@ -457,7 +457,7 @@ void suffer::from_addictions( Character &you )
 
 void suffer::while_awake( Character &you, const int current_stim )
 {
-    // The purpose of reapplying the effects for 2 turns is to prevent the application message from appearing every turn.
+
     if( you.weight_carried() > you.max_pickup_capacity() ) {
         if( you.has_effect( effect_downed ) ) {
             you.add_effect( effect_downed, 1_turns, false, 0, true );
@@ -504,10 +504,10 @@ void suffer::while_awake( Character &you, const int current_stim )
 
     if( you.has_trait( trait_MOODSWINGS ) && one_turn_in( 6_hours ) ) {
         if( rng( 1, 20 ) > 9 ) {
-            // 55% chance
+
             you.add_morale( morale_moodswing, -20, -100 );
         } else {
-            // 45% chance
+
             you.add_morale( morale_moodswing, 20, 100 );
         }
     }
@@ -607,7 +607,7 @@ void suffer::from_asthma( Character &you, const int current_stim )
         you.has_effect( effect_took_antiasthmatic ) ) {
         return;
     }
-    //cap asthma attacks to 1 per minute (or risk instantly killing players that rely on oxygen tanks)
+
     if( !one_in( std::max( to_turns<int>( 1_minutes ),
                            ( to_turns<int>( 6_hours ) - current_stim * 300 ) ) *
                  ( you.has_effect( effect_sleep ) ? 10 : 1 ) ) ) {
@@ -629,11 +629,11 @@ void suffer::from_asthma( Character &you, const int current_stim )
     if( you.in_sleep_state() && !you.has_effect( effect_narcosis ) ) {
         temp_crafting_inventory map_inv;
         map_inv.form_from_map( you.pos_bub(), 2, &you );
-        // check if an inhaler is somewhere near
+
         bool nearby_use = auto_use || oxygenator || map_inv.has_charges( itype_inhaler, 1 ) ||
                           map_inv.has_charges( itype_oxygen_tank, 1 ) ||
                           map_inv.has_charges( itype_smoxygen_tank, 1 );
-        // check if character has an oxygenator first
+
         if( oxygenator ) {
             you.mod_power_level( -bio_gills->power_trigger / 8 );
             you.add_msg_if_player( m_info, _( "You use your Oxygenator to clear it up, "
@@ -648,7 +648,7 @@ void suffer::from_asthma( Character &you, const int current_stim )
                                                   "and go back to sleep." ) );
             }
         } else if( nearby_use  && !you.has_bionic( bio_sleep_shutdown ) ) {
-            // create new variable to resolve a reference issue
+
             int amount = 1;
             if( !here.use_charges( you.pos_bub(), 2, itype_inhaler, amount ).empty() ) {
                 you.add_msg_if_player( m_info, _( "You use your inhaler and go back to sleep." ) );
@@ -688,7 +688,7 @@ void suffer::from_asthma( Character &you, const int current_stim )
             you.add_effect( effect_took_antiasthmatic, rng( 6_hours, 12_hours ) );
         } else if( you.use_charges_if_avail( itype_oxygen_tank, 1 ) ||
                    you.use_charges_if_avail( itype_smoxygen_tank, 1 ) ) {
-            you.mod_moves( -to_moves<int>( 5_seconds ) ); // synched with use action
+            you.mod_moves( -to_moves<int>( 5_seconds ) );
             charges = you.charges_of( itype_oxygen_tank ) + you.charges_of( itype_smoxygen_tank );
             if( charges == 0 ) {
                 you.add_msg_if_player( m_bad, _( "You breathe in the last bit of oxygen "
@@ -747,7 +747,7 @@ void suffer::in_sunlight( Character &you )
         suffer::from_sunburn( you, true );
     }
 
-    // Albinism and datura have the same effects and do not stack with each other or sunburn.
+
     if( ( !you.has_flag( json_flag_SUNBURN ) &&
           ( you.has_flag( json_flag_ALBINO ) || you.has_effect( effect_datura ) ) ) &&
         !you.has_effect( effect_sunscreen ) ) {
@@ -789,20 +789,20 @@ void suffer::in_sunlight( Character &you )
 std::map<bodypart_id, float> Character::bodypart_exposure()
 {
     std::map<bodypart_id, float> bp_exposure;
-    // May need to iterate over all body parts several times, so make a copy
+
     const std::vector<bodypart_id> all_body_parts = get_all_body_parts();
 
-    // Initially, all parts are assumed to be fully exposed
+
     for( const bodypart_id &bp : all_body_parts ) {
         bp_exposure[bp] = 1.0f;
     }
-    // For every item worn, for every body part, adjust coverage
+
     worn.bodypart_exposure( bp_exposure, all_body_parts );
     return bp_exposure;
 }
 
-// Linear interpolation between start and end values.
-// Constant outside of interval (x_start; x_end)
+
+
 static float linear_interpolation( float x_start, float y_start, float x_end, float y_end, float x )
 {
     if( x < x_start ) {
@@ -818,45 +818,45 @@ static float linear_interpolation( float x_start, float y_start, float x_end, fl
 
 static float light_eff_chance( float exp )
 {
-    // Sharp increase until 5%
+
     return linear_interpolation( 0.01, 0.0, 0.05, 1.0, exp );
 }
 
 static float medium_eff_chance( float exp )
 {
-    // Starts at 5%, peaks at 30%
+
     return linear_interpolation( 0.05, 0.0, 0.55, 0.25, exp );
 }
 
 static float heavy_eff_chance( float exp )
 {
-    // Starts at 15%, increases to 0.1 at 100%
+
     return linear_interpolation( 0.15, 0.0, 1.0, 0.1, exp );
 }
 
 void suffer::from_sunburn( Character &you, bool severe )
 {
-    // Sunburn effects and albinism/datura occur about once per minute unless you have the SUNBURN_SUPERNATURAL flag
+
     if( !one_turn_in( 1_minutes ) && !you.has_flag( json_flag_SUNBURN_SUPERNATURAL ) ) {
         return;
     }
 
-    // If you have SUNBURN_SUPERNATURAL but some means of protection, you burn 75% slower
+
     if( !one_turn_in( 4_seconds ) && you.has_flag( json_flag_SUNBURN_SUPERNATURAL ) &&
         you.has_flag( json_flag_SUNBURN_SUPERNATURAL_REDUCTION ) ) {
         return;
     }
 
-    // TODO: Could factor bodypart_exposure out of Character too
+
     std::map<bodypart_id, float> bp_exposure = you.bodypart_exposure();
 
     enum Sunburn { None, Focus_Loss, Pain, Damage };
 
     auto heavy_sunburn = [severe, &you]( bodypart_id bp ) {
         if( severe ) {
-            // Because hands and feet share an HP pool with arms and legs, and the mouth shares
-            // an HP pool with the head, those parts take an unfair share of damage in relation
-            // to the torso, which only has one part.  Increase torso damage to balance this.
+
+
+
             if( bp == bodypart_id( "torso" ) ) {
                 you.apply_damage( nullptr, bp, 2 );
             } else {
@@ -890,7 +890,7 @@ void suffer::from_sunburn( Character &you, bool severe )
         }
     };
 
-    // Track body parts above the threshold
+
     std::map<bodypart_id, Sunburn> affected_bodyparts;
 
     for( auto &bp_exp : bp_exposure ) {
@@ -902,13 +902,13 @@ void suffer::from_sunburn( Character &you, bool severe )
         }
 
         if( bp == bodypart_id( "eyes" ) && !you.has_flag( json_flag_SUNBURN_SUPERNATURAL ) ) {
-            // Sunglasses can keep the sun off the eyes. SUNBURN_SUPERNATURAL ignores clothing
+
             if( you.has_flag( json_flag_GLARE_RESIST )
                 || you.worn_with_flag( flag_SUN_GLASSES )
                 || you.worn_with_flag( flag_BLIND ) ) {
                 continue;
             }
-            // If no UV-/glare-protection gear is worn the eyes should be treated as unprotected
+
             exposure = 1.0;
         } else if( !you.has_flag( json_flag_SUNBURN_SUPERNATURAL ) && ( ( you.get_wielded_item() &&
                    you.get_wielded_item()->has_flag( flag_RAIN_PROTECT ) )
@@ -921,11 +921,11 @@ void suffer::from_sunburn( Character &you, bool severe )
                    || ( bp == body_part_mouth
                         && you.worn_with_flag( flag_COLLAR )
                         && you.can_use_collar() ) ) ) {
-            // Eyes suffer even in the presence of the checks in this branch!
-            // Umbrellas can keep the sun off all bodyparts
-            // Pockets can keep the sun off your hands if you don't wield a too large item
-            // Hoods can keep the sun off your unencumbered head
-            // Collars can keep the sun off your unencumbered mouth
+
+
+
+
+
             continue;
         }
 
@@ -942,7 +942,7 @@ void suffer::from_sunburn( Character &you, bool severe )
         } else if( roll < light_cumul_chance ) {
             eff = light_sunburn( );
         } else {
-            // Do nothing. Assert that exposure is lower than 0.05 as above that point at least light_eff should always happen
+
             if( exposure > 0.05 ) {
                 debugmsg( "No sunburn effect was applied although the bodypart %s is sufficiently exposed at %f exposure",
                           body_part_name( bp ), exposure );
@@ -976,18 +976,18 @@ void suffer::from_sunburn( Character &you, bool severe )
         }
 
         const bodypart_id &opposite_bp = bp->opposite_part;
-        // If these are different, we have a left/right part like a leg or arm.
-        // If same, it's a central body part with no opposite, like head or torso.
-        // Used to generate a simpler message when both arms or both legs are affected.
+
+
+
         int count_limbs = 1;
         if( bp == bodypart_id( "eyes" ) ) {
             contains_eyes = true;
         }
         if( bp != opposite_bp ) {
             const auto found = affected_bodyparts.find( opposite_bp );
-            // Is opposite part exposed to the same level?
-            // If it has a lower exposure, we don't include it in the message.
-            // If it has a higher exposure we can immediately skip as this bodypart won't be included in the message.
+
+
+
             if( found != affected_bodyparts.end() ) {
                 if( found->second > effect ) {
                     continue;
@@ -997,7 +997,7 @@ void suffer::from_sunburn( Character &you, bool severe )
                 excluded_other_parts.insert( opposite_bp );
             }
         }
-        // Get singular or plural body part name; append "and other body parts" if appropriate
+
         std::string bp_name = body_part_name( bp, count_limbs );
         affected_part_names.push_back( bp_name );
     }
@@ -1009,7 +1009,7 @@ void suffer::from_sunburn( Character &you, bool severe )
     auto warn_and_wake_up = [ &you, &all_parts_list]
     ( const char *message, game_message_type type ) {
         you.add_msg_if_player( type, message, all_parts_list );
-        // Wake up from skin irritation/burning
+
         if( you.has_effect( effect_sleep ) ) {
             you.wake_up();
         }
@@ -1092,9 +1092,9 @@ void suffer::from_other_mutations( Character &you )
             }
         }
     }
-    //Web Weavers...weave web
+
     if( you.has_active_mutation( trait_WEB_WEAVER ) && !you.in_vehicle ) {
-        // this adds intensity to if its not already there.
+
         here.add_field( position, fd_web, 1 );
 
     }
@@ -1104,8 +1104,8 @@ void suffer::from_other_mutations( Character &you )
 
     }
 
-    // Blind/Deaf for brief periods about once an hour,
-    // and visuals about once every 30 min.
+
+
     if( you.has_trait( trait_PER_SLIME ) ) {
         if( one_turn_in( 1_hours ) && !you.has_effect( effect_deaf ) ) {
             you.add_msg_if_player( m_bad, _( "Suddenly, you can't hear anything!" ) );
@@ -1115,8 +1115,8 @@ void suffer::from_other_mutations( Character &you )
             you.add_msg_if_player( m_bad, _( "Suddenly, your eyes stop working!" ) );
             you.add_effect( effect_blind, rng( 2_minutes, 6_minutes ) );
         }
-        // Yes, you can be blind and hallucinate at the same time.
-        // Your post-human biology is truly remarkable.
+
+
         if( one_turn_in( 30_minutes ) && !you.has_effect( effect_visuals ) ) {
             you.add_msg_if_player( m_bad, _( "Your visual centers must be acting up…" ) );
             you.add_effect( effect_visuals, rng( 36_minutes, 72_minutes ) );
@@ -1124,7 +1124,7 @@ void suffer::from_other_mutations( Character &you )
     }
 
     if( you.has_trait( trait_WEB_SPINNER ) && !you.in_vehicle && one_in( 3 ) ) {
-        // this adds intensity to if its not already there.
+
         here.add_field( position, fd_web, 1 );
     }
 
@@ -1156,7 +1156,7 @@ void suffer::from_other_mutations( Character &you )
 void suffer::from_radiation( Character &you )
 {
     map &here = get_map();
-    // get radioactive leak level of your inventory
+
     float item_radiation = you.get_leak_level();
     const int map_radiation = here.get_radiation( you.pos_bub() );
     float rads = map_radiation / 100.0f + item_radiation / 10.0f;
@@ -1170,8 +1170,8 @@ void suffer::from_radiation( Character &you )
         rad_mut = 1;
     }
 
-    // Spread less radiation when sleeping (slower metabolism etc.)
-    // Otherwise it can quickly get to the point where you simply can't sleep at all
+
+
     const bool rad_mut_proc = rad_mut > 0 && x_in_y( rad_mut, to_turns<int>( you.in_sleep_state() ?
                               3_hours : 30_minutes ) );
 
@@ -1182,15 +1182,15 @@ void suffer::from_radiation( Character &you )
     if( rad_mut > 0 ) {
         const bool kept_in = you.is_rad_immune() || ( rad_resist && !one_in( 4 ) );
         if( kept_in ) {
-            // As if standing on a map tile with radiation level equal to rad_mut
+
             rads += rad_mut / 100.0f;
         }
 
         if( rad_mut_proc && !kept_in ) {
-            // Irradiate a random nearby point
-            // If you can't, irradiate the player instead
+
+
             tripoint_bub_ms rad_point = you.pos_bub() + point( rng( -3, 3 ), rng( -3, 3 ) );
-            // TODO: Radioactive vehicles?
+
             if( here.get_radiation( rad_point ) < rad_mut ) {
                 here.adjust_radiation( rad_point, 1 );
             } else {
@@ -1199,7 +1199,7 @@ void suffer::from_radiation( Character &you )
         }
     }
 
-    // Used to control vomiting from radiation to make it not-annoying
+
     bool radiation_increasing = you.irradiate( rads );
 
     if( radiation_increasing && calendar::once_every( 3_minutes ) ) {
@@ -1220,12 +1220,12 @@ void suffer::from_radiation( Character &you )
         } else if( you.get_rad() > 2000 ) {
             you.set_rad( 2000 );
         }
-        // Linear increase in chance to mutate with irriadation level.
-        // 100 rads = 1 / 10000
-        // 110 rads = 10 / 10000 = 1 / 1000
-        // 200 rads = 100 / 10000 = 1 / 100
-        // 1000 rads = 900 / 10000 = 9 / 100 = 10% !!!
-        // 2000 rads = 2000 / 10000 = 1 / 5 = 20% !!!
+
+
+
+
+
+
         if( get_option<bool>( "RAD_MUTATION" ) && rng( 100, 10000 ) < you.get_rad() ) {
             get_event_bus().send<event_type::character_radioactively_mutates>( you.getID() );
         }
@@ -1238,12 +1238,12 @@ void suffer::from_radiation( Character &you )
 
     const bool radiogenic = you.has_trait( trait_RADIOGENIC );
     if( radiogenic && calendar::once_every( 30_minutes ) && you.get_rad() > 0 ) {
-        // At 200 irradiation, twice as fast as REGEN
+
         if( x_in_y( you.get_rad(), 200 ) ) {
             you.healall( 1 );
             if( rad_mut == 0 ) {
-                // Don't heal radiation if we're generating it naturally
-                // That would counter the main downside of radioactivity
+
+
                 you.mod_rad( -5 );
             }
         }
@@ -1268,7 +1268,7 @@ void suffer::from_radiation( Character &you )
 
 void suffer::from_bad_bionics( Character &you )
 {
-    // Negative bionics effects
+
     if( you.has_bionic( bio_synlungs ) && !you.has_active_bionic( bio_synlungs ) &&
         !you.has_effect( effect_narcosis ) ) {
         if( you.get_power_level() >= bio_synlungs->power_trigger ) {
@@ -1329,7 +1329,7 @@ void suffer::from_bad_bionics( Character &you )
 
 void suffer::from_stimulants( Character &you, const int current_stim )
 {
-    // Stim +250 kills
+
     if( current_stim > 210 ) {
         if( one_turn_in( 2_minutes ) && !you.is_on_ground() ) {
             you.add_msg_if_player( m_bad, _( "Your muscles spasm!" ) );
@@ -1358,7 +1358,7 @@ void suffer::from_stimulants( Character &you, const int current_stim )
         }
     }
 
-    //stim -200 or painkillers 240 kills
+
     if( current_stim < -160 || you.get_painkiller() > 200 ) {
         if( one_turn_in( 3_minutes ) && !you.in_sleep_state() ) {
             you.add_msg_if_player( m_bad, _( "You black out!" ) );
@@ -1424,12 +1424,12 @@ static void apply_weary_message( const Character &you, int level, int old )
 
 static void apply_weariness( Character &you, int level, int old )
 {
-    // Exertion cannot be negative!
+
     if( level < 0 || old < 0 ) {
         debugmsg( "Attempted to apply weariness to character with negative ( new: %d old: %d ) weariness",
                   level, old );
     }
-    // A mapping of weariness level to the effect to be applied
+
     static const std::array<efftype_id, 9> weary_effects { {
             effect_weary_0,
             effect_weary_1,
@@ -1442,8 +1442,8 @@ static void apply_weariness( Character &you, int level, int old )
             effect_weary_8,
         }};
 
-    // If we're going above level 8, we're seriously messed up
-    // So just stick to level 8
+
+
     if( level > 8 ) {
         level = 8;
     }
@@ -1451,12 +1451,12 @@ static void apply_weariness( Character &you, int level, int old )
         old = 8;
     }
 
-    /*
-     * It's possible that old == level, but we need to make sure we're removing
-     * the old effect when that's not true It's simple enough to just remove
-     * the old effect then apply the new, effect, because no change will happen
-     * if they're equal
-     */
+
+
+
+
+
+
     you.remove_effect( weary_effects[old] );
     you.add_effect( weary_effects[level], 1_turns, true );
     apply_weary_message( you, level, old );
@@ -1467,12 +1467,12 @@ void suffer::from_exertion( Character &you )
     int new_weary_level = you.weariness_level();
     float max_activity = you.maximum_exertion_level();
 
-    // Only if there are changes (duh)
+
     if( new_weary_level != you.old_weary_level ) {
         apply_weariness( you, new_weary_level, you.old_weary_level );
     }
 
-    // Significantly slow the rate of messaging when in an activity
+
     const int chance = you.activity ? to_turns<int>( 48_minutes ) : to_turns<int>( 5_minutes );
     if( !you.in_sleep_state() && you.activity_history.activity( false ) > max_activity &&
         one_in( chance ) ) {
@@ -1480,13 +1480,13 @@ void suffer::from_exertion( Character &you )
                                _( "You're tiring out; continuing to work at this rate will be slower." ) );
     }
 
-    // This must happen at the end, for hopefully obvious reasons
+
     you.old_weary_level = new_weary_level;
 }
 
 void suffer::without_sleep( Character &you, const int sleep_deprivation )
 {
-    // redo as a snippet?
+
     if( sleep_deprivation >= SLEEP_DEPRIVATION_HARMLESS ) {
         if( one_turn_in( 50_minutes ) ) {
             switch( dice( 1, 4 ) ) {
@@ -1510,7 +1510,7 @@ void suffer::without_sleep( Character &you, const int sleep_deprivation )
             }
         }
     }
-    // Minor discomfort
+
     if( sleep_deprivation >= SLEEP_DEPRIVATION_MINOR ) {
         if( one_turn_in( 75_minutes ) ) {
             you.add_msg_if_player( m_warning, _( "You feel lightheaded for a moment." ) );
@@ -1525,7 +1525,7 @@ void suffer::without_sleep( Character &you, const int sleep_deprivation )
             you.add_effect( effect_visuals, rng( 1_minutes, 5_minutes ) );
         }
     }
-    // Slight disability
+
     if( sleep_deprivation >= SLEEP_DEPRIVATION_SERIOUS ) {
         if( one_turn_in( 75_minutes ) ) {
             you.add_msg_if_player( m_bad, _( "Your mind lapses into unawareness briefly." ) );
@@ -1540,7 +1540,7 @@ void suffer::without_sleep( Character &you, const int sleep_deprivation )
             you.mod_pain( rng( 10, 25 ) );
         }
     }
-    // Major disability, high chance of passing out also relevant
+
     if( sleep_deprivation >= SLEEP_DEPRIVATION_MAJOR ) {
         if( !you.has_effect( effect_nausea ) && one_turn_in( 500_minutes ) ) {
             you.add_msg_if_player( m_bad, _( "You feel heartburn and an acid taste in your mouth." ) );
@@ -1570,7 +1570,7 @@ void suffer::without_sleep( Character &you, const int sleep_deprivation )
 
 void suffer::from_tourniquet( Character &you )
 {
-    // shortcut for the most common scenario.
+
     if( !you.worn_with_flag( flag_TOURNIQUET ) ) {
         return;
     }
@@ -1618,7 +1618,7 @@ void suffer::from_artifact_resonance( Character &you, int amt )
     int rng_outcome;
     if( rng( 0, 3600 + std::floor( amt / 2000 ) ) > 3600 ) {
         if( amt > 12500 && one_in( 2 ) ) {
-            //deadly effects from way too high resonance
+
             rng_outcome = rng( 1, 3 );
             if( rng_outcome == 1 ) {
                 you.add_msg_player_or_npc( m_bad, _( "You attract the attention of something horrible." ),
@@ -1641,7 +1641,7 @@ void suffer::from_artifact_resonance( Character &you, int amt )
                 you.add_effect( effect_incorporeal, 1_minutes );
             }
         } else if( amt > 7500 && one_in( 2 ) ) {
-            //severe effects from very high resonance
+
             rng_outcome = rng( 1, 3 );
             if( rng_outcome == 1 ) {
                 you.add_msg_player_or_npc( m_bad, _( "You are suddenly beset with agonizing, unbearable pain." ),
@@ -1659,7 +1659,7 @@ void suffer::from_artifact_resonance( Character &you, int amt )
                 you.irradiate( 45, false );
             }
         } else if( amt > 4500 && one_in( 2 ) ) {
-            //bad effects from moderately high resonance
+
             rng_outcome = rng( 1, 3 );
             if( rng_outcome == 1  && !you.in_vehicle ) {
                 you.add_msg_player_or_npc( m_bad, _( "You suddenly shift slightly." ),
@@ -1679,7 +1679,7 @@ void suffer::from_artifact_resonance( Character &you, int amt )
                 you.irradiate( 10, false );
             }
         } else {
-            //mild effects from somewhat high resonance
+
             rng_outcome = rng( 1, 3 );
             if( rng_outcome == 1 ) {
                 you.add_msg_if_player( m_bad,
@@ -1734,7 +1734,7 @@ void Character::suffer()
 
     if( !in_sleep_state() ) {
         suffer::while_awake( *this, current_stim );
-    } // Done with while-awake-only effects
+    }
 
     if( has_trait( trait_ASTHMA ) ) {
         suffer::from_asthma( *this, current_stim );
@@ -1748,18 +1748,18 @@ void Character::suffer()
     suffer::from_bad_bionics( *this );
     suffer::from_stimulants( *this, current_stim );
     int sleep_deprivation = in_sleep_state() ? 0 : get_sleep_deprivation();
-    // Stimulants can lessen the PERCEIVED effects of sleep deprivation, but
-    // they do nothing to cure it. As such, abuse is even more dangerous now.
+
+
     if( current_stim > 0 ) {
-        // 100% of blacking out = 20160sd ; Max. stim modifier = 12500sd @ 250stim
-        // Note: Very high stim already has its own slew of bad effects,
-        // so the "useful" part of this bonus is actually lower.
+
+
+
         sleep_deprivation -= current_stim * 50;
     }
 
     suffer::without_sleep( *this, sleep_deprivation );
     suffer::from_tourniquet( *this );
-    //Suffer from enchantments
+
     enchantment_cache->activate_passive( *this );
     if( calendar::once_every( 30_minutes ) ) {
         int healthy_mod = enchantment_cache->modify_value( enchant_vals::mod::MOD_HEALTH, 0 );
@@ -1785,28 +1785,28 @@ bool Character::irradiate( float rads, bool bypass )
         const bool rad_resist = power_armored || worn_with_flag( flag_RAD_RESIST );
 
         if( is_rad_immune() && !bypass ) {
-            // Power armor and some high-tech gear protects completely from radiation
+
             rads = 0.0f;
         } else if( rad_resist && !bypass ) {
             rads /= 4.0f;
         }
 
         if( has_effect( effect_iodine ) ) {
-            // Radioactive mutation makes iodine less efficient (but more useful)
+
             rads *= 0.3f + 0.1f * rad_mut;
         }
 
         int rads_max = roll_remainder( rads );
         mod_rad( rng( 0, rads_max ) );
 
-        // Apply rads to any radiation badges that are exposed (worn or wielded)
+
         for( item *const it : inv_dump() ) {
             if( !it->has_flag( json_flag_RAD_DETECT ) ) {
                 continue;
             }
 
-            // Actual irradiation levels of badges and the player aren't precisely matched.
-            // This is intentional.
+
+
             const int before = it->irradiation;
 
             const int delta = rng( 0, rads_max );
@@ -1816,7 +1816,7 @@ bool Character::irradiate( float rads, bool bypass )
 
             it->irradiation += delta;
 
-            // If the color hasn't changed, don't print anything.
+
             const std::string &col_before = rad_badge_color( before ).first;
             const std::string &col_after = rad_badge_color( it->irradiation ).first;
             if( col_before == col_after ) {
@@ -1837,7 +1837,7 @@ bool Character::irradiate( float rads, bool bypass )
 
 void Character::mend( int rate_multiplier )
 {
-    // Wearing splints can slowly mend a broken limb back to 1 hp.
+
     bool any_broken = false;
     for( const bodypart_id &bp : get_all_body_parts() ) {
         if( is_limb_broken( bp ) ) {
@@ -1851,10 +1851,10 @@ void Character::mend( int rate_multiplier )
     }
 
     double healing_factor = 1.0;
-    // Studies have shown that alcohol and tobacco use delay fracture healing time
-    // Being under effect is 50% slowdown
-    // Being addicted but not under effect scales from 25% slowdown to 75% slowdown
-    // The improvement from being intoxicated over withdrawal is intended
+
+
+
+
     if( has_effect( effect_cig ) ) {
         healing_factor *= 0.5;
     } else {
@@ -1871,28 +1871,28 @@ void Character::mend( int rate_multiplier )
         healing_factor *= clamp( ( 1000.0f - get_rad() ) / 1000.0f, 0.0f, 1.0f );
     }
 
-    // Bed rest speeds up mending
+
     if( has_effect( effect_sleep ) ) {
         healing_factor *= 4.0;
     } else if( get_sleepiness() > sleepiness_levels::DEAD_TIRED ) {
-        // but being dead tired does not...
+
         healing_factor *= 0.75;
     } else {
-        // If not dead tired, resting without sleep also helps
+
         healing_factor *= 1.0f + rest_quality();
     }
 
-    // Being healthy helps.
+
     healing_factor *= 1.0f + get_lifestyle() / 200.0f;
 
-    // Very hungry starts lowering the chance
-    // square rooting the value makes the numbers drop off faster when below 1
+
+
     healing_factor *= std::sqrt( static_cast<float>( get_stored_kcal() ) / static_cast<float>
                                  ( get_healthy_kcal() ) );
-    // Similar for thirst - starts at very thirsty, drops to 0 ~halfway between two last statuses
+
     healing_factor *= 1.0f - clamp( ( get_thirst() - 80.0f ) / 300.0f, 0.0f, 1.0f );
 
-    // Mutagenic healing factor!
+
     bool needs_splint = true;
 
     healing_factor = enchantment_cache->modify_value( enchant_vals::mod::MENDING_MODIFIER,
@@ -1900,7 +1900,7 @@ void Character::mend( int rate_multiplier )
 
     add_msg_debug( debugmode::DF_CHAR_HEALTH, "Limb mend healing factor: %.2f", healing_factor );
     if( healing_factor <= 0.0f ) {
-        // The section below assumes positive healing rate
+
         return;
     }
 
@@ -1949,15 +1949,15 @@ void Character::drench( int saturation, const body_part_set &flags, bool ignore_
         return;
     }
 
-    // OK, water gets in your AEP suit or whatever.  It wasn't built to keep you dry.
+
     if( has_trait( trait_DEBUG_NOTEMP ) || in_shell ||
         ( !ignore_waterproof && is_waterproof( flags ) ) ) {
         return;
     }
 
-    // Make the body wet
+
     for( const bodypart_id &bp : get_all_body_parts() ) {
-        // Different body parts have different size, they can only store so much water
+
         int bp_wetness_max = 0;
         if( flags.test( bp.id() ) ) {
             bp_wetness_max = get_part_drench_capacity( bp );
@@ -1966,10 +1966,10 @@ void Character::drench( int saturation, const body_part_set &flags, bool ignore_
         if( bp_wetness_max == 0 ) {
             continue;
         }
-        // Different sources will only make the bodypart wet to a limit
+
         int source_wet_max = saturation * bp_wetness_max / 100;
         int wetness_increment = ignore_waterproof ? 100 : bp->drench_increment;
-        // Respect maximums
+
         const int wetness_max = std::min( source_wet_max, bp_wetness_max );
         const int curr_wetness = get_part_wetness( bp );
         if( curr_wetness < wetness_max ) {
@@ -1991,7 +1991,7 @@ void Character::drench( int saturation, const body_part_set &flags, bool ignore_
         add_msg_if_player( m_good, _( "You feel the water runs on your skin, making you feel better." ) );
     }
 
-    // Remove onfire effect
+
     if( saturation > 10 || x_in_y( saturation, 10 ) ) {
         remove_effect( effect_onfire );
     }
@@ -1999,13 +1999,13 @@ void Character::drench( int saturation, const body_part_set &flags, bool ignore_
 
 void Character::apply_wetness_morale( units::temperature temperature )
 {
-    // First, a quick check if we have any wetness to calculate morale from
-    // Faster than checking all worn items for friendliness
+
+
     if( !has_atleast_one_wet_part() ) {
         return;
     }
 
-    // Normalize temperature to [-1.0,1.0]
+
     float temperature_f = units::to_fahrenheit( temperature );
     temperature_f = std::max( 0.f, std::min( 100.f, temperature_f ) );
     const double global_temperature_mod = -1.0 + ( 2.0 * temperature_f / 100.0 );
@@ -2013,7 +2013,7 @@ void Character::apply_wetness_morale( units::temperature temperature )
     int total_morale = 0;
     const body_part_set wet_friendliness = exclusive_flag_coverage( flag_WATER_FRIENDLY );
     for( const bodypart_id &bp : get_all_body_parts() ) {
-        // Sum of body wetness can go up to 103
+
         const int part_drench = get_part_wetness( bp ) / 100;
         if( part_drench == 0 ) {
             continue;
@@ -2032,36 +2032,36 @@ void Character::apply_wetness_morale( units::temperature temperature )
         const bool is_friendly = wet_friendliness.test( bp.id() );
         const int effective_drench = part_drench - part_ignored;
         if( is_friendly ) {
-            // Using entire bonus from mutations and then some "human" bonus
+
             bp_morale = std::min( part_good, effective_drench ) + effective_drench / 2;
         } else if( effective_drench < part_good ) {
-            // Positive or 0
-            // Won't go higher than part_good / 2
-            // Wet slime/scale doesn't feel as good when covered by wet rags/fur/kevlar
+
+
+
             bp_morale = std::min( effective_drench, part_good - effective_drench );
         } else if( effective_drench > part_good + part_neutral ) {
-            // This one will be negative
+
             bp_morale = part_good + part_neutral - effective_drench;
         }
 
-        // Clamp to [COLD,HOT]
+
         const units::temperature part_temperature =
             std::min( BODYTEMP_HOT, std::max( BODYTEMP_COLD, get_part_temp_cur( bp ) ) );
-        // 0.0 at COLD, 1.0 at HOT
+
         const double part_mod = ( part_temperature - BODYTEMP_COLD ) /
                                 ( BODYTEMP_HOT - BODYTEMP_COLD );
-        // Average of global and part temperature modifiers, each in range [-1.0, 1.0]
+
         double scaled_temperature = ( global_temperature_mod + part_mod ) / 2;
 
         bp_morale += bp->wet_morale;
         if( bp_morale < 0 ) {
-            // Damp, hot clothing on hot skin feels bad
+
             scaled_temperature = std::fabs( scaled_temperature );
         }
 
-        // For an unmutated human swimming in deep water, this will add up to:
-        // +12 when hot in 100% water friendly clothing
-        // -26 when cold/hot in 100% unfriendly clothing
+
+
+
         total_morale += static_cast<int>( bp_morale * ( 1.0 + scaled_temperature ) / 8.0 );
     }
 
@@ -2077,7 +2077,7 @@ void Character::apply_wetness_morale( units::temperature temperature )
             morale_effect = -1;
         }
     }
-    // 61_seconds because decay is applied in 1_minutes increments
+
     add_morale( morale_wet, morale_effect, total_morale, 61_seconds, 61_seconds, true );
 }
 
@@ -2094,7 +2094,7 @@ void Character::add_addiction( const addiction_id &type, int strength )
         strength /= 2;
         timer = 6_hours;
     }
-    //Update existing addiction
+
     for( addiction &i : addictions ) {
         if( i.type != type ) {
             continue;
@@ -2103,7 +2103,7 @@ void Character::add_addiction( const addiction_id &type, int strength )
         if( i.sated < 0_turns ) {
             i.sated = timer;
         } else if( i.sated < 10_minutes ) {
-            // TODO: Make this variable?
+
             i.sated += timer;
         } else {
             i.sated += timer / 2;
@@ -2118,7 +2118,7 @@ void Character::add_addiction( const addiction_id &type, int strength )
         return;
     }
 
-    // Add a new addiction
+
     const int roll = rng( 0, 100 );
     add_msg_debug( debugmode::DF_CHAR_HEALTH, "Addiction: roll %d vs strength %d", roll, strength );
     if( roll < strength ) {

@@ -4,7 +4,7 @@ import json
 import argparse
 import os
 
-# no one references these, but we may want them again some day
+
 OBSOLETE_TOPICS = [
     "TALK_DENY_GUARD", "TALK_FRIEND_UNCOMFORTABLE", "TALK_USE_ITEM",
     "TALK_GIVE_ITEM"
@@ -106,7 +106,7 @@ def validate(dialogue):
         "TALK_SEDATED": {"responses": ["TALK_DONE"], "ends": True,
                          "parent": None},
     }
-    # defined in src/npctalk.cpp
+
     defined_ids = [
         "TALK_NONE", "TALK_DONE", "TALK_TRAIN", "TALK_HOW_MUCH_FURTHER",
         "TALK_SEDATED"
@@ -114,7 +114,6 @@ def validate(dialogue):
     for topic_id in defined_ids:
         add_topic_by_id(topics, topic_id)
 
-    # referenced in src/npctalk.cpp
     refered_ids = [
         "TALK_WAKE_UP", "TALK_RADIO", "TALK_MISSION_DESCRIBE_URGENT",
         "TALK_MISSION_DESCRIBE", "TALK_SHELTER", "TALK_SIZE_UP",
@@ -125,7 +124,6 @@ def validate(dialogue):
     for topic_id in refered_ids:
         add_topic_by_chat(topics, topic_id)
 
-    # TALK_TRAIN_START is technically not a start id
     start_topics = [
         "TALK_RADIO", "TALK_LEADER", "TALK_FRIEND", "TALK_STOLE_ITEM",
         "TALK_MISSION_DESCRIBE_URGENT", "TALK_SEDATED", "TALK_WAKE_UP",
@@ -191,9 +189,7 @@ def validate(dialogue):
                 continue
             for response_id in branch_record["responses"]:
                 if topic_branches.get(response_id, {}).get("ends", False):
-                    # useful debug statement that I'm leaving here
-                    #print("pass {} {} terminates by {}".format(
-                    #    passes, topic_id, response_id))
+
                     branch_record["ends"] = True
                     no_change = False
                     break
@@ -204,7 +200,7 @@ def validate(dialogue):
         no_change = True
         passes += 1
         for topic_id in topic_branches:
-            # skip undefined topics
+
             if not topics[topic_id].get("valid", False):
                 continue
             branch_record = topic_branches[topic_id]
@@ -221,7 +217,6 @@ def validate(dialogue):
                 response_record["parent"] = branch_record["parent"]
                 no_change = False
 
-    # print(json.dumps(topic_branches, indent=2))
     skip_topics = ["TALK_DONE", "TALK_SIZE_UP", "TALK_LOOK_AT", "TALK_OPINION",
                    "TALK_SHOUT"]
 

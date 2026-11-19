@@ -37,4 +37,4 @@ void UTF8ToLowerUpperCheck::check( const MatchFinder::MatchResult &Result )
     }
 }
 
-} // namespace clang::tidy::cata
+}

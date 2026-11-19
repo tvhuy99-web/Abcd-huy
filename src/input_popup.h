@@ -45,7 +45,7 @@ class input_popup : public cataimgui::window
         explicit input_popup( int width, const std::string &title = "", const point &pos = point::min,
                               ImGuiWindowFlags flags = ImGuiWindowFlags_None );
 
-        // todo: monofont is a hack for easy support of old descriptions and should be replaced by a more universal solution
+
         void set_description( const std::string &desc, const nc_color &default_color = c_green,
                               bool monofont = false );
         void set_label( const std::string &label, const nc_color &default_color = c_light_red );
@@ -60,14 +60,16 @@ class input_popup : public cataimgui::window
         cataimgui::bounds get_bounds() override;
 
         bool handle_custom_callbacks( const std::string &action );
-        const std::string &reader_description() const { return description; }
+        const std::string &reader_description() const {
+            return description;
+        }
         std::string reader_title;
 
         input_context ctxt;
         std::string label;
         nc_color label_default_color = c_light_red;
         int max_input_length = 0;
-        // set focus on startup, ability to set focus on other occasions
+
         bool set_focus = true;
         bool is_cancelled = false;
         std::vector<std::pair<callback_input, std::function<bool()>>> callbacks;
@@ -89,7 +91,7 @@ class string_input_popup_imgui : public input_popup
                                            ImGuiWindowFlags flags = ImGuiWindowFlags_None );
 
         std::string query();
-        // tries to parse input into a tripoint_abs_omt
+
         std::optional<tripoint_abs_omt> query_coordinate( bool loop = false );
         void set_identifier( const std::string &ident );
         void set_text( const std::string &txt );
@@ -102,7 +104,7 @@ class string_input_popup_imgui : public input_popup
         void add_to_history( const std::string &value ) const;
         void show_history();
         std::string text;
-        // currently entered input for history handling
+
         std::string session_input;
         std::string old_input;
         std::string identifier;
@@ -112,7 +114,7 @@ class string_input_popup_imgui : public input_popup
         bool do_clear_text = false;
 };
 
-// todo: make generic for any numeric type?
+
 template<typename T>
 class number_input_popup : public input_popup
 {
@@ -121,11 +123,11 @@ class number_input_popup : public input_popup
                                      const point &pos = point::min, ImGuiWindowFlags flags = ImGuiWindowFlags_None );
         T query();
         void set_step_size( std::optional<T> step, std::optional<T> fast_step );
-        // Optional engine-defined bounds for the native Android editor.
+
         void set_value_range( T minimum, T maximum );
-        // Opt-in only for an integer item quantity with a real upper bound.
-        // Generic number fields (settings, character creation, etc.) retain
-        // their existing edit-and-confirm interaction.
+
+
+
         void set_accessible_quantity_max( T available );
         bool quantity_cancelled() const;
     protected:
@@ -140,4 +142,4 @@ class number_input_popup : public input_popup
         std::optional<T> accessible_quantity_max = std::nullopt;
         bool last_quantity_cancelled = false;
 };
-#endif // CATA_SRC_INPUT_POPUP_H
+#endif

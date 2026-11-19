@@ -222,7 +222,7 @@ TEST_CASE( "player_morale_murdered_innocent", "[player_morale]" )
     player_morale &m = *player.morale;
     tripoint_bub_ms next_to = player.adjacent_tile();
     standard_npc innocent( "Lapin", next_to, {}, 0, 8, 8, 8, 7 );
-    // Innocent as could be.
+
     faction_id lapin( "lapin" );
     innocent.set_fac( lapin );
     innocent.setpos( here, next_to );
@@ -234,7 +234,7 @@ TEST_CASE( "player_morale_murdered_innocent", "[player_morale]" )
         player.mod_moves( 1000 );
         player.melee_attack( innocent, true );
     }
-    // Death is just a data state, we can still do useful checks even after they're dead.
+
     CHECK( innocent.hit_by_player == true );
     REQUIRE( m.get_total_negative_value() == 90 );
 }
@@ -247,7 +247,7 @@ TEST_CASE( "player_morale_kills_hostile_bandit", "[player_morale]" )
     player_morale &m = *player.morale;
     tripoint_bub_ms next_to = player.adjacent_tile();
     standard_npc badguy( "Raider", next_to, {}, 0, 8, 8, 8, 7 );
-    // Always-hostile
+
     faction_id hells_raiders( "hells_raiders" );
     badguy.set_fac( hells_raiders );
     badguy.setpos( here, next_to );
@@ -268,9 +268,9 @@ TEST_CASE( "player_morale_ranged_kill_of_unaware_hostile_bandit", "[player_moral
     clear_map();
     clear_avatar();
     avatar &player = get_avatar();
-    // Set the time to midnight to ensure the bandit doesn't notice the player.
+
     set_time( calendar::turn_zero + 0_hours );
-    // Give us a clairvoyance to clearly see the target in the night.
+
     player.set_mutation( trait_DEBUG_CLAIRVOYANCE );
     player_morale &m = *player.morale;
     const tripoint_bub_ms bandit_pos = player.pos_bub() + ( point::east * 2 );
@@ -680,9 +680,9 @@ TEST_CASE( "player_morale_stacking", "[player_morale]" )
     }
 }
 
-// Regression test for GitHub #85895: check_and_recover_morale was replacing
-// the entire morale object when it found a permanent-point inconsistency,
-// which destroyed all temporary morale (food, music, etc.).
+
+
+
 TEST_CASE( "check_and_recover_morale_preserves_temporary_morale", "[player_morale]" )
 {
     clear_avatar();
@@ -690,26 +690,26 @@ TEST_CASE( "check_and_recover_morale_preserves_temporary_morale", "[player_moral
     player_morale &m = *dummy.morale;
 
     SECTION( "temporary morale survives when permanent point is inconsistent" ) {
-        // Add temporary morale
+
         m.add( morale_food_good, 20, 40, 20_turns, 10_turns );
         REQUIRE( m.has( morale_food_good ) == 20 );
 
-        // Inject a stale permanent point that the character should not have.
-        // The avatar has no constrained mutations, so test_morale will
-        // compute constrained = 0 and detect an inconsistency.
+
+
+
         m.set_permanent( morale_perm_constrained, -5 );
         REQUIRE( m.has( morale_perm_constrained ) == -5 );
 
-        // The inconsistency triggers a debugmsg; capture it so the test
-        // framework does not treat it as a failure.
+
+
         std::string dmsg = capture_debugmsg_during( [&dummy]() {
             dummy.check_and_recover_morale();
         } );
         CHECK_THAT( dmsg, Catch::Contains( "is inconsistent" ) );
 
-        // Recovery should fix the permanent point...
+
         CHECK( m.has( morale_perm_constrained ) == 0 );
-        // ...without destroying the temporary morale
+
         CHECK( m.has( morale_food_good ) == 20 );
     }
 
@@ -719,7 +719,7 @@ TEST_CASE( "check_and_recover_morale_preserves_temporary_morale", "[player_moral
         REQUIRE( m.has( morale_food_good ) == 15 );
         REQUIRE( m.has( morale_book ) == 8 );
 
-        // Inject inconsistency
+
         m.set_permanent( morale_perm_constrained, -3 );
 
         std::string dmsg = capture_debugmsg_during( [&dummy]() {
@@ -733,9 +733,9 @@ TEST_CASE( "check_and_recover_morale_preserves_temporary_morale", "[player_moral
     }
 }
 
-// Regression test for the save-load root cause: player_morale's mutation
-// tracking is not initialized during load, so update_constrained_penalty()
-// and update_masochist_bonus() compute wrong values when triggered.
+
+
+
 TEST_CASE( "morale_mutation_state_after_load_like_sequence", "[player_morale]" )
 {
     clear_avatar();
@@ -746,21 +746,21 @@ TEST_CASE( "morale_mutation_state_after_load_like_sequence", "[player_morale]" )
         dummy.toggle_trait( trait_FLOWERS );
         REQUIRE( dummy.has_trait( trait_FLOWERS ) );
 
-        // First verify correct behavior when properly set up
+
         const item hat( itype_tinfoil_hat, calendar::turn_zero );
         m.on_mutation_gain( trait_FLOWERS );
         m.on_item_wear( hat );
         REQUIRE( m.has( morale_perm_constrained ) == -10 );
 
-        // Now simulate what save-load does: clear morale and rebuild
-        // WITHOUT activating mutations (the bug)
+
+
         dummy.clear_morale();
-        // Only replay item wear (as savegame_json.cpp:918 does)
+
         m.on_item_wear( hat );
-        // Without mutation activation, constrained penalty is wrong
+
         CHECK( m.has( morale_perm_constrained ) == 0 );
 
-        // After activating mutations (the fix), penalty is correct
+
         m.on_mutation_gain( trait_FLOWERS );
         CHECK( m.has( morale_perm_constrained ) == -10 );
     }
@@ -768,21 +768,21 @@ TEST_CASE( "morale_mutation_state_after_load_like_sequence", "[player_morale]" )
     SECTION( "temporary morale preserved through recovery after load fix" ) {
         dummy.toggle_trait( trait_FLOWERS );
 
-        // Wear the hat through the Character so check_and_recover_morale
-        // will see it when rebuilding test_morale from worn items.
+
+
         dummy.wear_item( item( itype_tinfoil_hat ) );
 
-        // Activate mutations in morale (simulates the fix in savegame_json)
+
         for( const trait_id &mut : dummy.get_functioning_mutations() ) {
             m.on_mutation_gain( mut );
         }
 
-        // Add temporary morale
+
         m.add( morale_food_good, 20, 40, 20_turns, 10_turns );
         REQUIRE( m.has( morale_food_good ) == 20 );
         REQUIRE( m.has( morale_perm_constrained ) == -10 );
 
-        // check_and_recover should find consistency -- no wipe
+
         dummy.check_and_recover_morale();
         CHECK( m.has( morale_food_good ) == 20 );
         CHECK( m.has( morale_perm_constrained ) == -10 );

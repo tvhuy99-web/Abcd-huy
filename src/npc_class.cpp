@@ -29,14 +29,14 @@ class item;
 
 static generic_factory<npc_class> npc_class_factory( "npc_class" );
 
-/** @relates string_id */
+
 template<>
 const npc_class &string_id<npc_class>::obj() const
 {
     return npc_class_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<npc_class>::is_valid() const
 {
@@ -57,7 +57,7 @@ void npc_class::reset_npc_classes()
     npc_class_factory.reset();
 }
 
-// Copies the value under the key "ALL" to all unassigned skills
+
 template <typename T>
 static void apply_all_to_unassigned( T &skills )
 {
@@ -295,12 +295,12 @@ void npc_class::load( const JsonObject &jo, std::string_view )
 
     optional( jo, was_loaded, "proficiencies", _starting_proficiencies );
     optional( jo, was_loaded, "sells_belongings", sells_belongings, true );
-    /* Mutation rounds can be specified as follows:
-     *   "mutation_rounds": {
-     *     "ANY" : { "constant": 1 },
-     *     "INSECT" : { "rng": [1, 3] }
-     *   }
-     */
+
+
+
+
+
+
     if( jo.has_object( "mutation_rounds" ) ) {
         const std::map<mutation_category_id, mutation_category_trait> &mutation_categories =
             mutation_category_trait::get_all();
@@ -441,7 +441,7 @@ bool is_within_work_hours( int hour, int start, int end )
     if( start <= end ) {
         return hour >= start && hour < end;
     }
-    // wraps midnight
+
     return hour >= start || hour < end;
 }
 

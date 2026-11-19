@@ -47,17 +47,17 @@
 #include "ui_manager.h"
 #include "widget.h"
 
-//TODO: Use these variables again later to enhance the limb health widget.
-//static const efftype_id effect_got_checked( "got_checked" );
-//static const efftype_id effect_mending( "mending" );
-//static const flag_id json_flag_SPLINT( "SPLINT" );
-//static const flag_id json_flag_THERMOMETER( "THERMOMETER" );
 
-//static const string_id<behavior::node_t> behavior_node_t_npc_needs( "npc_needs" );
 
-//static const trait_id trait_NOPAIN( "NOPAIN" );
 
-// constructor
+
+
+
+
+
+
+
+
 window_panel::window_panel(
     const std::function<void( const draw_args & )> &draw_func,
     const std::string &id, const translation &nm, const int ht, const int wd,
@@ -81,9 +81,9 @@ window_panel::window_panel(
     wgt = widget_id::NULL_ID();
 }
 
-// ====================================
-// panels prettify and helper functions
-// ====================================
+
+
+
 
 static std::string trunc_ellipse( const std::string &input, unsigned int trunc )
 {
@@ -176,7 +176,7 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                                      const tripoint_abs_omt &global_omt, const point &start_input,
                                      const int width, const int height )
 {
-    // Map is centered on curs - typically player's global_omt_location
+
     const point_abs_omt curs = global_omt.xy();
     const tripoint_abs_omt targ = you.get_active_mission_target();
     const int start_y = start_input.y;
@@ -192,13 +192,13 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
     opts.hilite_pc = true;
     opts.hilite_mission = true;
 
-    // i scans across width, with 0 in the middle(ish)
-    //     -(w/2) ... w-(w/2)-1
-    // w:9   -4 ... 4
-    // w:10  -5 ... 4
-    // w:11  -5 ... 5
-    // w:12  -6 ... 5
-    // w:13  -6 ... 6
+
+
+
+
+
+
+
     int left = -( width / 2 );
     int right = width - ( width / 2 ) + 1;
     int top = -( height / 2 );
@@ -208,19 +208,19 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                             targ.y() >= top + curs.y() && targ.y() <= bottom + curs.y();
 
     for( int i = left; i <= right; i++ ) {
-        // j scans across height, with 0 in the middle(ish)
-        // (same algorithm)
+
+
         for( int j = top; j <= bottom; j++ ) {
-            // omp is the current overmap point, at the current z-level
+
             const tripoint_abs_omt omp( curs + point( i, j ), here.get_abs_sub().z() );
-            // Terrain color and symbol to use for this point
+
             nc_color ter_color;
             std::string ter_sym;
 
             oter_display_args args( overmap_buffer.seen( omp ) );
             args.edge_tile = i == left || i == right || j == top || j == bottom;
             std::tie( ter_sym, ter_color ) = oter_symbol_and_color( omp, args, opts );
-            // TODO: Build colorized string instead of writing directly to window
+
             mvwputch( w_minimap, mid + point( i + start_x, j + start_y ), ter_color, ter_sym );
         }
     }
@@ -233,25 +233,25 @@ void overmap_ui::draw_overmap_chunk_imgui( const avatar &you, const tripoint_abs
     ImVec2 start_pos = ImGui::GetCursorPos();
     const ImVec2 mid { static_cast<float>( width / 2.0 ), static_cast<float>( height / 2.0 ) };
     ImVec2 char_size = ImGui::CalcTextSize( "X" );
-    // Map is centered on curs - typically player's global_omt_location
+
     const tripoint_abs_omt targ = you.get_active_mission_target();
     bool drew_mission = targ.is_invalid();
     const int sight_points = you.overmap_sight_range( g->light_level( you.posz() ) );
 
-    // i scans across width, with 0 in the middle(ish)
-    //     -(w/2) ... w-(w/2)-1
-    // w:9   -4 ... 4
-    // w:10  -5 ... 4
-    // w:11  -5 ... 5
-    // w:12  -6 ... 5
-    // w:13  -6 ... 6
+
+
+
+
+
+
+
     for( int i = width - ( width / 2 ) - 1; i >= -( width / 2 ); i-- ) {
-        // j scans across height, with 0 in the middle(ish)
-        // (same algorithm)
+
+
         for( int j = height - ( height / 2 ) - 1; j >= -( height / 2 ); j-- ) {
-            // omp is the overmap point of the terrain whose symbol we are drawing
+
             const tripoint_abs_omt omp = global_omt + tripoint( i, j, 0 );
-            // Terrain color and symbol to use for this point
+
             nc_color ter_color;
             std::string ter_sym;
             const om_vision_level vision = overmap_buffer.seen( omp );
@@ -262,14 +262,14 @@ void overmap_ui::draw_overmap_chunk_imgui( const avatar &you, const tripoint_abs
                 ter_sym = sym_color.first;
                 ter_color = sym_color.second;
             } else if( !seen ) {
-                // Always gray # for unseen
+
                 ter_sym = "#";
                 ter_color = c_dark_gray;
             } else if( overmap_buffer.has_vehicle( omp ) ) {
                 ter_color = c_cyan;
                 ter_sym = overmap_buffer.get_vehicle_ter_sym( omp );
             } else {
-                // Otherwise, get symbol and color appropriate for the terrain
+
                 const oter_id &cur_ter = overmap_buffer.ter( omp );
                 ter_sym = cur_ter->get_symbol( vision, false );
                 if( overmap_buffer.is_explored( omp ) ) {
@@ -279,18 +279,18 @@ void overmap_ui::draw_overmap_chunk_imgui( const avatar &you, const tripoint_abs
                 }
             }
             if( !drew_mission && targ.xy() == omp.xy() ) {
-                // If there is a mission target, and it's not on the same
-                // overmap terrain as the player character, mark it.
-                // TODO: Inform player if the mission is above or below
+
+
+
                 drew_mission = true;
                 if( i != 0 || j != 0 ) {
                     ter_color = red_background( ter_color );
                 }
             }
-            // TODO: Build colorized string instead of writing directly to window
+
             ImVec2 pos = start_pos + ( char_size * ( mid + ImVec2( i, j ) ) );
             ImGui::SetCursorPos( pos );
-            // Show hordes on minimap, leaving a one-tile space around the player
+
             bool show_hordes = i < -1 || i > 1 || j < -1 || j > 1;
             int horde_size = overmap_buffer.get_horde_size( omp );
             if( show_hordes && horde_size >= HORDE_VISIBILITY_SIZE &&
@@ -300,7 +300,7 @@ void overmap_ui::draw_overmap_chunk_imgui( const avatar &you, const tripoint_abs
                 ImGui::SameLine( 0, 0 );
             } else {
                 if( i == 0 && j == 0 ) {
-                    // Highlight player character position in center of minimap
+
                     ter_color = hilite( ter_color );
                 }
                 ImGui::TextColored( ter_color, "%s", ter_sym.c_str() );
@@ -310,20 +310,20 @@ void overmap_ui::draw_overmap_chunk_imgui( const avatar &you, const tripoint_abs
         ImGui::NewLine();
     }
 
-    // When the mission marker is not visible within the current overmap extents,
-    // draw an arrow at the edge of the map pointing in the general mission direction.
-    // TODO: Replace `drew_mission` with a function like `is_mission_on_map`
-    // TODO: commented out temporarily
-    // if( !drew_mission ) {
-    //     char glyph = '*';
-    //     if( targ.z() > you.posz() ) {
-    //         glyph = '^';
-    //     } else if( targ.z() < you.posz() ) {
-    //         glyph = 'v';
-    //     }
-    //     const point arrow = display::mission_arrow_offset( you, width, height );
-    //     mvwputch( w_minimap, arrow + point( start_x, start_y ), c_red, glyph );
-    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     ImGui::EndGroup();
 }
 
@@ -350,7 +350,7 @@ static void draw_messages( const draw_args &args )
     werase( w );
     int line = getmaxy( w ) - 1;
     int maxlength = getmaxx( w );
-    Messages::display_messages( w, 1, 0 /*topline*/, maxlength - 1, line );
+    Messages::display_messages( w, 1, 0, maxlength - 1, line );
     wnoutrefresh( w );
 }
 
@@ -365,37 +365,37 @@ static void draw_mminimap( const draw_args &args )
 }
 #endif
 
-// ============
-// INITIALIZERS
-// ============
+
+
+
 
 bool default_render()
 {
     return true;
 }
 
-// Initialize custom panels from a given "sidebar" style widget
+
 static std::vector<window_panel> initialize_default_custom_panels( const widget &wgt )
 {
     std::vector<window_panel> ret;
 
-    // Use defined width, or at least 16
+
     const int width = std::max( wgt._width, 16 );
 
-    // Add window panel for each child widget
+
     for( const widget_id &row_wid : wgt._widgets ) {
         widget row_widget = row_wid.obj();
         ret.emplace_back( row_widget.get_window_panel( width ) );
     }
 
-    // Add compass, message log, and map to fill remaining space
-    // TODO: Make these into proper widgets
+
+
     ret.emplace_back( draw_messages, "Log", to_translation( "Log" ),
                       -2, width, true );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, "Map", to_translation( "Map" ),
                       -1, width, true, default_render, true );
-#endif // TILES
+#endif
 
     return ret;
 }
@@ -403,7 +403,7 @@ static std::vector<window_panel> initialize_default_custom_panels( const widget 
 static std::map<std::string, panel_layout> initialize_default_panel_layouts()
 {
     std::map<std::string, panel_layout> ret;
-    // Add panel layout for each "sidebar" widget
+
     for( const widget &wgt : widget::get_all() ) {
         if( wgt._style == "sidebar" ) {
             ret.emplace( wgt.getId().str(),
@@ -421,7 +421,7 @@ panel_manager::panel_manager()
 #else
     current_layout_id = "legacy_labels_sidebar";
 #endif
-    // Set empty layouts; these will be populated by load()
+
     layouts = std::map<std::string, panel_layout>();
 }
 
@@ -551,8 +551,8 @@ void panel_manager::deserialize( const JsonArray &ja )
 
     current_layout_id = joLayouts.get_string( "current_layout_id" );
     if( layouts.find( current_layout_id ) == layouts.end() ) {
-        // Layout id updated between loads.
-        // Shouldn't happen unless custom sidebar id's were modified or removed.
+
+
         joLayouts.allow_omitted_members();
         current_layout_id = "labels";
         return;
@@ -576,7 +576,7 @@ void panel_manager::deserialize( const JsonArray &ja )
             for( auto it2 = layout.begin() + std::distance( layout.begin(), it ); it2 != layout.end(); ++it2 ) {
                 if( it2->get_id() == id ) {
                     if( it->get_id() != id ) {
-                        // Copy is intentional: layout.erase( it2 ) below invalidates *it2.
+
                         // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
                         window_panel panel = *it2;
                         layout.erase( it2 );
@@ -594,7 +594,7 @@ void panel_manager::deserialize( const JsonArray &ja )
     }
 }
 
-// Dummy render pass to recalculate layout height
+
 static void dummy_wgt_render( const widget_id &wid, int width )
 {
     if( wid.is_null() || !wid.is_valid() ) {
@@ -614,12 +614,12 @@ static void draw_border_win( catacurses::window &w, const std::vector<int> &colu
 {
     werase( w );
     decorate_panel( _( "Sidebar options" ), w );
-    // Draw vertical separators
+
     wattron( w, BORDER_COLOR );
     mvwvline( w, point( column_widths[0] + 1, 1 ), 0,
-              popup_height - 2 ); //FIXME char is zero?
+              popup_height - 2 );
     mvwvline( w, point( column_widths[0] + column_widths[1] + 2, 1 ), 0,
-              popup_height - 2 ); //FIXME char is zero?
+              popup_height - 2 );
     wattroff( w, BORDER_COLOR );
     wnoutrefresh( w );
 }
@@ -742,19 +742,19 @@ void panel_manager::show_adm()
 
     bool recalc = true;
     bool exit = false;
-    // map of row the panel is on vs index
-    // panels not renderable due to game configuration will not be in this map
+
+
     std::map<size_t, size_t> row_indices;
 
-    // Reader adapter (R19.4). The visual screen conveys a panel's toggle
-    // state only through text color (white vs dark gray) and the layout
-    // order only through vertical position; the snapshot below publishes
-    // the same facts from the same panel_layout data as words. Every
-    // mutation intent returns one of this screen's own actions (or, for a
-    // complete reorder step, performs exactly the swap chain the
-    // original two-step MOVE_PANEL flow performs on the same panels
-    // vector), so saving still happens only through the original QUIT
-    // path and no parallel panel state exists.
+
+
+
+
+
+
+
+
+
     enum class reader_target_kind {
         panel,
         layout,
@@ -765,14 +765,16 @@ void panel_manager::show_adm()
     };
     std::unordered_map<std::string, reader_target> reader_targets;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "PANEL_MGMT",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "PANEL_MGMT",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
-        if( selected.kind == reader_target_kind::layout ) {
+        if( selected.kind == reader_target_kind::layout )
+        {
             if( intent.action != "focus" && intent.action != "activate" ) {
                 return std::nullopt;
             }
@@ -781,25 +783,29 @@ void panel_manager::show_adm()
             if( intent.action == "focus" ) {
                 return std::string( "A11Y_INTERNAL_PANEL_FOCUS" );
             }
-            // The original layout selection is MOVE_PANEL pressed in the
-            // right-hand column; let the screen's own loop perform it.
+
+
             return std::string( "MOVE_PANEL" );
         }
         const auto row_it = row_indices.find( selected.row );
-        if( row_it == row_indices.end() ) {
+        if( row_it == row_indices.end() )
+        {
             return std::nullopt;
         }
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             current_col = 0;
             current_row = selected.row;
             return std::string( "A11Y_INTERNAL_PANEL_FOCUS" );
         }
-        if( intent.action == "activate" ) {
+        if( intent.action == "activate" )
+        {
             current_col = 0;
             current_row = selected.row;
             return std::string( "TOGGLE_PANEL" );
         }
-        if( intent.action == "move_up" || intent.action == "move_down" ) {
+        if( intent.action == "move_up" || intent.action == "move_down" )
+        {
             if( swapping ||
                 ( intent.action == "move_up" && selected.row == 0 ) ||
                 ( intent.action == "move_down" &&
@@ -812,10 +818,10 @@ void panel_manager::show_adm()
             if( target_it == row_indices.end() ) {
                 return std::nullopt;
             }
-            // One complete reorder step: the same swap chain the loop's
-            // MOVE_PANEL commit runs between the source and destination
-            // panel indices, including any non-renderable panels between
-            // them in the layout's panel vector.
+
+
+
+
             auto &panel_list = get_current_layout().panels();
             const size_t source_index = row_it->second;
             const size_t target_index = target_it->second;
@@ -840,7 +846,8 @@ void panel_manager::show_adm()
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Sidebar options" );
-        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order.  Activate a layout name to switch the sidebar layout.  Changes are saved when you exit, as on the original screen." );
+        snapshot.summary =
+            _( "Activate a panel to toggle it on or off, or move it up or down to change the display order.  Activate a layout name to switch the sidebar layout.  Changes are saved when you exit, as on the original screen." );
         const auto &panel_list = get_current_layout().panels();
         for( const auto &entry : row_indices ) {
             const size_t row = entry.first;
@@ -857,8 +864,8 @@ void panel_manager::show_adm()
                               static_cast<int>( row + 1 ),
                               static_cast<int>( row_indices.size() ),
                               panel.get_width(), panel.get_height() );
-            // The same widget description the center column shows for
-            // the focused panel on the visual screen.
+
+
             const widget_id panel_widget = panel.get_widget();
             for( const widget &wgt : widget::get_all() ) {
                 if( wgt.getId() == panel_widget ) {
@@ -902,7 +909,7 @@ void panel_manager::show_adm()
         if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(),
         [&]( const a11y::semantic_node & node ) {
         return node.id == snapshot.focus;
-        } ) ) {
+    } ) ) {
             snapshot.focus = snapshot.nodes.empty() ? std::string() :
                              snapshot.nodes.front().id;
         }
@@ -986,8 +993,8 @@ void panel_manager::show_adm()
 
         const std::string action = ctxt.handle_input();
         if( action == "A11Y_INTERNAL_PANEL_FOCUS" ) {
-            // Reader focus/reorder bookkeeping only; no panel state
-            // changes beyond what the intent handler already applied.
+
+
         } else if( action == "UP" ) {
             if( current_row > 0 ) {
                 current_row -= 1;
@@ -1013,13 +1020,13 @@ void panel_manager::show_adm()
         } else if( action == "MOVE_PANEL" && current_col == 0 ) {
             swapping = !swapping;
             if( swapping ) {
-                // source window from the swap
-                // saving win1 index
+
+
                 source_row = current_row;
                 source_index = row_indices[current_row];
             } else {
-                // dest window for the swap
-                // saving win2 index
+
+
                 const size_t target_index = row_indices[current_row];
 
                 int distance = target_index - source_index;
@@ -1035,15 +1042,15 @@ void panel_manager::show_adm()
             current_layout_id = iter->first;
             int width = panel_manager::get_manager().get_current_layout().panels().begin()->get_width();
             update_offsets( width );
-            int h; // to_map_font_dimension needs a second input
+            int h;
             to_map_font_dimension( width, h );
-            // tell the game that the main screen might have a different size now.
+
             g->mark_main_ui_adaptor_resize();
-            // run a dummy render to set the initial height of each widget
+
             dummy_wgt_render( widget_id( current_layout_id ), width_right );
             recalc = true;
         } else if( !swapping && ( action == "RIGHT" || action == "LEFT" ) ) {
-            // there are only two columns
+
             if( current_col == 0 ) {
                 current_col = 2;
             } else {

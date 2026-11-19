@@ -57,9 +57,7 @@ def adjust_pockets(jo):
 def gen_new(path):
     change = False
     new_datas = list()
-    # Having troubles with this script halting?
-    # Uncomment below to find the file it's halting on
-    #print(path)
+
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)
@@ -106,7 +104,6 @@ def format_json(path):
         print("No json formatter found")
 
 
-# adjust items
 json_path = os.path.join(args_dict["dir"], "json")
 for root, directories, filenames in os.walk(json_path):
     for filename in filenames:

@@ -17,7 +17,7 @@ class item;
 
 namespace Pickup
 {
-/** Pick up information */
+
 struct pick_info {
     explicit pick_info( int extra_moves_per_distance = 0, units::volume max_volume = -1_ml,
                         units::mass max_mass = -1_gram ) : extra_moves_per_distance( extra_moves_per_distance ),
@@ -43,19 +43,19 @@ struct pick_info {
     units::mass picked_up_mass = 0_gram;
     units::mass max_mass = -1_gram;
 
-    // Readable outcome accumulated across multi-turn manual pickup. Never
-    // assume an item was collected merely because it was selected; only the
-    // actual successful transfer contributes to successes.
+
+
+
     std::vector<std::string> a11y_successes;
     std::vector<std::string> a11y_failures;
     int a11y_success_count = 0;
     int a11y_failure_count = 0;
 };
 
-/**
- * Returns `false` if the player was presented a prompt and decided to cancel the pickup.
- * `true` in other cases.
- */
+
+
+
+
 bool do_pickup( std::vector<item_location> &targets, std::vector<int> &quantities,
                 bool autopickup, bool &stash_successful, Pickup::pick_info &info );
 bool query_thief( item &it );
@@ -66,9 +66,9 @@ enum from_where : int {
     prompt
 };
 
-/** Pick up items; 'g' or ',' or via examine() */
+
 void autopickup( const tripoint_bub_ms &p );
-/** Determines the cost of moving an item by a character. */
+
 int cost_to_move_item( const Character &who, const item &it );
-} // namespace Pickup
-#endif // CATA_SRC_PICKUP_H
+}
+#endif

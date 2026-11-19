@@ -19,7 +19,7 @@ bool ispunct( char c )
     return c != '_' && std::ispunct( c ) != 0;
 }
 
-} // namespace
+}
 
 namespace math
 {
@@ -140,4 +140,4 @@ std::vector<token> const &lexer::tokens()
     return ret;
 }
 
-} // namespace math
+}

@@ -8,7 +8,7 @@ class JsonObject;
 namespace
 {
 generic_factory<profession_group> profession_group_factory( "profession_group" );
-} // namespace
+}
 
 template<>
 const profession_group &string_id<profession_group>::obj() const

@@ -5,7 +5,7 @@
 
 #include "cata_catch.h"
 
-// Wraps Catch2 internal test-enumeration API in one place.
+
 static std::vector<std::string> get_all_test_case_names()
 {
     std::vector<std::string> names;

@@ -20,11 +20,11 @@ struct transparent_less_than {
     }
 };
 
-/**
- * @brief A SimpleAssociativeContainer implemented as a sorted vector.
- *
- * O(n) insertion, O(log(n)) lookup, only one allocation at any given time.
- */
+
+
+
+
+
 template<typename T, typename Compare = transparent_less_than, typename Data = std::vector<T>>
 class flat_set : private Compare, Data
 {
@@ -149,11 +149,11 @@ class flat_set : private Compare, Data
         }
 
         iterator insert( iterator, const value_type &value ) {
-            /// TODO: Use insertion hint
+
             return insert( value ).first;
         }
         iterator insert( iterator, value_type &&value ) {
-            /// TODO: Use insertion hint
+
             return insert( std::move( value ) ).first;
         }
         std::pair<iterator, bool> insert( const value_type &value ) {
@@ -173,7 +173,7 @@ class flat_set : private Compare, Data
 
         template<typename InputIt>
         void insert( InputIt first, InputIt last ) {
-            /// TODO: could be faster when inserting only a few elements
+
             Data::insert( end(), first, last );
             sort_data();
         }
@@ -216,6 +216,6 @@ class flat_set : private Compare, Data
         }
 };
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_FLAT_SET_H
+#endif

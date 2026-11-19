@@ -1,19 +1,19 @@
-/* Main Loop for cataclysm
- * Linux only I guess
- * But maybe not
- * Who knows
- */
+
+
+
+
+
 #include <dirent.h>
 // IWYU pragma: no_include <sys/dirent.h>
 #include <sys/stat.h>
 #include <clocale>
 #include <cstdio>
-#include <cstring>  // for strcmp
+#include <cstring>
 #include <exception>
 #include <fstream>
 #include <iterator>
-#include <sstream> // for throwing errors
-#include <stack>    // for stack (obviously)
+#include <sstream>
+#include <stack>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -26,7 +26,7 @@
 
 #include "json.h"
 
-// copypasta: file_finder.cpp
+
 static std::vector<std::string> get_files_from_path_( const std::string &extension,
         std::string root_path,
         bool recursive_search, bool match_extension )
@@ -34,7 +34,7 @@ static std::vector<std::string> get_files_from_path_( const std::string &extensi
     std::vector<std::string> files;
     const size_t extsz = extension.size();
     const char *c_extension = extension.c_str();
-    // test for empty root path
+
     if( root_path.empty() ) {
         root_path = ".";
     }
@@ -57,9 +57,9 @@ static std::vector<std::string> get_files_from_path_( const std::string &extensi
             DIR *subdir;
 
             while( ( root_file = readdir( root ) ) ) {
-                // check to see if it is a folder!
+
                 if( stat( root_file->d_name, &_buff ) != 0x4 ) {
-                    // ignore '.' and '..' folder names, which are current and parent folder relative paths
+
                     if( ( strcmp( root_file->d_name, "." ) != 0 ) && ( strcmp( root_file->d_name, ".." ) != 0 ) ) {
                         std::string subpath = path_with_slash + root_file->d_name;
 
@@ -72,7 +72,7 @@ static std::vector<std::string> get_files_from_path_( const std::string &extensi
                         }
                     }
                 }
-                // check to see if it is a file with the appropriate extension
+
                 std::string tmp = root_file->d_name;
                 if( tmp.find( c_extension, match_extension ? tmp.size() - extsz : 0 ) != std::string::npos ) {
                     std::string fullpath = path_with_slash + tmp;
@@ -81,8 +81,8 @@ static std::vector<std::string> get_files_from_path_( const std::string &extensi
             }
             closedir( root );
         }
-        // Directories are added to tempstack in A->Z order, which makes them pop from Z->A. This Makes sure that directories are
-        // searched in the proper order and that the final output is in the proper order.
+
+
         while( !tempstack.empty() ) {
             directories.push( tempstack.top() );
             tempstack.pop();
@@ -91,7 +91,7 @@ static std::vector<std::string> get_files_from_path_( const std::string &extensi
     return files;
 }
 
-// copypasta: init.cpp
+
 static void load_object( TextJsonObject &jo )
 {
     std::string type = jo.get_string( "type" );
@@ -103,14 +103,14 @@ static void load_all_from_json( TextJsonIn &jsin )
 {
     char ch;
     jsin.eat_whitespace();
-    // examine first non-whitespace char
+
     ch = jsin.peek();
     if( ch == '{' ) {
-        // find type and dispatch single object
+
         TextJsonObject jo = jsin.get_object();
         load_object( jo );
         jo.finish();
-        // if there's anything else in the file, it's an error.
+
         jsin.eat_whitespace();
         if( jsin.good() ) {
             std::stringstream err;
@@ -120,7 +120,7 @@ static void load_all_from_json( TextJsonIn &jsin )
         }
     } else if( ch == '[' ) {
         jsin.start_array();
-        // find type and dispatch each object until array close
+
         while( !jsin.end_array() ) {
             jsin.eat_whitespace();
             ch = jsin.peek();
@@ -135,7 +135,7 @@ static void load_all_from_json( TextJsonIn &jsin )
             jo.finish();
         }
     } else {
-        // not an object or an array?
+
         std::stringstream err;
         err << "expected object or array, but found '" << ch << "'";
         jsin.error( err.str() );
@@ -144,15 +144,15 @@ static void load_all_from_json( TextJsonIn &jsin )
 
 static void load_json_dir( const std::string &dirname )
 {
-    // get a list of all files in the directory
+
     std::vector<std::string> dir =
         get_files_from_path_( ".json", dirname, true, true );
-    // iterate over each file
+
     std::vector<std::string>::iterator it;
     for( it = dir.begin(); it != dir.end(); it++ ) {
-        // open the file as a stream
+
         std::ifstream infile( it->c_str(), std::ifstream::in | std::ifstream::binary );
-        // and stuff it into ram
+
         std::istringstream iss(
             std::string(
                 ( std::istreambuf_iterator<char>( infile ) ),
@@ -160,7 +160,7 @@ static void load_json_dir( const std::string &dirname )
             )
         );
         infile.close();
-        // parse it
+
         try {
             TextJsonIn jsin( iss );
             load_all_from_json( jsin );
@@ -177,7 +177,7 @@ int main( int, char ** )
 #else
     bool supports_color = isatty( STDOUT_FILENO );
 #endif
-    // formatter stdout in github actions is redirected but still able to handle ANSI colors
+
     supports_color |= std::getenv( "CI" ) != nullptr;
 
     // NOLINTNEXTLINE(cata-tests-must-restore-global-state)

@@ -11,25 +11,25 @@
 
 namespace io
 {
-/**
- * @name Enumeration (de)serialization to/from string.
- *
- * @ref enum_to_string converts an enumeration value to a string (which can be written to JSON).
- * The result must be an non-empty string.
- *
- * This function must be implemented somewhere for each enumeration type for
- * which conversion is required.
- *
- * Such enums must also specialize enum_traits to specify their 'last' member.
- *
- * @ref string_to_enum converts the string value back into an enumeration value. The input
- * is expected to be one of the outputs of @ref enum_to_string. If the given string does
- * not match an enumeration, an @ref InvalidEnumString is thrown.
- *
- * @code string_to_enum<E>(enum_to_string<E>(X)) == X @endcode must yield true for all values
- * of the enumeration E.
- */
-/*@{*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class InvalidEnumString : public std::runtime_error
 {
     public:
@@ -70,7 +70,7 @@ const std::unordered_map<std::string, E> &get_enum_lookup_map()
     return string_to_enum_map;
 }
 
-// Helper function to do the lookup in an associative container
+
 template<typename C, typename E = typename C::mapped_type>
 inline E string_to_enum_look_up( const C &container, const std::string &data )
 {
@@ -88,7 +88,7 @@ E string_to_enum( const std::string &data )
     return string_to_enum_look_up( get_enum_lookup_map<E>(), data );
 }
 
-// Helper function to do the lookup in an associative container
+
 template<typename C, typename E = typename C::mapped_type>
 inline std::optional<E> string_to_enum_look_up_optional( const C &container,
         const std::string &data )
@@ -112,7 +112,7 @@ bool enum_is_valid( const std::string &data )
     return get_enum_lookup_map<E>().count( data );
 }
 
-/*@}*/
-} // namespace io
 
-#endif // CATA_SRC_ENUM_CONVERSIONS_H
+}
+
+#endif

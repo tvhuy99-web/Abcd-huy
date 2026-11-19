@@ -53,7 +53,7 @@ ammo_map_t &all_ammunition_types()
     static ammo_map_t the_map;
     return the_map;
 }
-} //namespace
+}
 
 ammunition_type::ammunition_type() : name_( no_translation( "null" ) )
 {
@@ -66,14 +66,14 @@ void ammunition_type::load_ammunition_type( const JsonObject &jsobj )
     jsobj.read( "default", res.default_ammotype_, true );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<ammunition_type>::is_valid() const
 {
     return all_ammunition_types().count( *this ) > 0;
 }
 
-/** @relates string_id */
+
 template<>
 const ammunition_type &string_id<ammunition_type>::obj() const
 {
@@ -97,25 +97,25 @@ void ammunition_type::reset()
 void ammunition_type::check_consistency()
 {
 
-    // FIXME: We would like to stop skipping these eventually, but for various reasons these need to skip the unused check.
+
     std::set<ammotype> whitelist = {
-        ammo_unfinished_char, // iexamine::kiln_fire sets charges directly and the resulting charcoal is still ammo, so it's unsafe for this not to be ammo.
-        ammo_plutonium, // Some C++ code assumes that itype plut_cell has charges. TODO: Investigate and remove if safe.
-        ammo_gunpowder, // Has issues with uncrafting before it can be de-charged
-        ammo_mana, // Causes an error in xedrawood due to obsoleting some random item or another, needs to be tracked down
-        ammo_gunpowder_artillery, // Ditto
-        ammo_gunpowder_large_rifle, // Ditto
-        ammo_gunpowder_magnum_pistol, // Ditto
-        ammo_gunpowder_pistol, // Ditto
-        ammo_gunpowder_rifle, // Ditto
-        ammo_gunpowder_shotgun, // Ditto
-        ammo_afs_titanium_small, // Just waiting for someone to do the work on de-charging this
-        ammo_120mm, // Has some hardcoded references despite the fact nothing can actually shoot this. Need to clean those up before it can be safely removed
-        ammo_rolling_paper, // Removing it causes an inexplicable autopickup test failure.
-        ammo_throwing_stick_with_charges, // Used in a test
-        ammo_test_1g_weight, // Used in a test
-        ammo_test_solid_1ml, // Used in a test
-        ammo_test_graphite // Used in a test. I think this IS used by a multimag test gun so possibly the unused check is faulty in some way??
+        ammo_unfinished_char,
+        ammo_plutonium,
+        ammo_gunpowder,
+        ammo_mana,
+        ammo_gunpowder_artillery,
+        ammo_gunpowder_large_rifle,
+        ammo_gunpowder_magnum_pistol,
+        ammo_gunpowder_pistol,
+        ammo_gunpowder_rifle,
+        ammo_gunpowder_shotgun,
+        ammo_afs_titanium_small,
+        ammo_120mm,
+        ammo_rolling_paper,
+        ammo_throwing_stick_with_charges,
+        ammo_test_1g_weight,
+        ammo_test_solid_1ml,
+        ammo_test_graphite
     };
 
     std::vector<mod_id> &loaded_mods = world_generator->active_world->active_mod_order;
@@ -131,9 +131,9 @@ void ammunition_type::check_consistency()
         }
 
 
-        // Because generic guns overrides TONS of guns into null objects which don't shoot anything, we risk
-        // throwing tons and tons of errors and maintenance costs for generic guns if we try to check when that mod is loaded.
-        // Therefore we ONLY check to make sure that the default ammo itype is at least legitimate. It's better than nothing.
+
+
+
         if( skip_all_unused_checks ) {
             continue;
         }
@@ -141,12 +141,12 @@ void ammunition_type::check_consistency()
 
         std::vector<const itype *> shoots_this_ammo = Item_factory::find( [&]( const itype & t ) {
             item maybe_ammo_user( t.get_id() );
-            // Either we use this ammo directly (i.e. we're a gun), or we're a weapon mod (a bore, or another type of gunmod) that lets a gun use this ammo.
+
             return maybe_ammo_user.ammo_types().count( id ) ||
                    ( t.mod && t.mod->ammo_modifier.count( id ) );
         } );
 
-        // Horrible terrain iteration to check if there's any mortars firing this.
+
         for( const ter_t &some_ter_furn : mapdata::terrain_data.get_all() ) {
             if( some_ter_furn.has_examine( "mortar" ) ) {
                 for( auto &examiner : some_ter_furn.get_examine() ) {
@@ -154,7 +154,7 @@ void ammunition_type::check_consistency()
                     if( actor ) {
                         for( const ammotype &some_ammo : actor->get_ammotypes() ) {
                             if( some_ammo == id ) {
-                                // These IDs are never dereferenced, so it's fine.
+
                                 shoots_this_ammo.push_back( &*itype_id::NULL_ID() );
                                 break;
                             }
@@ -164,7 +164,7 @@ void ammunition_type::check_consistency()
             }
         }
 
-        // Guess what? We get to do it again with furniture.
+
         for( const furn_t &some_ter_furn : mapdata::furniture_data.get_all() ) {
             if( some_ter_furn.has_examine( "mortar" ) ) {
                 for( auto &examiner : some_ter_furn.get_examine() ) {
@@ -188,14 +188,14 @@ void ammunition_type::check_consistency()
 
         const bool is_whitelisted = whitelist.count( id );
 
-        // Liquids still need charge handling, so a ton of liquids need their own fake ammo types.
+
         const bool is_liquid_sole_type = solid_types_as_this_ammo.empty();
 
         if( shoots_this_ammo.empty() && !is_whitelisted && !is_liquid_sole_type ) {
             debugmsg( "ammotype %s exists but is unused", id.c_str() );
         }
 
-        // The whitelist is specifically locked down to prevent shoving anything in there that doesn't strictly need to be in there.
+
         if( is_whitelisted && solid_types_as_this_ammo.size() > 1 ) {
             debugmsg( "whitelisted ammo type %s has more than one entry.", id.c_str() );
         }

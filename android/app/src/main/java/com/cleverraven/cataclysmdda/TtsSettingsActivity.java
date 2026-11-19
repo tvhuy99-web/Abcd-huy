@@ -17,10 +17,10 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
 
-/**
- * Dedicated, self-voiced TTS settings. All edits are drafts until Save.
- * Voice preview is optional and never blocks saving a configuration.
- */
+
+
+
+
 public final class TtsSettingsActivity extends Activity {
     private final ArrayList<AndroidSpeech.EngineOption> engines = new ArrayList<>();
     private final ArrayList<AndroidSpeech.VoiceOption> voices = new ArrayList<>();
@@ -97,7 +97,7 @@ public final class TtsSettingsActivity extends Activity {
         int padding = Math.round(16 * getResources().getDisplayMetrics().density);
         column.setPadding(padding, padding, padding, padding);
 
-        // Must be the very first control and is not committed until Save.
+
         enabled = new CheckBox(this);
         enabled.setText(R.string.a11yTtsEnable);
         enabled.setChecked(saved.isEnabled());
@@ -122,8 +122,8 @@ public final class TtsSettingsActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
                 updateSliders();
-                // Gesture-controlled SeekBar updates may report fromUser=false.
-                // Every changed value invalidates the previous voice preview.
+
+
                 invalidatePreview();
             }
 
@@ -138,7 +138,7 @@ public final class TtsSettingsActivity extends Activity {
         volume.setOnSeekBarChangeListener(changed);
         updateSliders();
 
-        // Status row: visible on screen and announced in both modes.
+
         status = new TextView(this);
         status.setTextSize(17.0f);
         status.setLayoutParams(new LinearLayout.LayoutParams(
@@ -181,8 +181,8 @@ public final class TtsSettingsActivity extends Activity {
                 } else if (event == AndroidSpeech.Event.ERROR
                         || event == AndroidSpeech.Event.REJECTED) {
                     previewPassed = false;
-                    // The event carries no reason; use the probe/speech
-                    // state instead.
+
+
                     announce(ttsFailureReason(speech.getState()));
                 }
             }
@@ -330,7 +330,7 @@ public final class TtsSettingsActivity extends Activity {
         }
         if (exists) { return; }
         voiceName = null;
-        // Keep Vietnamese as the default if any Vietnamese voice exists.
+
         boolean foundLocale = false;
         for (AndroidSpeech.VoiceOption voice : voices) {
             if (voice.locale.toLanguageTag().equals(languageTag)) {
@@ -451,10 +451,10 @@ public final class TtsSettingsActivity extends Activity {
         }
     }
 
-    /**
-     * Spoken reason for a failed voice state. Unknown states fall
-     * back to the generic unavailable message; never guess a reason.
-     */
+
+
+
+
     private String ttsFailureReason(AndroidSpeech.State state) {
         if (state == AndroidSpeech.State.MISSING_LANGUAGE) {
             return getString(R.string.a11yTtsMissingLanguage);

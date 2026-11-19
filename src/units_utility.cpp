@@ -26,65 +26,99 @@ units::angle angle_delta( units::angle a, units::angle b )
 int angle_to_dir4( const units::angle direction )
 {
     const int dir8 = angle_to_dir8( direction );
-    // direction is snapped to 8 directions in angle_to_dir8, then we need to further snap it
-    // to just 4 directions, used for tilesets; for consistent visuals NE/NW diagonals snap to north
-    // and SE/SW diagonals snap to south
+
+
+
     // NOLINTBEGIN(bugprone-branch-clone)
     switch( dir8 ) {
-        // *INDENT-OFF*
-        case 0:  return 0; // north
-        case 1:  return 0; // north <- north west
-        case 2:  return 1; // west
-        case 3:  return 2; // south <- south west
-        case 4:  return 2; // south
-        case 5:  return 2; // south <- south east
-        case 6:  return 3; // east
-        case 7:  return 0; // north <- north east
 
-        default: return 0;
-        // *INDENT-ON*
+        case 0:
+            return 0;
+        case 1:
+            return 0;
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 2;
+        case 5:
+            return 2;
+        case 6:
+            return 3;
+        case 7:
+            return 0;
+
+        default:
+            return 0;
+
     }
     // NOLINTEND(bugprone-branch-clone)
 }
 
 int angle_to_dir8( const units::angle direction )
 {
-    // Direction is snapped to "notches" of 15-degrees on a circle, we bump direction towards the
-    // middle of each notch, and lookup the 8-way direction. Cardinal directions get 5 "notches", diagonals
-    // get 1 at the boundary of each 2 cardinals. This can be shorter but this way is easier to read,
-    // the compilers will optimize into lookup table. This is mostly used in curses mode.
+
+
+
+
     constexpr units::angle bump = 15_degrees / 2.0;
     const int snap = normalize( direction - bump ) / 15_degrees + 1;
     // NOLINTBEGIN(bugprone-branch-clone)
     switch( snap ) {
-        // *INDENT-OFF*
-        case 22: return 0; // north
-        case 23: return 0; // north
-        case 24: return 0; // north      (   0 degrees )
-        case 1:  return 0; // north
-        case 2:  return 0; // north
-        case 3:  return 1; // north-west (  45 degrees )
-        case 4:  return 2; // west
-        case 5:  return 2; // west
-        case 6:  return 2; // west       (  90 degrees )
-        case 7:  return 2; // west
-        case 8:  return 2; // west
-        case 9:  return 3; // south-west ( 135 degrees )
-        case 10: return 4; // south
-        case 11: return 4; // south
-        case 12: return 4; // south      ( 180 degrees )
-        case 13: return 4; // south
-        case 14: return 4; // south
-        case 15: return 5; // south-east ( 225 degrees )
-        case 16: return 6; // east
-        case 17: return 6; // east
-        case 18: return 6; // east       ( 270 degrees )
-        case 19: return 6; // east
-        case 20: return 6; // east
-        case 21: return 7; // north-east ( 315 degrees )
 
-        default: return 0; // other values can't happen
-        // *INDENT-ON*
+        case 22:
+            return 0;
+        case 23:
+            return 0;
+        case 24:
+            return 0;
+        case 1:
+            return 0;
+        case 2:
+            return 0;
+        case 3:
+            return 1;
+        case 4:
+            return 2;
+        case 5:
+            return 2;
+        case 6:
+            return 2;
+        case 7:
+            return 2;
+        case 8:
+            return 2;
+        case 9:
+            return 3;
+        case 10:
+            return 4;
+        case 11:
+            return 4;
+        case 12:
+            return 4;
+        case 13:
+            return 4;
+        case 14:
+            return 4;
+        case 15:
+            return 5;
+        case 16:
+            return 6;
+        case 17:
+            return 6;
+        case 18:
+            return 6;
+        case 19:
+            return 6;
+        case 20:
+            return 6;
+        case 21:
+            return 7;
+
+        default:
+            return 0;
+
     }
     // NOLINTEND(bugprone-branch-clone)
 }
@@ -121,17 +155,17 @@ const char *volume_units_long()
 double convert_velocity( int velocity, const units_type vel_units )
 {
     const std::string type = get_option<std::string>( "USE_METRIC_SPEEDS" );
-    // internal units to mph conversion
+
     double ret = static_cast<double>( velocity ) / 100;
 
     if( type == "km/h" ) {
         switch( vel_units ) {
             case VU_VEHICLE:
-                // mph to km/h conversion
+
                 ret *= 1.609f;
                 break;
             case VU_WIND:
-                // mph to m/s conversion
+
                 ret *= 0.447f;
                 break;
         }
@@ -185,7 +219,7 @@ double convert_length_cm_in( const units::length &length )
         ret /= 10;
     } else {
         // imperial's a doozy, we can only try to approximate
-        // so first we convert it to inches which are the smallest unit
+
         ret /= 25.4;
     }
     return ret;
@@ -197,18 +231,18 @@ int convert_length( const units::length &length )
     const bool metric = get_option<std::string>( "DISTANCE_UNITS" ) == "metric";
     if( metric ) {
         if( ret % 1000000 == 0 ) {
-            // kilometers
+
             ret /= 1000000;
         } else if( ret % 1000 == 0 ) {
-            // meters
+
             ret /= 1000;
         } else if( ret % 10 == 0 ) {
-            // centimeters
+
             ret /= 10;
         }
     } else {
-        // imperial's a doozy, we can only try to approximate
-        // so first we convert it to inches which are the smallest unit
+
+
         ret /= 25.4;
         if( ret % 63360 == 0 ) {
             ret /= 63360;
@@ -240,8 +274,8 @@ std::string length_units( const units::length &length )
             return _( "mm" );
         }
     } else {
-        // imperial's a doozy, we can only try to approximate
-        // so first we convert it to inches which are the smallest unit
+
+
         length_mm /= 25.4;
         if( length_mm == 0 ) {
             //~ inches
@@ -277,20 +311,20 @@ double convert_length_approx( const units::length &length, bool &display_as_inte
     const bool metric = get_option<std::string>( "DISTANCE_UNITS" ) == "metric";
     if( metric ) {
         if( ret > 500000 ) {
-            // kilometers
+
             ret /= 1000000.0;
         } else {
-            // meters
+
             ret /= 1000.0;
             display_as_integer = true;
         }
     } else {
         double inches_value = ret / 25.4;
         if( inches_value > 31680 ) {
-            // Miles
+
             inches_value /= 63360.0;
         } else {
-            // Yards
+
             inches_value /= 36.0;
             display_as_integer = true;
         }
@@ -408,7 +442,7 @@ double convert_volume( int volume, int *out_scale )
         ret *= 0.001;
         scale = 2;
     } else {
-        // quarts.
+
         ret *= 0.00105669;
         scale = 2;
     }
@@ -445,9 +479,9 @@ std::string unit_to_string( const units::length &unit, const bool compact )
     return length_to_string( unit, compact );
 }
 
-/**
- * round a float @value, with int @decimal_places limitation
-*/
+
+
+
 double round_with_places( double value, int decimal_places )
 {
     const double multiplier = std::pow( 10.0, decimal_places );

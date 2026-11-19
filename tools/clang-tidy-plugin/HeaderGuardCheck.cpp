@@ -21,7 +21,7 @@ CataHeaderGuardCheck::CataHeaderGuardCheck( StringRef Name,
         ClangTidyContext *Context )
     : ClangTidyCheck( Name, Context ) {}
 
-/// \brief canonicalize a path by removing ./ and ../ components.
+
 static std::string cleanPath( StringRef Path )
 {
     SmallString<256> Result = Path;
@@ -44,14 +44,14 @@ static std::string getHeaderGuard( StringRef Filename )
 {
     std::string Guard = tooling::getAbsolutePath( Filename );
 
-    // Look for the top-level directory
+
     std::string TopDir = Guard;
     size_t LastSlash;
     bool Found = false;
     while( std::string::npos != ( LastSlash = TopDir.find_last_of( "/\\" ) ) ) {
         TopDir = TopDir.substr( 0, LastSlash );
-        // Either the root source dir (containing .travis.yml) or the root build
-        // dir (containing CMakeCache.txt)
+
+
         if( pathExists( TopDir + "/.travis.yml" ) || pathExists( TopDir + "/CMakeCache.txt" ) ) {
             Found = true;
             break;
@@ -132,22 +132,22 @@ class HeaderGuardPPCallbacks : public PPCallbacks
                 return;
             }
 
-            // Record #ifndefs that succeeded. We also need the Location of the Name.
+
             FileInfos[GetFileName( Loc )].Ifndefs.push_back(
                 IfndefInfo{ MacroNameTok.getIdentifierInfo(), Loc, MacroNameTok.getLocation() } );
         }
 
         void MacroDefined( const Token &MacroNameTok,
                            const MacroDirective *MD ) override {
-            // Record all defined macros. We store the whole token to get info on the
-            // name later.
+
+
             SourceLocation Loc = MD->getLocation();
             FileInfos[GetFileName( Loc )].Macros.push_back(
                 MacroInfo_{ MacroNameTok, MD->getMacroInfo() } );
         }
 
         void Endif( SourceLocation Loc, SourceLocation IfLoc ) override {
-            // Record all #endif and the corresponding #ifs (including #ifndefs).
+
             FileInfos[GetFileName( Loc )].EndIfs[IfLoc] = Loc;
         }
 
@@ -160,7 +160,7 @@ class HeaderGuardPPCallbacks : public PPCallbacks
         }
 
         void EndOfMainFile() override {
-            // Now that we have all this information from the preprocessor, use it!
+
             std::unordered_set<std::string> GuardlessHeaders = Files;
 
             for( const std::string &FileName : Files ) {
@@ -179,12 +179,12 @@ class HeaderGuardPPCallbacks : public PPCallbacks
                 StringRef CurHeaderGuard = Macro.Tok.getIdentifierInfo()->getName();
 
                 if( Ifndef.MacroId->getName() != CurHeaderGuard ) {
-                    // If the #ifndef and #define don't match, then it's
-                    // probably not a header guard we're looking at.  Abort.
+
+
                     continue;
                 }
 
-                // Look up Locations for this guard.
+
                 SourceLocation DefineLoc = Macro.Tok.getLocation();
                 auto EndifIt = Info.EndIfs.find( Ifndef.Loc );
 
@@ -196,19 +196,19 @@ class HeaderGuardPPCallbacks : public PPCallbacks
 
                 GuardlessHeaders.erase( FileName );
 
-                // If the macro Name is not equal to what we can compute, correct it in
-                // the #ifndef and #define.
+
+
                 std::vector<FixItHint> FixIts;
                 std::string NewGuard =
                     checkHeaderGuardDefinition( Ifndef.MacroNameLoc, DefineLoc, FileName,
                                                 CurHeaderGuard, FixIts );
 
-                // Now look at the #endif. We want a comment with the header guard. Fix it
-                // at the slightest deviation.
+
+
                 checkEndifComment( EndIfLoc, NewGuard, FixIts );
 
-                // Bundle all fix-its into one warning. The message depends on whether we
-                // changed the header guard or not.
+
+
                 if( !FixIts.empty() ) {
                     if( CurHeaderGuard != NewGuard ) {
                         Check->diag( Ifndef.Loc, "Header guard does not follow preferred style." )
@@ -221,10 +221,10 @@ class HeaderGuardPPCallbacks : public PPCallbacks
                 }
             }
 
-            // Emit warnings for headers that are missing guards.
+
             checkGuardlessHeaders( GuardlessHeaders );
 
-            // Clear all state.
+
             Files.clear();
             FileInfos.clear();
         }
@@ -245,7 +245,7 @@ class HeaderGuardPPCallbacks : public PPCallbacks
             // NOLINTNEXTLINE(cata-text-style)
             EndIfStr = EndIfStr.substr( EndIfStr.find_first_not_of( "#endif \t" ) );
 
-            // Give up if there's an escaped newline.
+
             size_t FindEscapedNewline = EndIfStr.find_last_not_of( ' ' );
             if( FindEscapedNewline != StringRef::npos &&
                 EndIfStr[FindEscapedNewline] == '\\' ) {
@@ -255,9 +255,9 @@ class HeaderGuardPPCallbacks : public PPCallbacks
             return EndIfStr != "// " + HeaderGuard.str();
         }
 
-        /// \brief Look for header guards that don't match the preferred style. Emit
-        /// fix-its and return the suggested header guard (or the original if no
-        /// change was made.
+
+
+
         static std::string checkHeaderGuardDefinition( SourceLocation Ifndef,
                 SourceLocation Define,
                 StringRef FileName,
@@ -283,8 +283,8 @@ class HeaderGuardPPCallbacks : public PPCallbacks
             return CurHeaderGuard.str();
         }
 
-        /// \brief Checks the comment after the #endif of a header guard and fixes it
-        /// if it doesn't match \c HeaderGuard.
+
+
         void checkEndifComment( SourceLocation EndIf, StringRef HeaderGuard,
                                 std::vector<FixItHint> &FixIts ) {
             size_t EndIfLen;
@@ -296,11 +296,11 @@ class HeaderGuardPPCallbacks : public PPCallbacks
             }
         }
 
-        /// \brief Looks for files that were visited but didn't have a header guard.
-        /// Emits a warning with fixits suggesting adding one.
+
+
         void checkGuardlessHeaders( const std::unordered_set<std::string> &GuardlessHeaders ) {
-            // Look for header files that didn't have a header guard. Emit a warning and
-            // fix-its to add the guard.
+
+
             for( const std::string &FileName : GuardlessHeaders ) {
                 if( !isHeaderFileName( FileName ) ) {
                     continue;
@@ -323,10 +323,10 @@ class HeaderGuardPPCallbacks : public PPCallbacks
                 if( CPPVar.empty() ) {
                     continue;
                 }
-                // If there's a macro with a name that follows the header guard convention
-                // but was not recognized by the preprocessor as a header guard there must
-                // be code outside of the guarded area. Emit a plain warning without
-                // fix-its.
+
+
+
+
                 bool SeenMacro = false;
                 for( const clang::tidy::cata::MacroInfo_ &MacroEntry : Info.Macros ) {
                     StringRef Name = MacroEntry.Tok.getIdentifierInfo()->getName();
@@ -384,4 +384,4 @@ void CataHeaderGuardCheck::registerPPCallbacks(
     PP->addPPCallbacks( std::make_unique<HeaderGuardPPCallbacks>( PP, this ) );
 }
 
-} // namespace clang::tidy::cata
+}

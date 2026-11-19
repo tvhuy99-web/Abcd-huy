@@ -26,8 +26,8 @@ class JsonTranslationInputCheck : public ClangTidyCheck
         void check( const ast_matchers::MatchFinder::MatchResult &Result ) override;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_JSONTRANSLATIONINPUTCHECK_H
+#endif

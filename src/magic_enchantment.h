@@ -31,18 +31,18 @@ struct const_dialogue;
 
 namespace enchant_vals
 {
-// the different types of values that can be modified by enchantments
-// either the item directly or the Character, whichever is more appropriate
+
+
 enum class mod : int {
-    //tracker for artifact carrying penalties
+
     ARTIFACT_RESONANCE,
-    // effects for the Character
+
     STRENGTH,
     DEXTERITY,
     PERCEPTION,
     INTELLIGENCE,
     SPEED,
-    ATTACK_SPEED, // affects attack speed of item even if it's not the one you're wielding
+    ATTACK_SPEED,
     AIMING_SPEED,
     RELOADING_SPEED,
     MOVE_COST,
@@ -58,12 +58,12 @@ enum class mod : int {
     MUT_INSTABILITY_MOD,
     MUT_ADDITIONAL_OPTIONS,
     RANGE_DODGE,
-    MAX_HP,        // for all limbs! use with caution
+    MAX_HP,
     REGEN_HP,
     REGEN_HP_AWAKE,
-    HUNGER,        // hunger rate
-    THIRST,        // thirst rate
-    SLEEPINESS,       // sleepiness rate
+    HUNGER,
+    THIRST,
+    SLEEPINESS,
     SLEEPINESS_REGEN,
     PAIN,
     PAIN_REMOVE,
@@ -117,7 +117,7 @@ enum class mod : int {
     LEARNING_FOCUS,
     ARMOR_ALL,
     EXTRA_ELEC_PAIN,
-    RECOIL_MODIFIER, //affects recoil when shooting a gun
+    RECOIL_MODIFIER,
     ITEM_ATTACK_SPEED,
     EQUIPMENT_DAMAGE_CHANCE,
     THEORETICAL_SKILL_CATCHUP_BONUS,
@@ -159,10 +159,10 @@ enum class mod : int {
     TURNING_DIFFICULTY,
     NUM_MOD
 };
-} // namespace enchant_vals
+}
 
-// an "enchantment" is what passive artifact effects used to be:
-// under certain conditions, the effect persists upon the appropriate Character
+
+
 class enchantment
 {
     public:
@@ -172,12 +172,12 @@ class enchantment
             HELD,
             NUM_HAS
         };
-        // the condition at which the enchantment is giving passive effects
+
         enum condition {
             ALWAYS,
-            ACTIVE, // the item, mutation, etc. is active
-            INACTIVE, // the item, mutation, etc. is inactive
-            DIALOG_CONDITION, // Check a provided dialog condition
+            ACTIVE,
+            INACTIVE,
+            DIALOG_CONDITION,
             NUM_CONDITION
         };
 
@@ -187,30 +187,30 @@ class enchantment
         void load( const JsonObject &jo, std::string_view src = {},
                    const std::optional<std::string> &inline_id = std::nullopt, bool is_child = false );
 
-        // Takes in a JsonValue which can be either a string or an enchantment object and returns the id of the enchantment the caller will use.
-        // If the input is a string return it as an enchantment_id otherwise create an enchantment with id inline_id and return inline_id as an enchantment id
+
+
         static enchantment_id load_inline_enchantment( const JsonValue &jv, std::string_view src,
                 std::string &inline_id );
 
-        // this enchantment has a valid condition and is in the right location
+
         bool is_active( const Character &guy, const item &parent ) const;
 
-        // this enchantment has a valid item independent conditions
-        // @active means the container for the enchantment is active, for comparison to active flag.
+
+
         bool is_active( const Character &guy, bool active ) const;
 
-        // same as above except for monsters. Much more limited.
+
         bool is_active( const monster &mon ) const;
 
         bool is_monster_relevant() const;
 
-        // same as above except for vehicles. Much more limited.
+
         bool is_active( const vehicle &veh, bool active ) const;
 
         bool is_vehicle_relevant() const;
 
-        // this enchantment is active when wielded.
-        // shows total conditional values, so only use this when Character is not available
+
+
         bool active_wield() const;
         enchantment_id id;
         // NOLINTNEXTLINE(cata-serialize)
@@ -225,7 +225,7 @@ class enchantment
         double get_value_multiply( enchant_vals::mod value, const Character &guy ) const;
 
         body_part_set modify_bodyparts( const body_part_set &unmodified ) const;
-        // does the enchantment modify bodyparts?
+
         bool modifies_bodyparts() const;
         struct bodypart_changes {
             bodypart_str_id gain;
@@ -241,19 +241,19 @@ class enchantment
         std::optional<emit_id> emitter;
         std::map<efftype_id, int> ench_effects;
 
-        // name to display for enchantments on items
+
         translation name;
 
-        // description to display for enchantments on items
+
         translation description;
 
-        // values that add to the base value
+
         std::map<enchant_vals::mod, dbl_or_var> values_add; // NOLINT(cata-serialize)
-        // values that get multiplied to the base value
-        // multipliers add to each other instead of multiply against themselves
+
+
         std::map<enchant_vals::mod, dbl_or_var> values_multiply; // NOLINT(cata-serialize)
 
-        // the exact same as above, though specifically for skills
+
         std::map<skill_id, dbl_or_var> skill_values_add; // NOLINT(cata-serialize)
         std::map<skill_id, dbl_or_var> skill_values_multiply; // NOLINT(cata-serialize)
 
@@ -326,17 +326,17 @@ class enchant_cache : public enchantment
         double modify_melee_damage( const damage_type_id &mod_val, double value ) const;
         double modify_damage_units_by_armor_protection( const damage_type_id &mod_val, double value ) const;
         double modify_damage_units_by_extra_damage( const damage_type_id &mod_val, double value ) const;
-        // adds two enchantments together and ignores their conditions
+
         void force_add( const enchantment &rhs, const Character &guy );
         void force_add( const enchantment &rhs, const monster &mon );
         void force_add( const enchantment &rhs, const vehicle &veh );
         void force_add( const enchantment &rhs );
         void force_add( const enchant_cache &rhs );
         void force_add_with_dialogue( const enchantment &rhs, const const_dialogue &d );
-        // adds enchantment mutations to the cache
+
         void force_add_mutation( const enchantment &rhs );
 
-        // modifies character stats, or does other passive effects
+
         void activate_passive( Character &guy ) const;
         template<typename TKey>
         double get_value( const TKey &value, const std::map<TKey, double> &value_map ) const;
@@ -355,22 +355,22 @@ class enchant_cache : public enchantment
         double get_encumbrance_multiply( const bodypart_str_id &value ) const;
         double get_extra_damage_multiply( const damage_type_id &value ) const;
         int skill_mult_bonus( const skill_id &value_type, int base_value ) const;
-        // attempts to add two like enchantments together.
-        // if their conditions don't match, return false. else true.
+
+
         bool add( const enchantment &rhs, Character &you );
         bool add( const enchant_cache &rhs );
-        // checks if the enchantments have the same active_conditions
+
         bool stacks_with( const enchantment &rhs ) const;
-        // performs cooldown and distance checks before casting enchantment spells
+
         void cast_enchantment_spell( Creature &caster, const Creature *target,
                                      const fake_spell &sp ) const;
-        //Clears all the maps and vectors in the cache.
+
         void clear();
 
-        // casts all the hit_you_effects on the target
+
         void cast_hit_you( Character &caster, const Creature &target ) const;
         void cast_hit_you( Creature &caster, const Creature &target ) const;
-        // casts all the hit_me_effects on self or a target depending on the enchantment definition
+
         void cast_hit_me( Character &caster, const Creature *target ) const;
         void cast_hit_me( Creature &caster, const Creature *target ) const;
 
@@ -390,7 +390,7 @@ class enchant_cache : public enchantment
                    const std::optional<std::string> &inline_id = std::nullopt );
         bool operator==( const enchant_cache &rhs ) const;
 
-        // details of each enchantment that includes them (name and description)
+
         std::vector<std::pair<std::string, std::string>> details; // NOLINT(cata-serialize)
 
         using special_vision_descriptions = enchantment::special_vision_descriptions;
@@ -415,11 +415,11 @@ class enchant_cache : public enchantment
 
     private:
         std::map<enchant_vals::mod, double> values_add; // NOLINT(cata-serialize)
-        // values that get multiplied to the base value
-        // multipliers add to each other instead of multiply against themselves
+
+
         std::map<enchant_vals::mod, double> values_multiply; // NOLINT(cata-serialize)
 
-        // the exact same as above, though specifically for skills
+
         std::map<skill_id, double> skill_values_add; // NOLINT(cata-serialize)
         std::map<skill_id, double> skill_values_multiply; // NOLINT(cata-serialize)
 
@@ -454,4 +454,4 @@ struct enum_traits<enchant_vals::mod> {
     static constexpr enchant_vals::mod last = enchant_vals::mod::NUM_MOD;
 };
 
-#endif // CATA_SRC_MAGIC_ENCHANTMENT_H
+#endif

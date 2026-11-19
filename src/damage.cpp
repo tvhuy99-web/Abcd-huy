@@ -35,30 +35,30 @@ namespace
 generic_factory<damage_type> damage_type_factory( "damage type" );
 generic_factory<damage_info_order> damage_info_order_factory( "damage info order" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const damage_type &string_id<damage_type>::obj() const
 {
     return damage_type_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<damage_type>::is_valid() const
 {
     return damage_type_factory.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const damage_info_order &string_id<damage_info_order>::obj() const
 {
     return damage_info_order_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<damage_info_order>::is_valid() const
 {
@@ -375,7 +375,7 @@ float damage_instance::type_arpen( const damage_type_id &dt ) const
     return ret;
 }
 
-//This returns the damage from this damage_instance. The damage done to the target will be reduced by their armor.
+
 float damage_instance::total_damage() const
 {
     float ret = 0.0f;
@@ -418,7 +418,7 @@ void damage_instance::ondamage_effects( Creature *source, Creature *target,
         }
         used_types.emplace( du.type );
 
-        // get the original damage
+
         auto predamageunit = std::find_if( premitigated.begin(),
         premitigated.end(), [du]( const damage_unit & dut ) {
             return dut.type == du.type;
@@ -450,7 +450,7 @@ void damage_type::ondamage_effects( Creature *source, Creature *target, bodypart
     }
 }
 
-//This returns the damage from this damage_instance. The damage done to the target will be reduced by their armor.
+
 damage_instance damage_instance::di_considering_length( units::length barrel_length ) const
 {
 
@@ -513,7 +513,7 @@ void damage_instance::add( const damage_unit &added_du )
         float mult = added_du.damage_multiplier / du.damage_multiplier;
         du.amount += added_du.amount * mult;
         du.res_pen += added_du.res_pen * mult;
-        // Linearly interpolate armor multiplier based on damage proportion contributed
+
         float t = added_du.damage_multiplier / ( added_du.damage_multiplier + du.damage_multiplier );
         du.res_mult = lerp( du.res_mult, added_du.damage_multiplier, t );
 
@@ -623,15 +623,15 @@ damage_instance &damage_instance::operator+=( const damage_instance &rhs )
             }
 
             damage_unit relative_copy = tmp;
-            // res_mult is set to 1 if it's not specified. Set it to zero so we don't accidentally add to it
+
             if( relative_copy.res_mult == 1.0f ) {
                 relative_copy.res_mult = 0;
             }
-            // Same for damage_multiplier
+
             if( relative_copy.damage_multiplier == 1.0f ) {
                 relative_copy.damage_multiplier = 0;
             }
-            // As well as the unconditional versions
+
             if( relative_copy.unconditional_res_mult == 1.0f ) {
                 relative_copy.unconditional_res_mult = 0;
             }
@@ -653,7 +653,7 @@ void damage_instance::deserialize( const JsonValue &val )
         return du;
     };
 
-    // reset before loading, in case this has already been used
+
     clear();
     if( val.test_object() ) {
         add( read_damage_unit( val.get_object() ) );
@@ -734,7 +734,7 @@ int accumulate_to_bash_damage( int so_far, const std::pair<damage_type_id, int> 
 
 resistances::resistances( const item &armor, bool to_self, int roll, const bodypart_id &bp )
 {
-    // Armors protect, but all items can resist
+
     if( to_self || armor.is_armor() || armor.is_pet_armor() ) {
         for( const damage_type &dam : damage_type::get_all() ) {
             set_resist( dam.id, armor.resist( dam.id, to_self, bp, roll ) );
@@ -744,7 +744,7 @@ resistances::resistances( const item &armor, bool to_self, int roll, const bodyp
 
 resistances::resistances( const item &armor, bool to_self, int roll, const sub_bodypart_id &bp )
 {
-    // Armors protect, but all items can resist
+
     if( to_self || armor.is_armor() ) {
         for( const damage_type &dam : damage_type::get_all() ) {
             set_resist( dam.id, armor.resist( dam.id, to_self, bp, roll ) );

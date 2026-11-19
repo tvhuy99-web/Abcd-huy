@@ -25,4 +25,4 @@ struct enum_traits<jmapgen_flags> {
     static constexpr jmapgen_flags last = jmapgen_flags::last;
 };
 
-#endif // CATA_SRC_JMAPGEN_FLAGS_H
+#endif

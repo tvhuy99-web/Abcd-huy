@@ -14,15 +14,15 @@ class item;
 class player_activity;
 
 enum class butcher_type : int {
-    BLEED,          // bleeding a corpse
-    QUICK,          // quick butchery
-    FULL,           // full workshop butchery
-    FIELD_DRESS,    // field dressing a corpse
-    SKIN,           // skinning a corpse
-    QUARTER,        // quarter a corpse
-    DISMEMBER,      // destroy a corpse
-    DISSECT,        // dissect a corpse for CBMs
-    NUM_TYPES       // always keep at the end, number of butchery types
+    BLEED,
+    QUICK,
+    FULL,
+    FIELD_DRESS,
+    SKIN,
+    QUARTER,
+    DISMEMBER,
+    DISSECT,
+    NUM_TYPES
 };
 
 struct butchery_data {
@@ -31,7 +31,7 @@ struct butchery_data {
     butcher_type b_type;
     float req_speed_bonus = 0.0f;
     time_duration time_to_butcher;
-    // when `progress` reaches `time_to_butcher`, the corpse is butchered
+
     time_duration progress;
 
     butchery_data() = default;
@@ -53,7 +53,7 @@ bool set_up_butchery( player_activity &act, Character &you, butchery_data bd );
 
 int roll_butchery_dissect( int skill_level, int dex, int tool_quality );
 
-// Returns false if the calling function should abort
+
 bool butchery_drops_harvest( butchery_data bt, Character &you );
 
 void butchery_quarter( item *corpse_item, const Character &you );

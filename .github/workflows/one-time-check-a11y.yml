@@ -1,0 +1,24 @@
+name: One-time full accessibility source-contract check
+
+on:
+  push:
+    branches: [chore/strip-code-comments-20261119]
+    paths: [.github/workflows/one-time-check-a11y.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-time-comment-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Verify every accessibility Python contract
+        run: python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v

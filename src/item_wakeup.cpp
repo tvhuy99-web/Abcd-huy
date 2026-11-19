@@ -25,8 +25,8 @@ namespace
 
 constexpr int CURRENT_VERSION = 1;
 
-// Stale dispatches before a single noise-control debugmsg fires.
-// Reset by clear() and deserialize().
+
+
 constexpr int STALE_DEBUGMSG_THRESHOLD = 32;
 
 const char *kind_to_string( item_wakeup_kind k )
@@ -183,7 +183,7 @@ std::map<itype_id, item_wakeup_test_enumerator> &test_enumerator_registry()
 
 bool processing_active = false;
 
-}  // namespace
+}
 
 void register_test_wakeup_handler( const itype_id &id, item_wakeup_test_handler fn )
 {
@@ -219,7 +219,7 @@ std::vector<desired_wakeup> enumerate_scheduled_dispatch( const item &it,
     return {};
 }
 
-// Dispatcher called from item::actualize_scheduled.
+
 static void dispatch_actualize( item &it, item_wakeup_kind kind, time_point now,
                                 const item_location &loc )
 {
@@ -234,8 +234,8 @@ static void dispatch_actualize( item &it, item_wakeup_kind kind, time_point now,
     }
 }
 
-// Persistable hint for find_item_by_uid on next dispatch.  Walks parent
-// containers to the topmost holder so uid lookup can recurse from there.
+
+
 static item_locator_hint hint_from_location( const item_location &loc )
 {
     item_locator_hint h;
@@ -277,7 +277,7 @@ static item_locator_hint hint_from_location( const item_location &loc )
             break;
         }
         case item_location::type::crafting_inventory:
-        // this isn't really a "place" per se
+
         case item_location::type::container:
         case item_location::type::invalid:
             break;
@@ -285,9 +285,9 @@ static item_locator_hint hint_from_location( const item_location &loc )
     return h;
 }
 
-// Min-heap comparator: top is smallest by (when, uid, kind).  push_heap and
-// friends produce a max-heap, so this returns true when `a` should sink
-// below `b`, i.e. `a` is greater.
+
+
+
 bool item_wakeup_manager::heap_greater( const entry_iter &a, const entry_iter &b )
 {
     if( a->when != b->when ) {
@@ -590,7 +590,7 @@ void item_wakeup_manager::deserialize( const JsonObject &jo )
     stats_.dropped_on_load = dropped;
 }
 
-// Item-side dispatch entry called from item.cpp.
+
 void actualize_scheduled_dispatch( item &it, item_wakeup_kind kind, time_point now,
                                    const item_location &loc )
 {

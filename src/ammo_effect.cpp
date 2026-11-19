@@ -9,49 +9,49 @@ generic_factory<ammo_effect> &get_all_ammo_effects()
     return all_ammo_effects;
 }
 
-/** @relates int_id */
+
 template<>
 bool int_id<ammo_effect>::is_valid() const
 {
     return get_all_ammo_effects().is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const ammo_effect &int_id<ammo_effect>::obj() const
 {
     return get_all_ammo_effects().obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const ammo_effect_str_id &int_id<ammo_effect>::id() const
 {
     return get_all_ammo_effects().convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool ammo_effect_str_id::is_valid() const
 {
     return get_all_ammo_effects().is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const ammo_effect &ammo_effect_str_id::obj() const
 {
     return get_all_ammo_effects().obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<ammo_effect> ammo_effect_str_id::id() const
 {
     return get_all_ammo_effects().convert( *this, AE_NULL );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<ammo_effect>::int_id( const ammo_effect_str_id &id ) : _id( id.id() )
 {

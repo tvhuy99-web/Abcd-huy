@@ -90,7 +90,7 @@ static void CheckDecl( CombineLocalsIntoPointCheck &Check, const MatchFinder::Ma
     NextDecl = YDecl->getNextDeclInContext();
     const VarDecl *ZDecl = dyn_cast_or_null<VarDecl>( NextDecl );
 
-    // Avoid altering bool variables
+
     if( StringRef( XDecl->getType().getAsString() ).ends_with( "ool" ) ) {
         return;
     }
@@ -118,7 +118,7 @@ static void CheckDecl( CombineLocalsIntoPointCheck &Check, const MatchFinder::Ma
         return getParent<Stmt>( Result, ParentStmt );
     };
 
-    // Verify that all the decls are in the same place
+
     const Stmt *XGrandparentStmt = GetGrandparent( XDecl );
     const Stmt *YGrandparentStmt = GetGrandparent( YDecl );
 
@@ -126,7 +126,7 @@ static void CheckDecl( CombineLocalsIntoPointCheck &Check, const MatchFinder::Ma
         return;
     }
 
-    // Only one modification per function
+
     const FunctionDecl *Func = getContainingFunction( Result, XDecl );
 
     if( !Func ) {
@@ -174,12 +174,12 @@ static void CheckDecl( CombineLocalsIntoPointCheck &Check, const MatchFinder::Ma
         NewVarName = "p" + NewVarName;
     }
 
-    // Ensure we don't use a keyword
+
     if( isKeyword( NewVarName ) ) {
         NewVarName += "_";
     }
 
-    // Ensure we don't collide with an existing name
+
     const DeclContext *Context = XDecl->getDeclContext();
     if( nameExistsInContext( Context, NewVarName ) ) {
         for( int suffix = 2; ; ++suffix ) {
@@ -197,7 +197,7 @@ static void CheckDecl( CombineLocalsIntoPointCheck &Check, const MatchFinder::Ma
         Check.usageReplacements.emplace( ZDecl, NewVarName + ".z" );
     }
 
-    // Construct replacement text
+
     std::string Replacement =
         ( "point " + NewVarName + "( " + getText( Result, XInit ) + ", " +
           getText( Result, YInit ) ).str();
@@ -286,4 +286,4 @@ void CombineLocalsIntoPointCheck::onEndOfTranslationUnit()
     }
 }
 
-} // namespace clang::tidy::cata
+}

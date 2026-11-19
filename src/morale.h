@@ -28,40 +28,40 @@ class player_morale
         player_morale &operator =( player_morale && ) = default;
         player_morale &operator =( const player_morale & ) = default;
 
-        /** Adds morale to existing or creates one */
+
         void add( const morale_type &type, int bonus, int max_bonus = 0,
                   const time_duration &duration = 6_minutes, const time_duration &decay_start = 3_minutes,
                   bool capped = false, const itype *item_type = nullptr );
-        /** Sets the new level for the permanent morale, or creates one */
+
         void set_permanent( const morale_type &type, int bonus, const itype *item_type = nullptr );
-        /** Returns bonus from specified morale */
+
         int has( const morale_type &type, const itype *item_type = nullptr ) const;
-        /** Removes specified morale */
+
         void remove( const morale_type &type, const itype *item_type = nullptr );
-        /** Clears up all morale points */
+
         void clear();
-        /** Returns overall morale level */
+
         int get_level() const;
-        /** Ticks down morale counters and removes them */
+
         void decay( const time_duration &ticks = 1_turns );
-        /** Displays morale screen */
+
         void display( int focus_eq, int pain_penalty, int sleepiness_penalty, Character &who );
-        // dumps the containment of all points into string, for debug purposes
+
         std::string to_string_writable();
-        /** Returns false whether morale is inconsistent with the argument.
-         *  Only permanent morale is checked */
+
+
         bool consistent_with( const player_morale &morale ) const;
-        /** Replaces permanent morale points and non-point state from reference,
-         *  preserving all temporary morale */
+
+
         void sync_permanent( const player_morale &reference );
 
-        /**calculates the percentage contribution for each morale point*/
+
         void calculate_percentage();
 
         int get_total_positive_value() const;
         int get_total_negative_value() const;
 
-        /** Returns perceived pain. Only used in morale_test.cpp*/
+
         int get_perceived_pain() const;
 
         void on_mutation_gain( const trait_id &mid );
@@ -112,9 +112,9 @@ class player_morale
                 void add( int new_bonus, int new_max_bonus, time_duration new_duration,
                           time_duration new_decay_start, bool new_cap );
                 void decay( const time_duration &ticks = 1_turns );
-                /*
-                 *contribution should be between [0,100] (inclusive)
-                 */
+
+
+
                 void set_percent_contribution( double contribution );
                 double get_percent_contribution() const;
             private:
@@ -122,23 +122,23 @@ class player_morale
                 const itype *item_type;
 
                 int bonus = 0;
-                time_duration duration = 0_turns;   // Zero duration == infinity
+                time_duration duration = 0_turns;
                 time_duration decay_start = 0_turns;
                 time_duration age = 0_turns;
-                /**
-                 *this point's percent contribution to the total positive or total negative morale effect
-                 */
+
+
+
                 double percent_contribution = 0; // NOLINT(cata-serialize)
 
-                /**
-                 * Returns either new_time or remaining time (which one is greater).
-                 * Only returns new time if same_sign is true
-                 */
+
+
+
+
                 time_duration pick_time( const time_duration &current_time, const time_duration &new_time,
                                          bool same_sign ) const;
-                /**
-                 * Returns normalized bonus if either max_bonus != 0 or capped == true
-                 */
+
+
+
                 int normalize_bonus( int bonus, int max_bonus, bool capped ) const;
         };
     protected:
@@ -199,7 +199,7 @@ class player_morale
         };
         std::map<trait_id, mutation_data> mutations;
 
-        // Mutability is required for lazy initialization
+
         mutable int level;
         mutable bool level_is_valid;
 
@@ -209,4 +209,4 @@ class player_morale
         int radiation;
 };
 
-#endif // CATA_SRC_MORALE_H
+#endif

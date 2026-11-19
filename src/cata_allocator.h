@@ -7,6 +7,6 @@ namespace cata
 
 void init_allocator();
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_CATA_ALLOCATOR_H
+#endif

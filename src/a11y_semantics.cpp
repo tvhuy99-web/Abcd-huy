@@ -22,11 +22,21 @@ std::string quote( const std::string_view text )
     std::string result = "\"";
     for( const unsigned char ch : text ) {
         switch( ch ) {
-            case '"': result += "\\\""; break;
-            case '\\': result += "\\\\"; break;
-            case '\n': result += "\\n"; break;
-            case '\r': result += "\\r"; break;
-            case '\t': result += "\\t"; break;
+            case '"':
+                result += "\\\"";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
             default:
                 if( ch < 0x20 ) {
                     result += "\\u00";
@@ -40,8 +50,8 @@ std::string quote( const std::string_view text )
     return result + '"';
 }
 
-// All semantic display strings share this sanitizing boundary. Never
-// rewrite node IDs or raw edit values: those are data, not spoken markup.
+
+
 std::string quote_spoken( const std::string_view value )
 {
     return quote( remove_color_tags( value ) );
@@ -52,8 +62,8 @@ std::string boolean( const bool value )
     return value ? "true" : "false";
 }
 
-// Compact JSON number for form domains: integers stay integers, other
-// values use %g so steps like 0.25 serialize exactly as written.
+
+
 std::string number( const double value )
 {
     if( std::isfinite( value ) && value == std::floor( value ) &&
@@ -74,8 +84,8 @@ bool parse_number( const std::string &text, double &value )
     return end != begin && *end == '\0' && std::isfinite( value );
 }
 
-// Shared domain check for one raw form value. Reason codes are stable
-// machine codes; presentation layers localize them.
+
+
 bool check_field_value( const semantic_node &node, const std::string &raw, std::string &reason )
 {
     if( raw.size() > max_intent_value_chars ) {
@@ -116,7 +126,9 @@ bool check_field_value( const semantic_node &node, const std::string &raw, std::
     }
     if( node.field_type == "choice" ) {
         if( std::none_of( node.choices.begin(), node.choices.end(),
-        [&raw]( const semantic_choice & choice ) { return choice.value == raw; } ) ) {
+        [&raw]( const semantic_choice & choice ) {
+        return choice.value == raw;
+    } ) ) {
             reason = "not_a_choice";
             return false;
         }
@@ -124,7 +136,7 @@ bool check_field_value( const semantic_node &node, const std::string &raw, std::
     }
     return true;
 }
-} // namespace
+}
 
 bool validate_intent_value( const semantic_node &node, const semantic_intent &intent,
                             std::string &reason )
@@ -183,8 +195,8 @@ bool validate_snapshot( const semantic_snapshot &snapshot, std::string &reason )
             return false;
         }
     }
-    // Tree structure: parents exist, published children only hang under an
-    // expanded parent, depths are consistent and acyclic.
+
+
     std::set<std::string> parents_with_children;
     for( const semantic_node &node : snapshot.nodes ) {
         if( node.depth < -1 || node.depth > max_tree_depth ) {
@@ -231,13 +243,13 @@ bool validate_snapshot( const semantic_snapshot &snapshot, std::string &reason )
             reason = "undeclared_tree_children";
             return false;
         }
-        // Flat position/total of non-tree nodes stay a builder convention
-        // (several existing builders publish positions before totals are
-        // known); only the tree sibling sets are structurally validated,
-        // through the parent/depth checks above.
+
+
+
+
     }
-    // Table rows reference declared tables and columns; row indices are
-    // unique per table.
+
+
     std::set<std::pair<std::string, int>> seen_rows;
     for( const semantic_node &node : snapshot.nodes ) {
         if( node.table_id.empty() ) {
@@ -258,14 +270,16 @@ bool validate_snapshot( const semantic_snapshot &snapshot, std::string &reason )
         }
         for( const semantic_cell &cell : node.cells ) {
             if( std::none_of( table->second->columns.begin(), table->second->columns.end(),
-            [&cell]( const semantic_column & column ) { return column.id == cell.column; } ) ) {
+            [&cell]( const semantic_column & column ) {
+            return column.id == cell.column;
+        } ) ) {
                 reason = "undeclared_column";
                 return false;
             }
         }
     }
-    // Form contracts: known types, sane ranges, unique choices, drafts
-    // inside their domain and dependencies on published fields.
+
+
     for( const semantic_node &node : snapshot.nodes ) {
         if( node.field_type.empty() ) {
             continue;
@@ -338,8 +352,9 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
         }
         first = false;
         result += "{\"id\":" + quote( node.id ) + ",\"role\":" + quote( node.role ) +
-                  ",\"label\":" + quote_spoken( node.label ) + ",\"value\":" + ( node.role == "text" || node.role == "number" || !node.field_type.empty() ?
-                                    quote( node.value ) : quote_spoken( node.value ) ) +
+                  ",\"label\":" + quote_spoken( node.label ) + ",\"value\":" + ( node.role == "text" ||
+                          node.role == "number" || !node.field_type.empty() ?
+                          quote( node.value ) : quote_spoken( node.value ) ) +
                   ",\"detail\":" + quote_spoken( node.detail ) +
                   ",\"disabledReason\":" + quote_spoken( node.disabled_reason ) +
                   ",\"enabled\":" + boolean( node.enabled ) +
@@ -347,9 +362,9 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                   ",\"checked\":" + boolean( node.checked ) +
                   ",\"position\":" + std::to_string( node.position ) +
                   ",\"total\":" + std::to_string( node.total ) +
-                  // Tree fields are always serialized; depth -1 and an empty
-                  // parent mark a flat node, so old consumers that ignore
-                  // them keep working (R02.4 compatibility).
+
+
+
                   ",\"parentId\":" + quote( node.parent_id ) +
                   ",\"depth\":" + std::to_string( node.depth ) +
                   ",\"hasChildren\":" + boolean( node.has_children ) +
@@ -376,9 +391,9 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                           ",\"fieldMax\":" + number( node.field_max ) +
                           ",\"fieldStep\":" + number( node.field_step );
             } else if( node.field_step > 0.0 ) {
-                // A step without a range (number popup, R04.2) is a real
-                // part of the contract; Java reads fieldStep independently
-                // of fieldMin/fieldMax.
+
+
+
                 result += ",\"fieldStep\":" + number( node.field_step );
             }
             result += ",\"choices\":[";
@@ -388,7 +403,8 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                     result += ',';
                 }
                 first_choice = false;
-                result += "{\"value\":" + quote( choice.value ) + ",\"label\":" + quote_spoken( choice.label ) + '}';
+                result += "{\"value\":" + quote( choice.value ) + ",\"label\":" + quote_spoken(
+                              choice.label ) + '}';
             }
             result += ']';
             if( node.has_draft ) {
@@ -426,9 +442,9 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
 
 std::string snapshot_json( const semantic_snapshot &snapshot )
 {
-    // Publish the game log alongside every screen. A session can resume
-    // directly inside inventory, before the world has published its
-    // world:messages node. Do not add an extra selectable menu node.
+
+
+
     std::string recent;
     const auto messages = Messages::recent_messages( 12 );
     for( auto it = messages.rbegin(); it != messages.rend(); ++it ) {
@@ -441,4 +457,4 @@ std::string snapshot_json( const semantic_snapshot &snapshot )
            ",\"recentMessages\":" + quote_spoken( recent ) + ',' +
            snapshot_content_json( snapshot ) + '}';
 }
-} // namespace a11y
+}

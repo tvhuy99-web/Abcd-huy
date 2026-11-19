@@ -32,7 +32,7 @@ void AlmostNeverAutoCheck::registerMatchers( MatchFinder *Finder )
 {
     Finder->addMatcher(
         varDecl(
-            // Exclude lambda captures with initializers
+
             unless( hasParent( lambdaExpr() ) ),
             anyOf(
                 varDecl( hasType( autoType() ) ),
@@ -53,8 +53,8 @@ static void CheckDecl( AlmostNeverAutoCheck &Check,
     }
 
     if( AutoVarDecl->isImplicit() ) {
-        // This is some compiler-generated VarDecl, such as in a range for
-        // loop; skip it
+
+
         return;
     }
 
@@ -63,7 +63,7 @@ static void CheckDecl( AlmostNeverAutoCheck &Check,
     const SourceManager *SM = Result.SourceManager;
     SourceLocation ExpansionBegin = SM->getFileLoc( RangeToReplace.getBegin() );
     if( ExpansionBegin != RangeToReplace.getBegin() ) {
-        // This means we're inside a macro expansion
+
         return;
     }
 
@@ -77,10 +77,10 @@ static void CheckDecl( AlmostNeverAutoCheck &Check,
     const Expr *Initializer = AutoVarDecl->getAnyInitializer();
 
     if( !Initializer ) {
-        // This happens for some range for loops in CDDA (e.g. test_statistics.h) and I'm not sure
-        // why they are different from the others.
+
+
         if( VarDeclType.getTypePtr()->isDependentType() ) {
-            // Probably shouldn't replace this one.
+
             return;
         }
         Check.diag(
@@ -109,43 +109,43 @@ static void CheckDecl( AlmostNeverAutoCheck &Check,
     std::string TypeStr = AutoTp.getAsString( Policy );
 
     std::string DesugaredTypeStr;
-    // Test stripped type is not null to avoid a crash in
-    // QualType::getSplitDesugaredType in clang/lib/AST/Type.cpp
+
+
     if( QualifierCollector().strip( AutoTp ) ) {
         QualType DesugaredAutoTp = AutoTp.getDesugaredType( *Result.Context );
         DesugaredTypeStr = DesugaredAutoTp.getAsString( Policy );
     }
 
-    // In the case of 'const auto' we need to bring the beginning forwards
-    // to the start of the 'const'.
+
+
     SourceLocation MaybeNewBegin = RangeToReplace.getBegin().getLocWithOffset( -6 );
     std::string TextBeforeBegin( SM->getCharacterData( MaybeNewBegin ), 10 );
     if( TextBeforeBegin == "const auto" ) {
         RangeToReplace.setBegin( MaybeNewBegin );
     }
-    // In the case of 'auto const' we need to push the end back to the end
-    // of the 'const'.  Couldn't find a nice way to do that, so using this
-    // super hacky way.
+
+
+
     std::string TextFromEnd( SM->getCharacterData( RangeToReplace.getEnd() ), 10 );
     if( TextFromEnd == "auto const" ) {
         RangeToReplace.setEnd( RangeToReplace.getEnd().getLocWithOffset( 10 ) );
     }
 
     if( TypeStr == "auto" ) {
-        // Not sure what causes this; usually something that returns "auto"
-        // like this is a thing we're relatively happy to be auto.  Can revisit
-        // if necessary.
+
+
+
         return;
     }
 
-    // Ignore lambdas and "<dependent type>"
+
     if( TypeStr.find_first_of( "(<" ) != std::string::npos ) {
         return;
     }
 
-    // Heuristic to ignore certain types (e.g. iterators, implementation
-    // details) based on their names.  Skipping the first character of each
-    // word to avoid worrying about capitalization.
+
+
+
     for( std::string Fragment : {
              "terator", "element_type", "mapped_type", "value_type", "nternal", "__"
          } ) {
@@ -177,4 +177,4 @@ void AlmostNeverAutoCheck::check( const MatchFinder::MatchResult &Result )
     CheckDecl( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

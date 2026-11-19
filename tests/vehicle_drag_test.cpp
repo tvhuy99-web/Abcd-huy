@@ -28,24 +28,24 @@ static const efftype_id effect_blind( "blind" );
 static void clear_game_drag( const ter_id &terrain )
 {
     map &here = get_map();
-    // Set to turn 0 to prevent solars from producing power
+
     calendar::turn = calendar::turn_zero;
     clear_creatures();
     clear_npcs();
 
     Character &player_character = get_player_character();
-    // Move player somewhere safe
+
     CHECK( !player_character.in_vehicle );
     player_character.setpos( here, tripoint_bub_ms::zero );
-    // Blind the player to avoid needless drawing-related overhead
+
     player_character.add_effect( effect_blind, 1_turns, true );
-    // Make sure the ST is 8 so that muscle powered results are consistent
+
     player_character.set_str_base( 8 );
     player_character.set_str_bonus( 0 );
 
     build_test_map( terrain );
 
-    // hard force a rebuild of caches
+
     here.shift( point_rel_sm::south );
     here.shift( point_rel_sm::north );
 }
@@ -63,13 +63,13 @@ static vehicle *setup_drag_test( const vproto_id &veh_id )
         return nullptr;
     }
 
-    // Remove all items from cargo to normalize weight.
-    // turn everything on
+
+
     for( const vpart_reference &vp : veh_ptr->get_all_parts() ) {
         veh_ptr->get_items( vp.part() ).clear();
         vp.part().enabled = true;
     }
-    // close the doors
+
     const auto doors = veh_ptr->get_avail_parts( "OPENABLE" );
     for( const vpart_reference &vp :  doors ) {
         const size_t door = vp.part_index();
@@ -80,11 +80,11 @@ static vehicle *setup_drag_test( const vproto_id &veh_id )
     return veh_ptr;
 }
 
-// Algorithm goes as follows:
-// Clear map
-// Spawn a vehicle
-// calculate c_air_drag and c_rolling_resistance
-// return whether they're within 5% of expected values
+
+
+
+
+
 static bool test_drag(
     const vproto_id &veh_id,
     const double expected_c_air = 0, const double expected_c_rr = 0,
@@ -147,7 +147,7 @@ static void test_vehicle_drag( std::pair<const vproto_id, std::vector<double>> &
                veh_drag.second[3], veh_drag.second[4], true );
 }
 
-/** This is even less of a test. It generates C++ lines for the actual test below */
+
 TEST_CASE( "vehicle_drag_calc_baseline", "[.]" )
 {
     clear_game_drag( ter_id( "t_pavement" ) );
@@ -157,8 +157,8 @@ TEST_CASE( "vehicle_drag_calc_baseline", "[.]" )
     }
 }
 
-// format is vehicle, coeff_air_drag, coeff_rolling_drag, coeff_water_drag, safe speed, max speed
-// coeffs are dimensionless, speeds are 100ths of mph, so 6101 is 61.01 mph
+
+
 TEST_CASE( "vehicle_drag", "[vehicle] [engine]" )
 {
     clear_game_drag( ter_id( "t_pavement" ) );

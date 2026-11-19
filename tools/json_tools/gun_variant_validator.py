@@ -66,7 +66,7 @@ UNIT_UNITS = {
     "barrel_length": LENGTH_UNITS,
 }
 GUNS_BLACKLIST = {
-    # Well named, faction-specific weapon, with weird ammo
+
     "brogyeki",
     "khuunaofaai",
     "exodii_plasma_fan",
@@ -89,19 +89,19 @@ VARIANT_CHECK_BLACKLIST = {
 
 }
 VARIANT_CHECK_PAIR_BLACKLIST = {
-    # FIXME: fix and remove these
+
     ("pamd68", "pamd68mountable"),
     ("type99", "type99_sniper"),
     ("ithaca37", "remington_1100"),
     ("browning_a5", "benelli_sa"),
     ("m1014", "remington_870_express"),
-    # one is semi-auto, another is pump-action,
-    # but we do not represent the difference between two meaningfully,
-    # except min_cycle_recoil, but this validator do not check it
+
+
+
 
 }
 IDENTIFIER_CHECK_BLACKLIST = {
-    # FIXME: fix and remove these
+
     "ar12_shotgun",
     "bigun",
     "fn_fal_semi",
@@ -114,7 +114,7 @@ IDENTIFIER_CHECK_BLACKLIST = {
     "srm_1216",
 }
 NAME_CHECK_BLACKLIST = {
-    # FIXME: fix and remove these
+
     "AT4",
     "atgm_launcher",
     "bbgun",
@@ -143,7 +143,7 @@ NAME_CHECK_BLACKLIST = {
     "win70",
     "xedra_gun",
 }
-# Stripped from gun/mag names before checking for an identifier
+
 BAD_IDENTIFIERS = [
     "10mm",
     ".22",
@@ -173,7 +173,7 @@ BAD_IDENTIFIERS = [
     "stripper",
     "speedloader",
 ]
-# Common tokens that will be rejected
+
 BAD_COMMON_TOKENS = {
     "rifle",
     "carbine",
@@ -188,13 +188,13 @@ BAD_COMMON_TOKENS = {
     "grenade launcher",
     "ing"
 }
-# Common tokens that are permitted to be below length reqs
+
 SHORT_COMMON_TOKENS = {
-    "AI",  # Abbreviation of gun manufacturer
-    "AK",  # Common name for a gun family
-    "FN",  # Common name for a manufacturer
-    "G3",  # Common name for a certain gun
-    "M9",  # Common name for a certain gun
+    "AI",
+    "AK",
+    "FN",
+    "G3",
+    "M9",
 }
 TYPE_DESCRIPTORS = [
     "automagnum",
@@ -202,26 +202,26 @@ TYPE_DESCRIPTORS = [
     "cannon",
     "carbine",
     "coilgun",
-    # Not great, but weird can get a pass
+
     "combination gun",
     "derringer",
     "flamethrower",
     "flintlock",
-    # Special faction-specific invented weapons get a pass
+
     "FSP",
     "gatling gun",
     "grenade launcher",
     "hand cannon",
     "handgun",
     "HMG",
-    # Special faction-specific invented weapons get a pass
+
     "HWP",
     "launcher",
     "lever gun",
     "LMG",
     "machine gun",
     "minigun",
-    # This is as close as you can get without a giant name
+
     "operational briefcase",
     "pistol",
     "railgun",
@@ -235,7 +235,7 @@ TYPE_DESCRIPTORS = [
     "trenchgun",
 ]
 DUPE_CHECK_BLACKLIST = [
-    # {"similar_gun1_id", "similar_gun2_id"},
+
 ]
 
 """
@@ -243,9 +243,8 @@ JSON parsing functions
 """
 
 
-# Helper to parse quantities
 def parse_unit(val, stops):
-    # already parsed
+
     if type(val) is not str:
         return val
     total = 0
@@ -259,10 +258,10 @@ def parse_unit(val, stops):
             unit += ord(val[eaten]) - ord('0')
         elif val[eaten] == '-':
             sign = -1
-        # Non-space, non-decimal characters must be part of a unit
+
         elif not val[eaten].isspace():
             unit_start = eaten if unit_start == -1 else unit_start
-            # We found a valid unit
+
             if val[unit_start:eaten + 1] in stops:
                 unit *= stops[val[unit_start:eaten + 1]]
                 total += unit * sign
@@ -273,9 +272,8 @@ def parse_unit(val, stops):
     return total
 
 
-# Parse the gun data represented in JSON to what we care about
 def simplify_gun_data(jo):
-    # We only care about what modes it has, and how many bullets
+
     if "modes" in jo:
         modes = []
         for mode in jo["modes"]:
@@ -283,47 +281,44 @@ def simplify_gun_data(jo):
         jo["modes"] = sorted(modes)
     else:
         jo["modes"] = [1]
-    # We only care how much damage it deals
+
     if "ranged_damage" in jo:
         if type(jo["ranged_damage"]) is not dict:
             raise ValueError("Multiple damage types not supported")
         jo["ranged_damage"] = jo["ranged_damage"]["amount"]
     else:
         jo["ranged_damage"] = 0
-    # And we only care what magazines it takes (or how much ammo, if no mags)
-    # Oh god why
+
     if "pocket_data" not in jo:
         if VERBOSE:
             print(f" - Removing {jo['id']}, conversion kit gun")
         return False
     for data in jo["pocket_data"]:
-        # It does not take magazines
+
         if data["pocket_type"] == "MAGAZINE":
-            # First value in dict
+
             quantity = next(iter(data["ammo_restriction"].values()))
-            # Check that ammo restriction is uniform
+
             if (len(data["ammo_restriction"]) != 1 and
                len(set(data["ammo_restriction"].values())) != 1):
                 raise ValueError("Only one quantity allowed for ammo")
-            # TODO: figure out a better way to specify this
+
             jo["magazines"] = [quantity]
-            # TODO: combine with magazines?
+
             if "allowed_speedloaders" in data:
                 jo["speedloaders"] = data["allowed_speedloaders"]
-        # It takes magazines (so much simpler!)
+
         elif data["pocket_type"] == "MAGAZINE_WELL":
             jo["magazines"] = sorted(data["item_restriction"])
         else:
             raise ValueError("Guns with other pockets not supported")
-    # We don't need all of this data
+
     del jo["pocket_data"]
     return True
 
 
-# Remove irrelevant keys and clean data to ease later checks
 def simplify_object(jo):
-    # Only guns are subject to intense scrutiny
-    # everything else can be considered already simple
+
     if "id" not in jo or jo["id"] in GUNS_BLACKLIST:
         if VERBOSE:
             name = str(jo)
@@ -337,18 +332,16 @@ def simplify_object(jo):
     req_keys = {"weight", "volume", "ammo", "id"}
     all_keys = req_keys | set(INHERITED_KEYS)
 
-    # Drop all the other keys
     removed = list(filter(lambda key: key not in all_keys, jo.keys()))
-    # Need to iterate over removed because we can't delete from dict in for
+
     for key in removed:
         del jo[key]
 
-    # guns without the required keys can't be checked
     for key in filter(lambda key: key not in jo, req_keys):
         if VERBOSE:
             print(f" - Removing {jo['id']}, lacking {key}")
         return False
-    # We don't care about fake guns
+
     if "flags" in jo and "PSEUDO" in jo["flags"]:
         if VERBOSE:
             print(f" - Removing  {jo['id']}, pseudo gun")
@@ -357,7 +350,6 @@ def simplify_object(jo):
     return simplify_gun_data(jo)
 
 
-# Given a JSON object, extract the player-visible name
 def name_of(jo):
     if type(jo["name"]) is dict:
         if "str" in jo["name"]:
@@ -494,7 +486,7 @@ def load_all_json(directory):
             if not filename.endswith(".json"):
                 continue
             if "obsolet" in root + filename:
-                # skip obsoleted json
+
                 continue
             path = os.path.join(root, filename)
             extract_jos(path)
@@ -509,10 +501,8 @@ CHECK 1: Should a gun be a variant?
 """
 
 
-# Are these guns similar enough they should be variants?
 def guns_are_similar(jo, gun):
-    # For volume, weight, length, etc
-    # Compare if they're in the same or an adjacent bucket
+
     def in_range(lhs, rhs, bucket_size):
         return abs((lhs // bucket_size) - (rhs // bucket_size)) < 2
 
@@ -522,7 +512,6 @@ def guns_are_similar(jo, gun):
         return ((lhs >= rhs * low and lhs <= rhs * high) or
                 (rhs >= lhs * low and rhs <= lhs * high))
 
-    # "symmetric difference" of sets - check if they completely intersect
     def sets_match(lhs, rhs):
         return len(set(lhs) ^ set(rhs)) == 0
 
@@ -539,19 +528,18 @@ def guns_are_similar(jo, gun):
         return False
     if not in_range(jo["ranged_damage"], gun["ranged_damage"], 2):
         return False
-    # If longest side isn't specified for either, don't care about it
+
     if ("longest_side" in jo and "longest_side" in gun and
        not in_range(jo["longest_side"], gun["longest_side"], 50)):
         return False
-    # Something to check if dispersion is similar
-    # This can be pretty niche, mostly matters for handcrafted guns
+
     if not in_pct(jo["dispersion"] if "dispersion" in jo else 0,
                   gun["dispersion"] if "dispersion" in gun else 0, 0.05):
         return False
-    # If one has speedloaders but the other doesn't
+
     if ("speedloaders" in jo) != ("speedloaders" in gun):
         return False
-    # If both have different speedloaders
+
     if ("speedloaders" in jo and "speedloaders" in gun and
        not sets_match(jo["speedloaders"], gun["speedloaders"])):
         return False
@@ -562,27 +550,16 @@ def guns_are_similar(jo, gun):
                     125):
         return False
     if ("barrel_length" in jo and "barrel_length" in gun and
-        # this can be super sensitive to small changes in mm
-        # at the low end, the bucket size is ~1-to-1 with damage
-        # ranges that can be combined. Most things won't be
-        # at the low end, and it seems to middle ranges of size
-        # have a 10-20 mm separation per damage rather than 2-3
-        # TODO: some sort of statistical analysis based on the ammo
-        #       and DT of gun determines bucket size?
+
+
+
+
+
+
+
        not in_range(jo["barrel_length"], gun["barrel_length"], 10)):
         return False
-    # TODO: get values for comparing these
-    #if ("barrel_volume" in jo and "barrel_volume" in gun and
-    #    not in_range(jo["barrel_volume"], gun["barrel_volume"], 125)):
-    #    return False
-    #if ("" in jo and "blackpower_tolerance" in gun and
-    #    not in_range(jo["blackpower_tolerance"],
-    #                 gun["blackpower_tolerance"], 125)):
-    #    return False
-    #if ("recoil" in jo and "recoil" in gun and
-    #    not in_range(jo["recoil"], gun["recoil"], 125)):
-    #    return False
-    # TODO: more with flags?
+
     return True
 
 
@@ -590,12 +567,11 @@ def find_variants(all_guns):
     similar_guns = []
     for i in range(len(all_guns)):
         gun = all_guns[i]
-        # We've already checked this gun against the guns before it,
-        # so only check against guns after
+
         for compared in all_guns[i + 1:]:
             lid = gun["id"]
             rid = compared["id"]
-            # We expect the same gun to be similar
+
             if (guns_are_similar(gun, compared) and
                 not ((lid, rid) in VARIANT_CHECK_PAIR_BLACKLIST or
                      (rid, lid) in VARIANT_CHECK_PAIR_BLACKLIST)):
@@ -608,8 +584,6 @@ CHECK 2: Are the default gun names linking the gun and it's mags
 """
 
 
-# https://stackoverflow.com/questions/2892931/longest-common-substring-from-more-than-two-strings/2894073#2894073
-# Used to find the shared token
 def longest_common_substring(dat):
     substr = ''
     if len(dat) > 1 and len(dat[0]) > 0:
@@ -620,7 +594,6 @@ def longest_common_substring(dat):
     return substr
 
 
-# Remove common but non-meaningful tokens from names
 def clean_names(names):
     ret = []
     for name in names:
@@ -630,17 +603,14 @@ def clean_names(names):
     return ret
 
 
-# Find the common token with a gun and the mags it takes
 def common_token(names):
     names = clean_names(names)
-    # Assume the longest common substring will be the "identifier"
-    # leading/trailing/extra whitespace isn't meaningful in identifiers
+
     common_token = " ".join(longest_common_substring(names).split())
-    # It can't be a meaningful identifier if it's 1-2 characters long
-    # Some exceptions (e.g. AK, G3)
+
     if len(common_token) < 3 and common_token not in SHORT_COMMON_TOKENS:
         return None
-    # Some common identifiers that don't work
+
     if common_token in BAD_COMMON_TOKENS:
         return None
     if VERBOSE > 1:
@@ -648,13 +618,12 @@ def common_token(names):
     return common_token
 
 
-# Print the identifier info for a gun and it's magazines/speedloaders
 def print_identifier_info(token, gun, magazines):
     mags = ""
     alt_mags = ""
     for mag in magazines:
         name = name_of(all_jos[mag]) if mag in all_jos else ""
-        # Skip STANAG names
+
         if "STANAG" in name:
             alt_mags += mag + ", "
             continue
@@ -668,16 +637,16 @@ def print_identifier_info(token, gun, magazines):
 
 
 def find_identifiers(all_guns):
-    # The guns with good identifiers linking the gun and it's magazines
+
     good_tokens = []
-    # The guns with nothing in common or otherwise poor identifiers
+
     bad_tokens = []
     for gun in all_guns:
         if gun["id"] in IDENTIFIER_CHECK_BLACKLIST:
             continue
-        # The names of the gun and all the magazines it accepts
+
         names = [name_of(gun)]
-        # The identifiers of the magazines it accepts
+
         mags = []
         for mag in gun["magazines"]:
             if mag not in all_jos:
@@ -685,16 +654,16 @@ def find_identifiers(all_guns):
                     print(f" - Not checking magazine {mag} for {gun['id']}")
                 continue
             mags.append(mag)
-        # Add all the magazine names in
+
         for mag in mags:
             name = name_of(all_jos[mag])
-            # Skip STANAG, because those are uber generic, also linkages
+
             if "STANAG" not in name and "linkage" not in all_jos[mag]:
                 names.append(name)
-        # If it didn't have any mags, we can skip it
+
         if len(names) < 2:
             continue
-        # Check if they've got a good token
+
         token = common_token(names)
         if token is None:
             bad_tokens.append((gun, mags))
@@ -751,7 +720,6 @@ def find_dupe_names(all_guns):
     for gun in all_guns:
         name = name_of(gun) + str(sorted(gun["ammo"]))
 
-        # include ammo count
         for mag_type in gun.get("magazines"):
             if type(mag_type) is int:
                 name += f",{mag_type}-round"
@@ -777,7 +745,6 @@ Driver functions
 """
 
 
-# True on failure
 def check_combination(all_guns):
     if not args_dict["combine"]:
         return False
@@ -811,8 +778,7 @@ def check_identifiers(all_guns):
                     good_token_list[good[2]].append(good[0]["id"])
                 else:
                     good_token_list[good[2]] = [good[0]["id"]]
-            # make sense: are real words (or gun names (: ), when they apply to
-            # multiple guns, those guns all take the same mags, etc
+
             print("The following valid identifiers were found.",
                   "Please check to ensure they make sense.")
 
@@ -847,7 +813,7 @@ def insert_separator():
 
 
 def table(all_guns):
-    # Don't report these
+
     skipped = {
         "type",
         "subtypes",
@@ -856,15 +822,15 @@ def table(all_guns):
         "pocket_data",
         "recoil"
     }
-    # If we don't have these, report this
+
     defaults = {
         "flags": [],
         "reload": 0,
         "speedloaders": [],
     }
-    # Do the inherited keys, except the skipped ones, plus these
+
     keys = INHERITED_KEYS + ["magazines", "speedloaders"]
-    # Print a header
+
     out = insert_start_char()
     for key in keys:
         if key in skipped:
@@ -872,7 +838,7 @@ def table(all_guns):
         out += key
         out += insert_separator()
     print(out)
-    # Markdown needs an extra line
+
     if not csv:
         out = insert_start_char()
         for key in keys:
@@ -881,7 +847,7 @@ def table(all_guns):
             out += "----"
             out += insert_separator()
         print(out)
-    # Print all the gun data
+
     for gun in all_guns:
         out = insert_start_char()
         for key in keys:
@@ -897,9 +863,9 @@ def table(all_guns):
 
 
 def main():
-    # Load all the JSON for the types we care about
+
     load_all_json(args_dict["dir"])
-    # Find all the guns and simplify them
+
     all_guns = []
     for jo in all_jos.values():
         if "GUN" not in jo["subtypes"]:
@@ -910,7 +876,7 @@ def main():
             continue
         if not simplify_object(jo):
             continue
-        # blacklisted ammo
+
         if len(set(jo["ammo"]).intersection(AMMO_BLACKLIST)) != 0:
             continue
         all_guns.append(jo)

@@ -26,11 +26,11 @@ static void erase_char( std::string &s, const char &c )
 static bool enable_stdout_ansi_colors()
 {
 #if defined(_WIN32)
-    // enable ANSI colors on windows consoles https://superuser.com/a/1529908
+
     DWORD dwMode;
     GetConsoleMode( GetStdHandle( STD_OUTPUT_HANDLE ), &dwMode );
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    // may fail on Windows 10 earlier than 1511
+
     return SetConsoleMode( GetStdHandle( STD_OUTPUT_HANDLE ), dwMode );
 #else
     return true;
@@ -44,7 +44,7 @@ int main( int argc, char *argv[] )
 #else
     bool supports_color = isatty( STDOUT_FILENO );
 #endif
-    // formatter stdout in github actions is redirected but still able to handle ANSI colors
+
     supports_color |= std::getenv( "CI" ) != nullptr;
 
     // NOLINTNEXTLINE(cata-tests-must-restore-global-state)
@@ -63,7 +63,7 @@ int main( int argc, char *argv[] )
 
     char *gateway_var = getenv( "GATEWAY_INTERFACE" );
     if( gateway_var == nullptr ) {
-        // Expect a single filename for now.
+
         if( argc == 2 ) {
             filename = argv[1];
         } else if( argc != 1 ) {

@@ -175,7 +175,7 @@
 #define c_bad all_colors.get(def_c_red)
 #define c_neutral all_colors.get(def_c_yellow)
 
-// def_x is a color that maps to x with default settings
+
 enum color_id {
     def_c_black = 0,
     def_c_white,
@@ -346,7 +346,7 @@ class JsonOut;
 
 void init_colors();
 
-// Index for highlight cache
+
 enum hl_enum {
     HL_BLUE = 0,
     HL_RED,
@@ -363,7 +363,7 @@ struct ImVec4;
 class nc_color
 {
     private:
-        // color is actually an ncurses attribute.
+
         int attribute_value;
         int index; // NOLINT(cata-serialize)
 
@@ -375,8 +375,8 @@ class nc_color
 
         operator ImVec4() const; // NOLINT(google-explicit-constructor): the conversion is not expensive
 
-        // Most of the functions here are implemented in ncurses_def.cpp
-        // (for ncurses builds) *and* in cursesport.cpp (for other builds).
+
+
 
         static nc_color from_color_pair_index( int index );
         int to_color_pair_index() const;
@@ -392,10 +392,10 @@ class nc_color
             return index;
         }
 
-        // Returns this attribute plus A_BOLD.
+
         nc_color bold() const;
         bool is_bold() const;
-        // Returns this attribute plus A_BLINK.
+
         nc_color blink() const;
         bool is_blink() const;
 
@@ -413,7 +413,7 @@ class nc_color
         }
 };
 
-// Support hashing of nc_color by forwarding the hash of the contained int.
+
 namespace std
 {
 template<>
@@ -422,7 +422,7 @@ struct hash<nc_color> {
         return hash<int>()( v.operator int() );
     }
 };
-} // namespace std
+}
 
 enum class report_color_error {
     no, yes
@@ -434,19 +434,19 @@ class color_manager
         void add_color( color_id col, const std::string &name,
                         const nc_color &color_pair, color_id inv_id );
         void clear();
-        void finalize(); // Caches colors properly
+        void finalize();
 
         struct color_struct {
-            nc_color color; // Default color
-            nc_color invert; // Inverted color (not set until finalization)
-            nc_color custom; // Custom color if > 0 (not set until finalization)
-            nc_color invert_custom; // Custom inverted color if > 0 (not set until finalization)
-            std::array<nc_color, NUM_HL> highlight; // Cached highlights (not set until finalization)
+            nc_color color;
+            nc_color invert;
+            nc_color custom;
+            nc_color invert_custom;
+            std::array<nc_color, NUM_HL> highlight;
 
-            color_id col_id; // Index of this color
-            color_id invert_id; // Index of inversion of this color
+            color_id col_id;
+            color_id invert_id;
             std::string name;
-            // String names for custom colors
+
             std::string name_custom;
             std::string name_invert_custom;
         };
@@ -489,14 +489,14 @@ class color_manager
 
 color_manager &get_all_colors();
 
-/**
- * For color values that are created *before* the color definitions are loaded
- * from JSON. One can't use the macros (e.g. c_white) directly as they query
- * the color_manager, which may not be initialized. Instead one has to use
- * the color_id (e.g. def_c_white) and translate the id to an actual color
- * later. This is done by this class: it stores the id and translates it
- * when needed to the color value.
- */
+
+
+
+
+
+
+
+
 class deferred_color
 {
     private:
@@ -549,4 +549,4 @@ std::string get_note_string_from_color( const nc_color &color );
 nc_color get_note_color( std::string_view note_id );
 const std::unordered_map<std::string, note_color> &get_note_color_names();
 
-#endif // CATA_SRC_COLOR_H
+#endif

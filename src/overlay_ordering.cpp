@@ -41,6 +41,6 @@ int get_overlay_order_of_mutation( const std::string &mutation_id_string )
 
 void reset_overlay_ordering()
 {
-    // tileset specific overlays are cleared on new tileset load
+
     base_mutation_overlay_ordering.clear();
 }

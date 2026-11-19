@@ -10,9 +10,9 @@
 #include "talker_character.h"
 #include "type_id.h"
 
-/*
- * Talker wrapper class for avatar.
- */
+
+
+
 class talker_avatar_const: public const_talker_cloner<talker_avatar_const, talker_character_const>
 {
     public:
@@ -24,7 +24,7 @@ class talker_avatar_const: public const_talker_cloner<talker_avatar_const, talke
             : talker_character_const{ new_me }, me_chr( new_me ) {};
         ~talker_avatar_const() override = default;
 
-        // mandatory functions for starting a dialogue
+
         std::vector<std::string> get_topics( bool ) const override;
         int parse_mod( const std::string &attribute, int factor ) const override;
         int trial_chance_mod( const std::string &trial_type ) const override;
@@ -53,5 +53,4 @@ class talker_avatar: virtual public talker_avatar_const,
     private:
         avatar *me_chr{};
 };
-#endif // CATA_SRC_TALKER_AVATAR_H
-
+#endif

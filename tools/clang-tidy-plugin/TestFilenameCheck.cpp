@@ -15,7 +15,7 @@ namespace clang
 {
 class MacroArgs;
 class MacroDefinition;
-}  // namespace clang
+}
 
 using namespace clang::ast_matchers;
 
@@ -56,4 +56,4 @@ void TestFilenameCheck::registerPPCallbacks( const SourceManager &SM, Preprocess
     PP->addPPCallbacks( std::make_unique<TestFilenameCallbacks>( this, &SM ) );
 }
 
-} // namespace clang::tidy::cata
+}

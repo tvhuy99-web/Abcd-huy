@@ -37,11 +37,10 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTravelControl", self.bridge)
         self.assertIn("static native int nativeTravelState();", self.activity)
         self.assertIn("static native boolean nativeTravelControl(int action);", self.activity)
-        # Walking uses this mailbox; autonomous driving consumes its own
-        # requests in autodrive_activity_actor without stealing walking input.
+
         self.assertIn("const int travel_control = driving_destination_activity ? 0 :", self.handler)
         self.assertIn("a11y::android::take_travel_control();", self.handler)
-        # No game/Character mutation belongs in the JNI callback.
+
         jni = self.bridge.split(
             "Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTravelControl(", 1
         )[1].split("extern \"C\" JNIEXPORT", 1)[0]
@@ -76,15 +75,13 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("set_safe_mode( SAFE_MODE_ON );", self.handler)
         self.assertNotIn("set_safe_mode( SAFE_MODE_OFF );\n        a11y::android::set_travel_state",
                          self.handler)
-        # A step can be rejected after get_next_auto_move_direction()
-        # has already removed its waypoint. It must be restored on a
-        # safety stop; simply keeping the remaining route would skip it.
+
         self.assertIn("const auto keep_safety_stopped_route =", self.handler)
         self.assertIn("&route = player_character.get_auto_move_route();", self.handler)
         self.assertIn("route.insert( route.begin(), dest_tile );", self.handler)
         self.assertIn("if( !keep_safety_stopped_route() )", self.handler)
         self.assertIn('_( "Travel stopped by safe mode.  Route kept." )', self.handler)
-        # Losing Android foreground focus must never silently resume.
+
         self.assertIn("!a11y::android::enabled()", self.handler)
 
     def test_travel_panel_is_accessible_and_modal_warnings_take_priority(self):
@@ -96,7 +93,7 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("if (state != announcedTravelState)", src)
         self.assertIn('|| (!"activity".equals(snapshot.category)', src)
         self.assertIn("private void renderTravelPanel(int state)", src)
-        # Only walking should open the travel panel while a driver is active.
+
         self.assertIn("if (walkingTravelPanelActive())", src)
         self.assertIn("travelChoice = Math.floorMod(travelChoice + delta,", src)
         self.assertIn("if (walkingTravelPanelActive()) { activateTravel(); return; }", src)

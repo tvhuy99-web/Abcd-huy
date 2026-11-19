@@ -221,16 +221,16 @@ void spawn_animal( npc &p, const mtype_id &mon )
         mon_ptr->friendly = -1;
         mon_ptr->add_effect( effect_pet, 1_turns, true );
     } else {
-        // TODO: handle this gracefully (return the money, proper in-character message from npc)
+
         add_msg_debug( debugmode::DF_NPC, "No space to spawn purchased pet" );
     }
 }
 
 void talk_function::start_trade( npc &p )
 {
-    // Name the trader in the title: the header used to read just "Trade",
-    // and when trading through a delegate that need not be the NPC being
-    // spoken to, the reader had no way to tell who the other party was.
+
+
+
     npc &trader = p.get_trade_delegate();
     npc_trading::trade( trader, 0, string_format( _( "Trade: %s" ), trader.get_name() ) );
 }
@@ -282,17 +282,17 @@ void talk_function::dismount( npc &p )
 
 void talk_function::find_mount( npc &p )
 {
-    // first find one nearby
+
     for( monster &critter : g->all_monsters() ) {
         if( p.can_mount( critter ) ) {
-            // keep the horse still for some time, so that NPC can catch up to it and mount it.
+
             p.assign_activity( find_mount_activity_actor() );
             p.chosen_mount = g->shared_from( critter );
-            // we found one, that's all we need.
+
             return;
         }
     }
-    // if we got here and this was prompted by a renewal of the activity, and there are no valid monsters nearby, then cancel whole thing.
+
     if( p.has_player_activity() ) {
         p.revert_after_activity();
     }
@@ -389,7 +389,7 @@ void talk_function::goto_location( npc &p )
     if( index == static_cast<int>( camps.size() ) ) {
         destination = player_character.pos_abs_omt();
     } else if( index == static_cast<int>( camps.size() ) + 1 ) {
-        // This looks nuts, but omt_path is emplaced in reverse order. So the front of the vector is our destination
+
         destination = player_character.omt_path.front();
     } else {
         const basecamp *selected_camp = camps[index];
@@ -405,12 +405,12 @@ void talk_function::goto_location( npc &p )
         add_msg( m_info, _( "That is not a valid destination for %s." ), p.disp_name() );
         return;
     }
-    g->follower_path_to_show = &p; // Necessary for overmap display in tiles version...
+    g->follower_path_to_show = &p;
     ui::omap::display_npc_path( p.pos_abs_omt(), p.omt_path );
     g->follower_path_to_show = nullptr;
     int tiles_to_travel = p.omt_path.size();
     time_duration ETA = time_between_npc_OM_moves * tiles_to_travel;
-    ETA = ETA * rng_float( 0.8, 1.2 ); // Add +-20% variance in our estimate
+    ETA = ETA * rng_float( 0.8, 1.2 );
     if( !query_yn(
             _( "Estimated time to arrival: %1$s  \nTiles to travel: %2$d  \nIs this path and destination acceptable?" ),
             to_string_approx( ETA ), tiles_to_travel ) ) {
@@ -488,8 +488,8 @@ void talk_function::return_to_camp_duties( npc &p )
     p.clear_ai_guard_pos();
     p.clear_committed_goal();
     p.chatbin.first_topic = "TALK_FRIEND_CAMP_RESIDENT";
-    // Check whether the NPC is already within the camp footprint
-    // (including expansion tiles), not just the base OMT.
+
+
     bool at_camp = false;
     if( p.assigned_camp ) {
         std::optional<basecamp *> bcp = overmap_buffer.find_camp( p.assigned_camp->xy() );
@@ -532,8 +532,8 @@ void talk_function::stop_guard( npc &p )
     p.guard_pos = std::nullopt;
     p.clear_ai_guard_pos();
     p.clear_committed_goal();
-    // assigned_camp is preserved: the NPC remembers their camp while following.
-    // Player can send them back via "Go back to your camp" in follower dialogue.
+
+
 }
 
 void talk_function::wake_up( npc &p )
@@ -544,7 +544,7 @@ void talk_function::wake_up( npc &p )
     p.remove_effect( effect_lying_down );
     p.remove_effect( effect_npc_suspend );
     p.remove_effect( effect_sleep );
-    // TODO: Get mad at player for waking us up unless we're in danger
+
 }
 
 void talk_function::reveal_stats( npc &p )
@@ -584,7 +584,7 @@ static void bionic_install_common( npc &p, Character &patron, Character &patient
         return;
     }
 
-    //Makes the doctor awesome at installing but not perfect
+
     if( patient.can_install_bionics( it, p, false, 20 ) ) {
         bionic.remove_item();
         patient.install_bionics( it, p, false, 20 );
@@ -630,10 +630,10 @@ static void bionic_remove_common( npc &p, Character &patient )
             bionics.push_back( &bio );
         }
     }
-    // Choose bionic if applicable
+
     int bionic_index = uilist( _( "Which bionic do you wish to uninstall?" ),
                                bionic_names );
-    // Did we cancel?
+
     if( bionic_index < 0 ) {
         popup( _( "You decide to hold off…" ) );
         return;
@@ -649,7 +649,7 @@ static void bionic_remove_common( npc &p, Character &patient )
         return;
     }
 
-    //Makes the doctor awesome at uninstalling but not perfect
+
     if( patient.can_uninstall_bionic( *bionics[bionic_index], p, false, 20 ) ) {
         patient.uninstall_bionic( *bionics[bionic_index], p, false, 20 );
     }
@@ -724,7 +724,7 @@ void talk_function::lesser_give_aid( npc &p )
 
 void talk_function::lesser_give_all_aid( npc &p )
 {
-    lesser_give_aid( p ); // Provide lesser aid to the player first
+    lesser_give_aid( p );
 
     Character &player_character = get_player_character();
     for( npc &guy : g->all_npcs() ) {
@@ -764,7 +764,7 @@ void talk_function::give_aid( npc &p )
 
 void talk_function::give_all_aid( npc &p )
 {
-    give_aid( p ); // Provide aid to the player first
+    give_aid( p );
 
     Character &player_character = get_player_character();
     for( npc &guy : g->all_npcs() ) {
@@ -860,12 +860,12 @@ static void generic_barber( const std::string &mut_type )
     }
 }
 
-void talk_function::barber_beard( npc &/*p*/ )
+void talk_function::barber_beard( npc & )
 {
     generic_barber( "facial_hair" );
 }
 
-void talk_function::barber_hair( npc &/*p*/ )
+void talk_function::barber_hair( npc & )
 {
     generic_barber( "hair_style" );
 }
@@ -892,15 +892,15 @@ void talk_function::morale_chat_activity( npc &p )
     player_character.assign_activity( socialize_activity_actor( 10_minutes, p.getID() ) );
 }
 
-/*
- * Function to make the npc drop non favorite, worn or wielded items at their current position.
- */
+
+
+
 void talk_function::drop_items_in_place( npc &p )
 {
     std::vector<drop_or_stash_item_info> to_drop;
 
-    // add all non favorite carried items to the drop off list
-    // this is all top-level items inside worn items (and wielded)
+
+
     p.visit_items( [&to_drop]( const item_location & npcs_item ) {
         if( !npcs_item->is_favorite && npcs_item.has_parent() &&
             !npcs_item.parent_item().has_parent() ) {
@@ -910,7 +910,7 @@ void talk_function::drop_items_in_place( npc &p )
         return VisitResponse::NEXT;
     } );
     if( !to_drop.empty() ) {
-        // spawn a activity for the npc to drop the specified items
+
         p.assign_activity( drop_activity_actor( to_drop, tripoint_rel_ms::zero, false ) );
         p.say( "<acknowledged>" );
     } else {
@@ -1000,7 +1000,7 @@ void talk_function::leave( npc &p )
     new_fac_id += p.name;
     new_fac_id += std::to_string( p.getID().get_value() );
     p.job.clear_all_priorities();
-    // create a new "lone wolf" faction for this one NPC
+
     faction *new_solo_fac = g->faction_manager_ptr->add_new_faction( p.name,
                             faction_id( new_fac_id ), faction_no_faction );
     p.set_fac( new_solo_fac ? new_solo_fac->id : faction_no_faction );
@@ -1015,10 +1015,10 @@ void talk_function::leave( npc &p )
 
 void talk_function::stop_following( npc &p )
 {
-    // this is to tell non-allied NPCs to stop following.
-    // ( usually after a mission where they were temporarily tagging along )
-    // so don't tell already allied NPCs to stop following.
-    // they use the guard command for that.
+
+
+
+
     if( p.is_player_ally() ) {
         return;
     }
@@ -1107,7 +1107,7 @@ void talk_function::drop_weapon( npc &p )
     get_map().add_item_or_charges( p.pos_bub(), weap );
 }
 
-void talk_function::player_weapon_away( npc &/*p*/ )
+void talk_function::player_weapon_away( npc & )
 {
     Character &player_character = get_player_character();
 
@@ -1121,7 +1121,7 @@ void talk_function::player_weapon_away( npc &/*p*/ )
     player_character.i_add( player_character.remove_weapon() );
 }
 
-void talk_function::player_weapon_drop( npc &/*p*/ )
+void talk_function::player_weapon_drop( npc & )
 {
     map &here = get_map();
 
@@ -1185,7 +1185,7 @@ void teach_domain::deserialize( const JsonValue &jsin )
     data.read( "style", style );
     data.read( "spell", spell );
 }
-} //namespace talk_function
+}
 
 void talk_function::start_training_npc( npc &p )
 {
@@ -1286,7 +1286,7 @@ void talk_function::start_training_gen( Character &teacher, std::vector<Characte
             tmp_cost = calc_ma_style_training_cost( teacher, *student, style );
             tmp_time = calc_ma_style_training_time( teacher, *student, style );
         } else if( sp_id != spell_id() ) {
-            // already checked if can learn this spell in npctalk.cpp
+
             tmp_cost = calc_spell_training_cost( teacher, *student, sp_id );
             tmp_time = calc_spell_training_time( teacher, *student, sp_id );
         } else if( proficiency != proficiency_id() ) {
@@ -1296,7 +1296,7 @@ void talk_function::start_training_gen( Character &teacher, std::vector<Characte
             debugmsg( "start_training with no valid skill or style set" );
             return;
         }
-        // use the slowest common denominator and combine cost
+
         cost += tmp_cost;
         time = std::max( time, tmp_time );
     }
@@ -1373,7 +1373,7 @@ void talk_function::distribute_food_auto( npc &p )
 
     zone_manager &mgr = zone_manager::get_manager();
     const tripoint_abs_ms &npc_abs_loc = p.pos_abs();
-    // 3x3 square with NPC in the center, includes NPC's tile and all adjacent ones, for overflow
+
     const tripoint_abs_ms top_left = npc_abs_loc + point::north_west;
     const tripoint_abs_ms bottom_right = npc_abs_loc + point::south_east;
     std::string zone_name = "ERROR IF YOU SEE THIS (dummy zone talk_function::distribute_food_auto)";
@@ -1382,7 +1382,7 @@ void talk_function::distribute_food_auto( npc &p )
     mgr.add( zone_name, zone_type_CAMP_STORAGE, fac_id, false, true, top_left,
              bottom_right );
     npc_camp->distribute_food( false );
-    // Now we clean up all camp zones, though there SHOULD only be the two we just made
+
     auto lambda_remove_zones = [&mgr, &fac_id]( zone_type_id type_to_remove ) {
         std::vector<zone_manager::ref_zone_data> p_zones = mgr.get_zones( fac_id );
         for( zone_data &a_zone : p_zones ) {

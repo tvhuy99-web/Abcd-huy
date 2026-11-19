@@ -24,8 +24,8 @@ class AssertMacroCallbacks : public PPCallbacks
             StringRef MacroName = MacroNameTok.getIdentifierInfo()->getName();
             SourceLocation Begin = Range.getBegin();
             SourceManager &SM = PP->getSourceManager();
-            // When using assert inside cata_assert, this fetches the location
-            // of the cata_assert from that of the assert.
+
+
             SourceLocation ExpansionBegin = SM.getFileLoc( Begin );
             if( MacroName == "cata_assert" ) {
                 CataAssertLocations.insert( ExpansionBegin );
@@ -86,11 +86,11 @@ void AssertCheck::check( const MatchFinder::MatchResult &Result )
     const SourceManager *SM = Result.SourceManager;
     SourceLocation ExpansionBegin = SM->getFileLoc( loc );
     if( ExpansionBegin != loc ) {
-        // This means we're inside a macro expansion
+
         return;
     }
 
     diag( loc, "Prefer cata_fatal to abort()." );
 }
 
-} // namespace clang::tidy::cata
+}

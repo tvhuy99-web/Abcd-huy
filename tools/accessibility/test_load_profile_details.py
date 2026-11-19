@@ -26,7 +26,7 @@ class LoadProfileDetailsTest(unittest.TestCase):
             "build_lookup_indices", "food_loops"
         ):
             self.assertIn('log_step( "' + stage + '" )', self.recipe)
-        # The final total is emitted directly with its absolute elapsed time.
+
         self.assertIn("A11Y_LOAD_DETAIL phase=recipe step=total", self.recipe)
         self.assertIn("cleanup_ms=", self.recipe)
         self.assertIn("finalize_ms=", self.recipe)

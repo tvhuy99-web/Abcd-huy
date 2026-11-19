@@ -32,7 +32,7 @@ TEST_CASE( "compute_tile_tint_saturated_light_in_darkness_caps_at_80", "[tint_ov
 TEST_CASE( "compute_tile_tint_bright_ambient_washes_out", "[tint_overlay]" )
 {
     const light_color_rgb red{ 0.5f, 0.0f, 0.0f };
-    // ratio = 0.5 / 50 = 0.01. alpha rounds down to 0, no tint.
+
     CHECK_FALSE( compute_tile_tint( red, 50.0f ).has_value() );
 }
 
@@ -59,7 +59,7 @@ TEST_CASE( "tint_texture_mod_encodes_strength_in_inverted_alpha", "[tint_overlay
 
 TEST_CASE( "tint_mix_channel_matches_the_tint_shader_formula", "[tint_overlay]" )
 {
-    // Strength 128/255 moves the mid-gray channel halfway to 255
+
     CHECK( std::lround( tint_mix_channel( 128.0f, 255.0f, 127 ) ) == 192 );
     CHECK( tint_mix_channel( 40.0f, 200.0f, 255 ) == Approx( 40.0f ) );
     CHECK( tint_mix_channel( 40.0f, 200.0f, 0 ) == Approx( 200.0f ) );
@@ -97,7 +97,7 @@ TEST_CASE( "shader_tint_self_test_maps_target_pixels_to_source_texels", "[tint_o
     SECTION( "pixels outside every footprint are uncovered" ) {
         CHECK_FALSE( shader_tint_self_test::covering_case( point::zero ) );
         CHECK_FALSE( shader_tint_self_test::covering_case( point( 6, 2 ) ) );
-        // inside c's unrotated rect, outside its rotated footprint
+
         CHECK_FALSE( shader_tint_self_test::covering_case( point( 18, 3 ) ) );
         CHECK_FALSE( shader_tint_self_test::covering_case( point( 21, 3 ) ) );
     }
@@ -120,9 +120,9 @@ TEST_CASE( "shader_tint_self_test_expects_the_tint_mix_blended_over_the_clear_co
     SECTION( "case a mixes toward red at strength 128/255" ) {
         CHECK( expected_rgb( point( 2, 2 ) ) == std::array<int, 3> { 255, 0, 0 } );
         CHECK( expected_rgb( point( 3, 2 ) ) == std::array<int, 3> { 128, 127, 0 } );
-        // alpha-128 texel blends the mix half over the clear color
+
         CHECK( expected_rgb( point( 4, 3 ) ) == std::array<int, 3> { 148, 94, 104 } );
-        // transparent texel leaves the clear color
+
         CHECK( expected_rgb( point( 5, 3 ) ) == clear );
     }
     SECTION( "case e mixes toward cyan at strength 191/255" ) {
@@ -154,7 +154,7 @@ TEST_CASE( "shader_tint_self_test_reports_the_first_pixel_beyond_the_tolerance",
         const int index = px.y * st::target_size + px.x;
         return pixels[static_cast<size_t>( index )];
     };
-    // b covers this pixel
+
     const point case_b_px( 11, 3 );
     const size_t case_b_index = 2;
 
@@ -226,8 +226,8 @@ TEST_CASE( "only_the_variants_that_keep_the_sprite_palette_take_tint", "[tint_ov
     CHECK_FALSE( cata_shader::variant_takes_tint( variant_kind::MEMORY ) );
 }
 
-// 2x1 strip: opaque white on the left, transparent on the right. asymmetric, so
-// a flip or rotation moves the opaque texel to a different destination
+
+
 static SDL_Texture_Ptr make_left_opaque_2x1_texture()
 {
     SDL_Surface_Ptr surf = create_surface_32( 2, 1 );
@@ -265,7 +265,7 @@ TEST_CASE( "software_renderer_color_mod_reaches_render_texture", "[tiles][tint_o
     SECTION( "unrotated draw" ) {
         RenderCopyEx( get_sdl_renderer(), tex.get(), nullptr, &dst, 0, nullptr, SDL_FLIP_NONE );
         CHECK( probe_argb( point::zero ) == 0x00FF0000 );
-        // transparent source pixel leaves the clear color
+
         CHECK( probe_argb( point::east ) == 0x00000000 );
     }
     SECTION( "horizontal flip takes the rotated path" ) {
@@ -274,9 +274,9 @@ TEST_CASE( "software_renderer_color_mod_reaches_render_texture", "[tiles][tint_o
         CHECK( probe_argb( point::zero ) == 0x00000000 );
     }
     SECTION( "ninety degree rotation takes the rotated path" ) {
-        // over a 2x2 rect the opaque texel first covers the left column.
-        // positive angle rotates clockwise about the destination center (1, 1),
-        // so the left column becomes the top row.
+
+
+
         const SDL_Rect square = { 0, 0, 2, 2 };
         RenderCopyEx( get_sdl_renderer(), tex.get(), nullptr, &square, 90, nullptr, SDL_FLIP_NONE );
         CHECK( probe_argb( point::zero ) == 0x00FF0000 );
@@ -294,4 +294,4 @@ TEST_CASE( "software_renderer_color_mod_reaches_render_texture", "[tiles][tint_o
     }
 }
 
-#endif // TILES
+#endif

@@ -75,7 +75,7 @@ struct npc_boarding_test_data {
     void deserialize( const JsonObject &jo );
 };
 
-// TODO: Support mounts
+
 struct bash_test_loadout {
     int strength;
     std::map<damage_type_id, int> expected_smash_ability;
@@ -116,7 +116,7 @@ class test_data
 {
     public:
         static std::set<itype_id> legacy_to_hit;
-        // TODO: remove when all known bad items got fixed
+
         static std::set<itype_id> known_bad;
         static std::set<itype_id> known_bad_calorie;
         static std::set<itype_id> known_bad_uncraft;
@@ -134,4 +134,4 @@ class test_data
         static void load( const JsonObject &jo );
 };
 
-#endif // CATA_TEST_DATA_H
+#endif

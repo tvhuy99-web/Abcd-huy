@@ -7,8 +7,8 @@
 
 class JsonOut;
 
-// Generate a fresh UID from the global counter.
-// Returns 0 if the game state is not yet initialized.
+
+
 int64_t generate_next_item_uid();
 
 class item_uid
@@ -18,21 +18,21 @@ class item_uid
 
         explicit item_uid( int64_t i ) : value( i ) {}
 
-        // Copy: generate fresh UID (like safe_reference_anchor)
+
         item_uid( const item_uid & ) : value( generate_next_item_uid() ) {}
 
-        // Move: transfer value, zero source
+
         item_uid( item_uid &&other ) noexcept : value( other.value ) {
             other.value = 0;
         }
 
-        // Copy assignment: generate fresh UID
+
         item_uid &operator=( const item_uid & ) {
             value = generate_next_item_uid();
             return *this;
         }
 
-        // Move assignment: transfer value, zero source
+
         item_uid &operator=( item_uid &&other ) noexcept {
             value = other.value;
             other.value = 0;
@@ -66,4 +66,4 @@ inline bool operator!=( const item_uid &l, const item_uid &r )
 
 std::ostream &operator<<( std::ostream &o, const item_uid &id );
 
-#endif // CATA_SRC_ITEM_UID_H
+#endif

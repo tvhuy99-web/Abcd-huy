@@ -38,7 +38,7 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn("multi.toggle_entry( **target, count );", code)
         self.assertNotIn('intent.action == "apply"', code)
         self.assertNotIn('"cancel_draft"', code)
-        # Final CONFIRM still belongs to pickup/drop and is not auto-executed.
+
         self.assertIn('if( input.action == "CONFIRM" )', code)
 
     def test_quick_pickup_follows_same_standard(self):
@@ -73,12 +73,10 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn('add(R.string.a11yQuantityDeselect, () -> listener.submit("0"))',
                       self.editor)
         self.assertIn("if (editor == null || formRequest != 0 || snapshot == null",
-                      self.controller)  # prevents duplicate commits while pending
+                      self.controller)
 
     def test_container_rows_select_before_opening_read_only_pockets(self):
-        # A pickup checkbox can also be a tree parent because it owns
-        # informational pocket-status children. Double-tap belongs to the
-        # item selection, not the non-actionable pocket child.
+
         code = self.controller.split("public void activate()", 1)[1].split(
             "private void openEditor(", 1)[0]
         self.assertIn('node.id.startsWith("item:")', code)

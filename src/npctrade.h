@@ -31,7 +31,7 @@ class item_pricing
 
         item_location loc;
         double price = 0;
-        // Whether this is selected for trading
+
         bool selected = false;
         bool is_container = false;
         int count = 0;
@@ -63,6 +63,6 @@ std::list<item> transfer_items( trade_selector::select_t &stuff, Character &give
 double net_price_adjustment( const Character &buyer, const Character &seller );
 bool trade( npc &p, int cost, const std::string &deal );
 std::vector<item_pricing> init_selling( npc &p );
-} // namespace npc_trading
+}
 
-#endif // CATA_SRC_NPCTRADE_H
+#endif

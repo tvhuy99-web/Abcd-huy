@@ -17,29 +17,25 @@ def gen_new(path):
     with open(path, "r", encoding="utf-8") as json_file:
         json_data = json.load(json_file)
         for jo in json_data:
-            # We only want JsonObjects
+
             if type(jo) is str:
                 return None
 
-            # We need a type to discriminate
             if "type" not in jo:
                 return None
 
-            # specifically, only recipes and uncrafts
             kind = jo["type"]
             if kind != "recipe" and kind != "uncraft":
                 return None
 
-            # Also, make sure it has a 'result'
             if "result" not in jo:
                 return None
 
-            # We don't want to change obsolete recipes
             if "obsolete" in jo and jo["obsolete"]:
                 return None
 
             if jo["result"] == args_dict["id"]:
-                # Already got this one
+
                 if jo["activity_level"] != "fake":
                     print("skipping {}".format(jo["result"]) +
                           " - value is {},".format(jo["activity_level"]) +

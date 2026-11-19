@@ -40,13 +40,13 @@ TEST_CASE( "string_ids_intern_test", "[string_id]" )
 
     struct test_obj {};
     std::vector<string_id<test_obj>> ids;
-    // lots of ids to make sure that "interning" map gets expanded
+
     ids.reserve( num_ids );
     for( int i = 0; i < num_ids; ++i ) {
         ids.emplace_back( "test_id" + std::to_string( i ) );
     }
 
-    // check that interning works
+
     for( const auto &id : ids ) {
         CAPTURE( id );
         CHECK( id == id );
@@ -58,11 +58,11 @@ TEST_CASE( "string_ids_intern_test", "[string_id]" )
         CHECK( &id.str() == &string_id<test_obj>( id.str() ).str() );
     }
 
-    // comparison sanity check
+
     for( int i = 1; i < num_ids ; ++i ) {
         CAPTURE( ids[i - 1], ids[i] );
         CHECK( ids[i - 1] != ids[i] );
-        // exactly one of two should be true
+
         CHECK( ( ids[i - 1] < ids[i] ) ^ ( ids[i] < ids[i - 1] ) );
     }
 }
@@ -108,7 +108,7 @@ TEST_CASE( "string_id_sorting_test", "[string_id]" )
 
         int i = 0;
         for( const std::pair<id, int> &p : sorted_lex( m ) ) {
-            // values (and ids) are iterated in order
+
             CHECK( p.second == i );
             i++;
         }
@@ -122,7 +122,7 @@ TEST_CASE( "string_id_sorting_test", "[string_id]" )
 
         int i = 0;
         for( const std::pair<id, int> &p : sorted_lex( vec ) ) {
-            // values (and ids) are iterated in order
+
             CHECK( p.second == i );
             i++;
         }
@@ -137,7 +137,7 @@ TEST_CASE( "string_id_sorting_test", "[string_id]" )
 
         int i = 0;
         for( const id &id : sorted_lex( vec ) ) {
-            // values (and ids) are iterated in order
+
             CHECK( id.str() == ( "id" + std::to_string( i ) ) );
             i++;
         }
@@ -151,7 +151,7 @@ TEST_CASE( "string_id_sorting_test", "[string_id]" )
 
         int i = 0;
         for( const id &id : sorted_lex( s ) ) {
-            // values (and ids) are iterated in order
+
             CHECK( id.str() == ( "id" + std::to_string( i ) ) );
             i++;
         }
@@ -167,8 +167,8 @@ TEST_CASE( "string_id_creation_benchmark", "[.][string_id][benchmark]" )
         test_strings.push_back( "some_test_string_" + std::to_string( i ) );
     }
 
-    // is_empty is chosen as the most lightweight method available
-    // that hopefully prevents the inlining of string_id construction
+
+
 
     int i = 0;
 

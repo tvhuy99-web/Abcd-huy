@@ -25,7 +25,7 @@ namespace clang
 {
 class MacroArgs;
 class MacroDefinition;
-}  // namespace clang
+}
 
 using namespace clang::ast_matchers;
 
@@ -104,9 +104,9 @@ static bool AnyDeclContextIsSpecialization( const Decl *D )
         return false;
     }
     if( tsk != TSK_Undeclared ) {
-        // This happens for e.g. a parameter 'T a' to an instantiated
-        // template function where T is long.  We don't want to report such
-        // cases.
+
+
+
         return true;
     }
     return AnyDeclContextIsSpecialization( ContextDecl );
@@ -124,14 +124,14 @@ static void CheckDecl( NoLongCheck &Check, const MatchFinder::MatchResult &Resul
         return;
     }
     if( MatchedDecl->getName().starts_with( "__" ) ) {
-        // Can happen for e.g. compiler-generated code inside an implicitly
-        // generated function
+
+
         return;
     }
     if( AnyDeclContextIsSpecialization( MatchedDecl ) ) {
-        // This happens for e.g. a parameter 'T a' to an instantiated
-        // template function where T is long.  We don't want to report such
-        // cases.
+
+
+
         return;
     }
     Check.diag(
@@ -160,9 +160,9 @@ static void CheckReturn( NoLongCheck &Check, const MatchFinder::MatchResult &Res
             static_cast<const CXXRecordDecl *>(
                 MatchedDecl->getDeclContext() )->getTemplateSpecializationKind();
         if( tsk == TSK_ImplicitInstantiation ) {
-            // This happens for e.g. a parameter 'T a' to an instantiated
-            // template function where T is long.  We don't want to report such
-            // cases.
+
+
+
             return;
         }
     }
@@ -193,4 +193,4 @@ void NoLongCheck::check( const MatchFinder::MatchResult &Result )
     CheckCast( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

@@ -117,11 +117,11 @@ static const recipe_id recipe_balclava( "balclava" );
 
 TEST_CASE( "item_volume", "[item]" )
 {
-    // Need to pick some item here which is count_by_charges and for which each
-    // charge is at least 1_ml.  Battery works for now.
+
+
     item i( itype_battery, calendar::turn_zero, item::default_charges_tag() );
     REQUIRE( i.count_by_charges() );
-    // Would be better with Catch2 generators
+
     const units::volume big_volume = units::from_milliliter( std::numeric_limits<int>::max() / 2 );
     for( units::volume v : {
              0_ml, 1_ml, i.volume(), big_volume
@@ -129,9 +129,9 @@ TEST_CASE( "item_volume", "[item]" )
         INFO( "checking batteries that fit in " << v );
         const int charges_that_should_fit = i.charges_per_volume( v );
         i.charges = charges_that_should_fit;
-        CHECK( i.volume() <= v ); // this many charges should fit
+        CHECK( i.volume() <= v );
         i.charges++;
-        CHECK( i.volume() > v ); // one more charge should not fit
+        CHECK( i.volume() > v );
     }
 }
 
@@ -139,7 +139,7 @@ TEST_CASE( "simple_item_layers", "[item]" )
 {
     CHECK( item( itype_arm_warmers ).get_layer().front() == layer_level::SKINTIGHT );
     CHECK( item( itype_10gal_hat ).get_layer().front() == layer_level::NORMAL );
-    // intentionally no waist layer check since it is obsoleted
+
     CHECK( item( itype_armor_mc_lightplate ).get_layer().front() == layer_level::OUTER );
     CHECK( item( itype_legrig ).get_layer().front() == layer_level::BELTED );
 }
@@ -170,17 +170,17 @@ TEST_CASE( "gun_with_gunmod_price_sums_components", "[item][price][gunmod]" )
 
 TEST_CASE( "stacking_cash_cards", "[item]" )
 {
-    // Differently-charged cash cards should stack if neither is zero.
+
     item cash0( itype_cash_card, calendar::turn_zero );
     item cash1( itype_cash_card, calendar::turn_zero );
     item cash2( itype_cash_card, calendar::turn_zero );
     cash1.put_in( item( itype_money, calendar::turn_zero, 1 ), pocket_type::MAGAZINE );
     cash2.put_in( item( itype_money, calendar::turn_zero, 2 ), pocket_type::MAGAZINE );
     CHECK( !cash0.stacks_with( cash1 ) );
-    //CHECK( cash1.stacks_with( cash2 ) ); Enable this once cash card stacking is brought back.
+
 }
 
-// second minute hour day week season year
+
 
 TEST_CASE( "stacking_over_time", "[item]" )
 {
@@ -285,10 +285,10 @@ TEST_CASE( "liquids_at_different_temperatures", "[item][temperature][stack][comb
     item liquid_cold( itype_test_liquid );
     item liquid_filthy( itype_test_liquid );
 
-    // heat_up/cold_up sets temperature of item and corresponding HOT/COLD flags
-    liquid_hot.heat_up(); // 60 C (333.15 K)
-    liquid_cold.cold_up(); // 3 C (276.15 K)
-    liquid_filthy.cold_up(); // 3 C (276.15 K)
+
+    liquid_hot.heat_up();
+    liquid_cold.cold_up();
+    liquid_filthy.cold_up();
     liquid_filthy.set_flag( json_flag_FILTHY );
 
     REQUIRE( units::to_kelvin( liquid_hot.temperature ) == Approx( 333.15 ) );
@@ -302,7 +302,7 @@ TEST_CASE( "liquids_at_different_temperatures", "[item][temperature][stack][comb
     }
 
     SECTION( "liquids at different temperature do not stack" ) {
-        // Items with different flags do not stack
+
         CHECK_FALSE( liquid_cold.stacks_with( liquid_hot ) );
         CHECK_FALSE( liquid_hot.stacks_with( liquid_cold ) );
     }
@@ -339,7 +339,7 @@ static void assert_minimum_length_to_volume_ratio( const item &target )
         CHECK( target.length() >= 0_mm );
         return;
     }
-    // Minimum possible length is if the item is a sphere.
+
     const float minimal_diameter = std::cbrt( ( 3.0 * units::to_milliliter( target.base_volume() ) ) /
                                    ( 4.0 * M_PI ) );
     CHECK( units::to_millimeter( target.length() ) >= minimal_diameter * 10.0 );
@@ -447,7 +447,7 @@ TEST_CASE( "efile_photos_total_photos_count_cache", "[item][estorage]" )
     }
 
     SECTION( "mixed cache state still stacks" ) {
-        // Cache key is derived; VARS must ignore it or lazy-fill desyncs split stacks.
+
         item a = make_photo_gallery( 4 );
         item b = make_photo_gallery( 4 );
         b.erase_var( "CAMERA_EXTENDED_PHOTOS_count" );
@@ -468,7 +468,7 @@ TEST_CASE( "efile_photos_total_photos_count_cache", "[item][estorage]" )
     }
 
     SECTION( "containers with differing nested galleries report EMEMORY mismatch" ) {
-        // EMEMORY bit drives aggregated free-mem display, must reflect real mismatch.
+
         item a( itype_usb_drive );
         item b( itype_usb_drive );
         REQUIRE( a.put_in( make_photo_gallery( 3 ), pocket_type::E_FILE_STORAGE ).success() );
@@ -490,7 +490,7 @@ TEST_CASE( "efile_photos_total_photos_count_cache", "[item][estorage]" )
     }
 
     SECTION( "estorage and non-estorage pair fails EMEMORY bit" ) {
-        // Aggregated headers AND this bit; mixed pairs must drop it.
+
         item drive( itype_usb_drive );
         item rock( itype_test_rock );
         REQUIRE( drive.is_estorage() );
@@ -1072,7 +1072,7 @@ TEST_CASE( "armor_entry_consolidate_check", "[item][armor]" )
 {
     item test_consolidate( itype_test_consolidate );
 
-    //check this item has a single armor entry, not 3 like is written in the json explicitly
+
 
     CHECK( test_consolidate.find_armor_data()->sub_data.size() == 1 );
 }
@@ -1110,7 +1110,7 @@ TEST_CASE( "rigid_armor_compliance", "[item][armor]" )
 {
     avatar &guy = get_avatar();
     clear_avatar();
-    // check if you can swap a rigid armor
+
     item test_armguard( itype_test_armguard );
     REQUIRE( guy.wield( test_armguard ) );
 
@@ -1122,7 +1122,7 @@ TEST_CASE( "rigid_armor_compliance", "[item][armor]" )
 
     CHECK( guy.worn.top_items_loc( guy ).front().get_item()->get_side() == side::RIGHT );
 
-    // check if you can't wear 3 rigid armors
+
     clear_avatar();
 
     item first_test_armguard( itype_test_armguard );
@@ -1177,14 +1177,14 @@ TEST_CASE( "rigid_splint_compliance", "[item][armor]" )
     item second_splint( itype_arm_splint );
     item third_splint( itype_arm_splint );
 
-    // check if you can wear a splint
+
     clear_avatar();
 
     guy.set_part_hp_cur( bodypart_id( "arm_r" ), 0 );
     REQUIRE( guy.wield( splint ) );
     REQUIRE( guy.wear( guy.used_weapon(), false ) );
 
-    // check if you cannot wear a splint if something rigid is on that arm
+
     clear_avatar();
 
     REQUIRE( guy.wield( test_armguard ) );
@@ -1192,13 +1192,13 @@ TEST_CASE( "rigid_splint_compliance", "[item][armor]" )
     REQUIRE( guy.wear( guy.used_weapon(), false ) );
 
     CHECK( guy.worn.top_items_loc( guy ).front().get_item()->get_side() == side::LEFT );
-    // swap side to the broken arm side
+
     guy.change_side( *guy.worn.top_items_loc( guy ).front().get_item() );
-    // should fail to wear
+
     REQUIRE( guy.wield( second_splint ) );
     REQUIRE( !guy.wear( guy.used_weapon(), false ) );
 
-    // check if you can wear a splint if nothing rigid is on that arm
+
     clear_avatar();
 
     REQUIRE( guy.wield( second_test_armguard ) );
@@ -1207,7 +1207,7 @@ TEST_CASE( "rigid_splint_compliance", "[item][armor]" )
 
     CHECK( guy.worn.top_items_loc( guy ).front().get_item()->get_side() == side::LEFT );
 
-    // should be able to wear the arm is open
+
     REQUIRE( guy.wield( third_splint ) );
     REQUIRE( guy.wear( guy.used_weapon(), false ) );
 }
@@ -1231,17 +1231,17 @@ TEST_CASE( "item_single_type_contents", "[item]" )
     REQUIRE( walnut.get_category_of_contents().id != rock.get_category_of_contents().id );
     REQUIRE( bag.put_in( walnut, pocket_type::CONTAINER ).success() );
     if( num == 1 ) {
-        // 1 rock and 1 walnut - nothing dominates
+
         CHECK( bag.get_category_of_contents().id == item_category_container );
     } else {
-        // 2 rock and 1 walnuts - rocks dominate
+
         CHECK( bag.get_category_of_contents().id == item_category_spare_parts );
         REQUIRE( bag.put_in( walnut, pocket_type::CONTAINER ).success() );
         item hammer( itype_hammer );
         REQUIRE( hammer.get_category_of_contents().id != rock.get_category_of_contents().id );
         REQUIRE( hammer.get_category_of_contents().id != walnut.get_category_of_contents().id );
         REQUIRE( bag.put_in( hammer, pocket_type::CONTAINER ).success() );
-        // no dominant category anymore - revert to container
+
         CHECK( bag.get_category_of_contents().id == item_category_container );
     }
 
@@ -1279,12 +1279,12 @@ TEST_CASE( "item_nested_contents", "[item]" )
     REQUIRE( outer_bag.put_in( inner_bag1, pocket_type::CONTAINER ).success() );
     REQUIRE( outer_bag.put_in( inner_bag2, pocket_type::CONTAINER ).success() );
     CAPTURE( outer_bag.display_name() );
-    // outer_bag
-    //   inner_bag1
-    //     walnut
-    //     walnut
-    //   inner_bag2
-    //     walnut
+
+
+
+
+
+
     CHECK( outer_bag.get_category_of_contents().id == item_category_food );
 }
 
@@ -1304,26 +1304,26 @@ TEST_CASE( "item_rotten_contents", "[item]" )
     butter.set_relative_rot( 0.5 );
     REQUIRE( wrapper.put_in( butter, pocket_type::CONTAINER ).success() );
     CAPTURE( wrapper.display_name() );
-    // wrapper
-    //   butter (rotten)
-    //   butter (rotten)
-    //   butter
+
+
+
+
     CHECK( wrapper.get_category_of_contents().id == item_category_food );
 }
 
 static bool uncraft_need_to_be_checked( const item &it )
 {
-    // skip items that do not have uncraft
+
     if( it.get_uncraft_components().empty() ) {
         return false;
     }
 
-    // skip specifically these mod stuff
+
     if( it.type->src.back().second == MOD_INFORMATION_test_data ) {
         return false;
     }
 
-    // ethereal, technical, mutation related item etc stuff are skipped even if have uncraft
+
     if( it.type->weight == 0_gram ||
         it.type->volume == 0_ml ||
         it.type->has_flag( flag_INTEGRATED ) ||
@@ -1335,18 +1335,18 @@ static bool uncraft_need_to_be_checked( const item &it )
     return true;
 }
 
-// checks only items that have some uncraft, either manually defined or reversible craft
+
 TEST_CASE( "uncraft_sanity_check", "[item]" )
 {
     std::vector<const itype *> all_items = item_controller->all();
 
-    // this specifies the precision of a crafting test
-    // 0.1 means 1000 g item can drop from 900 g to 1100 g of resources
+
+
     const float tolerance = 0.1f;
 
     for( const itype *type : all_items ) {
 
-        // skip if already know it's bad
+
         const bool in_list = test_data::known_bad_uncraft.count( type->id ) != 0;
         if( in_list ) {
             continue;
@@ -1380,8 +1380,8 @@ TEST_CASE( "uncraft_sanity_check", "[item]" )
 TEST_CASE( "uncraft_blacklist_is_pruned", "[item]" )
 {
     std::string list;
-    // this specifies the precision of a crafting test
-    // 0.1 means 1000 g item can drop from 900 g to 1100 g of resources
+
+
     const float tolerance = 0.1f;
 
     for( const itype_id &bad : test_data::known_bad_uncraft ) {

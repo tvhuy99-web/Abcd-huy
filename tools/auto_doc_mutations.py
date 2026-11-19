@@ -23,14 +23,13 @@ def find_files(
     for path in paths:
         if os.path.isdir(path):
             for dirpath, dirnames, filenames in os.walk(path):
-                # Ignore all subdirectories and files inside a mod.
+
                 if not include_mods and "modinfo.json" in filenames:
                     dirnames.clear()
                     filenames.clear()
 
-                # Yield modinfo.json before all other files, if it exists.
                 if include_mods and "modinfo.json" in filenames:
-                    # More than one modinfo.json is not allowed
+
                     if filenames.count("modinfo.json") > 1:
                         dirnames.clear()
                         filenames.clear()
@@ -77,19 +76,16 @@ def write_mutations(mutations: list[Mutation], filename: Path) -> None:
         else:
             categories["NONE"].append(mut)
 
-    # Sort categories alphabetically
     categories = dict(sorted(categories.items()))
 
-    # Sort mutations alphabetically in categories
     for mutations in categories.values():
         mutations.sort()
 
-        # Sort each mutation's categories alphabetically
         for mut in mutations:
             mut.categories.sort()
 
     with open(filename, "w", encoding="utf-8") as fd:
-        # Write table of contents
+
         fd.write("# Table of Contents\n")
         fd.write("- Categories\n")
         for category in categories.keys():
@@ -98,7 +94,6 @@ def write_mutations(mutations: list[Mutation], filename: Path) -> None:
             )
         fd.write("\n\n")
 
-        # Write mutations
         for category, mutations in categories.items():
             fd.write(f"## {category}\n")
             for mut in mutations:
@@ -192,7 +187,6 @@ class Mod:
 )
 def cli(paths, outfile, include_mods) -> None:
     """Search PATHS for JSON files and generate documentation for mutations."""
-    # The entrypoint to the CLI.
 
     if not include_mods:
         mutations = []
@@ -219,24 +213,20 @@ def cli(paths, outfile, include_mods) -> None:
 
         for file in find_files(paths, (".json",), include_mods=True):
             if os.path.basename(file) != "modinfo.json":
-                # Move mods who we have recursed out of off the stack.
+
                 mod_stack = move_stack(file, mod_stack)
                 mod_stack[-1][0].mutations.extend(
                     extract_mutations(file, mod_stack[-1][0].id_)
                 )
 
             elif os.path.split(os.path.split(file)[0])[1] == "dda":
-                # Skip DDA
+
                 continue
             else:
-                # Add a new mod to the stack.
+
                 with open(file, "rb") as fd:
                     jfile = orjson.loads(fd.read())
 
-                # modinfo.json supports two formats:
-                # - An array containing at least one object, the first of which
-                # contains info about the mod.
-                # - A single top-level object.
                 if isinstance(jfile, list) and len(jfile) > 0:
                     mod_info = jfile[0]
                 else:
@@ -252,7 +242,6 @@ def cli(paths, outfile, include_mods) -> None:
                     click.echo(f"{file} is an invalid modinfo.json file.")
                     sys.exit()
 
-        # Resolve mutations which use copy-from.
         for id_, mod in mods.items():
             if not mod.dependencies:
                 continue

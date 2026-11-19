@@ -121,7 +121,7 @@ enum class debug_menu_index : int {
     last
 };
 
-} // namespace debug_menu
+}
 
 template<>
 struct enum_traits<debug_menu::debug_menu_index> {
@@ -136,6 +136,6 @@ struct hash<debug_menu::debug_menu_index> {
         return hash<int>()( static_cast<int>( v ) );
     }
 };
-} // namespace std
+}
 
-#endif // CATA_SRC_DEBUG_MENU_TYPES_H
+#endif

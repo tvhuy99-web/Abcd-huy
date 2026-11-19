@@ -214,8 +214,8 @@ static void test_pl_translation_text_style_check( Matcher &&matcher, const std::
 
 TEST_CASE( "translation_text_style_check", "[json][translation]" )
 {
-    // this test case is mainly for checking the format of debug messages.
-    // the text style check itself is tested in the lit test of clang-tidy.
+
+
     restore_on_out_of_scope restore_error_log_format( error_log_format );
     restore_on_out_of_scope restore_check_plural( check_plural );
     restore_on_out_of_scope error_colors( json_error_output_colors );
@@ -224,7 +224,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
     json_error_output_colors = json_error_output_colors_t::no_colors;
 
     // NOLINTBEGIN(cata-text-style)
-    // string, ascii
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -237,7 +237,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"("foo. bar.")" "\n"
             R"(   ▲▲▲)" "\n" ),
         R"("foo. bar.")" );
-    // string, unicode
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -250,7 +250,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"("…foo. bar.")" "\n"
             R"(    ▲▲▲)" "\n" ),
         R"("…foo. bar.")" );
-    // string, escape sequence
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -263,7 +263,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"("\u2026foo. bar.")" "\n"
             R"(         ▲▲▲)" "\n" ),
         R"("\u2026foo. bar.")" );
-    // object, ascii
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -276,7 +276,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"({"str": "foo. bar."})" "\n"
             R"(           ▲▲▲)" "\n" ),
         R"({"str": "foo. bar."})" );
-    // object, unicode
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -289,7 +289,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"({"str": "…foo. bar."})" "\n"
             R"(            ▲▲▲)" "\n" ),
         R"({"str": "…foo. bar."})" );
-    // object, escape sequence
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -303,7 +303,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"(                 ▲▲▲)" "\n" ),
         R"({"str": "\u2026foo. bar."})" );
 
-    // test unexpected plural forms
+
     test_translation_text_style_check(
         Catch::Matchers::Equals(
             R"((json-error))" "\n"
@@ -323,7 +323,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"(                       ▲▲▲)" "\n" ),
         R"({"str": "foo", "str_pl": "foo"})" );
 
-    // test plural forms
+
     test_translation_text_style_check(
         Catch::Matchers::Equals( "" ),
         R"("box")" );
@@ -466,7 +466,7 @@ TEST_CASE( "translation_text_style_check", "[json][translation]" )
             R"("foo. bar.")" );
     }
 
-    // ensure sentence text style check is disabled when plural form is enabled
+
     test_pl_translation_text_style_check(
         Catch::Matchers::Equals( "" ),
         R"("foo. bar")" );
@@ -501,7 +501,7 @@ TEST_CASE( "translation_text_style_check_error_recovery", "[json][translation]" 
         const std::string dmsg = capture_debugmsg_during( [&]() {
             ja.read_next( trans );
         } );
-        // check that the correct debug message is shown
+
         CHECK_THAT(
             dmsg,
             Catch::Matchers::Equals(
@@ -531,7 +531,7 @@ TEST_CASE( "translation_text_style_check_error_recovery", "[json][translation]" 
         const std::string dmsg = capture_debugmsg_during( [&]() {
             jv.read( trans );
         } );
-        // check that the correct debug message is shown
+
         CHECK_THAT(
             dmsg,
             Catch::Matchers::Equals(
@@ -622,14 +622,14 @@ TEST_CASE( "correct_cursor_position_for_unicode_json_error", "[json]" )
     json_error_output_colors = json_error_output_colors_t::no_colors;
 
     // NOLINTBEGIN(cata-text-style)
-    // check long unicode strings point at the correct column
+
     const std::string json =
         R"({ "两两两两两两两两两两两两两两两两两两两两两两两两": 两 })";
     try {
         JsonArray ja = json_loader::from_string( json );
         JsonValue jv = ja.next_value();
     } catch( JsonError &e ) {
-        // check that the correct debug message is shown
+
         const std::string e_what = e.what();
         const std::string e_expected =
             R"(Json error: file <unknown source file>, at line 1, character 79:)"
@@ -683,38 +683,38 @@ TEST_CASE( "jsonin_get_string", "[json]" )
     json_error_output_colors = json_error_output_colors_t::no_colors;
 
     // NOLINTBEGIN(cata-text-style)
-    // read plain text
+
     test_get_string( "foo", R"("foo")" );
-    // ignore starting spaces
+
     test_get_string( "bar", R"(  "bar")" );
-    // read unicode characters
+
     test_get_string( "……", R"("……")" );
     test_get_string( "……", "\"\u2026\u2026\"" );
     test_get_string( "\xe2\x80\xa6", R"("…")" );
     test_get_string( "\u00A0", R"("\u00A0")" );
     test_get_string( "\u00A0", R"("\u00a0")" );
-    // read escaped unicode
+
     test_get_string( "…", R"("\u2026")" );
-    // read utf8 sequence
+
     test_get_string( "…", "\"\xe2\x80\xa6\"" );
-    // read newline
+
     test_get_string( "a\nb\nc", R"("a\nb\nc")" );
-    // read slash
+
     test_get_string( "foo\\bar", R"("foo\\bar")" );
-    // read escaped characters
+
     test_get_string( "\"\\/\b\f\n\r\t\u2581", R"("\"\\\/\b\f\n\r\t\u2581")" );
 
-    // empty json
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             "Json error: <unknown source file>:EOF:" "\n" "input file is empty" ),
         std::string() );
-    // no starting quote
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             "Json error: <unknown source file>:EOF:" "\n" "cannot parse value starting with: abc" ),
         R"(abc)" );
-    // no ending quote
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             "Json error: <unknown source file>:EOF:" "\n" "illegal character in string constant" ),
@@ -723,7 +723,7 @@ TEST_CASE( "jsonin_get_string", "[json]" )
         Catch::Matchers::Message(
             "Json error: <unknown source file>:EOF:" "\n" "illegal character in string constant" ),
         R"("foo)" );
-    // incomplete escape sequence and no ending quote
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             "Json error: <unknown source file>:EOF:" "\n" "unknown escape code in string constant" ),
@@ -736,7 +736,7 @@ TEST_CASE( "jsonin_get_string", "[json]" )
             R"("\u12)" "\n"
             R"( ▲▲▲)" "\n" ),
         R"("\u12)" );
-    // incorrect escape sequence
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             R"(Json error: file <unknown source file>, at line 1, character 2:)" "\n"
@@ -753,7 +753,7 @@ TEST_CASE( "jsonin_get_string", "[json]" )
             R"("\uDEFG")" "\n"
             R"( ▲▲▲)" "\n" ),
         R"("\uDEFG")" );
-    // not a valid utf8 sequence
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             "Json error: <unknown source file>:EOF:" "\n" "illegal UTF-8 sequence" ),
@@ -770,7 +770,7 @@ TEST_CASE( "jsonin_get_string", "[json]" )
         Catch::Matchers::Message(
             R"(Json error: <unknown source file>:EOF:)" "\n" "illegal UTF-8 sequence" ),
         "\"\xFC\x80\x80\x80\x80\xC0\"" );
-    // end of line
+
     test_get_string_throws_matches(
         Catch::Matchers::Message(
             R"(Json error: file <unknown source file>, at line 1, character 2:)" "\n"
@@ -788,8 +788,8 @@ TEST_CASE( "jsonin_get_string", "[json]" )
             R"(▲▲▲)" "\n" ),
         "\"b\r\"" );
 
-    // test throwing error after the given number of unicode characters
-    // ascii
+
+
     test_string_error_throws_matches(
         Catch::Matchers::Message(
             R"(Json error: file <unknown source file>, at line 1, character 1:)" "\n"
@@ -806,7 +806,7 @@ TEST_CASE( "jsonin_get_string", "[json]" )
             R"("foobar")" "\n"
             R"(  ▲▲▲)" "\n" ),
         R"("foobar")", 3 );
-    // unicode
+
     test_string_error_throws_matches(
         Catch::Matchers::Message(
             R"(Json error: file <unknown source file>, at line 1, character 4:)" "\n"
@@ -831,7 +831,7 @@ TEST_CASE( "jsonin_get_string", "[json]" )
             R"("foo…bar3")" "\n"
             R"(    ▲▲▲)" "\n" ),
         R"("foo…bar3")", 5 );
-    // escape sequence
+
     test_string_error_throws_matches(
         Catch::Matchers::Message(
             R"(Json error: file <unknown source file>, at line 1, character 11:)" "\n"
@@ -853,8 +853,8 @@ TEST_CASE( "jsonin_get_string", "[json]" )
 
 TEST_CASE( "item_colony_ser_deser", "[json][item]" )
 {
-    // calculates the number of substring (needle) occurrences within the target string (haystack)
-    // doesn't include overlaps
+
+
     const auto count_occurrences = []( const std::string_view haystack,
     const std::string_view needle ) {
         int occurrences = 0;
@@ -866,7 +866,7 @@ TEST_CASE( "item_colony_ser_deser", "[json][item]" )
         return occurrences;
     };
 
-    // checks if two colonies are equal using `same_for_rle` for item comparison
+
     const auto is_same = []( const cata::colony<item> &a, const cata::colony<item> &b ) {
         return std::equal( a.begin(), a.end(), b.begin(),
         []( const item & a, const item & b ) {
@@ -877,7 +877,7 @@ TEST_CASE( "item_colony_ser_deser", "[json][item]" )
     SECTION( "identical items are collapsed" ) {
         cata::colony<item> col;
         for( int i = 0; i < 10; ++i ) {
-            // currently tools cannot be stackable
+
             col.insert( item( itype_test_rag ) );
         }
         REQUIRE( col.size() == 10 );
@@ -942,7 +942,7 @@ TEST_CASE( "item_colony_ser_deser", "[json][item]" )
     }
 
     SECTION( "incorrect items in json are skipped" ) {
-        // first item is an array without the run length defined (illegal)
+
         const char *json =
             R"([[{"typeid":"test_rag","item_vars":{"magazine_converted":"1"}}],)" "\n"
             R"(    {"typeid":"test_rag","item_vars":{"magazine_converted":"1"}}])";
@@ -965,11 +965,11 @@ TEST_CASE( "item_colony_ser_deser", "[json][item]" )
 
 TEST_CASE( "temperature_unit_serialize_round_trip", "[json]" )
 {
-    // TODO: remove the legacy "%f" format
-    // -4C + 50mC. Yes, it is confusing - the format is meant for 4C - 50mC, etc
+
+
     const std::string input =
         R"(["2.40000","283.15000","0.00000","-4 C 50 mC","-10 C","10 C","0 C","127500 mC"])";
-    // i love floats
+
     const std::string output =
         R"(["-270 C -749 mC","10 C","-273 C -149 mC","-3 C -950 mC","-10 C","10 C","0 mC","127 C 499 mC"])";
     JsonValue jsin = json_loader::from_string( input );

@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 
-# Make sure you have python3 installed.
-# Ensure that the json_formatter is kept in Tools with this script.
-# For Windows:
-# Using command prompt type "python name.py"
-# For Max OS X or Linux:
-# Swap any "\\" with "/", then run the script as in windows.
 
 import json
 import os
@@ -23,7 +17,7 @@ def gen_new(path):
             print(f"JSONDecodeError in {path}")
             return None
         for jo in json_data:
-            # We only want JsonObjects
+
             if type(jo) is str:
                 continue
             if not jo.get('name'):

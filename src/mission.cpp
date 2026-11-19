@@ -80,7 +80,7 @@ static std::unordered_map<int, mission> world_missions;
 mission *mission::reserve_new( const mission_type_id &type, const character_id &npc_id )
 {
     const mission tmp = mission_type::get( type )->create( npc_id );
-    // TODO: Warn about overwrite?
+
     mission &miss = world_missions[tmp.uid] = tmp;
     return &miss;
 }
@@ -184,14 +184,14 @@ std::unordered_set<itype_id> present_mission_items( const std::unordered_set<ity
     return result;
 }
 
-} // namespace
+}
 
 void mission::process_all()
 {
     avatar &player_character = get_avatar();
     const std::unordered_set<itype_id> targets = find_item_mission_targets();
 
-    // Activity blocks MGOAL_FIND_ITEM before it searches any items.
+
     const bool use_item_filter = !targets.empty() && !player_character.activity;
     const std::unordered_set<itype_id> present = use_item_filter ? present_mission_items( targets ) :
             std::unordered_set<itype_id>();
@@ -209,7 +209,7 @@ void mission::process_all()
             miss.process();
         }
 
-        // Mission end effects can change the inventory used by later checks.
+
         if( was_in_progress && !miss.in_progress() ) {
             item_filter_valid = false;
         }
@@ -252,8 +252,8 @@ void mission::on_creature_death( Creature &poor_dead_dude )
     if( mon != nullptr ) {
 
         if( mon->is_nemesis() ) {
-            //the nemesis monster doesn't have a mission attached bc it's an overmap horde
-            //so we loop to find the appropriate mission and complete it
+
+
             avatar &player_character = get_avatar();
             for( std::pair<const int, mission> &e : world_missions ) {
                 mission &i = e.second;
@@ -261,7 +261,7 @@ void mission::on_creature_death( Creature &poor_dead_dude )
                     if( i.type->monster_kill_goal == 1 ) {
                         i.step_complete( 1 );
                     } else {
-                        // Recurring nemesis!!
+
                         mission_start::kill_nemesis( &i );
                     }
                     return;
@@ -295,14 +295,14 @@ void mission::on_creature_death( Creature &poor_dead_dude )
     }
     npc *p = dynamic_cast<npc *>( &poor_dead_dude );
     if( p == nullptr ) {
-        // Must be the player
+
         for( mission *&miss : get_avatar().get_active_missions() ) {
-            // mission is free and can be reused
+
             miss->player_id = character_id();
         }
-        // The missions remains assigned to the (dead) character. This should not cause any problems
-        // as the character is dismissed anyway.
-        // Technically, the active missions could be moved to the failed mission section.
+
+
+
         return;
     }
     const character_id dead_guys_id = p->getID();
@@ -311,15 +311,15 @@ void mission::on_creature_death( Creature &poor_dead_dude )
         if( !i.in_progress() ) {
             continue;
         }
-        //complete the mission if you needed killing
+
         if( i.type->goal == MGOAL_ASSASSINATE && i.target_npc_id == dead_guys_id ) {
             i.step_complete( 1 );
         }
-        //fail the mission if the mission giver dies
+
         if( i.npc_id == dead_guys_id ) {
             i.fail();
         }
-        //fail the mission if recruit target dies
+
         if( i.type->goal == MGOAL_RECRUIT_NPC && i.target_npc_id == dead_guys_id ) {
             i.fail();
         }
@@ -351,7 +351,7 @@ bool mission::on_creature_fusion( Creature &fuser, Creature &fused )
         }
         const mission_type *const type = found_mission->type;
         if( type->goal == MGOAL_KILL_MONSTER || type->goal == MGOAL_KILL_MONSTERS ) {
-            // the fuser has to be killed now!
+
             mon_fuser->mission_ids.emplace( mission_id );
             mission_ids_to_remove.push_back( mission_id );
             mission_transfered = true;
@@ -367,8 +367,8 @@ void mission::on_talk_with_npc( const character_id &npc_id )
 {
     switch( type->goal ) {
         case MGOAL_TALK_TO_NPC:
-            // If our goal is to talk to this npc, and we haven't yet completed a step for this
-            // mission, then complete a step.
+
+
             if( npc_id == target_npc_id && step == 0 ) {
                 step_complete( 1 );
             }
@@ -427,7 +427,7 @@ void mission::fail()
     if( player_character.getID() == player_id ) {
         player_character.on_mission_finished( *this );
     }
-    // Tracks completion/failure
+
     deadline = calendar::turn;
 
     type->fail( this );
@@ -455,11 +455,11 @@ void mission::step_complete( const int _step )
         case MGOAL_KILL_MONSTERS:
         case MGOAL_COMPUTER_TOGGLE:
         case MGOAL_TALK_TO_NPC:
-            // Go back and report.
+
             set_target_to_mission_giver();
             break;
         default:
-            //Suppress warnings
+
             break;
     }
 }
@@ -468,8 +468,8 @@ void mission::wrap_up()
 {
     avatar &player_character = get_avatar();
     if( player_character.getID() != player_id ) {
-        // This is called from npctalk.cpp, the npc should only offer the option to wrap up mission
-        // that have been assigned to the current player.
+
+
         debugmsg( "mission::wrap_up called, player %d was assigned, but current player is %d",
                   player_id.get_value(), player_character.getID().get_value() );
     }
@@ -553,11 +553,11 @@ void mission::wrap_up()
         }
         break;
         default:
-            //Suppress warnings
+
             break;
     }
 
-    // Tracks completion/failure
+
     deadline = calendar::turn;
 
     type->end( this );
@@ -696,10 +696,10 @@ bool mission::is_complete( const character_id &_npc_id ) const
         case MGOAL_CONDITION: {
             std::unique_ptr<talker> beta;
             std::vector<mission *> miss;
-            // Skip the NPC check if the mission was obtained via a scenario/profession/hobby
+
             if( npc_id.is_valid() || type->origins.empty() || type->origins.size() != 1 ||
                 type->origins.front() != mission_origin::ORIGIN_GAME_START ) {
-                // Only allow completing when talking to the mission originator.
+
                 if( npc_id != _npc_id ) {
                     return false;
                 }
@@ -742,7 +742,7 @@ void mission::get_all_item_group_matches( std::vector<item *> &items,
 
         bool item_in_group = item_group::group_contains_item( grp_type, itm->typeId() );
 
-        //check whether item itself is target
+
         if( item_in_group && correct_container ) {
             std::map<itype_id, int>::iterator it = matches.find( itm->typeId() );
             if( it != matches.end() ) {
@@ -752,12 +752,12 @@ void mission::get_all_item_group_matches( std::vector<item *> &items,
             }
         }
 
-        //recursively check item contents for target
+
         if( itm->is_container() && !itm->is_container_empty() ) {
             std::list<item *> content_list = itm->all_items_top();
             std::vector<item *> content = std::vector<item *>();
 
-            //list of item into list item*
+
             std::transform(
                 content_list.begin(), content_list.end(),
                 std::back_inserter( content ),
@@ -855,7 +855,7 @@ void mission::process()
 
     if( has_deadline() && calendar::turn > deadline ) {
         fail();
-    } else if( !npc_id.is_valid() && is_complete( npc_id ) ) { // No quest giver.
+    } else if( !npc_id.is_valid() && is_complete( npc_id ) ) {
         wrap_up();
     }
 }
@@ -940,7 +940,7 @@ mission_type_id mission::mission_id() const
 
 std::string mission::dialogue_for_topic( const std::string &in_topic ) const
 {
-    // The internal keys are pretty ugly, it's better to translate them here than globally
+
     static const std::map<std::string, std::string> topic_translation = {{
             { "TALK_MISSION_DESCRIBE", "describe" },
             { "TALK_MISSION_DESCRIBE_URGENT", "describe" },
@@ -996,12 +996,16 @@ template<>
 std::string enum_to_string<mission::mission_status>( mission::mission_status data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case mission::mission_status::yet_to_start: return "yet_to_start";
-        case mission::mission_status::in_progress: return "in_progress";
-        case mission::mission_status::success: return "success";
-        case mission::mission_status::failure: return "failure";
-        // *INDENT-ON*
+
+        case mission::mission_status::yet_to_start:
+            return "yet_to_start";
+        case mission::mission_status::in_progress:
+            return "in_progress";
+        case mission::mission_status::success:
+            return "success";
+        case mission::mission_status::failure:
+            return "failure";
+
         case mission::mission_status::num_mission_status:
             break;
 
@@ -1009,7 +1013,7 @@ std::string enum_to_string<mission::mission_status>( mission::mission_status dat
     cata_fatal( "Invalid mission_status" );
 }
 
-} // namespace io
+}
 
 mission::mission_status mission::status_from_string( const std::string &s )
 {

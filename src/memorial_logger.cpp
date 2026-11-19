@@ -119,11 +119,11 @@ void memorial_logger::clear()
     log.clear();
 }
 
-/**
- * Adds an event to the memorial log, to be written to the memorial file when
- * the character dies. The message should contain only the informational string,
- * as the timestamp and location will be automatically prepended.
- */
+
+
+
+
+
 void memorial_logger::add( std::string_view male_msg,
                            std::string_view female_msg )
 {
@@ -143,29 +143,29 @@ void memorial_logger::add( std::string_view male_msg,
     log.emplace_back( calendar::turn, cur_oter_type, oter_name, msg );
 }
 
-/**
- * Loads the data in a memorial file from the given ifstream.
- * In legacy format all the memorial entry lines begin with a pipe (|).
- * (This legacy format stopped being used before 0.F release.)
- * In new format the entries are stored as json.
- * @param fin The stream to read the memorial entries from.
- */
+
+
+
+
+
+
+
 void memorial_logger::load( std::istream &fin )
 {
     log.clear();
     if( fin.peek() == '|' ) {
-        // Legacy plain text format
+
         while( fin.peek() == '|' ) {
             std::string entry;
             getline( fin, entry );
-            // strip all \r from end of string
+
             while( *entry.rbegin() == '\r' ) {
                 entry.pop_back();
             }
             log.emplace_back( entry );
         }
     } else {
-        // Unittests do not write data to a file first.
+
         std::string memorial_data;
         fin.seekg( 0, std::ios_base::end );
         size_t size = fin.tellg();
@@ -185,11 +185,11 @@ void memorial_logger::save( std::ostream &os ) const
     jsout.write( log );
 }
 
-/**
- * Concatenates all of the memorial log entries, delimiting them with newlines,
- * and returns the resulting string. Used for saving and for writing out to the
- * memorial file.
- */
+
+
+
+
+
 std::string memorial_logger::dump() const
 {
     static const char *eol = cata_files::eol();
@@ -209,12 +209,12 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     avatar &u = get_avatar();
     static const char *eol = cata_files::eol();
 
-    //Size of indents in the memorial file
+
     const std::string indent = "  ";
 
     const std::string pronoun = u.male ? _( "He" ) : _( "She" );
 
-    //Avoid saying "a male unemployed" or similar
+
     std::string profession_name;
     if( u.prof == profession::generic() ) {
         if( u.male ) {
@@ -233,12 +233,12 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     const std::string kill_place = string_format( _( "%1$s was killed in a %2$s." ),
                                    pronoun, locdesc );
 
-    //Header
+
     file << string_format( _( "Cataclysm - Dark Days Ahead version %s memorial file" ),
                            getVersionString() ) << eol;
     file << eol;
     file << string_format( _( "In memory of: %s" ), u.get_name() ) << eol;
-    if( !epitaph.empty() ) {  //Don't record empty epitaphs
+    if( !epitaph.empty() ) {
         //~ The "%s" will be replaced by an epitaph as displayed in the memorial files. Replace the quotation marks as appropriate for your language.
         file << string_format( pgettext( "epitaph", "\"%s\"" ), epitaph ) << eol << eol;
     }
@@ -250,11 +250,11 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     file << kill_place << eol;
     file << eol;
 
-    //Misc
+
     file << string_format( _( "Cash on hand: %s" ), format_money( u.cash ) ) << eol;
     file << eol;
 
-    //HP
+
 
     const auto limb_hp =
     [&file, &indent, &u]( std::string_view desc, const bodypart_id & bp ) {
@@ -271,7 +271,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     limb_hp( _( "R Leg: %d/%d" ), bodypart_id( "leg_r" ) );
     file << eol;
 
-    //Stats
+
     file << _( "Final Stats:" ) << eol;
     file << indent << string_format( _( "Str %d" ), u.get_str() )
          << indent << string_format( _( "Dex %d" ), u.get_dex() )
@@ -284,7 +284,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
          << indent << string_format( _( "Per %d" ), u.get_per_base() ) << eol;
     file << eol;
 
-    //Last 20 messages
+
     file << _( "Final Messages:" ) << eol;
     std::vector<std::pair<std::string, std::string> > recent_messages =
         Messages::recent_messages( 20 );
@@ -294,14 +294,14 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     }
     file << eol;
 
-    //Kill list
+
     file << _( "Kills:" ) << eol;
 
     int total_kills = 0;
 
     std::map<std::tuple<std::string, std::string>, int> kill_counts;
 
-    // map <name, sym> to kill count
+
     const kill_tracker &kills = g->get_kill_tracker();
     for( const mtype &type : MonsterGenerator::generator().get_all_mtypes() ) {
         int this_count = kills.kill_count( type.id );
@@ -324,7 +324,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     }
     file << eol;
 
-    //Skills
+
     file << _( "Skills:" ) << eol;
     for( const std::pair<const skill_id, SkillLevel> &pair : u.get_all_skills() ) {
         const SkillLevel &lobj = pair.second;
@@ -334,7 +334,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     }
     file << eol;
 
-    //Traits
+
     file << _( "Traits:" ) << eol;
     for( const trait_id &mut : u.get_functioning_mutations() ) {
         file << indent << u.mutation_name( mut ) << eol;
@@ -344,7 +344,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     }
     file << eol;
 
-    //Effects (illnesses)
+
     file << _( "Ongoing Effects:" ) << eol;
     bool had_effect = false;
     if( u.get_perceived_pain() > 0 ) {
@@ -356,7 +356,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     }
     file << eol;
 
-    //Bionics
+
     file << _( "Bionics:" ) << eol;
     for( const bionic_id &bionic : u.get_bionics() ) {
         file << indent << bionic->name << eol;
@@ -369,7 +369,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
              units::to_kilojoule( u.get_power_level() ), units::to_kilojoule( u.get_max_power_level() ) ) << eol;
     file << eol;
 
-    //Equipment
+
     const item &weapon = u.get_wielded_item() ? *u.get_wielded_item() : null_item_reference();
     file << _( "Weapon:" ) << eol;
     file << indent << weapon.invlet << " - " << weapon.tname( 1, false ) << eol;
@@ -379,11 +379,11 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     u.worn.write_text_memorial( file, indent, eol );
     file << eol;
 
-    //Inventory
+
     file << _( "Inventory:" ) << eol;
     u.visit_items(
     [&file, &indent]( item_location node ) {
-        // your "inventory" is all items inside of other items.
+
         if( node.has_parent() && !node->is_gunmod() && !node->is_magazine() && !node->is_ammo() &&
             !node->made_of( phase_id::LIQUID ) ) {
             file << indent << node->invlet << " - " << node->tname();
@@ -397,7 +397,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     );
     file << eol;
 
-    //Lifetime stats
+
     file << _( "Lifetime Stats and Scores" ) << eol;
 
     for( const score *scr : get_stats().valid_scores() ) {
@@ -405,7 +405,7 @@ void memorial_logger::write_text_memorial( std::ostream &file,
     }
     file << eol;
 
-    //History
+
     file << _( "Game History" ) << eol;
     file << dump();
 }
@@ -427,8 +427,8 @@ void memorial_logger::write_json_memorial( std::ostream &memorial_file ) const
 
     jsout.end_object();
 
-    // Having written a new memorial file, we need to ensure that
-    // past_games_info now takes that into account
+
+
     clear_past_games();
 }
 
@@ -1134,7 +1134,7 @@ void memorial_logger::notify( const cata::event &e )
                  io::enum_to_string( e.get<debug_menu::debug_menu_index>( "debug_menu_option" ) ) );
             break;
         }
-        // All the events for which we have no memorial log are here
+
         case event_type::avatar_enters_omt:
         case event_type::avatar_moves:
         case event_type::camp_taken_over:

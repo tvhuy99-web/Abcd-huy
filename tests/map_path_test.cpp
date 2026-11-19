@@ -95,7 +95,7 @@ static map &setup_map_without_obstacles()
 TEST_CASE( "find_clear_path_with_adjacent_obstacles", "[map]" )
 {
     const tripoint_bub_ms p_center{ 10, 10, 0 };
-    // Adjacent mapsquares
+
     const tripoint_bub_ms nw = p_center + tripoint_rel_ms::north_west;
     const tripoint_bub_ms n = p_center + tripoint_rel_ms::north;
     const tripoint_bub_ms ne = p_center + tripoint_rel_ms::north_east;
@@ -104,7 +104,7 @@ TEST_CASE( "find_clear_path_with_adjacent_obstacles", "[map]" )
     const tripoint_bub_ms s = p_center + tripoint_rel_ms::south;
     const tripoint_bub_ms sw = p_center + tripoint_rel_ms::south_west;
     const tripoint_bub_ms w = p_center + tripoint_rel_ms::west;
-    // Mapsquares further out
+
     const tripoint_bub_ms n_nw = n + tripoint_rel_ms::north_west;
     const tripoint_bub_ms n_n = n + tripoint_rel_ms::north;
     const tripoint_bub_ms n_ne = n + tripoint_rel_ms::north_east;
@@ -195,12 +195,12 @@ TEST_CASE( "find_clear_path_5tiles_with_obstacles", "[map]" )
     const tripoint_bub_ms source{ 10, 10, 0 };
     const tripoint_bub_ms target{ 5, 8, 0 };
     GIVEN( "Map has obstacle southeast of target" ) {
-        /*
-         * Map layout:   t=target  s=source  o=obstacle
-         * t . . . . . .
-         * . o . . . . .
-         * . . . . . s .
-         */
+
+
+
+
+
+
         const tripoint_bub_ms obstacle{ 6, 9, 0 };
         place_obstacle( here, { obstacle } );
         WHEN( "map::find_clear_path to target" ) {
@@ -219,12 +219,12 @@ TEST_CASE( "find_clear_path_5tiles_with_obstacles", "[map]" )
         }
     }
     GIVEN( "Map has obstacle east of target" ) {
-        /*
-         * Map layout:   t=target  s=source  o=obstacle
-         * t o . . . . .
-         * . . . . . . .
-         * . . . . . s .
-         */
+
+
+
+
+
+
         const tripoint_bub_ms obstacle{ 6, 8, 0 };
         place_obstacle( here, { obstacle } );
         WHEN( "map::find_clear_path to target" ) {
@@ -238,18 +238,18 @@ TEST_CASE( "find_clear_path_5tiles_with_obstacles", "[map]" )
                 const bool path_contains_obstacle = std::find( path.begin(), path.end(), obstacle ) != path.end();
                 CHECK_FALSE( path_contains_obstacle );
             }
-            // default line crosses the obstacle, whatever other line find_clear_path found
+
             CHECK_FALSE( here.sees( source, target, -1 ) );
             CHECK_FALSE( here.sees( target, source, -1 ) );
         }
     }
     GIVEN( "Map has obstacle northwest of source" ) {
-        /*
-         * Map layout:   t=target  s=source  o=obstacle
-         * t . . . . . .
-         * . . . . o . .
-         * . . . . . s .
-         */
+
+
+
+
+
+
         const tripoint_bub_ms obstacle{ 9, 9, 0 };
         place_obstacle( here, { obstacle } );
         WHEN( "map::find_clear_path to target" ) {
@@ -268,12 +268,12 @@ TEST_CASE( "find_clear_path_5tiles_with_obstacles", "[map]" )
         }
     }
     GIVEN( "Map has obstacle west of source" ) {
-        /*
-         * Map layout:   t=target  s=source  o=obstacle
-         * t . . . . . .
-         * . . . . . . .
-         * . . . . o s .
-         */
+
+
+
+
+
+
         const tripoint_bub_ms obstacle{ 9, 10, 0 };
         place_obstacle( here, { obstacle } );
         WHEN( "map::find_clear_path to target" ) {
@@ -287,7 +287,7 @@ TEST_CASE( "find_clear_path_5tiles_with_obstacles", "[map]" )
                 const bool path_contains_obstacle = std::find( path.begin(), path.end(), obstacle ) != path.end();
                 CHECK_FALSE( path_contains_obstacle );
             }
-            // default line crosses the obstacle, whatever other line find_clear_path found
+
             CHECK_FALSE( here.sees( source, target, -1 ) );
             CHECK_FALSE( here.sees( target, source, -1 ) );
         }
@@ -302,12 +302,12 @@ TEST_CASE( "map_route_player_without_obstacles", "[map][pathfinding]" )
     const tripoint_bub_ms source = { 65, 65, 0 };
     const Character &pc = place_player_at( source );
     GIVEN( "Player on an empty map" ) {
-        /*
-         * Map layout:
-         *   . . . . . .     @=player
-         *   . @ 2 . 1 .     .=empty floor
-         *   . . . . . .     1,2=targets
-         */
+
+
+
+
+
+
         const tripoint_bub_ms t1 = { 68, 65, 0 };
         const tripoint_bub_ms t2 = { 66, 65, 0 };
         WHEN( "map::route does pathfinding to a tile 3 steps away" ) {
@@ -343,13 +343,13 @@ TEST_CASE( "map_route_player_around_obstacles", "[map][pathfinding]" )
     map &m = setup_map_without_obstacles();
     const Character &pc = place_player_at( tripoint_bub_ms{ 65, 65, 0 } );
     GIVEN( "Map has obstacles between player and target" ) {
-        /*
-         * Map layout:
-         *   . . @ . . .     @=player    .=empty floor
-         *   . # # # # .     #=trap or sharp wreckage
-         *   . t t t . .     t=tiles adjacent to target center
-         *   . t T t . .     T=target center
-         */
+
+
+
+
+
+
+
         const pathfinding_target t = pathfinding_target::adjacent(
                                          tripoint_bub_ms { 65, 68, 0 } );
         const std::vector<tripoint_bub_ms> obstacles = {
@@ -380,14 +380,14 @@ TEST_CASE( "map_route_player_around_obstacles", "[map][pathfinding]" )
     }
 
     GIVEN( "An obstacle course between player and target" ) {
-        /*
-         * Map layout:
-         * # # # # # # . . .
-         * . . . . . # . # .    #=obstacle
-         * . . . # . # . # .    @=player
-         * . . @ # . . . # 1    1=target
-         * # # # # # # # # .
-         */
+
+
+
+
+
+
+
+
         place_obstacle( m, {
             { 63, 62, 0 }, { 63, 66, 0 },
             { 64, 62, 0 }, { 64, 66, 0 },
@@ -438,14 +438,14 @@ TEST_CASE( "map_route_player_into_danger", "[map][pathfinding]" )
     map &m = setup_map_without_obstacles();
     const Character &pc = place_player_at( tripoint_bub_ms{ 65, 65, 0 } );
     GIVEN( "Map has obstacles around player, and target is not reachable by flat ground" ) {
-        /*
-         * Map layout:
-         *   . # # # .     #=trap or sharp wreckage
-         *   . # @ # .     @=player
-         *   . # # # .
-         *   . . . . .     .=empty floor
-         *   . . t . .     t=target
-         */
+
+
+
+
+
+
+
+
         const pathfinding_target t = pathfinding_target::point(
                                          tripoint_bub_ms { 65, 68, 0 } );
         const std::vector<tripoint_bub_ms> obstacles = {
@@ -487,12 +487,12 @@ TEST_CASE( "map_route_player_up_down_stairs", "[map][pathfinding]" )
     const ter_id t_floor( "t_floor" );
     const Character &pc = place_player_at( tripoint_bub_ms{ 65, 65, 0 } );
     GIVEN( "Map with stairs going up" ) {
-        /*
-         * Map layout:
-         *   . . . . . . .    .=empty floor
-         *   . @ . < . t .    @=player      <=stairs going up
-         *   . . . . . . .    t=target (one z-level above)
-         */
+
+
+
+
+
+
         m.ter_set( tripoint_bub_ms{ 67, 65, 0 }, t_stairs_up );
         m.ter_set( tripoint_bub_ms{ 67, 65, 1 }, t_stairs_down );
         m.ter_set( tripoint_bub_ms{ 68, 65, 1 }, t_floor );
@@ -512,12 +512,12 @@ TEST_CASE( "map_route_player_up_down_stairs", "[map][pathfinding]" )
         }
     }
     GIVEN( "Map with stairs going down" ) {
-        /*
-         * Map layout:
-         *   . . . . . . .    .=empty floor
-         *   . @ . > . t .    @=player      >=stairs going down
-         *   . . . . . . .    t=target (one z-level below)
-         */
+
+
+
+
+
+
         m.ter_set( tripoint_bub_ms{ 67, 65, 0 }, t_stairs_down );
         m.ter_set( tripoint_bub_ms{ 67, 65, -1 }, t_stairs_up );
         m.ter_set( tripoint_bub_ms{ 68, 65, -1 }, t_floor );
@@ -545,12 +545,12 @@ TEST_CASE( "map_route_player_into_unreachable_tiles", "[map][pathfinding]" )
     const Character &pc = place_player_at( tripoint_bub_ms{ 65, 65, 0 } );
     const tripoint_bub_ms not_passable = { 68, 65, 0 };
     GIVEN( "Map has unpassable tiles as target" ) {
-        /*
-         * Map layout:
-         *   . . . . . .    .=empty floor
-         *   . @ . . # .    @=player
-         *   . . . . . .    #=solid wall, is also the target
-         */
+
+
+
+
+
+
         place_obstacle( m, { not_passable } );
         WHEN( "map::route does pathfinding to a target tile that is not passable" ) {
             const std::vector<tripoint_bub_ms> path = m.route( pc, pathfinding_target::point( not_passable ) );
@@ -570,12 +570,12 @@ TEST_CASE( "map_route_player_into_unreachable_tiles", "[map][pathfinding]" )
         }
     }
     GIVEN( "Player is surrounded by walls" ) {
-        /*
-         * Map layout:
-         *   # # # . . .    .=empty floor
-         *   # @ # . t .    @=player     t=target
-         *   # # # . . .    #=solid wall
-         */
+
+
+
+
+
+
         const std::vector<tripoint_bub_ms> obstacles = {
             { 64, 64, 0 }, { 65, 64, 0 }, { 66, 64, 0 },
             { 64, 65, 0 },                { 66, 65, 0 },
@@ -598,13 +598,13 @@ TEST_CASE( "map_route_mon_around_danger", "[map][pathfinding]" )
     map &m = setup_map_without_obstacles();
     const monster &mon = spawn_test_monster( "mon_mi_go", tripoint_bub_ms{ 10, 10, 0 } );
     GIVEN( "Map has obstacles between mi-go and target" ) {
-        /*
-         * Map layout:
-         *   . # # # . .     #=trap, sharp wreckage or fire
-         *   . # & # . t     &=mi-go
-         *   . # . # . .     t=target
-         *   . . . . . .
-         */
+
+
+
+
+
+
+
         const pathfinding_target t = pathfinding_target::point(
                                          tripoint_bub_ms { 13, 10, 0 } );
         const std::vector<tripoint_bub_ms> obstacles = {

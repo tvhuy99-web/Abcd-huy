@@ -30,12 +30,12 @@ static void CheckDecl( StaticDeclarationsCheck &Check,
 
     const SourceManager &SM = *Result.SourceManager;
 
-    // Ignore cases that are not the first declaration
+
     if( ThisDecl->getPreviousDecl() ) {
         return;
     }
 
-    // Ignore cases that are in anonymous namespaces
+
     if( ThisDecl->isInAnonymousNamespace() ) {
         return;
     }
@@ -49,7 +49,7 @@ static void CheckDecl( StaticDeclarationsCheck &Check,
         IsStatic = F->getStorageClass() == SC_Static;
     }
 
-    // In header files static is forbidden entirely
+
     if( isInHeader( ThisDecl->getBeginLoc(), SM ) ) {
         if( IsStatic ) {
             if( IsConst ) {
@@ -69,12 +69,12 @@ static void CheckDecl( StaticDeclarationsCheck &Check,
         return;
     }
 
-    // Ignore if already static.
+
     if( IsStatic ) {
         return;
     }
 
-    // Ignore main
+
     if( ThisDecl->getNameAsString() == "main" ) {
         return;
     }
@@ -103,4 +103,4 @@ void StaticDeclarationsCheck::check( const MatchFinder::MatchResult &Result )
     CheckDecl( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

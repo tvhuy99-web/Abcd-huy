@@ -10,8 +10,8 @@ struct npc_opinion {
     int fear;
     int value;
     int anger;
-    int owed; // Positive when the npc owes the player. Negative if player owes them.
-    int sold; // Total value of goods sold/donated by player to the npc. Cannot be negative.
+    int owed;
+    int sold;
 
     npc_opinion() {
         trust = 0;
@@ -40,4 +40,4 @@ struct npc_opinion {
     void deserialize( const JsonObject &data );
 };
 
-#endif // CATA_SRC_NPC_OPINION_H
+#endif

@@ -35,10 +35,10 @@ struct add_type {
         const translation &get_name() const {
             return _name;
         }
-        /**
-         * Returns the name of an addiction. It should be able to finish the sentence
-         * "Became addicted to ______".
-         */
+
+
+
+
         const translation &get_type_name() const {
             return _type_name;
         }
@@ -69,14 +69,14 @@ class addiction
         void serialize( JsonOut &json ) const;
         void deserialize( const JsonObject &jo );
 
-        /** Runs one update of this addiction's effects **/
+
         bool run_effect( Character &u );
 };
 
 std::string add_type_legacy_conv( std::string const &v );
 
-// Minimum intensity before effects are seen
+
 constexpr int MIN_ADDICTION_LEVEL = 3;
 constexpr int MAX_ADDICTION_LEVEL = 20;
 
-#endif // CATA_SRC_ADDICTION_H
+#endif

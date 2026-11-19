@@ -14,32 +14,32 @@ Tokenizer = regex.compile(
     r"(?<="
         r"(?:"  # a word can be after...  # noqa: E131
             r"^"  # ...the start of text...  # noqa: E131
-        r"|"  # ...or...
-            r"""[\s\-'‘"“«\*&\(\[\{/>]"""  # ...a valid starting delimiter
+        r"|"
+            r"""[\s\-'‘"“«\*&\(\[\{/>]"""
         r")"
-        r"[…]*"  # ignore possible punctuations before a word
+        r"[…]*"
     r")"
-    # a single letter is always considered a valid word and therefore not
-    # tokenized
+
+
     r"(?:" +
         _latin_and_diacritic +
-    r")"  # a word always starts with an letter...
+    r")"
     r"(?:" +
         _latin_and_diacritic +
-    r"|['‘’´])*"  # ...can contain letters and apostrophes...
+    r"|['‘’´])*"
     r"(?:" +
         _latin_and_diacritic +
-    r")"  # ...and always ends with an letter
-    # exclude suffix `'s` and match the apostrophe as a delimiter later
+    r")"
+
     r"(?<!'[sS])"
-    # note: staring and ending apostrophe cannot be distinguished from
-    # starting and ending single quote so the former is not considered.
+
+
     r"(?="
-        r"[,\.\?!:;…]*"  # ignore any punctuations after a word
-        r"(?:"  # a word can be before...
-            r"$"  # ...the end of text...
-        r"|"  # ...or...
-            r"""[\s\-'’"”»\*\)\]\}/<]"""  # ...a valid ending delimiter
+        r"[,\.\?!:;…]*"
+        r"(?:"
+            r"$"
+        r"|"
+            r"""[\s\-'’"”»\*\)\]\}/<]"""
         r")"
     r")"
 )
@@ -63,9 +63,7 @@ def init_known_words(DefaultKnownWords, KnownWords):
     for dictionary, knownwords in [
             (default_dict, DefaultKnownWords), (custom_dict, KnownWords)]:
         for word in dictionary:
-            # For words in full lower case, allow capitalization and all caps
-            # (e.g. word, Word, & WORD); for other words, allow the word itself
-            # and all caps (e.g. George & GEORGE or pH & PH)
+
             knownwords.add(word)
             if word == word.lower():
                 knownwords.add(word.capitalize())
@@ -81,8 +79,8 @@ if not KnownWords:
 def unit_test__tokenizer():
     text_and_results = [
         ("I'm a test", ["I'm", "test"]),
-        ("Bahá'í", ["Bahá'í"]),  # containing composed character á
-        ("Bahá'í", ["Bahá'í"]),  # containing decomposed sequence á
+        ("Bahá'í", ["Bahá'í"]),
+        ("Bahá'í", ["Bahá'í"]),
         ("This is Megingjörð", ["This", "is", "Megingjörð"]),
         ("Test 测试", ["Test"]),
         ("\"This'll do!\"", ["This'll", "do"]),
@@ -108,9 +106,9 @@ def unit_test__tokenizer():
         ("Lorem: ipsum; dolor…", ["Lorem", "ipsum", "dolor"]),
         ('"Lorem"', ["Lorem"]),
         ("Lorem-ipsum", ["Lorem", "ipsum"]),
-        ("«Lorem ipsum»", ["Lorem", "ipsum"]),  # used in some NPC dialogue
+        ("«Lorem ipsum»", ["Lorem", "ipsum"]),
         ("*Lorem ipsum*", ["Lorem", "ipsum"]),
-        ("&Lorem ipsum", ["Lorem", "ipsum"]),  # used in some NPC dialogue
+        ("&Lorem ipsum", ["Lorem", "ipsum"]),
         ("…Lorem", ["Lorem"]),
         ("'…Lorem ipsum…'", ["Lorem", "ipsum"]),
         ("Lorem <ipsum> <color_yellow>dolor</color>", ["Lorem", "dolor"]),

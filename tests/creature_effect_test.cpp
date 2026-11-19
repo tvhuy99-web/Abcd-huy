@@ -39,32 +39,32 @@ static const species_id species_ZOMBIE( "ZOMBIE" );
 static const trait_id trait_LEG_TENT_BRACE( "LEG_TENT_BRACE" );
 static const trait_id trait_SLIMY( "SLIMY" );
 
-// Test effect methods from `Creature` class on both `monster` and `player`
 
-// Functions covered:
-// Creature::add_effect
-// Creature::remove_effect
-// Creature::has_effect
-// Creature::has_effect_with_flag
-//
-// TODO:
-// - Creature::resists_effect
-// - Creature::process_effects
-// - Creature::add_env_effect
-// - Creature::get_effect
-// - Creature::get_effect_dur
-// - Creature::get_effect_int
 
-// Creature::add_effect
-//
-// TODO:
-// - May be "deferred" to not process it immediately
-// - For knockdown, if riding/ridden, force dismount
-// - Duration is limited to maximum for effect
-// - If already have same effect, modify duration and intensity
-// - Otherwise, add effect, and check if it is blocked by another effect
 
-// Characters have effects on separate body parts, or no particular part (indicated by `bp_null`)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "character_add_effect", "[creature][character][effect][add]" )
 {
     avatar dummy;
@@ -86,18 +86,18 @@ TEST_CASE( "character_add_effect", "[creature][character][effect][add]" )
             }
         }
 
-        // Make left arm bleed, and grab right arm
+
         WHEN( "character add_effect is called with a body part" ) {
             dummy.add_effect( effect_bleed, 1_minutes, left_arm );
             dummy.add_effect( effect_grabbed, 1_minutes, right_arm );
 
-            // Left arm bleeding, right arm grabbed
+
             THEN( "they have the effect on that body part" ) {
                 CHECK( dummy.has_effect( effect_bleed, left_arm.id() ) );
                 CHECK( dummy.has_effect( effect_grabbed, right_arm.id() ) );
             }
 
-            // Left arm not grabbed, right arm not bleeding
+
             THEN( "they do not have the effect on another body part" ) {
                 CHECK_FALSE( dummy.has_effect( effect_grabbed, left_arm.id() ) );
                 CHECK_FALSE( dummy.has_effect( effect_bleed, right_arm.id() ) );
@@ -106,7 +106,7 @@ TEST_CASE( "character_add_effect", "[creature][character][effect][add]" )
     }
 }
 
-// Monsters may have effects added to them, but they don't have separate body parts.
+
 TEST_CASE( "monster_add_effect", "[creature][monster][effect][add]" )
 {
     monster mummy( mon_hallu_mom );
@@ -123,7 +123,7 @@ TEST_CASE( "monster_add_effect", "[creature][monster][effect][add]" )
         }
     }
 
-    // "Your mother" monster is of 'HALLUCINATION' species, which doesn't have any bleeding type set for it, so it is immune to bleeding.
+
     GIVEN( "monster is immune to effect" ) {
         REQUIRE( mummy.is_immune_effect( effect_bleed ) );
 
@@ -143,8 +143,8 @@ TEST_CASE( "monster_add_effect", "[creature][monster][effect][add]" )
     }
 }
 
-// Creature::remove_effect
-//
+
+
 TEST_CASE( "remove_effect", "[creature][effect][remove]" )
 {
     avatar dummy;
@@ -162,74 +162,74 @@ TEST_CASE( "remove_effect", "[creature][effect][remove]" )
         }
     }
 
-    // Left arm grabbed
+
     WHEN( "character has effect on one body part" ) {
         dummy.add_effect( effect_grabbed, 1_minutes, left_arm );
         REQUIRE( dummy.has_effect( effect_grabbed, left_arm.id() ) );
 
         THEN( "remove_effect with no body part returns true" ) {
-            // Release all grabs
+
             CHECK( dummy.remove_effect( effect_grabbed ) );
-            // All grabs are released
+
             AND_THEN( "effect is removed" ) {
                 CHECK_FALSE( dummy.has_effect( effect_grabbed ) );
             }
         }
 
         THEN( "remove_effect with affected body part returns true" ) {
-            // Release grab on left arm
+
             CHECK( dummy.remove_effect( effect_grabbed, left_arm ) );
-            // Left arm is released
+
             AND_THEN( "effect is removed from that body part" ) {
                 CHECK_FALSE( dummy.has_effect( effect_grabbed, left_arm.id() ) );
             }
         }
 
         THEN( "remove_effect with an unaffected body part returns false" ) {
-            // Release (nonexistent) grab on right arm
+
             CHECK_FALSE( dummy.remove_effect( effect_grabbed, right_arm ) );
-            // Left arm is still grabbed
+
             AND_THEN( "effect still applies to original body part" ) {
                 CHECK( dummy.has_effect( effect_grabbed, left_arm.id() ) );
             }
         }
     }
 
-    // Both arms grabbed
+
     WHEN( "character has effect on two body parts" ) {
         dummy.add_effect( effect_grabbed, 1_minutes, left_arm );
         dummy.add_effect( effect_grabbed, 1_minutes, right_arm );
         REQUIRE( dummy.has_effect( effect_grabbed, left_arm.id() ) );
         REQUIRE( dummy.has_effect( effect_grabbed, right_arm.id() ) );
 
-        // Release all grabs
+
         THEN( "remove_effect with no body part returns true" ) {
             CHECK( dummy.remove_effect( effect_grabbed ) );
-            // Both arms are released
+
             AND_THEN( "effect is removed from all body parts" ) {
                 CHECK_FALSE( dummy.has_effect( effect_grabbed, left_arm.id() ) );
                 CHECK_FALSE( dummy.has_effect( effect_grabbed, right_arm.id() ) );
             }
         }
 
-        // Only release left arm
+
         THEN( "remove_effect with an affected body part returns true" ) {
             CHECK( dummy.remove_effect( effect_grabbed, left_arm ) );
-            // Left arm is released
+
             AND_THEN( "effect is removed from that body part" ) {
                 CHECK_FALSE( dummy.has_effect( effect_grabbed, left_arm.id() ) );
             }
-            // Right arm still grabbed
+
             AND_THEN( "effect still applies to other body part" ) {
                 CHECK( dummy.has_effect( effect_grabbed, right_arm.id() ) );
             }
         }
 
-        // Release (nonexistent) grabs on legs
+
         THEN( "remove_effect with an unaffected body part returns false" ) {
             CHECK_FALSE( dummy.remove_effect( effect_grabbed, left_leg ) );
             CHECK_FALSE( dummy.remove_effect( effect_grabbed, right_leg ) );
-            // Both arms still grabbed
+
             AND_THEN( "effect still applies to original body parts" ) {
                 CHECK( dummy.has_effect( effect_grabbed, left_arm.id() ) );
                 CHECK( dummy.has_effect( effect_grabbed, right_arm.id() ) );
@@ -238,18 +238,18 @@ TEST_CASE( "remove_effect", "[creature][effect][remove]" )
     }
 }
 
-// Creature::has_effect
-//
+
+
 TEST_CASE( "has_effect", "[creature][effect][has]" )
 {
 
-    // For monster, has_effect is not body-part-specific (uses bp_null)
+
     SECTION( "monster has_effect" ) {
         monster mummy( mon_hallu_mom );
 
         mummy.clear_effects();
 
-        // Not downed or grabbed
+
         WHEN( "monster does not have effect" ) {
 
             THEN( "has_effect is false" ) {
@@ -258,7 +258,7 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
             }
         }
 
-        // Downed but not grabbed
+
         WHEN( "monster has one effect" ) {
             mummy.add_effect( effect_downed, 1_minutes );
 
@@ -270,7 +270,7 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
             }
         }
 
-        // Both downed and grabbed
+
         WHEN( "monster has two effects" ) {
             mummy.add_effect( effect_downed, 1_minutes );
             mummy.add_effect( effect_grabbed, 1_minutes );
@@ -282,7 +282,7 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
         }
     }
 
-    // For character, has_effect may apply to individual body parts
+
     SECTION( "character has_effect" ) {
         avatar dummy;
         const bodypart_id left_arm( "arm_l" );
@@ -290,7 +290,7 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
 
         dummy.clear_effects();
 
-        // Not downed or grabbed
+
         WHEN( "character does not have effect" ) {
             THEN( "has_effect is false" ) {
                 CHECK_FALSE( dummy.has_effect( effect_downed ) );
@@ -298,7 +298,7 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
             }
         }
 
-        // Left arm grabbed
+
         WHEN( "character has effect on one body part" ) {
             dummy.add_effect( effect_grabbed, 1_minutes, left_arm );
 
@@ -315,7 +315,7 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
 
         }
 
-        // Downed
+
         WHEN( "character has effect on the whole body" ) {
             dummy.add_effect( effect_downed, 1_minutes );
 
@@ -331,8 +331,8 @@ TEST_CASE( "has_effect", "[creature][effect][has]" )
     }
 }
 
-// Creature::has_effect_with_flag
-//
+
+
 TEST_CASE( "has_effect_with_flag", "[creature][effect][has][flag]" )
 {
     monster mummy( mon_hallu_mom );
@@ -363,16 +363,16 @@ TEST_CASE( "has_effect_with_flag", "[creature][effect][has][flag]" )
     }
 }
 
-// monster::is_immune_effect
-//
+
+
 TEST_CASE( "monster_is_immune_effect", "[creature][monster][effect][immune]" )
 {
-    // TODO: Monster may be immune to:
-    // - onfire (if is_immune_damage DT_HEAT, made_of LIQUID, has_flag MF_FIREY)
-    // - stunned (if has_flag MF_STUN_IMMUNE)
+
+
+
 
     WHEN( "monster is made of flesh, is not zombified, has blood and has no legs" ) {
-        // graboid - fleshy, living snake of a species with bleed data
+
         monster graboid( mon_graboid );
         graboid.clear_effects();
         REQUIRE( graboid.made_of_any( Creature::cmat_flesh ) );
@@ -399,7 +399,7 @@ TEST_CASE( "monster_is_immune_effect", "[creature][monster][effect][immune]" )
     }
 
     WHEN( "monster is a zombie, made of flesh, has blood and has legs" ) {
-        // Zombie - fleshy humanoid zombie
+
         monster zed( mon_zombie );
         zed.clear_effects();
         REQUIRE( zed.made_of_any( Creature::cmat_flesh ) );
@@ -429,7 +429,7 @@ TEST_CASE( "monster_is_immune_effect", "[creature][monster][effect][immune]" )
     }
 
     WHEN( "monster is made of nether flesh and is flying" ) {
-        // Flaming eye, flesh, Nether species and flying
+
         monster feye( mon_flaming_eye );
         feye.clear_effects();
         REQUIRE( feye.made_of_any( Creature::cmat_flesh ) );
@@ -456,7 +456,7 @@ TEST_CASE( "monster_is_immune_effect", "[creature][monster][effect][immune]" )
     }
 
     WHEN( "monster is not made of flesh or iflesh" ) {
-        // Fungaloid - veggy, has no blood or bodytype
+
         monster fungaloid( mon_fungaloid );
         fungaloid.clear_effects();
         REQUIRE_FALSE( fungaloid.made_of_any( Creature::cmat_flesh ) );
@@ -483,7 +483,7 @@ TEST_CASE( "monster_is_immune_effect", "[creature][monster][effect][immune]" )
     }
 
     WHEN( "monster species doesn't have bleeding type set, but it has flag describing its bleeding type" ) {
-        // Razorclaw - has `MUTANT` species which doesn't have any bleeding type set, but has arthropod blood
+
         monster razorclaw( mon_razorclaw );
         razorclaw.clear_effects();
         REQUIRE( razorclaw.has_flag( mon_flag_ARTHROPOD_BLOOD ) );
@@ -494,17 +494,17 @@ TEST_CASE( "monster_is_immune_effect", "[creature][monster][effect][immune]" )
     }
 }
 
-// Character::is_immune_effect
-//
+
+
 TEST_CASE( "character_is_immune_effect", "[creature][character][effect][immune]" )
 {
     avatar dummy;
     dummy.set_body();
     dummy.clear_mutations();
 
-    // TODO: Character may be immune to:
-    // - onfire (if immune_damage DT_HEAT)
-    // - deaf (if wearing something with DEAF/PARTIALDEAF, bionic ears, rm13 armor)
+
+
+
 
     WHEN( "character has Slimy mutation" ) {
         dummy.toggle_trait( trait_SLIMY );
@@ -543,12 +543,11 @@ TEST_CASE( "character_is_immune_effect", "[creature][character][effect][immune]"
     }
 }
 
-// Creature::resists_effect
-//
+
+
 TEST_CASE( "creature_effect_reistance", "[creature][effect][resist]" )
 {
-    // TODO: Creature resists effect if:
-    // - has effect from eff.get_resist_effects
-    // - has trait from eff.get_resist_traits
-}
 
+
+
+}

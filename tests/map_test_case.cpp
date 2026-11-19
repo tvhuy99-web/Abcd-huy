@@ -192,7 +192,7 @@ void map_test_case::validate_anchor_point( const tripoint_bub_ms &p )
     tripoint_bub_ms origin_p = get_origin();
     REQUIRE( origin_p.z() == p.z() );
     REQUIRE( p == anchor_map_pos );
-    // offset is anchor_map_pos in `map_test_case` local coords
+
     tripoint_rel_ms offset = p - origin_p;
     REQUIRE( offset.y() >= 0 );
     REQUIRE( offset.y() < get_height() );
@@ -313,7 +313,7 @@ std::string map_test_case_common::printers::expected( map_test_case &t )
     } ) );
 }
 
-// common helpers, used together with map_test_case
+
 namespace map_test_case_common
 {
 
@@ -369,6 +369,6 @@ tile_predicate ter_set(
     };
 }
 
-} // namespace tiles
+}
 
-} // namespace map_test_case_common
+}

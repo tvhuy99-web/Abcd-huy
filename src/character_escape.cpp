@@ -72,11 +72,11 @@ bool Character::can_escape_trap( int difficulty, bool manip = false ) const
 void Character::try_remove_downed()
 {
 
-    /** @EFFECT_DEX increases chance to stand up when knocked down */
-    /** @EFFECT_ARM_STR increases chance to stand up when knocked down, slightly */
-    // Downed reduces balance score to 10% unless resisted, multiply to compensate
+
+
+
     int chance = ( get_dex() + get_arm_str() / 2.0 ) * get_limb_score( limb_score_balance ) * 10.0;
-    // Always 2,5% chance to stand up
+
     chance += has_flag( json_flag_DOWNED_RECOVERY ) ? 20 : 1;
     if( !has_flag( json_flag_CANNOT_MOVE ) ) {
         if( !x_in_y( chance, 40 ) ) {
@@ -95,12 +95,12 @@ void Character::try_remove_bear_trap()
 {
     map &here = get_map();
 
-    /* Real bear traps can't be removed without the proper tools or immense strength; eventually this should
-       allow normal players two options: removal of the limb or removal of the trap from the ground
-       (at which point the player could later remove it from the leg with the right tools).
-       As such we are currently making it a bit easier for players and NPCs to get out of bear traps.
-    */
-    // If is riding, then despite the character having the effect, it is the mounted creature that escapes.
+
+
+
+
+
+
     if( is_avatar() && is_mounted() ) {
         auto *mon = mounted_creature.get();
         if( mon->type->melee_dice * mon->type->melee_sides >= 18 ) {
@@ -115,7 +115,7 @@ void Character::try_remove_bear_trap()
             }
         }
     } else {
-        // If we were caught in several bear traps at once, conduct a separate attempt to free for each one
+
         for( const bodypart_id &bp : get_all_body_parts() ) {
             if( has_effect( effect_beartrap, bp ) ) {
                 if( can_escape_trap( 100 ) ) {
@@ -197,7 +197,7 @@ void Character::try_remove_crushed()
 bool Character::try_remove_grab( bool attacking )
 {
     if( is_mounted() ) {
-        // Use the same calc as monster::move_effect
+
         auto *mon = mounted_creature.get();
         if( mon->has_effect_with_flag( json_flag_GRAB ) ) {
             for( const effect &grab : mon->get_effects_with_flag( json_flag_GRAB ) ) {
@@ -212,18 +212,18 @@ bool Character::try_remove_grab( bool attacking )
                 }
             }
         } else {
-            // No chivalrous zombies letting you go after pulling you off your horse
+
             if( one_in( 4 ) ) {
                 add_msg( m_bad, _( "You are pulled from your %s!" ), mon->get_name() );
                 forced_dismount();
             }
         }
     } else if( has_effect_with_flag( json_flag_GRAB ) ) {
-        // Need to know who's around for targeted removal
+
         map &here = get_map();
         creature_tracker &creatures = get_creature_tracker();
 
-        // No need to recalculate it in-loop, breaking previous grabs doesn't change skills
+
         float skill_factor = std::min( 0.8f,
         std::max( {
             static_cast<float>( get_skill_level( skill_melee ) ) / 10,
@@ -233,12 +233,12 @@ bool Character::try_remove_grab( bool attacking )
         int grab_break_factor = has_grab_break_tec() ? 10 : 0;
         const tripoint_range<tripoint_bub_ms> &surrounding = here.points_in_radius( pos_bub(), 1, 0 );
 
-        // Iterate through all our grabs and attempt to break them one by one
+
         for( const effect &eff : get_effects_with_flag( json_flag_GRAB ) ) {
             float escape_chance = 1.0f;
             float grabber_roll = static_cast<float>( eff.get_intensity() );
-            // We need to figure out which monster is responsible for this grab early for good messaging
-            // For now, one grabber per limb TODO: handle multiple grabbers and decrement intensity
+
+
             monster *grabber = nullptr;
             for( const tripoint_bub_ms loc : surrounding ) {
                 monster *mon = creatures.creature_at<monster>( loc );
@@ -249,14 +249,14 @@ bool Character::try_remove_grab( bool attacking )
                 }
             }
 
-            // Something went wrong, remove grab to be sure and throw an error
+
             if( grabber == nullptr ) {
                 remove_effect( eff.get_id(), eff.get_bp() );
                 add_msg_debug( debugmode::DF_MATTACK, "Orphan grab found and removed" );
                 continue;
             }
 
-            // Short out the check when attacking after removing any orphan grabs
+
             if( attacking ) {
                 add_msg_debug( debugmode::DF_MATTACK,
                                "Grab break check triggered by an attack, only removing orphan grabs allowed" );
@@ -266,13 +266,13 @@ bool Character::try_remove_grab( bool attacking )
             bool torn_pocket = false;
             std::vector<item_pocket *> pd = worn.grab_drop_pockets( eff.get_bp() );
             if( !pd.empty() ) {
-                // choose an item to be ripped off
+
                 int index = rng( 0, pd.size() - 1 );
                 int chance = rng( 0, get_effect_int( eff.get_id(), eff.get_bp() ) );
                 int sturdiness = rng( 0, pd[index]->get_pocket_data()->ripoff * 10 );
                 add_msg_debug( debugmode::DF_MATTACK, "Tearoff pocket %s chosen, sturdiness %d, tearing chance %d",
                                pd[index]->get_name(), sturdiness, chance );
-                // the item is ripped off your character
+
                 if( sturdiness < chance ) {
                     pd[index]->spill_contents( adjacent_tile() );
                     add_msg_player_or_npc( m_bad,
@@ -285,8 +285,8 @@ bool Character::try_remove_grab( bool attacking )
                 }
             }
 
-            // Limb factor we check directly
-            // Stats might get modified by certain grabby effects, check them to be safe
+
+
             float stat_factor = std::max( get_str() / 2, get_dex() / 3 );
             float limb_factor = get_modifier( character_modifier_grab_break_limb_mod );
             escape_chance = ( skill_factor * limb_factor ) * 100 + stat_factor;
@@ -294,9 +294,9 @@ bool Character::try_remove_grab( bool attacking )
             escape_chance += grab_break_factor;
             if( has_trait( trait_SLIMY ) || has_trait( trait_VISCOUS ) ) {
                 const float slime_factor = worn.clothing_wetness_mult( eff.get_bp() ) * 6;
-                // Slime offers a 6% bonus to escaping from a grab on a naked body part.
-                // Slime exudes from the skin and will only soak through clothes according to their combined breathability and coverage.
-                // Since the attacker is grabbing at the outermost layer, that 6% is multiplied by clothing_wetness_mult for that body part.
+
+
+
                 escape_chance += slime_factor;
                 add_msg_debug( debugmode::DF_MATTACK,
                                "%s is slimy, escape chance increased by %f",
@@ -314,7 +314,7 @@ bool Character::try_remove_grab( bool attacking )
                                escape_chance * 100 / eff.get_intensity() );
             }
 
-            // Every attempt burns some stamina - maybe some moves?
+
             burn_energy_arms( -5 * eff.get_intensity() );
             if( x_in_y( escape_chance, grabber_roll ) ) {
                 grabber->remove_grab( eff.get_bp().id() );
@@ -329,7 +329,7 @@ bool Character::try_remove_grab( bool attacking )
                                            _( "<npcname> breaks %s grab on their %s!" ), grabber->disp_name( true ),
                                            eff.get_bp()->name );
                 }
-                // Remove only this one grab
+
                 remove_effect( eff.get_id(), eff.get_bp() );
             } else {
                 add_msg_player_or_npc( m_bad, _( "You try to break %s grab on your %s, but fail!" ),
@@ -338,8 +338,8 @@ bool Character::try_remove_grab( bool attacking )
             }
         }
 
-        // We have attempted to break every grab but have failed to break at least one
-        // Attacks only get the abbreviated grab check, grabs don't prevent attacking
+
+
         if( has_effect_with_flag( json_flag_GRAB ) && !attacking ) {
             return false;
         }
@@ -378,7 +378,7 @@ void Character::try_remove_impeding_effect()
                 mon->remove_effect( eff_id );
                 remove_effect( eff_id );
             }
-            /** @EFFECT_STR increases chance to escape webs */
+
         } else if( can_escape_trap( 6 * get_effect_int( eff_id ) ) ) {
             add_msg_player_or_npc( m_good, _( "You free yourself!" ),
                                    _( "<npcname> frees themselves!" ) );
@@ -421,12 +421,12 @@ bool Character::move_effects( bool attacking )
         return false;
     }
 
-    // Below this point are things that allow for movement if they succeed
 
-    // Currently we only have one thing that forces movement if you succeed, should we get more
-    // than this will need to be reworked to only have success effects if /all/ checks succeed
+
+
+
     if( has_effect( effect_in_pit ) ) {
-        /** @EFFECT_DEX increases chance to escape pit, slightly */
+
         if( !can_escape_trap( 40 - get_dex() / 2 ) ) {
             add_msg_if_player( m_bad, _( "You try to escape the pit, but slip back in." ) );
             return false;
@@ -436,7 +436,7 @@ bool Character::move_effects( bool attacking )
             remove_effect( effect_in_pit );
         }
     }
-    // Attempt to break grabs, only check for orphan grabs on attack
+
     if( has_flag( json_flag_GRAB ) ) {
         return try_remove_grab( attacking );
     }
@@ -473,4 +473,3 @@ void Character::wait_effects( bool attacking )
         return;
     }
 }
-

@@ -44,7 +44,7 @@ template<> std::string enum_to_string<comfort_data::category>( comfort_data::cat
     }
     cata_fatal( "Invalid comfort_data::category" );
 }
-} // namespace io
+}
 
 static comfort_data human_comfort;
 
@@ -298,8 +298,8 @@ bool comfort_data::human_or_impossible() const
     return this == &human_comfort || base_comfort == COMFORT_IMPOSSIBLE;
 }
 
-// The logic isn't intuitive at all, but it works. Conditions are ORed together if `conditions_or`
-// is true and ANDed together if it's false. Somehow.
+
+
 bool comfort_data::are_conditions_true( const Character &guy, const tripoint_bub_ms &p ) const
 {
     for( const condition &cond : conditions ) {

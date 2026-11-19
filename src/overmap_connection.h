@@ -85,6 +85,6 @@ void reset();
 string_id<overmap_connection> guess_for( const int_id<oter_type_t> &oter_id );
 string_id<overmap_connection> guess_for( const int_id<oter_t> &oter_id );
 
-} // namespace overmap_connections
+}
 
-#endif // CATA_SRC_OVERMAP_CONNECTION_H
+#endif

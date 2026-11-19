@@ -7,7 +7,7 @@
 #include "point.h"
 #include "stringmaker.h"
 
-// StringMaker specializations for Cata types for reporting via Catch2 macros
+
 
 namespace Catch
 {
@@ -49,4 +49,4 @@ std::string StringMaker<talk_response>::convert( const talk_response &r )
     return string_format( "talk_response( text=\"%s\" )", r.text );
 }
 
-} // namespace Catch
+}

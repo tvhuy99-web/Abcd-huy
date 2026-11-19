@@ -26,7 +26,7 @@ TEST_CASE( "monster_pulping_test" )
     Character &you = get_player_character();
     for( const pulp_test_data &test : test_data::pulp_test ) {
         clear_character( you );
-        // to reset character weight
+
         you.set_stored_kcal( 120000 );
 
         you.worn.wear_item( you, item( itype_debug_backpack ), false, false );

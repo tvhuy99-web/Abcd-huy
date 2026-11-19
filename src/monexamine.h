@@ -12,6 +12,6 @@ bool mech_hack( monster &z );
 bool pay_bot( monster &z );
 bool mfriend_menu( monster &z );
 
-} // namespace monexamine
+}
 
-#endif // CATA_SRC_MONEXAMINE_H
+#endif

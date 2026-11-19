@@ -85,7 +85,7 @@ building_gen_pointer get_mapgen_cfunction( const std::string &ident )
             { "river_curved",     &mapgen_river_curved },
             { "subway_straight",    &mapgen_subway },
             { "subway_curved",      &mapgen_subway },
-            // TODO: Add a dedicated dead-end function. For now it copies the straight section above.
+
             { "subway_end",         &mapgen_subway },
             { "subway_tee",         &mapgen_subway },
             { "subway_four_way",    &mapgen_subway },
@@ -116,7 +116,7 @@ ter_str_id clay_or_sand()
 
 int terrain_type_to_nesw_array( oter_id terrain_type, std::array<bool, 4> &array )
 {
-    // count and mark which directions the road goes
+
     const oter_t &oter( *terrain_type );
     int num_dirs = 0;
     for( const om_direction::type dir : om_direction::all ) {
@@ -125,7 +125,7 @@ int terrain_type_to_nesw_array( oter_id terrain_type, std::array<bool, 4> &array
     return num_dirs;
 }
 
-// perform dist counterclockwise rotations on a nesw or neswx array
+
 template<typename T, size_t N>
 static void nesw_array_rotate( std::array<T, N> &array, size_t dist )
 {
@@ -140,7 +140,7 @@ static void nesw_array_rotate( std::array<T, N> &array, size_t dist )
         }
     } else {
         while( dist-- ) {
-            // N E S W NE SE SW NW
+
             T temp = array[0];
             array[0] = array[4];
             array[4] = array[1];
@@ -154,20 +154,20 @@ static void nesw_array_rotate( std::array<T, N> &array, size_t dist )
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-///// builtin terrain-specific mapgen functions.
+
+
 
 void mapgen_subway( mapgendata &dat )
 {
     map *const m = &dat.m;
-    // start by filling the whole map with grass/dirt/etc
+
     dat.fill_groundcover();
 
-    // which of the cardinal directions get subway?
+
     std::array<bool, 4> subway_nesw = {};
     int num_dirs = terrain_type_to_nesw_array( dat.terrain_type(), subway_nesw );
 
-    // N E S W
+
     for( int dir = 0; dir < 4; dir++ ) {
         if( dat.t_nesw[dir]->has_flag( oter_flags::subway_connection ) && !subway_nesw[dir] ) {
             num_dirs++;
@@ -175,9 +175,9 @@ void mapgen_subway( mapgendata &dat )
         }
     }
 
-    // which way should our subway curve, based on neighbor subway?
+
     std::array<int, 4> curvedir_nesw = {};
-    // N E S W
+
     for( int dir = 0; dir < 4; dir++ ) {
         if( !subway_nesw[dir] ) {
             continue;
@@ -187,9 +187,9 @@ void mapgen_subway( mapgendata &dat )
             !dat.t_nesw[dir]->has_flag( oter_flags::subway_connection ) ) {
             continue;
         }
-        // n_* contain details about the neighbor being considered
+
         std::array<bool, 4> n_subway_nesw = {};
-        // TODO: figure out how to call this function without creating a new oter_id object
+
         int n_num_dirs = terrain_type_to_nesw_array( dat.t_nesw[dir], n_subway_nesw );
         for( int dir = 0; dir < 4; dir++ ) {
             if( dat.t_nesw[dir]->has_flag( oter_flags::subway_connection ) && !n_subway_nesw[dir] ) {
@@ -197,112 +197,112 @@ void mapgen_subway( mapgendata &dat )
                 n_subway_nesw[dir] = true;
             }
         }
-        // if 2-way neighbor has a subway facing us
+
         if( n_num_dirs == 2 && n_subway_nesw[( dir + 2 ) % 4] ) {
-            // curve towards the direction the neighbor turns
-            // our subway curves counterclockwise
+
+
             if( n_subway_nesw[( dir - 1 + 4 ) % 4] ) {
                 curvedir_nesw[dir]--;
             }
-            // our subway curves clockwise
+
             if( n_subway_nesw[( dir + 1 ) % 4] ) {
                 curvedir_nesw[dir]++;
             }
         }
     }
 
-    // calculate how far to rotate the map so we can work with just one orientation
-    // also keep track of diagonal subway
+
+
     int rot = 0;
     bool diag = false;
-    // TODO: reduce amount of logical/conditional constructs here
+
     switch( num_dirs ) {
         case 4:
-            // 4-way intersection
+
             break;
         case 3:
-            // tee
-            // E/S/W, rotate 180 degrees
+
+
             if( !subway_nesw[0] ) {
                 rot = 2;
                 break;
             }
-            // N/S/W, rotate 270 degrees
+
             if( !subway_nesw[1] ) {
                 rot = 3;
                 break;
             }
-            // N/E/S, rotate  90 degrees
+
             if( !subway_nesw[3] ) {
                 rot = 1;
                 break;
             }
-            // N/E/W, don't rotate
+
             break;
         case 2:
-            // straight or diagonal
-            // E/W, rotate  90 degrees
+
+
             if( subway_nesw[1] && subway_nesw[3] ) {
                 rot = 1;
                 break;
             }
-            // E/S, rotate  90 degrees
+
             if( subway_nesw[1] && subway_nesw[2] ) {
                 rot = 1;
                 diag = true;
                 break;
             }
-            // S/W, rotate 180 degrees
+
             if( subway_nesw[2] && subway_nesw[3] ) {
                 rot = 2;
                 diag = true;
                 break;
             }
-            // W/N, rotate 270 degrees
+
             if( subway_nesw[3] && subway_nesw[0] ) {
                 rot = 3;
                 diag = true;
                 break;
             }
-            // N/E, don't rotate
+
             if( subway_nesw[0] && subway_nesw[1] ) {
                 diag = true;
                 break;
             }
-            break;                                                                  // N/S, don't rotate
+            break;
         case 1:
-            // dead end
-            // E, rotate  90 degrees
+
+
             if( subway_nesw[1] ) {
                 rot = 1;
                 break;
             }
-            // S, rotate 180 degrees
+
             if( subway_nesw[2] ) {
                 rot = 2;
                 break;
             }
-            // W, rotate 270 degrees
+
             if( subway_nesw[3] ) {
                 rot = 3;
                 break;
             }
-            // N, don't rotate
+
             break;
     }
 
-    // Rotate the map backwards so things can can be placed in their 'normal' orientation.
+
     m->rotate( 4 - rot );
 
-    // rotate the arrays left by rot steps
+
     nesw_array_rotate( subway_nesw, rot );
     nesw_array_rotate( curvedir_nesw, rot );
 
-    // now we have only these shapes: '   |   '-   -'-   -|-
+
 
     switch( num_dirs ) {
         case 4:
-            // 4-way intersection
+
             mapf::formatted_set_simple( m, point_bub_ms::zero,
                                         "..^/D^^/D^....^D/^^D/^..\n"
                                         ".^/DX^/DX......XD/^XD/^.\n"
@@ -344,7 +344,7 @@ void mapgen_subway( mapgendata &dat )
                                                 furn_str_id::NULL_ID() ) );
             break;
         case 3:
-            // tee
+
             mapf::formatted_set_simple( m, point_bub_ms::zero,
                                         "..^/D^^/D^...^/D^^/D^...\n"
                                         ".^/D^^/D^...^/D^^/D^....\n"
@@ -390,8 +390,8 @@ void mapgen_subway( mapgendata &dat )
                                                 furn_str_id::NULL_ID() ) );
             break;
         case 2:
-            // straight or diagonal
-            if( diag ) { // diagonal subway get drawn differently from all other types
+
+            if( diag ) {
                 mapf::formatted_set_simple( m, point_bub_ms::zero,
                                             "...^DD^^DD^...^DD^^DD^..\n"
                                             "....^DD^^DD^...^DD^^DD^.\n"
@@ -427,7 +427,7 @@ void mapgen_subway( mapgendata &dat )
                                                     furn_str_id::NULL_ID(),
                                                     furn_str_id::NULL_ID(),
                                                     furn_str_id::NULL_ID() ) );
-            } else { // normal subway drawing
+            } else {
                 mapf::formatted_set_simple( m, point_bub_ms::zero,
                                             "...^X^^^X^....^X^^^X^...\n"
                                             "...-x---x-....-x---x-...\n"
@@ -470,7 +470,7 @@ void mapgen_subway( mapgendata &dat )
             }
             break;
         case 1:
-            // dead end
+
             mapf::formatted_set_simple( m, point_bub_ms::zero,
                                         "...^X^^^X^..../D^^/D^...\n"
                                         "...-x---x-.../DX^/DX^...\n"
@@ -520,7 +520,7 @@ void mapgen_subway( mapgendata &dat )
             break;
     }
 
-    // finally, unrotate the map back to its normal orientation, resulting in the new addition being rotated.
+
     m->rotate( rot );
 }
 
@@ -537,12 +537,12 @@ void mapgen_river_curved_not( mapgendata &dat )
         rot = 3;
     }
 
-    // Rotate the map backwards so things can can be placed in their 'normal' orientation.
+
     m->rotate( 4 - rot );
 
     fill_background( m, ter_t_water_moving_dp );
-    // this is not_ne, so deep on all sides except ne corner, which is shallow
-    // shallow is 20,0, 23,4
+
+
     int north_edge = rng( 16, 18 );
     int east_edge = rng( 4, 8 );
 
@@ -560,7 +560,7 @@ void mapgen_river_curved_not( mapgendata &dat )
         }
     }
 
-    // finally, unrotate the map back to its normal orientation, resulting in the new addition being rotated.
+
     m->rotate( rot );
 }
 
@@ -577,7 +577,7 @@ void mapgen_river_straight( mapgendata &dat )
         rot = 3;
     }
 
-    // Rotate the map backwards so things can can be placed in their 'normal' orientation.
+
     m->rotate( 4 - rot );
 
     fill_background( m, ter_t_water_moving_dp );
@@ -593,7 +593,7 @@ void mapgen_river_straight( mapgendata &dat )
               dat.zlevel() );
     }
 
-    // finally, unrotate the map back to its normal orientation, resulting in the new addition being rotated.
+
     m->rotate( rot );
 }
 
@@ -610,11 +610,11 @@ void mapgen_river_curved( mapgendata &dat )
         rot = 3;
     }
 
-    // Rotate the map backwards so things can can be placed in their 'normal' orientation.
+
     m->rotate( 4 - rot );
 
     fill_background( m, ter_t_water_moving_dp );
-    // NE corner deep, other corners are shallow.  do 2 passes: one x, one y
+
     for( int x = 0; x < SEEX * 2; x++ ) {
         int ground_edge = rng( 1, 3 );
         int shallow_edge = rng( 4, 6 );
@@ -637,7 +637,7 @@ void mapgen_river_curved( mapgendata &dat )
               dat.zlevel() );
     }
 
-    // finally, unrotate the map back to its normal orientation, resulting in the new addition being rotated.
+
     m->rotate( rot );
 }
 
@@ -649,47 +649,47 @@ void mapgen_forest( mapgendata &dat )
         dat.region.get_settings_forest_composition();
     const std::set<forest_biome_mapgen_id> &biomes =
         dat.region.get_settings_forest_composition().biomes;
-    // perimeter_size is a useful shorthand that should not be changed:
+
     static constexpr int perimeter_size = SEEX * 4 + SEEY * 4;
-    // The following constexpr terms would do well to be json-ized.
-    // The average mid-way point between the forest and its adjacent biomes:
+
+
     static constexpr int average_depth = 5 * SEEX / 12;
-    // The average number of complete oscillations which should occur in the biome border per map-tile:
+
     static constexpr int average_extra_critical_points = 1;
-    // The intensity of the oscillations along forest borders:
+
     static constexpr int biome_transition_abruptness = 1;
-    // The standard deviation of the lengthwise distribution of the oscillations:
+
     static constexpr int border_deviation = 3;
-    // Higher values = more pronounced curves, obscures seams:
+
     static constexpr float border_curviness = 2;
-    // The standard deviation of the depthwise distribution of the oscillations' peaks:
+
     static constexpr float depth_deviation = 1;
-    // Scalar for the amount of space to add between the groundcover and feature margins:
+
     static constexpr int groundcover_margin = average_depth / 2;
-    // Scaling factor to apply to the weighting of the self-terrain over adjacent ones:
+
     static constexpr float self_scalar = 3.;
 
-    // Adjacency factor is used to weight the frequency of a feature
-    // being placed by the relative density of the current terrain to its
-    // neighbors. For example, a forest_thick surrounded by forest_thick on
-    // all sides can be much more dense than a forest_water surrounded by
-    // fields on all sides.
 
-    // "Sparsity Factor" is a misnomer carried over from JSON; the value reflects
-    // the density of the terrain, not the sparsity.
 
-    /**
-    * Determines the density of natural features in \p ot.
-    *
-    * If there is no defined biome for \p ot, returns a sparsity factor
-    * of 0. It's possible to specify biomes in the forest regional settings
-    * that are not rendered by this forest map gen method, in order to control
-    * how terrains are blended together (e.g. specify roads with an equal
-    * biome to forests so that forests don't fade out as they transition to roads).
-    *
-    * @param ot The type of terrain to determine the sparseness of.
-    * @return A discrete scale of the density of natural features occurring in \p ot.
-    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const auto get_sparseness_adjacency_factor = [&settings_forest_comp]( const oter_id & ot ) {
 
         const auto biome = settings_forest_comp.oter_to_biomes.find( ot->get_type_id() );
@@ -702,7 +702,7 @@ void mapgen_forest( mapgendata &dat )
 
     const ter_furn_id no_ter_furn = ter_furn_id();
 
-    // Calculate the maximum possible sparseness factor (density) for the region.
+
     int max_factor = 0;
     if( !biomes.empty() ) {
         std::vector<int> factors;
@@ -713,26 +713,26 @@ void mapgen_forest( mapgendata &dat )
         max_factor = *max_element( std::begin( factors ), std::end( factors ) );
     }
 
-    // Get the sparseness factor (density) for this and adjacent terrain.
+
     const int factor = get_sparseness_adjacency_factor( dat.terrain_type() );
     for( int i = 0; i < 4; i++ ) {
         dat.dir( i ) = get_sparseness_adjacency_factor( dat.t_nesw[i] );
     }
 
-    // The index of the following structures are defined in dat.dir():
-    //
-    // (0,0)     NORTH
-    //      ---------------
-    //      | 7  | 0 | 4  |
-    //      |----|---|----|
-    // WEST | 3  |   | 1  |  EAST
-    //      |----|---|----|
-    //      | 6  | 2 | 5  |
-    //      ---------------
-    //           SOUTH      (SEEX * 2, SEEY * 2)
 
-    // In order to feather (blend) this overmap tile with adjacent ones, the general composition thereof must be known.
-    // This can be calculated once from dat.t_nesw, and stored here:
+
+
+
+
+
+
+
+
+
+
+
+
+
     std::array<const forest_biome_mapgen *, 8> adjacent_biomes;
     for( int d = 0; d <= 7; d++ ) {
         auto lookup = settings_forest_comp.oter_to_biomes.find( dat.t_nesw[d]->get_type_id() );
@@ -744,13 +744,13 @@ void mapgen_forest( mapgendata &dat )
         }
     }
 
-    // Keep track of the "true perimeter" of the biome. It has a curve to make it seem natural.
-    // The depth of the perimeter at each border of the forest being generated:
+
+
     std::array<int, 8> border_depth;
 
     for( int bd_x = 0; bd_x < 2; bd_x++ ) {
         for( int bd_y = 0; bd_y < 2; bd_y++ ) {
-            // Use the corners of the overmap tiles as hash seeds.
+
             point_abs_ms global_corner = m->get_abs( tripoint_bub_ms( bd_x * SEEX * 2, bd_y * SEEY * 2,
                                          m->get_abs_sub().z() ) ).xy();
             uint32_t net_hash = std::hash<uint32_t> {}( global_corner.x() ) ^ ( std::hash<int> {}( global_corner.y() )
@@ -759,7 +759,7 @@ void mapgen_forest( mapgendata &dat )
             uint32_t v_hash = std::hash<uint32_t> {}( net_hash );
             float h_unit_hash = static_cast<float>( h_hash ) / static_cast<float>( UINT32_MAX );
             float v_unit_hash = static_cast<float>( v_hash ) / static_cast<float>( UINT32_MAX );
-            // Apply the box-muller transform to produce a gaussian distribution with the desired mean and deviation.
+
             float mag = depth_deviation * std::sqrt( -2. * log( h_unit_hash ) );
             int h_norm_transform = static_cast<int>( clamp( std::round( mag * std::cos(
                                        2 * M_PI * v_unit_hash ) + average_depth ), static_cast<double>( INT32_MIN ),
@@ -768,18 +768,18 @@ void mapgen_forest( mapgendata &dat )
                                        2 * M_PI * v_unit_hash ) + average_depth ), static_cast<double>( INT32_MIN ),
                                    static_cast<double>( INT32_MAX ) ) );
 
-            int corner_index = bd_x ? 1 + bd_y : 3 * bd_y; // Counterclockwise labeling.
+            int corner_index = bd_x ? 1 + bd_y : 3 * bd_y;
             border_depth[corner_index] = std::abs( h_norm_transform );
             border_depth[corner_index + 4] = std::abs( v_norm_transform );
         }
     }
 
-    // Indicies of border_depth accessible by dat.dir() nomenclature, [h_idx 0..4 : v_idx 0..4]:
+
     static constexpr std::array<int, 8> edge_corner_mappings = {0, 5, 3, 4, 1, 6, 2, 7};
 
-    // Now, generate a curve along the border of the biome, which will be used to calculate each cardinally
-    // adjacent biome's relative impact.
-    // Format: [ SEEX * 2 (North) : SEEY * 2 (East) : SEEX * 2 (South) : SEEX * 2 (West) ] (order from dat.dir())
+
+
+
     std::array<int, perimeter_size> perimeter_depth;
     for( int edge = 0; edge < 4; edge++ ) {
         int perimeter_depth_offset = ( SEEX * 2 ) * ( ( edge + 1 ) / 2 ) + ( SEEY * 2 ) * ( edge / 2 );
@@ -789,11 +789,11 @@ void mapgen_forest( mapgendata &dat )
         int *critical_point_depths = new int[interediary_crit_point_count + 2];
         critical_point_displacements[0] = 0;
         critical_point_displacements[interediary_crit_point_count + 1] =
-            edge_length; // first coordinate of next overmap location
+            edge_length;
         critical_point_depths[0] = border_depth[edge_corner_mappings[edge]];
         critical_point_depths[interediary_crit_point_count + 1] = border_depth[edge_corner_mappings[edge +
                 4]];
-        // Generate critical points in-order displacement-wise.
+
         for( int ci = 1; ci < interediary_crit_point_count + 1; ci++ ) {
             critical_point_displacements[ci] = clamp<int>( std::abs( static_cast<int>( std::round( normal_roll(
                                                    static_cast<double>(
@@ -801,7 +801,7 @@ void mapgen_forest( mapgendata &dat )
                                                edge_length - 2 );
             critical_point_depths[ci] = static_cast<int>( std::round( abs( normal_roll( average_depth,
                                         depth_deviation ) ) ) );
-            // Ensure order by swapping:
+
             if( critical_point_displacements[ci] < critical_point_displacements[ci - 1] ) {
                 int buffer = critical_point_displacements[ci];
                 critical_point_displacements[ci] = critical_point_displacements[ci - 1];
@@ -809,12 +809,12 @@ void mapgen_forest( mapgendata &dat )
             }
         }
 
-        // By only considering the left and right two points, transitioning the curve across map borders becomes unnoticable.
-        int ubidx = 1; // Upper bound index
+
+        int ubidx = 1;
         for( int step = 0; step < edge_length; step++ ) {
             while( step > critical_point_displacements[ubidx] ) {
                 if( ++ubidx > interediary_crit_point_count + 1 ) {
-                    // Should never happen, but good future proofing.
+
                     ubidx = interediary_crit_point_count + 1;
                     break;
                 }
@@ -829,40 +829,40 @@ void mapgen_forest( mapgendata &dat )
 
             if( perimeter_depth[perimeter_depth_offset + step] < 1 ) {
                 perimeter_depth[perimeter_depth_offset + step] =
-                    1;    // Clamp depth to within the overmap tile. Makes math pretty.
+                    1;
             }
         }
         delete[] critical_point_displacements;
         delete[] critical_point_depths;
     }
 
-    // Get the current biome definition for this terrain.
+
     const auto current_biome_def_it = settings_forest_comp.oter_to_biomes.find(
                                           dat.terrain_type()->get_type_id() );
 
-    // If there is no biome definition for this terrain, fill in with the region's default ground cover
-    // and bail--nothing more to be done. Should not continue with terrain feathering if there is
-    // nothing to feather into. Generally, this should never happen.
+
+
+
     if( current_biome_def_it == settings_forest_comp.oter_to_biomes.end() ) {
         dat.fill_groundcover();
         return;
     }
     forest_biome_mapgen self_biome = *current_biome_def_it->second;
 
-    /**
-    * Modifies border weights to conform to biome conditions along corners.
-    *
-    * Ensures that adjacent forest_mapgen() dependent terrains do not generate outcroppings into
-    * continuous biomes that they are mutually adjacent to, focusing on details provided for a
-    * corner of the map.
-    *
-    * @param ccw The forest biome counter-clockwise of the evaluated corner.
-    * @param corner The forest biome in the evaluated corner (i.e. NW, NE, SW, or SE).
-    * @param cw The forest biome clockwise of the evaluated corner.
-    * @param ccw_weight The relative impact of the counterclockwise biome on generation.
-    * @param cw_weight The relative impact of the clockwise biome on generation.
-    * @param self_weight The relative impact of the original biome on generation.
-    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const auto unify_continuous_border = [&self_biome]( const forest_biome_mapgen * ccw,
                                          const forest_biome_mapgen * corner, const forest_biome_mapgen * cw, float * ccw_weight,
                                          float * cw_weight,
@@ -878,19 +878,19 @@ void mapgen_forest( mapgendata &dat )
         }
     };
 
-    /**
-    * Prevents the generation of outcroppings from biomes across contiguous adjacencies.
-    *
-    * Ensures that adjacent forest_mapgen() dependent terrains do not generate outcroppings into
-    * continuous biomes that they are mutually adjacent to, checking weights in each corner.
-    *
-    * @param cardinal_four_weights The relative impacts of the cardinally adjacent biomes on generation.
-    * @param p the point in the terrain being weighted from the cardinally adjacent biomes.
-    */
+
+
+
+
+
+
+
+
+
     const auto unify_all_borders = [&unify_continuous_border,
                                     &adjacent_biomes]( std::array<float, 4> &cardinal_four_weights, float * self_weight,
     const point & p ) {
-        // Refer to dat.dir() convention.
+
         if( p.x < SEEX ) {
             if( p.y < SEEY ) {
                 unify_continuous_border( adjacent_biomes[3], adjacent_biomes[7], adjacent_biomes[0],
@@ -912,17 +912,17 @@ void mapgen_forest( mapgendata &dat )
         }
     };
 
-    /**
-    * Calculates a weighted proximity of a point to the perimeter in each cardinal direction.
-    *
-    * Format is that defined in dir(), i.e. clockwise starting from north.
-    *
-    * @param p The point to evaluate the weights of adjacent directions on.
-    * @param scaling_factor The scaling factor to apply to the weights.
-    * @param weights A 4 element array of floats to store the output in, dat.dir() order.
-    * @param root_depth_offset an offset to apply to the already-generated perimeter_depth
-    * @return The sum of all of the weights written to \p weights.
-    */
+
+
+
+
+
+
+
+
+
+
+
     const auto nesw_weights = [&perimeter_depth, &adjacent_biomes]( const point & p,
     float scaling_factor, std::array<float, 4> &weights, float root_depth_offset = 0. ) {
         float net_weight = 0.;
@@ -940,9 +940,9 @@ void mapgen_forest( mapgendata &dat )
                                              1 );
         for( int wi = 0; wi < 4; wi++ ) {
             if( adjacent_biomes[wi] == nullptr ) {
-                // Biome-less terrain does not feather on its side, but biome-owning terrain is presumed to.
-                // In order to account for this, the border of the map generation function must be determined
-                // to correspond either to the half-way point between biomes or the end-point of the transition.
+
+
+
                 weights[wi] = std::pow( static_cast<float>( perimeter_depths[wi] ) / ( point_depths[wi] + 1 ),
                                         biome_transition_abruptness ) * scaling_factor;
                 net_weight += weights[wi];
@@ -957,15 +957,15 @@ void mapgen_forest( mapgendata &dat )
         return net_weight;
     };
 
-    /**
-    * Determines the groundcover that should be placed at a furniture-less point in a forest.
-    *
-    * Similar to the get_feathered_feature lambda with a different weighting algorithm,
-    * which favors the biome of this terrain over that of adjacent ones by fixed margin.
-    * Only selects groundcover, rather than biome-appropriate furniture.
-    *
-    * @return The groundcover to be placed at the specified point in the forest.
-    */
+
+
+
+
+
+
+
+
+
     const auto get_feathered_groundcover = [&max_factor, &factor, &self_biome,
                  &adjacent_biomes, &nesw_weights, &unify_all_borders, &dat]( const point & p ) {
         std::array<float, 4> adj_weights;
@@ -996,7 +996,7 @@ void mapgen_forest( mapgendata &dat )
                     if( cover ) {
                         return *cover;
                     }
-                    // Adjacent biome has no groundcover, use the region default.
+
                     return *dat.region.default_groundcover.pick();
                 } else {
                     return *dat.region.default_groundcover.pick();
@@ -1004,16 +1004,16 @@ void mapgen_forest( mapgendata &dat )
         }
     };
 
-    /**
-    * Determines the feature that should be placed at a point in the forest.
-    *
-    * Determines the position of \p p relative to the calculated perimeter,
-    * and from this picks an item from a weighted feature pool in the involved
-    * biomes.
-    * In the case of corners,
-    *
-    * @param p the point to check to place a feature at.
-    */
+
+
+
+
+
+
+
+
+
+
     const auto get_feathered_feature = [&no_ter_furn, &max_factor, &factor, &self_biome,
                                                       &adjacent_biomes, &nesw_weights, &unify_all_borders,
                   &dat]( const point & p ) {
@@ -1022,10 +1022,10 @@ void mapgen_forest( mapgendata &dat )
         float self_weight = self_scalar;
         unify_all_borders( adj_weights, &self_weight, p );
 
-        // Pool together all of the biomes which the target point might constitute.
+
         weighted_float_list<const int>
-        direction_pool; // Style guidelines say use int, but it is necessary for this weighting algorithm.
-        // Two special cases: default and sparsity:
+        direction_pool;
+
         static constexpr int no_dir = -1;
         static constexpr int empty = -2;
         direction_pool.add( 0, adj_weights[0] );
@@ -1037,7 +1037,7 @@ void mapgen_forest( mapgendata &dat )
                             ( adj_weights[0] * dat.n_fac + adj_weights[1] * dat.e_fac + adj_weights[2] * dat.s_fac +
                               adj_weights[3] * dat.w_fac + self_weight * factor ) );
 
-        // Pick from the direction pool, and calculate + return the appropriate terrain:
+
         ter_furn_id feature;
         const int feather_selection = *direction_pool.pick();
         switch( feather_selection ) {
@@ -1059,37 +1059,37 @@ void mapgen_forest( mapgendata &dat )
         return feature;
     };
 
-    /**
-    * Attempt, randomly, to place a terrain dependent furniture.
-    *
-    * For example, f_cattails on t_water_sh.
-    * @param tid: The terrain to place a dependent feature on.
-    * @param p: The point to place the dependent feature, if one is selected.
-    */
+
+
+
+
+
+
+
     const auto set_terrain_dependent_furniture =
     [&self_biome, &m]( const ter_id & tid, const point_bub_ms & p ) {
         const auto terrain_dependent_furniture_it = self_biome.terrain_dependent_furniture.find(
                     tid );
         if( terrain_dependent_furniture_it == self_biome.terrain_dependent_furniture.end() ) {
-            // No terrain dependent furnitures for this terrain.
+
             return;
         }
 
         const forest_biome_terrain_dependent_furniture_new tdf = terrain_dependent_furniture_it->second;
         if( tdf.furniture.get_weight() <= 0 ) {
-            // We've got furnitures, but their weight is 0 or less.
+
             return;
         }
 
         if( one_in( tdf.chance ) ) {
-            // Pick a furniture and set it on the map right now.
+
             const furn_id *fid = tdf.furniture.pick();
             m->furn_set( p, *fid );
         }
     };
 
-    // For each location within this overmap terrain,
-    // Lay groundcover, place a feature, and place terrain dependent furniture.
+
+
     for( int x = 0; x < SEEX * 2; x++ ) {
         for( int y = 0; y < SEEY * 2; y++ ) {
             const point pos_raw = point( x, y );
@@ -1113,7 +1113,7 @@ void mapgen_forest( mapgendata &dat )
         }
     }
 
-    // Place items on this terrain as defined in the biome.
+
     for( int i = 0; i < self_biome.item_spawn_iterations; i++ ) {
         m->place_items( self_biome.item_group, self_biome.item_group_chance,
                         point_bub_ms::zero, point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), dat.zlevel(), true, dat.when() );
@@ -1124,27 +1124,27 @@ void mapgen_lake_shore( mapgendata &dat )
 {
     map *const m = &dat.m;
     const region_settings_lake &settings_lake = dat.region.get_settings_lake();
-    // Our lake shores may "extend" adjacent terrain, if the adjacent types are defined as being
-    // extendable in our regional settings. What this effectively means is that if the lake shore is
-    // adjacent to one of these, e.g. a forest, then rather than the lake shore simply having the
-    // region's default groundcover for the land parts of the terrain, instead we run the mapgen
-    // for this location as if it were the adjacent terrain, and then carve our water out of it as
-    // per usual. I think it looks a lot nicer, e.g. in the case of a forest, to have the trees and
-    // ground clutter of the forest abutting the water rather than simply some empty ground.
 
-    // To accomplish this extension, we simply count up the adjacent terrains that are in the
-    // defined extendable terrain setting, choose the most common one, and then run its mapgen.
 
-    // NOTE: Presently this treats ocean and lake shore as identical.  Some, but not all, of the
-    // ocean checks should eventually be refactored into mapgen_ocean_shore.
+
+
+
+
+
+
+
+
+
+
+
     bool did_extend_adjacent_terrain = false;
     if( !settings_lake.shore_extendable_overmap_terrain.empty() ) {
         std::map<oter_id, int> adjacent_type_count;
         for( oter_id &adjacent : dat.t_nesw ) {
-            // Define the terrain we'll look for a match on.
+
             oter_id match = adjacent;
 
-            // Check if this terrain has an alias to something we actually will extend, and if so, use it.
+
             for( const shore_extendable_overmap_terrain_alias &alias :
                  settings_lake.shore_extendable_overmap_terrain_aliases ) {
                 if( is_ot_match( alias.overmap_terrain, adjacent, alias.match_type ) ) {
@@ -1173,8 +1173,8 @@ void mapgen_lake_shore( mapgendata &dat )
             did_extend_adjacent_terrain = run_mapgen_func( most_common_adjacent->first.id().str(),
                                           forest_mapgen_dat );
 
-            // One fun side effect of running another mapgen here is that it may have placed items in locations
-            // that we're later going to turn into water. Let's just remove all items.
+
+
             if( did_extend_adjacent_terrain ) {
                 for( int x = 0; x < SEEX * 2; x++ ) {
                     for( int y = 0; y < SEEY * 2; y++ ) {
@@ -1185,8 +1185,8 @@ void mapgen_lake_shore( mapgendata &dat )
         }
     }
 
-    // If we didn't extend an adjacent terrain, then just fill this entire location with the default
-    // groundcover for the region.
+
+
     if( !did_extend_adjacent_terrain ) {
         dat.fill_groundcover();
     }
@@ -1194,8 +1194,8 @@ void mapgen_lake_shore( mapgendata &dat )
     const oter_id river_center = oter_river_center.id();
 
     auto is_lake = [&]( const oter_id & id ) {
-        // We want to consider river_center as a lake as well, so that the confluence of a
-        // river and a lake is a continuous water body.
+
+
         return id.obj().is_lake() || id == river_center;
     };
 
@@ -1216,67 +1216,67 @@ void mapgen_lake_shore( mapgendata &dat )
     const bool se_lake = is_lake( dat.seast() );
     const bool sw_lake = is_lake( dat.swest() );
 
-    // If we don't have any adjacent lakes, then we don't need to worry about a shoreline,
-    // and are done at this point.
+
+
     const bool no_adjacent_water = !n_lake && !e_lake && !s_lake && !w_lake && !nw_lake && !ne_lake &&
                                    !se_lake && !sw_lake;
     if( no_adjacent_water ) {
         return;
     }
 
-    // I'm pretty unhappy with this block of if statements that follows, but got frustrated/sidetracked
-    // in finding a more elegant solution. This is functional, but improvements that maintain the result
-    // are welcome. The basic gist is as follows:
-    //
-    // Given our current location and the 8 adjacent locations, we classify them all as lake, lake shore,
-    // river bank, or something else that we don't care about. We then create a polygon with four points,
-    // one in each corner of our location. Then, based on the permutations of possible adjacent location
-    // types, we manipulate the four points of our polygon to generate the rough outline of our shore. The
-    // area inside the polygon will retain our ground we generated, while the area outside will get turned
-    // into the shoreline with shallow and deep water.
-    //
-    // For example, if we have forests to the west, the lake to the east, and more shore north and south of
-    // us, like this...
-    //
-    //     | --- | --- | --- |
-    //     | F   | S   | L   |
-    //     | --- | --- | --- |
-    //     | F   | S   | L   |
-    //     | --- | --- | --- |
-    //     | F   | S   | L   |
-    //     | --- | --- | --- |
-    //
-    // ...then what we want to do with our polygon is push our eastern points to the west. If the north location
-    // were instead a continuation of the lake, with a commensurate shoreline like this...
-    //
-    //     | --- | --- | --- |
-    //     | S   | L   | L   |
-    //     | --- | --- | --- |
-    //     | S   | S   | L   |
-    //     | --- | --- | --- |
-    //     | F   | S   | L   |
-    //     | --- | --- | --- |
-    //
-    // ...then we still need to push our eastern points to the west, but we also need to push our northern
-    // points south, and since we don't want such a blocky shoreline at our corners, we also want to
-    // push the north-eastern point even further south-west.
-    //
-    // Things get even more complicated when we transition into a river bank--they have their own style of
-    // mapgen, and while things don't have to be seamless, I did want the lake shores to fairly smoothly
-    // transition into them, so if we have a river bank adjacent like this...
-    //
-    //     | --- | --- | --- |
-    //     | F   | R   | L   |
-    //     | --- | --- | --- |
-    //     | F   | S   | L   |
-    //     | --- | --- | --- |
-    //     | F   | S   | L   |
-    //     | --- | --- | --- |
-    //
-    // ...then we need to push our adjacent corners in even more for a good transition.
-    //
-    // At the end of all this, we'll have our basic four point polygon that we'll then inspect and use
-    // to create the line-segments that will form our shoreline, but more on in a bit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const bool n_shore = is_shore( dat.north() );
     const bool e_shore = is_shore( dat.east() );
@@ -1288,17 +1288,17 @@ void mapgen_lake_shore( mapgendata &dat )
     const bool s_river_bank = is_river_bank( dat.south() );
     const bool w_river_bank = is_river_bank( dat.west() );
 
-    // This is length we end up pushing things about by as a baseline.
+
     const int sector_length = SEEX * 2 / 3;
 
-    // Define the corners of the map. These won't change.
+
     static constexpr point_bub_ms nw_corner{};
     static constexpr point_bub_ms ne_corner( SEEX * 2 - 1, 0 );
     static constexpr point_bub_ms se_corner( SEEX * 2 - 1, SEEY * 2 - 1 );
     static constexpr point_bub_ms sw_corner( 0, SEEY * 2 - 1 );
 
-    // Define the four points that make up our polygon that we'll later pull line segments from for
-    // the actual shoreline.
+
+
     point_bub_ms nw = nw_corner;
     point_bub_ms ne = ne_corner;
     point_bub_ms se = se_corner;
@@ -1306,7 +1306,7 @@ void mapgen_lake_shore( mapgendata &dat )
 
     std::vector<std::vector<point_bub_ms>> line_segments;
 
-    // This section is about pushing the straight N, S, E, or W borders inward when adjacent to an actual lake.
+
     if( n_lake ) {
         nw.y() += sector_length;
         ne.y() += sector_length;
@@ -1327,7 +1327,7 @@ void mapgen_lake_shore( mapgendata &dat )
         se.x() -= sector_length;
     }
 
-    // This section is about pushing the corners inward when adjacent to a lake that curves into a river bank.
+
     if( n_river_bank ) {
         if( w_lake && nw_lake ) {
             nw.x() += sector_length;
@@ -1368,10 +1368,10 @@ void mapgen_lake_shore( mapgendata &dat )
         }
     }
 
-    // This section is about pushing the corners inward when we've got a lake in the corner that
-    // either has lake adjacent to it and us, or more shore adjacent to it and us. Note that in the
-    // case of having two shores adjacent, we end up adding a new line segment that isn't part of
-    // our original set--we end up cutting the corner off our polygonal box.
+
+
+
+
     if( nw_lake ) {
         if( n_lake && w_lake ) {
             nw.x() += sector_length / 2;
@@ -1476,11 +1476,11 @@ void mapgen_lake_shore( mapgendata &dat )
         }
     }
 
-    // Ok, all of the fiddling with the polygon corners is done.
-    // At this point we've got four points that make up four line segments that started out
-    // at the map boundaries, but have subsequently been perturbed by the adjacent terrains.
-    // Let's look at them and see which ones differ from their original state and should
-    // form our shoreline.
+
+
+
+
+
     if( nw.y() != nw_corner.y() || ne.y() != ne_corner.y() ) {
         line_segments.push_back( { nw, ne } );
     }
@@ -1499,9 +1499,9 @@ void mapgen_lake_shore( mapgendata &dat )
 
     static constexpr inclusive_rectangle<point_bub_ms> map_boundaries( nw_corner, se_corner );
 
-    // This will draw our shallow water coastline from the "from" point to the "to" point.
-    // It buffers the points a bit for a thicker line. It also clears any furniture that might
-    // be in the location as a result of our extending adjacent mapgen.
+
+
+
     const auto draw_shallow_water = [&]( const point_bub_ms & from, const point_bub_ms & to ) {
         std::vector<point_bub_ms> points = line_to( from, to );
         for( point_bub_ms &p : points ) {
@@ -1509,16 +1509,16 @@ void mapgen_lake_shore( mapgendata &dat )
                 if( !map_boundaries.contains( bp ) ) {
                     continue;
                 }
-                // Use t_null for now instead of t_water_sh, because sometimes our extended terrain
-                // has put down a t_water_sh, and we need to be able to flood-fill over that.
+
+
                 m->ter_set( bp, ter_str_id::NULL_ID() );
                 m->furn_set( bp, furn_str_id::NULL_ID() );
             }
         }
     };
 
-    // Given two points, return a point that is midway between the two points and then
-    // jittered by a random amount in proportion to the length of the line segment.
+
+
     const auto jittered_midpoint = [&]( const point_bub_ms & from, const point_bub_ms & to ) {
         const int jitter = rl_dist( from, to ) / 4;
         const point_bub_ms midpoint( ( from.x() + to.x() ) / 2 + rng( -jitter, jitter ),
@@ -1526,9 +1526,9 @@ void mapgen_lake_shore( mapgendata &dat )
         return midpoint;
     };
 
-    // For each of our valid shoreline line segments, generate a slightly more interesting
-    // set of line segments by splitting the line into four segments with jittered
-    // midpoints, and then draw shallow water for four each of those.
+
+
+
     for( auto &ls : line_segments ) {
         const point_bub_ms mp1 = jittered_midpoint( ls[0], ls[1] );
         const point_bub_ms mp2 = jittered_midpoint( ls[0], mp1 );
@@ -1540,9 +1540,9 @@ void mapgen_lake_shore( mapgendata &dat )
         draw_shallow_water( mp3, ls[1] );
     }
 
-    // Now that we've done our ground mapgen and laid down a contiguous shoreline of shallow water,
-    // we'll floodfill the sections adjacent to the lake with deep water. As before, we also clear
-    // out any furniture that we placed by the extended mapgen.
+
+
+
     std::unordered_set<point_bub_ms> visited;
 
     const auto should_fill = [&]( const point_bub_ms & p ) {
@@ -1561,8 +1561,8 @@ void mapgen_lake_shore( mapgendata &dat )
         }
     };
 
-    // We'll flood fill from the four corners, using the corner if any of the locations
-    // adjacent to it were a lake.
+
+
     if( n_lake || nw_lake || w_lake ) {
         fill_deep_water( nw_corner );
     }
@@ -1579,8 +1579,8 @@ void mapgen_lake_shore( mapgendata &dat )
         fill_deep_water( se_corner );
     }
 
-    // We previously placed our shallow water but actually did a t_null instead to make sure that we didn't
-    // pick up shallow water from our extended terrain. Now turn those nulls into t_water_sh.
+
+
     m->translate( ter_str_id::NULL_ID(), ter_t_water_sh );
 }
 
@@ -1589,17 +1589,17 @@ void mapgen_ocean_shore( mapgendata &dat )
     map *const m = &dat.m;
     const region_settings_lake &settings_lake = dat.region.get_settings_lake();
     const region_settings_ocean &settings_ocean = dat.region.get_settings_ocean();
-    // This is the same as lake shore but saltier.
-    // Read documetation above
+
+
     bool did_extend_adjacent_terrain = false;
     if( !settings_lake.shore_extendable_overmap_terrain.empty() ) {
         std::map<oter_id, int> adjacent_type_count;
         for( oter_id &adjacent : dat.t_nesw ) {
-            // Define the terrain we'll look for a match on.
+
             oter_id match = adjacent;
 
-            // Check if this terrain has an alias to something we actually will extend, and if so, use it.
-            // for now, these are the same as lake. They may need to be changed eventually.
+
+
             for( const shore_extendable_overmap_terrain_alias &alias :
                  settings_lake.shore_extendable_overmap_terrain_aliases ) {
                 if( is_ot_match( alias.overmap_terrain, adjacent, alias.match_type ) ) {
@@ -1628,8 +1628,8 @@ void mapgen_ocean_shore( mapgendata &dat )
             did_extend_adjacent_terrain = run_mapgen_func( most_common_adjacent->first.id().str(),
                                           forest_mapgen_dat );
 
-            // One fun side effect of running another mapgen here is that it may have placed items in locations
-            // that we're later going to turn into water. Let's just remove all items.
+
+
             if( did_extend_adjacent_terrain ) {
                 for( int x = 0; x < SEEX * 2; x++ ) {
                     for( int y = 0; y < SEEY * 2; y++ ) {
@@ -1640,8 +1640,8 @@ void mapgen_ocean_shore( mapgendata &dat )
         }
     }
 
-    // If we didn't extend an adjacent terrain, then just fill this entire location with the default
-    // groundcover for the region.
+
+
     if( !did_extend_adjacent_terrain ) {
         dat.fill_groundcover();
     }
@@ -1649,7 +1649,7 @@ void mapgen_ocean_shore( mapgendata &dat )
     const oter_id river_center = oter_river_center.id();
 
     auto is_ocean = [&]( const oter_id & id ) {
-        // We want to consider river_center as well.
+
         return id.obj().is_ocean() || id == river_center;
     };
 
@@ -1670,8 +1670,8 @@ void mapgen_ocean_shore( mapgendata &dat )
     const bool se_ocean = is_ocean( dat.seast() );
     const bool sw_ocean = is_ocean( dat.swest() );
 
-    // If we don't have any adjacent ocean, then we don't need to worry about a shoreline,
-    // and are done at this point.
+
+
     const bool no_adjacent_water = !n_ocean && !e_ocean && !s_ocean && !w_ocean && !nw_ocean &&
                                    !ne_ocean &&
                                    !se_ocean && !sw_ocean;
@@ -1679,7 +1679,7 @@ void mapgen_ocean_shore( mapgendata &dat )
         return;
     }
 
-    // See detail above in lake version
+
 
     const bool n_shore = is_shore( dat.north() );
     const bool e_shore = is_shore( dat.east() );
@@ -1691,17 +1691,17 @@ void mapgen_ocean_shore( mapgendata &dat )
     const bool s_river_bank = is_river_bank( dat.south() );
     const bool w_river_bank = is_river_bank( dat.west() );
 
-    // This is length we end up pushing things about by as a baseline.
+
     const int sector_length = SEEX - 1;
 
-    // Define the corners of the map. These won't change.
+
     static constexpr point_bub_ms nw_corner{};
     static constexpr point_bub_ms ne_corner( SEEX * 2 - 1, 0 );
     static constexpr point_bub_ms se_corner( SEEX * 2 - 1, SEEY * 2 - 1 );
     static constexpr point_bub_ms sw_corner( 0, SEEY * 2 - 1 );
 
-    // Define the four points that make up our polygon that we'll later pull line segments from for
-    // the actual shoreline.
+
+
     point_bub_ms nw = nw_corner;
     point_bub_ms ne = ne_corner;
     point_bub_ms se = se_corner;
@@ -1711,7 +1711,7 @@ void mapgen_ocean_shore( mapgendata &dat )
     int ns_direction_adjust = 0;
     int ew_direction_adjust = 0;
     int sand_margin = settings_ocean.sandy_beach_width / 2;
-    // This section is about pushing the straight N, S, E, or W borders inward when adjacent to an actual ocean.
+
     if( n_ocean ) {
         nw.y() += sector_length;
         ne.y() += sector_length;
@@ -1898,11 +1898,11 @@ void mapgen_ocean_shore( mapgendata &dat )
         }
     }
 
-    // Ok, all of the fiddling with the polygon corners is done.
-    // At this point we've got four points that make up four line segments that started out
-    // at the map boundaries, but have subsequently been perturbed by the adjacent terrains.
-    // Let's look at them and see which ones differ from their original state and should
-    // form our shoreline.
+
+
+
+
+
 
     if( nw.y() != nw_corner.y() || ne.y() != ne_corner.y() ) {
         ns_direction_adjust -= sand_margin * 2;
@@ -1926,9 +1926,9 @@ void mapgen_ocean_shore( mapgendata &dat )
 
     static constexpr inclusive_rectangle<point_bub_ms> map_boundaries( nw_corner, se_corner );
 
-    // This will draw our shallow water coastline from the "from" point to the "to" point.
-    // It buffers the points a bit for a thicker line. It also clears any furniture that might
-    // be in the location as a result of our extending adjacent mapgen.
+
+
+
     const auto draw_shallow_water = [&]( const point_bub_ms & from, const point_bub_ms & to ) {
         point_bub_ms from_mod = from;
         point_bub_ms to_mod = to;
@@ -1955,7 +1955,7 @@ void mapgen_ocean_shore( mapgendata &dat )
             }
         }
     };
-    // This will draw our sandy beach coastline from the "from" point to the "to" point.
+
     const auto draw_sand = [&]( const point_bub_ms & from, const point_bub_ms & to ) {
         std::vector<point_bub_ms> points = line_to( from, to );
         for( point_bub_ms &p : points ) {
@@ -1963,8 +1963,8 @@ void mapgen_ocean_shore( mapgendata &dat )
                 if( !map_boundaries.contains( bp ) ) {
                     continue;
                 }
-                // Use t_null for now instead of t_sand, because sometimes our extended terrain
-                // has put down a t_sand, and we need to be able to flood-fill over that.
+
+
                 m->ter_set( bp, ter_str_id::NULL_ID() );
                 m->furn_set( bp, furn_str_id::NULL_ID() );
             }
@@ -1979,8 +1979,8 @@ void mapgen_ocean_shore( mapgendata &dat )
         }
     };
 
-    // Given two points, return a point that is midway between the two points and then
-    // jittered by a random amount in proportion to the length of the line segment.
+
+
     const auto jittered_midpoint = [&]( const point_bub_ms & from, const point_bub_ms & to ) {
         const int jitter = rl_dist( from, to ) / 5;
         const point_bub_ms midpoint( ( from.x() + to.x() ) / 2 + rng( -jitter, jitter ),
@@ -1988,11 +1988,11 @@ void mapgen_ocean_shore( mapgendata &dat )
         return midpoint;
     };
 
-    // For each of our valid shoreline line segments, generate a slightly more interesting
-    // set of line segments by splitting the line into four segments with jittered
-    // midpoints.
-    // Draw water after the sand to make sure we don't get too much sand.  Everyone hates sand,
-    // it's coarse and - you know what, never mind.
+
+
+
+
+
     for( auto &ls : line_segments ) {
         const point_bub_ms mp1 = jittered_midpoint( ls[0], ls[1] );
         const point_bub_ms mp2 = jittered_midpoint( ls[0], mp1 );
@@ -2008,9 +2008,9 @@ void mapgen_ocean_shore( mapgendata &dat )
         draw_sand( mp3, ls[1] );
     }
 
-    // Now that we've done our ground mapgen and laid down a contiguous shoreline of shallow water,
-    // we'll floodfill the sections adjacent to the ocean with deep water. As before, we also clear
-    // out any furniture that we placed by the extended mapgen.
+
+
+
     std::unordered_set<point_bub_ms> visited;
 
     const auto should_fill = [&]( const point_bub_ms & p ) {
@@ -2030,8 +2030,8 @@ void mapgen_ocean_shore( mapgendata &dat )
         }
     };
 
-    // We'll flood fill from the four corners, using the corner if any of the locations
-    // adjacent to it were a ocean.
+
+
     if( n_ocean || nw_ocean || w_ocean ) {
         fill_deep_water( nw_corner );
     }
@@ -2048,8 +2048,8 @@ void mapgen_ocean_shore( mapgendata &dat )
         fill_deep_water( se_corner );
     }
 
-    // We previously placed our sand but actually did a t_null instead to make sure that we didn't
-    // pick up sand from our extended terrain. Now turn those nulls into t_sand.
+
+
     m->translate( ter_str_id::NULL_ID(), ter_t_sand );
 }
 
@@ -2057,7 +2057,7 @@ void mapgen_ravine_edge( mapgendata &dat )
 {
     map *const m = &dat.m;
     const region_settings_ravine &settings_ravine = dat.region.get_settings_ravine();
-    // A solid chunk of z layer appropriate wall or floor is first generated to carve the cliffside off from
+
     if( dat.zlevel() == 0 ) {
         dat.fill_groundcover();
     } else {
@@ -2078,8 +2078,8 @@ void mapgen_ravine_edge( mapgendata &dat )
     const auto is_ravine_edge = [&]( const oter_id & id ) {
         return id.obj().is_ravine_edge();
     };
-    // Since this terrain is directionless, we look at its immediate neighbors to determine whether a straight
-    // or curved ravine edge should be generated. And to then apply the correct rotation.
+
+
     const bool n_ravine  = is_ravine( dat.north() );
     const bool e_ravine  = is_ravine( dat.east() );
     const bool s_ravine  = is_ravine( dat.south() );
@@ -2102,7 +2102,7 @@ void mapgen_ravine_edge( mapgendata &dat )
     const bool interior_corner = !straight && !any_orthogonal_ravine();
     const bool exterior_corner = !straight && any_orthogonal_ravine();
 
-    //With that done, we generate the maps.
+
     if( straight ) {
         int rot = 0;
 
@@ -2118,7 +2118,7 @@ void mapgen_ravine_edge( mapgendata &dat )
 
         rot %= 4;
 
-        // Rotate the map 'backwards' to allow the new addition to be placed at its normal orientation.
+
         m->rotate( 4 - rot );
 
         for( int x = 0; x < SEEX * 2; x++ ) {
@@ -2127,7 +2127,7 @@ void mapgen_ravine_edge( mapgendata &dat )
                   dat.zlevel() );
         }
 
-        // Rotate the map back to its normal rotation, resulting in the new contents becoming rotated.
+
         m->rotate( rot );
 
     } else if( interior_corner ) {
@@ -2145,7 +2145,7 @@ void mapgen_ravine_edge( mapgendata &dat )
 
         rot %= 4;
 
-        // Rotate the map 'backwards' to allow the new addition to be placed at its normal orientation.
+
         m->rotate( 4 - rot );
 
         for( int x = 0; x < SEEX * 2; x++ ) {
@@ -2154,7 +2154,7 @@ void mapgen_ravine_edge( mapgendata &dat )
                   dat.zlevel() );
         }
 
-        // Rotate the map back to its normal rotation, resulting in the new contents becoming rotated.
+
         m->rotate( rot );
 
     } else if( exterior_corner ) {
@@ -2172,7 +2172,7 @@ void mapgen_ravine_edge( mapgendata &dat )
 
         rot %= 4;
 
-        // Rotate the map 'backwards' to allow the new addition to be placed at its normal orientation.
+
         m->rotate( 4 - rot );
 
         for( int x = 0; x < SEEX * 2; x++ ) {
@@ -2180,11 +2180,11 @@ void mapgen_ravine_edge( mapgendata &dat )
             line( m, ter_str_id::NULL_ID(), point_bub_ms( x, --ground_edge ), point_bub_ms( x, SEEY * 2 - 1 ),
                   dat.zlevel() );
         }
-        // Rotate the map back to its normal rotation, resulting in the new contents becoming rotated.
+
         m->rotate( rot );
     }
-    // The placed t_null terrains are converted into the regional groundcover in the ravine's bottom level,
-    // in the other levels they are converted into open air to generate the cliffside.
+
+
     if( dat.zlevel() == settings_ravine.ravine_depth ) {
         m->translate( ter_str_id::NULL_ID(), dat.groundcover() );
     } else {
@@ -2235,7 +2235,7 @@ void mremove_fields( map *m, const tripoint_bub_ms &p )
     m->clear_fields( p );
 }
 
-void resolve_regional_terrain_and_furniture( const mapgendata &dat, int z_offset /*= 0*/ )
+void resolve_regional_terrain_and_furniture( const mapgendata &dat, int z_offset )
 {
     if( dat.region.id.is_valid() ) {
         const region_settings_terrain_furniture &settings_terfurn =

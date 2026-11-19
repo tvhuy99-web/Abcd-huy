@@ -34,4 +34,4 @@ class dispersion_sources
         friend std::ostream &operator<<( std::ostream &stream, const dispersion_sources &sources );
 };
 
-#endif // CATA_SRC_DISPERSION_H
+#endif

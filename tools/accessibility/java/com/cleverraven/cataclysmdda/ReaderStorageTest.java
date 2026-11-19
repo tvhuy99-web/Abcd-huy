@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 
-/** Filesystem fault tests against production transaction/archive classes. */
+
 public final class ReaderStorageTest {
     private static int assertions;
     private static void check(boolean value, String message) {
@@ -26,7 +26,7 @@ public final class ReaderStorageTest {
                 "BACKUP_", new String[] {"save", "config"});
     }
 
-    /** Restart after each legal rename boundary, with either root absent initially. */
+
     private static void interruptedSwaps(Path base) throws Exception {
         String[] roots = {"save", "config"};
         for (int mask = 0; mask < 4; mask++) {

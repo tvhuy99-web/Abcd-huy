@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Same-filesystem directory replacement. A failed recovery retains its journal and originals. */
+
 final class ReaderFileTransaction {
     interface BeforeCommit { void run() throws IOException; }
 
@@ -37,7 +37,7 @@ final class ReaderFileTransaction {
         for (String root : roots) {
             if (new File(live, root).exists()) { originals.add(root); }
         }
-        // Persist intent before the first destructive rename. Failure is fatal.
+
         write("SWAPPING", roots, originals);
         try {
             if (!rollback.mkdir()) { throw new IOException("Cannot create rollback directory"); }
@@ -55,7 +55,7 @@ final class ReaderFileTransaction {
             }
             throw failure;
         }
-        // COMMITTED is durable before cleanup. Retry cleanup at the next launch if needed.
+
         cleanupCommitted();
     }
 
@@ -90,8 +90,8 @@ final class ReaderFileTransaction {
         if (!(prefix + "SWAPPING").equals(state)) {
             throw new IOException("Unknown transaction state; originals retained");
         }
-        // Read the pre-fix journal format conservatively. Do not delete a live
-        // root whose original existence was not recorded by that old format.
+
+
         if (roots == null || originals == null) {
             roots = new ArrayList<>(allowed);
             originals = new ArrayList<>(allowed);
@@ -108,11 +108,11 @@ final class ReaderFileTransaction {
             } else if (!originals.contains(root)) {
                 deleteChecked(target);
             }
-            // Missing parked original means it was never parked, or has
-            // already been restored by an earlier interrupted recovery.
+
+
         }
-        // Reached only after every restoration succeeded. Never erase the
-        // only good copy or clear the journal after a failed rename.
+
+
         deleteChecked(rollback);
         removeJournal();
     }

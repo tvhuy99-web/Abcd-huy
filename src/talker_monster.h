@@ -11,9 +11,9 @@
 #include "talker.h"
 #include "type_id.h"
 
-/*
- * Talker wrapper class for monster.
- */
+
+
+
 class talker_monster_const: public const_talker_cloner<talker_monster_const>
 {
     public:
@@ -32,7 +32,7 @@ class talker_monster_const: public const_talker_cloner<talker_monster_const>
             return me_mon_const;
         }
 
-        // identity and location
+
         std::string disp_name() const override;
         std::string get_name() const override;
 
@@ -47,7 +47,7 @@ class talker_monster_const: public const_talker_cloner<talker_monster_const>
 
         int perceived_pain_cur() const override;
 
-        // effects and values
+
         bool has_effect( const efftype_id &effect_id, const bodypart_id &bp ) const override;
         effect get_effect( const efftype_id &effect_id, const bodypart_id &bp ) const override;
 
@@ -98,7 +98,7 @@ class talker_monster: public talker_monster_const, public talker_cloner<talker_m
             return me_mon;
         }
 
-        // effects and values
+
         void add_effect( const efftype_id &new_effect, const time_duration &dur,
                          const std::string &bp, bool permanent, bool force, int intensity
                        ) override;
@@ -121,4 +121,4 @@ class talker_monster: public talker_monster_const, public talker_cloner<talker_m
     private:
         monster *me_mon{};
 };
-#endif // CATA_SRC_TALKER_MONSTER_H
+#endif

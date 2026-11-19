@@ -44,10 +44,10 @@ struct damage_type {
     bool material_required = false;
     bool was_loaded = false;
 
-    // Applies damage type on-hit effects
+
     void onhit_effects( Creature *source, Creature *target ) const;
 
-    // Applies damage type on-damage effects
+
     void ondamage_effects( Creature *source, Creature *target,
                            bodypart_str_id bp, double total_damage = 0.0,
                            double damage_taken = 0.0 ) const;
@@ -116,11 +116,11 @@ struct damage_unit {
     void deserialize( const JsonObject &jo );
 
     damage_type_id type;
-    //the amount of damage_type
+
     float amount = 0.0f;
-    //armor penetration
+
     float res_pen = 0.0f;
-    //armor penetration multiplier
+
     float res_mult = 1.0f;
     float damage_multiplier = 1.0f;
 
@@ -137,15 +137,15 @@ struct damage_unit {
 
     bool operator==( const damage_unit &other ) const;
     damage_unit &operator*=( double rhs );
-    //handles "relative" field; NOT the same as damage_instance::add(damage_unit)
+
     damage_unit &operator+=( const damage_unit &rhs );
 };
 
-// a single atomic unit of damage from an attack. Can include multiple types
-// of damage at different armor mitigation/penetration values
+
+
 struct damage_instance {
     bool was_loaded = false;
-    //called by JsonValue::read(), damage_unit is what is read from JSON
+
     void deserialize( const JsonValue &val );
 
     std::vector<damage_unit> damage_units;
@@ -160,17 +160,17 @@ struct damage_instance {
     void clear();
     bool empty() const;
 
-    // Applies damage type on-hit effects for all damage units
+
     void onhit_effects( Creature *source, Creature *target ) const;
 
-    // Applies damage type on-damage effects for all damage units
+
     void ondamage_effects( Creature *source, Creature *target, const damage_instance &premitigated,
                            bodypart_str_id bp ) const;
 
-    // calculates damage taking barrel length into consideration for the amount
+
     damage_instance di_considering_length( units::length barrel_length ) const;
 
-    // returns true if any of damage units contain barrel damage
+
     bool has_damage_by_barrel() const;
 
     std::vector<damage_unit>::iterator begin();
@@ -179,22 +179,22 @@ struct damage_instance {
     std::vector<damage_unit>::const_iterator end() const;
 
     bool operator==( const damage_instance &other ) const;
-    //loads an object mapping damage_instance JSON fields to proportional floats
+
     bool handle_proportional( const JsonValue &jval );
-    //handles "relative" field; NOT the same as add(damage_unit)
+
     damage_instance &operator+=( const damage_instance &rhs );
 
-    /**
-     * Adds damage to the instance.
-     * If the damage type already exists in the instance, the old and new instance are normalized.
-     * The normalization means that the effective damage can actually decrease (depending on target's armor).
-     */
-    /*@{*/
+
+
+
+
+
+
     void add_damage( const damage_type_id &dt, float amt, float arpen = 0.0f, float arpen_mult = 1.0f,
                      float dmg_mult = 1.0f, float unc_arpen_mult = 1.0f, float unc_dmg_mult = 1.0f );
     void add( const damage_instance &added_di );
     void add( const damage_unit &added_du );
-    /*@}*/
+
 };
 
 class damage_over_time_data
@@ -215,7 +215,7 @@ class damage_over_time_data
 
 struct dealt_damage_instance {
     std::map<damage_type_id, int> dealt_dams;
-    // todo: make a map or vector
+
     bodypart_id bp_hit;
     std::string wp_hit;
 
@@ -231,7 +231,7 @@ struct resistances {
 
     resistances() = default;
 
-    // If to_self is true, we want armor's own resistance, not one it provides to wearer
+
     explicit resistances( const item &armor, bool to_self = false, int roll = 0,
                           const bodypart_id &bp = bodypart_id() );
     explicit resistances( const item &armor, bool to_self, int roll, const sub_bodypart_id &bp );
@@ -257,12 +257,12 @@ resistances extend_resistances_instance( resistances ret, const JsonObject &jo )
 resistances load_resistances_instance( const JsonObject &jo,
                                        const std::set<std::string> &ignored_keys = {} );
 
-// Returns damage or resistance data
-// Handles some shorthands
+
+
 std::unordered_map<damage_type_id, float> load_damage_map( const JsonObject &jo,
         const std::set<std::string> &ignored_keys = {} );
 void finalize_damage_map( std::unordered_map<damage_type_id, float> &damage_map,
                           bool force_derive = false,
                           float default_value = 0.0f );
 
-#endif // CATA_SRC_DAMAGE_H
+#endif

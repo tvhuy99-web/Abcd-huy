@@ -53,7 +53,7 @@ static const skill_id skill_melee( "melee" );
 
 static float brute_probability( Creature &attacker, Creature &target, const size_t iters )
 {
-    // Note: not using deal_melee_attack because it trains dodge, which causes problems here
+
     size_t hits = 0;
     for( size_t i = 0; i < iters; i++ ) {
         const int spread = attacker.hit_roll() - target.dodge_roll();
@@ -89,7 +89,7 @@ static std::string full_attack_details( const Character &dude )
 
 static std::string percent_string( const float f )
 {
-    // Using stringstream for prettier precision printing
+
     std::stringstream ss;
     ss << 100.0f * f << "%";
     return ss.str();
@@ -334,7 +334,7 @@ TEST_CASE( "Melee_skill_training_caps", "[melee], [melee_training_cap], [skill]"
         dude.melee_attack_abstract( zed, false, matec_id( "" ) );
         CHECK( level.knowledgeLevel() == 4 );
         CHECK( level.knowledgeExperience( true ) > 0 );
-        // Training stops if we get above the cap
+
         dude.set_skill_level( skill_melee, 7 );
         int prev_xp = level.knowledgeExperience( true );
         dude.melee_attack_abstract( zed, false, matec_id( "" ) );
@@ -427,7 +427,7 @@ static void check_damage_from_test_fire( const std::vector<itype_id> &armor_item
         for( const itype_id &itm : armor_items ) {
             REQUIRE( dude2.wear_item( item( itm ), false ).has_value() );
         }
-        dude2.set_movement_mode( move_mode_prone ); // no dodging allowed :)
+        dude2.set_movement_mode( move_mode_prone );
         REQUIRE( dude2.pos_bub() == dude.pos_bub() + tripoint::east );
         REQUIRE( dude2.get_armor_type( damage_test_fire, checked_bp ) == expected_resist );
         REQUIRE( dude2.is_immune_damage( damage_test_fire ) == is_immune );

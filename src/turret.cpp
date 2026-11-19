@@ -120,8 +120,8 @@ const itype *turret_data::ammo_data() const
         return nullptr;
     }
     if( part->base.uses_firing_requirements() ) {
-        // Same prep-on-temp-copy pattern as range() so callers always see the
-        // post-prep ammo identity, not the empty pre-fire pocket state.
+
+
         item gun_copy( part->base );
         const gun_mode_id mode = gun_copy.gun_get_mode_id();
         vehicle::prepare_multimag_pockets( *veh, get_map(), gun_copy, mode, ammo_current() );
@@ -157,10 +157,10 @@ std::set<itype_id> turret_data::ammo_options() const
     }
 
     if( part->base.uses_firing_requirements() ) {
-        // Battery pockets are not user-selectable and never enumerated.
+
         const item &gun = part->base;
-        // TODO(multimag): base itype firing_requirements only; gunmod-owned
-        // modes (mode_firing_requirements) are not resolved for turrets.
+
+
         const std::vector<pocket_consumption_entry> *entries =
             gun.type->firing_requirements.for_mode( gun.gun_get_mode_id() );
         if( entries == nullptr ) {
@@ -236,9 +236,9 @@ std::set<ammo_effect_str_id> turret_data::ammo_effects() const
         return std::set<ammo_effect_str_id>();
     }
     if( part->base.uses_firing_requirements() ) {
-        // Auto-fire reads ammo_effects() to size AoE before firing. Vehicle-
-        // bound pockets are empty until prep loads them, so prep on a temp
-        // copy and read effects from the resulting ammo_data.
+
+
+
         item gun_copy( part->base );
         const gun_mode_id mode = gun_copy.gun_get_mode_id();
         vehicle::prepare_multimag_pockets( *veh, get_map(), gun_copy, mode, ammo_current() );
@@ -261,9 +261,9 @@ int turret_data::range() const
         return 0;
     }
     if( part->base.uses_firing_requirements() ) {
-        // Vehicle-bound pockets are empty pre-fire, so reading range off
-        // part->base.ammo_data() would miss the ammo bonus entirely. Prep a
-        // temp copy so range reflects what the firing path will actually load.
+
+
+
         item gun_copy( part->base );
         const gun_mode_id mode = gun_copy.gun_get_mode_id();
         vehicle::prepare_multimag_pockets( *veh, get_map(), gun_copy, mode, ammo_current() );
@@ -302,7 +302,7 @@ bool turret_data::can_reload() const
         return false;
     }
     if( !part->base.magazine_integral() ) {
-        // always allow changing of magazines
+
         return true;
     }
     if( part->base.ammo_remaining( ) == 0 ) {
@@ -317,9 +317,9 @@ bool turret_data::can_unload() const
         return false;
     }
     if( part->base.uses_firing_requirements() ) {
-        // Multimag aggregate: any loaded mag in any well, or any loose ammo
-        // in any direct MAGAZINE pocket. magazine_current() returns only the
-        // first well's mag and would miss the second well.
+
+
+
         return !part->base.magazines_current().empty() || part->base.ammo_remaining() > 0;
     }
     if( uses_vehicle_tanks_or_batteries() ) {
@@ -339,8 +339,8 @@ std::vector<multimag_display_pocket> turret_data::multimag_display_state() const
         return out;
     }
     const gun_mode_id mode = gun.gun_get_mode_id();
-    // TODO(multimag): base itype firing_requirements only; gunmod-owned modes
-    // (mode_firing_requirements) are not resolved for turrets.
+
+
     const std::vector<pocket_consumption_entry> *entries =
         gun.type->firing_requirements.for_mode( mode );
     if( entries == nullptr ) {
@@ -386,9 +386,9 @@ turret_data::status turret_data::query() const
     const item &gun = part->base;
 
     if( gun.uses_firing_requirements() ) {
-        // Temp-copy the gun, prep vehicle-backed pockets, then ask the same
-        // mode-aware feasibility the firing path will use. Vehicle is never
-        // mutated by prepare_multimag_pockets (only the temp gun is loaded).
+
+
+
         item gun_copy( gun );
         const gun_mode_id mode = gun_copy.gun_get_mode_id();
         vehicle::prepare_multimag_pockets( *veh, here, gun_copy, mode, ammo_current() );
@@ -418,10 +418,10 @@ void turret_data::prepare_fire( Character &you )
 {
     map &here = get_map();
 
-    // prevent turrets from shooting their own vehicles
+
     you.add_effect( effect_on_roof, 1_turns );
 
-    // turrets are subject only to recoil_vehicle()
+
     cached_recoil = you.recoil;
     you.recoil = 0;
 
@@ -433,7 +433,7 @@ void turret_data::prepare_fire( Character &you )
         return;
     }
 
-    // set fuel tank fluid as ammo, if appropriate
+
     if( uses_vehicle_tanks_or_batteries() ) {
         gun_mode mode = base()->gun_current_mode();
         int qty  = mode->ammo_required();
@@ -444,14 +444,14 @@ void turret_data::prepare_fire( Character &you )
 
 void turret_data::post_fire( map *here, Character &you, int shots )
 {
-    // remove any temporary recoil adjustments
+
     you.remove_effect( effect_on_roof );
     you.recoil = cached_recoil;
 
     gun_mode mode = base()->gun_current_mode();
 
-    // Clears item's MAGAZINE_WELL pockets, this gets rid of e.g. flamethrower's
-    // "pressurized tanks", or chemoelectric cartridges etc that are left over after firing.
+
+
     static const auto clear_mag_wells = []( item & it ) {
         std::vector<item_pocket *> magazine_wells = it.get_contents().get_pockets(
         []( const item_pocket & pocket ) {
@@ -464,7 +464,7 @@ void turret_data::post_fire( map *here, Character &you, int shots )
 
     item &gun = part->base;
     if( gun.uses_firing_requirements() ) {
-        // Bill bound pockets, clear only those so player-loaded pockets keep residue.
+
         vehicle::drain_back_multimag( *veh, *here, gun, mm_bindings_ );
         for( const auto &b : mm_bindings_ ) {
             if( item_pocket *pkt = gun.pocket_by_id( b.first ) ) {
@@ -475,7 +475,7 @@ void turret_data::post_fire( map *here, Character &you, int shots )
         return;
     }
 
-    // handle draining of vehicle tanks or batteries, if applicable
+
     if( uses_vehicle_tanks_or_batteries() ) {
         veh->drain( here, ammo_current(), mode->ammo_required() * shots );
         mode->ammo_unset();
@@ -505,7 +505,7 @@ void vehicle::turrets_aim_and_fire_single()
     std::vector<std::string> option_names;
     std::vector<vehicle_part *> options;
 
-    // Find all turrets that are ready to fire
+
     for( vehicle_part *&t : turrets() ) {
         turret_data data = turret_query( *t );
         if( data.query() == turret_data::status::ready ) {
@@ -514,7 +514,7 @@ void vehicle::turrets_aim_and_fire_single()
         }
     }
 
-    // Select one
+
     if( options.empty() ) {
         add_msg( m_warning, _( "None of the turrets are ready to fire." ) );
         return;
@@ -582,7 +582,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
 {
     map &here = get_map();
 
-    // Clear existing targets
+
     for( vehicle_part *t : turrets ) {
         if( !turret_query( *t ) ) {
             debugmsg( "Expected a valid vehicle turret" );
@@ -603,14 +603,14 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
         return false;
     }
 
-    // Get target
+
     target_handler::trajectory trajectory = target_handler::mode_turrets( player_character, *this,
                                             turrets );
 
     bool got_target = !trajectory.empty();
     if( got_target ) {
         tripoint_bub_ms target = trajectory.back();
-        // Set target for any turret in range
+
         const tripoint_abs_ms abs_target = here.get_abs( target );
 
         for( vehicle_part *t : turrets ) {
@@ -619,7 +619,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
             }
         }
 
-        ///\EFFECT_INT speeds up aiming of vehicle turrets
+
         player_character.set_moves( std::min( 0,
                                               player_character.get_moves() - 100 + ( 5 * player_character.get_int() ) ) );
     }
@@ -690,7 +690,7 @@ void vehicle::turrets_set_targeting()
             }
         }
 
-        // clear the turret's current targets to prevent unwanted auto-firing
+
         tripoint_bub_ms pos = locations[ sel ];
         turrets[ sel ]->reset_target( here.get_abs( pos ) );
     }
@@ -738,19 +738,19 @@ npc &vehicle_part::get_targeting_npc( vehicle &veh )
 {
     map &here = get_map();
 
-    // Make a fake NPC to represent the targeting system
+
     if( !cpu.brain ) {
         cpu.brain = std::make_unique<npc>();
         npc &brain = *cpu.brain;
         brain.set_body();
         brain.set_fake( true );
-        // turrets are subject only to recoil_vehicle()
+
         brain.recoil = 0;
-        // These might all be affected by vehicle part damage, weather effects, etc.
+
         brain.set_str_base( 16 );
         brain.set_dex_base( 8 );
         brain.set_per_base( 12 );
-        // Assume vehicle turrets are friendly to the player.
+
         brain.set_attitude( NPCATT_FOLLOW );
         brain.set_fac( veh.get_owner() );
         brain.set_skill_level( skill_gun, 4 );
@@ -774,7 +774,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
         return shots;
     }
 
-    // An automatic turret will not fire if the gun is too hot.
+
     double overheat_modifier = 0;
     float overheat_multiplier = 1.0f;
     for( const item *mod : gun.base()->gunmods() ) {
@@ -785,43 +785,43 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     double threshold = std::max( ( gun.base()->type->gun->overheat_threshold * overheat_multiplier ) +
                                  overheat_modifier, 5.0 );
 
-    // Heat is too hot, do not fire. The warning chime will have just started sounding.
+
     if( heat > threshold * 0.6 ) {
         return shots;
     }
 
-    // The position of the vehicle part.
+
     tripoint_bub_ms pos = bub_part_pos( here, pt );
 
-    // Create the targeting computer's npc
+
     npc &cpu = pt.get_targeting_npc( *this );
 
     int area = max_aoe_size( gun.ammo_effects() );
     if( area > 0 ) {
-        // Pad a bit for less friendly fire
+
         area += area == 1 ? 1 : 2;
     }
 
     Character &player_character = get_player_character();
     const bool u_see = player_character.sees( here, pos );
     const bool u_hear = !player_character.is_deaf();
-    // The current target of the turret.
+
     auto &target = pt.target;
     if( target.first == target.second ) {
-        // Manual target not set, find one automatically.
-        // BEWARE: Calling turret_data.fire on tripoint min coordinates starts a crash
-        //      triggered at `trajectory.insert( trajectory.begin(), source )` at ranged.cpp:236
+
+
+
         pt.reset_target( here.get_abs( pos ) );
         int boo_hoo;
 
-        // TODO: calculate chance to hit and cap range based upon this
+
         int max_range = 20;
         int range = std::min( gun.range(), max_range );
         Creature *auto_target = cpu.auto_find_hostile_target( range, boo_hoo, area );
         if( auto_target == nullptr ) {
             if( boo_hoo ) {
                 cpu.get_name() = string_format( pgettext( "vehicle turret", "The %s" ), pt.name() );
-                // check if the player can see or hear then print chooses a message accordingly
+
                 if( u_see && u_hear ) {
                     add_msg( m_warning, n_gettext( "%s points in your direction and emits an IFF warning beep.",
                                                    "%s points in your direction and emits %d annoyed sounding beeps.",
@@ -841,7 +841,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
         target.second = auto_target->pos_abs();
 
     } else {
-        // Target is already set, make sure we didn't move after aiming (it's a bug if we did).
+
         if( pos != here.get_bub( target.first ) ) {
             target.second = target.first;
             debugmsg( "%s moved after aiming but before it could fire.", cpu.get_name() );
@@ -849,7 +849,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
         }
     }
 
-    // Get the turret's target and reset it
+
     tripoint_bub_ms targ( here.get_bub( target.second ) );
     pt.reset_target( here.get_abs( pos ) );
 

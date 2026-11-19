@@ -25,10 +25,9 @@ GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 class AccessibleVehicleContracts(unittest.TestCase):
     def test_onboard_map_swipes_only_walk_after_release(self):
         gate = WORLD.split("result.swipe_movement_allowed =", 1)[1].split(
-            "// Eight-direction combat gestures", 1
+            "constexpr std::array<point, 8> combat_steps", 1
         )[0]
-        # Passengers may still walk to controls; native control is the
-        # authoritative guard preventing walking gestures from steering.
+
         for forbidden in ("!viewer.in_vehicle", "!viewer.controlling_vehicle",
                           "!viewer.is_driving()"):
             self.assertNotIn(forbidden, gate)
@@ -82,11 +81,9 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('requestVehicleAction("reader:vehicle:heading:right")',
                       CTRL)
         self.assertIn("a11y_steering_nudge = 3;", ENGINE)
-        # The autonomous-travel guard above has its own swipe cases that
-        # only disable input, so scope the gesture lookups to the manual
-        # vehicle-mode switch.
+
         vehicle = CTRL.split(
-            "// The native game still handles acceleration, direction and", 1
+            "if (vehicleMode && directWorldGesturesEnabled()) {", 1
         )[1]
         for gesture, node in (
             ("swipe_up", "forward"), ("swipe_down", "reverse"),
@@ -103,7 +100,11 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("pldrive( point_rel_ms( 0, -1 ) );", ENGINE)
         self.assertIn("pldrive( point_rel_ms( 0, 1 ) );", ENGINE)
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
-        self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
+        pattern = (
+            r'requestVehicleAction\("reader:vehicle:horn"\);\s*return true;\s*'
+            r'default:\s*(?://[^\n]*\n\s*)*return true;'
+        )
+        self.assertRegex(CTRL, pattern)
 
     def test_vehicle_onboarding_uses_touch_instructions(self):
         source = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
@@ -146,7 +147,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('_( "Driving: Automatic. Switch to manual" )', menu)
         self.assertIn("a11y_manual_drive = !a11y_manual_drive;", menu)
         self.assertIn(".keep_menu_open()", menu)
-        # The accessibility toggle is after the ordinary vehicle controls.
+
         self.assertGreater(menu.index("a11y_manual_drive = !a11y_manual_drive;"),
                            menu.index("FOLD_VEHICLE"))
         self.assertIn("a11y_continuous_drive = false;", menu)
@@ -168,7 +169,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_manual_mode_warns_without_applying_sensor_brakes(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving ) {", VEH)
-        sensor = VEH.split("// Manual mode reports hazards", 1)[1].split(
+        sensor = VEH.split("if( a11y_manual_drive && !is_autodriving ) {", 1)[1].split(
             "} else if( is_autodriving ) {", 1
         )[0]
         self.assertIn('_( "Obstacle ahead: %1$s, %2$d tiles." )', sensor)
@@ -226,8 +227,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("!vehicleReleasePending && !vehicleDriverReady()", CTRL)
 
     def test_throttle_swipes_advance_native_physics(self):
-        # Native pldrive() does not spend moves for straight cruise changes.
-        # A forward swipe must still advance a turn after selecting a target.
+
         drive = ENGINE.split("void game::move_or_drive(", 1)[1].split(
             "    } else {\n        const int pre_walk_moves", 1
         )[0]
@@ -255,7 +255,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         for compass in ("north", "northeast", "east", "southeast",
                         "south", "southwest", "west", "northwest"):
             self.assertIn('_( "' + compass + '" )', WORLD)
-        heading = WORLD.split("// A steering gesture must speak", 1)[1].split(
+        heading = WORLD.split("const auto spoken_heading = [](", 1)[1].split(
             'document( "reader:vehicle:heading"', 1
         )[0]
         self.assertIn("spoken_heading( veh.face.dir() )", heading)
@@ -275,19 +275,16 @@ class AccessibleVehicleContracts(unittest.TestCase):
             SURF.index("listener.scanDirection("))
         self.assertIn("scanDirection(horizontal, vertical);", CTRL)
         self.assertIn('"reader:scan:vehicle:" + relative', CTRL)
-        # The octant math moved into announce_vehicle_relative_scan in the
-        # world file; the handler dispatches every side through one generic
-        # branch (prefix check + announce_vehicle_relative_scan).
+
         self.assertIn("octants[( facing + offset ) % 8]", WORLD)
         self.assertIn("a11y::announce_vehicle_relative_scan(", ENGINE)
         self.assertIn('intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0', ENGINE)
         self.assertIn("std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1", WORLD)
         for side in ("front", "back", "left", "right"):
             self.assertIn('reader:scan:vehicle:' + side, WORLD)
-        # Same autonomous-guard shadowing as the swipe test above: scope
-        # the gesture lookups to the manual vehicle-mode switch.
+
         vehicle = CTRL.split(
-            "// The native game still handles acceleration, direction and", 1
+            "if (vehicleMode && directWorldGesturesEnabled()) {", 1
         )[1]
         for gesture, action in (
             ("swipe_down_left", 'speakVehicleDocument("reader:vehicle:speed")'),
@@ -343,16 +340,13 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("horizon, reverse )", WORLD)
         self.assertIn("veh.bub_part_pos( here, i ).xy()", WORLD)
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
-        # c8fe150 unified obstacle classification into
-        # vehicle_autodrive::classify_tile; the reader scan still uses the
-        # same rules and keeps unrestricted_creatures, so it still ignores
-        # player visibility for live creatures.
+
         self.assertIn(
             "vehicle_autodrive::classify_tile( veh, here, tile, driver, mobility )",
             WORLD)
         self.assertIn("veh.has_sufficient_rotorlift( here ), true", WORLD)
         self.assertIn("mobility.unrestricted_creatures ||", AUTODRIVE)
-        # The other-vehicle check lives in the shared classifier now.
+
         self.assertIn("&other->vehicle() == &driven_veh", AUTODRIVE)
         self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, reverse )", VEH)
         self.assertIn('document( "reader:vehicle:road"', WORLD)
@@ -440,14 +434,12 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("collision_vector.clear_advance();", path)
         self.assertIn("collision_vector.advance( 1 );", path)
         self.assertNotIn("collision_vector.advance( i );", path)
-        # c8fe150 moved the smashable check into the shared classifier;
-        # smashable terrain is still reported as an obstacle (brush warns).
+
         self.assertIn(
             "vehicle_autodrive::classify_tile( veh, here, tile, driver, mobility )",
             WORLD)
         self.assertIn("terrain_type.is_smashable()", AUTODRIVE)
-        # Furniture and NOCOLLIDE checks live in the shared classifier
-        # now, under the local furniture/terrain_type names.
+
         self.assertIn("furniture.obj().movecost != 0", AUTODRIVE)
         self.assertIn("terrain_type.has_flag( ter_furn_flag::TFLAG_NOCOLLIDE )",
                       AUTODRIVE)
@@ -465,8 +457,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertNotIn('|| "reader:vehicle:forward".equals(id)', requests)
         self.assertNotIn('|| "reader:vehicle:reverse".equals(id)', requests)
         self.assertIn("requestLiveWorldCommand(id);", requests)
-        # 7fd8b04 rewrote the area-change branch in the positive form;
-        # driving still uses the low-priority A11Y_AREA channel.
+
         self.assertIn("if( traveler.in_vehicle && traveler.controlling_vehicle ) {",
                       WORLD)
         self.assertIn('a11y::android::announce( "A11Y_AREA:" + spoken, 1 );',

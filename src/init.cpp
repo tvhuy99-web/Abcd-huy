@@ -177,9 +177,9 @@ shared_ptr_fast<std::istream> DynamicDataLoader::get_cached_stream( const std::s
     cata_assert( stream_cache &&
                  "Stream cache is only available during finalization" );
     shared_ptr_fast<std::istringstream> cached = stream_cache->cache.get( path, nullptr );
-    // Create a new stream if the file is not opened yet, or if some code is still
-    // using the previous stream (in such case, `cached` and `stream_cache` have
-    // two references to the stream, hence the test for > 2).
+
+
+
     if( !cached ) {
         cached = make_shared_fast<std::istringstream>( read_entire_file( path ) );
     } else if( cached.use_count() > 2 ) {
@@ -215,16 +215,16 @@ void DynamicDataLoader::load_deferred( deferred_json &data )
                 inp_mngr.pump_events();
             }
             data.clear();
-            return; // made no progress on this cycle so abort
+            return;
         }
     }
 }
 
 static void load_ignored_type( const JsonObject &jo )
 {
-    // This does nothing!
-    // This function is used for types that are to be ignored
-    // (for example for testing or for unimplemented types)
+
+
+
     jo.allow_omitted_members();
 }
 
@@ -268,12 +268,12 @@ void DynamicDataLoader::add( const std::string &type,
 
 void DynamicDataLoader::initialize()
 {
-    // Initialize loading data that must be in place before any loading functions are called
+
     init_mapdata();
 
-    // all of the applicable types that can be loaded, along with their loading functions
-    // Add to this as needed with new StaticFunctionAccessors or new ClassFunctionAccessors for new applicable types
-    // Static Function Access
+
+
+
     add( "WORLD_OPTION", &load_world_option );
     add( "EXTERNAL_OPTION", &load_external_option );
     add( "option_slider", &option_slider::load_option_sliders );
@@ -337,8 +337,8 @@ void DynamicDataLoader::initialize()
     add( "ascii_art", &ascii_art::load_ascii_art );
     add( "end_screen", &end_screen::load_end_screen );
 
-    // json/colors.json would be listed here, but it's loaded before the others (see init_colors())
-    // Non Static Function Access
+
+
     add( "snippet", []( const JsonObject & jo, const std::string & src ) {
         SNIPPET.load_snippet( jo, src );
     } );
@@ -463,9 +463,9 @@ void DynamicDataLoader::initialize()
         mutation_branch::load_trait_migration( jo );
     } );
 
-    // loaded earlier.
+
     add( "colordef", &load_ignored_type );
-    // mod information, ignored, handled by the mod manager
+
     add( "MOD_INFO", &load_ignored_type );
 
     add( "faction", &faction_template::load );
@@ -521,7 +521,7 @@ void DynamicDataLoader::initialize()
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
-    // Dummy function
+
     add( "mod_tileset", load_ignored_type );
 #endif
 }
@@ -530,11 +530,11 @@ void DynamicDataLoader::load_data_from_path( const cata_path &path, const std::s
 {
     cata_assert( !finalized &&
                  "Can't load additional data after finalization.  Must be unloaded first." );
-    // We assume that each folder is consistent in itself,
-    // and all the previously loaded folders.
-    // E.g. the core might provide a vpart "frame-x"
-    // the first loaded mode might provide a vehicle that uses that frame
-    // But not the other way round.
+
+
+
+
+
 
     std::vector<cata_path> files;
     if( dir_exist( path.get_unrelative_path() ) ) {
@@ -544,10 +544,10 @@ void DynamicDataLoader::load_data_from_path( const cata_path &path, const std::s
         files.emplace_back( path );
     }
 
-    // iterate over each file
+
     for( const cata_path &file : files ) {
         try {
-            // parse it
+
 #if defined(__ANDROID__)
             const auto json_started = std::chrono::steady_clock::now();
 #endif
@@ -575,27 +575,27 @@ void DynamicDataLoader::load_mod_data_from_path( const cata_path &path, const st
 {
     cata_assert( !finalized &&
                  "Can't load additional data after finalization.  Must be unloaded first." );
-    // We assume that each folder is consistent in itself,
-    // and all the previously loaded folders.
-    // E.g. the core might provide a vpart "frame-x"
-    // the first loaded mode might provide a vehicle that uses that frame
-    // But not the other way round.
+
+
+
+
+
 
     std::vector<cata_path> files;
-    // if give path is a directory
+
     if( dir_exist( path.get_unrelative_path() ) ) {
         const std::vector<cata_path> dir_files = get_files_from_path_with_path_exclusion( ".json",
                 "mod_interactions", path, true, true );
         files.insert( files.end(), dir_files.begin(), dir_files.end() );
-        // if given path is an individual file
+
     } else if( file_exist( path.get_unrelative_path() ) ) {
         files.emplace_back( path );
     }
 
-    // iterate over each file
+
     for( const cata_path &file : files ) {
         try {
-            // parse it
+
 #if defined(__ANDROID__)
             const auto json_started = std::chrono::steady_clock::now();
 #endif
@@ -630,7 +630,7 @@ void DynamicDataLoader::load_mod_interaction_files_from_path( const cata_path &p
 
     if( dir_exist( path.get_unrelative_path() ) ) {
 
-        // obtain folders within mod_interactions to see if they match loaded mod ids
+
         const std::vector<cata_path> interaction_folders = get_directories( path, false );
 
         for( const cata_path &f : interaction_folders ) {
@@ -646,10 +646,10 @@ void DynamicDataLoader::load_mod_interaction_files_from_path( const cata_path &p
             }
         }
     }
-    // iterate over each file
+
     for( const std::pair<const mod_id, cata_path> &file : files ) {
         try {
-            // parse it
+
 #if defined(__ANDROID__)
             const auto json_started = std::chrono::steady_clock::now();
 #endif
@@ -677,17 +677,17 @@ void DynamicDataLoader::load_all_from_json( const JsonValue &jsin, const std::st
         const cata_path &base_path, const cata_path &full_path )
 {
     if( jsin.test_object() ) {
-        // find type and dispatch single object
+
         JsonObject jo = jsin.get_object();
         load_object( jo, src, base_path, full_path );
     } else if( jsin.test_array() ) {
         JsonArray ja = jsin.get_array();
-        // find type and dispatch each object until array close
+
         for( JsonObject jo : ja ) {
             load_object( jo, src, base_path, full_path );
         }
     } else {
-        // not an object or an array?
+
         jsin.throw_error( "expected object or array" );
     }
     inp_mngr.pump_events();
@@ -846,13 +846,13 @@ void DynamicDataLoader::unload_data()
     zone_type::reset();
 }
 
-// void DynamicDataLoader::finalize_loaded_data()
-// {
-//     // Create a dummy that will not display anything
-//     // TODO: Make it print to stdout?
-//     background_pane bg;
-//     finalize_loaded_data( );
-// }
+
+
+
+
+
+
+
 
 void DynamicDataLoader::finalize_loaded_data()
 {
@@ -1004,7 +1004,7 @@ void DynamicDataLoader::finalize_loaded_data()
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - started ).count();
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_GROUP phase=finalize name=" << e.first <<
-                                  " ms=" << ms;
+                                   " ms=" << ms;
 #endif
     }
 
@@ -1125,7 +1125,7 @@ void DynamicDataLoader::check_consistency()
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - started ).count();
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_GROUP phase=verify name=" << e.first <<
-                                  " ms=" << ms;
+                                   " ms=" << ms;
 #endif
     }
 }

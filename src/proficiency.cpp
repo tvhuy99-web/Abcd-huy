@@ -23,7 +23,7 @@ namespace
 {
 generic_factory<proficiency> proficiency_factory( "proficiency" );
 generic_factory<proficiency_category> proficiency_category_factory( "proficiency category" );
-} // namespace
+}
 
 template<>
 const proficiency &proficiency_id::obj() const
@@ -55,20 +55,26 @@ template<>
 std::string enum_to_string<proficiency_bonus_type>( const proficiency_bonus_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case proficiency_bonus_type::strength: return "strength";
-        case proficiency_bonus_type::dexterity: return "dexterity";
-        case proficiency_bonus_type::intelligence: return "intelligence";
-        case proficiency_bonus_type::perception: return "perception";
-        case proficiency_bonus_type::stamina: return "stamina";
-        case proficiency_bonus_type::last: break;
-        // *INDENT-ON*
+
+        case proficiency_bonus_type::strength:
+            return "strength";
+        case proficiency_bonus_type::dexterity:
+            return "dexterity";
+        case proficiency_bonus_type::intelligence:
+            return "intelligence";
+        case proficiency_bonus_type::perception:
+            return "perception";
+        case proficiency_bonus_type::stamina:
+            return "stamina";
+        case proficiency_bonus_type::last:
+            break;
+
     }
 
     debugmsg( "Invalid proficiency bonus type" );
     return "";
 }
-} // namespace io
+}
 
 void proficiency::load_proficiencies( const JsonObject &jo, const std::string &src )
 {
@@ -125,7 +131,7 @@ void proficiency::load( const JsonObject &jo, std::string_view )
 
     optional( jo, was_loaded, "bonuses", _bonuses );
 
-    // TODO: Remove at some point
+
     if( jo.has_float( "default_fail_multiplier" ) ) {
         debugmsg( "Proficiency %s uses 'default_fail_multiplier' instead of 'default_skill_penalty'!",
                   id.c_str() );
@@ -257,7 +263,7 @@ learning_proficiency &proficiency_set::fetch_learning( const proficiency_id &tar
         }
     }
 
-    // This should _never_ happen
+
     debugmsg( "Uh-oh!  Requested proficiency that character does not know"
               " - expect crash or undefined behavior" );
     return learning[0];
@@ -271,8 +277,8 @@ void proficiency_set::clear()
 
 std::vector<display_proficiency> proficiency_set::display() const
 {
-    // The proficiencies are sorted by whether or not you know them
-    // and then alphabetically
+
+
     std::vector<std::pair<std::string, proficiency_id>> sorted_known;
     std::vector<std::pair<std::string, proficiency_id>> sorted_learning;
 
@@ -288,7 +294,7 @@ std::vector<display_proficiency> proficiency_set::display() const
     std::sort( sorted_known.begin(), sorted_known.end(), localized_compare );
     std::sort( sorted_learning.begin(), sorted_learning.end(), localized_compare );
 
-    // Our display_proficiencies, sorted in the order above
+
     std::vector<display_proficiency> ret;
 
     for( const std::pair<std::string, proficiency_id> &cur : sorted_known ) {
@@ -395,7 +401,7 @@ void proficiency_set::learn( const proficiency_id &learned, bool recursive )
     known.insert( learned );
 }
 
-// All the proficiencies in subjects that require one of the proficiencies in requirements
+
 static std::set<proficiency_id> proficiencies_requiring(
     const std::set<proficiency_id> &requirements,
     const cata::flat_set<proficiency_id> &subjects )
@@ -414,7 +420,7 @@ static std::set<proficiency_id> proficiencies_requiring(
 
 void proficiency_set::remove( const proficiency_id &lost )
 {
-    // Removes from proficiencies you are learning
+
     for( std::vector<learning_proficiency>::iterator it = learning.begin(); it != learning.end(); ) {
         if( it->id == lost ) {
             it = learning.erase( it );
@@ -423,16 +429,16 @@ void proficiency_set::remove( const proficiency_id &lost )
         }
     }
 
-    // No unintended side effects
+
     if( !known.count( lost ) ) {
         return;
     }
-    // Loop over all the proficiencies requiring lost, to remove them too
-    // Then the ones requiring it, etc.
+
+
     std::set<proficiency_id> to_remove;
     to_remove.insert( lost );
     size_t cached_size = 0;
-    // While we have new proficiencies we need to check for anything requiring them
+
     while( to_remove.size() != cached_size ) {
         cached_size = to_remove.size();
         std::set<proficiency_id> additional = proficiencies_requiring( to_remove, known );
@@ -446,7 +452,7 @@ void proficiency_set::remove( const proficiency_id &lost )
 
 void proficiency_set::direct_learn( const proficiency_id &learned )
 {
-    // Player might be learning proficiency
+
     for( std::vector<learning_proficiency>::iterator it = learning.begin(); it != learning.end(); ) {
         if( it->id == learned ) {
             it = learning.erase( it );

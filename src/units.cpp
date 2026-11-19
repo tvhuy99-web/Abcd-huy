@@ -72,7 +72,7 @@ void specific_energy::deserialize( const JsonValue &jv )
     *this = units::from_joule_per_gram( v.value() );
 }
 
-// both of these are gross, but they kind of need to be.
+
 template<>
 void temperature::serialize( JsonOut &jsout ) const
 {
@@ -83,7 +83,7 @@ template<>
 void temperature::deserialize( const JsonValue &jv )
 {
     std::string str = jv.get_string();
-    // TODO: legacy format, remove after 0.J
+
     if( isdigit( str.back() ) ) {
         std::optional<double> v = svtod( str );
         if( !v.has_value() ) {
@@ -166,7 +166,7 @@ void ememory::deserialize( const JsonValue &jv )
 
 std::string display( const units::ememory &v )
 {
-    //TODO: generic metric units
+
     int64_t ebytes = v.value();
     int i;
     int ipart;
@@ -193,12 +193,12 @@ std::string display( const units::energy &v )
     using value_type = units::energy::value_type;
     const value_type kj = units::to_kilojoule( v );
     const value_type j = units::to_joule( v );
-    // at least 1 kJ and there is no fraction
+
     if( kj >= 1 && static_cast<double>( j ) / kj == 1000 ) {
         return std::to_string( kj ) + ' ' + pgettext( "energy unit: kilojoule", "kJ" );
     }
     const value_type mj = units::to_millijoule( v );
-    // at least 1 J and there is no fraction
+
     if( j >= 1 && static_cast<double>( mj ) / j  == 1000 ) {
         return std::to_string( j ) + ' ' + pgettext( "energy unit: joule", "J" );
     }
@@ -209,12 +209,12 @@ std::string display( const units::power v )
 {
     const int kw = units::to_kilowatt( v );
     const int w = units::to_watt( v );
-    // at least 1 kW and there is no fraction
+
     if( kw >= 1 && static_cast<float>( w ) / kw == 1000 ) {
         return std::to_string( kw ) + ' ' + pgettext( "energy unit: kilowatt", "kW" );
     }
     const int mw = units::to_milliwatt( v );
-    // at least 1 W and there is no fraction
+
     if( w >= 1 && static_cast<float>( mw ) / w == 1000 ) {
         return std::to_string( w ) + ' ' + pgettext( "energy unit: watt", "W" );
     }
@@ -273,4 +273,4 @@ units::temperature &operator+=( units::temperature &T, const units::temperature_
     return T;
 }
 
-} // namespace units
+}

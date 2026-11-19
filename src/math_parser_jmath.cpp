@@ -18,16 +18,16 @@ generic_factory<jmath_func> &get_all_jmath_func()
     static generic_factory<jmath_func> jmath_func_factory( "jmath_function" );
     return jmath_func_factory;
 }
-} // namespace
+}
 
-/** @relates string_id */
+
 template <>
 jmath_func const &string_id<jmath_func>::obj() const
 {
     return get_all_jmath_func().obj( *this );
 }
 
-/** @relates string_id */
+
 template <>
 bool string_id<jmath_func>::is_valid() const
 {
@@ -49,7 +49,7 @@ void jmath_func::load_func( const JsonObject &jo, std::string const &src )
     get_all_jmath_func().load( jo, src );
 }
 
-void jmath_func::load( JsonObject const &jo, std::string_view /*src*/ )
+void jmath_func::load( JsonObject const &jo, std::string_view )
 {
     optional( jo, was_loaded, "num_args", num_params );
     optional( jo, was_loaded, "return", _str );

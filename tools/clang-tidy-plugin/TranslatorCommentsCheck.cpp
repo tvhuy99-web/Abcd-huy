@@ -27,7 +27,7 @@ namespace clang
 {
 class CXXConstructExpr;
 class MacroDefinition;
-}  // namespace clang
+}
 
 using namespace clang::ast_matchers;
 
@@ -51,7 +51,7 @@ AST_MATCHER_P( StringLiteral, isMarkedString, tidy::cata::TranslatorCommentsChec
     return Check->MarkedStrings.find( Loc ) != Check->MarkedStrings.end();
     static_cast<void>( Builder );
 }
-} // namespace ast_matchers
+}
 namespace tidy::cata
 {
 
@@ -59,14 +59,14 @@ class TranslatorCommentsCheck::TranslatorCommentsHandler : public CommentHandler
 {
     public:
         explicit TranslatorCommentsHandler( TranslatorCommentsCheck &Check ) : Check( Check ),
-            // xgettext will treat all comments containing the marker as
+
             // translator comments, but we only match those starting with
-            // the marker to allow using the marker inside normal comments
+
             Match( "^/[/*]~.*$" ) {}
 
         bool HandleComment( Preprocessor &PP, SourceRange Range ) override {
             if( Check.MatchingStarted ) {
-                // according to the standard, all comments are processed before analyzing the syntax
+
                 Check.diag( Range.getBegin(), "AST Matching started before the end of comment preprocessing",
                             DiagnosticIDs::Error );
             }
@@ -141,7 +141,7 @@ class TranslatorCommentsCheck::TranslationMacroCallback : public PPCallbacks
                            SourceRange Range,
                            const MacroArgs *Args ) override {
             if( Check.MatchingStarted ) {
-                // according to the standard, all macros are expanded before analyzing the syntax
+
                 Check.diag( Range.getBegin(), "AST Matching started before the end of macro expansion",
                             DiagnosticIDs::Error );
             }
@@ -168,7 +168,7 @@ class TranslatorCommentsCheck::TranslationMacroCallback : public PPCallbacks
                             DiagnosticIDs::Error );
             }
 
-            // First ensure that translation markers have only string literal arguments
+
             for( unsigned int i = 0; i < Args->getNumMacroArguments(); i++ ) {
                 const Token *Tok = Args->getUnexpArgument( i );
                 if( Tok->is( tok::eof ) ) {
@@ -317,21 +317,21 @@ void TranslatorCommentsCheck::check( const MatchFinder::MatchResult &Result )
 
     auto it = Handler->TranslatorComments.lower_bound( { File, BegLine, BegCol } );
     // Strictly speaking, a translator comment preceding a raw string with only
-    // blank lines in between will also be extracted, but we report it as an
-    // error here for simplicity.
+
+
     while( it != Handler->TranslatorComments.begin() && std::prev( it )->first.File == File &&
            std::prev( it )->first.EndLine + 1 >= BegLine ) {
         it = std::prev( it );
-        // TODO: for the following code,
-        //
-        // /*<marker> foo*/ to_translation( "bar" );
-        // _( "baz" );
-        //
-        // The current logic will mark the comment when matching _() in addition
-        // to to_translation(), while xgettext will only match the comment with
-        // to_translation(). However the logic currently does not concern the
-        // content of the extracted string, so this doens't affect the results
-        // for now.
+
+
+
+
+
+
+
+
+
+
         it->second.Checked = true;
         BegLine = it->second.BegLine;
     }
@@ -348,5 +348,5 @@ void TranslatorCommentsCheck::onEndOfTranslationUnit()
     ClangTidyCheck::onEndOfTranslationUnit();
 }
 
-} // namespace tidy::cata
-} // namespace clang
+}
+}

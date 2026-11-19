@@ -81,7 +81,7 @@ bool Character::has_martialart( const matype_id &m ) const
 
 void Character::handle_skill_warning( const skill_id &id, bool force_warning )
 {
-    //remind the player intermittently that no skill gain takes place
+
     if( is_avatar() && ( force_warning || one_in( 5 ) ) ) {
         SkillLevel &level = get_skill_level_object( id );
 
@@ -225,10 +225,10 @@ void Character::mod_knowledge_level( const skill_id &ident, const int delta )
 
 int Character::read_speed() const
 {
-    // Stat window shows stat effects on based on current stat
+
     const float intel = 2.0f + get_int() / 8.0f;
-    // 4 int = 72 seconds, 8 int = 60 seconds, 12 int = 51 seconds, 16 int = 45 seconds, 20 int = 40 seconds
-    /** @EFFECT_INT affects reading speed by an decreasing amount the higher intelligence goes, intially about 9% per point at 4 int to lower than 4% at 20+ int */
+
+
     time_duration ret = 180_seconds / intel;
 
     ret = enchantment_cache->modify_value( enchant_vals::mod::READING_SPEED_MULTIPLIER, ret );
@@ -262,17 +262,17 @@ void Character::do_skill_rust()
             ( ( has_flag( json_flag_PRED2 ) && calendar::once_every( 8_hours ) ) ||
               ( has_flag( json_flag_PRED3 ) && calendar::once_every( 4_hours ) ) ||
               ( has_flag( json_flag_PRED4 ) && calendar::once_every( 3_hours ) ) ) ) {
-            // Their brain is optimized to remember this
+
             if( one_in( 13 ) ) {
-                // They've already passed the roll to avoid rust at
-                // this point, but print a message about it now and
-                // then.
-                //
-                // 13 combat skills.
-                // This means PRED2/PRED3/PRED4 think of hunting on
-                // average every 8/4/3 hours, enough for immersion
-                // without becoming an annoyance.
-                //
+
+
+
+
+
+
+
+
+
                 add_msg_if_player( _( "Your heart races as you recall your most recent hunt." ) );
                 mod_stim( 1 );
             }
@@ -325,16 +325,16 @@ void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
-        // TODO: known_traps should map to a trap_str_id
+
         known_traps[p] = t.id.str();
     }
 }
 
 int Character::persuade_skill() const
 {
-    /** @EFFECT_INT slightly increases talking skill */
-    /** @EFFECT_PER slightly increases talking skill */
-    /** @EFFECT_SPEECH increases talking skill */
+
+
+
     float ret = get_int() + get_per() + get_skill_level( skill_speech ) * 3;
     ret = enchantment_cache->modify_value( enchant_vals::mod::SOCIAL_PERSUADE, ret );
     return round( ret );
@@ -342,9 +342,9 @@ int Character::persuade_skill() const
 
 int Character::lie_skill() const
 {
-    /** @EFFECT_INT slightly increases talking skill */
-    /** @EFFECT_PER slightly increases talking skill */
-    /** @EFFECT_SPEECH increases talking skill */
+
+
+
     float ret = get_int() + get_per() + get_skill_level( skill_speech ) * 3;
     ret = enchantment_cache->modify_value( enchant_vals::mod::SOCIAL_LIE, ret );
     return round( ret );
@@ -355,13 +355,13 @@ book_mastery Character::get_book_mastery( const item &book ) const
     if( !book.is_book() || !has_identified( book.typeId() ) ) {
         return book_mastery::CANT_DETERMINE;
     }
-    // TODO: add illiterate check?
+
 
     const cata::value_ptr<islot_book> &type = book.type->book;
     const skill_id &skill = type->skill;
 
     if( !skill ) {
-        // book gives no skill
+
         return book_mastery::MASTERED;
     }
 
@@ -391,7 +391,7 @@ int Character::book_fun_for( const item &book, const Character &p ) const
         return 0;
     }
 
-    // If you don't have a problem with eating humans, To Serve Man becomes rewarding
+
     if( ( p.has_trait( trait_CANNIBAL ) || p.has_flag( json_flag_PSYCHOPATH ) ||
           p.has_trait( trait_SAPIOVORE ) ) &&
         book.typeId() == itype_cookbook_human ) {
@@ -482,14 +482,14 @@ const Character *Character::get_book_reader( const item &book,
     const skill_id &book_skill = type->skill;
     const int book_skill_requirement = type->req;
 
-    // Check for conditions that immediately disqualify the player from reading:
+
     read_condition_result condition = check_read_condition( book );
     if( condition & read_condition_result::DRIVING ) {
         reasons.emplace_back( _( "It's a bad idea to read while driving!" ) );
         return nullptr;
     }
     if( condition & read_condition_result::MORALE_LOW ) {
-        // Low morale still permits skimming
+
         reasons.emplace_back( is_avatar() ?
                               _( "What's the point of studying?  (Your morale is too low!)" )  :
                               string_format( _( "What's the point of studying?  (%s's morale is too low!)" ), disp_name() ) );
@@ -503,7 +503,7 @@ const Character *Character::get_book_reader( const item &book,
         return nullptr;
     }
 
-    // Check for conditions that disqualify us only if no other Characters can read to us
+
     if( condition & read_condition_result::ILLITERATE ) {
         reasons.emplace_back( is_avatar() ? _( "You're illiterate!" ) : string_format(
                                   _( "%s is illiterate!" ), disp_name() ) );
@@ -512,7 +512,7 @@ const Character *Character::get_book_reader( const item &book,
                               string_format( _( "%s's eyes won't focus without reading glasses." ), disp_name() ) );
     } else if( condition & read_condition_result::TOO_DARK &&
                !has_flag( json_flag_READ_IN_DARKNESS ) && !book.has_flag( flag_CAN_USE_IN_DARK ) ) {
-        // Too dark to read only applies if the player can read to himself
+
         reasons.emplace_back( _( "It's too dark to read!" ) );
         return nullptr;
     } else {
@@ -520,12 +520,12 @@ const Character *Character::get_book_reader( const item &book,
     }
 
     if( ! is_avatar() ) {
-        // NPCs are too proud to ask for help, perhaps someday they will not be
+
         return nullptr;
     }
 
-    //Check for other Characters to read for you, negates Illiterate and Far Sighted
-    //The fastest-reading Character is chosen
+
+
     if( is_deaf() ) {
         reasons.emplace_back( _( "Maybe someone could read that to you, but you're deaf!" ) );
         return nullptr;
@@ -535,7 +535,7 @@ const Character *Character::get_book_reader( const item &book,
     std::vector<Character *> candidates = get_crafting_helpers();
 
     for( const Character *elem : candidates ) {
-        // Check for disqualifying factors:
+
         condition = elem->check_read_condition( book );
         if( condition & read_condition_result::ILLITERATE ) {
             reasons.push_back( string_format( _( "%s is illiterate!" ),
@@ -555,7 +555,7 @@ const Character *Character::get_book_reader( const item &book,
             reasons.push_back( string_format( _( "%s could read that to you, but they can't see you." ),
                                               elem->disp_name() ) );
         } else if( condition & read_condition_result::MORALE_LOW ) {
-            // Low morale still permits skimming
+
             reasons.push_back( string_format( _( "%s morale is too low!" ), elem->disp_name( true ) ) );
         } else if( condition & read_condition_result::BLIND ) {
             reasons.push_back( string_format( _( "%s is blind." ), elem->disp_name() ) );
@@ -567,7 +567,7 @@ const Character *Character::get_book_reader( const item &book,
             }
         }
     }
-    //end for all candidates
+
     return reader;
 }
 
@@ -576,8 +576,8 @@ time_duration Character::time_to_read( const item &book, const Character &reader
 {
     const auto &type = book.type->book;
     const skill_id &skill = type->skill;
-    // The reader's reading speed has an effect only if they're trying to understand the book as they read it
-    // Reading speed is assumed to be how well you learn from books (as opposed to hands-on experience)
+
+
     const bool try_understand = reader.fun_to_read( book ) ||
                                 reader.get_knowledge_level( skill ) < type->level;
     int reading_speed = try_understand ? std::max( reader.read_speed(), read_speed() ) : read_speed();
@@ -593,7 +593,7 @@ time_duration Character::time_to_read( const item &book, const Character &reader
         retval += type->time * ( time_duration::from_seconds( type->intel - effective_int ) / 1_minutes );
     }
     if( !has_identified( book.typeId() ) ) {
-        //skimming
+
         retval /= 10;
     }
     return retval;

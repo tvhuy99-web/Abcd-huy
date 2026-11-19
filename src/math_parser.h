@@ -18,9 +18,9 @@ class math_exp
         ~math_exp();
         math_exp();
         math_exp( math_exp const &other );
-        math_exp( math_exp &&/* other */ ) noexcept;
+        math_exp( math_exp && ) noexcept;
         math_exp &operator=( math_exp const &other );
-        math_exp &operator=( math_exp &&/* other */ ) noexcept;
+        math_exp &operator=( math_exp && ) noexcept;
         explicit math_exp( math_exp_impl impl_ );
 
         bool parse( std::string_view str, bool handle_errors = true );
@@ -33,4 +33,4 @@ class math_exp
         std::unique_ptr<math_exp_impl> impl;
 };
 
-#endif // CATA_SRC_MATH_PARSER_H
+#endif

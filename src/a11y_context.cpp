@@ -11,7 +11,7 @@ namespace a11y
 namespace
 {
 std::atomic<std::uint64_t> session_sequence{ 1 };
-} // namespace
+}
 
 context_stack::context_stack() :
     session( session_sequence.fetch_add( 1, std::memory_order_relaxed ) )
@@ -71,4 +71,4 @@ bool context_stack::accepts( const context_token &token ) const
            token.frame == frames.back().id && token.generation == generation;
 }
 
-} // namespace a11y
+}

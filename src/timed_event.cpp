@@ -131,14 +131,14 @@ void timed_event::actualize()
                 pgettext( "memorial_male", "Drew the attention of more dark wyrms!" ),
                 pgettext( "memorial_female", "Drew the attention of more dark wyrms!" ) );
 
-            // 50% chance to spawn a dark wyrm near every orifice on the level.
+
             for( const tripoint_bub_ms &p : here.points_on_zlevel() ) {
                 if( here.ter( p ) == ter_id( "t_orifice" ) ) {
                     g->place_critter_around( mon_dark_wyrm, p, 1 );
                 }
             }
 
-            // You could drop the flag, you know.
+
             if( player_character.has_amount( itype_petrified_eye, 1 ) ) {
                 sounds::sound( pos, MAX_VIEW_DISTANCE, sounds::sound_t::alert,
                                _( "a tortured scream!" ),
@@ -178,7 +178,7 @@ void timed_event::actualize()
                             }
                         }
                     } else {
-                        // Vertical fault
+
                         monp.y() = rng( fault_point->y(), fault_point->y() + 2 * SEEY - 8 );
                         for( int n = -1; n <= 1; n++ ) {
                             if( here.ter( point_bub_ms( fault_point->x() + n, monp.y() ) ) == ter_t_rock_floor ) {
@@ -256,10 +256,10 @@ void timed_event::actualize()
                 }
             }
             if( !flooded ) {
-                // We finished flooding the entire chamber!
+
                 return;
             }
-            // Check if we should print a message
+
             if( flood_buf[pos.x()][pos.y()] != here.ter(
                     pos ) ) {
                 if( flood_buf[pos.x()][pos.y()] == ter_t_water_sh ) {
@@ -268,7 +268,7 @@ void timed_event::actualize()
                         pgettext( "memorial_male", "Water level reached knees." ),
                         pgettext( "memorial_female", "Water level reached knees." ) );
                 } else {
-                    // Must be deep water!
+
                     add_msg( m_warning, _( "Water fills nearly to the ceiling!" ) );
                     get_memorial().add(
                         pgettext( "memorial_male", "Water level reached the ceiling." ),
@@ -276,7 +276,7 @@ void timed_event::actualize()
                     avatar_action::swim( here, player_character, pos );
                 }
             }
-            // flood_buf is filled with correct tiles; now copy them back to here
+
             for( const tripoint_bub_ms &p : here.points_on_zlevel() ) {
                 here.ter_set( p, flood_buf[p.x()][p.y()] );
             }
@@ -341,7 +341,7 @@ void timed_event::actualize()
         }
 
         default:
-            // Nothing happens for other events
+
             break;
     }
 }
@@ -391,7 +391,7 @@ void timed_event::per_turn()
             break;
 
         default:
-            // Nothing happens for other events
+
             break;
     }
 }

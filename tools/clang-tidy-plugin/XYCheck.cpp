@@ -65,7 +65,7 @@ static void CheckField( XYCheck &Check, const MatchFinder::MatchResult &Result )
     }
     TemplateSpecializationKind tsk = Record->getTemplateSpecializationKind();
     if( tsk != TSK_Undeclared ) {
-        // Avoid duplicate warnings for specializations
+
         return;
     }
     if( ZVar ) {
@@ -93,7 +93,7 @@ static void CheckParam( XYCheck &Check, const MatchFinder::MatchResult &Result )
     if( !XParam || !Function ) {
         return;
     }
-    // Don't mess with the methods of point and tripoint themselves
+
     if( isPointMethod( Function ) ) {
         return;
     }
@@ -120,7 +120,7 @@ static void CheckParam( XYCheck &Check, const MatchFinder::MatchResult &Result )
 
     TemplateSpecializationKind tsk = Function->getTemplateSpecializationKind();
     if( tsk != TSK_Undeclared ) {
-        // Avoid duplicate warnings for specializations
+
         return;
     }
 
@@ -148,4 +148,4 @@ void XYCheck::check( const MatchFinder::MatchResult &Result )
     CheckParam( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

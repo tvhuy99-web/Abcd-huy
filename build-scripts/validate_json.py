@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# Validate that all JSON files are syntactically correct;
-# does NOT check indentation styles.
 
 import glob
 import json

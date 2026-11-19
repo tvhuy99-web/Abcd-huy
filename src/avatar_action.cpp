@@ -197,14 +197,14 @@ static bool check_water_affect_items( avatar &you )
 
 namespace
 {
-// RAII fallback for avatar_action::move (R08). Explicit outcome records
-// made at the engine branches inside move() always win: if the outcome
-// sequence advanced during the call, the destructor records nothing.
-// Otherwise the only fact the fallback may state is the position delta --
-// a changed position means the avatar moved, and an unchanged position
-// means the result is undetermined. "blocked" is never inferred from an
-// unchanged position; only the invalid-move branch records it, with the
-// blocker classified from what the engine itself can name there.
+
+
+
+
+
+
+
+
 class move_outcome_guard
 {
     public:
@@ -228,7 +228,7 @@ class move_outcome_guard
         tripoint_abs_ms start_pos_;
         std::uint64_t start_sequence_ = 0;
 };
-} // namespace
+}
 
 bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 {
@@ -245,7 +245,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         return false;
     }
 
-    // If any leg broken without crutches and not already on the ground topple over
+
     if( ( !you.enough_working_legs() && !you.is_prone() &&
           !( you.get_wielded_item() && you.get_wielded_item()->has_flag( flag_CRUTCHES ) ) ) ) {
         you.set_movement_mode( move_mode_prone );
@@ -268,7 +268,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     }
 
     if( dest_loc == you.pos_bub() ) {
-        // Well that sure was easy
+
         return true;
     }
     bool via_ramp = false;
@@ -280,7 +280,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         via_ramp = true;
     }
 
-    // Berserk creatures cannot voluntarily move farther away from visible hostiles.
+
     if( you.has_effect( effect_berserk ) ) {
         bool retreating = false;
 
@@ -321,15 +321,15 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         if( weapon && weapon->has_flag( flag_DIG_TOOL ) ) {
             if( weapon->type->can_use( "PICKAXE" ) ) {
                 you.invoke_item( &*weapon, "PICKAXE", dest_loc );
-                // don't move into the tile until done mining
+
                 you.defer_move( dest_loc );
                 return true;
             }
         }
     }
 
-    // by this point we're either walking, running, crouching, or attacking, so update the activity level to match
-    // Riding an animal is less exerting, riding a mech has no exertion level
+
+
     if( !is_riding ) {
         you.set_activity_level( you.enchantment_cache->modify_value(
                                     enchant_vals::mod::MOVEMENT_EXERTION_MODIFIER, you.current_movement_mode()->exertion_level() ) );
@@ -339,7 +339,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                                     you.current_movement_mode()->exertion_level_animal_riding() ) );
     }
 
-    // If the player is *attempting to* move on the X axis, update facing direction of their sprite to match.
+
     point_rel_ms new_d = dest_loc.xy() - you_pos.xy();
 
     if( !g->is_tileset_isometric() ) {
@@ -355,36 +355,36 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             }
         }
     } else {
-        //
-        // iso:
-        //
-        // right key            =>  +x -y       FacingDirection::RIGHT
-        // left key             =>  -x +y       FacingDirection::LEFT
-        // up key               =>  +x +y       ______
-        // down key             =>  -x -y       ______
-        // y: left-up key       =>  __ +y       FacingDirection::LEFT
-        // u: right-up key      =>  +x __       FacingDirection::RIGHT
-        // b: left-down key     =>  -x __       FacingDirection::LEFT
-        // n: right-down key    =>  __ -y       FacingDirection::RIGHT
-        //
-        // right key            =>  +x -y       FacingDirection::RIGHT
-        // u: right-up key      =>  +x __       FacingDirection::RIGHT
-        // n: right-down key    =>  __ -y       FacingDirection::RIGHT
-        // up key               =>  +x +y       ______
-        // down key             =>  -x -y       ______
-        // left key             =>  -x +y       FacingDirection::LEFT
-        // y: left-up key       =>  __ +y       FacingDirection::LEFT
-        // b: left-down key     =>  -x __       FacingDirection::LEFT
-        //
-        // right key            =>  +x +y       FacingDirection::RIGHT
-        // u: right-up key      =>  +x __       FacingDirection::RIGHT
-        // n: right-down key    =>  __ +y       FacingDirection::RIGHT
-        // up key               =>  +x -y       ______
-        // left key             =>  -x -y       FacingDirection::LEFT
-        // b: left-down key     =>  -x __       FacingDirection::LEFT
-        // y: left-up key       =>  __ -y       FacingDirection::LEFT
-        // down key             =>  -x +y       ______
-        //
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         if( new_d.x() >= 0 && new_d.y() >= 0 ) {
             you.facing = FacingDirection::RIGHT;
             if( is_riding ) {
@@ -432,8 +432,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         return false;
     }
 
-    // Check if our movement is actually an attack on a monster or npc
-    // Are we displacing a monster?
+
+
 
     creature_tracker &creatures = get_creature_tracker();
     bool attacking = false;
@@ -442,8 +442,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     }
 
     if( !you.move_effects( attacking ) ) {
-        // move_effects determined we could not move, waste all moves.
-        // No destination blocker can be assumed from this condition.
+
+
         you.set_moves( 0 );
         a11y::record_action_outcome( a11y::action_outcome_kind::blocked,
                                      _( "your condition" ) );
@@ -452,10 +452,10 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 
     if( monster *const mon_ptr = creatures.creature_at<monster>( dest_loc, true ) ) {
         monster &critter = *mon_ptr;
-        // Creatures swimming under a solid surface don't block surface movement
+
         if( critter.is_underwater() &&
             m.has_flag( ter_furn_flag::TFLAG_SWIM_UNDER, dest_loc ) ) {
-            // They're under the walkway/ice, player walks over them
+
         } else if( critter.friendly == 0 &&
                    !critter.has_effect( effect_pet ) ) {
             if( you.is_auto_moving() ) {
@@ -492,9 +492,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             a11y::record_action_outcome( a11y::action_outcome_kind::blocked, critter.disp_name() );
             return false;
         }
-        // Successful displacing is handled (much) later
+
     }
-    // If not a monster, maybe there's an NPC there
+
     if( npc *const np_ = creatures.creature_at<npc>( dest_loc ) ) {
         npc &np = *np_;
         if( you.is_auto_moving() ) {
@@ -516,7 +516,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         return false;
     }
 
-    // CANNOT_MOVE allows melee attacking
+
     if( you.has_flag( json_flag_CANNOT_MOVE ) ) {
         you.add_msg_if_player( m_bad,
                                _( "You cannot move!" ) );
@@ -525,7 +525,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         return false;
     }
 
-    // GRAB: pre-action checking.
+
     int dpart = -1;
     const optional_vpart_position vp0 = m.veh_at( you.pos_bub() );
     vehicle *const veh0 = veh_pointer_or_null( vp0 );
@@ -571,9 +571,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             return false;
         }
     }
-    // Dive into water!
+
     if( toSwimmable && toDeepWater && !toBoat && !waterWalking ) {
-        // Requires confirmation if we were on dry land previously
+
         if( is_riding ) {
             auto *mon = you.mounted_creature.get();
             if( !mon->swims() || mon->get_size() < you.get_size() + 2 ) {
@@ -595,9 +595,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         return true;
     }
 
-    //Wooden Fence Gate (or equivalently walkable doors):
-    // open it if we are walking
-    // vault over it if we are running
+
+
+
     std::string door_name = m.obstacle_name( dest_loc );
     if( m.passable_ter_furn( dest_loc )
         && you.is_walking()
@@ -606,7 +606,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         you.mod_moves( -you.get_speed() );
         you.add_msg_if_player( _( "You open the %s." ), door_name );
         a11y::record_action_outcome( a11y::action_outcome_kind::opened, door_name );
-        // if auto move is on, continue moving next turn
+
         if( you.is_auto_moving() ) {
             you.defer_move( dest_loc );
         }
@@ -617,17 +617,17 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     const tripoint_abs_ms abs_dest_loc = here.get_abs( dest_loc );
     const bool was_in_vehicle = you.in_vehicle;
     if( g->walk_move( dest_loc, via_ramp ) ) {
-        // Walking out of a vehicle was silent; the player only learned
-        // it from the destination tile's description. Announced here --
-        // the walk-out path -- rather than in map::unboard_vehicle,
-        // which also runs on death, teleport, despawning, being thrown
-        // from the car and character swaps, where "you get out" would be
-        // wrong. Boarding has its own announcement in
-        // map::board_vehicle. Reader-only, so sighted play is unchanged.
+
+
+
+
+
+
+
         if( was_in_vehicle && !you.in_vehicle && a11y::enabled() ) {
             add_msg( m_info, _( "You get out of the vehicle." ) );
         }
-        // AUTOPEEK: If safe mode would be triggered after the move, look around and move back
+
         if( g->safe_mode == SAFE_MODE_ON && !you.is_running() &&
             you.pos_abs() == abs_dest_loc ) {
             here.build_map_cache( dest_loc.z() );
@@ -641,7 +641,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                                ctxt.get_desc( "QUIT" ),
                                ctxt.get_desc( "CONFIRM" ) ).on_top( true );
                 ui_manager::redraw();
-                // Get bub coords again after build_map_cache
+
                 const tripoint_bub_ms src_loc = here.get_bub( old_abs_pos );
                 tripoint_bub_ms center( src_loc.x(), src_loc.y(), dest_loc.z() );
                 const look_around_result result = g->look_around( false, center, center, false, false, true );
@@ -657,7 +657,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 }
                 a11y::record_action_outcome( a11y::action_outcome_kind::undetermined,
                                              "Safe mode stopped the move" );
-                return false; // cancel automove
+                return false;
             }
         }
         return true;
@@ -669,7 +669,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( g->phasing_move( dest_loc ) ) {
         return true;
     }
-    //TODO: use open_tile_activity_actor
+
     if( veh_closed_door ) {
         if( !veh1->handle_potential_theft( you ) ) {
             return true;
@@ -685,7 +685,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             a11y::record_action_outcome( a11y::action_outcome_kind::opened, door_name );
         }
         you.mod_moves( -you.get_speed() );
-        // if auto move is on, continue moving next turn
+
         if( you.is_auto_moving() ) {
             you.defer_move( dest_loc );
         }
@@ -702,18 +702,18 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             you.add_msg_if_player( _( "You open the %s." ), door_name );
         }
         a11y::record_action_outcome( a11y::action_outcome_kind::opened, door_name );
-        // if auto move is on, continue moving next turn
+
         if( you.is_auto_moving() ) {
             you.defer_move( dest_loc );
         }
         return true;
     }
 
-    // Invalid move
+
     const bool waste_moves = you.is_blind() || you.has_effect( effect_stunned );
     if( waste_moves || dest_loc.z() != you.posz() ) {
         add_msg( _( "You bump into the %s!" ), m.obstacle_name( dest_loc ) );
-        // Only lose movement if we're blind
+
         if( waste_moves ) {
             you.mod_moves( -you.get_speed() );
         }
@@ -721,15 +721,15 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         add_msg( _( "You rattle the bars but the door is locked!" ) );
     } else if( const std::unordered_set<ter_str_id> locked_doors = { ter_t_door_locked, ter_t_door_locked_peep, ter_t_door_locked_alarm, ter_t_door_locked_interior };
                locked_doors.find( t.id() ) != locked_doors.end() ) {
-        // Don't drain move points for learning something you could learn just by looking
+
         add_msg( _( "That door is locked!" ) );
     }
     {
-        // Classify the blocker in the engine's own order: a creature the
-        // avatar can actually see at the destination first (an unseen
-        // creature is never named), then the map's obstacle name, which
-        // already covers vehicle parts and terrain/furniture names exactly
-        // as the engine announces them.
+
+
+
+
+
         std::string blocker;
         if( Creature *const creature = creatures.creature_at( dest_loc ) ) {
             if( you.sees( here, *creature ) ) {
@@ -797,12 +797,12 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
     bool diagonal = p.x() != you_pos.x() && p.y() != you_pos.y();
     if( you.in_vehicle ) {
         m.unboard_vehicle( you.pos_bub() );
-        // Swimming out of a vehicle was silent. Announced here -- the
-        // swim-out path -- rather than in map::unboard_vehicle, which
-        // also runs on death, teleport, despawning and being thrown from
-        // the car, where "you get out" would be wrong. Walking out on
-        // land is announced in avatar_action::move instead.
-        // Reader-only, so sighted play is unchanged.
+
+
+
+
+
+
         if( a11y::enabled() ) {
             add_msg( m_info, _( "You get out of the vehicle." ) );
         }
@@ -872,7 +872,7 @@ void avatar_action::autoattack( avatar &you, map &m )
         if( reach == 1 && !you.is_adjacent( c, true ) ) {
             return true;
         }
-        if( !you.can_reach_attack( *c ) ) { // target on different z-level
+        if( !you.can_reach_attack( *c ) ) {
             return true;
         }
         if( !c->is_npc() ) {
@@ -897,11 +897,11 @@ void avatar_action::autoattack( avatar &you, map &m )
 
     const tripoint_rel_ms diff = best.pos_bub() - you.pos_bub();
     if( a11y::enabled() ) {
-        // The native autoattack has already chosen its target. Say which
-        // creature will be attacked without adding a selection or a delay.
+
+
         add_msg( m_info, _( "Autoattack: %1$s, %2$s, distance %3$d." ),
                  best.disp_name(), direction_name( direction_from( you.pos_bub(),
-                                  best.pos_bub() ) ),
+                         best.pos_bub() ) ),
                  rl_dist( you.pos_bub(), best.pos_bub() ) );
     }
     if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
@@ -917,7 +917,7 @@ void avatar_action::autoattack( avatar &you, map &m )
     }
 }
 
-// TODO: Move data/functions related to targeting out of game class
+
 bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weapon )
 {
     if( !weapon.is_gun() ) {
@@ -964,8 +964,8 @@ void avatar_action::fire_wielded_weapon( avatar &you )
         return;
     } else if( !weapon->uses_firing_requirements() && weapon->has_ammo_data() &&
                !weapon->ammo_types().count( weapon->loaded_ammo().ammo_type() ) ) {
-        // Multimag guns enforce per-pocket ammo at load time; this gate is for
-        // single-mag guns whose accepted ammo can shift via gunmod conversion.
+
+
         add_msg( m_info, _( "The %s can't be fired while loaded with incompatible ammunition %s" ),
                  weapon->tname(), weapon->ammo_current()->nname( 1 ) );
         return;
@@ -1005,21 +1005,21 @@ bool avatar_action::fire_turret_manual( avatar &you, map &m, turret_data &turret
             return false;
     }
 
-    // check if any gun modes are usable
+
     std::vector<std::string> messages;
     const std::map<gun_mode_id, gun_mode> gunmodes = turret.base()->gun_all_modes();
     if( !std::any_of( gunmodes.begin(), gunmodes.end(),
     [&you, &m, &messages]( const std::pair<const gun_mode_id, gun_mode> &p ) {
     return gunmode_checks_common( you, m, messages, p.second );
     } ) ) {
-        // no gunmode is usable, dump reason messages why not
+
         for( const std::string &msg : messages ) {
             add_msg( m_bad, msg );
         }
         return false;
     }
 
-    // all checks passed - start aiming
+
     g->temp_exit_fullscreen();
     target_handler::trajectory trajectory = target_handler::mode_turret_manual( you, turret );
 
@@ -1040,10 +1040,10 @@ void avatar_action::mend( avatar &you, item_location loc )
 
     if( !loc ) {
         if( a11y::enabled() ) {
-            // Reader mode must let the player choose a carried or worn item.
-            // Selecting a row only focuses it; confirmation uses the native
-            // inventory selector and its existing item validation.
-            loc = g->inv_map_splice( [&you]( const item_location &candidate ) {
+
+
+
+            loc = g->inv_map_splice( [&you]( const item_location & candidate ) {
                 if( !you.has_item( *candidate ) ) {
                     return false;
                 }
@@ -1199,7 +1199,7 @@ void avatar_action::plthrow( avatar &you, item_location loc,
         return;
     }
 
-    // Bypass check for whether we can wield an item if we're inside a mech
+
     if( !in_mech ) {
         const ret_val<void> ret = you.can_wield( *loc );
         if( !ret.success() ) {
@@ -1208,9 +1208,9 @@ void avatar_action::plthrow( avatar &you, item_location loc,
         }
     }
 
-    // make a copy and get the original.
-    // the copy is thrown and has its and the originals charges set appropriately
-    // or deleted from inventory if its charges(1) or not stackable.
+
+
+
     item *orig = loc.get_item();
     item thrown = *orig;
     int range = you.throw_range( thrown );
@@ -1223,7 +1223,7 @@ void avatar_action::plthrow( avatar &you, item_location loc,
     }
 
     if( you.is_wielding( *orig ) && orig->has_flag( flag_NO_UNWIELD ) ) {
-        // pos == -1 is the weapon, NO_UNWIELD is used for bio_claws_weapon
+
         add_msg( m_info, _( "That's part of your body, you can't throw that!" ) );
         return;
     }
@@ -1232,7 +1232,7 @@ void avatar_action::plthrow( avatar &you, item_location loc,
                                   _( "You can't muster up the effort to throw anything…" ) ) ) {
         return;
     }
-    // if you're wearing the item you need to be able to take it off
+
     if( you.is_worn( *orig ) ) {
         ret_val<void> ret = you.can_takeoff( *orig );
         if( !ret.success() ) {
@@ -1240,8 +1240,8 @@ void avatar_action::plthrow( avatar &you, item_location loc,
             return;
         }
     }
-    // you must wield the item to throw it
-    // if we're in the mech, let's assume the mech wields the item
+
+
     if( !in_mech ) {
         if( !you.is_wielding( *orig ) ) {
             if( !you.wield( *orig ) ) {
@@ -1250,9 +1250,9 @@ void avatar_action::plthrow( avatar &you, item_location loc,
         }
     }
 
-    // Shift our position to our "peeking" position, so that the UI
-    // for picking a throw point lets us target the location we couldn't
-    // otherwise see.
+
+
+
     const tripoint_abs_ms original_player_position = you.pos_abs();
     if( blind_throw_from_pos ) {
         you.setpos( here, *blind_throw_from_pos, false );
@@ -1264,7 +1264,7 @@ void avatar_action::plthrow( avatar &you, item_location loc,
     target_handler::trajectory trajectory = target_handler::mode_throw( you, *weapon,
                                             blind_throw_from_pos.has_value() );
 
-    // If we previously shifted our position, put ourselves back now that we've picked our target.
+
     if( blind_throw_from_pos ) {
         you.setpos( original_player_position, false );
     }
@@ -1324,7 +1324,7 @@ void avatar_action::use_item( avatar &you, item_location &loc, std::string const
         return;
     }
 
-    // Some items may be used without being picked up first
+
     bool use_in_place = false;
 
     if( !loc ) {
@@ -1346,7 +1346,7 @@ void avatar_action::use_item( avatar &you, item_location &loc, std::string const
         if( query_yn( _( "This item is still wet and it will break if you turn it on.  Proceed?" ) ) ) {
             loc->deactivate();
             loc.get_item()->set_random_fault_of_type( "wet", true );
-            // An electronic item in water is also shorted.
+
             if( loc->has_flag( flag_ELECTRONIC ) ) {
                 loc.get_item()->set_random_fault_of_type( "shorted", true );
             }
@@ -1360,10 +1360,10 @@ void avatar_action::use_item( avatar &you, item_location &loc, std::string const
     int pre_obtain_moves = you.get_moves();
     if( loc->has_flag( flag_ALLOWS_REMOTE_USE ) || you.is_worn( *loc ) ) {
         use_in_place = true;
-        // Activate holster on map only if hands are free.
+
     } else if( you.can_wield( *loc ).success() && loc->is_holster() && !loc.held_by( you ) ) {
         use_in_place = true;
-        // Adjustment because in player::wield_contents this amount is refunded.
+
         you.mod_moves( -loc.obtain_cost( you ) );
     } else {
         item_location::type loc_where = loc.where_recursive();
@@ -1373,7 +1373,7 @@ void avatar_action::use_item( avatar &you, item_location &loc, std::string const
             on_person = false;
         }
 
-        // Get the parent pocket before the item is obtained.
+
         if( loc.has_parent() ) {
             parent_pocket = loc.parent_pocket();
         }
@@ -1427,10 +1427,10 @@ void avatar_action::unload( avatar &you )
     }
 
     if( ret.second || !ret.first->is_container() ) {
-        // Auto contain
+
         you.unload( ret.first );
     } else {
-        // Manual contain
+
         item_location new_container = g->inv_map_splice( [&you]( const item_location & it ) {
             return it->is_container() && !it->is_corpse() && you.rate_action_insert( it ) == hint_rating::good;
         }, _( "Insert item" ), 1, _( "You have no container to insert items." ) );

@@ -97,7 +97,7 @@ class WorldAreaAndNativeBuildTest(unittest.TestCase):
         self.assertIn("-Paccessibility_apk_version=$apk_version", yaml)
         self.assertIn("apk_version=\"$(git rev-parse --short=8 HEAD)\"", yaml)
         self.assertIn("accessibility_apk_version", read(ROOT / "android/app/build.gradle"))
-        # 7331ed6 raised the Gradle workers from 3 to 4.
+
         self.assertIn("-Pj=4", yaml)
         self.assertIn("CCACHE_MAXSIZE: 3G", yaml)
         self.assertIn("ccache --show-stats --verbose", yaml)

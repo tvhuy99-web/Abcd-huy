@@ -83,7 +83,7 @@ void parse_keymap( std::istream &keymap_txt, std::map<char, action_id> &kmap,
         std::string id;
         keymap_txt >> id;
         if( id.empty() || id[0] == '#' ) {
-            // Empty line or comment, chomp it
+
             getline( keymap_txt, id );
         } else if( id == "unbind" ) {
             keymap_txt >> id;
@@ -426,7 +426,7 @@ std::string action_ident( action_id act )
 bool can_action_change_worldstate( const action_id act )
 {
     switch( act ) {
-        // Shift view
+
         case ACTION_CENTER:
         case ACTION_SHIFT_N:
         case ACTION_SHIFT_NE:
@@ -436,16 +436,16 @@ bool can_action_change_worldstate( const action_id act )
         case ACTION_SHIFT_SW:
         case ACTION_SHIFT_W:
         case ACTION_SHIFT_NW:
-        // Environment Interaction
+
         case ACTION_LOOK:
         case ACTION_LIST_ITEMS:
         case ACTION_ZONES:
-        // Long-term / special actions
+
         case ACTION_SAVE:
         case ACTION_QUICKSAVE:
         case ACTION_QUICKLOAD:
         case ACTION_SUICIDE:
-        // Info Screens
+
         case ACTION_PL_INFO:
         case ACTION_MAP:
         case ACTION_SKY:
@@ -467,7 +467,7 @@ bool can_action_change_worldstate( const action_id act )
         case ACTION_WORLD_MODS:
         case ACTION_DISTRACTION_MANAGER:
         case ACTION_EXPORT_BUG_REPORT_ARCHIVE:
-        // Debug Functions
+
         case ACTION_TOGGLE_FULLSCREEN:
         case ACTION_DEBUG:
         case ACTION_DISPLAY_RADIATION:
@@ -492,7 +492,7 @@ bool can_action_change_worldstate( const action_id act )
 
 action_id look_up_action( const std::string &ident )
 {
-    // Temporarily for the interface with the input manager!
+
     if( ident == "move_nw" ) {
         return ACTION_MOVE_FORTH_LEFT;
     } else if( ident == "move_sw" ) {
@@ -514,7 +514,7 @@ action_id look_up_action( const std::string &ident )
     } else if( ident == "move_up" ) {
         return ACTION_MOVE_UP;
     }
-    // ^^ Temporarily for the interface with the input manager!
+
     for( int i = 0; i < NUM_ACTIONS; i++ ) {
         if( action_ident( static_cast<action_id>( i ) ) == ident ) {
             return static_cast<action_id>( i );
@@ -523,7 +523,7 @@ action_id look_up_action( const std::string &ident )
     return ACTION_NULL;
 }
 
-// (Press X (or Y)|Try) to Z
+
 std::string press_x( action_id act )
 {
     input_context ctxt = get_default_mode_input_context();
@@ -545,8 +545,8 @@ std::optional<std::string> press_x_if_bound( action_id act )
 {
     input_context ctxt = get_default_mode_input_context();
     std::string description = action_ident( act );
-    if( ctxt.keys_bound_to( description, /*maximum_modifier_count=*/ -1,
-                            /*restrict_to_printable=*/false ).empty() ) {
+    if( ctxt.keys_bound_to( description, -1,
+                            false ).empty() ) {
         return std::nullopt;
     }
     return press_x( act );
@@ -573,9 +573,9 @@ action_id get_movement_action_from_delta( const tripoint_rel_ms &d, const iso_ro
         return iso_mode ? ACTION_MOVE_LEFT : ACTION_MOVE_FORTH_LEFT;
     }
 
-    // Check z location last.
-    // If auto-moving over ramps, we need the character to move the xy directions.
-    // The z-movement is caused by the ramp automatically.
+
+
+
     if( d.z() == -1 ) {
         return ACTION_MOVE_DOWN;
     } else if( d.z() == 1 ) {
@@ -625,17 +625,17 @@ std::optional<input_event> hotkey_for_action( const action_id action,
 
 bool can_butcher_at( map &here, const tripoint_bub_ms &p )
 {
-    // The native butcher action refuses inaccessible sealed tiles.
+
     if( here.has_flag( ter_furn_flag::TFLAG_SEALED, p ) ) {
         return false;
     }
     map_stack items = here.i_at( p );
-    // Early exit when there's definitely nothing to butcher
+
     if( items.empty() ) {
         return false;
     }
     Character &player_character = get_player_character();
-    // TODO: unify this with game::butcher
+
     const int factor = player_character.max_quality( qual_BUTCHER, PICKUP_RANGE );
     const int factorD = player_character.max_quality( qual_CUT_FINE, PICKUP_RANGE );
     bool has_item = false;
@@ -654,8 +654,8 @@ bool can_butcher_at( map &here, const tripoint_bub_ms &p )
     if( has_corpse || has_item ) {
         return true;
     }
-    // Native game::butcher also cuts salvageable items with a salvage tool.
-    // Match that capability instead of hiding the action on salvage-only tiles.
+
+
     static const std::string salvage_string = "salvage";
     const auto has_salvage_use = []( const item & tool ) {
         return tool.get_usable_item( salvage_string ) != nullptr;
@@ -663,7 +663,7 @@ bool can_butcher_at( map &here, const tripoint_bub_ms &p )
     for( item *tool : player_character.items_with( has_salvage_use ) ) {
         item *usable = tool->get_usable_item( salvage_string );
         const salvage_actor *actor = dynamic_cast<const salvage_actor *>(
-                                          usable->get_use( salvage_string )->get_actor_ptr() );
+                                         usable->get_use( salvage_string )->get_actor_ptr() );
         if( actor == nullptr ) {
             continue;
         }
@@ -682,7 +682,7 @@ bool can_move_vertical_at( const map &here, const tripoint_bub_ms &p, int movez 
         return false;
     }
     Character &player_character = get_player_character();
-    // TODO: unify this with game::move_vertical
+
     if( here.has_flag( ter_furn_flag::TFLAG_SWIMMABLE, p ) &&
         here.has_flag( ter_furn_flag::TFLAG_DEEP_WATER, p ) ) {
         if( movez == -1 ) {
@@ -783,8 +783,8 @@ bool can_interact_at( action_id action, map &here, const tripoint_bub_ms &p )
     }
 }
 
-// Accessibility list: browse every currently visible, actionable adjacent tile
-// before selecting one. No action runs until a menu entry is activated.
+
+
 std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::string &title,
         const std::function<bool( const tripoint_bub_ms & )> &allowed,
         const std::string &empty_reason )
@@ -807,13 +807,13 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
     std::string visible_object;
     uilist menu;
     menu.title = title;
-    // The first real object should be heard immediately, without a tutorial.
+
     menu.input_category = "nearby-target";
     menu.text.clear();
     for( std::size_t i = 0; i < offsets.size(); ++i ) {
         const tripoint_bub_ms target = origin + offsets[i];
-        // Never list live hidden terrain or unseen creatures from the engine's
-        // interaction check. The perception layer owns visibility restrictions.
+
+
         const a11y::tile_observation observed = a11y::observe_tile( target );
         if( observed.source != a11y::observation_source::visible ) {
             continue;
@@ -832,9 +832,9 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         }
         const int index = static_cast<int>( targets.size() );
         targets.push_back( target );
-        // Read only the most useful object on this tile by default.
-        // The complete perception-safe description remains in the row's
-        // explicit detail, including any other objects sharing the tile.
+
+
+
         std::string name = observed.terrain;
         if( !observed.seen_items.empty() ) {
             name = observed.seen_items.front();
@@ -851,8 +851,8 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         if( observed.door != a11y::door_state::none ) {
             name = !observed.furniture.empty() ? observed.furniture : observed.terrain;
             const std::string state = observed.door == a11y::door_state::locked ? _( "Locked" ) :
-                                observed.door == a11y::door_state::closed ? _( "Closed" ) :
-                                _( "Open" );
+                                      observed.door == a11y::door_state::closed ? _( "Closed" ) :
+                                      _( "Open" );
             name += " (" + state + ")";
         }
         menu.addentry_desc( index, true, -1,
@@ -872,7 +872,7 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         return std::nullopt;
     }
     const tripoint_bub_ms chosen = targets[menu.ret];
-    // Revalidate after the user has browsed the menu; do not act on stale targets.
+
     return allowed( chosen ) ? std::optional<tripoint_bub_ms>( chosen ) : std::nullopt;
 }
 
@@ -895,7 +895,7 @@ action_id handle_interact( map &here, const tripoint_bub_ms &pos )
     for( action_id act : check_actions ) {
         if( ( act == ACTION_MOVE_UP || act == ACTION_MOVE_DOWN ) &&
             pos != get_avatar().pos_bub( here ) ) {
-            continue; // Stairs are used from the player's tile, not a neighbor.
+            continue;
         }
         if( can_interact_at( act, here, pos ) ) {
             valid_actions.push_back( act );
@@ -931,7 +931,7 @@ action_id handle_action_menu( map &here )
     const input_context ctxt = get_default_mode_input_context();
     std::string catgname;
 
-#define REGISTER_ACTION( name ) entries.emplace_back( name, true, hotkey_for_action( name, /*maximum_modifier_count=*/1 ), \
+#define REGISTER_ACTION( name ) entries.emplace_back( name, true, hotkey_for_action( name, 1 ), \
         ctxt.get_action_name( action_ident( name ) ) );
 #define REGISTER_CATEGORY( name )  categories_by_int[last_category] = name; \
     catgname = name; \
@@ -939,49 +939,49 @@ action_id handle_action_menu( map &here )
     entries.emplace_back( last_category, true, -1, catgname ); \
     last_category++;
 
-    // Calculate weightings for the various actions to give the player suggestions
-    // Weight >= 200: Special action only available right now
+
+
     std::map<action_id, int> action_weightings;
 
     Character &player_character = get_player_character();
-    // Check if we're in a potential combat situation, if so, sort a few actions to the top.
+
     if( !player_character.get_hostile_creatures( MAX_VIEW_DISTANCE ).empty() ) {
-        // Only prioritize movement options if we're not driving.
+
         if( !player_character.controlling_vehicle ) {
             action_weightings[ACTION_CYCLE_MOVE] = 400;
             action_weightings[ACTION_CYCLE_MOVE_REVERSE] = 400;
         }
         const item_location weapon = player_character.get_wielded_item();
-        // Only prioritize fire weapon options if we're wielding a ranged weapon.
+
         if( weapon && ( weapon->is_gun() || weapon->has_flag( flag_REACH_ATTACK ) ) ) {
             action_weightings[ACTION_FIRE] = 350;
         }
     }
 
-    // If we're already running, make it simple to toggle running to off.
+
     if( player_character.is_running() ) {
         action_weightings[ACTION_TOGGLE_RUN] = 300;
     }
-    // If we're already crouching, make it simple to toggle crouching to off.
+
     if( player_character.is_crouching() ) {
         action_weightings[ACTION_TOGGLE_CROUCH] = 300;
     }
-    // If we're already prone, make it simple to toggle prone to off.
+
     if( player_character.is_prone() ) {
         action_weightings[ACTION_TOGGLE_PRONE] = 300;
     }
 
-    // Check if we're on a vehicle, if so, vehicle controls should be top.
+
     if( here.veh_at( player_character.pos_bub() ) ) {
-        // Make it 300 to prioritize it before examining the vehicle.
+
         action_weightings[ACTION_CONTROL_VEHICLE] = 300;
     }
 
-    // Check if we can perform one of our actions on nearby terrain. If so,
-    // display that action at the top of the list.
+
+
     for( const tripoint_bub_ms &pos : here.points_in_radius( player_character.pos_bub(), 1 ) ) {
         if( pos != player_character.pos_bub() ) {
-            // Check for actions that work on nearby tiles
+
             if( can_interact_at( ACTION_OPEN, here, pos ) ) {
                 action_weightings[ACTION_OPEN] = 200;
             }
@@ -992,7 +992,7 @@ action_id handle_action_menu( map &here )
                 action_weightings[ACTION_EXAMINE] = 200;
             }
         } else {
-            // Check for actions that work on own tile only
+
             if( can_interact_at( ACTION_BUTCHER, here, pos ) ) {
                 action_weightings[ACTION_BUTCHER] = 200;
             }
@@ -1009,13 +1009,13 @@ action_id handle_action_menu( map &here )
         action_weightings[ACTION_HAUL_TOGGLE] = 300;
     }
 
-    // sort the map by its weightings
+
     std::vector<std::pair<action_id, int> > sorted_pairs;
     std::copy( action_weightings.begin(), action_weightings.end(),
                std::back_inserter<std::vector<std::pair<action_id, int> > >( sorted_pairs ) );
     std::reverse( sorted_pairs.begin(), sorted_pairs.end() );
 
-    // Default category is called "back"
+
     std::string category = "back";
 
     while( true ) {
@@ -1039,26 +1039,26 @@ action_id handle_action_menu( map &here )
             REGISTER_CATEGORY( _( "Craft" ) );
             REGISTER_CATEGORY( _( "Info" ) );
             REGISTER_CATEGORY( _( "Misc" ) );
-            if( hotkey_for_action( ACTION_QUICKSAVE, /*maximum_modifier_count=*/1 ).has_value() ) {
+            if( hotkey_for_action( ACTION_QUICKSAVE, 1 ).has_value() ) {
                 REGISTER_ACTION( ACTION_QUICKSAVE );
             }
             REGISTER_ACTION( ACTION_SAVE );
-            if( hotkey_for_action( ACTION_QUICKLOAD, /*maximum_modifier_count=*/1 ).has_value() ) {
+            if( hotkey_for_action( ACTION_QUICKLOAD, 1 ).has_value() ) {
                 REGISTER_ACTION( ACTION_QUICKLOAD );
             }
-            if( hotkey_for_action( ACTION_SUICIDE, /*maximum_modifier_count=*/1 ).has_value() ) {
+            if( hotkey_for_action( ACTION_SUICIDE, 1 ).has_value() ) {
                 REGISTER_ACTION( ACTION_SUICIDE );
             }
             REGISTER_ACTION( ACTION_HELP );
             if( ( entry = &entries.back() ) ) {
-                // help _is_a menu.
+
                 entry->txt += "…";
             }
-            if( hotkey_for_action( ACTION_DEBUG, /*maximum_modifier_count=*/1 ).has_value() ) {
-                // register with global key
+            if( hotkey_for_action( ACTION_DEBUG, 1 ).has_value() ) {
+
                 REGISTER_CATEGORY( _( "Debug" ) );
                 if( ( entry = &entries.back() ) ) {
-                    entry->hotkey = hotkey_for_action( ACTION_DEBUG, /*maximum_modifier_count=*/1 );
+                    entry->hotkey = hotkey_for_action( ACTION_DEBUG, 1 );
                 }
             }
         } else if( category == _( "Look" ) ) {
@@ -1074,9 +1074,9 @@ action_id handle_action_menu( map &here )
             REGISTER_ACTION( ACTION_SORT_ARMOR );
             REGISTER_ACTION( ACTION_DIR_DROP );
 
-            // Everything below here can be accessed through
-            // the inventory screen, so it's sorted to the
-            // end of the list.
+
+
+
             REGISTER_ACTION( ACTION_INSERT_ITEM );
             REGISTER_ACTION( ACTION_UNLOAD_CONTAINER );
             REGISTER_ACTION( ACTION_DROP );
@@ -1093,7 +1093,7 @@ action_id handle_action_menu( map &here )
         } else if( category == _( "Debug" ) ) {
             REGISTER_ACTION( ACTION_DEBUG );
             if( ( entry = &entries.back() ) ) {
-                // debug _is_a menu.
+
                 entry->txt += "…";
             }
 #if !defined(TILES)
@@ -1103,7 +1103,7 @@ action_id handle_action_menu( map &here )
             REGISTER_ACTION( ACTION_TOGGLE_PIXEL_MINIMAP );
             REGISTER_ACTION( ACTION_RELOAD_TILESET );
             REGISTER_ACTION( ACTION_TOGGLE_PREVENT_OCCLUSION );
-#endif // TILES
+#endif
             REGISTER_ACTION( ACTION_TOGGLE_PANEL_ADM );
             REGISTER_ACTION( ACTION_DISPLAY_SCENT );
             REGISTER_ACTION( ACTION_DISPLAY_SCENT_TYPE );
@@ -1195,7 +1195,7 @@ action_id handle_action_menu( map &here )
             std::string msg = _( "Back" );
             msg += "…";
             entries.emplace_back( 2 * NUM_ACTIONS, true,
-                                  hotkey_for_action( ACTION_ACTIONMENU, /*maximum_modifier_count=*/1 ), msg );
+                                  hotkey_for_action( ACTION_ACTIONMENU, 1 ), msg );
         }
 
         std::string title = _( "Actions" );
@@ -1235,7 +1235,7 @@ action_id handle_main_menu()
     std::vector<uilist_entry> entries;
 
     const auto REGISTER_ACTION = [&]( action_id name, std::optional<char> kb = std::nullopt ) {
-        std::optional<input_event> hotkey = hotkey_for_action( name, /*maximum_modifier_count=*/1 );
+        std::optional<input_event> hotkey = hotkey_for_action( name, 1 );
         if( hotkey.has_value() || !kb.has_value() ) {
             entries.emplace_back( name, true, hotkey, ctxt.get_action_name( action_ident( name ) ) );
         } else {
@@ -1245,7 +1245,7 @@ action_id handle_main_menu()
 
     REGISTER_ACTION( ACTION_HELP );
 
-    // The hotkey is reserved for the uilist keybindings menu
+
     entries.emplace_back( ACTION_KEYBINDINGS, true, std::nullopt,
                           ctxt.get_action_name( action_ident( ACTION_KEYBINDINGS ) ) );
 
@@ -1261,11 +1261,11 @@ action_id handle_main_menu()
     REGISTER_ACTION( ACTION_ACTIONMENU );
     REGISTER_ACTION( ACTION_QUICKSAVE );
     REGISTER_ACTION( ACTION_SAVE );
-    if( hotkey_for_action( ACTION_DEBUG, /*maximum_modifier_count=*/1, false ).has_value() ) {
+    if( hotkey_for_action( ACTION_DEBUG, 1, false ).has_value() ) {
         REGISTER_ACTION( ACTION_DEBUG, 'D' );
     }
 
-    // Special handling: This one is not a keybind, so we emplace it manually with a descriptive name.
+
     entries.emplace_back( ACTION_EXPORT_BUG_REPORT_ARCHIVE, true, 'd',
                           _( "Export save archive for github bug report" ) );
 
@@ -1317,7 +1317,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
 
     temp_hide_advanced_inv();
     a11y::screen_scope reader( &ctxt, "adjacent-direction",
-    [&]( const a11y::semantic_intent &intent ) {
+    [&]( const a11y::semantic_intent & intent ) {
         return a11y::registered_intent( ctxt, intent );
     } );
     std::string action;
@@ -1335,13 +1335,13 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
                     offset = tripoint_rel_ms::zero;
                 }
                 if( offset ) {
-                    // Use the engine's transformed direction, including an
-                    // isometric tileset, so spoken compass names stay truthful.
+
+
                     node.label = direction_name( direction_from( offset->raw() ) );
                     const a11y::tile_observation observation = a11y::observe_tile( origin + *offset );
                     node.detail = a11y::describe_tile( observation );
-                    // Match the visible target highlights without publishing
-                    // validity tests against hidden live terrain or furniture.
+
+
                     if( reader_target_hint && observation.source == a11y::observation_source::visible ) {
                         node.detail += "\n" + remove_color_tags( reader_target_hint( origin + *offset ) );
                     }
@@ -1353,7 +1353,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         action = ctxt.handle_input();
         if( std::optional<tripoint_rel_ms> vec = ctxt.get_direction_rel_ms( action ) ) {
             FacingDirection &facing = get_player_character().facing;
-            // Make player's sprite face left/right if interacting with something to the left or right
+
             if( vec->x() > 0 ) {
                 facing = FacingDirection::RIGHT;
             } else if( vec->x() < 0 ) {
@@ -1398,7 +1398,7 @@ std::optional<tripoint_bub_ms> choose_adjacent( const tripoint_bub_ms &pos,
         const std::function<std::string( const tripoint_bub_ms & )> &reader_target_hint )
 {
     const std::optional<tripoint_rel_ms> dir = choose_direction(
-                message, allow_vertical, /*allow_mouse=*/true, timeout,
+                message, allow_vertical, true, timeout,
     [&]( const input_context & ctxt, const std::string & action ) {
         if( action == "SELECT" ) {
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates(

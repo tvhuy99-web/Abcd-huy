@@ -43,44 +43,44 @@ static void find_ammo_helper( T &src, const item &obj, bool empty, Output out, b
 {
     src.visit_items( [&nested, &out, &obj, empty, now]( item_location node ) {
 
-        // This stops containers and magazines counting *themselves* as ammo sources
+
         if( node.get_item() == &obj ) {
             return VisitResponse::SKIP;
         }
 
-        // Spills are not valid. spilled liquids have no parent.
+
         if( !node.has_parent() && node->made_of_from_type( phase_id::LIQUID ) ) {
             return VisitResponse::SKIP;
         }
 
-        // Frozen liquids can't be loaded
+
         if( node->is_frozen_liquid() ) {
             return VisitResponse::SKIP;
         }
 
-        // Do not steal ammo from magazines
+
         if( node.has_parent() && node.parent_item()->is_magazine() ) {
             return VisitResponse::SKIP;
         }
 
-        // Do not steal magazines from other items
+
         if( node.has_parent() && node.get_item() == node.parent_item()->magazine_current() ) {
             return VisitResponse::SKIP;
         }
 
-        // Do not consider empty mags unless specified
+
         if( node->is_magazine() && !node->ammo_remaining( ) && !empty ) {
             return VisitResponse::SKIP;
         }
 
         if( node->has_flag( flag_SPEEDLOADER ) && obj.magazine_integral() ) {
-            // Can't reload with empty speedloaders
+
             if( !node->ammo_remaining( ) ) {
                 return VisitResponse::SKIP;
             }
-            // All speedloaders are accepted.
-            // Ammo check is done somewhere else
-            // Ammo check should probably happen here...
+
+
+
             if( obj.can_reload_with( *node, now ) ) {
                 out = node;
             }
@@ -91,7 +91,7 @@ static void find_ammo_helper( T &src, const item &obj, bool empty, Output out, b
             out = node;
         }
 
-        // Not-nested checks only top level containers and their immediate contents.
+
         return !node.has_parent() || nested ? VisitResponse::NEXT : VisitResponse::SKIP;
 
     } );
@@ -148,32 +148,32 @@ std::vector<item_location> Character::find_ammo( const item &obj, bool empty, in
 std::pair<int, int> Character::gunmod_installation_odds( const item_location &gun,
         const item &mod ) const
 {
-    // Mods with INSTALL_DIFFICULT have a chance to fail, potentially damaging the gun
+
     if( !mod.has_flag( flag_INSTALL_DIFFICULT ) || has_trait( trait_DEBUG_HS ) ) {
         return std::make_pair( 100, 0 );
     }
 
-    int roll = 100; // chance of success (%)
-    int risk = 0;   // chance of failure (%)
-    float chances = 1.0f; // start with 1 in 6 (~17% chance)
+    int roll = 100;
+    int risk = 0;
+    float chances = 1.0f;
 
     for( const auto &e : mod.type->min_skills ) {
-        // gain an additional chance for every level above the minimum requirement
+
         skill_id sk = e.first.str() == "weapon" ? gun->gun_skill() : e.first;
         chances += std::max( get_greater_skill_or_knowledge_level( sk )  - e.second, 0.0f );
     }
-    // cap success from skill alone to 1 in 5 (~83% chance)
+
     roll = std::min( static_cast<double>( chances ), 5.0 ) / 6.0 * 100;
-    // focus is either a penalty or bonus of at most +/-10%
+
     roll += ( std::clamp( get_focus(), 60, 140 ) - 100 ) / 4;
-    // dexterity and intelligence give +/-2% for each point above or below 12
+
     roll += ( get_dex() - 12 ) * 2;
     roll += ( get_int() - 12 ) * 2;
-    // each level of damage to the base gun reduces success by 10%
+
     roll -= gun->damage_level() * 10;
     roll = std::min( std::max( roll, 0 ), 100 );
 
-    // risk of causing damage on failure increases with less durable guns
+
     risk = ( 100 - roll ) * ( ( 10.0 - std::min( gun->type->gun->durability, 9 ) ) / 10.0 );
 
     return std::make_pair( roll, risk );
@@ -191,7 +191,7 @@ void Character::gunmod_add( item &gun, item &mod )
         return;
     }
 
-    // first check at least the minimum requirements are met
+
     if( !has_trait( trait_DEBUG_HS ) && !can_use( mod, gun ) ) {
         return;
     }
@@ -204,7 +204,7 @@ void Character::gunmod_add( item &gun, item &mod )
         return;
     }
 
-    // Wielding will create a new gun and/or mod when the item changes location.
+
     item_location wielded_gun = get_wielded_item();
     std::vector<item *> mods = items_with( [&mod_type]( const item & it ) {
         return it.typeId() == mod_type;
@@ -216,7 +216,7 @@ void Character::gunmod_add( item &gun, item &mod )
     }
 
     item &moved_mod = *mods.front();
-    // any (optional) tool charges that are used during installation
+
     auto odds = gunmod_installation_odds( wielded_gun, moved_mod );
     int roll = odds.first;
     int risk = odds.second;
@@ -229,11 +229,11 @@ void Character::gunmod_add( item &gun, item &mod )
                        colorize( moved_mod.tname(), moved_mod.color_in_inventory() ),
                        colorize( wielded_gun->tname(), wielded_gun->color_in_inventory() ) ) ) {
             add_msg_if_player( _( "Never mind." ) );
-            return; // player canceled installation
+            return;
         }
     }
 
-    // if chance of success <100% prompt user to continue
+
     if( roll < 100 ) {
         uilist prompt;
         prompt.text = string_format( _( "Attach your %1$s to your %2$s?" ), moved_mod.tname(),
@@ -251,8 +251,8 @@ void Character::gunmod_add( item &gun, item &mod )
         actions.emplace_back( [&] {
             tool = "small_repairkit";
             qty = 100;
-            roll *= 2; // firearm repair kit improves success...
-            risk /= 2; // ...and reduces the risk of damage upon failure
+            roll *= 2;
+            risk /= 2;
         } );
 
         prompt.addentry( -1, has_charges( itype_large_repairkit, 25 ), 'g',
@@ -261,14 +261,14 @@ void Character::gunmod_add( item &gun, item &mod )
         actions.emplace_back( [&] {
             tool = "large_repairkit";
             qty = 25;
-            roll *= 3; // gunsmith repair kit improves success markedly...
-            risk = 0;  // ...and entirely prevents damage upon failure
+            roll *= 3;
+            risk = 0;
         } );
 
         prompt.query();
         if( prompt.ret < 0 ) {
             add_msg_if_player( _( "Never mind." ) );
-            return; // player canceled installation
+            return;
         }
         actions[prompt.ret]();
     }
@@ -279,10 +279,10 @@ void Character::gunmod_add( item &gun, item &mod )
     assign_activity( gunmod_add_activity_actor( moves, tool ) );
     activity.targets.emplace_back( wielded_gun );
     activity.targets.emplace_back( *this, &moved_mod );
-    activity.values.push_back( 0 ); // dummy value
-    activity.values.push_back( roll ); // chance of success (%)
-    activity.values.push_back( risk ); // chance of damage (%)
-    activity.values.push_back( qty ); // tool charges
+    activity.values.push_back( 0 );
+    activity.values.push_back( roll );
+    activity.values.push_back( risk );
+    activity.values.push_back( qty );
 }
 
 bool Character::gunmod_remove( item &gun, item &mod )
@@ -304,7 +304,7 @@ bool Character::gunmod_remove( item &gun, item &mod )
         return false;
     }
 
-    // Removing gunmod takes only half as much time as installing it
+
     const int moves = has_trait( trait_DEBUG_HS ) ? 0 : to_moves<int>
                       ( mod.type->gunmod->install_time ) / 2;
     item_location gun_loc = item_location( *this, &gun );
@@ -332,4 +332,3 @@ bool Character::has_magazine_for_ammo( const ammotype &at ) const
                  ( it.magazine_current() != nullptr && it.magazine_current()->ammo_types().count( at ) ) );
     } );
 }
-

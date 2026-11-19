@@ -6,7 +6,7 @@
 namespace
 {
 generic_factory<item_category> item_category_factory( "item_category" );
-} // namespace
+}
 
 template<>
 const item_category &string_id<item_category>::obj() const

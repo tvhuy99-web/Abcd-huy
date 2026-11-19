@@ -41,23 +41,23 @@ static std::function< bool( const item & )> can_contain_filter( std::string_view
         std::string_view filter, Unit max, const std::array<std::pair<std::string_view, Unit>, N> &units,
         const std::function<item( itype *, Unit u )> &set_function )
 {
-    // TODO: LAMBDA_NORETURN_CLANG21x1 can be replaced with [[noreturn]] once we switch to C++23 on all compilers
-    auto const error = [hint, filter]( char const *, size_t /* offset */ ) LAMBDA_NORETURN_CLANG21x1 {
+
+    auto const error = [hint, filter]( char const *, size_t ) LAMBDA_NORETURN_CLANG21x1 {
         throw math::runtime_error( _( string_format( hint, filter ) ) );
     };
-    // Start at max. On convert failure: results are empty and user knows it is unusable.
+
     Unit uni = max;
     try {
         uni = detail::read_from_json_string_common<Unit>( filter, units, error );
     } catch( math::runtime_error &err ) {
-        // TODO notify the user: popup( err.what() );
+
     }
-    // copy the debug item template (itype), put it on heap so the itype pointer doesn't move
-    // TODO unique_ptr
+
+
     std::shared_ptr<itype> filtered_fake_itype = std::make_shared<itype>
             ( *item_controller->find_template( itype_debug_item_search ) );
     item filtered_fake_item = set_function( filtered_fake_itype.get(), uni );
-    // pass to keep filtered_fake_itype valid until lambda capture is destroyed (while item is needed)
+
     return [filtered_fake_itype, filtered_fake_item]( const item & i ) {
         return i.can_contain( filtered_fake_item ).success();
     };
@@ -74,12 +74,12 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
         }
     }
     switch( flag ) {
-        // category
+
         case 'c':
             return [filter]( const item & i ) {
                 return lcmatch( i.get_category_of_contents().name_header(), filter );
             };
-        // material
+
         case 'm':
             return [filter]( const item & i ) {
                 return std::any_of( i.made_of().begin(), i.made_of().end(),
@@ -87,19 +87,19 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                     return lcmatch( mat.first->name(), filter );
                 } );
             };
-        // qualities
+
         case 'q':
             return [filter]( const item & i ) {
                 return i.type->has_any_quality( filter );
             };
-        // both
+
         case 'b':
             return [filter]( const item & i ) {
                 auto pair = get_both( filter );
                 return item_filter_from_string( pair.first )( i )
                        && item_filter_from_string( pair.second )( i );
             };
-        // disassembled components
+
         case 'd':
             return [filter]( const item & i ) {
                 const auto &components = i.get_uncraft_components();
@@ -110,13 +110,13 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 }
                 return false;
             };
-        // item notes
+
         case 'n':
             return [filter]( const item & i ) {
                 const std::string note = i.get_var( "item_note" );
                 return !note.empty() && lcmatch( note, filter );
             };
-        // item flags, must type in whole flag string name(case insensitive) so as to avoid revealing hidden flags.
+
         case 'f':
             return [filter]( const item & i ) {
                 std::string flag_filter = filter;
@@ -128,7 +128,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                     return false;
                 }
             };
-        // by book skill
+
         case 's':
             return [filter]( const item & i ) {
                 if( get_avatar().has_identified( i.typeId() ) ) {
@@ -136,7 +136,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 }
                 return false;
             };
-        // by can contain length
+
         case 'L': {
             return can_contain_filter<units::length>( "Failed to convert '%s' to length.\nValid examples:\n122 cm\n1101mm\n2   meter",
             filter, units::length::max(), units::length_units, []( itype * typ, units::length len ) {
@@ -146,7 +146,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 return itm;
             } );
         }
-        // by can contain volume
+
         case 'V': {
             return can_contain_filter<units::volume>( "Failed to convert '%s' to volume.\nValid examples:\n750 ml\n4L",
             filter, units::volume::max(), units::volume_units, []( itype * typ, units::volume vol ) {
@@ -154,7 +154,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 return item( typ );
             } );
         }
-        // by can contain mass
+
         case 'M': {
             return can_contain_filter<units::mass>( "Failed to convert '%s' to mass.\nValid examples:\n12 mg\n400g\n25  kg",
             filter, units::mass::max(), units::mass_units, []( itype * typ, units::mass mas ) {
@@ -162,7 +162,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 return item( typ );
             } );
         }
-        // covers bodypart
+
         case 'v': {
             std::unordered_set<bodypart_id> filtered_bodyparts;
             std::unordered_set<sub_bodypart_id> filtered_sub_bodyparts;
@@ -190,7 +190,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 } );
             };
         }
-        // covers layer
+
         case 'e': {
             std::unordered_set<layer_level> filtered_layers;
             for( layer_level layer = layer_level( 0 ); layer != layer_level::NUM_LAYER_LEVELS; ++layer ) {
@@ -205,7 +205,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 } );
             };
         }
-        // by name
+
         default:
             return [filter]( const item & a ) {
                 return lcmatch( remove_color_tags( a.tname() ), filter );

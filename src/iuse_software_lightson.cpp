@@ -32,7 +32,7 @@ void lightson_game::new_level()
 {
     win = false;
 
-    // level generation
+
     const int half_perimeter = rng( 8, 11 );
     const int lvl_width = rng( 4, 6 );
     const int lvl_height = half_perimeter - lvl_width;
@@ -49,7 +49,7 @@ void lightson_game::reset_level()
 {
     std::fill( level.begin(), level.end(), true );
 
-    // change level
+
     std::for_each( change_coords.begin(), change_coords.end(), [this]( point & p ) {
         toggle_lights_at( p );
     } );
@@ -101,7 +101,7 @@ void lightson_game::generate_change_coords( int changes )
 
             candidate.x = candidate_index % level_size.x;
             candidate.y = ( candidate_index - candidate.x ) / level_size.x;
-            // not accept repeatable coordinates
+
         } while( !( k == 0 ||
                     std::find( change_coords.begin(), change_coords.end(), candidate ) == change_coords.end() ) );
         change_coords[k] = candidate;
@@ -155,17 +155,18 @@ int lightson_game::start_game()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    // Reader adapter: the board is drawn by hand, so the generic command
-    // fallback would never publish the lights themselves. Every cell is
-    // public information in this game (there is no hidden state), so the
-    // whole board is published as one node per cell. Focusing a cell only
-    // moves the cursor and observes it; only activating a cell toggles,
-    // through the same TOGGLE_SPACE action the keyboard uses.
+
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "lightson",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.node.rfind( "lights:cell:", 0 ) == 0 ) {
+        if( intent.node.rfind( "lights:cell:", 0 ) == 0 )
+        {
             const std::string suffix =
-                intent.node.substr( std::string( "lights:cell:" ).size() );
+            intent.node.substr( std::string( "lights:cell:" ).size() );
             const std::size_t separator = suffix.find( ':' );
             if( separator == std::string::npos ) {
                 return std::nullopt;
@@ -305,13 +306,13 @@ int lightson_game::start_game()
             position.y = clamp( position.y + vec->y(), 0, level_size.y - 1 );
             position.x = clamp( position.x + vec->x(), 0, level_size.x - 1 );
             if( position == old_position && a11y::enabled() ) {
-                // the cursor is pinned at the edge, so the board
-                // does not change, the snapshot is identical and the reader
-                // would otherwise stay silent: the player cannot tell a
-                // blocked move from a gesture the game never received.
-                // Announce it at once, exactly as a blocked world step is
-                // announced. (The win still goes through its popup, so no
-                // announcement is added for it here.)
+
+
+
+
+
+
+
                 a11y::android::announce(
                     _( "At the edge: you cannot move further in that direction." ), 3 );
                 a11y::android::cue( "blocked" );

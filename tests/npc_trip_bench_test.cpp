@@ -29,8 +29,8 @@ static const itype_id itype_orange( "orange" );
 static const ter_str_id ter_t_wall_glass( "t_wall_glass" );
 static const ter_str_id ter_t_water_sh( "t_water_sh" );
 
-// run by hand with "[npc_trip_bench]"; prints one line per case and phase:
-// BENCH,case,phase,npcs,npc_turns,route_calls,ms_total,ms_per_npc_turn,steps,drinks,spins
+
+
 
 namespace
 {
@@ -43,12 +43,12 @@ struct bench_npc {
 struct phase_total {
     int turns = 0;
     double ms = 0.0;
-    // tiles walked: tells a slower phase from one that walks more
+
     int steps = 0;
-    // turns that ended with water drunk
+
     int drinks = 0;
     int route_calls = 0;
-    // spun-out turns; their time isn't real work
+
     int spins = 0;
 };
 
@@ -62,7 +62,7 @@ npc &spawn_thirsty( const tripoint_bub_ms &pos )
     return guy;
 }
 
-// fixed workload: thirst back every round, start position every reset_every rounds
+
 void restore( bench_npc &b, const int round, const int reset_every )
 {
     b.guy->stomach.empty();
@@ -113,7 +113,7 @@ void run_case( const std::string &name, std::vector<bench_npc> &npcs, const int 
 
 void bench_setup()
 {
-    // candidate scans need sight: vision on, daylight
+
     clear_map_with_vision();
     set_time_to_day();
     clear_avatar();
@@ -129,7 +129,7 @@ void lay_pond( const tripoint_bub_ms &center, const int radius )
     }
 }
 
-} // namespace
+}
 
 TEST_CASE( "npc_trip_bench", "[.][npc_trip_bench]" )
 {
@@ -147,8 +147,8 @@ TEST_CASE( "npc_trip_bench", "[.][npc_trip_bench]" )
         bench_setup();
         map &here = get_map();
         const tripoint_bub_ms start( 50, 50, 0 );
-        // each orange sealed in glass, so every candidate is routed and none reached.
-        // rings apart: an orange under another's ring wall is reachable from outside
+
+
         std::vector<tripoint_bub_ms> oranges;
         for( const tripoint_bub_ms &p : here.points_in_radius( start, 9 ) ) {
             const bool apart = std::none_of( oranges.begin(), oranges.end(),
@@ -170,7 +170,7 @@ TEST_CASE( "npc_trip_bench", "[.][npc_trip_bench]" )
         here.build_map_cache( 0 );
         std::vector<bench_npc> npcs{ { &spawn_thirsty( start ), start } };
         run_case( "drinks_behind_obstacles", npcs, rounds, 0 );
-        // the workload held: nothing was reached
+
         for( const tripoint_bub_ms &p : oranges ) {
             CAPTURE( p );
             CHECK( here.has_items( p ) );

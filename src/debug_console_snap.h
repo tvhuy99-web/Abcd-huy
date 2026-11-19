@@ -13,12 +13,12 @@ class character_id;
 namespace debug_menu::snap
 {
 
-// Snapshot factories shared by inline +M buttons and the monitor target
-// table. Each function returns a std::function<std::string()> closure that
-// produces the snapshot string when called. Closures may run many times
-// across game ticks; they must not capture stale references.
 
-// Zero-arg snapshots.
+
+
+
+
+
 std::function<std::string()> avatar_vitals();
 std::function<std::string()> avatar_pos();
 std::function<std::string()> avatar_metabolism();
@@ -44,12 +44,12 @@ std::function<std::string()> world_tile_under_feet();
 std::function<std::string()> world_items_under_feet();
 std::function<std::string()> imgui_fps();
 
-// Parameterized snapshots. Each captures its argument by value into the
-// closure so the snap survives mutation of any caller-side temporaries.
+
+
 std::function<std::string()> skill( skill_id sid );
 std::function<std::string()> proficiency_progress( proficiency_id pid );
-// Character-targeted variants: re-resolve the creature by id each tick, so a
-// monitor can track any avatar or NPC, not only the player.
+
+
 std::function<std::string()> char_vitals( character_id id );
 std::function<std::string()> char_metabolism( character_id id );
 std::function<std::string()> char_gi( character_id id );
@@ -71,15 +71,15 @@ std::function<std::string()> faction_stats( faction_id fid );
 std::function<std::string()> event_count_this_turn( int event_type_idx,
         std::string ev_name );
 std::function<std::string()> global_var( std::string vname );
-// May return an empty std::function when expr fails to parse.
+
 std::function<std::string()> math_expr( std::string expr );
 std::function<std::string()> eoc_state( effect_on_condition_id eid );
-// Used by Nearest-creature monitor: returns nullable closure that captures
-// the name of the nearest non-avatar creature at registration time and
-// then re-resolves by name every snapshot. Returns empty std::function
-// when no candidate exists.
+
+
+
+
 std::function<std::string()> nearest_creature();
 
-} // namespace debug_menu::snap
+}
 
-#endif // CATA_SRC_DEBUG_CONSOLE_SNAP_H
+#endif

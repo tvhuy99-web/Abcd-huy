@@ -26,7 +26,7 @@ class map;
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 class scent_type
 {
@@ -70,15 +70,15 @@ class scent_map
         void decay();
         void shift( const point_rel_ms &sm_shift );
 
-        /**
-         * Get the scent value at the given position.
-         * An invalid position is allows and will yield a 0 value.
-         * The coordinate system is the same as the @ref map (`g->m`) uses.
-         */
-        /**@{*/
+
+
+
+
+
+
         void set( const tripoint_bub_ms &p, int value, const scenttype_id &type = scenttype_id() );
         int get( const tripoint_bub_ms &p ) const;
-        /**@}*/
+
         void set_unsafe( const tripoint_bub_ms &p, int value, const scenttype_id &type = scenttype_id() );
         int get_unsafe( const tripoint_bub_ms &p ) const;
 
@@ -91,4 +91,4 @@ class scent_map
 
 scent_map &get_scent();
 
-#endif // CATA_SRC_SCENT_MAP_H
+#endif

@@ -22,4 +22,4 @@ using GenderMap = std::map<std::string, std::vector<std::string>>;
  */
 std::string gettext_gendered( const GenderMap &genders, const std::string &msg );
 
-#endif // CATA_SRC_TRANSLATION_GENDERED_H
+#endif

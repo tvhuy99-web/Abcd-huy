@@ -138,26 +138,26 @@ TEST_CASE( "display_name_includes_item_contents", "[item][display_name][contents
     clear_avatar();
 
     item arrow( itype_test_arrow_wood, calendar::turn_zero, item::default_charges_tag{} );
-    // Arrows are ammo with a default count of 10
+
     REQUIRE( arrow.is_ammo() );
     REQUIRE( arrow.count() == 10 );
 
     item quiver( itype_test_quiver );
-    // Quivers are not magazines, nor do they have magazines
+
     REQUIRE_FALSE( quiver.is_magazine() );
     REQUIRE_FALSE( quiver.magazine_current() );
-    // But they do have ammo types and can contain ammo
+
     REQUIRE_FALSE( quiver.ammo_types().empty() );
     REQUIRE( quiver.can_contain( arrow ).success() );
 
-    // Check empty quiver display
+
     CHECK( quiver.display_name() ==
            "<color_c_green>++</color>\u00A0"
            "test quiver (0)" );
 
-    // Insert one arrow
+
     quiver.put_in( arrow, pocket_type::CONTAINER );
-    // Expect 1 arrow remaining and displayed
+
     CHECK( quiver.ammo_remaining( ) == 10 );
     std::string const arrow_color = get_tag_from_color( arrow.color_in_inventory() );
     std::string const color_end_tag = "</color>";

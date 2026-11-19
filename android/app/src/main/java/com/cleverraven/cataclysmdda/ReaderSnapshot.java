@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Immutable semantic copy. No native object handles or hidden gameplay state. */
+
 public final class ReaderSnapshot {
-    // Structural guardrails mirroring a11y_semantics.h (R02.4). A snapshot
-    // beyond these limits is malformed, never silently truncated.
+
+
     public static final int MAX_NODES = 4096;
     public static final int MAX_TABLES = 16;
     public static final int MAX_COLUMNS = 16;
@@ -31,14 +31,14 @@ public final class ReaderSnapshot {
     public final String summary;
     public final String category;
     public final String focus;
-    /** Engine permission for walking swipe gestures (R00.2); absent means denied. */
+
     public final boolean swipeMovementAllowed;
     public final List<Table> tables;
     public final List<Node> nodes;
     private final Map<String, Table> tablesById;
     private final Map<String, Node> nodesById;
 
-    /** One table column declaration (R02.2). */
+
     public static final class Column {
         public final String id;
         public final String header;
@@ -51,7 +51,7 @@ public final class ReaderSnapshot {
         }
     }
 
-    /** A declared table: its rows are nodes whose tableId names it. */
+
     public static final class Table {
         public final String id;
         public final List<Column> columns;
@@ -88,7 +88,7 @@ public final class ReaderSnapshot {
         }
     }
 
-    /** One presentation cell of a table row node (R02.2). Never actionable. */
+
     public static final class Cell {
         public final String column;
         public final String value;
@@ -103,7 +103,7 @@ public final class ReaderSnapshot {
         }
     }
 
-    /** One selectable value of a form field (R02.3). */
+
     public static final class Choice {
         public final String value;
         public final String label;
@@ -115,7 +115,7 @@ public final class ReaderSnapshot {
     }
 
     public static final class Node {
-        /** Local-only commands never pass through the native action gate. */
+
         static Node localCommand(String id, String label) {
             try {
                 return new Node(new JSONObject().put("id", id)
@@ -142,16 +142,16 @@ public final class ReaderSnapshot {
         public final int position;
         public final int total;
         public final List<String> actions;
-        // Tree contract (R02.1); depth -1 means a flat node.
+
         public final String parentId;
         public final int depth;
         public final boolean hasChildren;
         public final boolean expanded;
-        // Table contract (R02.2); tableId empty means not a row.
+
         public final String tableId;
         public final int rowIndex;
         public final List<Cell> cells;
-        // Form contract (R02.3); fieldType empty means not a field.
+
         public final String fieldType;
         public final String appliedValue;
         public final boolean hasFieldRange;
@@ -251,7 +251,7 @@ public final class ReaderSnapshot {
             }
         }
 
-        /** The raw value a draft edit starts from: the draft if one is pending. */
+
         public String effectiveRawValue() {
             return hasDraft ? draftValue : appliedValue;
         }
@@ -311,10 +311,10 @@ public final class ReaderSnapshot {
         validateStructure();
     }
 
-    // Mirrors a11y::validate_snapshot: a structurally impossible snapshot is
-    // malformed here too, so the controller can never navigate a tree with
-    // a missing parent, address a row of an undeclared table, or edit a
-    // draft that references an unknown field (R02.4).
+
+
+
+
     private void validateStructure() throws JSONException {
         Set<String> parentsWithChildren = new HashSet<>();
         for (Node node : nodes) {
@@ -386,7 +386,7 @@ public final class ReaderSnapshot {
                 return value;
             }
         } catch (NumberFormatException ignored) {
-            // Report a malformed snapshot, never truncate an identity.
+
         }
         throw new JSONException("Invalid semantic token: " + key);
     }

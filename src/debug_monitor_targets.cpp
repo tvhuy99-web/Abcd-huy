@@ -16,8 +16,8 @@
 namespace debug_menu
 {
 
-// Tolerates spaces around commas; nullopt if fewer than two integers
-// could be tokenized. Three forms accepted: "x,y", "x,y,z", trailing comma.
+
+
 static std::optional<tripoint_rel_ms> parse_rel_coord( std::string_view s )
 {
     int v[3] = { 0, 0, 0 };
@@ -325,4 +325,4 @@ const std::vector<monitor_target_entry> &all_monitor_targets()
     return table;
 }
 
-} // namespace debug_menu
+}

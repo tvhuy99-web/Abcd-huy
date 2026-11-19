@@ -34,7 +34,7 @@ class building_bin
         bool finalized = false; // NOLINT(cata-serialize)
     public:
         building_bin() = default;
-        //TODO: remove add
+
         void add( const overmap_special_id &building, int weight );
         overmap_special_id pick() const;
         std::vector<std::string> all; // NOLINT(cata-serialize)
@@ -56,13 +56,13 @@ struct region_settings_city {
     int city_size = 8;
     int city_spacing = 4;
 
-    // About the average US city non-residential, non-park land usage
+
     int shop_radius = 30;
     int shop_sigma = 20;
 
-    // Set the same as shop radius, let parks bleed through via normal rolls
+
     int park_radius = shop_radius;
-    // We'll spread this out to the rest of the town.
+
     int park_sigma = 100 - park_radius;
 
     std::string name_snippet = "<city_name>";
@@ -102,20 +102,20 @@ struct region_settings_city {
     void finalize();
 };
 
-/*
- * template for random bushes and such.
- * supports occasional boost to a single ter/furn type (clustered blueberry bushes for example)
- * json: double percentages (region statistics)and str ids, runtime int % * 1mil and int ids
- */
+
+
+
+
+
 struct groundcover_extra {
-    // TODO: make into something more generic for other stuff (maybe)
+
     std::string                   default_ter_str;
     std::map<std::string, double> percent_str;
     std::map<std::string, double> boosted_percent_str;
     std::map<int, ter_furn_id>    weightlist;
     std::map<int, ter_furn_id>    boosted_weightlist;
     ter_id default_ter               = t_null;
-    int mpercent_coverage         = 0; // % coverage where this is applied (*10000)
+    int mpercent_coverage         = 0;
     int boost_chance              = 0;
     int boosted_mpercent_coverage = 0;
     int boosted_other_mpercent    = 1;
@@ -150,7 +150,7 @@ struct forest_biome_terrain_dependent_furniture_new {
     forest_biome_terrain_dependent_furniture_new() = default;
 };
 
-/** Defines forest mapgen */
+
 struct forest_biome_mapgen {
     forest_biome_mapgen_id id = forest_biome_mapgen_id::NULL_ID();
 
@@ -174,12 +174,12 @@ struct forest_biome_mapgen {
     forest_biome_mapgen() = default;
 };
 
-/** Defines forest mapgen for a given OMT in a given region */
+
 struct region_settings_forest_mapgen {
     region_settings_forest_mapgen_id id = region_settings_forest_mapgen_id::NULL_ID();
 
     std::set<forest_biome_mapgen_id> biomes;
-    //use for convenience
+
     std::map<oter_type_id, forest_biome_mapgen_id> oter_to_biomes;
 
     bool was_loaded = false;
@@ -229,9 +229,9 @@ struct region_settings_forest {
     int river_floodplain_buffer_distance_min = 3;
     int river_floodplain_buffer_distance_max = 15;
 
-    // hard to generate cities above 0.4
+
     float max_forest;
-    // increase nesw
+
     std::array<float, 4> forest_increase;
 
     bool was_loaded = false;
@@ -405,7 +405,7 @@ struct region_settings_map_extras {
     region_settings_map_extras_id id = region_settings_map_extras_id::NULL_ID();
     std::set<map_extra_collection_id> extras;
 
-    //returns every map extra in this collection regardless of weight
+
     std::set<map_extra_id> get_all_map_extras() const;
 
     bool was_loaded = false;
@@ -414,7 +414,7 @@ struct region_settings_map_extras {
     static void reset();
 };
 
-/** Collection of `region_terrain_furniture` mappings */
+
 struct region_settings_terrain_furniture {
     region_settings_terrain_furniture_id id = region_settings_terrain_furniture_id::NULL_ID();
 
@@ -431,10 +431,10 @@ struct region_settings_terrain_furniture {
     static void reset();
 };
 
-/**
-* Maps abstract region terrain/furniture (e.g. `t_region_groundcover`) to
-* actual region terrain/furniture (e.g. `t_grass`) with a weighted list
-*/
+
+
+
+
 struct region_terrain_furniture {
     region_terrain_furniture_id id = region_terrain_furniture_id::NULL_ID();
 
@@ -453,14 +453,14 @@ struct region_terrain_furniture {
     static void reset();
 };
 
-/*
- * Spatially relevant overmap and mapgen variables grouped into a set of suggested defaults;
- * eventually region mapping will modify as required and allow for transitions of biomes / demographics in a smooth fashion
- */
+
+
+
+
 struct region_settings {
     region_settings_id id = region_settings_id::NULL_ID();
     std::array<oter_str_id, OVERMAP_LAYERS> default_oter;
-    weighted_int_list<ter_id> default_groundcover; // i.e., 'grass_or_dirt'
+    weighted_int_list<ter_id> default_groundcover;
     shared_ptr_fast<weighted_int_list<ter_str_id>> default_groundcover_str;
 
     std::optional<region_settings_city_id> city_spec;
@@ -487,7 +487,7 @@ struct region_settings {
     double npc_spawn_time;
 
     float max_urban;
-    // increase nesw
+
     std::array<float, 4> urban_increase;
 
 
@@ -582,4 +582,4 @@ struct region_settings {
     static void reset();
 };
 
-#endif // CATA_SRC_REGIONAL_SETTINGS_H
+#endif

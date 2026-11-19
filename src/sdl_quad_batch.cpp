@@ -33,8 +33,8 @@ void quad_batch::append_quad( const float x, const float y, const float w, const
 void quad_batch::append_textured_quad( const SDL_Rect &dst, const SDL_Rect &src,
                                        const int tex_w, const int tex_h, const SDL_FColor &color )
 {
-    // divide each edge instead of adding a scaled width so that neither edge
-    // inherits the other's rounding
+
+
     append( static_cast<float>( dst.x ), static_cast<float>( dst.y ),
             static_cast<float>( dst.w ), static_cast<float>( dst.h ), color,
             static_cast<float>( src.x ) / tex_w, static_cast<float>( src.y ) / tex_h,
@@ -135,8 +135,8 @@ void text_batch::flush( const SDL_Renderer_Ptr &renderer )
         render_quad_batch( renderer, glyphs_[i].second, glyphs_[i].first );
     }
     rects_.clear();
-    // keep buffers for each group, only drop the texture it pointed at (which a
-    // renderer recovery may destroy before the next pass)
+
+
     for( size_t i = 0; i < active_groups_; ++i ) {
         glyphs_[i].first = nullptr;
         glyphs_[i].second.clear();
@@ -144,4 +144,4 @@ void text_batch::flush( const SDL_Renderer_Ptr &renderer )
     active_groups_ = 0;
 }
 
-#endif // TILES
+#endif

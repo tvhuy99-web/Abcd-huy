@@ -22,8 +22,7 @@ class WorldGestureContracts(unittest.TestCase):
         )[0]
         self.assertIn("snapshot.swipeMovementAllowed", guard)
         self.assertIn("hasCardinalDirections(snapshot)", guard)
-        # Manual map swipes remain available, but the same one-finger
-        # movement MUST be locked while ACT_AUTODRIVE owns the car.
+
         self.assertIn("return !combatMode && !vehicleMode && !autonomousDriveTrip", guard)
         self.assertIn("&& worldStepAllowed();", guard)
         self.assertNotIn("preferences.isFastMovementEnabled()", guard)
@@ -78,9 +77,7 @@ class WorldGestureContracts(unittest.TestCase):
             self.assertIn('"reader:scan:' + direction + '"', controller)
             self.assertIn('"Scan 30 tiles ' + direction + '"', world)
             self.assertIn('intent.node == "reader:scan:' + direction + '"', handler)
-        # The handler dispatches every side through one generic branch, so
-        # the side literals live in the world snapshot; the octant math
-        # lives in announce_vehicle_relative_scan in the world file.
+
         self.assertIn('intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0', handler)
         self.assertIn("a11y::announce_vehicle_relative_scan(", handler)
         for direction in ("front", "back", "left", "right"):
@@ -100,8 +97,7 @@ class WorldGestureContracts(unittest.TestCase):
         reader = world.split("void announce_player_coordinates()", 1)[1].split(
             "semantic_snapshot activity_snapshot(", 1
         )[0]
-        # The player's absolute X/Y/Z remain the existing numbers. The
-        # overmap name is optional, drawn only from previously known data.
+
         self.assertIn('_( "Coordinates.  X %1$d. Y %2$d. Z %3$d." )', reader)
         self.assertIn("viewer.pos_abs_omt()", reader)
         self.assertIn("overmap_buffer.seen( omt )", reader)
@@ -111,8 +107,7 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("terrain.is_valid()", reader)
         self.assertIn("terrain->get_name( vision )", reader)
         self.assertIn('_( "Area: %1$s. %2$s" )', reader)
-        # d9c2b55 routes the explicit location query through the
-        # A11Y_QUERY channel so it preempts other speech while driving.
+
         self.assertIn('a11y::android::announce( "A11Y_QUERY:" + spoken, 1 );', reader)
         po = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
         self.assertIn('msgid "Area: %1$s. %2$s"', po)

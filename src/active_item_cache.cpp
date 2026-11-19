@@ -60,18 +60,18 @@ bool active_item_cache::add( item &it, point_rel_ms location, item *parent,
     std::unordered_map<item *, safe_reference<item>> &target_index = active_items_index[speed];
     std::list<item_reference> &target_list = active_items[speed];
     if( target_index.empty() && !target_list.empty() ) {
-        // If the index has been cleared, rebuild it first.
+
         for( item_reference &iter : target_list ) {
-            // Omit those expired references
+
             if( iter.item_ref ) {
                 target_index.emplace( iter.item_ref.get(), iter.item_ref );
             }
         }
     }
-    // If the item is already in the cache for some reason, don't add a second reference
+
     auto iter = target_index.find( &it );
     if( iter != target_index.end() ) {
-        // Ensure it's really what we want, and hasn't expired
+
         if( iter->second && iter->second.get() == &it ) {
             return true;
         }
@@ -120,7 +120,7 @@ std::vector<item_reference> active_item_cache::get_for_processing()
         return prev + kv.second.size() / static_cast<size_t>( kv.first );
     } ) );
     for( std::pair<const int, std::list<item_reference>> &kv : active_items ) {
-        // Rely on iteration logic to make sure the number is sane.
+
         int num_to_process = kv.second.size() / kv.first;
         std::list<item_reference>::iterator it = kv.second.begin();
         for( ; it != kv.second.end() && num_to_process >= 0; ) {
@@ -129,13 +129,13 @@ std::vector<item_reference> active_item_cache::get_for_processing()
                 --num_to_process;
                 ++it;
             } else {
-                // The item has been destroyed, so remove the reference from the cache
+
                 active_items_index[kv.first].clear();
                 it = kv.second.erase( it );
             }
         }
-        // Rotate the returned items to the end of their list so that the items that weren't
-        // returned this time will be first in line on the next call
+
+
         kv.second.splice( kv.second.end(), kv.second, kv.second.begin(), it );
     }
     return items_to_process;
@@ -169,7 +169,7 @@ void active_item_cache::rotate_locations( int turns, const point_rel_ms &dim )
 {
     for( std::pair<const int, std::list<item_reference>> &pair : active_items ) {
         for( item_reference &ir : pair.second ) {
-            // Should 'rotate' be propaged up to the typed coordinates?
+
             ir.location = ir.location.rotate( turns, dim.raw() );
         }
     }

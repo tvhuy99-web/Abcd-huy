@@ -24,7 +24,7 @@
 #include "sdl_wrappers.h"
 #include "sdltiles.h"
 
-// Characterization: pins what draw_window paints for TrueType and bitmap fonts.
+
 
 namespace
 {
@@ -40,12 +40,12 @@ constexpr int canvas_w = win_cols * cell_w;
 constexpr int canvas_h = win_rows * cell_h;
 constexpr SDL_Color sentinel = { 0xFF, 0x00, 0xFF, 0xFF };
 
-const std::string cjk_middle = "中";     // two cells wide
-const std::string box_horizontal = "─"; // LINE_OXOX
-const std::string box_vertical = "│";   // LINE_XOXO
+const std::string cjk_middle = "中";
+const std::string box_horizontal = "─";
+const std::string box_vertical = "│";
 
-// Unifont glyphs rasterize to opaque/clear pixels only, even blended; Roboto
-// has antialiased edges, so blended runs exercise partial alpha
+
+
 const std::string typeface_unifont = "unifont.ttf";
 const std::string typeface_roboto = "Roboto-Medium.ttf";
 
@@ -91,7 +91,7 @@ const std::vector<cell_spec> &test_cells()
         { point( 5, 1 ), box_horizontal, 8, 7 },
         { point( 0, 2 ), " ", 7, 9 },
         { point( 1, 2 ), "Q", 1, 14 },
-        // stays under the right half of the wide glyph the wrap writes below
+
         { point( 1, 3 ), "k", 5, 6 },
         { point( 7, 3 ), "z", 4, 0 },
     };
@@ -107,15 +107,15 @@ void put_cell( const catacurses::window &w, const cell_spec &c )
     cell.BG = static_cast<catacurses::base_color>( c.bg );
 }
 
-// wide glyph in the last column wraps: printstring moves it to column 0 of the
-// next row and leaves column 1 as is, so that cell draws over the glyph's right
-// half
+
+
+
 void wrap_wide_glyph( const catacurses::window &w )
 {
     catacurses::mvwprintw( w, point( win_cols - 1, 2 ), cjk_middle );
 }
 
-// Software canvas composed with SDL's own blitter in draw_window's order.
+
 class oracle_canvas
 {
     public:
@@ -135,8 +135,8 @@ class oracle_canvas
             FillRect( canvas_, &r, MapRGBA( canvas_, c.r, c.g, c.b, c.a ) );
         }
 
-        // glyph cell rule: each axis centred in the cw x h cell, a larger
-        // source cropped from its centre, copied without blending.
+
+
         void glyph( const std::string &ch, const point &at, const int fg ) {
             const SDL_Color color = pal_[fg & 0xf];
             SDL_Surface_Ptr src = blending_ ? RenderUTF8_Blended( font_, ch.c_str(), color )
@@ -178,7 +178,7 @@ class oracle_canvas
 
         const palette_t &pal_;
         bool blending_;
-        // texels of composed glyph cells with 0 < alpha < 255
+
         int partial_alpha_texels = 0;
 
     private:
@@ -202,7 +202,7 @@ class oracle_canvas
         TTF_Font_Ptr font_;
 };
 
-// font's box line rects, for the two line glyphs used here.
+
 void oracle_line( oracle_canvas &o, const std::string &ch, const point &at, const int fg )
 {
     const SDL_Color c = o.pal_[fg];
@@ -213,8 +213,8 @@ void oracle_line( oracle_canvas &o, const std::string &ch, const point &at, cons
     }
 }
 
-// draw_window order: per row a black line clear, then per cell its background
-// and then its glyph or line
+
+
 void compose_expected( oracle_canvas &o, const catacurses::window &w, const bool ascii_routine )
 {
     const cata_cursesport::WINDOW *win = w.get<cata_cursesport::WINDOW>();
@@ -274,14 +274,14 @@ void clear_to_sentinel()
     RenderClear( get_sdl_renderer() );
 }
 
-} // namespace
+}
 
 TEST_CASE( "draw_window_matches_ttf_glyph_oracle", "[tiles][sdl_font]" )
 {
     const std::string face = GENERATE( typeface_unifont, typeface_roboto );
     const bool blending = GENERATE( false, true );
     const bool ascii_routine = GENERATE( false, true );
-    // software renderer draws immediately, forcing the atlas covers the batched path
+
     const bool atlas = GENERATE( false, true );
     CAPTURE( face, blending, ascii_routine, atlas );
 
@@ -308,15 +308,15 @@ TEST_CASE( "draw_window_matches_ttf_glyph_oracle", "[tiles][sdl_font]" )
         }
         wrap_wide_glyph( w );
         const cata_cursesport::WINDOW *win = w.get<cata_cursesport::WINDOW>();
-        // layout this case rests on: the writer's wrap branch left the cell
-        // under the glyph's right half occupied
+
+
         REQUIRE( win->line[3].chars[0].ch == cjk_middle );
         REQUIRE( win->line[3].chars[1].ch == "k" );
         oracle_canvas expected( typeface, windowsPalette, blending );
         REQUIRE( expected.ready() );
         compose_expected( expected, w, ascii_routine );
         if( blending && face == typeface_roboto ) {
-            // otherwise blended runs never reach the partial-alpha math
+
             REQUIRE( expected.partial_alpha_texels > 0 );
         }
 
@@ -326,9 +326,9 @@ TEST_CASE( "draw_window_matches_ttf_glyph_oracle", "[tiles][sdl_font]" )
             const std::vector<Uint32> actual = read_canvas( canvas_w, canvas_h );
 
             THEN( "every pixel matches the oracle" ) {
-                // Solid glyph texels are opaque or clear, so exact. Blended
-                // edges go through SDL's blitter here and the renderer's blend
-                // in the draw, which may round one step apart.
+
+
+
                 const int tolerance = blending ? 1 : 0;
                 int mismatches = 0;
                 point first_bad = point::north_west;
@@ -357,8 +357,8 @@ TEST_CASE( "draw_window_matches_ttf_glyph_oracle", "[tiles][sdl_font]" )
 
 TEST_CASE( "draw_window_paints_a_npot_bitmap_font_glyph", "[tiles][sdl_font]" )
 {
-    // window format on common desktops; build_textures recolors only texels
-    // that read 0xFFFFFF in it
+
+
     const Uint32 format = SDL_PIXELFORMAT_XRGB8888;
     const bool atlas = GENERATE( false, true );
     CAPTURE( atlas );
@@ -414,4 +414,4 @@ TEST_CASE( "draw_window_paints_a_npot_bitmap_font_glyph", "[tiles][sdl_font]" )
     }
 }
 
-#endif // TILES
+#endif

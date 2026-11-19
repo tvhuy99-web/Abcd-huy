@@ -209,7 +209,7 @@ static npc create_model()
     model_npc.set_thirst( 0 );
     model_npc.set_sleepiness( 0 );
     model_npc.remove_effect( effect_sleep );
-    // An ugly hack to prevent NPC falling asleep during testing due to massive sleepiness
+
     model_npc.set_mutation( trait_WEB_WEAVER );
 
     return model_npc;
@@ -269,12 +269,12 @@ TEST_CASE( "on_load-sane-values", "[.]" )
         test_npc.add_effect( effect_sleep, 6_hours );
         test_npc.set_sleepiness( 1000 );
         const double five_min_ticks = 6_hours / 5_minutes;
-        /*
-        // sleepiness regeneration starts at 1 per 5min, but linearly increases to 2 per 5min at 2 hours or more
-        const int expected_sleepiness_change =
-            ((1.0f + 2.0f) / 2.0f * 2_hours / 5_minutes ) +
-            (2.0f * (6_hours - 2_hours) / 5_minutes);
-        */
+
+
+
+
+
+
         on_load_test( test_npc, 0_turns, 5_minutes * five_min_ticks );
 
         const int margin = 10;
@@ -327,7 +327,7 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
 
 TEST_CASE( "snippet-tag-test" )
 {
-    // Actually used tags
+
     static const std::set<std::string> npc_talk_tags = {
         {
             "<name_b>", "<name_g>", "<hungry>", "<thirsty>",
@@ -346,7 +346,7 @@ TEST_CASE( "snippet-tag-test" )
         }
     }
 
-    // Special tags, those should have no replacements
+
     static const std::set<std::string> special_tags = {
         {
             "<yrwp>", "<mywp>", "<ammo>"
@@ -360,12 +360,12 @@ TEST_CASE( "snippet-tag-test" )
     }
 }
 
-/* Test setup. Player should always be at top-left.
- *
- * U is the player, V is vehicle, # is wall, R is rubble & acid with NPC on it,
- * A is acid with NPC on it, W/M is vehicle & acid with (follower/non-follower) NPC on it,
- * B/C is acid with (follower/non-follower) NPC on it.
- */
+
+
+
+
+
+
 static constexpr int height = 5, width = 17;
 // NOLINTNEXTLINE(cata-use-mdarray,modernize-avoid-c-arrays)
 static constexpr char setup[height][width + 1] = {
@@ -495,27 +495,27 @@ TEST_CASE( "npc-board-player-vehicle" )
             REQUIRE( companion->path_settings->allow_open_doors );
             REQUIRE( companion->path_settings->allow_unlock_doors );
 
-            /* Uncomment for some extra info when test fails
-            debug_mode = true;
-            debugmode::enabled_filters.clear();
-            debugmode::enabled_filters.emplace( debugmode::DF_NPC );
-            REQUIRE( debugmode::enabled_filters.size() == 1 );
-            */
+
+
+
+
+
+
 
             int turns = 0;
             while( turns++ < 100 && companion->pos_bub() != data.npc_target ) {
                 companion->set_moves( 100 );
-                /* Uncommment for extra debug info
-                tripoint npc_pos = companion->pos();
-                optional_vpart_position vp = here.veh_at( npc_pos );
-                vehicle *veh = veh_pointer_or_null( vp );
-                add_msg( m_info, "%s is at %d %d %d and sees t: %s, f: %s, v: %s (%s)",
-                         companion->name, npc_pos.x, npc_pos.y, npc_pos.z,
-                         here.tername( npc_pos ),
-                         here.furnname( npc_pos ),
-                         vp ? remove_color_tags( vp->part_displayed()->part().name() ) : "",
-                         veh ? veh->name : " " );
-                */
+
+
+
+
+
+
+
+
+
+
+
                 companion->move();
             }
 
@@ -577,14 +577,14 @@ TEST_CASE( "npc-movement" )
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
             const tripoint_bub_ms p = player_character.pos_bub() + point( x, y );
-            // create walls
+
             if( type == '#' ) {
                 here.ter_set( p, t_wall_metal );
             } else {
                 here.ter_set( p, t_floor );
             }
-            // spawn acid
-            // a copy is needed because we will remove elements from it
+
+
             const field fs = here.field_at( p );
             for( const auto &f : fs ) {
                 here.remove_field( p, f.first );
@@ -594,13 +594,13 @@ TEST_CASE( "npc-movement" )
 
                 here.add_field( p, fd_acid, 3 );
             }
-            // spawn rubbles
+
             if( type == 'R' ) {
                 here.furn_set( p, f_rubble );
             } else {
                 here.furn_set( p, furn_str_id::NULL_ID() );
             }
-            // create vehicles
+
             if( type == 'V' || type == 'W' || type == 'M' ) {
                 vehicle *veh = here.add_vehicle( vehicle_prototype_none, p, 270_degrees, 0,
                                                  veh_spawn_status::UNDAMAGED );
@@ -609,7 +609,7 @@ TEST_CASE( "npc-movement" )
                 veh->install_part( here, point_rel_ms::zero, vpart_seat );
                 here.add_vehicle_to_cache( veh );
             }
-            // spawn npcs
+
             if( type == 'A' || type == 'R' || type == 'W' || type == 'M'
                 || type == 'B' || type == 'C' ) {
 
@@ -621,9 +621,9 @@ TEST_CASE( "npc-movement" )
                 } );
                 REQUIRE( !guy->is_immune_field( fd_acid ) );
                 guy->spawn_at_precise( get_map().get_abs( p ) );
-                // Set the shopkeep mission; this means that
-                // the NPC deems themselves to be guarding and stops them
-                // wandering off in search of distant ammo caches, etc.
+
+
+
                 guy->mission = NPC_MISSION_SHOPKEEP;
                 overmap_buffer.insert_npc( guy );
                 g->load_npcs();
@@ -632,7 +632,7 @@ TEST_CASE( "npc-movement" )
         }
     }
 
-    // check preconditions
+
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
@@ -734,12 +734,12 @@ TEST_CASE( "npc_uses_guns", "[npc_ai]" )
     hostile.set_attitude( NPCATT_KILL );
     hostile.name = "Enemy NPC";
     arm_shooter( hostile, itype_M24 );
-    // Give them an excuse to use it by making them aware the player (an enemy) exists
+
     arm_shooter( player_character, itype_M24 );
     hostile.regen_ai_cache();
     float danger_around = hostile.danger_assessment();
     CHECK( danger_around > 1.0f );
-    // Now give them a TON of junk
+
     for( item &some_trash : item_group::items_from( Item_spawn_data_SUS_trash_forest_manmade ) ) {
         hostile.i_add( some_trash );
     }
@@ -775,10 +775,10 @@ TEST_CASE( "npc_prefers_guns", "[npc_ai]" )
     hostile.name = "Enemy NPC";
     item backpack( itype_debug_backpack );
     hostile.wear_item( backpack );
-    // Give them a bat and a belt
+
     hostile.i_add( item( itype_leather_belt ) );
     hostile.i_add( item( itype_bat ) );
-    // Make them realize we exist and COULD maybe hurt them! Or something. Otherwise they won't re-wield.
+
     arm_shooter( player_character, itype_M24 );
     hostile.regen_ai_cache();
     float danger_around = hostile.danger_assessment();
@@ -789,14 +789,14 @@ TEST_CASE( "npc_prefers_guns", "[npc_ai]" )
     REQUIRE( hostile.get_wielded_item() );
     CAPTURE( hostile.get_wielded_item().get_item()->tname() );
     CHECK( !hostile.get_wielded_item().get_item()->is_gun() );
-    // Now give them a gun and some magazines
+
     for( item &some_gun_item : item_group::items_from( Item_spawn_data_test_NPC_guns ) ) {
         hostile.i_add( some_gun_item );
     }
     hostile.wield_better_weapon();
     CHECK( hostile.get_wielded_item().get_item()->is_gun() );
 
-    //Now give them some time to choose their belt instead
+
     advance_turn( hostile );
     advance_turn( hostile );
     advance_turn( hostile );
@@ -827,7 +827,7 @@ TEST_CASE( "npc_extracts_weapon_from_wielded_container", "[npc_ai]" )
     hostile.set_attitude( NPCATT_KILL );
     hostile.name = "Enemy NPC";
 
-    // Wield a non-melee container with a melee weapon inside
+
     item backpack( itype_debug_backpack );
     backpack.force_insert_item( item( itype_bat ), pocket_type::CONTAINER );
     REQUIRE( !backpack.empty() );
@@ -835,29 +835,29 @@ TEST_CASE( "npc_extracts_weapon_from_wielded_container", "[npc_ai]" )
     REQUIRE( hostile.get_wielded_item() );
     REQUIRE( !hostile.get_wielded_item()->is_melee() );
 
-    // Trigger danger awareness so the NPC considers switching weapons
+
     arm_shooter( player_character, itype_M24 );
     hostile.regen_ai_cache();
     CHECK( hostile.danger_assessment() > 1.0f );
 
-    // evaluate_best_weapon should find the bat inside the backpack
+
     item *best = hostile.evaluate_best_weapon();
     item_location wielded = hostile.get_wielded_item();
     CHECK( best != wielded.get_item() );
     CHECK( best->typeId() == itype_bat );
 
-    // wield_better_weapon should extract the bat and wield it
+
     hostile.wield_better_weapon();
     REQUIRE( hostile.get_wielded_item() );
     CHECK( hostile.get_wielded_item()->typeId() == itype_bat );
 
-    // The backpack should no longer be wielded
+
     CHECK( hostile.get_wielded_item()->typeId() != itype_debug_backpack );
 }
 
 TEST_CASE( "npc_needs_bt_diagnostic_during_move", "[npc][behavior]" )
 {
-    // RAII: save and restore debug globals so later tests are unaffected
+
     restore_on_out_of_scope<bool> restore_debug( debug_mode );
     restore_on_out_of_scope<std::unordered_set<debugmode::debug_filter>>
             restore_filters( debugmode::enabled_filters );
@@ -866,7 +866,7 @@ TEST_CASE( "npc_needs_bt_diagnostic_during_move", "[npc][behavior]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy );
 
-    // Make NPC hungry with food available
+
     guy.set_hunger( 500 );
     guy.set_stored_kcal( 1000 );
     guy.i_add( item( itype_sandwich_cheese_grilled ) );
@@ -886,7 +886,7 @@ TEST_CASE( "npc_needs_bt_diagnostic_during_move", "[npc][behavior]" )
             if( msg.second.find( "BT needs goal" ) != std::string::npos ) {
                 found_bt_msg = true;
                 CHECK( msg.second.find( "eat_food" ) != std::string::npos );
-                // Convergence: legacy need should appear in the same message
+
                 CHECK( msg.second.find( "need_food" ) != std::string::npos );
                 break;
             }
@@ -897,7 +897,7 @@ TEST_CASE( "npc_needs_bt_diagnostic_during_move", "[npc][behavior]" )
     SECTION( "filter absent - no BT evaluation" ) {
         debug_mode = true;
         debugmode::enabled_filters.clear();
-        // DF_NPC_NEEDS deliberately NOT added
+
 
         Messages::clear_messages();
         guy.set_moves( 100 );
@@ -916,58 +916,58 @@ TEST_CASE( "npc_eats_food_with_harmless_iuse", "[npc][food]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy );
 
-    // Make NPC hungry enough that rate_food scores positively
+
     guy.set_hunger( 300 );
     guy.set_stored_kcal( 5000 );
     guy.set_thirst( 0 );
 
-    // Items with use_methods that NPCs SHOULD eat:
+
     SECTION( "eats honeycomb" ) {
-        // harmless iuse -- spawns wax, good nutrition
+
         guy.i_add( item( itype_honeycomb ) );
         CHECK( guy.consume_food() );
     }
 
     SECTION( "eats weed brownies" ) {
-        // WEED_CAKE iuse -- small debuff, but edible food
+
         guy.i_add( item( itype_space_cake ) );
         CHECK( guy.consume_food() );
     }
 
-    // Items without use_methods that are still rejected by other checks:
+
     SECTION( "refuses raw meat" ) {
-        // parasites field -- caught by parasites check, not use_methods
+
         guy.i_add( item( itype_meat ) );
         CHECK_FALSE( guy.consume_food() );
     }
 
-    // Items with use_methods that NPCs should NOT eat:
+
     SECTION( "refuses tainted meat" ) {
-        // POISON iuse -- zed meat, tainted organs
+
         guy.i_add( item( itype_meat_tainted ) );
         CHECK_FALSE( guy.consume_food() );
     }
 
     SECTION( "refuses marloss berry" ) {
-        // MARLOSS and MYCUS_OK flags -- fungal transformation
+
         guy.i_add( item( itype_marloss_berry ) );
         CHECK_FALSE( guy.consume_food() );
     }
 
     SECTION( "refuses marloss gel" ) {
-        // MARLOSS flag -- fungal transformation, no MYCUS_OK flag
+
         guy.i_add( item( itype_marloss_gel ) );
         CHECK_FALSE( guy.consume_food() );
     }
 
     SECTION( "refuses mutagen" ) {
-        // consume_drug iuse, MED type -- player-controlled mutation
+
         guy.i_add( item( itype_mutagen ) );
         CHECK_FALSE( guy.consume_food() );
     }
 
     SECTION( "saprovore eats tainted meat" ) {
-        // Saprovore mutation allows eating parasitic/tainted food
+
         guy.set_mutation( trait_SAPROVORE );
         guy.i_add( item( itype_meat_tainted ) );
         CHECK( guy.consume_food() );
@@ -991,10 +991,10 @@ TEST_CASE( "npc_no_food_mod_suppresses_complaints", "[npc][needs]" )
     guy.set_attitude( NPCATT_FOLLOW );
     guy.set_fac( faction_your_followers );
 
-    guy.set_hunger( 300 );   // well above NPC_HUNGER_COMPLAIN (160)
-    guy.set_thirst( 200 );   // well above NPC_THIRST_COMPLAIN (80)
+    guy.set_hunger( 300 );
+    guy.set_thirst( 200 );
 
-    // Assert the exact preconditions that npc::complain() checks
+
     REQUIRE( guy.is_player_ally() );
     REQUIRE( get_player_view().sees( get_map(), guy ) );
 
@@ -1042,9 +1042,9 @@ TEST_CASE( "npc_saprovore_eats_rotten_food", "[npc][food]" )
     }
 }
 
-// npc_action enum values (npc_noop, npc_undecided, etc.) are defined in
-// npcmove.cpp, not exposed in a header. Tests assert NPC state changes
-// (worn items, position) rather than return codes.
+
+
+
 TEST_CASE( "npc_warmth_response_in_address_needs", "[npc]" )
 {
     clear_map_without_vision();
@@ -1152,11 +1152,11 @@ TEST_CASE( "npc_warmth_response_in_address_needs", "[npc]" )
     }
 
     SECTION( "freezing NPC wears clothes during combat retreat" ) {
-        // Wearing fires even when address_needs() is called from
-        // move_away_from() with elevated danger. The NPC spends one
-        // turn wearing the item instead of fleeing. Accepted trade-off:
-        // hypothermia kills reliably, losing one retreat turn usually
-        // does not.
+
+
+
+
+
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
         guy.i_add( item( itype_sweater ) );
 
@@ -1174,8 +1174,8 @@ TEST_CASE( "npc_bodytemp_updates_during_turn", "[npc][needs]" )
     weather.clear_temp_cache();
 
     SECTION( "throttle blocks bodytemp before 10-second boundary" ) {
-        // once_every(10s) fires when (turn - turn_zero) % 10s == 0.
-        // 3 seconds is non-aligned, so the throttle should block.
+
+
         calendar::turn = calendar::turn_zero + 3_seconds;
         npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
         clear_character( guy, true );
@@ -1217,7 +1217,7 @@ TEST_CASE( "npc_bodytemp_updates_during_turn", "[npc][needs]" )
 
         guy.npc_update_body();
 
-        // update_body_wetness adds effect_wet deterministically when wetness > 0
+
         CHECK( guy.has_effect( effect_wet, bp_torso ) );
     }
 
@@ -1248,8 +1248,8 @@ TEST_CASE( "npc_camp_water_through_stomach", "[npc][needs][camp]" )
     clear_map_without_vision();
     get_player_character().camps.clear();
     map &m = get_map();
-    // Use mid-map position so NPC and camp share the same OMT regardless
-    // of where the map's absolute origin falls.
+
+
     const tripoint_bub_ms mid{ MAPSIZE_X / 2, MAPSIZE_Y / 2, 0 };
     const tripoint_abs_ms zone_loc = m.get_abs( mid );
     REQUIRE( m.inbounds( zone_loc ) );
@@ -1265,7 +1265,7 @@ TEST_CASE( "npc_camp_water_through_stomach", "[npc][needs][camp]" )
     test_camp->set_owner( your_fac );
     REQUIRE( test_camp->has_water() );
 
-    // Spawn NPC at mid-map so it's in the same OMT as the camp
+
     npc &guy = spawn_npc( mid.xy(), "test_talker" );
     clear_character( guy, true );
     guy.set_fac( faction_your_followers );
@@ -1284,7 +1284,7 @@ TEST_CASE( "npc_camp_water_through_stomach", "[npc][needs][camp]" )
     }
 
     SECTION( "intake capped at stomach capacity" ) {
-        // Pre-fill stomach near capacity, leaving only 50ml room
+
         const units::volume room = guy.stomach.stomach_remaining( guy );
         if( room > 50_ml ) {
             guy.stomach.ingest( { room - 50_ml, 0_ml, {} } );
@@ -1297,11 +1297,11 @@ TEST_CASE( "npc_camp_water_through_stomach", "[npc][needs][camp]" )
     }
 
     SECTION( "full stomach does not waste turn" ) {
-        // Fill stomach to capacity
+
         const units::volume room = guy.stomach.stomach_remaining( guy );
         guy.stomach.ingest( { room, 0_ml, {} } );
-        // Raw thirst must exceed 40 + capacity/5 so NPC-facing thirst
-        // still passes the > 40 gate despite stomach water subtraction.
+
+
         guy.set_thirst( 600 );
         REQUIRE( guy.get_thirst() > 40 );
 
@@ -1309,12 +1309,12 @@ TEST_CASE( "npc_camp_water_through_stomach", "[npc][needs][camp]" )
     }
 
     SECTION( "calorie-deficit NPC eats camp food even when short-term hunger is zero" ) {
-        // Stock the camp larder with 50 kcal of food.
+
         camp_faction->debug_food_supply().emplace_back( calendar::turn_zero, nutrients{} );
         camp_faction->debug_food_supply().back().second.calories = 50 * 1000;
         REQUIRE( camp_faction->food_supply().kcal() >= 50 );
 
-        // NPC has severe calorie deficit but no short-term hunger.
+
         guy.set_stored_kcal( 1000 );
         guy.set_hunger( 0 );
         REQUIRE( guy.has_calorie_deficit() );
@@ -1328,9 +1328,9 @@ TEST_CASE( "npc_camp_water_through_stomach", "[npc][needs][camp]" )
 TEST_CASE( "npc_nonally_sleeps_when_tired", "[npc][needs]" )
 {
     clear_map_without_vision();
-    // 30+ minutes past turn_zero so can_sleep()'s 30-minute cooldown
-    // (anchored to last_sleep_check default of turn_zero) does not
-    // block the first evaluation.
+
+
+
     calendar::turn = calendar::turn_zero + 1_hours;
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
@@ -1342,16 +1342,16 @@ TEST_CASE( "npc_nonally_sleeps_when_tired", "[npc][needs]" )
     REQUIRE_FALSE( guy.is_player_ally() );
 
     SECTION( "exhausted non-ally falls asleep when safe" ) {
-        // Sleepiness 800 makes can_sleep() reliably pass despite bare-
-        // ground comfort and rng(-8,8): sleepiness_factor ~26 dominates.
+
+
         guy.set_sleepiness( 800 );
         guy.set_mission( NPC_MISSION_SHELTER );
         guy.set_moves( 100 );
 
         guy.move();
 
-        // NPCs call fall_asleep() directly on can_sleep() success.
-        // Recovery only runs on the asleep branch in update_needs.
+
+
         CHECK( guy.has_effect( effect_sleep ) );
     }
 
@@ -1363,17 +1363,17 @@ TEST_CASE( "npc_nonally_sleeps_when_tired", "[npc][needs]" )
 
         guy.move();
 
-        // can_sleep() returns false on meth, NPC gets lying_down fallback
+
         CHECK_FALSE( guy.has_effect( effect_sleep ) );
         CHECK( guy.has_effect( effect_lying_down ) );
     }
 
     SECTION( "non-ally does not sleep in danger" ) {
         guy.set_sleepiness( 800 );
-        // address_needs decides, execute_action performs. Together they
-        // cover the decision gate and the sleep branch without needing
-        // the full move() pipeline (which requires overmap/vision setup).
-        // execute_action(npc_undecided) is safe -- just pauses.
+
+
+
+
         npc_action action = guy.address_needs( NPC_DANGER_VERY_LOW + 1 );
         guy.execute_action( action );
 
@@ -1391,8 +1391,8 @@ TEST_CASE( "npc_nonally_sleeps_when_tired", "[npc][needs]" )
     }
 }
 
-// Thugs are guaranteed_hostile() by faction but start NPCATT_NULL.
-// assess_danger() must detect faction hostility so combat beats sleep.
+
+
 
 TEST_CASE( "faction_hostile_npc_detects_player_threat", "[npc][npc_ai]" )
 {
@@ -1405,14 +1405,14 @@ TEST_CASE( "faction_hostile_npc_detects_player_threat", "[npc][npc_ai]" )
     npc &bandit = spawn_npc( player_character.pos_bub().xy() + point::south, "thug" );
     REQUIRE( rl_dist( player_character.pos_bub(), bandit.pos_bub() ) <= 1 );
 
-    // Thug is guaranteed_hostile by faction, but attitude has not flipped yet.
+
     REQUIRE( bandit.guaranteed_hostile() );
     REQUIRE_FALSE( bandit.is_enemy() );
 
     bandit.regen_ai_cache();
 
-    // assess_danger() must count the player as a threat even before the
-    // attitude enum flips to NPCATT_KILL.
+
+
     CHECK( bandit.get_ai_danger() > 0 );
     CHECK( bandit.current_target() == static_cast<Creature *>( &player_character ) );
 }
@@ -1422,7 +1422,7 @@ TEST_CASE( "faction_hostile_tired_npc_fights_not_sleeps", "[npc][npc_ai][needs]"
     g->faction_manager_ptr->create_if_needed();
     clear_map_without_vision();
     clear_avatar();
-    // 30+ minutes past turn_zero so can_sleep() cooldown does not interfere.
+
     calendar::turn = calendar::turn_zero + 1_hours;
 
     Character &player_character = get_player_character();
@@ -1433,28 +1433,28 @@ TEST_CASE( "faction_hostile_tired_npc_fights_not_sleeps", "[npc][npc_ai][needs]"
     bandit.set_stored_kcal( bandit.get_healthy_kcal() );
     bandit.set_all_parts_temp_conv( BODYTEMP_NORM );
     bandit.set_all_parts_temp_cur( BODYTEMP_NORM );
-    // Exhausted -- would sleep if no danger present.
+
     bandit.set_sleepiness( 800 );
     bandit.set_moves( 100 );
 
-    // Thug is guaranteed_hostile by faction, but attitude starts neutral.
-    // The move() pipeline must detect the player as a threat and choose
-    // combat over sleep.
+
+
+
     REQUIRE( bandit.guaranteed_hostile() );
     REQUIRE_FALSE( bandit.is_enemy() );
 
     bandit.move();
 
-    // Must NOT have fallen asleep.
+
     CHECK_FALSE( bandit.has_effect( effect_sleep ) );
     CHECK_FALSE( bandit.has_effect( effect_lying_down ) );
-    // The attitude must have flipped to hostile.
+
     CHECK( bandit.is_enemy() );
 }
 
-// ---------------------------------------------------------------------------
-// Helper-level tests for local resource acquisition
-// ---------------------------------------------------------------------------
+
+
+
 
 TEST_CASE( "npc_find_nearby_water_sources", "[npc][needs]" )
 {
@@ -1507,7 +1507,7 @@ TEST_CASE( "npc_find_nearby_water_sources", "[npc][needs]" )
     }
 
     SECTION( "ignores water behind walls (no LOS)" ) {
-        // Place water behind a wall -- NPC can't see it
+
         tripoint_bub_ms wall_pos = guy.pos_bub() + tripoint::east;
         tripoint_bub_ms water_behind = guy.pos_bub() + tripoint( 2, 0, 0 );
         here.ter_set( wall_pos, ter_t_concrete_wall );
@@ -1584,7 +1584,7 @@ TEST_CASE( "npc_find_nearby_food", "[npc][needs]" )
     }
 
     SECTION( "results sorted by descending score" ) {
-        // Two different foods; verify the list is sorted descending by score.
+
         here.add_item_or_charges( adj, item( itype_honeycomb ) );
         tripoint_bub_ms adj2 = guy.pos_bub() + point::west;
         here.add_item_or_charges( adj2, item( itype_sandwich_cheese_grilled ) );
@@ -1620,9 +1620,9 @@ TEST_CASE( "npc_find_nearby_food", "[npc][needs]" )
     }
 
     SECTION( "dry food found but scored lower when thirsty" ) {
-        // Thirst-dominant NPCs still find dry food (no hard filter).
-        // rate_food penalizes thirst-inducing items when thirsty,
-        // so hydrating food naturally ranks higher.
+
+
+
         guy.set_thirst( 400 );
         guy.set_hunger( 50 );
         item dry_food( itype_meat_cooked );
@@ -1728,14 +1728,14 @@ TEST_CASE( "npc_ownership_blocks_ground_food", "[npc][needs]" )
     map &here = get_map();
     const tripoint_bub_ms adj = guy.pos_bub() + point::east;
     REQUIRE_FALSE( guy.is_player_ally() );
-    // Place player close enough to see NPC and adj tile
+
     get_player_character().setpos( here, guy.pos_bub() + tripoint( 0, -2, 0 ) );
     REQUIRE( get_player_view().sees( here, guy.pos_bub( here ) ) );
     REQUIRE( get_player_view().sees( here, adj ) );
 
     SECTION( "high-trust NPC skips player-owned food (caught stealing)" ) {
-        // stealing_threshold = 10 + 100/5 - 5 - 0 = 25 > 0
-        // would_always_steal = false; player sees NPC -> won't steal
+
+
         guy.get_faction()->trusts_u = 100;
         guy.personality.aggression = 5;
         guy.personality.collector = 0;
@@ -1746,8 +1746,8 @@ TEST_CASE( "npc_ownership_blocks_ground_food", "[npc][needs]" )
     }
 
     SECTION( "aggressive NPC takes player-owned food (always steals)" ) {
-        // stealing_threshold = 10 + 0/5 - 20 - 0 = -10 < 0
-        // would_always_steal = true, ignores visibility
+
+
         guy.get_faction()->trusts_u = 0;
         guy.personality.aggression = 20;
         guy.personality.collector = 0;
@@ -1809,9 +1809,9 @@ TEST_CASE( "npc_wear_item_at_helper", "[npc][needs]" )
     }
 }
 
-// ---------------------------------------------------------------------------
-// Integration tests: address_needs with ground resources
-// ---------------------------------------------------------------------------
+
+
+
 
 TEST_CASE( "npc_address_needs_ground_water", "[npc][needs]" )
 {
@@ -1872,7 +1872,7 @@ TEST_CASE( "npc_address_needs_ground_water", "[npc][needs]" )
     SECTION( "blocked nearest water skipped, reachable farther water reached" ) {
         guy.set_thirst( 200 );
         REQUIRE( guy.get_thirst() > 80 );
-        // Nearest water behind glass walls (unreachable)
+
         tripoint_bub_ms blocked_at = guy.pos_bub() + tripoint( 2, 0, 0 );
         for( const tripoint_bub_ms &w : here.points_in_radius( blocked_at, 1 ) ) {
             if( w != blocked_at ) {
@@ -1880,7 +1880,7 @@ TEST_CASE( "npc_address_needs_ground_water", "[npc][needs]" )
             }
         }
         here.ter_set( blocked_at, ter_t_water_sh );
-        // Farther water on open ground (reachable)
+
         tripoint_bub_ms open_at = guy.pos_bub() + tripoint( 0, 3, 0 );
         here.ter_set( open_at, ter_t_water_sh );
         REQUIRE( here.passable( open_at ) );
@@ -1978,7 +1978,7 @@ TEST_CASE( "npc_address_needs_ground_food", "[npc][needs]" )
         guy.set_stored_kcal( 2000 );
         guy.set_hunger( 300 );
         guy.set_thirst( 100 );
-        // High-value food behind glass (unreachable)
+
         tripoint_bub_ms blocked_at = guy.pos_bub() + tripoint( 3, 0, 0 );
         for( const tripoint_bub_ms &w : here.points_in_radius( blocked_at, 1 ) ) {
             if( w != blocked_at ) {
@@ -1988,7 +1988,7 @@ TEST_CASE( "npc_address_needs_ground_food", "[npc][needs]" )
         here.add_item_or_charges( blocked_at, item( itype_sandwich_cheese_grilled ) );
         REQUIRE( here.sees_some_items( blocked_at, guy ) );
         REQUIRE( guy.sees( here, blocked_at ) );
-        // Low-value food on open ground (reachable)
+
         tripoint_bub_ms open_at = guy.pos_bub() + tripoint( 0, 3, 0 );
         REQUIRE( here.passable( open_at ) );
         here.add_item_or_charges( open_at, item( itype_honeycomb ) );
@@ -2082,7 +2082,7 @@ TEST_CASE( "npc_address_needs_ground_clothing", "[npc][needs]" )
     }
 }
 
-// === Stabilization fixes: thirst-dominant filter, quench floor, shelter, cargo, foraging ===
+
 
 TEST_CASE( "npc_thirst_dominant_filter_fallback", "[npc][needs]" )
 {
@@ -2124,7 +2124,7 @@ TEST_CASE( "npc_thirst_dominant_filter_fallback", "[npc][needs]" )
 
         REQUIRE( food.size() >= 2 );
         CHECK( food[0].loc.get_item()->typeId() == itype_sandwich_cheese_grilled );
-        // Dry food present as lower-priority fallback
+
         bool has_dry = std::any_of( food.begin(), food.end(),
         []( const npc::scored_item & si ) {
             return si.loc.get_item()->typeId() == itype_crackers;
@@ -2145,9 +2145,9 @@ TEST_CASE( "npc_rate_food_quench_surplus_floor", "[npc][needs]" )
     const tripoint_bub_ms adj = guy.pos_bub() + point::east;
 
     SECTION( "calorie-positive hydrating food not killed by quench penalty" ) {
-        // NPC is not thirsty. Quench surplus penalty would normally make
-        // weight negative for fresh hydrating food (penalty = (1-rot)*quench).
-        // The floor keeps calorie-positive food available as a last resort.
+
+
+
         guy.set_thirst( 0 );
         guy.set_hunger( 300 );
         guy.set_stored_kcal( 5000 );
@@ -2164,8 +2164,8 @@ TEST_CASE( "npc_rate_food_quench_surplus_floor", "[npc][needs]" )
     }
 
     SECTION( "zero-calorie drink still rejected by quench surplus" ) {
-        // The floor only applies to nutr > 0. A zero-calorie drink like
-        // clean water should still be filtered out when NPC isn't thirsty.
+
+
         guy.set_thirst( 0 );
         guy.set_hunger( 300 );
         guy.set_stored_kcal( 5000 );
@@ -2291,8 +2291,8 @@ TEST_CASE( "npc_shelter_pathfinding", "[npc][needs]" )
 
     SECTION( "unreachable shelter: NPC stays put" ) {
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
-        // Shelter inside 2-tile-thick glass enclosure. Single-tile walls
-        // have diagonal gaps that A* can exploit; double-thick seals them.
+
+
         const tripoint_bub_ms shelter = guy.pos_bub() + tripoint( 4, 0, 0 );
         here.ter_set( shelter, ter_t_floor );
         for( int r = 1; r <= 2; ++r ) {
@@ -2312,7 +2312,7 @@ TEST_CASE( "npc_shelter_pathfinding", "[npc][needs]" )
 
     SECTION( "unreachable nearest shelter, falls through to reachable second" ) {
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
-        // Nearest shelter in double-thick glass enclosure (unreachable).
+
         const tripoint_bub_ms close = guy.pos_bub() + tripoint( 4, 0, 0 );
         here.ter_set( close, ter_t_floor );
         for( int r = 1; r <= 2; ++r ) {
@@ -2322,7 +2322,7 @@ TEST_CASE( "npc_shelter_pathfinding", "[npc][needs]" )
                 }
             }
         }
-        // Second shelter reachable (open), opposite direction.
+
         const tripoint_bub_ms distant = guy.pos_bub() + tripoint( -3, 0, 0 );
         here.ter_set( distant, ter_t_floor );
         here.build_map_cache( 0 );
@@ -2395,7 +2395,7 @@ TEST_CASE( "npc_find_food_vehicle_cargo", "[npc][needs]" )
     }
 
     SECTION( "cargo-locking blocks food discovery" ) {
-        // Build from empty prototype: frame + trunk_floor (LOCKABLE_CARGO) + cargo_lock.
+
         vehicle *veh = here.add_vehicle( vehicle_prototype_none, adj, 0_degrees, 0,
                                          veh_spawn_status::UNDAMAGED );
         REQUIRE( veh != nullptr );
@@ -2405,7 +2405,7 @@ TEST_CASE( "npc_find_food_vehicle_cargo", "[npc][needs]" )
         REQUIRE( trunk_idx >= 0 );
         const int lock_idx = veh->install_part( here, origin, vpart_cargo_lock );
         REQUIRE( lock_idx >= 0 );
-        // Refresh vehicle caches after installing parts on empty prototype.
+
         here.rebuild_vehicle_level_caches();
         const tripoint_bub_ms cargo_pos = veh->bub_part_pos( here, trunk_idx );
         const std::optional<vpart_reference> cargo = here.veh_at( cargo_pos ).cargo();
@@ -2489,8 +2489,8 @@ TEST_CASE( "npc_find_nearby_harvestable", "[npc][needs]" )
     SECTION( "finds adjacent forageable underbrush" ) {
         here.ter_set( adj, ter_t_underbrush );
         here.build_map_cache( 0 );
-        // Underbrush uses examine_action, not the harvest system.
-        // find_nearby_harvestable detects both.
+
+
         auto h = guy.find_nearby_harvestable();
         REQUIRE_FALSE( h.empty() );
         CHECK( h[0].pos == adj );
@@ -2533,10 +2533,10 @@ TEST_CASE( "npc_find_nearby_harvestable", "[npc][needs]" )
     }
 }
 
-// Harvest scavenging is a last-resort fallback, not reliable food production.
-// is_harvestable() matches any non-empty harvest (underbrush, berry bushes,
-// fruit trees, but also trees that yield sticks/leaves). Actual food output
-// is seasonal RNG. Tests verify attempt-and-plumbing, not hunger relief.
+
+
+
+
 TEST_CASE( "npc_harvest_scavenging", "[npc][needs]" )
 {
     clear_map_without_vision();
@@ -2563,10 +2563,10 @@ TEST_CASE( "npc_harvest_scavenging", "[npc][needs]" )
         CHECK( guy.activity.placement == here.get_abs( adj ) );
     }
 
-    // NOTE: Normal-hunger path also wires scavenging as fallback (after the
-    // one_in(3) gate in address_needs), but that gate is non-deterministic.
-    // No test for normal-path scavenging until we have a clean deterministic
-    // seam. Extreme-hunger path is deterministic and fully covered here.
+
+
+
+
 
     SECTION( "NPC paths toward distant harvestable when starving" ) {
         guy.set_stored_kcal( 2000 );
@@ -2644,14 +2644,14 @@ TEST_CASE( "npc_harvest_scavenging", "[npc][needs]" )
         CHECK( cargo->items().size() < cargo_before );
     }
 
-    // Forage activity completion (terrain transform, item spawn) belongs in the
-    // activity test seam, not the NPC needs suite. The NPC activity-resume
-    // backlog triggers ACT_NULL when driving do_turn() directly in tests.
-    // Completion coverage for forage_activity_actor should go in
-    // player_activities_test.cpp or harvest_test.cpp.
+
+
+
+
+
 }
 
-// Helper: place double-thick glass enclosure around a point (seals diagonal gaps)
+
 static void enclose_in_glass( map &here, const tripoint_bub_ms &center )
 {
     for( int r = 1; r <= 2; ++r ) {
@@ -2663,8 +2663,8 @@ static void enclose_in_glass( map &here, const tripoint_bub_ms &center )
     }
 }
 
-// Helper: set up a sleepy non-ally NPC ready to call move().
-// Mirrors npc_nonally_sleeps_when_tired setup.
+
+
 static void make_npc_sleepy( npc &guy )
 {
     guy.set_sleepiness( 800 );
@@ -2687,12 +2687,12 @@ TEST_CASE( "npc_sleep_spot_reachability", "[npc][needs]" )
     map &here = get_map();
 
     SECTION( "reachable worse bed beats unreachable better bed" ) {
-        // Good bed behind glass walls (unreachable without bashing)
+
         const tripoint_bub_ms walled_bed = guy.pos_bub() + tripoint( 5, 0, 0 );
         here.ter_set( walled_bed, ter_t_floor );
         here.furn_set( walled_bed, furn_f_bed );
         enclose_in_glass( here, walled_bed );
-        // Worse bed on open ground (reachable)
+
         const tripoint_bub_ms open_bed = guy.pos_bub() + tripoint( 0, 3, 0 );
         here.ter_set( open_bed, ter_t_floor );
         here.furn_set( open_bed, furn_f_makeshift_bed );
@@ -2723,8 +2723,8 @@ TEST_CASE( "npc_sleep_spot_reachability", "[npc][needs]" )
     }
 
     SECTION( "bed behind bashable furniture is unreachable" ) {
-        // Seal bed behind double-thick locker enclosure (same pattern as glass
-        // wall tests -- single thickness has diagonal gaps A* can exploit).
+
+
         const tripoint_bub_ms blocked_bed = guy.pos_bub() + tripoint( 5, 0, 0 );
         here.ter_set( blocked_bed, ter_t_floor );
         here.furn_set( blocked_bed, furn_f_bed );
@@ -2735,7 +2735,7 @@ TEST_CASE( "npc_sleep_spot_reachability", "[npc][needs]" )
                 }
             }
         }
-        // Alternative on open ground
+
         const tripoint_bub_ms open_bed = guy.pos_bub() + tripoint( 0, 3, 0 );
         here.ter_set( open_bed, ter_t_floor );
         here.furn_set( open_bed, furn_f_makeshift_bed );
@@ -2785,7 +2785,7 @@ TEST_CASE( "npc_no_go_zone_blocks_needs", "[npc][needs]" )
     REQUIRE_FALSE( guy.is_player_ally() );
     map &here = get_map();
 
-    // NPC_NO_GO zone covering tiles east of NPC (x >= npc_x + 1)
+
     const tripoint_abs_ms zone_start = guy.pos_abs() + tripoint( 1, -10, 0 );
     const tripoint_abs_ms zone_end = guy.pos_abs() + tripoint( 20, 10, 0 );
     zone_manager &mgr = zone_manager::get_manager();
@@ -2794,11 +2794,11 @@ TEST_CASE( "npc_no_go_zone_blocks_needs", "[npc][needs]" )
     mgr.cache_data();
 
     SECTION( "sleep: best bed in NPC_NO_GO is skipped" ) {
-        // Good bed in no-go zone
+
         const tripoint_bub_ms zoned_bed = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.ter_set( zoned_bed, ter_t_floor );
         here.furn_set( zoned_bed, furn_f_bed );
-        // Worse bed outside zone (west)
+
         const tripoint_bub_ms open_bed = guy.pos_bub() + tripoint( 0, -3, 0 );
         here.ter_set( open_bed, ter_t_floor );
         here.furn_set( open_bed, furn_f_makeshift_bed );
@@ -2876,7 +2876,7 @@ TEST_CASE( "npc_no_go_zone_blocks_needs", "[npc][needs]" )
         CHECK( here.i_at( cloth_at ).size() == items_before );
     }
 
-    // Cleanup: remove test zone so it doesn't leak into other tests
+
     mgr.clear();
     mgr.cache_data();
 }
@@ -2906,11 +2906,11 @@ TEST_CASE( "npc_is_no_go_position", "[npc][needs]" )
     }
 
     SECTION( "false for different faction" ) {
-        // Zone is for guy's faction; a different NPC with different faction
-        // should not be blocked
+
+
         npc &other = spawn_npc( { 55, 50 }, "test_talker" );
         clear_character( other, true );
-        // Set a different faction
+
         other.set_fac( faction_your_followers );
         REQUIRE( other.get_fac_id() != guy.get_fac_id() );
         CHECK_FALSE( other.is_no_go_position( inside ) );
@@ -2947,11 +2947,11 @@ TEST_CASE( "npc_persistent_guard_pos_authority", "[npc][needs]" )
         const tripoint_abs_ms original_post = guy.pos_abs();
         REQUIRE( guy.guard_pos == original_post );
 
-        // Move NPC away from post
+
         guy.setpos( here, guy.pos_bub() + tripoint( 5, 0, 0 ) );
         REQUIRE( guy.pos_abs() != original_post );
 
-        // Simulate cache loss
+
         guy.clear_ai_guard_pos();
         REQUIRE_FALSE( guy.get_ai_guard_pos().has_value() );
 
@@ -2971,7 +2971,7 @@ TEST_CASE( "npc_persistent_guard_pos_authority", "[npc][needs]" )
         CHECK( guy.guard_pos == duty_post );
         CHECK( guy.get_ai_guard_pos() == duty_post );
 
-        // Simulate cache loss and rebuild
+
         guy.clear_ai_guard_pos();
         guy.regen_ai_cache();
 
@@ -2986,20 +2986,20 @@ TEST_CASE( "npc_persistent_guard_pos_authority", "[npc][needs]" )
         guy.regen_ai_cache();
         REQUIRE( guy.get_ai_guard_pos() == permanent_post );
 
-        // Sound investigation writes a temporary anchor to ai_cache
-        // without touching persistent guard_pos.
+
+
         const tripoint_abs_ms sound_anchor = guy.pos_abs() + tripoint( 10, 0, 0 );
         guy.set_ai_guard_pos( sound_anchor );
         CHECK( guy.get_ai_guard_pos() == sound_anchor );
         CHECK( guy.guard_pos == permanent_post );
 
-        // NPC reaches sound source; cache cleared by execute_action.
+
         guy.clear_ai_guard_pos();
         REQUIRE_FALSE( guy.get_ai_guard_pos().has_value() );
-        // Persistent still untouched.
+
         CHECK( guy.guard_pos == permanent_post );
 
-        // Generic refill re-populates cache from persistent.
+
         guy.regen_ai_cache();
         CHECK( guy.get_ai_guard_pos() == permanent_post );
     }
@@ -3011,7 +3011,7 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
     clear_avatar();
     calendar::turn = calendar::turn_zero + 1_hours;
     map &here = get_map();
-    // Move player underground so they don't interact with NPC at all
+
     get_player_character().setpos( here, tripoint_bub_ms( 50, 50, -2 ) );
 
     SECTION( "shopkeeper returns to post after sleep and cache loss" ) {
@@ -3025,7 +3025,7 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         const tripoint_abs_ms post = guy.pos_abs();
         REQUIRE( guy.guard_pos == post );
 
-        // Place a bed nearby and make NPC sleepy
+
         const tripoint_bub_ms bed_pos = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.ter_set( bed_pos, ter_t_floor );
         here.furn_set( bed_pos, furn_f_bed );
@@ -3037,7 +3037,7 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         guy.set_all_parts_temp_conv( BODYTEMP_NORM );
         guy.set_all_parts_temp_cur( BODYTEMP_NORM );
 
-        // Move toward bed until asleep or 10 turns
+
         for( int i = 0; i < 10 && !guy.has_effect( effect_sleep ); ++i ) {
             guy.set_moves( 100 );
             guy.move();
@@ -3045,15 +3045,15 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         REQUIRE( guy.has_effect( effect_sleep ) );
         REQUIRE( guy.pos_abs() != post );
 
-        // Simulate cache loss while at bed
+
         guy.clear_ai_guard_pos();
         REQUIRE_FALSE( guy.get_ai_guard_pos().has_value() );
 
-        // Regen re-fills from persistent post, not bed position
+
         guy.regen_ai_cache();
         CHECK( guy.get_ai_guard_pos() == post );
 
-        // Wake up and return
+
         guy.remove_effect( effect_sleep );
         guy.remove_effect( effect_lying_down );
         guy.set_sleepiness( 0 );
@@ -3067,7 +3067,7 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         }
         CHECK( guy.pos_abs() == post );
 
-        // Stay at post on subsequent turns
+
         for( int i = 0; i < 3; ++i ) {
             guy.set_moves( 100 );
             guy.move();
@@ -3118,9 +3118,9 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         guy.regen_ai_cache();
         const tripoint_abs_ms post = guy.pos_abs();
         here.furn_set( guy.pos_bub() + tripoint( 3, 0, 0 ), furn_f_bed );
-        // Sleepiness 800: sleep_urgency 0.8 beats on-shift duty 0.45,
-        // so BT says go_to_sleep. While walking to bed (1-3 tiles from
-        // post), goal commitment prevents flipping to return_to_guard_pos.
+
+
+
         guy.set_sleepiness( 800 );
 
         bool oscillated = false;
@@ -3153,7 +3153,7 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         guy.set_all_parts_temp_conv( BODYTEMP_NORM );
         guy.set_all_parts_temp_cur( BODYTEMP_NORM );
         guy.regen_ai_cache();
-        // Well above TIRED threshold -- BT says go_to_sleep.
+
         guy.set_sleepiness( 800 );
 
         guy.set_moves( 100 );
@@ -3170,8 +3170,8 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         guy.regen_ai_cache();
         const tripoint_abs_ms post = guy.pos_abs();
 
-        // Displace 10 tiles from post. duty_urgency = min(0.5, 10*0.05) = 0.5.
-        // sleepiness_urgency = 400/1000 = 0.4. Duty wins.
+
+
         guy.setpos( here, guy.pos_bub() + tripoint( 10, 0, 0 ) );
         REQUIRE( guy.pos_abs() != post );
         const int dist_to_post = rl_dist( guy.pos_bub(), here.get_bub( post ) );
@@ -3180,14 +3180,14 @@ TEST_CASE( "npc_shopkeeper_sleep_wake_return", "[npc][needs]" )
         guy.set_moves( 100 );
         guy.move();
 
-        // Should move toward post, not sleep
+
         CHECK( rl_dist( guy.pos_bub(), here.get_bub( post ) ) < dist_to_post );
         CHECK_FALSE( guy.has_effect( effect_sleep ) );
         CHECK_FALSE( guy.has_effect( effect_lying_down ) );
     }
 }
 
-// Helper: set up an NPC as an intercom operator with a given faction and shift.
+
 static npc &spawn_intercom_operator( const point_bub_ms &pos, const npc_class_id &cls,
                                      const faction_id &fac )
 {
@@ -3203,8 +3203,8 @@ TEST_CASE( "find_intercom_operator_shift_selection", "[npc][intercom]" )
 {
     clear_map_without_vision();
 
-    // Real intercom class IDs with work_hours from JSON.
-    // NC_ROBOFAC_INTERCOM_DAY [6,18], NC_ROBOFAC_INTERCOM_NIGHT [18,6].
+
+
     SECTION( "noon selects day operator" ) {
         calendar::turn = calendar::turn_zero + 12_hours;
         npc &day = spawn_intercom_operator( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY, faction_robofac );
@@ -3213,7 +3213,7 @@ TEST_CASE( "find_intercom_operator_shift_selection", "[npc][intercom]" )
         npc *result = find_intercom_operator( trait_INTERCOM_OPERATOR, faction_robofac );
         REQUIRE( result != nullptr );
         CHECK( result->getID() == day.getID() );
-        ( void )night; // suppress unused
+        ( void )night;
     }
     SECTION( "midnight selects night operator" ) {
         calendar::turn = calendar::turn_zero + 0_hours;
@@ -3248,12 +3248,12 @@ TEST_CASE( "find_intercom_operator_shift_selection", "[npc][intercom]" )
         npc &day = spawn_intercom_operator( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY, faction_robofac );
         npc &night = spawn_intercom_operator( { 52, 50 }, NC_ROBOFAC_INTERCOM_NIGHT, faction_robofac );
 
-        // Put the on-shift (day) operator to sleep
+
         day.add_effect( effect_sleep, 1_hours );
 
         npc *result = find_intercom_operator( trait_INTERCOM_OPERATOR, faction_robofac );
         REQUIRE( result != nullptr );
-        // Day is asleep, night is awake -- falls back to night
+
         CHECK( result->getID() == night.getID() );
     }
     SECTION( "no operators returns nullptr" ) {
@@ -3270,7 +3270,7 @@ TEST_CASE( "find_intercom_operator_shift_selection", "[npc][intercom]" )
     }
 }
 
-// --- Schedule reconciliation tests ---
+
 
 static npc &spawn_scheduled_npc( const point_bub_ms &pos, const npc_class_id &cls )
 {
@@ -3318,8 +3318,8 @@ TEST_CASE( "schedule_reconciliation_no_npc_food", "[npc][schedule]" )
     }
 
     SECTION( "on_load sets sleepiness proportional to shift" ) {
-        // 12:00 is 6 hours into a [6,18] shift (12h total).
-        // Expected: TIRED * 6/12 = TIRED/2
+
+
         calendar::turn = calendar::turn_zero + 12_hours;
         npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
         guy.set_sleepiness( 0 );
@@ -3333,7 +3333,7 @@ TEST_CASE( "schedule_reconciliation_no_npc_food", "[npc][schedule]" )
     }
 
     SECTION( "loaded NPC covers full shift then sleeps" ) {
-        // Start just before shift end so we don't need a massive time jump.
+
         calendar::turn = calendar::turn_zero + 17_hours + 59_minutes;
         map &here = get_map();
         clear_avatar();
@@ -3344,12 +3344,12 @@ TEST_CASE( "schedule_reconciliation_no_npc_food", "[npc][schedule]" )
         const tripoint_abs_ms post = guy.pos_abs();
         REQUIRE( guy.guard_pos == post );
 
-        // Place a bed 3 tiles away for sleep target.
+
         const tripoint_bub_ms bed_pos = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.ter_set( bed_pos, ter_t_floor );
         here.furn_set( bed_pos, furn_f_bed );
 
-        // On-shift: NPC should stay at post.
+
         for( int i = 0; i < 5; ++i ) {
             guy.set_moves( 100 );
             guy.move();
@@ -3357,14 +3357,14 @@ TEST_CASE( "schedule_reconciliation_no_npc_food", "[npc][schedule]" )
         CHECK( guy.pos_abs() == post );
         CHECK_FALSE( guy.in_sleep_state() );
 
-        // Cross shift boundary. Small time jump (2 minutes).
+
         calendar::turn = calendar::turn_zero + 18_hours + 10_seconds;
         guy.update_body( calendar::turn - 10_seconds, calendar::turn );
         guy.npc_update_body();
 
         CHECK( guy.get_sleepiness() >= static_cast<int>( sleepiness_levels::TIRED ) );
 
-        // BT should now send NPC to sleep.
+
         bool reached_sleep = false;
         for( int i = 0; i < 20; ++i ) {
             guy.set_moves( 100 );
@@ -3436,21 +3436,21 @@ TEST_CASE( "npc_update_body_calls_reconcile_schedule", "[npc][schedule]" )
     clear_map_without_vision();
     override_option no_food( "NO_NPC_FOOD", "true" );
 
-    // Align to a 10-second boundary so once_every(10_seconds) fires.
+
     calendar::turn = calendar::turn_zero + 12_hours;
     npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
     guy.add_effect( effect_sleep, 1_hours );
     guy.update_body( calendar::turn, calendar::turn );
     REQUIRE( guy.in_sleep_state() );
 
-    // Advance exactly to the next 10-second boundary.
+
     calendar::turn += 10_seconds;
     guy.npc_update_body();
 
     CHECK_FALSE( guy.in_sleep_state() );
 }
 
-// --- Trade delegate tests ---
+
 
 TEST_CASE( "trade_delegate", "[npc][trade]" )
 {
@@ -3492,13 +3492,13 @@ TEST_CASE( "trade_delegate", "[npc][trade]" )
         op.set_mutation( trait_INTERCOM_OPERATOR );
         op.set_fac( faction_robofac );
 
-        // The intended backend.
+
         npc &clerk = spawn_npc( { 52, 50 }, "test_talker" );
         clear_character( clerk, true );
         clerk.set_mutation( trait_TRADE_BACKEND );
         clerk.set_fac( faction_robofac );
 
-        // Another robofac shopkeeper (no TRADE_BACKEND).
+
         npc &other = spawn_npc( { 54, 50 }, "test_talker" );
         clear_character( other, true );
         other.myclass = test_shop_class;
@@ -3562,8 +3562,8 @@ TEST_CASE( "intercom_shopkeeper_isolation", "[npc][trade][intercom]" )
 
         day.shop_restock();
 
-        // restock timestamp should be unchanged: shop_restock() is a
-        // no-op for non-shopkeepers (is_shopkeeper() returns false).
+
+
         CHECK( day.restock == calendar::turn_zero );
     }
 }
@@ -3575,9 +3575,9 @@ TEST_CASE( "shift_start_clears_stale_sleep_commitment", "[npc][schedule]" )
     map &here = get_map();
     get_player_character().setpos( here, tripoint_bub_ms( 50, 50, -2 ) );
     SECTION( "already sleeping at shift start, duty wins after wake" ) {
-        // Sleepiness 400: urgency 0.4, below on-shift duty at post (0.45).
-        // reconcile_schedule clears the stale go_to_sleep commitment so
-        // the BT picks duty instead of sending the NPC back to bed.
+
+
+
         calendar::turn = calendar::turn_zero + 12_hours;
         npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
         guy.set_sleepiness( 400 );
@@ -3597,7 +3597,7 @@ TEST_CASE( "shift_start_clears_stale_sleep_commitment", "[npc][schedule]" )
         CHECK( guy.get_sleepiness() == 400 );
         CHECK( guy.get_committed_goal().empty() );
 
-        // Gameplay outcome: NPC stays at post instead of heading to bed.
+
         for( int i = 0; i < 3; ++i ) {
             guy.set_moves( 100 );
             guy.move();
@@ -3607,35 +3607,35 @@ TEST_CASE( "shift_start_clears_stale_sleep_commitment", "[npc][schedule]" )
     }
 
     SECTION( "walking toward bed at shift start" ) {
-        // Off-shift, NPC committed to sleep but not sleeping yet.
+
         calendar::turn = calendar::turn_zero + 5_hours + 50_minutes;
         npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
-        guy.set_sleepiness( 400 );  // sleep_urgency 0.4 < duty_urgency 0.45
+        guy.set_sleepiness( 400 );
         guy.regen_ai_cache();
         guy.set_committed_goal( "go_to_sleep" );
 
         REQUIRE_FALSE( guy.in_sleep_state() );
         REQUIRE( guy.needs_food() );
 
-        // Advance to on-shift.
+
         calendar::turn = calendar::turn_zero + 6_hours + 10_minutes;
         guy.set_moves( 100 );
         guy.move();
 
-        // BT returns hold_position (duty 0.45 > sleep 0.4).
-        // go_to_sleep completes because new_goal != "go_to_sleep".
+
+
         CHECK( guy.get_committed_goal() != "go_to_sleep" );
     }
 
     SECTION( "committed sleep yields to a different needs goal" ) {
-        // Off-shift so duty is irrelevant. Sleepiness below TIRED (191)
-        // so can_sleep fails and sleep branch is not running. Thirst is
-        // high with water available, so BT returns drink_water (same
-        // needs category, but different goal).
-        calendar::turn = calendar::turn_zero + 20_hours; // off-shift [6,18]
+
+
+
+
+        calendar::turn = calendar::turn_zero + 20_hours;
         npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
-        guy.set_sleepiness( 100 );  // below TIRED (191): can_sleep fails
-        guy.set_thirst( 600 );       // thirst_urgency = 0.5
+        guy.set_sleepiness( 100 );
+        guy.set_thirst( 600 );
         guy.i_add( item( itype_water_clean, calendar::turn ) );
         guy.regen_ai_cache();
         guy.set_committed_goal( "go_to_sleep" );
@@ -3645,8 +3645,8 @@ TEST_CASE( "shift_start_clears_stale_sleep_commitment", "[npc][schedule]" )
         guy.set_moves( 100 );
         guy.move();
 
-        // BT returns drink_water. Same needs category, but goal-level
-        // completion fires because new_goal != "go_to_sleep".
+
+
         CHECK( guy.get_committed_goal() != "go_to_sleep" );
     }
 }
@@ -3657,10 +3657,10 @@ TEST_CASE( "hold_position_commitment_completes_off_shift", "[npc][schedule]" )
     clear_avatar();
     map &here = get_map();
     get_player_character().setpos( here, tripoint_bub_ms( 50, 50, -2 ) );
-    // Near end of shift.
+
     calendar::turn = calendar::turn_zero + 17_hours + 50_minutes;
     npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
-    // Low needs so BT returns idle off-shift, not go_to_sleep.
+
     guy.set_sleepiness( 0 );
     guy.set_hunger( 0 );
     guy.set_thirst( 0 );
@@ -3674,14 +3674,14 @@ TEST_CASE( "hold_position_commitment_completes_off_shift", "[npc][schedule]" )
 
     guy.set_committed_goal( "hold_position" );
 
-    // Advance past shift end.
+
     calendar::turn = calendar::turn_zero + 18_hours + 10_minutes;
 
     guy.set_moves( 100 );
     guy.move();
 
-    // BT returns idle (off-shift, no urgent needs). hold_position
-    // should complete because BT no longer returns hold_position.
+
+
     CHECK( guy.get_committed_goal() != "hold_position" );
 }
 
@@ -3702,7 +3702,7 @@ TEST_CASE( "off_shift_displaced_npc_does_not_return_to_post", "[npc][schedule]" 
     clear_avatar();
     map &here = get_map();
     get_player_character().setpos( here, tripoint_bub_ms( 50, 50, -2 ) );
-    // Off-shift, low needs so BT returns "idle".
+
     calendar::turn = calendar::turn_zero + 20_hours;
     npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
     guy.set_sleepiness( 0 );
@@ -3718,10 +3718,10 @@ TEST_CASE( "off_shift_displaced_npc_does_not_return_to_post", "[npc][schedule]" 
     REQUIRE( guy.guard_pos == post );
     REQUIRE( guy.needs_food() );
 
-    // Displace the NPC 5 tiles from their guard post.
+
     guy.setpos( here, tripoint_bub_ms( 55, 50, 0 ) );
-    // Pin overmap goal to current OMT so the is_stationary path
-    // yields npc_pause rather than npc_goto_destination.
+
+
     guy.goal = guy.pos_abs_omt();
     guy.regen_ai_cache();
     const tripoint_abs_ms displaced = guy.pos_abs();
@@ -3746,7 +3746,7 @@ TEST_CASE( "return_to_start_pos_npc_still_uses_legacy_fallback", "[npc][schedule
 
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
-    // RETURN_TO_START_POS + SHELTER. BT duty fires, same result as before.
+
     guy.set_mutation( trait_RETURN_TO_START_POS );
     guy.set_mission( NPC_MISSION_SHELTER );
     guy.set_hunger( 0 );
@@ -3760,7 +3760,7 @@ TEST_CASE( "return_to_start_pos_npc_still_uses_legacy_fallback", "[npc][schedule
     const tripoint_abs_ms post = guy.pos_abs();
     REQUIRE( guy.guard_pos == post );
 
-    // Displace the NPC.
+
     guy.setpos( here, tripoint_bub_ms( 55, 50, 0 ) );
     guy.goal = guy.pos_abs_omt();
     guy.regen_ai_cache();
@@ -3768,7 +3768,7 @@ TEST_CASE( "return_to_start_pos_npc_still_uses_legacy_fallback", "[npc][schedule
 
     REQUIRE( guy.pos_abs() != post );
 
-    // First tick commits to return_to_guard_pos.
+
     guy.set_moves( 100 );
     guy.move();
     CHECK( guy.get_committed_goal() == "return_to_guard_pos" );
@@ -3841,7 +3841,7 @@ TEST_CASE( "temp_anchor_return_after_bt_idle", "[npc][behavior]" )
     guy.set_attitude( NPCATT_NULL );
     guy.guard_pos = std::nullopt;
 
-    // NPC displaced from origin by sound investigation, temp anchor set.
+
     const tripoint_abs_ms anchor = guy.pos_abs();
     guy.setpos( here, tripoint_bub_ms( 55, 50, 0 ) );
     guy.set_ai_guard_pos( anchor );
@@ -3858,7 +3858,7 @@ TEST_CASE( "temp_anchor_return_after_bt_idle", "[npc][behavior]" )
     REQUIRE( guy.get_effective_guard_pos() == anchor );
     REQUIRE_FALSE( guy.get_guard_post().has_value() );
 
-    // Idle dispatch sees temp anchor, routes npc_return_to_guard_pos.
+
     for( int i = 0; i < 10; ++i ) {
         guy.set_moves( 100 );
         guy.move();
@@ -3879,7 +3879,7 @@ TEST_CASE( "bt_idle_falls_through_to_cascade_goto", "[npc][behavior]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
     guy.setpos( here, tripoint_bub_ms( 50, 50, 0 ) );
-    // Player within follow_distance, so BT returns idle.
+
     get_player_character().setpos( here, tripoint_bub_ms( 52, 50, 0 ) );
     guy.set_fac( faction_your_followers );
     guy.set_attitude( NPCATT_FOLLOW );
@@ -3890,14 +3890,14 @@ TEST_CASE( "bt_idle_falls_through_to_cascade_goto", "[npc][behavior]" )
     guy.set_stored_kcal( guy.get_healthy_kcal() );
     guy.set_all_parts_temp_conv( BODYTEMP_NORM );
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
-    // Clear after regen so RETURN_TO_START_POS doesn't repopulate.
+
     guy.regen_ai_cache();
     guy.guard_pos = std::nullopt;
     guy.clear_ai_guard_pos();
     REQUIRE_FALSE( guy.get_effective_guard_pos().has_value() );
     REQUIRE( rl_dist( guy.pos_abs(), get_player_character().pos_abs() ) <= guy.follow_distance() );
 
-    // Player-ordered goto.
+
     const tripoint_abs_ms target = guy.pos_abs() + tripoint( 5, 0, 0 );
     guy.goto_to_this_pos = target;
 
@@ -3914,7 +3914,7 @@ TEST_CASE( "recruited_follower_with_guard_pos_follows_player", "[npc][behavior]"
     clear_avatar();
     map &here = get_map();
 
-    // Player west, guard post east. NPC at center.
+
     const tripoint_bub_ms npc_pos( 50, 50, 0 );
     const tripoint_bub_ms player_pos( 40, 50, 0 );
     get_player_character().setpos( here, player_pos );
@@ -3978,9 +3978,9 @@ TEST_CASE( "follow_only_engages_follow_regardless_of_rules", "[npc][behavior]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
     guy.set_attitude( NPCATT_NULL );
-    // Simulate a stale "move freely" toggle from a prior interaction:
-    // base flag cleared. Mission-attached follow must engage anyway,
-    // since follow_close controls spacing, not whether-to-follow.
+
+
+
     guy.rules.clear_flag( ally_rule::follow_close );
     REQUIRE_FALSE( guy.rules.has_flag( ally_rule::follow_close ) );
 
@@ -3988,7 +3988,7 @@ TEST_CASE( "follow_only_engages_follow_regardless_of_rules", "[npc][behavior]" )
 
     CHECK( guy.get_attitude() == NPCATT_FOLLOW );
     CHECK( guy.can_follow_player_now() );
-    // Loose-follow radius applies because follow_close stays cleared.
+
     CHECK( guy.desired_follow_radius() == 6 );
 }
 
@@ -4024,7 +4024,7 @@ TEST_CASE( "guard_assignment_clears_follow_commitment", "[npc][behavior]" )
 
     const tripoint_abs_ms pre_assign_pos = guy.pos_abs();
 
-    // Simulate assign_guard: guard current tile.
+
     guy.set_attitude( NPCATT_NULL );
     guy.set_mission( NPC_MISSION_GUARD_ALLY );
     guy.set_omt_destination();
@@ -4034,13 +4034,13 @@ TEST_CASE( "guard_assignment_clears_follow_commitment", "[npc][behavior]" )
     const auto &[wh_start2, wh_end2] = guy.myclass.obj().get_work_hours();
     REQUIRE( ( wh_start2 == 0 && wh_end2 == 24 ) );
 
-    // Follow commitment clears, NPC stays at post.
+
     guy.set_moves( 100 );
     guy.move();
     CHECK( guy.get_committed_goal().empty() );
     CHECK( guy.pos_abs() == pre_assign_pos );
 
-    // Next tick: hold_position commits.
+
     guy.set_moves( 100 );
     guy.move();
     CHECK( guy.get_committed_goal() == "hold_position" );
@@ -4077,7 +4077,7 @@ TEST_CASE( "player_embarks_clears_follow_commitment", "[npc][behavior]" )
     guy.move();
     REQUIRE( guy.get_committed_goal() == "follow_player" );
 
-    // Player boards a vehicle.
+
     vehicle *veh = here.add_vehicle( vehicle_prototype_test_rv, pc.pos_bub(),
                                      0_degrees, 100, veh_spawn_status::UNDAMAGED );
     REQUIRE( veh != nullptr );
@@ -4085,14 +4085,14 @@ TEST_CASE( "player_embarks_clears_follow_commitment", "[npc][behavior]" )
     REQUIRE( pc.in_vehicle );
     REQUIRE_FALSE( guy.in_vehicle );
 
-    // Vehicle mismatch clears follow commitment.
+
     guy.set_moves( 100 );
     guy.move();
     CHECK( guy.get_committed_goal() != "follow_player" );
 }
 
-// Followers wait while the player is in a moving vehicle: don't path into
-// the vehicle's trajectory, don't try to board until the player parks.
+
+
 TEST_CASE( "follower_yields_to_moving_player_vehicle", "[npc][behavior][vehicle]" )
 {
     clear_map_without_vision();
@@ -4134,13 +4134,13 @@ TEST_CASE( "follower_yields_to_moving_player_vehicle", "[npc][behavior][vehicle]
         const tripoint_abs_ms before = guy.pos_abs();
         guy.set_moves( 100 );
         guy.move();
-        // BT picks idle, dispatch returns npc_pause; NPC stays put.
+
         CHECK( guy.pos_abs() == before );
     }
 }
 
-// A close follower with no active combat action engages a hostile target in
-// range instead of standing idle.
+
+
 TEST_CASE( "follower_in_range_engages_target", "[npc][behavior][combat]" )
 {
     clear_map_without_vision();
@@ -4160,7 +4160,7 @@ TEST_CASE( "follower_in_range_engages_target", "[npc][behavior][combat]" )
     guy.clear_ai_guard_pos();
     guy.set_wielded_item( item( itype_bat ) );
 
-    // Hostile zombie just past the player, within follow radius of NPC.
+
     const tripoint_bub_ms zpos = pc.pos_bub() + point::east;
     spawn_test_monster( "mon_zombie_brute_shocker", zpos );
     here.build_map_cache( 0 );
@@ -4170,12 +4170,12 @@ TEST_CASE( "follower_in_range_engages_target", "[npc][behavior][combat]" )
 
     guy.set_moves( 100 );
     guy.move();
-    // Engaged target consumes moves; idle pause would leave them at 100.
+
     CHECK( guy.get_moves() < 100 );
 }
 
-// A fleeing follower close to the player keeps fleeing and is not pulled
-// into combat by the engagement hook.
+
+
 TEST_CASE( "fleeing_follower_not_forced_to_attack", "[npc][behavior][combat]" )
 {
     clear_map_without_vision();
@@ -4209,8 +4209,8 @@ TEST_CASE( "fleeing_follower_not_forced_to_attack", "[npc][behavior][combat]" )
     guy.set_moves( 100 );
     guy.move();
     const int dist_after = rl_dist( guy.pos_abs(), zomb.pos_abs() );
-    // Fleeing NPC must not be forced into method_of_attack; distance to
-    // monster must not decrease (flee path moves away from target).
+
+
     CHECK( dist_after >= dist_before );
 }
 
@@ -4237,7 +4237,7 @@ TEST_CASE( "goto_order_beats_generic_follow", "[npc][behavior]" )
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
     guy.regen_ai_cache();
 
-    // Player west, goto target east -- opposite directions.
+
     get_player_character().setpos( here, tripoint_bub_ms( 40, 50, 0 ) );
     const tripoint_abs_ms goto_target = guy.pos_abs() + tripoint( 10, 0, 0 );
     guy.goto_to_this_pos = goto_target;
@@ -4257,7 +4257,7 @@ TEST_CASE( "goto_order_beats_generic_follow", "[npc][behavior]" )
         guy.move();
     }
 
-    // Moved east toward goto, not west toward player.
+
     CHECK( guy.pos_bub().x() > 50 );
     CHECK( rl_dist( guy.pos_abs(), goto_target ) < initial_dist_goto );
 }
@@ -4285,7 +4285,7 @@ TEST_CASE( "follow_close_beats_fetching_item", "[npc][behavior]" )
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
     guy.regen_ai_cache();
 
-    // Player west, pending pickup east -- opposite directions.
+
     get_player_character().setpos( here, tripoint_bub_ms( 40, 50, 0 ) );
     REQUIRE( rl_dist( guy.pos_abs(), get_player_character().pos_abs() )
              > guy.follow_distance() );
@@ -4296,7 +4296,7 @@ TEST_CASE( "follow_close_beats_fetching_item", "[npc][behavior]" )
     guy.set_moves( 100 );
     guy.move();
 
-    // Follow wins over item pickup, matching old cascade ordering.
+
     CHECK( guy.pos_bub().x() < 50 );
 }
 
@@ -4329,7 +4329,7 @@ TEST_CASE( "activity_npc_without_task_reverts_to_follower", "[npc][behavior]" )
     guy.set_moves( 100 );
     guy.move();
 
-    // Cascade revert: ally without camp reverts to FOLLOW.
+
     CHECK( guy.get_attitude() == NPCATT_FOLLOW );
     CHECK( guy.get_committed_goal().empty() );
 }
@@ -4388,7 +4388,7 @@ TEST_CASE( "leader_npc_leads_not_follows", "[npc][behavior]" )
     guy.set_all_parts_temp_conv( BODYTEMP_NORM );
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
 
-    // Player 5 tiles west. Destination east.
+
     get_player_character().setpos( here, tripoint_bub_ms( 45, 50, 0 ) );
     guy.goal = project_to<coords::omt>( guy.pos_abs() + tripoint( 10 * SEEX, 0, 0 ) );
     guy.regen_ai_cache();
@@ -4404,7 +4404,7 @@ TEST_CASE( "leader_npc_leads_not_follows", "[npc][behavior]" )
     }
 
     CHECK( guy.get_committed_goal() != "follow_player" );
-    // Did not move toward player (west). Either moved east or stayed put.
+
     CHECK( guy.pos_bub().x() >= 50 );
 }
 
@@ -4430,7 +4430,7 @@ TEST_CASE( "leader_npc_waits_when_player_far", "[npc][behavior]" )
     guy.set_all_parts_temp_conv( BODYTEMP_NORM );
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
 
-    // Player 15 tiles west (>= 12, triggers "keep up").
+
     get_player_character().setpos( here, tripoint_bub_ms( 35, 50, 0 ) );
     guy.goal = project_to<coords::omt>( guy.pos_abs() + tripoint( 10 * SEEX, 0, 0 ) );
     guy.regen_ai_cache();
@@ -4443,13 +4443,13 @@ TEST_CASE( "leader_npc_waits_when_player_far", "[npc][behavior]" )
     guy.set_moves( 100 );
     guy.move();
 
-    // Leader should pause and gain catch_up effect, NOT follow.
+
     CHECK( guy.pos_abs() == start_pos );
     CHECK( guy.get_committed_goal() != "follow_player" );
     CHECK( guy.has_effect( effect_catch_up ) );
 }
 
-// --- Camp resident state split tests ---
+
 
 TEST_CASE( "camp_resident_is_not_guarding", "[npc][camp]" )
 {
@@ -4540,14 +4540,14 @@ TEST_CASE( "camp_resident_guard_transitions", "[npc][camp]" )
         talk_function::return_to_camp_duties( guy );
         CHECK( guy.mission == NPC_MISSION_CAMP_RESIDENT );
         CHECK( guy.goal == camp_pos );
-        // omt_path may be empty if overmap pathfinding has no data,
-        // but goal is set so the NPC will path on next move().
+
+
     }
     SECTION( "stop_guard recalls but preserves camp" ) {
         talk_function::assign_guard( guy );
         talk_function::stop_guard( guy );
         CHECK( guy.mission == NPC_MISSION_NULL );
-        // Camp assignment preserved so player can send NPC back later.
+
         CHECK( guy.assigned_camp == camp_pos );
     }
     SECTION( "return_to_camp_duties clears stale movement state" ) {
@@ -4623,7 +4623,7 @@ TEST_CASE( "on_load_migrates_legacy_camp_npcs", "[npc][camp]" )
     }
 }
 
-// NPC infinite loop when trying to forage/harvest terrain it can't interact with.
+
 TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -4635,7 +4635,7 @@ TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
 
-    // Extreme hunger bypasses the one_in(3) gate, deterministically tries to forage.
+
     guy.set_hunger( 300 );
     guy.set_thirst( 100 );
     guy.set_stored_kcal( 1000 );
@@ -4643,7 +4643,7 @@ TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
     map &here = get_map();
     const tripoint_bub_ms adj = guy.pos_bub() + point::east;
 
-    // Helper: run the NPC turn loop from do_turn.cpp, return true if it loops.
+
     const auto npc_loops = [&]() {
         guy.set_moves( 100 );
         int turns = 0;
@@ -4674,7 +4674,7 @@ TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
     }
 
     SECTION( "harvestable tree - query_pick rejects non-avatar" ) {
-        // Autumn so the apple tree has a harvest entry.
+
         calendar::turn = calendar::turn_zero + 2 * calendar::season_length() + 12_hours;
         here.ter_set( adj, ter_t_tree_apple );
         here.build_map_cache( 0 );
@@ -4688,8 +4688,8 @@ TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
         override_option no_food( "NO_NPC_FOOD", "true" );
         REQUIRE_FALSE( guy.needs_food() );
 
-        // Stale hunger/thirst values that would trigger food-seeking
-        // if the needs_food() guards were missing.
+
+
         guy.set_hunger( 300 );
         guy.set_thirst( 100 );
         guy.set_stored_kcal( 1000 );
@@ -4706,9 +4706,9 @@ TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
         here.ter_set( adj, ter_t_underbrush );
         here.build_map_cache( 0 );
 
-        // Run several game turns. Each turn the BT may try to override the
-        // forage activity with follow_player. The activity should complete
-        // without endlessly re-assigning and flooding the backlog.
+
+
+
         for( int turn = 0; turn < 20; ++turn ) {
             guy.set_moves( 100 );
             guy.move();
@@ -4717,8 +4717,8 @@ TEST_CASE( "npc_no_infinite_loop_foraging", "[npc][needs][forage]" )
     }
 }
 
-// BT should commit to eat_food when the NPC has a caloric deficit and food
-// is obtainable nearby, even when short-term hunger is low.
+
+
 TEST_CASE( "npc_bt_commits_to_food_when_starving", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -4731,12 +4731,12 @@ TEST_CASE( "npc_bt_commits_to_food_when_starving", "[npc][needs][forage]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
 
-    // Follower NPC so the BT considers follow_player.
+
     guy.set_fac( faction_your_followers );
     guy.set_attitude( NPCATT_FOLLOW );
     REQUIRE( guy.is_player_ally() );
 
-    // Caloric deficit but NOT short-term hungry (reproduces the save scenario).
+
     guy.set_stored_kcal( 1000 );
     guy.set_hunger( -1 );
     guy.set_thirst( 0 );
@@ -4746,8 +4746,8 @@ TEST_CASE( "npc_bt_commits_to_food_when_starving", "[npc][needs][forage]" )
     here.ter_set( adj, ter_t_underbrush );
     here.build_map_cache( 0 );
 
-    // Run several turns. The NPC should commit to eating (forage) and not
-    // oscillate between eat_food and follow_player every other turn.
+
+
     int forage_turns = 0;
     int follow_turns = 0;
     for( int turn = 0; turn < 10; ++turn ) {
@@ -4762,12 +4762,12 @@ TEST_CASE( "npc_bt_commits_to_food_when_starving", "[npc][needs][forage]" )
         }
     }
 
-    // NPC should spend most turns foraging, not following.
+
     CHECK( forage_turns > follow_turns );
 }
 
-// When an NPC is committed to eat_food but all nearby food sources are gone,
-// the commitment should clear so other goals (follow, goto) can proceed.
+
+
 TEST_CASE( "npc_eat_food_commitment_clears_when_unobtainable", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -4782,7 +4782,7 @@ TEST_CASE( "npc_eat_food_commitment_clears_when_unobtainable", "[npc][needs][for
     guy.set_fac( faction_your_followers );
     guy.set_attitude( NPCATT_FOLLOW );
 
-    // Caloric deficit but no food anywhere.
+
     guy.set_stored_kcal( 1000 );
     guy.set_hunger( -1 );
     guy.set_thirst( 0 );
@@ -4790,10 +4790,10 @@ TEST_CASE( "npc_eat_food_commitment_clears_when_unobtainable", "[npc][needs][for
     map &here = get_map();
     here.build_map_cache( 0 );
 
-    // Force commitment to eat_food.
+
     guy.set_committed_goal( "eat_food" );
 
-    // Run a few turns. With no food obtainable, the commitment should clear
+
     // and the NPC should fall through to another goal (follow, etc.).
     for( int turn = 0; turn < 5; ++turn ) {
         guy.set_moves( 100 );
@@ -4802,8 +4802,8 @@ TEST_CASE( "npc_eat_food_commitment_clears_when_unobtainable", "[npc][needs][for
     CHECK( guy.get_committed_goal() != "eat_food" );
 }
 
-// Executor-level tests for eat_food goal: sticky targets, progress tracking,
-// retargeting, and interaction with follow_player.
+
+
 TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -4817,8 +4817,8 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
     clear_character( guy, true );
     guy.set_fac( faction_your_followers );
     guy.set_attitude( NPCATT_FOLLOW );
-    // Low enough for calorie deficit and needs_food_badly, high enough to
-    // survive the test without starving to death.
+
+
     guy.set_stored_kcal( 20000 );
     guy.set_hunger( -1 );
     guy.set_thirst( 0 );
@@ -4847,14 +4847,14 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
             }
             prev = cur;
         }
-        // NPC should consistently move in one direction, not both.
+
         CHECK( ( east_moves == 0 || west_moves == 0 ) );
-        // And should have actually moved toward a target.
+
         CHECK( ( east_moves + west_moves ) > 0 );
     }
 
     SECTION( "zero progress for N turns clears or retargets" ) {
-        // Surround an apple tree with walls so it's visible but unreachable.
+
         calendar::turn = calendar::turn_zero + 2 * calendar::season_length() + 12_hours;
         const tripoint_bub_ms tree = guy.pos_bub() + tripoint( 2, 0, 0 );
         for( const point &d : {
@@ -4883,24 +4883,24 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         here.build_map_cache( 0 );
         guy.set_committed_goal( "eat_food" );
 
-        // Let NPC start pursuing but not reach the bush yet.
+
         for( int turn = 0; turn < 2; ++turn ) {
             guy.set_moves( 100 );
             guy.move();
         }
         REQUIRE_FALSE( guy.activity );
 
-        // Remove the target mid-plan.
+
         here.ter_set( bush, ter_t_floor );
         here.build_map_cache( 0 );
 
-        // Place a new target within scan range of the NPC's current position,
-        // away from the player path (player is south at y=55).
+
+
         const tripoint_bub_ms bush2 = guy.pos_bub() + tripoint( 0, -3, 0 );
         here.ter_set( bush2, ter_t_underbrush );
         here.build_map_cache( 0 );
 
-        // NPC should retarget toward bush2 and eventually forage it.
+
         for( int turn = 0; turn < 10; ++turn ) {
             guy.set_moves( 100 );
             guy.move();
@@ -4916,8 +4916,8 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         here.build_map_cache( 0 );
         guy.set_committed_goal( "eat_food" );
 
-        // Net progress: no turn should increase distance to food,
-        // and at least one turn should decrease it.
+
+
         int progress_turns = 0;
         int regress_turns = 0;
         int prev_dist = rl_dist( guy.pos_bub(), bush );
@@ -4937,25 +4937,25 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
     }
 
     SECTION( "closer food mid-approach does not dither the plan" ) {
-        // NPC starts pursuing a distant bush.
+
         const tripoint_bub_ms far_bush = guy.pos_bub() + tripoint( 5, 0, 0 );
         here.ter_set( far_bush, ter_t_underbrush );
         here.build_map_cache( 0 );
         guy.set_committed_goal( "eat_food" );
 
-        // Let NPC start moving east toward far_bush.
+
         for( int turn = 0; turn < 2; ++turn ) {
             guy.set_moves( 100 );
             guy.move();
         }
         REQUIRE( guy.pos_bub().x() > 50 );
 
-        // Drop a closer bush to the north (off the current path).
+
         const tripoint_bub_ms near_bush = guy.pos_bub() + tripoint( 0, -2, 0 );
         here.ter_set( near_bush, ter_t_underbrush );
         here.build_map_cache( 0 );
 
-        // NPC should keep pursuing the original target, not switch.
+
         tripoint_bub_ms prev = guy.pos_bub();
         int east_moves = 0;
         int north_moves = 0;
@@ -4971,15 +4971,15 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
             }
             prev = cur;
         }
-        // Should keep going east toward original target, not veer north.
+
         CHECK( east_moves > north_moves );
     }
 
     SECTION( "eat_food executor skips pure-drink items" ) {
-        // NPC is thirsty, so water would normally score in the legacy path.
+
         guy.set_thirst( 100 );
 
-        // Water in inventory and on adjacent ground.
+
         guy.i_add( item( itype_water_clean ) );
         const tripoint_bub_ms adj = guy.pos_bub() + point::east;
         here.add_item( adj, item( itype_water_clean ) );
@@ -4987,7 +4987,7 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
 
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "eat_food" );
-        // Pure drinks don't satisfy eat_food; no food exists, so impossible.
+
         CHECK( result == npc::need_result::impossible );
     }
 
@@ -4996,21 +4996,21 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         here.ter_set( bush, ter_t_underbrush );
         here.build_map_cache( 0 );
 
-        // Low danger: executor acquires target and moves toward it.
+
         guy.set_ai_danger( 0 );
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "eat_food" );
         REQUIRE( result == npc::need_result::progressed );
         REQUIRE( guy.get_food_plan().active() );
 
-        // High danger: movement is deferred, plan stays alive.
+
         guy.set_ai_danger( NPC_DANGER_VERY_LOW + 1 );
         guy.set_moves( 100 );
         result = guy.execute_need_goal( "eat_food" );
         CHECK( result == npc::need_result::deferred );
         CHECK( guy.get_food_plan().active() );
 
-        // Low danger again: executor resumes progress.
+
         guy.set_ai_danger( 0 );
         guy.set_moves( 100 );
         result = guy.execute_need_goal( "eat_food" );
@@ -5024,7 +5024,7 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         here.build_map_cache( 0 );
         REQUIRE( here.is_harvestable( tree_pos ) );
 
-        // Executor acquires a harvestable food target.
+
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "eat_food" );
         REQUIRE( result == npc::need_result::progressed );
@@ -5032,12 +5032,12 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         using need_source = npc_short_term_cache::need_source;
         REQUIRE( guy.get_food_plan().source_kind == need_source::harvestable );
 
-        // Change terrain to non-food harvestable (dead tree = sticks only).
+
         here.ter_set( tree_pos, ter_t_tree_dead );
         here.build_map_cache( 0 );
         REQUIRE( here.is_harvestable( tree_pos ) );
 
-        // Executor should invalidate the stale plan; no other food, so impossible.
+
         guy.set_moves( 100 );
         result = guy.execute_need_goal( "eat_food" );
         CHECK( result == npc::need_result::impossible );
@@ -5047,8 +5047,8 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         calendar::turn = calendar::turn_zero + 2 * calendar::season_length() + 12_hours;
         using need_source = npc_short_term_cache::need_source;
 
-        // Close tree behind glass (visible through glass, but impassable
-        // without bashing, and executor should not bash for normal food).
+
+
         const tripoint_bub_ms close = guy.pos_bub() + tripoint( 2, 0, 0 );
         for( const point &d : {
                  point::north, point::south, point::east, point::west,
@@ -5058,27 +5058,27 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         }
         here.ter_set( close, ter_t_tree_apple );
 
-        // Far tree in the open (reachable).
+
         const tripoint_bub_ms distant = guy.pos_bub() + tripoint( 0, -5, 0 );
         here.ter_set( distant, ter_t_tree_apple );
         here.build_map_cache( 0 );
         REQUIRE( here.is_harvestable( close ) );
         REQUIRE( here.is_harvestable( distant ) );
 
-        // The close tree must be the first candidate (closer = higher score).
+
         auto cands = guy.find_food_candidates();
         REQUIRE( cands.size() >= 2 );
         REQUIRE( cands.front().target == here.get_abs( close ) );
 
-        // Drive the executor directly. The close tree should produce
-        // no progress (no-bash policy for non-critical food) and time out.
+
+
         for( int turn = 0; turn < 5; ++turn ) {
             guy.set_moves( 100 );
             guy.execute_need_goal( "eat_food" );
         }
         REQUIRE( guy.get_food_plan().last_result == npc::need_result::impossible );
 
-        // Next call should skip the failed close tree and target the far one.
+
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "eat_food" );
         CHECK( guy.get_food_plan().active() );
@@ -5090,7 +5090,7 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
     SECTION( "failed target becomes reachable after generation reset" ) {
         calendar::turn = calendar::turn_zero + 2 * calendar::season_length() + 12_hours;
 
-        // Single tree behind glass (visible, unreachable without bashing).
+
         const tripoint_bub_ms tree = guy.pos_bub() + tripoint( 2, 0, 0 );
         for( const point &d : {
                  point::north, point::south, point::east, point::west,
@@ -5102,20 +5102,20 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         here.build_map_cache( 0 );
         REQUIRE( here.is_harvestable( tree ) );
 
-        // Exhaust the target: 5 turns of no-progress, then impossible.
+
         for( int turn = 0; turn < 5; ++turn ) {
             guy.set_moves( 100 );
             guy.execute_need_goal( "eat_food" );
         }
         REQUIRE( guy.get_food_plan().last_result == npc::need_result::impossible );
 
-        // Next call: only candidate is in the failed set, so the
-        // generation resets and returns impossible with a clean slate.
+
+
         guy.set_moves( 100 );
         guy.execute_need_goal( "eat_food" );
         REQUIRE( guy.get_food_plan().last_result == npc::need_result::impossible );
 
-        // Remove the glass walls so the tree becomes reachable.
+
         for( const point &d : {
                  point::north, point::south, point::east, point::west,
                  point::north_west, point::north_east, point::south_west, point::south_east
@@ -5124,8 +5124,8 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         }
         here.build_map_cache( 0 );
 
-        // The executor should now acquire the formerly-failed tree
-        // and make progress toward it.
+
+
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "eat_food" );
         CHECK( guy.get_food_plan().active() );
@@ -5143,13 +5143,13 @@ TEST_CASE( "npc_food_executor_contract", "[npc][needs][forage]" )
         const int kcal_before = guy.get_stored_kcal();
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "eat_food" );
-        // The NPC should eat the adjacent food, not return impossible.
+
         CHECK( result == npc::need_result::satisfied );
         CHECK( guy.get_stored_kcal() + guy.stomach.get_calories() > kcal_before );
     }
 }
 
-// Starving NPCs should eat foraged food immediately instead of dropping it.
+
 TEST_CASE( "npc_eats_foraged_food_immediately", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -5169,7 +5169,7 @@ TEST_CASE( "npc_eats_foraged_food_immediately", "[npc][needs][forage]" )
     guy.set_thirst( 0 );
     REQUIRE( guy.has_calorie_deficit() );
 
-    // Apple tree in autumn: always drops 2-5 apples, no RNG gating.
+
     calendar::turn = calendar::turn_zero + 2 * calendar::season_length() + 12_hours;
     map &here = get_map();
     const tripoint_bub_ms adj = guy.pos_bub() + point::east;
@@ -5178,18 +5178,18 @@ TEST_CASE( "npc_eats_foraged_food_immediately", "[npc][needs][forage]" )
     REQUIRE( here.is_harvestable( adj ) );
     REQUIRE_FALSE( guy.find_nearby_harvestable( true ).empty() );
 
-    // Run enough turns for the harvest activity to complete.
+
     const int kcal_before = guy.get_stored_kcal();
     for( int turn = 0; turn < 40; ++turn ) {
         guy.set_moves( 100 );
         guy.move();
     }
 
-    // The NPC should have consumed at least some harvested food.
+
     CHECK( guy.get_stored_kcal() + guy.stomach.get_calories() > kcal_before );
 }
 
-// handle_harvest auto-eating must charge consume time, not eat for free.
+
 TEST_CASE( "npc_harvest_consume_charges_moves", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -5208,17 +5208,17 @@ TEST_CASE( "npc_harvest_consume_charges_moves", "[npc][needs][forage]" )
     guy.set_thirst( 0 );
     REQUIRE( guy.has_calorie_deficit() );
 
-    // Auto-eating only happens during self-care need execution.
+
     guy.set_committed_goal( "eat_food" );
     guy.set_moves( 200 );
     const int moves_before = guy.get_moves();
     iexamine_helper::handle_harvest( guy, itype_sandwich_cheese_grilled, false );
 
-    // Moves must decrease (consume time charged).
+
     CHECK( guy.get_moves() < moves_before );
 }
 
-// can_obtain_food should distinguish food-yielding terrain from non-food.
+
 TEST_CASE( "npc_can_obtain_food_filters_harvests", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -5280,9 +5280,9 @@ TEST_CASE( "npc_can_obtain_food_filters_harvests", "[npc][needs][forage]" )
     }
 }
 
-// can_obtain_food should recognize camp food the same way can_obtain_water
-// recognizes camp water, so the BT commits eat_food when camp food is the
-// only available source.
+
+
+
 TEST_CASE( "npc_can_obtain_food_camp_fallback", "[npc][needs][forage][camp]" )
 {
     clear_avatar();
@@ -5304,7 +5304,7 @@ TEST_CASE( "npc_can_obtain_food_camp_fallback", "[npc][needs][forage][camp]" )
     test_camp->define_camp( this_omt, "faction_base_bare_bones_NPC_camp_0", false );
     test_camp->set_owner( your_fac );
 
-    // Stock the camp larder.
+
     camp_faction->empty_food_supply();
     camp_faction->debug_food_supply().emplace_back( calendar::turn_zero, nutrients{} );
     camp_faction->debug_food_supply().back().second.calories = 500 * 1000;
@@ -5318,7 +5318,7 @@ TEST_CASE( "npc_can_obtain_food_camp_fallback", "[npc][needs][forage][camp]" )
     guy.set_thirst( 0 );
     m.build_map_cache( 0 );
 
-    // Camp food is now in the candidate layer, so candidates are non-empty.
+
     auto cands = guy.find_food_candidates();
     REQUIRE_FALSE( cands.empty() );
     bool has_camp_source = false;
@@ -5339,10 +5339,10 @@ TEST_CASE( "npc_can_obtain_food_camp_fallback", "[npc][needs][forage][camp]" )
         set_time_to_day();
         get_player_character().setpos( get_map(), mid );
         guy.set_attitude( NPCATT_FOLLOW );
-        // stored_kcal=1000 triggers needs_food_badly in the BT.
+
         REQUIRE( guy.has_calorie_deficit() );
 
-        // Let the BT pick a goal naturally.
+
         guy.set_moves( 100 );
         guy.move();
         CHECK( guy.get_committed_goal() == "eat_food" );
@@ -5356,8 +5356,8 @@ TEST_CASE( "npc_can_obtain_food_camp_fallback", "[npc][needs][forage][camp]" )
     }
 }
 
-// Candidate query layer tests: verify find_food_candidates / find_water_candidates
-// match the policy checks that predicates and executors share.
+
+
 TEST_CASE( "npc_find_food_candidates", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -5492,9 +5492,9 @@ TEST_CASE( "npc_find_water_candidates", "[npc][needs][water]" )
     }
 
     SECTION( "ground drink item yields ground_item candidate" ) {
-        // Orange has quench > 0 and is a solid item that persists on
-        // bare ground. Liquids (water_clean) may not, so use a food
-        // item that also hydrates.
+
+
+
         here.add_item_or_charges( adj, item( itype_orange ) );
         here.build_map_cache( 0 );
         auto cands = guy.find_water_candidates();
@@ -5528,7 +5528,7 @@ TEST_CASE( "npc_find_water_candidates", "[npc][needs][water]" )
         here.build_map_cache( 0 );
         auto cands = guy.find_water_candidates();
         REQUIRE_FALSE( cands.empty() );
-        // Should find both ground drinks and water terrain now.
+
         bool has_ground = false;
         bool has_terrain = false;
         for( const npc_short_term_cache::need_candidate &c : cands ) {
@@ -5555,8 +5555,8 @@ TEST_CASE( "npc_find_water_candidates", "[npc][needs][water]" )
     }
 }
 
-// Executor-level tests for drink_water goal: water terrain sources,
-// inventory drinks, drink-only filtering, sticky targets, progress tracking.
+
+
 TEST_CASE( "npc_water_executor_contract", "[npc][needs][water]" )
 {
     clear_map_without_vision();
@@ -5602,12 +5602,12 @@ TEST_CASE( "npc_water_executor_contract", "[npc][needs][water]" )
     }
 
     SECTION( "drink_water executor skips pure-food items" ) {
-        // Crackers in inventory (nutrition only, negative quench).
+
         guy.i_add( item( itype_crackers ) );
 
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "drink_water" );
-        // No water source exists; crackers don't count.
+
         CHECK( result == npc::need_result::impossible );
     }
 
@@ -5624,17 +5624,17 @@ TEST_CASE( "npc_water_executor_contract", "[npc][needs][water]" )
         here.ter_set( east_water, ter_t_water_sh );
         here.build_map_cache( 0 );
 
-        // Acquire target.
+
         guy.set_moves( 100 );
         guy.execute_need_goal( "drink_water" );
         REQUIRE( guy.get_water_plan().active() );
 
-        // Add closer water to the north.
+
         const tripoint_bub_ms north_water = guy.pos_bub() + tripoint( 0, -2, 0 );
         here.ter_set( north_water, ter_t_water_sh );
         here.build_map_cache( 0 );
 
-        // NPC should keep pursuing original target.
+
         tripoint_bub_ms prev = guy.pos_bub();
         int east_moves = 0;
         int north_moves = 0;
@@ -5658,20 +5658,20 @@ TEST_CASE( "npc_water_executor_contract", "[npc][needs][water]" )
         here.ter_set( water, ter_t_water_sh );
         here.build_map_cache( 0 );
 
-        // Low danger: acquire target.
+
         guy.set_ai_danger( 0 );
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "drink_water" );
         REQUIRE( result == npc::need_result::progressed );
 
-        // High danger: deferred.
+
         guy.set_ai_danger( NPC_DANGER_VERY_LOW + 1 );
         guy.set_moves( 100 );
         result = guy.execute_need_goal( "drink_water" );
         CHECK( result == npc::need_result::deferred );
         CHECK( guy.get_water_plan().active() );
 
-        // Low danger: resumes.
+
         guy.set_ai_danger( 0 );
         guy.set_moves( 100 );
         result = guy.execute_need_goal( "drink_water" );
@@ -5679,8 +5679,8 @@ TEST_CASE( "npc_water_executor_contract", "[npc][needs][water]" )
     }
 }
 
-// Candidate query layer tests for warmth: verify find_warmth_candidates
-// returns the right mix of ground clothing and shelter candidates.
+
+
 TEST_CASE( "npc_find_warmth_candidates", "[npc][needs][warmth]" )
 {
     clear_map_without_vision();
@@ -5713,7 +5713,7 @@ TEST_CASE( "npc_find_warmth_candidates", "[npc][needs][warmth]" )
     }
 
     SECTION( "nearby clothing outranks distant shelter" ) {
-        // Clothing at distance 1 (warmth ~30), shelter at distance 3 (score -3).
+
         here.add_item_or_charges( adj, item( itype_sweater ) );
         tripoint_bub_ms distant = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.ter_set( distant, ter_t_floor );
@@ -5729,7 +5729,7 @@ TEST_CASE( "npc_find_warmth_candidates", "[npc][needs][warmth]" )
     }
 
     SECTION( "already indoors: no shelter candidates but clothing still found" ) {
-        // Standing on indoor tile: find_nearby_shelters returns empty.
+
         here.ter_set( guy.pos_bub(), ter_t_floor );
         here.add_item_or_charges( adj, item( itype_sweater ) );
         here.build_map_cache( 0 );
@@ -5753,8 +5753,8 @@ TEST_CASE( "npc_find_warmth_candidates", "[npc][needs][warmth]" )
     }
 }
 
-// Executor-level tests for seek_warmth goal: inventory wear, ground clothing,
-// shelter seeking, danger gating, sticky targets, progress tracking.
+
+
 TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
 {
     clear_map_without_vision();
@@ -5784,7 +5784,7 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
 
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
-        // One sweater may not resolve extreme cold, so progressed not satisfied.
+
         CHECK( result == npc::need_result::progressed );
         CHECK( guy.is_wearing( itype_sweater ) );
     }
@@ -5846,43 +5846,43 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
     }
 
     SECTION( "NPC holds position at shelter until warmth recovers" ) {
-        // Adjacent indoor tile; NPC can reach it in one step.
+
         const tripoint_bub_ms shelter = guy.pos_bub() + point::east;
         here.ter_set( shelter, ter_t_floor );
         here.build_map_cache( 0 );
 
-        // First call: move into shelter.
+
         guy.set_moves( 100 );
         guy.execute_need_goal( "seek_warmth" );
         REQUIRE( guy.pos_bub() == shelter );
 
-        // NPC is indoors but still freezing. Shelter drops from
-        // candidates (find_nearby_shelters returns empty indoors),
-        // but the executor should hold position and return progressed,
-        // not impossible, so follow/other goals don't pull the NPC out.
+
+
+
+
         behavior::character_oracle_t oracle( &guy );
         REQUIRE( oracle.needs_warmth_badly( "" ) == behavior::status_t::running );
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
-        // holding (not progressed) so dispatch maps to npc_pause
-        // which consumes moves, avoiding zero-move spin.
+
+
         CHECK( result == npc::need_result::holding );
         CHECK( guy.pos_bub() == shelter );
     }
 
     SECTION( "NPC at shelter switches to clothing when available" ) {
-        // NPC starts indoors (on floor tile) but still cold.
+
         here.ter_set( guy.pos_bub(), ter_t_floor );
         here.build_map_cache( 0 );
 
-        // No candidates: shelter empty (already indoors), no clothing.
-        // Executor should hold position (holding, not progressed).
+
+
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
         REQUIRE( result == npc::need_result::holding );
 
-        // Now place distant clothing. The NPC should pursue it instead
-        // of staying stuck indoors.
+
+
         const tripoint_bub_ms clothing = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.add_item_or_charges( clothing, item( itype_sweater ) );
         here.build_map_cache( 0 );
@@ -5895,8 +5895,8 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
     }
 
     SECTION( "clothing outranks shelter when clothing scores higher" ) {
-        // Shelter at distance 2 (score -2), clothing at distance 4 (warmth ~30).
-        // Clothing's warmth score beats shelter's negative-distance score.
+
+
         const tripoint_bub_ms shelter = guy.pos_bub() + tripoint( 2, 0, 0 );
         here.ter_set( shelter, ter_t_floor );
         const tripoint_bub_ms clothing = guy.pos_bub() + tripoint( 4, 0, 0 );
@@ -5911,7 +5911,7 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
     }
 
     SECTION( "unreachable clothing times out then skips to second target" ) {
-        // First sweater behind glass (visible, unreachable without bashing).
+
         const tripoint_bub_ms close = guy.pos_bub() + tripoint( 2, 0, 0 );
         for( const point &d : {
                  point::north, point::south, point::east, point::west,
@@ -5920,7 +5920,7 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
             here.ter_set( close + d, ter_t_wall_glass );
         }
         here.add_item_or_charges( close, item( itype_sweater ) );
-        // Second sweater in the open.
+
         const tripoint_bub_ms distant = guy.pos_bub() + tripoint( 0, -4, 0 );
         here.add_item_or_charges( distant, item( itype_sweater ) );
         here.build_map_cache( 0 );
@@ -5928,14 +5928,14 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
         auto cands = guy.find_warmth_candidates();
         REQUIRE( cands.size() >= 2 );
 
-        // 5-turn no-progress timeout on first target.
+
         for( int turn = 0; turn < 5; ++turn ) {
             guy.set_moves( 100 );
             guy.execute_need_goal( "seek_warmth" );
         }
         REQUIRE( guy.get_warmth_plan().last_result == npc::need_result::impossible );
 
-        // Next call skips the failed target and picks the second one.
+
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
         CHECK( guy.get_warmth_plan().active() );
@@ -5944,19 +5944,19 @@ TEST_CASE( "npc_warmth_executor_contract", "[npc][needs][warmth]" )
     }
 
     SECTION( "indoor hold returns holding, not blocked" ) {
-        // NPC starts indoors, no warmth sources.
+
         here.ter_set( guy.pos_bub(), ter_t_floor );
         here.build_map_cache( 0 );
 
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
         CHECK( result == npc::need_result::holding );
-        // holding must not increment the no-progress counter
+
         CHECK( guy.plan_for( npc::need_goal_id::seek_warmth ).no_progress_turns == 0 );
     }
 }
 
-// seek_warmth commitment lifecycle through npc::move().
+
 TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
 {
     clear_map_without_vision();
@@ -5980,7 +5980,7 @@ TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
     map &here = get_map();
 
     SECTION( "commitment clears when warmth resolves" ) {
-        // Place distant clothing so seek_warmth activates.
+
         const tripoint_bub_ms distant = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.add_item_or_charges( distant, item( itype_sweater ) );
         here.build_map_cache( 0 );
@@ -5990,7 +5990,7 @@ TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
         guy.move();
         REQUIRE( guy.get_committed_goal() == "seek_warmth" );
 
-        // Warm up the NPC so the predicate clears.
+
         guy.set_all_parts_temp_conv( BODYTEMP_NORM );
         guy.set_moves( 100 );
         guy.move();
@@ -5998,22 +5998,22 @@ TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
     }
 
     SECTION( "stale impossible from prior cycle does not kill live commitment" ) {
-        // No warmth sources: executor returns impossible.
+
         here.build_map_cache( 0 );
         guy.set_committed_goal( "seek_warmth" );
         guy.set_moves( 100 );
         guy.move();
-        // Commitment should have cleared (impossible).
+
         REQUIRE( guy.get_committed_goal() != "seek_warmth" );
 
-        // Now add a sweater to inventory and recommit.
+
         guy.i_add( item( itype_sweater ) );
         guy.set_committed_goal( "seek_warmth" );
         guy.set_moves( 100 );
         guy.move();
-        // The executor should have worn the sweater (progressed),
-        // and the commitment should still be alive because warmth
-        // is not yet resolved (still VERY_COLD).
+
+
+
         CHECK( guy.is_wearing( itype_sweater ) );
         behavior::character_oracle_t oracle( &guy );
         if( oracle.needs_warmth_badly( "" ) == behavior::status_t::running ) {
@@ -6022,7 +6022,7 @@ TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
     }
 
     SECTION( "indoor hold does not produce zero-move spin" ) {
-        // NPC starts indoors, no warmth sources.
+
         here.ter_set( guy.pos_bub(), ter_t_floor );
         here.build_map_cache( 0 );
 
@@ -6030,15 +6030,15 @@ TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
         const int moves_before = 100;
         guy.set_moves( moves_before );
         guy.move();
-        // The NPC should have consumed moves (not spun at 0).
+
         CHECK( guy.get_moves() < moves_before );
     }
 
     SECTION( "cold NPC starting indoors without commitment stays put" ) {
-        // Fresh BT evaluation, no prior seek_warmth commitment.
-        // NPC is cold, indoors, no warmth sources. The BT should
-        // commit seek_warmth (predicate sees indoors-hold case),
-        // and the NPC should not leave shelter.
+
+
+
+
         here.ter_set( guy.pos_bub(), ter_t_floor );
         here.build_map_cache( 0 );
         REQUIRE( guy.get_committed_goal().empty() );
@@ -6046,19 +6046,19 @@ TEST_CASE( "npc_seek_warmth_commitment_lifecycle", "[npc][needs][warmth]" )
         const tripoint_bub_ms start = guy.pos_bub();
         guy.set_moves( 100 );
         guy.move();
-        // NPC should stay indoors, not follow player outside.
+
         CHECK( guy.pos_bub() == start );
     }
 }
 
-// Same-category preemption: a more urgent executor need can interrupt a
-// less urgent one when the committed goal is in holding or blocked state.
+
+
 TEST_CASE( "same_category_preemption", "[npc][needs]" )
 {
     clear_map_without_vision();
     clear_avatar();
     get_player_character().camps.clear();
-    // Player adjacent to NPC so following urgency stays near zero.
+
     get_player_character().setpos( get_map(), tripoint_bub_ms{ 50, 51, 0 } );
     set_time_to_day();
 
@@ -6073,21 +6073,21 @@ TEST_CASE( "same_category_preemption", "[npc][needs]" )
     map &here = get_map();
 
     SECTION( "holding warmth preempted by critical thirst" ) {
-        // Cold NPC indoors (holding), critically thirsty, water in inventory.
-        // At current thresholds: warmth ~0.67, thirst ~0.88.
-        // Thirst exceeds warmth + preempt_margin (0.15).
+
+
+
         get_weather().forced_temperature = -30_C;
         here.ter_set( guy.pos_bub(), ter_t_floor );
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
         guy.set_thirst( 1050 );
-        // Inventory water (in bottle) so has_water returns true and
-        // BT selects drink_water.
+
+
         const item_group::ItemList water_items = item_group::items_from(
                     Item_spawn_data_test_bottle_water );
         guy.i_add( water_items.front() );
         here.build_map_cache( 0 );
 
-        // Pre-commit seek_warmth in holding state.
+
         guy.set_committed_goal( "seek_warmth" );
         guy.plan_for( npc::need_goal_id::seek_warmth ).last_result =
             npc::need_result::holding;
@@ -6098,21 +6098,21 @@ TEST_CASE( "same_category_preemption", "[npc][needs]" )
     }
 
     SECTION( "progressed warmth not preempted by moderate thirst" ) {
-        // Cold NPC actively moving toward clothing (progressed).
-        // Moderate thirst (600/1200 = 0.5) should NOT preempt because
-        // the committed goal is making progress.
+
+
+
         get_weather().forced_temperature = -30_C;
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
         guy.set_thirst( 600 );
-        // Place clothing so seek_warmth has a plan.
+
         const tripoint_bub_ms clothing = guy.pos_bub() + tripoint( 5, 0, 0 );
         here.add_item_or_charges( clothing, item( itype_sweater ) );
-        // Place water so drink_water is viable.
+
         const tripoint_bub_ms water = guy.pos_bub() + tripoint( 0, 3, 0 );
         here.ter_set( water, ter_t_water_sh );
         here.build_map_cache( 0 );
 
-        // Pre-commit seek_warmth in progressed state with an active plan.
+
         guy.set_committed_goal( "seek_warmth" );
         npc::need_plan &wp = guy.plan_for( npc::need_goal_id::seek_warmth );
         wp.goal = "seek_warmth";
@@ -6126,9 +6126,9 @@ TEST_CASE( "same_category_preemption", "[npc][needs]" )
     }
 
     SECTION( "progressed warmth preempted by critical thirst" ) {
-        // Cold NPC actively moving toward clothing (progressed), but
-        // critically thirsty (urgency > 0.75 critical threshold and
-        // exceeds warmth urgency). Should preempt.
+
+
+
         get_weather().forced_temperature = -30_C;
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
         guy.set_thirst( 1050 );
@@ -6152,8 +6152,8 @@ TEST_CASE( "same_category_preemption", "[npc][needs]" )
     }
 
     SECTION( "deferred warmth preempted by urgent thirst" ) {
-        // Cold NPC deferred (danger blocked movement). Urgent thirst
-        // should preempt with the same margin as blocked state.
+
+
         get_weather().forced_temperature = -30_C;
         guy.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
         guy.set_thirst( 1050 );
@@ -6195,20 +6195,20 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
     here.build_map_cache( 0 );
 
     SECTION( "empty lighter + firewood: no fire plan" ) {
-        // Raw lighter has no butane charges.
+
         guy.i_add( item( itype_lighter ) );
         guy.i_add( item( itype_2x4 ) );
 
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
-        // No usable firestarter, no clothing, and grass is not shelter.
+
         // Should fall through to impossible (no warmth candidates).
         CHECK( result == npc::need_result::impossible );
     }
 
     SECTION( "charged lighter + no firewood + nonflammable tiles: impossible" ) {
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
-        // No firewood. Set all adjacent tiles to non-flammable concrete.
+
         for( const tripoint_bub_ms &p : here.points_in_radius( guy.pos_bub(), 1 ) ) {
             if( p != guy.pos_bub() ) {
                 here.ter_set( p, ter_t_concrete_wall );
@@ -6223,7 +6223,7 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
 
     SECTION( "charged lighter + adjacent flammable fuel: progressed" ) {
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
-        // Drop a 2x4 on an adjacent tile to make it flammable.
+
         const tripoint_bub_ms adj = guy.pos_bub() + point::east;
         here.add_item_or_charges( adj, item( itype_2x4 ) );
         here.build_map_cache( 0 );
@@ -6232,15 +6232,15 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
         CHECK( result == npc::need_result::progressed );
-        // Lighter is fast enough for instant fire or activity.
+
         CHECK( ( here.get_field( adj, fd_fire ) || guy.activity ) );
     }
 
     SECTION( "charged lighter + firewood + nonflammable tile: starts fire" ) {
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
         guy.i_add( item( itype_2x4 ) );
-        // Default terrain is t_grass (outdoor, non-flammable, not shelter).
-        // Verify preconditions: fire spot exists, no shelter/clothing candidates.
+
+
         here.build_map_cache( 0 );
         REQUIRE( guy.find_fire_spot().has_value() );
         REQUIRE( guy.find_nearby_warm_clothing().empty() );
@@ -6270,32 +6270,32 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
     SECTION( "creature on adjacent tile: fire spot skips it" ) {
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
         guy.i_add( item( itype_2x4 ) );
-        // Block all adjacent tiles except east with walls.
+
         for( const tripoint_bub_ms &p : here.points_in_radius( guy.pos_bub(), 1 ) ) {
             if( p != guy.pos_bub() && p != guy.pos_bub() + point::east ) {
                 here.ter_set( p, ter_t_concrete_wall );
             }
         }
-        // Place a monster on the only open tile.
+
         const tripoint_bub_ms east = guy.pos_bub() + point::east;
         monster &mon = spawn_test_monster( "mon_zombie", east );
         ( void ) mon;
         here.build_map_cache( 0 );
 
-        // No valid fire spot (only open tile has a creature).
+
         CHECK_FALSE( guy.find_fire_spot().has_value() );
     }
 
     SECTION( "NPC_NO_GO zone on adjacent tile: fire spot skips it" ) {
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
         guy.i_add( item( itype_2x4 ) );
-        // Block all adjacent tiles except east with walls.
+
         for( const tripoint_bub_ms &p : here.points_in_radius( guy.pos_bub(), 1 ) ) {
             if( p != guy.pos_bub() && p != guy.pos_bub() + point::east ) {
                 here.ter_set( p, ter_t_concrete_wall );
             }
         }
-        // NPC_NO_GO zone covering the east tile.
+
         const tripoint_abs_ms east_abs = guy.pos_abs() + tripoint::east;
         zone_manager &mgr = zone_manager::get_manager();
         mgr.add( "test_no_go", zone_type_NPC_NO_GO, guy.get_fac_id(),
@@ -6311,12 +6311,12 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
 
     SECTION( "wielded firewood not burned as fuel" ) {
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
-        // Wield a 2x4 (FIREWOOD flag, melee_bash 16).
+
         item plank( itype_2x4 );
         guy.wield( plank );
         REQUIRE( guy.get_wielded_item() );
         REQUIRE( guy.get_wielded_item()->typeId() == itype_2x4 );
-        // Also add a 2x4 to inventory so there IS valid fuel.
+
         guy.i_add( item( itype_2x4 ) );
         here.build_map_cache( 0 );
         REQUIRE( guy.find_fire_spot().has_value() );
@@ -6324,7 +6324,7 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
         guy.set_moves( 100 );
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
         CHECK( result == npc::need_result::progressed );
-        // The wielded weapon must still be a 2x4.
+
         REQUIRE( guy.get_wielded_item() );
         CHECK( guy.get_wielded_item()->typeId() == itype_2x4 );
     }
@@ -6334,8 +6334,8 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
         item plank( itype_2x4 );
         guy.wield( plank );
         REQUIRE( guy.get_wielded_item() );
-        // No inventory firewood. All adjacent tiles are non-flammable.
-        // find_fire_spot should return nullopt (no safe fuel available).
+
+
         for( const tripoint_bub_ms &p : here.points_in_radius( guy.pos_bub(), 1 ) ) {
             if( p != guy.pos_bub() ) {
                 here.ter_set( p, ter_t_concrete );
@@ -6346,8 +6346,8 @@ TEST_CASE( "npc_fire_executor_contract", "[npc][needs][warmth][fire]" )
     }
 }
 
-// Thirsty NPCs with only forageable fruit nearby should treat harvestable
-// terrain as a water source (fruits have positive quench).
+
+
 TEST_CASE( "npc_harvest_for_water", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -6355,8 +6355,8 @@ TEST_CASE( "npc_harvest_for_water", "[npc][needs][forage]" )
     get_player_character().camps.clear();
     get_player_character().setpos( get_map(), tripoint_bub_ms{ 50, 55, 0 } );
     get_weather().forced_temperature = 20_C;
-    // Apple tree requires autumn to be harvestable. set_time refreshes
-    // light/visibility caches needed for NPC sees() checks.
+
+
     set_time( calendar::turn_zero + 2 * calendar::season_length() + 12_hours );
 
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
@@ -6376,17 +6376,17 @@ TEST_CASE( "npc_harvest_for_water", "[npc][needs][forage]" )
     here.build_map_cache( 0 );
     REQUIRE( here.is_harvestable( tree_pos ) );
 
-    // Precondition: the harvestable function finds the tree.
+
     REQUIRE_FALSE( guy.find_nearby_harvestable( false ).empty() );
 
-    // No ground drinks, no water terrain, no camp water. Only the
-    // harvestable apple tree. Water candidates must include it.
+
+
     auto candidates = guy.find_water_candidates();
     CHECK_FALSE( candidates.empty() );
 }
 
-// start_fire is a stale-save compat goal. The commitment block still
-// clears it when the BT selects a different goal.
+
+
 TEST_CASE( "start_fire_does_not_block_needs_forever", "[npc][needs]" )
 {
     clear_map_without_vision();
@@ -6404,7 +6404,7 @@ TEST_CASE( "start_fire_does_not_block_needs_forever", "[npc][needs]" )
     guy.set_hunger( 0 );
     guy.set_thirst( 900 );
     guy.worn.wear_item( guy, item( itype_backpack ), false, false );
-    // Give water so the BT can select drink_water.
+
     const item_group::ItemList water_items = item_group::items_from(
                 Item_spawn_data_test_bottle_water );
     guy.i_add( water_items.front() );
@@ -6412,17 +6412,17 @@ TEST_CASE( "start_fire_does_not_block_needs_forever", "[npc][needs]" )
     map &here = get_map();
     here.build_map_cache( 0 );
 
-    // Pre-commit start_fire.  The NPC is warm (no warmth need), so the
+
     // BT will return drink_water instead of start_fire.  The BT-fallthrough
-    // completion check should clear the start_fire commitment.
+
     guy.set_committed_goal( "start_fire" );
     guy.set_moves( 100 );
     guy.move();
     CHECK( guy.get_committed_goal() != "start_fire" );
 }
 
-// External commitment clears (dialogue, schedule transitions) must also
-// clear executor plan and failed-target state.
+
+
 TEST_CASE( "clear_committed_goal_clears_executor_state", "[npc][needs]" )
 {
     clear_map_without_vision();
@@ -6431,7 +6431,7 @@ TEST_CASE( "clear_committed_goal_clears_executor_state", "[npc][needs]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
 
-    // Simulate an active eat_food plan with failed targets.
+
     guy.set_committed_goal( "eat_food" );
     npc::need_plan &fp = guy.plan_for( npc::need_goal_id::eat_food );
     fp.goal = "eat_food";
@@ -6442,7 +6442,7 @@ TEST_CASE( "clear_committed_goal_clears_executor_state", "[npc][needs]" )
     guy.failed_targets_for( npc::need_goal_id::eat_food ).insert(
         tripoint_abs_ms{ 60, 50, 0 } );
 
-    // clear_committed_goal must reset everything.
+
     guy.clear_committed_goal();
     CHECK( guy.get_committed_goal().empty() );
     CHECK_FALSE( fp.active() );
@@ -6450,9 +6450,9 @@ TEST_CASE( "clear_committed_goal_clears_executor_state", "[npc][needs]" )
     CHECK( guy.failed_targets_for( npc::need_goal_id::eat_food ).empty() );
 }
 
-// Camp candidates must never become sticky plan targets.  The step-3
-// acquisition loop skips camp_food/camp_water source kinds.  After any
-// executor run, the plan's source_kind must never be a camp type.
+
+
+
 TEST_CASE( "camp_candidates_not_planned", "[npc][needs][camp]" )
 {
     clear_avatar();
@@ -6474,7 +6474,7 @@ TEST_CASE( "camp_candidates_not_planned", "[npc][needs][camp]" )
     test_camp->define_camp( this_omt, "faction_base_bare_bones_NPC_camp_0", false );
     test_camp->set_owner( your_fac );
 
-    // Stock the camp larder.
+
     camp_faction->empty_food_supply();
     camp_faction->debug_food_supply().emplace_back( calendar::turn_zero, nutrients{} );
     camp_faction->debug_food_supply().back().second.calories = 500 * 1000;
@@ -6488,7 +6488,7 @@ TEST_CASE( "camp_candidates_not_planned", "[npc][needs][camp]" )
     guy.set_thirst( 0 );
     m.build_map_cache( 0 );
 
-    // Camp food is in the candidate list.
+
     auto cands = guy.find_food_candidates();
     bool has_camp = false;
     for( const npc_short_term_cache::need_candidate &c : cands ) {
@@ -6498,9 +6498,9 @@ TEST_CASE( "camp_candidates_not_planned", "[npc][needs][camp]" )
     }
     REQUIRE( has_camp );
 
-    // Run the executor. Regardless of whether step-1 camp consumption
-    // succeeds or the executor falls through to step-3, the plan must
-    // never target a camp source.
+
+
+
     guy.set_committed_goal( "eat_food" );
     guy.set_moves( 100 );
     guy.execute_need_goal( "eat_food" );
@@ -6511,7 +6511,7 @@ TEST_CASE( "camp_candidates_not_planned", "[npc][needs][camp]" )
 
 TEST_CASE( "need_goal_id_helpers", "[npc][needs]" )
 {
-    // goal_id_for maps known executor goal strings to typed IDs.
+
     REQUIRE( npc::goal_id_for( "eat_food" ).has_value() );
     CHECK( *npc::goal_id_for( "eat_food" ) == npc::need_goal_id::eat_food );
     REQUIRE( npc::goal_id_for( "drink_water" ).has_value() );
@@ -6522,12 +6522,12 @@ TEST_CASE( "need_goal_id_helpers", "[npc][needs]" )
     REQUIRE( npc::goal_id_for( "go_to_sleep" ).has_value() );
     CHECK( *npc::goal_id_for( "go_to_sleep" ) == npc::need_goal_id::go_to_sleep );
 
-    // Non-executor goals return nullopt.
+
     CHECK_FALSE( npc::goal_id_for( "follow_player" ).has_value() );
     CHECK_FALSE( npc::goal_id_for( "idle" ).has_value() );
     CHECK_FALSE( npc::goal_id_for( "" ).has_value() );
 
-    // is_executor_goal convenience wrapper.
+
     CHECK( npc::is_executor_goal( "eat_food" ) );
     CHECK( npc::is_executor_goal( "drink_water" ) );
     CHECK( npc::is_executor_goal( "seek_warmth" ) );
@@ -6544,8 +6544,8 @@ TEST_CASE( "need_goal_id_plan_accessors", "[npc][needs]" )
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy, true );
 
-    // plan_for returns the correct underlying cache member.
-    // Capture non-const result first to avoid unsequenced calls in CHECK.
+
+
     npc::need_plan *food_ptr = &guy.plan_for( npc::need_goal_id::eat_food );
     npc::need_plan *water_ptr = &guy.plan_for( npc::need_goal_id::drink_water );
     npc::need_plan *warmth_ptr = &guy.plan_for( npc::need_goal_id::seek_warmth );
@@ -6555,7 +6555,7 @@ TEST_CASE( "need_goal_id_plan_accessors", "[npc][needs]" )
     CHECK( warmth_ptr == &guy.get_warmth_plan() );
     CHECK( sleep_ptr == &guy.get_sleep_plan() );
 
-    // clear_need_state resets both plan and failed targets.
+
     npc::need_plan &fp = guy.plan_for( npc::need_goal_id::eat_food );
     fp.goal = "eat_food";
     fp.no_progress_turns = 3;
@@ -6567,9 +6567,9 @@ TEST_CASE( "need_goal_id_plan_accessors", "[npc][needs]" )
     CHECK( guy.failed_targets_for( npc::need_goal_id::eat_food ).empty() );
 }
 
-// Failed-target history survives impossible dispatch so the same bad
-// target is not immediately reacquired. Targets clear naturally when
-// all candidates are exhausted (one tick to flush) or on satisfaction.
+
+
+
 TEST_CASE( "impossible_dispatch_preserves_failed_targets", "[npc][needs]" )
 {
     clear_map_without_vision();
@@ -6589,9 +6589,9 @@ TEST_CASE( "impossible_dispatch_preserves_failed_targets", "[npc][needs]" )
 
     map &here = get_map();
 
-    // Place food behind glass walls -- visible but unreachable without
-    // bashing.  The executor will target it and time out after 5 turns,
-    // populating food_failed_targets.
+
+
+
     const tripoint_bub_ms food_pos = guy.pos_bub() + tripoint( 3, 0, 0 );
     for( const point &d : {
              point::north, point::south, point::east, point::west,
@@ -6602,7 +6602,7 @@ TEST_CASE( "impossible_dispatch_preserves_failed_targets", "[npc][needs]" )
     here.add_item_or_charges( food_pos, item( itype_sandwich_cheese_grilled ) );
     here.build_map_cache( 0 );
 
-    // Step 1: Run the executor for 5 turns to hit the no-progress timeout.
+
     guy.set_committed_goal( "eat_food" );
     npc::need_result result = npc::need_result::idle;
     for( int turn = 0; turn < 5; ++turn ) {
@@ -6610,25 +6610,25 @@ TEST_CASE( "impossible_dispatch_preserves_failed_targets", "[npc][needs]" )
         result = guy.execute_need_goal( "eat_food" );
     }
     REQUIRE( result == npc::need_result::impossible );
-    // The timeout path inserts the target into failed_targets.
+
     REQUIRE_FALSE( guy.failed_targets_for( npc::need_goal_id::eat_food ).empty() );
 
-    // Simulate the dispatch impossible path (normally done by move()).
-    // Dispatch clears the plan but preserves failed-target history so the
-    // same bad target is not immediately reacquired.
+
+
+
     if( auto gid = npc::goal_id_for( "eat_food" ); gid ) {
         guy.plan_for( *gid ).clear();
     }
 
-    // Plan is cleared but failed targets persist.
+
     CHECK_FALSE( guy.plan_for( npc::need_goal_id::eat_food ).active() );
     CHECK_FALSE( guy.failed_targets_for( npc::need_goal_id::eat_food ).empty() );
 
-    // Step 2: Remove the glass walls and recommit.  The NPC should
-    // acquire the same food tile. Failed targets from step 1 persist
-    // across the impossible dispatch, but the executor clears them
-    // when all candidates are exhausted (one tick to flush). Manually
-    // clear here to simulate the flush and test fresh retargeting.
+
+
+
+
+
     for( const point &d : {
              point::north, point::south, point::east, point::west,
              point::north_west, point::north_east, point::south_west, point::south_east
@@ -6646,7 +6646,7 @@ TEST_CASE( "impossible_dispatch_preserves_failed_targets", "[npc][needs]" )
     CHECK( guy.plan_for( npc::need_goal_id::eat_food ).target == here.get_abs( food_pos ) );
 }
 
-// drink_water commitment lifecycle through npc::move().
+
 TEST_CASE( "npc_drink_water_commitment_clears_when_unobtainable", "[npc][needs][water]" )
 {
     clear_map_without_vision();
@@ -6662,8 +6662,8 @@ TEST_CASE( "npc_drink_water_commitment_clears_when_unobtainable", "[npc][needs][
     guy.set_attitude( NPCATT_FOLLOW );
     guy.set_stored_kcal( 55000 );
     guy.set_hunger( 0 );
-    // Must exceed needs_water_badly threshold (520) so the commitment
-    // doesn't clear via the "satisfied" path before the executor runs.
+
+
     guy.set_thirst( 600 );
     REQUIRE( guy.get_thirst() > 520 );
 
@@ -6679,7 +6679,7 @@ TEST_CASE( "npc_drink_water_commitment_clears_when_unobtainable", "[npc][needs][
     CHECK( guy.get_committed_goal() != "drink_water" );
 }
 
-// can_obtain_water should detect nearby water terrain sources.
+
 TEST_CASE( "npc_can_obtain_water_predicate", "[npc][needs][water]" )
 {
     clear_map_without_vision();
@@ -6736,7 +6736,7 @@ TEST_CASE( "npc_sleep_executor_contract", "[npc][needs][sleep]" )
 
     SECTION( "current tile is valid: falls asleep here" ) {
         guy.set_sleepiness( sleepiness_levels::MASSIVE_SLEEPINESS );
-        // Wall off all adjacent tiles so the NPC can only sleep in place.
+
         for( const tripoint_bub_ms &p : here.points_in_radius( guy.pos_bub(), 1 ) ) {
             if( p != guy.pos_bub() ) {
                 here.ter_set( p, ter_t_concrete_wall );
@@ -6779,8 +6779,8 @@ TEST_CASE( "npc_sleep_executor_contract", "[npc][needs][sleep]" )
                  guy.has_effect( effect_lying_down ) ) );
     }
 
-    // lying_down test is a separate TEST_CASE below to avoid
-    // effect_sleep leaking from other sections in the full suite.
+
+
 
     SECTION( "danger blocks distant movement: deferred" ) {
         guy.set_sleepiness( sleepiness_levels::MASSIVE_SLEEPINESS );
@@ -6794,14 +6794,14 @@ TEST_CASE( "npc_sleep_executor_contract", "[npc][needs][sleep]" )
         CHECK( result == npc::need_result::deferred );
     }
 
-    // No sleep-specific timeout test: find_sleep_candidates() always
-    // includes the NPC's own tile, so blocked-progress is hard to
-    // construct. The timeout branch is exercised through warmth/food/water
-    // where unreachable targets are constructible.
+
+
+
+
 }
 
-// Standalone test for lying_down -> holding, isolated from the
-// executor contract to avoid effect_sleep cross-section leakage.
+
+
 TEST_CASE( "npc_sleep_lying_down_returns_holding", "[npc][needs][sleep]" )
 {
     clear_map_without_vision();
@@ -6815,9 +6815,9 @@ TEST_CASE( "npc_sleep_lying_down_returns_holding", "[npc][needs][sleep]" )
     clear_character( guy, true );
     guy.set_sleepiness( 300 );
     REQUIRE_FALSE( guy.has_effect( effect_sleep ) );
-    // deferred=true so add_effect does not immediately process the
-    // lying_down handler (which calls can_sleep -> fall_asleep).
-    // Signature: (id, dur, permanent, intensity, force, deferred)
+
+
+
     guy.add_effect( effect_lying_down, 30_minutes, false, 1, false, true );
     REQUIRE_FALSE( guy.has_effect( effect_sleep ) );
     REQUIRE( guy.has_effect( effect_lying_down ) );
@@ -6846,10 +6846,10 @@ TEST_CASE( "npc_sleep_preemption", "[npc][needs][sleep]" )
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
     guy.worn.wear_item( guy, item( itype_backpack ), false, false );
 
-    // Moderate sleepiness so sleep urgency is moderate.
+
     guy.set_sleepiness( 400 );
 
-    // Extreme thirst so drink urgency is very high.
+
     guy.set_thirst( 1100 );
     const item_group::ItemList water_items = item_group::items_from(
                 Item_spawn_data_test_bottle_water );
@@ -6858,9 +6858,9 @@ TEST_CASE( "npc_sleep_preemption", "[npc][needs][sleep]" )
     map &here = get_map();
     here.build_map_cache( 0 );
 
-    // Pre-commit go_to_sleep with holding state (lying down).
-    // Apply effect_lying_down with deferred=true to avoid
-    // process_one_effect -> can_sleep() -> fall_asleep().
+
+
+
     guy.set_committed_goal( "go_to_sleep" );
     npc::need_plan &sp = guy.plan_for( npc::need_goal_id::go_to_sleep );
     sp.goal = "go_to_sleep";
@@ -6871,18 +6871,18 @@ TEST_CASE( "npc_sleep_preemption", "[npc][needs][sleep]" )
     guy.set_moves( 100 );
     guy.move();
 
-    // Thirst urgency (1100/1200 = 0.92) should preempt sleep
-    // urgency (400/1000 = 0.40) with margin.
+
+
     CHECK( guy.get_committed_goal() != "go_to_sleep" );
-    // Preemption must remove lying_down so process_one_effect
-    // doesn't re-trigger can_sleep() -> fall_asleep().
+
+
     CHECK_FALSE( guy.has_effect( effect_lying_down ) );
 }
 
-// Foraging/harvesting NPCs must react to danger instead of blindly
-// continuing the activity. The early-return optimization prevents BT
-// re-evaluation (which would flood the backlog), but danger assessment
-// must still interrupt.
+
+
+
+
 TEST_CASE( "npc_forage_yields_to_danger", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -6901,8 +6901,8 @@ TEST_CASE( "npc_forage_yields_to_danger", "[npc][needs][forage]" )
     guy.set_all_parts_temp_conv( BODYTEMP_NORM );
     guy.set_all_parts_temp_cur( BODYTEMP_NORM );
 
-    // clear_character teleports to (60,60). Reposition NPC and player
-    // so follow_close / must_retreat doesn't suppress danger assessment.
+
+
     map &here = get_map();
     guy.setpos( here, tripoint_bub_ms{ 50, 50, 0 } );
     get_player_character().setpos( here, guy.pos_bub() + point::north );
@@ -6919,7 +6919,7 @@ TEST_CASE( "npc_forage_yields_to_danger", "[npc][needs][forage]" )
     }
 
     SECTION( "foraging NPC cancels activity on real danger" ) {
-        // mon_zombie_brute_shocker has diff 10, well above NPC_DANGER_VERY_LOW.
+
         const tripoint_bub_ms adj = guy.pos_bub() + point::east;
         spawn_test_monster( "mon_zombie_brute_shocker", adj );
         here.build_map_cache( 0 );
@@ -6956,9 +6956,9 @@ TEST_CASE( "npc_forage_yields_to_danger", "[npc][needs][forage]" )
     }
 }
 
-// Auto-eating harvested food must only happen when the NPC is executing
-// a self-care need goal (eat_food / drink_water), not during generic
-// harvest work (farming zones, player-assigned tasks).
+
+
+
 TEST_CASE( "npc_harvest_auto_eat_restricted_to_self_care", "[npc][needs][forage]" )
 {
     clear_map_without_vision();
@@ -6984,7 +6984,7 @@ TEST_CASE( "npc_harvest_auto_eat_restricted_to_self_care", "[npc][needs][forage]
         const int moves_before = guy.get_moves();
         iexamine_helper::handle_harvest( guy, itype_sandwich_cheese_grilled, false );
 
-        // Should have eaten (moves charged).
+
         CHECK( guy.get_moves() < moves_before );
     }
 
@@ -6998,13 +6998,13 @@ TEST_CASE( "npc_harvest_auto_eat_restricted_to_self_care", "[npc][needs][forage]
     }
 
     SECTION( "NPC on generic work: food goes to inventory, not eaten" ) {
-        // No committed goal (generic harvest job).
+
         guy.set_committed_goal( "" );
         guy.set_moves( 200 );
         const int moves_before = guy.get_moves();
         iexamine_helper::handle_harvest( guy, itype_sandwich_cheese_grilled, false );
 
-        // Should NOT have eaten (no move cost).
+
         CHECK( guy.get_moves() == moves_before );
     }
 
@@ -7018,18 +7018,18 @@ TEST_CASE( "npc_harvest_auto_eat_restricted_to_self_care", "[npc][needs][forage]
     }
 }
 
-// Cold guarding NPCs should use the warmth executor (including fire
-// starting) instead of only the legacy wear_warmest_item path.
+
+
 TEST_CASE( "npc_guard_uses_warmth_executor", "[npc][needs][warmth][guard]" )
 {
     clear_map_without_vision();
     clear_avatar();
     get_player_character().camps.clear();
     map &here = get_map();
-    // Player far away so the NPC doesn't try to follow.
+
     get_player_character().setpos( here, tripoint_bub_ms{ 50, 55, 0 } );
     get_weather().forced_temperature = 20_C;
-    // On-shift for NC_ROBOFAC_INTERCOM_DAY (shift is 6:00-18:00).
+
     calendar::turn = calendar::turn_zero + 10_hours;
 
     npc &guy = spawn_scheduled_npc( { 50, 50 }, NC_ROBOFAC_INTERCOM_DAY );
@@ -7048,15 +7048,15 @@ TEST_CASE( "npc_guard_uses_warmth_executor", "[npc][needs][warmth][guard]" )
         guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
         guy.i_add( item( itype_2x4 ) );
 
-        // Verify no warm clothing or shelter available.
+
         REQUIRE( guy.find_nearby_warm_clothing().empty() );
         REQUIRE( guy.find_nearby_shelters().empty() );
 
-        // Run a move cycle. The guard path should use the warmth executor.
+
         guy.set_moves( 100 );
         guy.move();
 
-        // Check that fire was started or fire-starting activity assigned.
+
         bool has_fire = false;
         for( const tripoint_bub_ms &p : here.points_in_radius( guy.pos_bub(), 1 ) ) {
             if( here.get_field( p, fd_fire ) ) {
@@ -7068,9 +7068,9 @@ TEST_CASE( "npc_guard_uses_warmth_executor", "[npc][needs][warmth][guard]" )
     }
 }
 
-// clear_committed_goal() must remove effect_lying_down when clearing
-// a go_to_sleep commitment. Otherwise the effect handler keeps trying
-// to put the NPC to sleep after the goal is gone.
+
+
+
 TEST_CASE( "npc_clear_goal_removes_sleep_effects", "[npc][needs][sleep]" )
 {
     clear_map_without_vision();
@@ -7113,7 +7113,7 @@ TEST_CASE( "npc_clear_goal_removes_sleep_effects", "[npc][needs][sleep]" )
 
     SECTION( "non-sleep goal does not touch effects" ) {
         guy.set_committed_goal( "eat_food" );
-        // Unrelated effect should not be removed.
+
         guy.add_effect( effect_lying_down, 30_minutes, false, 1, false, true );
         REQUIRE( guy.has_effect( effect_lying_down ) );
 
@@ -7123,10 +7123,10 @@ TEST_CASE( "npc_clear_goal_removes_sleep_effects", "[npc][needs][sleep]" )
     }
 }
 
-// Dialogue transitions must cancel in-progress self-care activities.
-// The forage/harvest early return in npc::move() bypasses BT
-// re-evaluation, so a new order would be ignored until the activity
-// finishes unless clear_committed_goal() also cancels the activity.
+
+
+
+
 TEST_CASE( "npc_clear_goal_cancels_self_care_activities", "[npc][needs]" )
 {
     clear_map_without_vision();
@@ -7159,7 +7159,7 @@ TEST_CASE( "npc_clear_goal_cancels_self_care_activities", "[npc][needs]" )
 
     SECTION( "harvest activity cancelled on goal clear" ) {
         guy.set_committed_goal( "eat_food" );
-        // Autumn so t_tree_apple is harvestable.
+
         set_time( calendar::turn_zero + 2 * calendar::season_length() + 12_hours );
         const tripoint_bub_ms tree = guy.pos_bub() + point::east;
         here.ter_set( tree, ter_t_tree_apple );
@@ -7176,8 +7176,8 @@ TEST_CASE( "npc_clear_goal_cancels_self_care_activities", "[npc][needs]" )
 
     SECTION( "fire-starting activity cancelled on goal clear" ) {
         guy.set_committed_goal( "seek_warmth" );
-        // Build a fire_start activity. The actor holds an item_location
-        // into inventory; cancel_activity must handle cleanup.
+
+
         item &lighter = *guy.i_add( tool_with_ammo( itype_lighter, 20 ) );
         item_location tool_loc( guy, &lighter );
         const tripoint_bub_ms fire_pos = guy.pos_bub() + point::east;
@@ -7202,9 +7202,9 @@ TEST_CASE( "npc_clear_goal_cancels_self_care_activities", "[npc][needs]" )
     }
 }
 
-// Indoor warmth hold must have a timeout. Without one, an NPC indoors
-// on a cold tile that never warms them will hold forever, suppressing
-// follow/duty indefinitely.
+
+
+
 TEST_CASE( "npc_warmth_indoor_hold_timeout", "[npc][needs][warmth]" )
 {
     clear_map_without_vision();
@@ -7227,25 +7227,25 @@ TEST_CASE( "npc_warmth_indoor_hold_timeout", "[npc][needs][warmth]" )
 
     map &here = get_map();
 
-    // Put the NPC indoors with no warmth sources.
+
     here.ter_set( guy.pos_bub(), ter_t_floor );
     here.build_map_cache( 0 );
 
     SECTION( "indoor hold times out after threshold" ) {
-        // Precondition: NPC is indoors, cold, no warmth candidates.
+
         REQUIRE( here.has_flag( ter_furn_flag::TFLAG_INDOORS, guy.pos_bub() ) );
         behavior::character_oracle_t oracle( &guy );
         REQUIRE( oracle.needs_warmth_badly( "" ) == behavior::status_t::running );
         REQUIRE( guy.find_warmth_candidates().empty() );
 
-        // First call should return holding.
+
         guy.set_moves( 100 );
         npc::need_result first = guy.execute_need_goal( "seek_warmth" );
         REQUIRE( first == npc::need_result::holding );
         REQUIRE( guy.get_warmth_indoor_hold_turns() == 1 );
 
-        // Run the executor repeatedly. It should hold for a while, then
-        // give up and return impossible (threshold is 60 turns).
+
+
         npc::need_result last = first;
         int hold_count = 1;
         for( int turn = 1; turn < 80; ++turn ) {
@@ -7263,7 +7263,7 @@ TEST_CASE( "npc_warmth_indoor_hold_timeout", "[npc][needs][warmth]" )
     }
 
     SECTION( "predicate returns failure after indoor hold timeout" ) {
-        // Exhaust the indoor hold timeout (60 turns).
+
         for( int turn = 0; turn < 80; ++turn ) {
             guy.set_moves( 100 );
             npc::need_result result = guy.execute_need_goal( "seek_warmth" );
@@ -7272,22 +7272,22 @@ TEST_CASE( "npc_warmth_indoor_hold_timeout", "[npc][needs][warmth]" )
             }
         }
 
-        // The predicate should now return failure for the indoor case,
-        // preventing the BT from immediately re-selecting seek_warmth.
+
+
         behavior::character_oracle_t oracle( &guy );
         REQUIRE( oracle.needs_warmth_badly( "" ) == behavior::status_t::running );
         CHECK( oracle.can_obtain_warmth( "" ) == behavior::status_t::failure );
     }
 
     SECTION( "real candidate resets indoor hold stagnation" ) {
-        // Accumulate some indoor hold turns.
+
         for( int turn = 0; turn < 10; ++turn ) {
             guy.set_moves( 100 );
             guy.execute_need_goal( "seek_warmth" );
         }
 
-        // Place clothing. The executor should pursue it, resetting
-        // the stagnation counter.
+
+
         const tripoint_bub_ms clothing = guy.pos_bub() + tripoint( 3, 0, 0 );
         here.add_item_or_charges( clothing, item( itype_sweater ) );
         here.build_map_cache( 0 );
@@ -7296,8 +7296,8 @@ TEST_CASE( "npc_warmth_indoor_hold_timeout", "[npc][needs][warmth]" )
         npc::need_result result = guy.execute_need_goal( "seek_warmth" );
         CHECK( result == npc::need_result::progressed );
 
-        // Counter should be reset. Remove the clothing and verify
-        // indoor hold can run again from 0.
+
+
         here.i_clear( clothing );
         guy.clear_need_state( npc::need_goal_id::seek_warmth );
         here.build_map_cache( 0 );
@@ -7316,8 +7316,8 @@ TEST_CASE( "npc_warmth_indoor_hold_timeout", "[npc][needs][warmth]" )
 
 TEST_CASE( "npc_trade_test", "[npc][trade]" )
 {
-    // note for readers of this test: transfer_items() can't be called multiple times
-    // with escrow. it removes items from the player.
+
+
     clear_avatar();
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     avatar &you = get_avatar();
@@ -7367,7 +7367,7 @@ TEST_CASE( "npc_trade_test", "[npc][trade]" )
         escrow = npc_trading::transfer_items( try_trade, you, guy, from_map, true );
         REQUIRE( escrow.size() == 1 );
         REQUIRE( escrow.front().empty_container() );
-        // dropped the unwanted item
+
         REQUIRE( map_cursor( you.pos_abs() ).has_item_with( has_filthy ) );
     }
 }

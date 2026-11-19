@@ -3,12 +3,12 @@
 #include "a11y_semantics.h"
 #include "cata_catch.h"
 
-// Written during the coding phase (R22.2). These exercise the pure R02
-// snapshot/intent contracts in src/a11y_semantics.cpp; they need no game
-// world. Execute them with the full suite only after the coding phase is
-// complete. Oracle: the validator's verdict and its stable machine reason
-// code; a rejected snapshot must be rejected whole (the node list is never
-// silently truncated to fit a limit).
+
+
+
+
+
+
 
 namespace
 {
@@ -43,7 +43,7 @@ a11y::semantic_intent value_intent( const std::string &node, const std::string &
     return intent;
 }
 
-} // namespace
+}
 
 TEST_CASE( "a11y_schema_accepts_a_minimal_valid_snapshot", "[a11y][schema]" )
 {
@@ -64,7 +64,7 @@ TEST_CASE( "a11y_schema_rejects_duplicate_node_ids", "[a11y][schema]" )
     std::string reason;
     CHECK_FALSE( a11y::validate_snapshot( snapshot, reason ) );
     CHECK( reason == "duplicate_node_id" );
-    // Rejection is whole: nothing was dropped to make the snapshot fit.
+
     CHECK( snapshot.nodes.size() == 2 );
 }
 
@@ -106,10 +106,10 @@ TEST_CASE( "a11y_schema_tree_parentage_rules", "[a11y][schema]" )
         b.expanded = true;
         snapshot.nodes.push_back( a );
         snapshot.nodes.push_back( b );
-        // The exact code is not pinned: the validator checks depth
-        // consistency before its cycle walk, and a cycle cannot have
-        // consistent depths, so an earlier structural code may fire.
-        // The oracle is rejection with some stable code, never acceptance.
+
+
+
+
         CHECK_FALSE( a11y::validate_snapshot( snapshot, reason ) );
         CHECK_FALSE( reason.empty() );
     }
@@ -218,9 +218,9 @@ TEST_CASE( "a11y_intent_value_domain_checks", "[a11y][schema]" )
         pick.choices.push_back( a11y::semantic_choice{ "a", "A" } );
         pick.choices.push_back( a11y::semantic_choice{ "b", "B" } );
         CHECK( a11y::validate_intent_value( pick, value_intent( "pick", "b", "select_choice" ),
-                                           reason ) );
+                                            reason ) );
         CHECK_FALSE( a11y::validate_intent_value( pick, value_intent( "pick", "c", "select_choice" ),
-                       reason ) );
+                     reason ) );
         CHECK( reason == "not_a_choice" );
     }
     SECTION( "a value aimed at a non-field node is refused" ) {
@@ -229,8 +229,8 @@ TEST_CASE( "a11y_intent_value_domain_checks", "[a11y][schema]" )
         CHECK( reason == "not_a_field" );
     }
     SECTION( "non-value actions carry no domain check" ) {
-        // The R03 gate relies on this: only set_value/select_choice may
-        // carry a value; other actions pass validation untouched.
+
+
         a11y::semantic_intent activate;
         activate.node = "f";
         activate.action = "activate";

@@ -539,7 +539,7 @@ TEST_CASE( "shearing", "[activity][shearing][animals]" )
                     int count_mass   = 0;
                     int count_volume = 0;
                     for( const item &it : items ) {
-                        // can't use switch here
+
                         const itype_id it_id = it.typeId();
                         if( it_id == test_amount ) {
                             count_amount += it.charges;
@@ -854,7 +854,7 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
                     int count_amount = 0;
                     int count_random = 0;
                     for( const item &it : items ) {
-                        // can't use switch here
+
                         const itype_id it_id = it.typeId();
                         if( it_id == test_amount ) {
                             count_amount += it.charges;
@@ -1119,7 +1119,7 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
                     int count_amount = 0;
                     int count_random = 0;
                     for( const item &it : items ) {
-                        // can't use switch here
+
                         const itype_id it_id = it.typeId();
                         if( it_id == test_amount ) {
                             count_amount += it.charges;
@@ -1374,7 +1374,7 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
                     int count_amount = 0;
                     int count_random = 0;
                     for( const item &it : items ) {
-                        // can't use switch here
+
                         const itype_id it_id = it.typeId();
                         if( it_id == test_amount ) {
                             count_amount += it.charges;
@@ -1697,7 +1697,7 @@ TEST_CASE( "prying", "[activity][prying]" )
                     int count_amount = 0;
                     int count_random = 0;
                     for( const item &it : items ) {
-                        // can't use switch here
+
                         const itype_id it_id = it.typeId();
                         if( it_id == test_amount ) {
                             count_amount += it.charges;
@@ -1718,7 +1718,7 @@ static void update_efiles( std::vector<item_location> &edevice_locs,
                            std::vector<item_location> &efile_locs,
                            std::vector<item_location> &copiable_efile_locs )
 {
-    //update files
+
     efile_locs.clear();
     copiable_efile_locs.clear();
     for( item_location &edevice : edevice_locs ) {
@@ -1768,7 +1768,7 @@ TEST_CASE( "edevice", "[activity][edevice]" )
             REQUIRE( !i.is_browsed() );
             edevice_locs.emplace_back( dummy.i_add( i ) );
         }
-        //every test item group is only two devices
+
         laptop_with_files = edevice_locs.front();
         vector_laptop_with_files.clear();
         vector_laptop_with_files.emplace_back( laptop_with_files );
@@ -1785,7 +1785,7 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         REQUIRE( !!edevice_without_files );
 
         update_efiles( edevice_locs, efile_locs, copiable_efile_locs );
-        //browse required before any further efile operations
+
         do_activity( laptop_with_files, edevice_locs, efile_locs, EF_BROWSE );
         for( item_location &i : edevice_locs ) {
             REQUIRE( i->is_browsed() );
@@ -1843,11 +1843,11 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         dummy.activity.do_turn( dummy );
         REQUIRE( !dummy.activity );
     }
-    //power tests
+
     SECTION( "move to used edevice runs out of power" ) {
         add_edevices( Item_spawn_data_test_edevices_power );
         do_activity( edevice_without_files, vector_laptop_with_files, efile_locs, EF_MOVE_ONTO_THIS );
-        //the operation failed and the file has not been moved
+
         REQUIRE( edevice_without_files->efiles().empty() );
         REQUIRE( laptop_with_files->efiles().size() == 1 );
     }
@@ -1855,7 +1855,7 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         add_edevices( Item_spawn_data_test_edevices_power );
         REQUIRE( edevice_without_files );
         do_activity( laptop_with_files, vector_edevice_without_files, efile_locs, EF_MOVE_FROM_THIS );
-        //the operation fails and the file has not been moved
+
         REQUIRE( edevice_without_files->efiles().empty() );
         REQUIRE( laptop_with_files->efiles().size() == 1 );
     }
@@ -1871,9 +1871,9 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         }
         dummy.remove_item( *edevice_without_files );
         dummy.activity.do_turn( dummy );
-        //the operation immediately fails
+
         REQUIRE( !dummy.activity );
-        //the operation failed and the file has not been moved
+
         REQUIRE( laptop_with_files->efiles().size() == 1 );
     }
     SECTION( "move from target edevice disappears" ) {
@@ -1887,7 +1887,7 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         }
         dummy.remove_item( *edevice_without_files );
         process_activity( dummy );
-        //the operation fails and the file has not been moved
+
         REQUIRE( laptop_with_files->efiles().size() == 1 );
     }
     SECTION( "fast move between compatible devices" ) {
@@ -1895,7 +1895,7 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         time_point before = calendar::turn;
         do_activity( laptop_with_files, vector_edevice_without_files, efile_locs, EF_MOVE_FROM_THIS );
         REQUIRE( calendar::turn - ( before + 1_seconds ) ==
-                 810_seconds ); // 24GB / 30MB per sec + 10 second boot
+                 810_seconds );
     }
     SECTION( "slow move between incompatible devices" ) {
         add_edevices( Item_spawn_data_test_edevices_incompat, false );
@@ -1903,14 +1903,14 @@ TEST_CASE( "edevice", "[activity][edevice]" )
         int battery_start = laptop_with_files->ammo_remaining( );
         do_activity( laptop_with_files, vector_edevice_without_files, efile_locs, EF_MOVE_FROM_THIS );
         REQUIRE( battery_start - laptop_with_files->ammo_remaining( ) ==
-                 100 ); //400 minutes / 1 charge per 4 min
-        REQUIRE( calendar::turn - ( before + 1_seconds ) == 24010_seconds ); // 24GB / 1MB per sec
+                 100 );
+        REQUIRE( calendar::turn - ( before + 1_seconds ) == 24010_seconds );
     }
     SECTION( "fast move between incompatible devices with ETD" ) {
         add_edevices( Item_spawn_data_test_edevices_incompat );
         time_point before = calendar::turn;
         do_activity( laptop_with_files, vector_edevice_without_files, efile_locs, EF_MOVE_FROM_THIS );
-        REQUIRE( calendar::turn - ( before + 1_seconds ) == 4010_seconds ); // 24GB / (12 / 2)MB per sec
+        REQUIRE( calendar::turn - ( before + 1_seconds ) == 4010_seconds );
     }
     SECTION( "recipe combination" ) {
         add_edevices( Item_spawn_data_test_edevices_recipes );
@@ -1932,22 +1932,22 @@ TEST_CASE( "edevice", "[activity][edevice]" )
     }
 }
 
-static liquid_dest_opt dest_opt; // Defaults to LD_NULL, which is good enough when not used.
+static liquid_dest_opt dest_opt;
 
-/**
-* Helper method to create activity stubs that aren't meant to be processed.
-* The activities here still need to be able to pass activity_actor::start and
-* set activity::moves_left to a value greater than 0.
-* Some require a more complex setup for this, which is why they're commented out for now.
-* EDIT: They can now be done, but need someone to write the necessary terrain/items/vehicles/etc spawns.
-* Activity actors that use ui functionality in their start methods cannot work at all,
-* only affects workout_activity_actor right now
-*/
+
+
+
+
+
+
+
+
+
 
 static const std::vector<std::function<player_activity()>> test_activities {
-    //player_activity( autodrive_activity_actor() ),
-    //player_activity( bikerack_racking_activity_actor() ),
-    //player_activity( boltcutting_activity_actor( north, item_location() ) ),
+
+
+
     [] {
         Character *dummy = get_avatar().as_character();
         dummy->wear_item( item( itype_test_backpack, calendar::turn ), false );
@@ -1955,39 +1955,39 @@ static const std::vector<std::function<player_activity()>> test_activities {
         return player_activity( bookbinder_copy_activity_actor( bookbinder, recipe_water_clean ) );
     },
     [] { return player_activity( consume_activity_actor( item( itype_water_clean ) ) ); },
-    //player_activity( craft_activity_actor() ),
-    //player_activity( disable_activity_actor() ),
-    //player_activity( disassemble_activity_actor( 1 ) ),
+
+
+
     [] { return player_activity( drop_activity_actor() ); },
-    //player_activity( ebooksave_activity_actor( loc, loc ) ),
+
     [] { return player_activity( firstaid_activity_actor( 1, std::string(), get_avatar().getID() ) ); },
     [] { return player_activity( forage_activity_actor( 1 ) ); },
     [] { return player_activity( gunmod_remove_activity_actor( 1, item_location(), 0 ) ); },
     [] { return player_activity( hacking_activity_actor( item_location() ) ); },
-    //player_activity( hacksaw_activity_actor( p, loc ) ),
+
     [] { return player_activity( haircut_activity_actor() ); },
-    //player_activity( harvest_activity_actor( p ) ),
+
     [] { return player_activity( hotwire_car_activity_actor( 1, get_avatar().pos_abs() ) ); },
-    //player_activity( insert_item_activity_actor() ),
+
     [] {
         Character *dummy = get_avatar().as_character();
         dummy->wear_item( item( itype_test_backpack ), false );
         item_location lockpick_location = dummy->i_add( item( itype_test_lockpick, calendar::turn ) );
         return player_activity( lockpick_activity_actor::use_item( lockpick_location, get_avatar().pos_abs(), *dummy ) );
     },
-    //player_activity( longsalvage_activity_actor() ),
+
     [] { return player_activity( meditate_activity_actor() ); },
     [] { return player_activity( migration_cancel_activity_actor() ); },
     [] { return player_activity( milk_activity_actor( 1, 3000, get_avatar().pos_abs(), dest_opt, false ) ); },
     [] { return player_activity( mop_activity_actor( 1 ) ); },
-    //player_activity( move_furniture_activity_actor( p, false ) ),
+
     [] { return player_activity( move_items_activity_actor( {}, {}, false, tripoint_rel_ms::north ) ); },
     [] { return player_activity( open_gate_activity_actor( 1, get_avatar().pos_bub() ) ); },
-    //player_activity( oxytorch_activity_actor( p, loc ) ),
+
     [] { return player_activity( pickup_activity_actor( {}, {}, std::nullopt, false ) ); },
     [] { return player_activity( play_with_pet_activity_actor() ); },
-    //player_activity( prying_activity_actor( p, loc ) ),
-    //player_activity( read_activity_actor() ),
+
+
     [] {
         Character *dummy = get_avatar().as_character();
         dummy->wear_item( item( itype_test_backpack, calendar::turn ), false );
@@ -1998,15 +1998,15 @@ static const std::vector<std::function<player_activity()>> test_activities {
     },
     [] { return player_activity( safecracking_activity_actor( get_avatar().pos_bub() + tripoint_rel_ms::north ) ); },
     [] { return player_activity( shave_activity_actor() ); },
-    //player_activity( shearing_activity_actor( north ) ),
+
     [] { return player_activity( stash_activity_actor() ); },
     [] { return player_activity( tent_deconstruct_activity_actor( 1, 1, get_avatar().pos_bub(), itype_tent_kit ) ); },
-    //player_activity( tent_placement_activity_actor() ),
+
     [] { return player_activity( try_sleep_activity_actor( time_duration::from_hours( 1 ) ) ); },
     [] { return player_activity( unload_activity_actor( 1, item_location() ) ); },
     [] { return player_activity( wear_activity_actor( {}, {} ) ); },
     [] { return player_activity( wield_activity_actor( item_location(), 1 ) ); },
-    //player_activity( workout_activity_actor( p ) )
+
 };
 
 static void cleanup( avatar &dummy )
@@ -2020,7 +2020,7 @@ static void cleanup( avatar &dummy )
 
 static void update_cache( map &m )
 {
-    // Why twice? See vision_test.cpp
+
     m.invalidate_visibility_cache();
     m.update_visibility_cache( 0 );
     m.invalidate_map_cache( 0 );
@@ -2046,17 +2046,17 @@ TEST_CASE( "activity_interruption_by_distractions", "[activity][interruption]" )
         dummy.activity = activity;
         dummy.activity.start_or_resume( dummy, false );
 
-        //this must be larger than 0 for interruption to happen
+
         REQUIRE( dummy.activity.moves_left > 0 );
-        //some activities are set to null during start if they don't get valid data
+
         REQUIRE( dummy.activity.id() != ACT_NULL );
-        //aiming is excluded from this kind of interruption
+
         REQUIRE( dummy.activity.id() != ACT_AIM );
 
         tripoint_bub_ms zombie_pos_near = dummy.pos_bub() + tripoint( 2, 0, 0 );
         tripoint_bub_ms zombie_pos_far = dummy.pos_bub() + tripoint( 10, 0, 0 );
 
-        //to make section names unique
+
         std::string act = activity.id().str();
 
         SECTION( act + " interruption by nearby enemy" ) {

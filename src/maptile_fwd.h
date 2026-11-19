@@ -9,4 +9,4 @@ class submap;
 using maptile = maptile_impl<submap>;
 using const_maptile = maptile_impl<const submap>;
 
-#endif // CATA_SRC_MAPTILE_FWD_H
+#endif

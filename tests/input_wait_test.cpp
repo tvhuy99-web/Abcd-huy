@@ -70,8 +70,8 @@ TEST_CASE( "input_wait_blocks_until_the_earliest_wake", "[input_wait]" )
         }
     }
     GIVEN( "an overdue platform timer while a throttled present is pending" ) {
-        // CheckMessages skips touch timers until the present clears needupdate,
-        // so waking for the timer before then would spin
+
+
         input_wait_state s;
         s.platform_ms = 0;
         s.present_ms = 15;

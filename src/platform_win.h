@@ -15,10 +15,10 @@
 #       define STRICT
 #   endif
 #
-#   //unless overridden by the user, use win7
+#
 #   if !defined(NTDDI_VERSION) && !defined(_WIN32_WINNT)
-#       define NTDDI_VERSION 0x06010000 //NTDDI_WIN7
-#       define _WIN32_WINNT  0x0601     //_WIN32_WINNT_WIN7
+#       define NTDDI_VERSION 0x06010000
+#       define _WIN32_WINNT  0x0601
 #   endif
 #
 #   include <windows.h>
@@ -26,4 +26,4 @@
 HWND getWindowHandle();
 #endif
 
-#endif //CATA_PLATFORM_WIN_H
+#endif

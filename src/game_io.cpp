@@ -1,7 +1,7 @@
-/**
-* game-scale core saving/loading only.
-* See savegame.cpp for game component IO
-*/
+
+
+
+
 
 #include "game.h"
 #include "a11y_runtime.h"
@@ -103,22 +103,22 @@ static const mod_id MOD_INFORMATION_dda( "dda" );
 
 #define dbg(x) DebugLog((x),D_GAME) << __FILE__ << ":" << __LINE__ << ": "
 
-// Load everything that will not depend on any mods
+
 void game::load_static_data()
 {
-    // UI stuff, not mod-specific per definition
-    inp_mngr.init();            // Load input config JSON
-    // Init mappings for loading the json stuff
+
+    inp_mngr.init();
+
     DynamicDataLoader::get_instance();
     fullscreen = false;
     was_fullscreen = false;
     show_panel_adm = false;
 
-    // These functions do not load stuff from json.
-    // The content they load/initialize is hardcoded into the program.
-    // Therefore they can be loaded here.
-    // If this changes (if they load data from json), they have to
-    // be moved to game::load_mod or game::load_core_data
+
+
+
+
+
 
     get_auto_pickup().load_global();
     get_auto_notes_settings().load( false );
@@ -129,10 +129,10 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
 {
     dependency_tree &tree = world_generator->get_mod_manager().get_tree();
 
-    // deduplicated list of mods to check
+
     std::set<mod_id> check( opts.begin(), opts.end() );
 
-    // if no specific mods specified check all non-obsolete mods
+
     if( check.empty() ) {
         for( const mod_id &e : world_generator->get_mod_manager().all_mods() ) {
             if( !e->obsolete ) {
@@ -148,7 +148,7 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
         WORLD *test_world = world_generator->make_new_world( mods_empty );
         world_generator->set_active_world( test_world );
 
-        // if no loadable mods then test core data only
+
         try {
             load_core_data();
             DynamicDataLoader::get_instance().finalize_loaded_data();
@@ -188,14 +188,14 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
         try {
             load_core_data();
 
-            // Load any dependencies and de-duplicate them
+
             std::vector<mod_id> dep_vector = tree.get_dependencies_of_X_as_strings( mod.ident );
             std::set<mod_id> dep_set( dep_vector.begin(), dep_vector.end() );
             for( const auto &dep : dep_set ) {
                 load_data_from_dir( dep->path, dep->ident.str() );
             }
 
-            // Load mod itself
+
             load_data_from_dir( mod.path, mod.ident.str() );
             DynamicDataLoader::get_instance().finalize_loaded_data();
         } catch( const std::exception &err ) {
@@ -218,8 +218,8 @@ bool game::is_core_data_loaded() const
 
 void game::load_core_data()
 {
-    // core data can be loaded only once and must be first
-    // anyway.
+
+
     DynamicDataLoader::get_instance().unload_data();
 
     load_data_from_dir( PATH_INFO::jsondir(), "core" );
@@ -290,7 +290,7 @@ void game::load_master()
 bool game::load_dimension_data()
 {
     const cata_path datafile = PATH_INFO::current_dimension_save_path() / SAVE_DIMENSION_DATA;
-    // If dimension_data.gsav doesn't exist, return false
+
     return read_from_file_optional( datafile, [this, &datafile]( std::istream & is ) {
         unserialize_dimension_data( datafile, is );
     } );
@@ -311,7 +311,7 @@ bool game::load( const std::string &world )
     try {
         world_generator->set_active_world( wptr );
         g->setup( true );
-        // A failed character load must not be reported as a successful resume.
+
         if( !g->load( wptr->world_saves.front() ) ) {
             return false;
         }
@@ -342,14 +342,14 @@ bool game::load( const save_t &name )
             {
                 _( "Master save" ), [&]()
                 {
-                    // Now load up the master game data; factions (and more?)
+
                     load_master();
                 }
             },
             {
                 _( "Dimension data" ), [&]()
                 {
-                    // Load up dimension specific data (ie; weather, overmapstate)
+
                     load_dimension_data();
                 }
             },
@@ -412,21 +412,21 @@ bool game::load( const save_t &name )
                     }
 #endif
 
-                    // Now that the player's worn items are updated, their sight limits need to be
-                    // recalculated. (This would be cleaner if u.worn were private.)
+
+
                     u.recalc_sight_limits();
 
                     if( !gamemode ) {
                         gamemode = std::make_unique<special_game>();
                     }
 
-                    mostseen = 0; // ...and mostseen is 0, we haven't seen any monsters yet.
+                    mostseen = 0;
 
                     init_autosave();
-                    get_auto_pickup().load_character(); // Load character auto pickup rules
-                    get_auto_notes_settings().load( true ); // Load character auto notes settings
-                    get_safemode().load_character(); // Load character safemode rules
-                    zone_manager::get_manager().load_zones(); // Load character world zones
+                    get_auto_pickup().load_character();
+                    get_auto_notes_settings().load( true );
+                    get_safemode().load_character();
+                    zone_manager::get_manager().load_zones();
                     read_from_file_optional_json(
                         PATH_INFO::world_base_save_path() / "uistate.json",
                     []( const JsonValue & jsin ) {
@@ -441,11 +441,11 @@ bool game::load( const save_t &name )
                     for( item *&e : u.inv_dump() ) {
                         e->set_owner( get_player_character() );
                     }
-                    // legacy, needs to be here as we access the map.
+
                     if( !u.getID().is_valid() ) {
-                        // player does not have a real id, so assign a new one,
+
                         u.setID( assign_npc_id() );
-                        // The vehicle stores the IDs of the boarded players, so update it, too.
+
                         if( u.in_vehicle ) {
                             if( const std::optional<vpart_reference> vp = here.veh_at(
                                         u.pos_bub() ).part_with_feature( "BOARDABLE", true ) ) {
@@ -454,9 +454,9 @@ bool game::load( const save_t &name )
                         }
                     }
 
-                    // populate calendar caches now, after active world is set, but before we do
-                    // anything else, to ensure they pick up the correct value from the save's
-                    // worldoptions
+
+
+
                     calendar::set_eternal_season( ::get_option<bool>( "ETERNAL_SEASON" ) );
                     calendar::set_season_length( ::get_option<int>( "SEASON_LENGTH" ) );
 
@@ -483,13 +483,13 @@ bool game::load( const save_t &name )
                     }
 
                     effect_on_conditions::load_existing_character( u );
-                    // recalculate light level for correctly resuming crafting and disassembly
+
                     here.build_map_cache( here.get_abs_sub().z() );
 
                     set_zoom( uistate.tileset_zoom );
                     set_overmap_zoom( uistate.overmap_tileset_zoom );
 #if defined(TILES)
-                    // Ensure tileset display is synced with loaded zoom level
+
                     rescale_tileset( uistate.tileset_zoom );
                     overmap_tilecontext->set_draw_scale( uistate.overmap_tileset_zoom );
 #endif
@@ -507,8 +507,8 @@ bool game::load( const save_t &name )
         e.second();
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=" << e.first <<
-                                  " ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() - stage_started_at ).count();
+                                   " ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - stage_started_at ).count();
 #endif
         if( abort ) {
             loading_ui::done();
@@ -519,8 +519,8 @@ bool game::load( const save_t &name )
     loading_ui::done();
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=save_total ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - load_started_at ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - load_started_at ).count();
 #endif
     return true;
 }
@@ -529,7 +529,7 @@ void game::load_world_modfiles()
 {
     auto &mods = world_generator->active_world->active_mod_order;
 
-    // remove any duplicates whilst preserving order (fixes #19385)
+
     std::set<mod_id> found;
     mods.erase( std::remove_if( mods.begin(), mods.end(), [&found]( const mod_id & e ) {
         if( found.count( e ) ) {
@@ -540,21 +540,21 @@ void game::load_world_modfiles()
         }
     } ), mods.end() );
 
-    // require at least one core mod (saves before version 6 may implicitly require dda pack)
+
     if( std::none_of( mods.begin(), mods.end(), []( const mod_id & e ) {
     return e->core;
 } ) ) {
         mods.insert( mods.begin(), MOD_INFORMATION_dda );
     }
 
-    // this code does not care about mod dependencies,
-    // it assumes that those dependencies are static and
-    // are resolved during the creation of the world.
-    // That means world->active_mod_order contains a list
-    // of mods in the correct order.
+
+
+
+
+
     load_packs( _( "Loading files" ), mods );
 
-    // Load additional mods from that world-specific folder
+
 #if defined(__ANDROID__)
     const auto custom_started = std::chrono::steady_clock::now();
 #endif
@@ -563,22 +563,22 @@ void game::load_world_modfiles()
                                         "mod_interactions", "custom" );
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=custom_world_mods ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - custom_started ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - custom_started ).count();
     const auto finalize_started = std::chrono::steady_clock::now();
 #endif
     DynamicDataLoader::get_instance().finalize_loaded_data();
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=finalize_and_verify ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - finalize_started ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - finalize_started ).count();
 #endif
 }
 
 void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs )
 {
     for( const auto &mod : packs ) {
-        // Suppress missing mods the player chose to leave in the modlist
+
         if( !mod.is_valid() ) {
             continue;
         }
@@ -594,9 +594,9 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
         load_mod_data_from_dir( mod->path, mod.str() );
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=content id=" << mod.str() <<
-                                  " version=" << mod->version << " ms=" <<
-                                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() - pack_started ).count();
+                                   " version=" << mod->version << " ms=" <<
+                                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - pack_started ).count();
 #endif
     }
     cata_timer::print_stats();
@@ -612,14 +612,14 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
         load_mod_interaction_data_from_dir( mod->path / "mod_interactions", mod.str() );
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=interaction id=" << mod.str() <<
-                                  " version=" << mod->version << " ms=" <<
-                                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() - interaction_started ).count();
+                                   " version=" << mod->version << " ms=" <<
+                                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - interaction_started ).count();
 #endif
     }
 }
 
-//Saves all factions and missions and npcs.
+
 bool game::save_factions_missions_npcs()
 {
     cata_path masterfile = PATH_INFO::world_base_save_path() / SAVE_MASTER;
@@ -627,7 +627,7 @@ bool game::save_factions_missions_npcs()
         serialize_master( fout );
     }, _( "factions data" ) );
 }
-//Saves per-dimension data like Weather and overmapbuffer state
+
 bool game::save_dimension_data()
 {
     cata_path data_file = PATH_INFO::current_dimension_save_path() / SAVE_DIMENSION_DATA;
@@ -641,8 +641,8 @@ bool game::save_maps()
 
     try {
         here.save();
-        overmap_buffer.save(); // can throw
-        MAPBUFFER.save(); // can throw
+        overmap_buffer.save();
+        MAPBUFFER.save();
         return true;
     } catch( const std::exception &err ) {
         popup( _( "Failed to save the maps: %s" ), err.what() );
@@ -697,19 +697,19 @@ bool game::save_achievements()
 {
     const std::string &achievement_dir = PATH_INFO::achievementdir();
 
-    //Check if achievement dir exists
+
     if( !assure_dir_exist( achievement_dir ) ) {
         dbg( D_ERROR ) << "game:save_achievements: Unable to make achievement directory.";
         debugmsg( "Could not make '%s' directory", achievement_dir );
         return false;
     }
 
-    // This sets the maximum length for the filename
+
     constexpr size_t suffix_len = 24 + 1;
     constexpr size_t max_name_len = FILENAME_MAX - suffix_len;
 
     const size_t name_len = u.name.size();
-    // Here -1 leaves space for the ~
+
     const size_t truncated_name_len = ( name_len >= max_name_len ) ? ( max_name_len - 1 ) : name_len;
 
     std::ostringstream achievement_file_path;
@@ -717,7 +717,7 @@ bool game::save_achievements()
     achievement_file_path << achievement_dir;
 
     if( get_options().has_option( "ENCODING_CONV" ) && !get_option<bool>( "ENCODING_CONV" ) ) {
-        // Use the default locale to replace non-printable characters with _ in the player name.
+
         std::locale locale{ "C" };
         std::replace_copy_if( std::begin( u.name ), std::begin( u.name ) + truncated_name_len,
                               std::ostream_iterator<char>( achievement_file_path ),
@@ -732,10 +732,10 @@ bool game::save_achievements()
         }, '_' );
     }
 
-    // Add a ~ if the player name was actually truncated.
+
     achievement_file_path << ( ( truncated_name_len != name_len ) ? "~-" : "-" );
 
-    // Add world timestamp to distinguish characters from different worlds with the same name
+
     achievement_file_path << world_generator->active_world->timestamp << "-";
 
     const int character_id = get_player_character().getID().get_value();
@@ -823,8 +823,8 @@ bool game::save()
                 fout << total_time_played.count();
             } );
 #if defined(EMSCRIPTEN)
-            // This will allow the window to be closed without a prompt, until do_turn()
-            // is called.
+
+
             EM_ASM( window.game_unsaved = false; );
 #endif
             return true;
@@ -844,19 +844,19 @@ std::vector<std::string> game::list_active_saves()
     return saves;
 }
 
-/**
- * Writes information about the character out to a text file timestamped with
- * the time of the file was made. This serves as a record of the character's
- * state at the time the memorial was made (usually upon death) and
- * accomplishments in a human-readable format.
- */
+
+
+
+
+
+
 void game::write_memorial_file( std::string sLastWords )
 {
     const std::string &memorial_dir = PATH_INFO::memorialdir();
     const std::string &memorial_active_world_dir = memorial_dir +
             world_generator->active_world->world_name + "/";
 
-    //Check if both dirs exist. Nested assure_dir_exist fails if the first dir of the nested dir does not exist.
+
     if( !assure_dir_exist( memorial_dir ) ) {
         dbg( D_ERROR ) << "game:write_memorial_file: Unable to make memorial directory.";
         debugmsg( "Could not make '%s' directory", memorial_dir );
@@ -870,20 +870,20 @@ void game::write_memorial_file( std::string sLastWords )
         return;
     }
 
-    // <name>-YYYY-MM-DD-HH-MM-SS.txt
-    //       123456789012345678901234 ~> 24 chars + a null
+
+
     constexpr size_t suffix_len   = 24 + 1;
     constexpr size_t max_name_len = FILENAME_MAX - suffix_len;
 
     const size_t name_len = u.name.size();
-    // Here -1 leaves space for the ~
+
     const size_t truncated_name_len = ( name_len >= max_name_len ) ? ( max_name_len - 1 ) : name_len;
 
     std::ostringstream memorial_file_path;
     memorial_file_path << memorial_active_world_dir;
 
     if( get_options().has_option( "ENCODING_CONV" ) && !get_option<bool>( "ENCODING_CONV" ) ) {
-        // Use the default locale to replace non-printable characters with _ in the player name.
+
         std::locale locale {"C"};
         std::replace_copy_if( std::begin( u.name ), std::begin( u.name ) + truncated_name_len,
                               std::ostream_iterator<char>( memorial_file_path ),
@@ -898,10 +898,10 @@ void game::write_memorial_file( std::string sLastWords )
         }, '_' );
     }
 
-    // Add a ~ if the player name was actually truncated.
+
     memorial_file_path << ( ( truncated_name_len != name_len ) ? "~-" : "-" );
 
-    // Add a timestamp for uniqueness.
+
 
 #if defined(_WIN32)
     SYSTEMTIME current_time;
@@ -942,7 +942,7 @@ void game::init_autosave()
 
 void game::quicksave()
 {
-    //Don't autosave if the player hasn't done anything since the last autosave/quicksave,
+
     if( !moves_since_last_save && !world_generator->active_world->world_saves.empty() ) {
         return;
     }
@@ -954,17 +954,17 @@ void game::quicksave()
     ui_manager::redraw();
     refresh_display();
 
-    time_t now = std::time( nullptr ); //timestamp for start of saving procedure
+    time_t now = std::time( nullptr );
 
-    //perform save
+
     if( !save() && a11y::enabled() ) {
-        // R20.1: quicksave (and autosave, which runs through here) used
-        // to fail silently apart from a debug message. The counters
-        // below still reset exactly as before; only the reader gets a
-        // spoken result.
+
+
+
+
         ::popup( _( "Quicksave failed. The game was not saved." ) );
     }
-    //Now reset counters for autosaving, so we don't immediately autosave after a quicksave or autosave.
+
     moves_since_last_save = 0;
     last_save_timestamp = now;
 }
@@ -979,7 +979,7 @@ void game::quickload()
     std::string const &save_id = u.get_save_id();
 
     if( active_world->save_exists( save_t::from_save_id( save_id ) ) ) {
-        if( moves_since_last_save != 0 ) { // See if we need to reload anything
+        if( moves_since_last_save != 0 ) {
             moves_since_last_save = 0;
             last_save_timestamp = std::time( nullptr );
 
@@ -998,11 +998,11 @@ void game::quickload()
 
 void game::autosave()
 {
-    //Don't autosave if the min-autosave interval has not passed since the last autosave/quicksave.
+
     if( std::time( nullptr ) < last_save_timestamp + 60 * get_option<int>( "AUTOSAVE_MINUTES" ) ) {
         return;
     }
-    quicksave();    //Driving checks are handled by quicksave()
+    quicksave();
 }
 
 cata_path PATH_INFO::player_base_save_path()

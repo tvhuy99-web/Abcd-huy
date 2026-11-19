@@ -10,13 +10,13 @@ std::vector<mod_tileset> all_mod_tilesets;
 void load_mod_tileset( const JsonObject &jsobj, std::string_view, const cata_path &base_path,
                        const cata_path &full_path )
 {
-    // This function only checks whether mod tileset is compatible.
-    // Actual sprites are loaded when the main tileset is loaded.
-    // As such, most JSON members are skipped here.
+
+
+
     jsobj.allow_omitted_members();
 
     int new_num_in_file = 1;
-    // Check mod tileset num in file
+
     for( const mod_tileset &mts : all_mod_tilesets ) {
         if( mts.get_full_path() == full_path ) {
             new_num_in_file++;

@@ -24,18 +24,18 @@ namespace sounds
 enum class sound_t : int {
     background = 0,
     weather,
-    sensory, // Sonar etc. Ensures this sound will usually get a visual marker so the player can see it.
+    sensory,
     music,
     movement,
     speech,
-    electronic_speech, // Any electronic sound that's not music/alarm: Robot speech, radio, etc.
+    electronic_speech,
     activity,
     destructive_activity,
     alarm,
-    combat, // any violent sounding activity
-    alert, // louder than speech to get attention
-    order,  // loudest to get attention
-    LAST // must always be last
+    combat,
+    alert,
+    order,
+    LAST
 };
 
 inline auto format_as( sound_t st )
@@ -43,54 +43,54 @@ inline auto format_as( sound_t st )
     return static_cast<std::underlying_type_t<sound_t>>( st );
 }
 
-// Methods for recording sound events.
-/**
- * Sound at (p) of intensity (vol)
- *
- * If the description parameter is a non-empty string, then a string message about the
- * sound is generated for the player.
- *
- * @param p position of sound.
- * @param vol Volume of sound.
- * @param category general type of sound for faster parsing
- * @param description Description of the sound for the player
- * @param ambient Sound does not interrupt player activity if this is true
- * @param id Id of sound effect
- * @param variant Variant of sound effect given in id
- * @returns true if the player could hear the sound.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void sound( const tripoint_bub_ms &p, int vol, sound_t category, const std::string &description,
             bool ambient = false, const std::string &id = "",
             const std::string &variant = "default" );
 void sound( const tripoint_bub_ms &p, int vol, sound_t category, const translation &description,
             bool ambient = false, const std::string &id = "",
             const std::string &variant = "default" );
-/** Functions identical to sound(..., true). */
+
 void ambient_sound( const tripoint_bub_ms &p, int vol, sound_t category,
                     const std::string &description );
-/** Creates a list of coordinates at which to draw footsteps. */
+
 void add_footstep( const tripoint_bub_ms &p, int volume, int distance, monster *source,
                    const std::string &footstep );
 
-/* Make sure the sounds are all reset when we start a new game. */
+
 void reset_sounds();
 void reset_markers();
 
-// Methods for processing sound events, these
-// process_sounds() applies the sounds since the last turn to monster AI,
+
+
 void process_sounds();
-// process_sound_markers applies sound events to the player and records them for display.
+
 void process_sound_markers( Character *you );
 
-// Return list of points that have sound events the player can hear.
+
 std::vector<tripoint_bub_ms> get_footstep_markers();
-// Return list of all sounds and the list of sound cluster centroids.
+
 std::pair<std::vector<tripoint_bub_ms>, std::vector<tripoint_bub_ms>> get_monster_sounds();
-// retrieve the sound event(s?) at a location.
+
 std::string sound_at( const tripoint_bub_ms &location );
-/** Tells us if sound has been enabled in options */
+
 extern bool sound_enabled;
-} // namespace sounds
+}
 
 template<>
 struct enum_traits<sounds::sound_t> {
@@ -99,9 +99,9 @@ struct enum_traits<sounds::sound_t> {
 
 namespace sfx
 {
-//Channel assignments:
+
 enum class channel : int {
-    any = -1,                   //Finds the first available channel
+    any = -1,
     daytime_outdoors_env = 0,
     nighttime_outdoors_env,
     underground_env,
@@ -132,16 +132,16 @@ enum class channel : int {
     outdoors_clear_env,
     outdoors_cloudy_env,
     outdoors_sunny_env,
-    MAX_CHANNEL                 //the last reserved channel
+    MAX_CHANNEL
 };
 
-//Group Assignments:
+
 enum class group : int {
-    none = 0,       //unassigned slot
-    weather,        //SFX related to weather
-    time_of_day,    //SFX related to time of day
-    context_themes, //SFX related to context themes
-    low_stamina    //SFX related to low_stamina
+    none = 0,
+    weather,
+    time_of_day,
+    context_themes,
+    low_stamina
 };
 
 void load_sound_effects( const JsonObject &jsobj );
@@ -197,8 +197,8 @@ void stop_sound_effect_timed( channel channel, int time );
 int set_channel_volume( channel channel, int volume );
 void do_player_death_hurt( const Character &target, bool death );
 void do_low_stamina_sfx();
-// @param obst should be string id of obstacle terrain or vehicle part
-void do_obstacle( std::string_view obst = "" );
-} // namespace sfx
 
-#endif // CATA_SRC_SOUNDS_H
+void do_obstacle( std::string_view obst = "" );
+}
+
+#endif

@@ -43,10 +43,10 @@ static void test_greedy_u_bend()
     const Point start( 0, 0 ); // NOLINT(cata-use-named-point-constants,cata-point-initialization)
     const Point finish( 2, 0 );
     const Point max( 3, 3 );
-    // Test area and expected path:
-    // SxF    6x0
-    // .x.    5x1
-    // ...    432
+
+
+
+
 
     const pf::two_node_scoring_fn<Point> estimate =
     [&]( pf::directed_node<Point> cur, std::optional<pf::directed_node<Point>> ) {
@@ -87,10 +87,10 @@ TEST_CASE( "find_overmap_path_u_bend", "[pathfinding]" )
     const Point start( 0, 0, 0 );
     const Point finish( 2, 0, 0 );
     const inclusive_cuboid<Point> bounds( start, Point( 2, 2, 0 ) );
-    // Test area and expected path:
-    // SxF    6x0
-    // .x.    5x1
-    // ...    432
+
+
+
+
 
     const pf::omt_scoring_fn estimate = [&]( Point cur ) {
         if( !bounds.contains( cur ) || ( cur.x() == 1 && cur.y() != 2 ) ) {
@@ -116,11 +116,11 @@ TEST_CASE( "find_overmap_path_bridge", "[pathfinding]" )
     const Point start( 0, 0, 0 );
     const Point finish( 2, 0, 0 );
     const inclusive_cuboid<Point> bounds( start, Point( 2, 2, 1 ) );
-    // Test area and expected path:
-    // SxF    6x0
-    // ^x^    5x1
-    // .x.    .x.
-    // ( points 2, 3, 4 are at z=1 )
+
+
+
+
+
 
     const pf::omt_scoring_fn estimate = [&]( Point cur ) {
         if( !bounds.contains( cur ) || ( cur.x() == 1 && cur.z() == 0 ) ) {
@@ -139,4 +139,3 @@ TEST_CASE( "find_overmap_path_bridge", "[pathfinding]" )
     CHECK( pth.points[1] == Point( 2, 1, 0 ) );
     CHECK( pth.points[0] == Point( 2, 0, 0 ) );
 }
-

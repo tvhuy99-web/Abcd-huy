@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/** Narrow injectable behavior for driver tests, not an Android implementation. */
+
 public final class TextToSpeech {
     public static final int SUCCESS = 0;
     public static final int ERROR = -1;
@@ -21,7 +21,7 @@ public final class TextToSpeech {
         private Engine() { }
     }
 
-    /** Mirror of the real EngineInfo shape used by the voice probe (R06.1). */
+
     public static final class EngineInfo {
         public final String name;
         public final String label;
@@ -78,7 +78,7 @@ public final class TextToSpeech {
         return SUCCESS;
     }
 
-    /** One fake engine with the current fake voice, for probe tests. */
+
     public List<EngineInfo> getEngines() {
         List<EngineInfo> engines = new ArrayList<>();
         engines.add(new EngineInfo("fake.engine", "Fake engine"));

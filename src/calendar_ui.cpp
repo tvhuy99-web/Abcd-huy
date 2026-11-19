@@ -21,13 +21,20 @@ namespace
 static std::string calendar_granularity_name( const calendar_ui::granularity granularity )
 {
     switch( granularity ) {
-        case calendar_ui::granularity::year: return _( "year" );
-        case calendar_ui::granularity::season: return _( "season" );
-        case calendar_ui::granularity::day: return _( "day" );
-        case calendar_ui::granularity::hour: return _( "hour" );
-        case calendar_ui::granularity::minute: return _( "minute" );
-        case calendar_ui::granularity::turn: return _( "turn" );
-        case calendar_ui::granularity::last: break;
+        case calendar_ui::granularity::year:
+            return _( "year" );
+        case calendar_ui::granularity::season:
+            return _( "season" );
+        case calendar_ui::granularity::day:
+            return _( "day" );
+        case calendar_ui::granularity::hour:
+            return _( "hour" );
+        case calendar_ui::granularity::minute:
+            return _( "minute" );
+        case calendar_ui::granularity::turn:
+            return _( "turn" );
+        case calendar_ui::granularity::last:
+            break;
     }
     return _( "turn" );
 }
@@ -36,7 +43,7 @@ class calendar_accessibility_callback : public uilist_callback
 {
     public:
         explicit calendar_accessibility_callback( const calendar_ui::granularity max_granularity,
-                                                bool concise = false ) :
+                bool concise = false ) :
             max_granularity( max_granularity ), concise( concise ) {}
 
         void describe_accessibility_action( const std::string &action, const int selected,
@@ -55,33 +62,45 @@ class calendar_accessibility_callback : public uilist_callback
             if( selected_field < 0 || selected_field > static_cast<int>( max_granularity ) ) {
                 node.enabled = false;
                 node.disabled_reason = string_format(
-                                          _( "This field is more precise than the allowed limit of %s." ),
-                                          calendar_granularity_name( max_granularity ) );
+                                           _( "This field is more precise than the allowed limit of %s." ),
+                                           calendar_granularity_name( max_granularity ) );
                 return;
             }
 
             std::string unit;
             switch( static_cast<calendar_ui::granularity>( selected_field ) ) {
-                case calendar_ui::granularity::year: unit = _( "year" ); break;
-                case calendar_ui::granularity::season: unit = _( "season" ); break;
-                case calendar_ui::granularity::day: unit = _( "day" ); break;
-                case calendar_ui::granularity::hour: unit = _( "hour" ); break;
-                case calendar_ui::granularity::minute: unit = _( "minute" ); break;
-                case calendar_ui::granularity::turn: unit = _( "turn" ); break;
+                case calendar_ui::granularity::year:
+                    unit = _( "year" );
+                    break;
+                case calendar_ui::granularity::season:
+                    unit = _( "season" );
+                    break;
+                case calendar_ui::granularity::day:
+                    unit = _( "day" );
+                    break;
+                case calendar_ui::granularity::hour:
+                    unit = _( "hour" );
+                    break;
+                case calendar_ui::granularity::minute:
+                    unit = _( "minute" );
+                    break;
+                case calendar_ui::granularity::turn:
+                    unit = _( "turn" );
+                    break;
                 default:
                     node.enabled = false;
                     node.disabled_reason = _( "Select a date or time field first." );
                     return;
             }
             node.detail = string_format( action == "LEFT" ? _( "Decrease the selected %s by one." ) :
-                                        _( "Increase the selected %s by one." ), unit );
+                                         _( "Increase the selected %s by one." ), unit );
         }
 
     private:
         calendar_ui::granularity max_granularity;
         bool concise;
 };
-} // namespace
+}
 
 time_point calendar_ui::select_time_point( time_point initial_value, std::string_view title,
         calendar_ui::granularity granularity_level, bool creator_reader )
@@ -99,7 +118,7 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
             new_value = result_time;
         }
         const time_duration offset = ( new_value - initial ) * factor;
-        // Arbitrary maximal value.
+
         const time_point max = calendar::turn_zero + time_duration::from_turns(
                                    std::numeric_limits<int>::max() / 2 );
         return_value = std::max( std::min( max, return_value + offset ), calendar::turn_zero );
@@ -128,8 +147,8 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
             { "RESET", to_translation( "Reset value" ) }
         };
         if( simple_reader ) {
-            // Two-finger Up finishes, two-finger Down cancels. Only the
-            // date/day and hour controls are surfaced in this concise view.
+
+
             smenu.additional_actions.emplace_back( "CALENDAR_DONE", to_translation( "Done" ) );
         }
         smenu.callback = &accessibility_callback;
@@ -164,21 +183,21 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
             if( entry.retval > static_cast<int>( granularity_level ) ) {
                 entry.enabled = false;
                 entry.a11y_disabled_reason = string_format(
-                                                _( "This field is more precise than the allowed limit of %s." ),
-                                                calendar_granularity_name( granularity_level ) );
+                                                 _( "This field is more precise than the allowed limit of %s." ),
+                                                 calendar_granularity_name( granularity_level ) );
             }
         }
-        // (G11): the old/new date comparison lives only in smenu.text,
-        // which the reader publishes as the snapshot summary, and the Java
-        // reader does not speak that summary when entering this menu. Attach
-        // the same comparison to the first (initially focused) row's
-        // reader-only value, reusing the already-translated frame above, so
-        // it is heard on entry and whenever that row is focused. a11y_value
-        // is never drawn on screen, so sighted play is unchanged.
+
+
+
+
+
+
+
         if( !smenu.entries.empty() ) {
             smenu.entries.front().a11y_value = string_format(
-                _( "Old date: %1$s\nNew date: %2$s" ),
-                to_string( initial_value ), to_string( return_value ) );
+                                                   _( "Old date: %1$s\nNew date: %2$s" ),
+                                                   to_string( initial_value ), to_string( return_value ) );
         }
         smenu.selected = iSel;
         smenu.query();

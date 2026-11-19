@@ -448,7 +448,7 @@ bool mtype::same_species( const mtype &other ) const
 field_type_id mtype::bloodType() const
 {
     if( has_flag( mon_flag_ACID_BLOOD ) )
-        //A monster that has the death effect "ACID" does not need to have acid blood.
+
     {
         return fd_acid;
     }
@@ -484,7 +484,7 @@ field_type_id mtype::gibType() const
     if( made_of( material_flesh ) ) {
         return fd_gibs_flesh;
     }
-    // There are other materials not listed here like steel, protoplasmic, powder, null, stone, bone
+
     return fd_null;
 }
 
@@ -502,7 +502,7 @@ itype_id mtype::get_meat_itype() const
 {
     if( has_flag( mon_flag_POISON ) ) {
         if( made_of( material_flesh ) || made_of( material_hflesh ) ||
-            //In the future, insects could drop insect flesh rather than plain ol' meat.
+
             made_of( material_iflesh ) ) {
             return itype_meat_tainted;
         } else if( made_of( material_veggy ) ) {
@@ -520,7 +520,7 @@ itype_id mtype::get_meat_itype() const
                 return itype_meat;
             }
         } else if( made_of( material_iflesh ) ) {
-            //In the future, insects could drop insect flesh rather than plain ol' meat.
+
             return itype_meat;
         } else if( made_of( material_veggy ) ) {
             return itype_veggy;

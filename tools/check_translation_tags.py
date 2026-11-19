@@ -15,10 +15,8 @@ PATTERN_PRINTF = re.compile(r"%[0-9$.]*[diufegxscp]")
 
 PO_PATH = pathlib.Path("lang/po/")
 PO_FILES = dict([f.stem, f] for f in sorted(PO_PATH.glob("*.po")))
-# PO_FILES = { "ar": Path("lang/po/ar.po").., }
 
 
-# tags that can be safely omitted in translation
 TAGS_OPTIONAL = (
     "<zombie>", "<zombies>",
     "<name_b>", "<name_g>",
@@ -27,7 +25,7 @@ TAGS_OPTIONAL = (
     "<mypronoun>", "<mypossesivepronoun>",
 )
 
-# known false-positive strings. FIXME?
+
 SKIP_STRINGS = (
     "<empty>",
     "Even if you climb down safely, you will fall "
@@ -49,11 +47,6 @@ def _f(input_list):
     return f"`{' '.join(input_list)}`"
 
 
-##########################
-# ELLIPSES CHECK         #
-##########################
-
-
 def check_ellipses(entry):
     """Checks if translations use three dots instead of the ellipsis symbol"""
 
@@ -63,11 +56,6 @@ def check_ellipses(entry):
         return [" * It's recommended to use the `…` symbol "
                 "instead of three dots."]
     return []
-
-
-##########################
-# PRINTF CHECK           #
-##########################
 
 
 def _is_mixed(tags):
@@ -105,51 +93,44 @@ def check_printf(entry):
     """Checks whether formatting arguments %s/%1$d"""
     """in the source string and in the translation match."""
 
-    # error messages
     msgs = []
 
-    # find all <tags> in the original string
     tags_msgid = PATTERN_PRINTF.findall(entry.msgid)
-    # find all <tags> in the translated string
+
     if entry.msgstr:
         tags_msgstr = PATTERN_PRINTF.findall(entry.msgstr)
-    # find all <tags> for the plural translated strings
+
     elif entry.msgstr_plural:
         tags_msgstr_pl = [PATTERN_PRINTF.findall(v)
                           for v in entry.msgstr_plural.values()]
         tags_msgstr = tags_msgstr_pl[0]
 
-        # assume that all strings should have the same set of arguments
         for tag in tags_msgstr_pl:
             if tag != tags_msgstr:
                 msgs.append(" * Plural strings have"
                             " different sets of arguments;")
                 break
 
-    # strings must not have %s and %1$s at the same time
     if _is_mixed(tags_msgid) or _is_mixed(tags_msgstr):
         msgs.append(" * Cannot mix positional and non-positional "
                     "arguments in format string;")
     if msgs:
         return msgs
 
-    # if everything else is good
     if tags_msgid == tags_msgstr:
         return msgs
-    # and if everything is ok when replacing with positional arguments
+
     tags_msgid_pos = _make_pos_arg(tags_msgid)
     if tags_msgid_pos == _make_pos_arg(tags_msgstr):
         return msgs
 
-    # check if the number of arguments matches
     if len(tags_msgid) == len(tags_msgstr):
-        # if non-positional arguments are swapped
-        # then suggest positional syntax
+
         if sorted(tags_msgid) == sorted(tags_msgstr):
             msgs.append(" * The types of arguments differ;\n"
                         "   Use positional syntax:"
                         f" {_f(tags_msgid)} => {_f(tags_msgid_pos)};")
-        # otherwise it's most likely just a typo
+
         else:
             msgs.append(" * The types of arguments differ:"
                         f" {_f(tags_msgid)} and {_f(tags_msgstr)};")
@@ -160,63 +141,45 @@ def check_printf(entry):
     return msgs
 
 
-##########################
-# TAGS CHECK             #
-##########################
-
-
 def check_tags(entry):
     """Checks if <tags> in the source string match those in the translation."""
 
-    # error messages
     msgs = []
 
-    # find all <tags> in the original string
     tags_msgid = sorted(PATTERN_TAG.findall(entry.msgid))
-    # find all <tags> in the translated string
+
     if entry.msgstr:
         tags_msgstr = sorted(PATTERN_TAG.findall(entry.msgstr))
-    # find all <tags> for the plural translated strings
+
     elif entry.msgstr_plural:
         tags_msgstr_pl = [sorted(PATTERN_TAG.findall(v))
                           for v in entry.msgstr_plural.values()]
         tags_msgstr = tags_msgstr_pl[0]
 
-        # assume that all strings should have the same set of tags
         for tag in tags_msgstr_pl:
             if tag != tags_msgstr:
                 msgs.append(" * Plural strings have different sets of tags;")
                 break
 
-    # if everything else is good
     if tags_msgid == tags_msgstr:
         return msgs
 
-    # remove common <tags>
-    # both lists will contain only tags that are unique to them
     for tag in reversed(tags_msgid):
         if tag in reversed(tags_msgstr):
             tags_msgid.remove(tag)
             tags_msgstr.remove(tag)
 
-    # filter optional <tags>
     for tag in reversed(tags_msgid):
         if tag in TAGS_OPTIONAL:
             if CHECK_TAGS:
                 msgs.append(f" * Missing OPTIONAL tag(s): {_f(tag)};")
             tags_msgid.remove(tag)
 
-    # gather error messages to the list and return it
     if tags_msgid:
         msgs.append(f" * Missing tag(s): {_f(tags_msgid)};")
     if tags_msgstr:
         msgs.append(f" * Bad/extra tag(s): {_f(tags_msgstr)};")
     return msgs
-
-
-##########################
-# MAIN FUNCTIONS         #
-##########################
 
 
 def check_po_file(input_path):
@@ -229,7 +192,6 @@ def check_po_file(input_path):
 
     for entry in po.translated_entries():
 
-        # skip known false-positive strings
         if entry.msgid in SKIP_STRINGS:
             continue
 

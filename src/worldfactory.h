@@ -27,7 +27,7 @@ constexpr std::string_view zzip_suffix = ".zzip";
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 class save_t
 {
@@ -55,20 +55,20 @@ class save_t
 
 struct WORLD {
     public:
-        /**
-         * @returns A path to a folder in the file system that should contain
-         * all the world specific files. It depends on @ref world_name,
-         * changing that will also change the result of this function.
-         */
+
+
+
+
+
         cata_path folder_path() const;
 
         std::string world_name;
         options_manager::options_container WORLD_OPTIONS;
         std::vector<save_t> world_saves;
-        /**
-         * A (possibly empty) list of (idents of) mods that
-         * should be loaded for this world.
-         */
+
+
+
+
         std::vector<mod_id> active_mod_order;
         std::string timestamp;
 
@@ -105,17 +105,17 @@ class worldfactory
         worldfactory();
         ~worldfactory();
 
-        // Generate a world
+
         WORLD *make_new_world( bool show_prompt = true, const std::string &world_to_copy = "" );
         WORLD *make_new_world( special_game_type special_type );
-        // Used for unit tests - does NOT verify if the mods can be loaded
+
         WORLD *make_new_world( const std::string &name, const std::vector<mod_id> &mods );
         WORLD *make_new_world( const std::vector<mod_id> &mods );
-        /// Returns the *existing* world of given name.
+
         WORLD *get_world( const std::string &name );
-        /// Returns the *existing* world's name from its index in the world list.
+
         std::string get_world_name( size_t index );
-        /// Returns the *existing* world's index in the world list from its name.
+
         size_t get_world_index( const std::string &name );
         bool has_world( const std::string &name ) const;
 
@@ -139,11 +139,11 @@ class worldfactory
         void remove_world( const std::string &worldname );
         bool valid_worldname( const std::string &name, bool automated = false ) const;
 
-        /**
-         * @param delete_folder If true: delete all the files and directories of the given
-         * world folder. Else just avoid deleting the config files and the directory
-         * itself.
-         */
+
+
+
+
+
         void delete_world( const std::string &worldname, bool delete_folder );
 
         static std::map<size_t, inclusive_rectangle<point>> draw_worldgen_tabs( const catacurses::window &w,
@@ -182,9 +182,9 @@ class worldfactory
 
 void load_world_option( const JsonObject &jo );
 
-//load external option from json
+
 void load_external_option( const JsonObject &jo );
 
 extern std::unique_ptr<worldfactory> world_generator;
 
-#endif // CATA_SRC_WORLDFACTORY_H
+#endif

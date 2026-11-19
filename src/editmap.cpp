@@ -81,13 +81,18 @@ template<>
 std::string enum_to_string<editmap_shapetype>( editmap_shapetype data )
 {
     switch( data ) {
-            // *INDENT-OFF*
-        case editmap_shapetype::editmap_point: return _("Point");
-        case editmap_shapetype::editmap_rect: return _("Rectangle");
-        case editmap_shapetype::editmap_rect_filled: return _("Rectangle, Filled");
-        case editmap_shapetype::editmap_line: return _("Line");
-        case editmap_shapetype::editmap_circle: return _("Circle");
-            // *INDENT-ON*
+
+        case editmap_shapetype::editmap_point:
+            return _( "Point" );
+        case editmap_shapetype::editmap_rect:
+            return _( "Rectangle" );
+        case editmap_shapetype::editmap_rect_filled:
+            return _( "Rectangle, Filled" );
+        case editmap_shapetype::editmap_line:
+            return _( "Line" );
+        case editmap_shapetype::editmap_circle:
+            return _( "Circle" );
+
         default:
             cata_fatal( "Invalid editmap_shapetype in enum_to_string" );
     }
@@ -96,16 +101,24 @@ template<>
 std::string enum_to_string<editmap_action>( editmap_action data )
 {
     switch( data ) {
-            // *INDENT-OFF*
-        case editmap_action::EDIT_ITEMS: return _("EDIT_ITEMS");
-        case editmap_action::EDIT_MAPGEN: return _("EDIT_MAPGEN");
-        case editmap_action::SELECT_BRUSH: return _("SELECT_BRUSH");
-        case editmap_action::SELECT_TERRAIN: return _("SELECT_TERRAIN");
-        case editmap_action::SELECT_FURNITURE: return _("SELECT_FURNITURE");
-        case editmap_action::SELECT_TRAP: return _("SELECT_TRAP");
-        case editmap_action::SELECT_FIELD: return _("SELECT_FIELD");
-        case editmap_action::SELECT_RADIATION: return _("SELECT_RADIATION");
-            // *INDENT-ON*
+
+        case editmap_action::EDIT_ITEMS:
+            return _( "EDIT_ITEMS" );
+        case editmap_action::EDIT_MAPGEN:
+            return _( "EDIT_MAPGEN" );
+        case editmap_action::SELECT_BRUSH:
+            return _( "SELECT_BRUSH" );
+        case editmap_action::SELECT_TERRAIN:
+            return _( "SELECT_TERRAIN" );
+        case editmap_action::SELECT_FURNITURE:
+            return _( "SELECT_FURNITURE" );
+        case editmap_action::SELECT_TRAP:
+            return _( "SELECT_TRAP" );
+        case editmap_action::SELECT_FIELD:
+            return _( "SELECT_FIELD" );
+        case editmap_action::SELECT_RADIATION:
+            return _( "SELECT_RADIATION" );
+
         default:
             cata_fatal( "Invalid editmap_action in enum_to_string" );
     }
@@ -114,15 +127,17 @@ template<>
 std::string enum_to_string<editmap_mode>( editmap_mode data )
 {
     switch( data ) {
-            // *INDENT-OFF*
-        case editmap_mode::EMM_DRAWING: return _("EMM_DRAWING");
-        case editmap_mode::EMM_SELECTING: return _("EMM_SELECTING");
-            // *INDENT-ON*
+
+        case editmap_mode::EMM_DRAWING:
+            return _( "EMM_DRAWING" );
+        case editmap_mode::EMM_SELECTING:
+            return _( "EMM_SELECTING" );
+
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
     }
 }
-} // namespace io
+}
 
 static std::vector<std::string> fld_string( const std::string &str, int width )
 {
@@ -325,24 +340,24 @@ input_context editmap_ui::setup_input_context()
     ctxt.register_action( "EDITMAP_EDIT_OVERMAP" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    // Needed for timeout to be useful
+
     ctxt.register_action( "ANY_INPUT" );
     return ctxt;
 }
 
 
-/*
-* Shorthand for e.g:
 
-std::optional<ter_id> selected_ter = brush.select_feature<ter_t>();
-if (!!selected_ter) {
-    brush.selected_terrain = *selected_ter;
-    if (!brush.drawing_terrain) {
-        brush.drawing_terrain = true;
-    }
-}
 
-*/
+
+
+
+
+
+
+
+
+
+
 template <typename T_t, typename T_id>
 static void brush_set_feature( editmap_brush &brush, T_id &brush_selected, bool &brush_enabled )
 {
@@ -539,7 +554,7 @@ void editmap_ui::draw_main_ui_overlay()
     const Creature *critter = get_creature_tracker().creature_at( target );
     map &here = get_map();
 
-    // update target point
+
     if( critter != nullptr ) {
         critter->draw( g->w_terrain, target, true );
     } else {
@@ -575,10 +590,10 @@ void editmap_ui::draw_main_ui_overlay()
                     const tripoint_omt_ms tmp_p( x, y, target.z() );
                     const tripoint_bub_ms map_p = origin_p + tmp_p.raw();
                     g->draw_radiation_override( tripoint_bub_ms( map_p ), tmpmap.get_radiation( tmp_p ) );
-                    // scent is managed in `game` instead of `map`, so there's no override for it
-                    // temperature is managed in `game` instead of `map`, so there's no override for it
-                    // TODO: visibility could be affected by both the actual map and the preview map,
-                    // which complicates calculation, so there's no override for it (yet)
+
+
+
+
                     g->draw_terrain_override( map_p, tmpmap.ter( tmp_p ) );
                     g->draw_furniture_override( map_p, tmpmap.furn( tmp_p ) );
                     g->draw_graffiti_override( tripoint_bub_ms( map_p ), tmpmap.has_graffiti_at( tmp_p ) );
@@ -610,7 +625,7 @@ void editmap_ui::draw_main_ui_overlay()
                     }
                 }
             }
-            // int: count, bool: more than 1 spawn data
+
             std::map<tripoint_bub_ms, std::tuple<mtype_id, int, bool, Creature::Attitude>> spawns;
             for( int x = 0; x < 2; x++ ) {
                 for( int y = 0; y < 2; y++ ) {
@@ -675,11 +690,11 @@ void editmap_ui::draw_current_point_info()
     cataimgui::TextColoredParagraphNewline( draw_color,
                                             string_format( _( "Target: bub_ms = %s; abs_ms = %s" ), current_point.to_string(),
                                                     here.get_abs( current_point ).to_string() ) );
-    /* uncomment for origin
-    cataimgui::TextColoredParagraphNewline( draw_color,
-                                            string_format( "Origin: bub_ms = %s; abs_ms = %s", current_origin.to_string(),
-                                                    here.get_abs( current_origin ).to_string() ) );
-    */
+
+
+
+
+
     ImGui::Separator();
     draw_symbol_and_info( terrain_type.color(), terrain_type.symbol(), draw_color,
                           string_format( _( " Terrain: %s (#%d); move cost %d" ),
@@ -969,7 +984,7 @@ void apply<field_type>( const field_type &t, const editmap_brush &brush )
     }
 }
 
-// edit terrain, furnitrue, or traps
+
 template<typename T_t>
 std::optional<int_id<T_t>> editmap_brush::select_feature()
 {
@@ -1014,9 +1029,9 @@ std::optional<int_id<T_t>> editmap_brush::select_feature()
     return std::nullopt;
 }
 
-/*
- * edit items in target square. WIP
- */
+
+
+
 namespace
 {
 enum editmap_imenu_ent {
@@ -1029,7 +1044,7 @@ enum editmap_imenu_ent {
     imenu_savetest,
     imenu_exit,
 };
-} // namespace
+}
 
 void editmap_ui::edit_items()
 {
@@ -1045,7 +1060,7 @@ void editmap_ui::edit_items()
     ilmenu.addentry( items.size(), true, 'a', _( "Add item" ) );
     ilmenu.input_category = "EDIT_ITEMS";
     ilmenu.additional_actions = {
-        { "HELP_KEYBINDINGS", translation() } // to refresh the view after exiting from keybindings
+        { "HELP_KEYBINDINGS", translation() }
     };
     ilmenu.allow_additional = true;
 
@@ -1075,7 +1090,7 @@ void editmap_ui::edit_items()
                             "savetest" ) );
             imenu.input_category = "EDIT_ITEMS";
             imenu.additional_actions = {
-                { "HELP_KEYBINDINGS", translation() } // to refresh the view after exiting from keybindings
+                { "HELP_KEYBINDINGS", translation() }
             };
             imenu.allow_additional = true;
 
@@ -1238,11 +1253,11 @@ void editmap_brush::update_brush_points()
     }
 }
 
-/*
- * Shift 'var' (i.e., part of a coordinate plane) by 'shift'.
- * If the result is not >= min and < 'max', constrain the result and adjust 'shift',
- * so it can adjust subsequent points of a set consistently.
- */
+
+
+
+
+
 static int limited_shift( int var, int &shift, int min, int max )
 {
     if( var + shift < min ) {
@@ -1267,7 +1282,7 @@ bool editmap_ui::move_target( const std::string &action, const input_context &ct
 
     target.x() = limited_shift( target.x(), mp.x(), 0, MAPSIZE_X );
     target.y() = limited_shift( target.y(), mp.y(), 0, MAPSIZE_Y );
-    // OVERMAP_HEIGHT is the limit, not size of a 0 based vector, and limited_shift restricts to <, not <=
+
     target.z() = limited_shift( target.z(), mp.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
     if( moveorigin ) {
         brush.origin += mp;
@@ -1300,11 +1315,11 @@ void editmap_ui::mapgen_preview( const real_coords &tc, oter_id previewed_omt ) 
     editmap_uistate &editmap_state = uistate.editmap_state;
     editmap_brush &brush = get_brush();
     tripoint_bub_ms &target = brush.target;
-    // Coordinates of the overmap terrain that should be generated.
+
     const point_abs_omt omt_pos2 = tc.abs_omt();
     const tripoint_abs_omt omt_pos( omt_pos2, target.z() );
     const oter_id &omt_ref = overmap_buffer.ter( omt_pos );
-    // Copy to store the original value, to restore it upon canceling
+
     const oter_id orig_oters = omt_ref;
     overmap_buffer.ter_set( omt_pos, previewed_omt );
     smallmap tmpmap;
@@ -1369,8 +1384,8 @@ void editmap_ui::mapgen_preview( const real_coords &tc, oter_id previewed_omt ) 
                 for( int x = 0; x < 2; x++ ) {
                     for( int y = 0; y < 2; y++ ) {
                         for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-                            // Apply previewed mapgen to map. Since this is a function for testing, we try avoid triggering
-                            // functions that would alter the results
+
+
                             const tripoint_rel_sm dest_pos = target_sub + tripoint( x, y, z );
                             const tripoint_rel_sm src_pos = tripoint_rel_sm{ x, y, z };
 
@@ -1388,14 +1403,14 @@ void editmap_ui::mapgen_preview( const real_coords &tc, oter_id previewed_omt ) 
                                 veh->sm_pos = here.get_abs_sub().xy() + dest_pos;
                             }
 
-                            if( !destsm->spawns.empty() ) { // trigger spawnpoints
+                            if( !destsm->spawns.empty() ) {
                                 here.spawn_monsters( true );
                             }
                         }
                     }
                 }
 
-                // Since we cleared the vehicle cache of the whole z-level (not just the generate map), we add it back here
+
                 for( int x = 0; x < here.getmapsize(); x++ ) {
                     for( int y = 0; y < here.getmapsize(); y++ ) {
                         const tripoint_rel_sm dest_pos = tripoint_rel_sm( x, y, target.z() );
@@ -1405,7 +1420,7 @@ void editmap_ui::mapgen_preview( const real_coords &tc, oter_id previewed_omt ) 
                                       dest_pos.y(), dest_pos.z() );
                             continue;
                         }
-                        here.update_vehicle_list( destsm, target.z() ); // update real map's vcaches
+                        here.update_vehicle_list( destsm, target.z() );
                     }
                 }
 
@@ -1425,7 +1440,7 @@ void editmap_ui::mapgen_preview( const real_coords &tc, oter_id previewed_omt ) 
     } while( gpmenu.ret != UILIST_CANCEL && !changed_oter_id );
 
     editmap_state.tmpmap_ptr = nullptr;
-    // original om_ter wasn't changed, restore it
+
     if( !changed_oter_id ) {
         overmap_buffer.ter_set( omt_pos, orig_oters );
     }
@@ -1444,7 +1459,7 @@ void editmap_ui::mapgen_retarget()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    // Needed for timeout to be useful
+
     ctxt.register_action( "ANY_INPUT" );
     std::string action;
     tripoint_bub_ms origm = target;

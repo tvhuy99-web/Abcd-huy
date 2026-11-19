@@ -11,7 +11,7 @@
 #include "rng.h"
 
 static const std::map<std::string, std::function<void( mission * )>> mission_function_map = {{
-        // Starts
+
         { "standard", { } },
         { "kill_nemesis", mission_start::kill_nemesis },
         { "place_npc_software", mission_start::place_npc_software },
@@ -19,8 +19,8 @@ static const std::map<std::string, std::function<void( mission * )>> mission_fun
         { "find_safety", mission_start::find_safety },
         { "place_book", mission_start::place_book },
         { "reveal_refugee_center", mission_start::reveal_refugee_center },
-        // Endings
-        // Failures
+
+
     }
 };
 
@@ -38,14 +38,20 @@ template<>
 std::string enum_to_string<mission_origin>( mission_origin data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case ORIGIN_NULL: return "ORIGIN_NULL";
-        case ORIGIN_GAME_START: return "ORIGIN_GAME_START";
-        case ORIGIN_OPENER_NPC: return "ORIGIN_OPENER_NPC";
-        case ORIGIN_ANY_NPC: return "ORIGIN_ANY_NPC";
-        case ORIGIN_SECONDARY: return "ORIGIN_SECONDARY";
-        case ORIGIN_COMPUTER: return "ORIGIN_COMPUTER";
-        // *INDENT-ON*
+
+        case ORIGIN_NULL:
+            return "ORIGIN_NULL";
+        case ORIGIN_GAME_START:
+            return "ORIGIN_GAME_START";
+        case ORIGIN_OPENER_NPC:
+            return "ORIGIN_OPENER_NPC";
+        case ORIGIN_ANY_NPC:
+            return "ORIGIN_ANY_NPC";
+        case ORIGIN_SECONDARY:
+            return "ORIGIN_SECONDARY";
+        case ORIGIN_COMPUTER:
+            return "ORIGIN_COMPUTER";
+
         case mission_origin::NUM_ORIGIN:
             break;
     }
@@ -56,44 +62,63 @@ template<>
 std::string enum_to_string<mission_goal>( mission_goal data )
 {
     switch( data ) {
-        // *INDENT-OFF*
-        case MGOAL_NULL: return "MGOAL_NULL";
-        case MGOAL_GO_TO: return "MGOAL_GO_TO";
-        case MGOAL_GO_TO_TYPE: return "MGOAL_GO_TO_TYPE";
-        case MGOAL_FIND_ITEM: return "MGOAL_FIND_ITEM";
-        case MGOAL_FIND_ANY_ITEM: return "MGOAL_FIND_ANY_ITEM";
-        case MGOAL_FIND_ITEM_GROUP: return "MGOAL_FIND_ITEM_GROUP";
-        case MGOAL_FIND_MONSTER: return "MGOAL_FIND_MONSTER";
-        case MGOAL_FIND_NPC: return "MGOAL_FIND_NPC";
-        case MGOAL_ASSASSINATE: return "MGOAL_ASSASSINATE";
-        case MGOAL_KILL_MONSTER: return "MGOAL_KILL_MONSTER";
-        case MGOAL_KILL_MONSTERS: return "MGOAL_KILL_MONSTERS";
-        case MGOAL_KILL_MONSTER_TYPE: return "MGOAL_KILL_MONSTER_TYPE";
-        case MGOAL_KILL_MONSTER_SPEC: return "MGOAL_KILL_MONSTER_SPEC";
-        case MGOAL_KILL_NEMESIS: return "MGOAL_KILL_NEMESIS";
-        case MGOAL_RECRUIT_NPC: return "MGOAL_RECRUIT_NPC";
-        case MGOAL_RECRUIT_NPC_CLASS: return "MGOAL_RECRUIT_NPC_CLASS";
-        case MGOAL_COMPUTER_TOGGLE: return "MGOAL_COMPUTER_TOGGLE";
-        case MGOAL_TALK_TO_NPC: return "MGOAL_TALK_TO_NPC";
-        case MGOAL_CONDITION: return "MGOAL_CONDITION";
-        // *INDENT-ON*
+
+        case MGOAL_NULL:
+            return "MGOAL_NULL";
+        case MGOAL_GO_TO:
+            return "MGOAL_GO_TO";
+        case MGOAL_GO_TO_TYPE:
+            return "MGOAL_GO_TO_TYPE";
+        case MGOAL_FIND_ITEM:
+            return "MGOAL_FIND_ITEM";
+        case MGOAL_FIND_ANY_ITEM:
+            return "MGOAL_FIND_ANY_ITEM";
+        case MGOAL_FIND_ITEM_GROUP:
+            return "MGOAL_FIND_ITEM_GROUP";
+        case MGOAL_FIND_MONSTER:
+            return "MGOAL_FIND_MONSTER";
+        case MGOAL_FIND_NPC:
+            return "MGOAL_FIND_NPC";
+        case MGOAL_ASSASSINATE:
+            return "MGOAL_ASSASSINATE";
+        case MGOAL_KILL_MONSTER:
+            return "MGOAL_KILL_MONSTER";
+        case MGOAL_KILL_MONSTERS:
+            return "MGOAL_KILL_MONSTERS";
+        case MGOAL_KILL_MONSTER_TYPE:
+            return "MGOAL_KILL_MONSTER_TYPE";
+        case MGOAL_KILL_MONSTER_SPEC:
+            return "MGOAL_KILL_MONSTER_SPEC";
+        case MGOAL_KILL_NEMESIS:
+            return "MGOAL_KILL_NEMESIS";
+        case MGOAL_RECRUIT_NPC:
+            return "MGOAL_RECRUIT_NPC";
+        case MGOAL_RECRUIT_NPC_CLASS:
+            return "MGOAL_RECRUIT_NPC_CLASS";
+        case MGOAL_COMPUTER_TOGGLE:
+            return "MGOAL_COMPUTER_TOGGLE";
+        case MGOAL_TALK_TO_NPC:
+            return "MGOAL_TALK_TO_NPC";
+        case MGOAL_CONDITION:
+            return "MGOAL_CONDITION";
+
         case mission_goal::NUM_MGOAL:
             break;
     }
     cata_fatal( "Invalid mission_goal" );
 }
-} // namespace io
+}
 
 static generic_factory<mission_type> mission_type_factory( "mission_type" );
 
-/** @relates string_id */
+
 template<>
 const mission_type &string_id<mission_type>::obj() const
 {
     return mission_type_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<mission_type>::is_valid() const
 {
@@ -137,7 +162,7 @@ bool mission_type::load( const JsonObject &jo, const std::string_view src )
     return origin == ORIGIN_ANY_NPC || origin == ORIGIN_OPENER_NPC || origin == ORIGIN_SECONDARY;
 } ) ) {
         JsonObject djo = jo.get_object( "dialogue" );
-        // TODO: There should be a cleaner way to do it
+
         mandatory( djo, was_loaded, "describe", dialogue[ "describe" ] );
         mandatory( djo, was_loaded, "offer", dialogue[ "offer" ] );
         mandatory( djo, was_loaded, "accepted", dialogue[ "accepted" ] );
@@ -156,7 +181,7 @@ bool mission_type::load( const JsonObject &jo, const std::string_view src )
     optional( jo, was_loaded, "count", item_count, 1 );
     optional( jo, was_loaded, "required_container", container_id );
     optional( jo, was_loaded, "remove_container", remove_container );
-    //intended for situations where closed and open container are different
+
     optional( jo, was_loaded, "empty_container", empty_container );
     optional( jo, was_loaded, "has_generic_rewards", has_generic_rewards, true );
 
@@ -194,7 +219,7 @@ bool mission_type::load( const JsonObject &jo, const std::string_view src )
     optional( jo, was_loaded, "monster_kill_goal", monster_kill_goal, -1 );
     optional( jo, was_loaded, "destination", target_id );
 
-    // FIXME: reader for condition
+
     if( jo.has_member( "goal_condition" ) ) {
         read_condition( jo, "goal_condition", goal_condition, true );
     }

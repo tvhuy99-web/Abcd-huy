@@ -43,7 +43,7 @@ class TextJsonObject;
 class TextJsonValue;
 class item;
 
-// Traits class to distinguish sequences which are string like from others
+
 template< class, class = void >
 struct is_string_like : std::false_type { };
 template< class T >
@@ -97,9 +97,9 @@ struct key_from_json_string<T, std::void_t<decltype( std::declval<T &>().to_stri
 
 struct number_sci_notation {
     bool negative = false;
-    // AKA the significand
+
     uint64_t number = 0;
-    // AKA the order of magnitude
+
     int64_t exp = 0;
 };
 
@@ -108,15 +108,15 @@ struct json_source_location {
     int offset = 0;
 };
 
-// careful when deleting values from this enum; they're used outside cdda code (in formatter tools)
-// please make sure to update or file an issue that an update is needed for:
-// * in CDDA repository; tools/format_emscripten/shell.html
-// * VS Code extension; https://github.com/cdda-toys/cdda-json-formatter-vscode-extension/issues/
+
+
+
+
 enum class json_error_output_colors_t : int32_t {
-    unset = 0,        // default value, will print a warning
-    no_colors = 1,    // use when error output is a redirected pipe
-    color_tags = 2,   // use when debugmsg will handle the errors in either SDL or curses mode
-    ansi_escapes = 3, // use when error output will end up in stdout: in tooling, formatters or CI
+    unset = 0,
+    no_colors = 1,
+    color_tags = 2,
+    ansi_escapes = 3,
 };
 
 extern json_error_output_colors_t json_error_output_colors;
@@ -161,7 +161,7 @@ class TextJsonValue
         double get_float() const;
         TextJsonObject get_object() const;
         TextJsonArray get_array() const;
-        // Consumes null value in the underlying JsonIn.
+
         void get_null() const;
 
         [[noreturn]] void string_error( const std::string &err ) const;
@@ -171,86 +171,86 @@ class TextJsonValue
         [[noreturn]] void throw_error_after( const std::string &err ) const;
 };
 
-/* TextJsonIn
- * ======
- *
- * The TextJsonIn class provides a wrapper around a std::istream,
- * with methods for reading JSON data directly from the stream.
- *
- * TextJsonObject and TextJsonArray provide higher-level wrappers,
- * and are a little easier to use in most cases,
- * but have the small overhead of indexing the members or elements before use.
- *
- * Typical TextJsonIn usage might be something like the following:
- *
- *     TextJsonIn jsin(myistream);
- *     // expecting an array of objects
- *     jsin.start_array(); // throws JsonError if array not found
- *     while (!jsin.end_array()) { // end_array returns false if not the end
- *         TextJsonObject jo = jsin.get_object();
- *         ... // load object using TextJsonObject methods
- *     }
- *
- * The array could have been loaded into a TextJsonArray for convenience.
- * Not doing so saves one full pass of the data,
- * as the element positions don't have to be read beforehand.
- *
- * If the JSON structure is not as expected,
- * verbose error messages are provided, indicating the problem,
- * and the exact line number and byte offset within the istream.
- *
- *
- * Single-Pass Loading
- * -------------------
- *
- * A TextJsonIn can also be used for single-pass loading,
- * by passing off members as they arrive according to their names.
- *
- * Typical usage might be:
- *
- *     TextJsonIn jsin(&myistream);
- *     // expecting an array of objects, to be mapped by id
- *     std::map<std::string,my_data_type> myobjects;
- *     jsin.start_array();
- *     while (!jsin.end_array()) {
- *         my_data_type myobject;
- *         jsin.start_object();
- *         while (!jsin.end_object()) {
- *             std::string name = jsin.get_member_name();
- *             if (name == "id") {
- *                 myobject.id = jsin.get_string();
- *             } else if (name == "name") {
- *                 myobject.name = _(jsin.get_string());
- *             } else if (name == "description") {
- *                 myobject.description = _(jsin.get_string());
- *             } else if (name == "points") {
- *                 myobject.points = jsin.get_int();
- *             } else if (name == "flags") {
- *                 if (jsin.test_string()) { // load single string tag
- *                     myobject.tags.insert(jsin.get_string());
- *                 } else { // load tag array
- *                     jsin.start_array();
- *                     while (!jsin.end_array()) {
- *                         myobject.tags.insert(jsin.get_string());
- *                     }
- *                 }
- *             } else {
- *                 jsin.skip_value();
- *             }
- *         }
- *         myobjects[myobject.id] = myobject;
- *     }
- *
- * The get_* methods automatically verify and skip separators and whitespace.
- *
- * Using this method, unrecognized members are silently ignored,
- * allowing for things like "comment" members,
- * but the user must remember to provide an "else" clause,
- * explicitly skipping them.
- *
- * If an if;else if;... is missing the "else", it /will/ cause bugs,
- * so preindexing as a TextJsonObject is safer, as well as tidier.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class TextJsonIn
 {
     private:
@@ -281,17 +281,17 @@ class TextJsonIn
             ate_separator = s;
         }
 
-        int tell(); // get current stream position
-        void seek( int pos ); // seek to specified stream position
-        char peek(); // what's the next char gonna be?
-        bool good(); // whether stream is ok
+        int tell();
+        void seek( int pos );
+        char peek();
+        bool good();
 
-        // advance seek head to the next non-whitespace character
+
         void eat_whitespace();
-        // or rewind to the previous one
+
         void uneat_whitespace();
 
-        // quick skipping for when values don't have to be parsed
+
         void skip_member();
         void skip_string();
         void skip_value();
@@ -302,18 +302,18 @@ class TextJsonIn
         void skip_null();
         void skip_number();
 
-        // data parsing
-        std::string get_string(); // get the next value as a string
-        int get_int(); // get the next value as an int
-        unsigned int get_uint(); // get the next value as an unsigned int
-        int64_t get_int64(); // get the next value as an int64
-        uint64_t get_uint64(); // get the next value as a uint64
-        bool get_bool(); // get the next value as a bool
-        double get_float(); // get the next value as a double
-        std::string get_member_name(); // also strips the ':'
+
+        std::string get_string();
+        int get_int();
+        unsigned int get_uint();
+        int64_t get_int64();
+        uint64_t get_uint64();
+        bool get_bool();
+        double get_float();
+        std::string get_member_name();
         TextJsonObject get_object();
         TextJsonArray get_array();
-        TextJsonValue get_value(); // just returns a TextJsonValue at the current position.
+        TextJsonValue get_value();
 
         template<typename E, typename = std::enable_if_t<std::is_enum_v<E>>>
         E get_enum_value() {
@@ -321,18 +321,18 @@ class TextJsonIn
             try {
                 return io::string_to_enum<E>( get_string() );
             } catch( const io::InvalidEnumString & ) {
-                seek( old_offset ); // so the error message points to the correct place.
+                seek( old_offset );
                 error( "invalid enumeration value" );
             }
         }
 
-        // container control and iteration
-        void start_array(); // verify array start
-        bool end_array(); // returns false if it's not the end
-        void start_object();
-        bool end_object(); // returns false if it's not the end
 
-        // type testing
+        void start_array();
+        bool end_array();
+        void start_object();
+        bool end_object();
+
+
         bool test_null();
         bool test_bool();
         bool test_number();
@@ -347,9 +347,9 @@ class TextJsonIn
         bool test_array();
         bool test_object();
 
-        // optionally-fatal reading into values by reference
-        // returns true if the data was read successfully, false otherwise
-        // if throw_on_error then throws JsonError rather than returning false.
+
+
+
         bool read_null( bool throw_on_error = false );
         bool read( bool &b, bool throw_on_error = false );
         bool read( char &c, bool throw_on_error = false );
@@ -377,7 +377,7 @@ class TextJsonIn
             return true;
         }
 
-        // This is for the int_id type
+
         template <typename T>
         auto read( int_id<T> &thing, bool throw_on_error = false ) -> bool {
             std::string tmp;
@@ -388,7 +388,7 @@ class TextJsonIn
             return true;
         }
 
-        /// Overload that calls a global function `deserialize(T&, const TextJsonValue&)`, if available.
+
         template<typename T>
         auto read( T &v, bool throw_on_error = false ) ->
         decltype( deserialize( v, std::declval<const TextJsonValue &>() ), true ) {
@@ -403,7 +403,7 @@ class TextJsonIn
             }
         }
 
-        /// Overload that calls a member function `T::deserialize(const TextJsonValue&)`, if available.
+
         template<typename T>
         auto read( T &v, bool throw_on_error = false ) -> decltype( v.deserialize(
                     std::declval<const TextJsonValue &>() ), true ) {
@@ -433,7 +433,7 @@ class TextJsonIn
             return false;
         }
 
-        /// Overload for std::pair
+
         template<typename T, typename U>
         bool read( std::pair<T, U> &p, bool throw_on_error = false ) {
             if( !test_array() ) {
@@ -458,7 +458,7 @@ class TextJsonIn
             }
         }
 
-        // array ~> vector, deque, list
+
         template < typename T, typename std::enable_if_t <
                        !std::is_same_v<void, typename T::value_type> &&
                        !is_string_like<T>::value
@@ -488,7 +488,7 @@ class TextJsonIn
             return true;
         }
 
-        // array ~> array
+
         template <typename T, size_t N>
         bool read( std::array<T, N> &v, bool throw_on_error = false ) {
             if( !test_array() ) {
@@ -501,10 +501,10 @@ class TextJsonIn
                         if( throw_on_error ) {
                             error( "Json array is too short" );
                         }
-                        return false; // json array is too small
+                        return false;
                     }
                     if( !read( v[i], throw_on_error ) ) {
-                        return false; // invalid entry
+                        return false;
                     }
                 }
                 bool result = end_array();
@@ -520,8 +520,8 @@ class TextJsonIn
             }
         }
 
-        // object ~> containers with matching key_type and value_type
-        // set, unordered_set ~> object
+
+
         template <typename T, std::enable_if_t<
                       std::is_same_v<typename T::key_type, typename T::value_type>> * = nullptr
                   >
@@ -554,7 +554,7 @@ class TextJsonIn
             return true;
         }
 
-        // special case for enum_bitset
+
         template <typename T>
         bool read( enum_bitset<T> &v, bool throw_on_error = false ) {
             if( !test_array() ) {
@@ -586,8 +586,8 @@ class TextJsonIn
             return true;
         }
 
-        // special case for colony<item> as it supports RLE
-        // see corresponding `write` for details
+
+
         template <typename T, std::enable_if_t<std::is_same_v<T, item>> * = nullptr >
         bool read( cata::colony<T> &v, bool throw_on_error = false ) {
             if( !test_array() ) {
@@ -605,14 +605,14 @@ class TextJsonIn
                         if( read( element, throw_on_error ) &&
                             read( run_l, throw_on_error ) &&
                             end_array()
-                          ) { // all is good
-                            // first insert (run_l-1) elements
+                          ) {
+
                             for( int i = 0; i < run_l - 1; i++ ) {
                                 v.insert( element );
                             }
-                            // micro-optimization, move last element
+
                             v.insert( std::move( element ) );
-                        } else { // array is malformed, skipping it entirely
+                        } else {
                             error_or_false( throw_on_error, "Expected end of array" );
                             seek( prev_pos );
                             skip_array();
@@ -635,9 +635,9 @@ class TextJsonIn
             return true;
         }
 
-        // special case for colony as it uses `insert()` instead of `push_back()`
-        // and therefore doesn't fit with vector/deque/list
-        // for colony of items there is another specialization with RLE
+
+
+
         template < typename T, std::enable_if_t < !std::is_same_v<T, item> > * = nullptr >
         bool read( cata::colony<T> &v, bool throw_on_error = false ) {
             if( !test_array() ) {
@@ -664,8 +664,8 @@ class TextJsonIn
             return true;
         }
 
-        // object ~> containers with unmatching key_type and value_type
-        // map, unordered_map ~> object
+
+
         template < typename T, std::enable_if_t <
                        !std::is_same_v<typename T::key_type, typename T::value_type> > * = nullptr
                    >
@@ -696,56 +696,56 @@ class TextJsonIn
             return true;
         }
 
-        // error messages
-        std::string line_number( int offset_modifier = 0 ); // for occasional use only
-        [[noreturn]] void error( const std::string &message ); // ditto
-        [[noreturn]] void error( int offset, const std::string &message ); // ditto
-        // if the next element is a string, throw error after the `offset`th unicode
-        // character in the parsed string. if `offset` is 0, throw error right after
-        // the starting quotation mark.
+
+        std::string line_number( int offset_modifier = 0 );
+        [[noreturn]] void error( const std::string &message );
+        [[noreturn]] void error( int offset, const std::string &message );
+
+
+
         [[noreturn]] void string_error( int offset, const std::string &message );
 
-        // If throw_, then call error( message, offset ), otherwise return
-        // false
+
+
         bool error_or_false( bool throw_, const std::string &message );
         bool error_or_false( bool throw_, int offset, const std::string &message );
         void rewind( int max_lines = -1, int max_chars = -1 );
         std::string substr( size_t pos, size_t len = std::string::npos );
     private:
-        // This should be used to get any and all numerical data types.
+
         number_sci_notation get_any_number();
-        // Calls get_any_number() then applies operations common to all integer types.
+
         number_sci_notation get_any_int();
 };
 
-/* JsonOut
- * =======
- *
- * The JsonOut class provides a straightforward interface for outputting JSON.
- *
- * It wraps a std::ostream, providing methods for writing JSON data directly.
- *
- * Typical usage might be as follows:
- *
- *     JsonOut jsout(myostream);
- *     jsout.start_object();          // {
- *     jsout.member("type", "point"); // "type":"point"
- *     jsout.member("data");          // ,"data":
- *     jsout.start_array();           // [
- *     jsout.write(5)                 // 5
- *     jsout.write(9)                 // ,9
- *     jsout.end_array();             // ]
- *     jsout.end_object();            // }
- *
- * which writes {"type":"point","data":[5,9]} to myostream.
- *
- * Separators are handled automatically,
- * and the constructor also has an option for crude pretty-printing,
- * which inserts newlines and whitespace liberally, if turned on.
- *
- * Basic containers such as maps, sets and vectors,
- * can be serialized automatically by write() and member().
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class JsonOut
 {
     private:
@@ -760,7 +760,7 @@ class JsonOut
         JsonOut( const JsonOut & ) = delete;
         JsonOut &operator=( const JsonOut & ) = delete;
 
-        // punctuation
+
         void write_indent();
         void write_separator();
         void write_member_separator();
@@ -783,7 +783,7 @@ class JsonOut
         void start_array( bool wrap = false );
         void end_array();
 
-        // write data to the output stream as JSON
+
         void write_null();
 
         template <typename T, std::enable_if_t<std::is_fundamental_v<T>, int> = 0>
@@ -795,19 +795,19 @@ class JsonOut
             need_separator = true;
         }
 
-        /// Overload that calls a global function `serialize(const T&,JsonOut&)`, if available.
+
         template<typename T>
         auto write( const T &v ) -> decltype( serialize( v, *this ), void() ) {
             serialize( v, *this );
         }
 
-        /// Overload that calls a member function `T::serialize(JsonOut&) const`, if available.
+
         template<typename T>
         auto write( const T &v ) -> decltype( v.serialize( *this ), void() ) {
             v.serialize( *this );
         }
 
-        /// Overload to be able to write reference_wrapper as normal references.
+
         template<typename T>
         auto write( const std::reference_wrapper<const T> &v ) -> decltype( v.get().serialize( *this ),
                 void() ) {
@@ -819,13 +819,13 @@ class JsonOut
             write( static_cast<std::underlying_type_t<T>>( val ) );
         }
 
-        // strings need escaping and quoting
+
         void write( std::string_view val );
         void write( const char *val ) {
             write( std::string( val ) );
         }
 
-        // char should always be written as an unquoted numeral
+
         void write( char val ) {
             write( static_cast<int>( val ) );
         }
@@ -849,7 +849,7 @@ class JsonOut
             write( thing.id().str() );
         }
 
-        // enum ~> string
+
         template <typename E, std::enable_if_t<std::is_enum_v<E>> * = nullptr>
         void write_as_string( const E value ) {
             write( io::enum_to_string<E>( value ) );
@@ -892,8 +892,8 @@ class JsonOut
             end_array();
         }
 
-        // containers with front() ~> array
-        // vector, deque, forward_list, list
+
+
         template < typename T, typename std::enable_if_t <
                        !std::is_same_v<void, typename T::value_type> &&
                        !is_string_like<T>::value
@@ -902,8 +902,8 @@ class JsonOut
             write_as_array( container );
         }
 
-        // containers with matching key_type and value_type ~> array
-        // set, unordered_set
+
+
         template <typename T, std::enable_if_t<
                       std::is_same_v<typename T::key_type, typename T::value_type>> * = nullptr
                   >
@@ -911,14 +911,14 @@ class JsonOut
             write_as_array( container );
         }
 
-        // special case for item colony, adds simple RLE-based compression
+
         template <typename T, std::enable_if_t<std::is_same_v<T, item>> * = nullptr>
         void write( const cata::colony<T> &container ) {
             start_array();
-            // simple RLE implementation:
-            // run_l is the length of the "running sequence" of identical items, ending with the current item.
-            // when sequence ends, it's written as either the single item object (run_l==1) or as a two-element
-            // array (run_l > 1), where the first element is the item and second element is the size of the sequence.
+
+
+
+
             int run_l = 1;
             for( auto it = container.begin(); it != container.end(); ++it ) {
                 const auto nxt = std::next( it );
@@ -939,15 +939,15 @@ class JsonOut
             end_array();
         }
 
-        // special case for colony, since it doesn't fit in other categories
-        // for colony of items there is another specialization with RLE
+
+
         template < typename T, std::enable_if_t < !std::is_same_v<T, item> > * = nullptr >
         void write( const cata::colony<T> &container ) {
             write_as_array( container );
         }
 
-        // containers with unmatching key_type and value_type ~> object
-        // map, unordered_map ~> object
+
+
         template < typename T, std::enable_if_t <
                        !std::is_same_v<typename T::key_type, typename T::value_type> > * = nullptr
                    >
@@ -961,8 +961,8 @@ class JsonOut
             end_object();
         }
 
-        // convenience methods for writing named object members
-        // TODO: enforce value after
+
+
         void member( std::string_view name );
         void null_member( std::string_view name );
         template <typename T> void member( const std::string_view name, const T &value ) {
@@ -981,80 +981,80 @@ class JsonOut
         }
 };
 
-/* TextJsonObject
- * ==========
- *
- * The TextJsonObject class provides easy access to incoming JSON object data.
- *
- * TextJsonObject maps member names to the byte offset of the paired value,
- * given an underlying TextJsonIn stream.
- *
- * It provides data by seeking the stream to the relevant position,
- * and calling the correct TextJsonIn method to read the value from the stream.
- *
- *
- * General Usage
- * -------------
- *
- *     TextJsonObject jo(jsin);
- *     std::string id = jo.get_string("id");
- *     std::string name = _(jo.get_string("name"));
- *     std::string description = _(jo.get_string("description"));
- *     int points = jo.get_int("points", 0);
- *     std::set<std::string> tags = jo.get_tags("flags");
- *     my_object_type myobject(id, name, description, points, tags);
- *
- * Here the "id", "name" and "description" members are required.
- * TextJsonObject will throw a JsonError if they are not found,
- * identifying the problem and the current position in the input stream.
- *
- * Note that "name" and "description" are passed to gettext for translating.
- * Any members with string information that is displayed directly to the user
- * will need similar treatment, and may also need to be explicitly handled
- * in lang/extract_json_strings.py to be translatable.
- *
- * The "points" member here is not required.
- * If it is not found in the incoming JSON object,
- * it will be initialized with the default value given as the second parameter,
- * in this case, 0.
- *
- * get_tags() always returns an empty set if the member is not found,
- * and so does not require a default value to be specified.
- *
- *
- * Member Testing and Automatic Deserialization
- * --------------------------------------------
- *
- * JsonObjects can test for member type with has_int(name) etc.,
- * and for member existence with has_member(name).
- *
- * They can also read directly into compatible data structures,
- * including sets, vectors, maps, and any class with a compatible
- * deserialize() routine.
- *
- * read() returns true on success, false on failure.
- *
- *     TextJsonObject jo(jsin);
- *     std::vector<std::string> messages;
- *     if (!jo.read("messages", messages)) {
- *         DebugLog() << "No messages.";
- *     }
- *
- *
- * Automatic error checking
- * ------------------------
- *
- * By default, when a TextJsonObject is destroyed (or when you call finish) it will
- * check to see whether every member of the object was referenced in some way
- * (even simply checking for the existence of the member is sufficient).
- *
- * If not all the members were referenced, then an error will be written to the
- * log (which in particular will cause the tests to fail).
- *
- * If you don't want this behavior, then call allow_omitted_members() before
- * the TextJsonObject is destroyed.  Calling str() also suppresses it (on the basis
- * that you may be intending to re-parse that string later).
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class TextJsonObject
 {
     private:
@@ -1093,27 +1093,27 @@ class TextJsonObject
         const_iterator begin() const;
         const_iterator end() const;
 
-        void finish(); // moves the stream to the end of the object
+        void finish();
         size_t size() const;
         bool empty() const;
 
         void allow_omitted_members() const;
-        // If we're making a copy of the TextJsonObject (because it is required) to pass to a function,
-        // use this to count the members visited on that one as visited on this one
-        // See item::deserialize for a use case
+
+
+
         void copy_visited_members( const TextJsonObject &rhs ) const;
-        bool has_member( const std::string &name ) const; // true iff named member exists
-        std::string str() const; // copy object json as string
+        bool has_member( const std::string &name ) const;
+        std::string str() const;
         [[noreturn]] void throw_error( const std::string &err ) const;
         [[noreturn]] void throw_error_at( std::string_view name, const std::string &err ) const;
-        // seek to a value and return a pointer to the TextJsonIn (member must exist)
+
         TextJsonIn *get_raw( std::string_view name ) const;
         TextJsonValue get_member( std::string_view name ) const;
         json_source_location get_source_location() const;
 
-        // values by name
-        // variants with no fallback throw an error if the name is not found.
-        // variants with a fallback return the fallback value in stead.
+
+
+
         bool get_bool( std::string_view name ) const;
         bool get_bool( std::string_view name, bool fallback ) const;
         int get_int( std::string_view name ) const;
@@ -1139,23 +1139,23 @@ class TextJsonObject
             return jsin->get_enum_value<E>();
         }
 
-        // containers by name
-        // get_array returns empty array if the member is not found
+
+
         TextJsonArray get_array( std::string_view name ) const;
         std::vector<int> get_int_array( std::string_view name ) const;
         std::vector<std::string> get_string_array( std::string_view name ) const;
-        // returns a single element array if the sype is string instead of array
+
         std::vector<std::string> get_as_string_array( std::string_view name ) const;
-        // get_object returns empty object if not found
+
         TextJsonObject get_object( std::string_view name ) const;
 
-        // get_tags returns empty set if none found
+
         template<typename T = std::string, typename Res = std::set<T>>
         Res get_tags( std::string_view name ) const;
 
-        // TODO: some sort of get_map(), maybe
 
-        // type checking
+
+
         bool has_null( std::string_view name ) const;
         bool has_bool( std::string_view name ) const;
         bool has_number( std::string_view name ) const;
@@ -1169,11 +1169,11 @@ class TextJsonObject
         bool has_array( std::string_view name ) const;
         bool has_object( std::string_view name ) const;
 
-        // non-fatally read values by reference
-        // return true if the value was set.
-        // return false if the member is not found.
-        // throw_on_error dictates the behavior when the member was present
-        // but the read fails.
+
+
+
+
+
         template <typename T>
         bool read( const std::string_view name, T &t, bool throw_on_error = true ) const {
             int pos = verify_position( name, false );
@@ -1185,80 +1185,80 @@ class TextJsonObject
             return jsin->read( t, throw_on_error );
         }
 
-        // useful debug info
-        std::string line_number() const; // for occasional use only
+
+        std::string line_number() const;
 };
 
-/* TextJsonArray
- * =========
- *
- * The TextJsonArray class provides easy access to incoming JSON array data.
- *
- * TextJsonArray stores only the byte offset of each element in the TextJsonIn stream,
- * and iterates or accesses according to these offsets.
- *
- * It provides data by seeking the stream to the relevant position,
- * and calling the correct TextJsonIn method to read the value from the stream.
- *
- * Arrays can be iterated over,
- * or accessed directly by element index.
- *
- * Elements can be returned as standard data types,
- * or automatically read into a compatible container.
- *
- *
- * Iterative Access
- * ----------------
- *
- *     TextJsonArray ja = jo.get_array("some_array_member");
- *     std::vector<int> myarray;
- *     while (ja.has_more()) {
- *         myarray.push_back(ja.next_int());
- *     }
- *
- * If the array member is not found, get_array() returns an empty array,
- * and has_more() is always false, so myarray will remain empty.
- *
- * next_int() and the other next_* methods advance the array iterator,
- * so after the final element has been read,
- * has_more() will return false and the loop will terminate.
- *
- * If the next element is not an integer,
- * TextJsonArray will throw a JsonError indicating the problem,
- * and the position in the input stream.
- *
- * To handle arrays with elements of indeterminate type,
- * the test_* methods can be used, calling next_* according to the result.
- *
- * Note that this style of iterative access requires an element to be read,
- * or else the index will not be incremented, resulting in an infinite loop.
- * Unwanted elements can be skipped with TextJsonArray::skip_value().
- *
- *
- * Positional Access
- * -----------------
- *
- *     TextJsonArray ja = jo.get_array("xydata");
- *     point xydata(ja.get_int(0), ja.get_int(1));
- *
- * Arrays also provide has_int(index) etc., for positional type testing,
- * and read(index, &container) for automatic deserialization.
- *
- *
- * Automatic Deserialization
- * -------------------------
- *
- * Elements can also be automatically read into compatible containers,
- * such as maps, sets, vectors, and classes using a deserialize routine,
- * using the read_next() and read() methods.
- *
- *     TextJsonArray ja = jo.get_array("custom_datatype_array");
- *     while (ja.has_more()) {
- *         MyDataType mydata;
- *         ja.read_next(mydata);
- *         process(mydata);
- *     }
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class TextJsonArray
 {
     private:
@@ -1279,18 +1279,18 @@ class TextJsonArray
         }
         TextJsonArray &operator=( const TextJsonArray & );
 
-        void finish(); // move the stream position to the end of the array
+        void finish();
 
-        bool has_more() const; // true iff more elements may be retrieved with next_*
+        bool has_more() const;
         size_t size() const;
         bool empty();
-        std::string str(); // copy array json as string
+        std::string str();
         [[noreturn]] void throw_error( const std::string &err ) const;
         [[noreturn]] void throw_error( int idx, const std::string &err ) const;
-        // See JsonIn::string_error
+
         [[noreturn]] void string_error( int idx, int offset, const std::string &err ) const;
 
-        // iterative access
+
         TextJsonValue next_value();
         bool next_bool();
         int next_int();
@@ -1298,9 +1298,9 @@ class TextJsonArray
         std::string next_string();
         TextJsonArray next_array();
         TextJsonObject next_object();
-        void skip_value(); // ignore whatever is next
+        void skip_value();
 
-        // static access
+
         bool get_bool( size_t index ) const;
         int get_int( size_t index ) const;
         double get_float( size_t index ) const;
@@ -1308,7 +1308,7 @@ class TextJsonArray
         TextJsonArray get_array( size_t index ) const;
         TextJsonObject get_object( size_t index ) const;
 
-        // get_tags returns empty set if none found
+
         template<typename T = std::string, typename Res = std::set<T>>
         Res get_tags( size_t index ) const;
 
@@ -1317,7 +1317,7 @@ class TextJsonArray
         const_iterator begin() const;
         const_iterator end() const;
 
-        // iterative type checking
+
         bool test_null() const;
         bool test_bool() const;
         bool test_number() const;
@@ -1332,7 +1332,7 @@ class TextJsonArray
         bool test_array() const;
         bool test_object() const;
 
-        // random-access type checking
+
         bool has_null( size_t index ) const;
         bool has_bool( size_t index ) const;
         bool has_number( size_t index ) const;
@@ -1346,13 +1346,13 @@ class TextJsonArray
         bool has_array( size_t index ) const;
         bool has_object( size_t index ) const;
 
-        // iteratively read values by reference
+
         template <typename T> bool read_next( T &t ) {
             verify_index( index );
             jsin->seek( positions[index++] );
             return jsin->read( t );
         }
-        // random-access read values by reference
+
         template <typename T> bool read( size_t i, T &t, bool throw_on_error = false ) const {
             verify_index( i );
             jsin->seek( positions[i] );
@@ -1489,16 +1489,16 @@ inline TextJsonArray::const_iterator TextJsonArray::end() const
 {
     return const_iterator( *this, size() );
 }
-/**
- * Represents a member of a @ref TextJsonObject. This is returned when one iterates over
- * a TextJsonObject.
- * It *is* @ref TextJsonValue, which is the value of the member, which allows one to write:
-<code>
-for( const TextJsonMember &member : some_json_object )
-    TextJsonArray array = member.get_array();
-}
-</code>
- */
+
+
+
+
+
+
+
+
+
+
 class TextJsonMember : public TextJsonValue
 {
     private:
@@ -1511,11 +1511,11 @@ class TextJsonMember : public TextJsonValue
         const std::string &name() const {
             return name_;
         }
-        /**
-         * @returns Whether this member is considered a comment.
-         * Comments should generally be ignored by game, but they should be kept
-         * when this class is used within a generic JSON tool.
-         */
+
+
+
+
+
         bool is_comment() const {
             return name_ == "//";
         }
@@ -1566,7 +1566,7 @@ Res TextJsonArray::get_tags( const size_t index ) const
     verify_index( index );
     jsin->seek( positions[ index ] );
 
-    // allow single string as tag
+
     if( jsin->test_string() ) {
         res.insert( T( jsin->get_string() ) );
         return res;
@@ -1592,13 +1592,13 @@ Res TextJsonObject::get_tags( const std::string_view name ) const
     mark_visited( name );
     jsin->seek( pos );
 
-    // allow single string as tag
+
     if( jsin->test_string() ) {
         res.insert( T( jsin->get_string() ) );
         return res;
     }
 
-    // otherwise assume it's an array and error if it isn't.
+
     for( const std::string line : jsin->get_array() ) {
         if( !res.insert( T( line ) ).second ) {
             jsin->error( "duplicate item in set defined by json array" );
@@ -1608,10 +1608,10 @@ Res TextJsonObject::get_tags( const std::string_view name ) const
     return res;
 }
 
-/**
- * Get an array member from json with name name.  For each element of that
- * array (which should be a string) add it to the given set.
- */
+
+
+
+
 void add_array_to_set( std::set<std::string> &, const TextJsonObject &json,
                        std::string_view name );
 
@@ -1632,7 +1632,7 @@ void deserialize( std::optional<T> &obj, const TextJsonValue &jsin )
 {
     if( jsin.test_null() ) {
         obj.reset();
-        // Temporary to manage internal mutable state correctly.
+
         jsin.get_null();
     } else {
         obj.emplace();
@@ -1642,4 +1642,4 @@ void deserialize( std::optional<T> &obj, const TextJsonValue &jsin )
 
 #include "flexbuffer_json.h"
 
-#endif // CATA_SRC_JSON_H
+#endif

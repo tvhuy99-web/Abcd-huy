@@ -69,7 +69,7 @@ void binding::deserialize( const JsonObject &data )
 
 bool merge_equivalent( const item &lhs, const item &rhs )
 {
-    // The test inventory::add_item makes before merge_charges.
+
     return lhs.count_by_charges() && rhs.count_by_charges() &&
            static_cast<bool>( lhs.stacks_with( rhs ) );
 }
@@ -77,8 +77,8 @@ bool merge_equivalent( const item &lhs, const item &rhs )
 bool contains_reserved( const item &it )
 {
     const craft_reservation_index &idx = get_craft_reservations();
-    // The common state is an empty index, and this runs per item in every inventory
-    // formation, charge walk and automation scan; the walk must cost nothing then.
+
+
     if( !idx.any_item_claims() ) {
         return false;
     }
@@ -164,9 +164,9 @@ scoped_own_claims::~scoped_own_claims()
 bool bashing_would_break_reservation( map &here, const Creature &who,
                                       const tripoint_bub_ms &p )
 {
-    // this sits in the pathfinder's inner loop, so the cheap exits run before the item
-    // walk: nothing claimed anywhere, the state most of the game runs in, then a tile
-    // that needs no bashing
+
+
+
     const craft_reservation_index &idx = get_craft_reservations();
     if( !idx.any_claims() ) {
         return false;
@@ -174,14 +174,14 @@ bool bashing_would_break_reservation( map &here, const Creature &who,
     if( here.passable_through( p ) || !here.is_bashable( p ) ) {
         return false;
     }
-    // Door the character can open is walked through, not broken, so nothing on it is
-    // at risk. A locked one is not, and reads as bash-required.
+
+
     if( here.open_door( who, p, !here.is_outside( who.pos_bub() ), true ) ) {
         return false;
     }
 
     const tripoint_abs_ms abs = here.get_abs( p );
-    // Bashing craft's own site breaks the craft, not just providers on it
+
     if( idx.craft_site_reserved( abs ) || idx.provider_tile_reserved( abs ) ) {
         return true;
     }
@@ -197,7 +197,7 @@ bool bashing_would_break_reservation( map &here, const Creature &who,
 namespace
 {
 uint64_t expansions_total = 0;
-} // namespace
+}
 
 uint64_t search_expansions_total()
 {
@@ -214,7 +214,7 @@ void reset_search_expansions()
     expansions_total = 0;
 }
 
-} // namespace craft_reservation
+}
 
 bool craft_reservation_index::any_item_claims() const
 {
@@ -235,8 +235,8 @@ bool craft_reservation_index::incumbent_is_live( const int64_t owner_token ) con
 
 void craft_reservation_index::unindex( const record &rec )
 {
-    // Conditional on still owning the entry, so an expired craft's release cannot erase
-    // whoever took its provider meanwhile.
+
+
     for( const int64_t uid : rec.provider_item_uids ) {
         const auto it = item_uid_to_owner_.find( uid );
         if( it != item_uid_to_owner_.end() && it->second == rec.craft_uid ) {
@@ -273,15 +273,15 @@ void craft_reservation_index::unindex( const record &rec )
 
 void craft_reservation_index::index( const record &rec )
 {
-    // Stored but never indexed, so load order cannot decide ownership.
+
     if( !rec.live( calendar::turn ) ) {
         return;
     }
 
     for( const int64_t uid : rec.provider_item_uids ) {
         const auto it = item_uid_to_owner_.find( uid );
-        // An expired incumbent is no incumbent, or nothing could be bound until the
-        // sweep runs.
+
+
         if( it == item_uid_to_owner_.end() || !incumbent_is_live( it->second ) ) {
             item_uid_to_owner_[uid] = rec.craft_uid;
             ++generation_;
@@ -335,12 +335,12 @@ void craft_reservation_index::set( const record &rec )
     const bool was_live = existing->second.live( calendar::turn );
     const bool now_live = rec.live( calendar::turn );
 
-    // Validation runs once per craft per minute; bumping on a refresh would invalidate
-    // every character's crafting inventory that often.
+
+
     if( was_live == now_live && same_membership( existing->second, rec ) ) {
         existing->second = rec;
-        // Idempotent, and it retakes a claim this record lost to an incumbent that has
-        // since gone; an unchanged live record indexes to nothing and bumps nothing.
+
+
         index( existing->second );
         return;
     }
@@ -380,7 +380,7 @@ const craft_reservation_index::record *craft_reservation_index::record_for_item_
         return nullptr;
     }
     const record *rec = find( it->second );
-    // An expired owner reads as unreserved even while its mapping survives.
+
     return rec != nullptr && rec->live( calendar::turn ) ? rec : nullptr;
 }
 
@@ -467,8 +467,8 @@ void craft_reservation_index::rebuild_for_craft( const item_location &loc )
     rec.craft_uid = token;
     rec.crafter = craft.get_crafter_id();
     rec.craft_tile = craft.get_reserved_tile();
-    // Copied, never minted: a craft whose lease lapsed before the save comes back
-    // expired rather than reclaiming its provider.
+
+
     rec.expires_at = craft.get_reservation_expiry();
 
     for( const craft_reservation::binding &b : craft.get_reservations() ) {
@@ -485,7 +485,7 @@ void craft_reservation_index::rebuild_for_craft( const item_location &loc )
                     rec.provider_tiles.push_back( *b.tile );
                 }
                 break;
-            // Shared providers and the unestablished sentinel index nothing.
+
             case craft_reservation::provider_kind::intrinsic:
             case craft_reservation::provider_kind::environment:
             case craft_reservation::provider_kind::last:
@@ -493,7 +493,7 @@ void craft_reservation_index::rebuild_for_craft( const item_location &loc )
         }
     }
 
-    // One provider backing several bindings is one entry; release is reference counted.
+
     auto dedup = []( std::vector<int64_t> &v ) {
         std::sort( v.begin(), v.end() );
         v.erase( std::unique( v.begin(), v.end() ), v.end() );
@@ -525,8 +525,8 @@ void craft_reservation_index::set_overlay( std::set<int64_t> items, std::set<int
     overlay_items_ = std::move( items );
     overlay_parts_ = std::move( parts );
     overlay_tiles_ = std::move( tiles );
-    // An inventory built before this is keyed on the generation alone, and its entries
-    // are copies whose uids no longer match, so only a rebuild can drop them.
+
+
     if( changes ) {
         ++generation_;
     }
@@ -546,8 +546,8 @@ void craft_reservation_index::clear_overlay()
 
 void craft_reservation_index::sweep_expired_records()
 {
-    // The release became visible at the deadline, not here, so the generation must not
-    // move.
+
+
     const uint64_t saved_generation = generation_;
     for( auto it = by_uid_.begin(); it != by_uid_.end(); ) {
         if( it->second.live( calendar::turn ) ) {

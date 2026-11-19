@@ -188,7 +188,7 @@ void apply_ammo_effects( Creature *source, const tripoint_bub_ms &p,
                 }
             }
 
-            // apply aoe_effects (but not on_hit_effects, this one is in apply_effects_nodamage())
+
             for( const aoe_effect &eff : ae.aoe_effects ) {
                 for( Creature *cr : here.get_creatures_in_radius_circ( p, eff.radius ) ) {
                     if( eff.all_bp ) {
@@ -219,7 +219,7 @@ void apply_ammo_effects( Creature *source, const tripoint_bub_ms &p,
                 foamcrete_build( p );
             }
 
-            //run EoCs
+
             for( const effect_on_condition_id &eoc : ae.eoc ) {
                 Creature *critter = get_creature_tracker().creature_at( p );
                 dialogue d( get_talker_for( *source ), critter == nullptr ? nullptr : get_talker_for( critter ) );
@@ -229,7 +229,7 @@ void apply_ammo_effects( Creature *source, const tripoint_bub_ms &p,
                 eoc->activate( d );
             }
 
-            //cast ammo effect spells
+
             for( const fake_spell &f_spell : ae.spell_data ) {
                 const spell ammo_spell = f_spell.get_spell();
                 if( ae.always_cast_spell || dealt_damage > 0 ) {
@@ -260,8 +260,8 @@ void multi_projectile_hit_message( Creature *critter, int hit_count, int damage_
     const map &here = get_map();
 
     if( hit_count > 0 && get_player_character().sees( here, *critter ) ) {
-        // Building a phrase to summarize the fragment effects.
-        // Target, Number of impacts, total amount of damage, proportion of deflected fragments.
+
+
         std::map<int, std::string> impact_count_descriptions = {
             { 1, _( "a" ) }, { 2, _( "several" ) }, { 5, _( "many" ) },
             { 20, _( "a large number of" ) }, { 100, _( "a huge number of" ) },

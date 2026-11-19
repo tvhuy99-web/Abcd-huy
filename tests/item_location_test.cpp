@@ -65,7 +65,7 @@ TEST_CASE( "item_location_can_maintain_reference_despite_item_removal", "[item][
     item_location item_loc( cursor, tshirt );
     REQUIRE( item_loc->typeId() == itype_tshirt );
     for( int j = 0; j < 4; ++j ) {
-        // Delete up to 4 random jeans
+
         map_stack stack = m.i_at( pos );
         REQUIRE( !stack.empty() );
         item *i = &random_entry_opt( stack )->get();
@@ -118,7 +118,7 @@ TEST_CASE( "item_in_container", "[item][item_location]" )
     CHECK( jeans_loc.parent_item() == backpack_loc );
 }
 
-// Helper: serialize an item_location to a JSON string
+
 static std::string serialize_item_location( const item_location &loc )
 {
     std::ostringstream os;
@@ -127,7 +127,7 @@ static std::string serialize_item_location( const item_location &loc )
     return os.str();
 }
 
-// Helper: deserialize an item_location from a JSON string
+
 static item_location deserialize_item_location( const std::string &json_str )
 {
     item_location loc;
@@ -151,7 +151,7 @@ TEST_CASE( "items_get_unique_uids", "[item][item_uid]" )
     CHECK( a.uid().get_value() != c.uid().get_value() );
     CHECK( b.uid().get_value() != c.uid().get_value() );
 
-    // Default-constructed item has invalid UID
+
     item null_item;
     CHECK_FALSE( null_item.uid().is_valid() );
 }
@@ -166,10 +166,10 @@ TEST_CASE( "item_copies_get_new_uids", "[item][item_uid]" )
     item b( a ); // NOLINT(performance-unnecessary-copy-initialization)
     CHECK( b.uid().is_valid() );
     CHECK( b.uid().get_value() != a_uid );
-    // Original unchanged
+
     CHECK( a.uid().get_value() == a_uid );
 
-    // Copy assignment
+
     item c( itype_tshirt );
     int64_t c_old_uid = c.uid().get_value();
     c = a;
@@ -184,13 +184,13 @@ TEST_CASE( "item_uid_survives_serialization", "[item][item_uid]" )
     REQUIRE( original.uid().is_valid() );
     int64_t original_uid = original.uid().get_value();
 
-    // Serialize
+
     std::ostringstream os;
     JsonOut jsout( os );
     original.serialize( jsout );
     std::string json_str = os.str();
 
-    // Deserialize
+
     item loaded;
     JsonValue jv = json_loader::from_string( json_str );
     JsonObject jo = jv;
@@ -207,7 +207,7 @@ TEST_CASE( "item_location_in_container_survives_restack", "[item][item_location]
     tripoint_bub_ms pos( 60, 60, 0 );
     m.i_clear( pos );
 
-    // Place a backpack on the ground with items inside
+
     item backpack_item( itype_backpack );
     item jeans1( itype_jeans );
     item tshirt( itype_tshirt );
@@ -219,7 +219,7 @@ TEST_CASE( "item_location_in_container_survives_restack", "[item][item_location]
     m.add_item( pos, backpack_item );
     item &placed_backpack = m.i_at( pos ).only_item();
 
-    // Find the tshirt inside the backpack
+
     item *tshirt_ptr = nullptr;
     for( item *it : placed_backpack.all_items_container_top() ) {
         if( it->typeId() == itype_tshirt ) {
@@ -229,20 +229,20 @@ TEST_CASE( "item_location_in_container_survives_restack", "[item][item_location]
     }
     REQUIRE( tshirt_ptr != nullptr );
 
-    // Create item_location pointing to tshirt inside backpack
+
     item_location backpack_loc( map_cursor( pos ), &placed_backpack );
     item_location tshirt_loc( backpack_loc, tshirt_ptr );
     REQUIRE( tshirt_loc->typeId() == itype_tshirt );
 
-    // Serialize
+
     std::string json_str = serialize_item_location( tshirt_loc );
 
-    // Trigger restack (merges the two jeans, changing indices)
+
     for( item_pocket *pkt : placed_backpack.get_standard_pockets() ) {
         pkt->restack();
     }
 
-    // Deserialize - should find tshirt by UID despite index shift
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );
@@ -255,7 +255,7 @@ TEST_CASE( "item_location_in_container_survives_removal", "[item][item_location]
     tripoint_bub_ms pos( 60, 60, 0 );
     m.i_clear( pos );
 
-    // Place a backpack on the ground with items inside
+
     item backpack_item( itype_backpack );
     item jeans_a( itype_jeans );
     item tshirt( itype_tshirt );
@@ -265,7 +265,7 @@ TEST_CASE( "item_location_in_container_survives_removal", "[item][item_location]
     m.add_item( pos, backpack_item );
     item &placed_backpack = m.i_at( pos ).only_item();
 
-    // Find items
+
     item *tshirt_ptr = nullptr;
     item *jeans_ptr = nullptr;
     for( item *it : placed_backpack.all_items_container_top() ) {
@@ -278,17 +278,17 @@ TEST_CASE( "item_location_in_container_survives_removal", "[item][item_location]
     REQUIRE( tshirt_ptr != nullptr );
     REQUIRE( jeans_ptr != nullptr );
 
-    // Create item_location pointing to tshirt
+
     item_location backpack_loc( map_cursor( pos ), &placed_backpack );
     item_location tshirt_loc( backpack_loc, tshirt_ptr );
 
-    // Serialize
+
     std::string json_str = serialize_item_location( tshirt_loc );
 
-    // Remove jeans (shifts indices)
+
     backpack_loc.remove_item( *jeans_ptr );
 
-    // Deserialize - should find tshirt by UID despite index shift
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );
@@ -302,7 +302,7 @@ TEST_CASE( "item_location_in_container_uid_miss_becomes_nowhere",
     tripoint_bub_ms pos( 60, 60, 0 );
     m.i_clear( pos );
 
-    // Place a backpack with a tshirt inside
+
     item backpack_item( itype_backpack );
     item tshirt( itype_tshirt );
     backpack_item.put_in( tshirt, pocket_type::CONTAINER );
@@ -322,18 +322,18 @@ TEST_CASE( "item_location_in_container_uid_miss_becomes_nowhere",
     item_location backpack_loc( map_cursor( pos ), &placed_backpack );
     item_location tshirt_loc( backpack_loc, tshirt_ptr );
 
-    // Serialize
+
     std::string json_str = serialize_item_location( tshirt_loc );
 
-    // Remove the target item entirely
+
     backpack_loc.remove_item( *tshirt_ptr );
 
-    // Put a different item so index 0 exists but is wrong
+
     item jeans_replacement( itype_jeans );
     placed_backpack.put_in( jeans_replacement, pocket_type::CONTAINER );
 
-    // Deserialize - UID present but item gone, should become nowhere
-    // (NOT fall back to index and bind to the jeans)
+
+
     item_location loaded;
     std::string dmsg = capture_debugmsg_during( [&]() {
         loaded = deserialize_item_location( json_str );
@@ -349,12 +349,12 @@ TEST_CASE( "item_location_on_map_survives_removal", "[item][item_location][item_
     tripoint_bub_ms pos( 60, 60, 0 );
     m.i_clear( pos );
 
-    // Place multiple items on the map
+
     m.add_item( pos, item( itype_jeans ) );
     m.add_item( pos, item( itype_tshirt ) );
     m.add_item( pos, item( itype_jeans ) );
 
-    // Find the tshirt
+
     item *tshirt_ptr = nullptr;
     item *first_jeans = nullptr;
     for( item &it : m.i_at( pos ) ) {
@@ -370,13 +370,13 @@ TEST_CASE( "item_location_on_map_survives_removal", "[item][item_location][item_
     item_location tshirt_loc( map_cursor( pos ), tshirt_ptr );
     REQUIRE( tshirt_loc->typeId() == itype_tshirt );
 
-    // Serialize
+
     std::string json_str = serialize_item_location( tshirt_loc );
 
-    // Remove the first jeans (shifts indices)
+
     m.i_rem( pos, first_jeans );
 
-    // Deserialize and access (triggers ensure_unpacked for map locations)
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );
@@ -390,11 +390,11 @@ TEST_CASE( "item_location_deserialize_without_uid_falls_back_to_index",
     tripoint_bub_ms pos( 60, 60, 0 );
     m.i_clear( pos );
 
-    // Place items on map
+
     m.add_item( pos, item( itype_jeans ) );
     m.add_item( pos, item( itype_tshirt ) );
 
-    // Hand-craft old-format JSON (no "uid" field) pointing to index 1
+
     tripoint_abs_ms abs_pos = m.get_abs( pos );
     std::ostringstream os;
     JsonOut jsout( os );
@@ -405,7 +405,7 @@ TEST_CASE( "item_location_deserialize_without_uid_falls_back_to_index",
     jsout.end_object();
     std::string json_str = os.str();
 
-    // Deserialize - should use index fallback since no UID
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );
@@ -417,7 +417,7 @@ TEST_CASE( "item_location_on_person_survives_restack", "[item][item_location][it
     Character &dummy = get_player_character();
     clear_avatar();
 
-    // Add items directly to inventory
+
     item_location jeans1_loc = dummy.i_add( item( itype_jeans ) );
     item_location tshirt_loc = dummy.i_add( item( itype_tshirt ) );
     item_location jeans2_loc = dummy.i_add( item( itype_jeans ) );
@@ -425,10 +425,10 @@ TEST_CASE( "item_location_on_person_survives_restack", "[item][item_location][it
     REQUIRE( tshirt_loc );
     REQUIRE( tshirt_loc->typeId() == itype_tshirt );
 
-    // Serialize the tshirt location
+
     std::string json_str = serialize_item_location( tshirt_loc );
 
-    // Deserialize - should find tshirt by UID
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );
@@ -440,13 +440,13 @@ TEST_CASE( "item_location_on_vehicle_base_item", "[item][item_location][item_uid
     map &m = get_map();
     clear_vehicles();
 
-    // Place a simple vehicle
+
     tripoint_bub_ms veh_pos( 60, 60, 0 );
     vehicle *veh = m.add_vehicle( vehicle_prototype_bicycle, veh_pos, 0_degrees, -1,
                                   veh_spawn_status::PRISTINE );
     REQUIRE( veh != nullptr );
 
-    // Get a vehicle part and create item_location for its base item
+
     int part_idx = 0;
     const item &base = veh->part( part_idx ).get_base();
 
@@ -454,10 +454,10 @@ TEST_CASE( "item_location_on_vehicle_base_item", "[item][item_location][item_uid
     item_location base_loc( cur, const_cast<item *>( &base ) );
     REQUIRE( base_loc );
 
-    // Serialize - base items omit idx and uid
+
     std::string json_str = serialize_item_location( base_loc );
 
-    // Verify the serialized JSON omits idx and uid (the base item invariant)
+
     JsonValue jv_check = json_loader::from_string( json_str );
     JsonObject jo_check = jv_check;
     jo_check.allow_omitted_members();
@@ -465,7 +465,7 @@ TEST_CASE( "item_location_on_vehicle_base_item", "[item][item_location][item_uid
     CHECK_FALSE( jo_check.has_member( "idx" ) );
     CHECK_FALSE( jo_check.has_member( "uid" ) );
 
-    // Deserialize - should resolve via idx < 0 path (no uid needed)
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == base.typeId() );
@@ -478,14 +478,14 @@ TEST_CASE( "item_location_on_vehicle_cargo_survives_removal",
     map &m = get_map();
     clear_vehicles();
 
-    // Place a vehicle with cargo -- use a car which has trunk/cargo
-    // Status 0 = fully intact (no random damage that could break the cargo part)
+
+
     tripoint_bub_ms veh_pos( 60, 60, 0 );
     vehicle *veh = m.add_vehicle( vehicle_prototype_car, veh_pos, 0_degrees, 0,
                                   veh_spawn_status::UNDAMAGED );
     REQUIRE( veh != nullptr );
 
-    // Find the largest cargo part (trunk)
+
     int cargo_part_idx = -1;
     units::volume best_vol = 0_ml;
     for( const vpart_reference &vpr : veh->get_all_parts() ) {
@@ -499,13 +499,13 @@ TEST_CASE( "item_location_on_vehicle_cargo_survives_removal",
     }
     REQUIRE( cargo_part_idx >= 0 );
 
-    // Clear any randomly-spawned items so the cargo has room for test items
+
     vehicle_stack cargo = veh->get_items( veh->part( cargo_part_idx ) );
     while( !cargo.empty() ) {
         cargo.erase( cargo.begin() );
     }
 
-    // Add items to cargo
+
     std::optional<vehicle_stack::iterator> added_jeans =
         veh->add_item( m, veh->part( cargo_part_idx ), item( itype_jeans ) );
     REQUIRE( added_jeans.has_value() );
@@ -517,13 +517,13 @@ TEST_CASE( "item_location_on_vehicle_cargo_survives_removal",
     item_location tshirt_loc( cur, & **added_tshirt );
     REQUIRE( tshirt_loc->typeId() == itype_tshirt );
 
-    // Serialize
+
     std::string json_str = serialize_item_location( tshirt_loc );
 
-    // Remove jeans (shifts indices)
+
     veh->remove_item( veh->part( cargo_part_idx ), *added_jeans );
 
-    // Deserialize - should find tshirt by UID
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );
@@ -541,14 +541,14 @@ TEST_CASE( "expired_item_location_serializes_as_nowhere", "[item][item_location]
     REQUIRE( loc );
     REQUIRE( loc->typeId() == itype_tshirt );
 
-    // Remove the target item, invalidating the safe_reference
+
     m.i_rem( pos, &*loc );
 
-    // The item_location's safe_reference is now expired.
-    // Serializing should produce "type": "null" (nowhere), not a bogus map+idx.
+
+
     std::string json_str = serialize_item_location( loc );
 
-    // Check that the serialized JSON is a nowhere location
+
     JsonValue jv = json_loader::from_string( json_str );
     JsonObject jo = jv;
     std::string type = jo.get_string( "type" );
@@ -567,7 +567,7 @@ TEST_CASE( "expired_vehicle_cargo_item_location_serializes_as_nowhere",
                                   veh_spawn_status::UNDAMAGED );
     REQUIRE( veh != nullptr );
 
-    // Find the largest cargo part
+
     int cargo_part_idx = -1;
     units::volume best_vol = 0_ml;
     for( const vpart_reference &vpr : veh->get_all_parts() ) {
@@ -581,13 +581,13 @@ TEST_CASE( "expired_vehicle_cargo_item_location_serializes_as_nowhere",
     }
     REQUIRE( cargo_part_idx >= 0 );
 
-    // Clear any randomly-spawned items so the cargo has room for test items
+
     vehicle_stack cargo2 = veh->get_items( veh->part( cargo_part_idx ) );
     while( !cargo2.empty() ) {
         cargo2.erase( cargo2.begin() );
     }
 
-    // Add an item to cargo
+
     std::optional<vehicle_stack::iterator> added =
         veh->add_item( m, veh->part( cargo_part_idx ), item( itype_tshirt ) );
     REQUIRE( added.has_value() );
@@ -596,11 +596,11 @@ TEST_CASE( "expired_vehicle_cargo_item_location_serializes_as_nowhere",
     item_location loc( cur, & **added );
     REQUIRE( loc );
 
-    // Remove the item, invalidating the safe_reference
+
     veh->remove_item( veh->part( cargo_part_idx ), *added );
 
-    // Serializing should produce "type": "null", not a partial vehicle object
-    // that would be misread as a base item (idx defaults to -1 on load)
+
+
     std::string json_str = serialize_item_location( loc );
 
     JsonValue jv = json_loader::from_string( json_str );
@@ -617,7 +617,7 @@ TEST_CASE( "item_location_in_container_deserialize_without_uid_falls_back_to_ind
     tripoint_bub_ms pos( 60, 60, 0 );
     m.i_clear( pos );
 
-    // Place a backpack with items inside
+
     item backpack_item( itype_backpack );
     backpack_item.put_in( item( itype_jeans ), pocket_type::CONTAINER );
     backpack_item.put_in( item( itype_tshirt ), pocket_type::CONTAINER );
@@ -625,10 +625,10 @@ TEST_CASE( "item_location_in_container_deserialize_without_uid_falls_back_to_ind
     m.add_item( pos, backpack_item );
     item &placed_backpack = m.i_at( pos ).only_item();
 
-    // First, serialize the parent (backpack on map) normally -- it has a UID
+
     item_location backpack_loc( map_cursor( pos ), &placed_backpack );
 
-    // Find the actual index of the tshirt in the container
+
     int tshirt_idx = -1;
     int idx = 0;
     for( const item *it : placed_backpack.all_items_container_top() ) {
@@ -640,7 +640,7 @@ TEST_CASE( "item_location_in_container_deserialize_without_uid_falls_back_to_ind
     }
     REQUIRE( tshirt_idx >= 0 );
 
-    // Hand-craft old-format in_container JSON: has idx but no uid
+
     std::ostringstream os;
     JsonOut jsout( os );
     jsout.start_object();
@@ -650,7 +650,7 @@ TEST_CASE( "item_location_in_container_deserialize_without_uid_falls_back_to_ind
     jsout.end_object();
     std::string json_str = os.str();
 
-    // Deserialize - should use index fallback since no UID
+
     item_location loaded = deserialize_item_location( json_str );
     REQUIRE( loaded );
     CHECK( loaded->typeId() == itype_tshirt );

@@ -17,14 +17,14 @@ generic_factory<city> &get_city_factory()
     return city_factory;
 }
 
-/** @relates string_id */
+
 template<>
 const city &string_id<city>::obj() const
 {
     return get_city_factory().obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<city>::is_valid() const
 {

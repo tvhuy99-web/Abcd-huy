@@ -44,10 +44,10 @@ class pixel_minimap
 
         void draw( const SDL_Rect &screen_rect, const tripoint_bub_ms &center );
 
-        // The projector and screen transform rebuild lazily on the next draw().
+
         void reset();
 
-        // True if the last draw() rendered any critters with blinking beacons.
+
         bool has_blinking_beacons() const {
             return has_blinking_beacons_;
         }
@@ -79,4 +79,4 @@ class pixel_minimap
         bool has_blinking_beacons_ = false;
 };
 
-#endif // CATA_SRC_PIXEL_MINIMAP_H
+#endif

@@ -17,7 +17,7 @@ class JsonOut;
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 class safemode
 {
@@ -82,22 +82,22 @@ class safemode
                     proximity( proximity_in ) {}
         };
 
-        /**
-         * The currently-active set of safemode rules, in a form that allows quick
-         * lookup. When this is filled (by @ref safemode::create_rules()), every
-         * monster existing in the game that matches a rule (either white- or blacklist)
-         * is added as the key, with rule_state::WHITELISTED or rule_state::BLACKLISTED as the values.
-         * safemode_rules[ 'creature name' ][ 'movement_mode' ][ 'attitude' ].rule_state_class('rule_state', 'proximity')
-         */
+
+
+
+
+
+
+
         // NOLINTNEXTLINE(cata-serialize)
         std::unordered_map < std::string, std::array < std::array < rule_state_class, 3 >, 2 >>
                 safemode_rules_hostile; // NOLINT(cata-serialize)
         // NOLINTNEXTLINE(cata-serialize)
         std::array < std::vector < rules_class >, 2 > safemode_rules_sound;
 
-        /**
-         * current rules for global and character tab
-         */
+
+
+
         std::vector<rules_class> global_rules;
         std::vector<rules_class> character_rules;
 
@@ -152,4 +152,4 @@ class safemode
 
 safemode &get_safemode();
 
-#endif // CATA_SRC_SAFEMODE_UI_H
+#endif

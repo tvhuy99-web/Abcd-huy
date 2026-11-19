@@ -64,13 +64,13 @@ static std::vector<const vpart_info *> all_turret_types()
 
 static void clear_faults_from_vp( vehicle_part &vp )
 {
-    // Just some small trickery to manipulate the const reference provided by get_base().
+
     item base_copy( vp.get_base() );
     base_copy.faults.clear();
     vp.set_base( std::move( base_copy ) );
 }
 
-// Install, reload and fire every possible vehicle turret.
+
 TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine]" )
 {
     clear_map_without_vision();
@@ -80,9 +80,9 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine]" )
     const tripoint_bub_ms veh_pos( 65, 65, 0 );
 
     for( const vpart_info *turret_vpi : all_turret_types() ) {
-        // Multimag guns are turret-installable but covered by
-        // vehicle_turret_multimag; the legacy ammo_set path here cannot
-        // populate per-pocket firing_requirements wells.
+
+
+
         if( !turret_vpi->base_item->firing_requirements.empty() ) {
             continue;
         }
@@ -103,13 +103,13 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine]" )
             if( base_itype->gun->energy_drain > 0_kJ || turret_vpi->has_flag( "USE_BATTERIES" ) ) {
                 const auto& [bat_current, bat_capacity] = veh->battery_power_level( );
                 CHECK( bat_capacity > 0 );
-                veh->charge_battery( here, bat_capacity, /* apply_loss = */ false );
-                REQUIRE( veh->battery_left( here, /* apply_loss = */ false ) == bat_capacity );
+                veh->charge_battery( here, bat_capacity, false );
+                REQUIRE( veh->battery_left( here, false ) == bat_capacity );
             }
 
             const itype_id ammo_itype = vp.get_base().ammo_default();
             if( ammo_itype.is_null() ) {
-                // probably a pure energy weapon
+
                 CHECK( base_itype->gun->energy_drain > 0_kJ );
             } else if( turret_vpi->has_flag( "USE_TANKS" ) ) {
                 CAPTURE( ammo_itype.str() );
@@ -141,7 +141,7 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine]" )
 
             player_character.setpos( here, veh->bub_part_pos( here, vp ) );
             int shots_fired = 0;
-            // 3 attempts to fire, to account for possible misfires
+
             for( int attempt = 0; shots_fired == 0 && attempt < 3; attempt++ ) {
                 shots_fired += qry.fire( player_character, &here, player_character.pos_bub() + point( qry.range(),
                                          0 ) );
@@ -151,9 +151,9 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine]" )
 
             here.destroy_vehicle( veh );
 
-            // clear pending explosions so not to interfere with subsequent tests
+
             explosion_handler::process_explosions();
-            // heal the avatar from explosion damages
+
             clear_avatar();
         }
     }
@@ -168,15 +168,15 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
     const tripoint_bub_ms veh_pos( 65, 65, 0 );
 
     SECTION( "multimag gun without NO_TURRET has an auto-generated turret vpart" ) {
-        // NO_TURRET on the gun suppresses turret vpart generation.
+
         REQUIRE( vpart_turret_test_multimag_turret_gun.is_valid() );
         REQUIRE_FALSE( vpart_turret_test_multimag_gun_consume.is_valid() );
     }
 
     SECTION( "flamethrower-shape gun gets USE_TANKS flag from gun_uses_liquid_ammo" ) {
-        // Direct MAGAZINE liquid pocket on the gun must trigger USE_TANKS in
-        // the auto-generated turret vpart so install heuristics treat it as
-        // a fluid-fed turret.
+
+
+
         REQUIRE( vpart_turret_test_multimag_turret_flamethrower.is_valid() );
         REQUIRE( vpart_turret_test_multimag_turret_flamethrower.obj().has_flag( "USE_TANKS" ) );
     }
@@ -194,10 +194,10 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
 
         REQUIRE( veh->turret_query( vp ).query() == turret_data::status::no_ammo );
 
-        // Charge battery (vehicle source for power well) but leave 9mm well empty.
+
         const auto& [bat_current, bat_capacity] = veh->battery_power_level();
         CHECK( bat_capacity > 0 );
-        veh->charge_battery( here, bat_capacity, /* apply_loss = */ false );
+        veh->charge_battery( here, bat_capacity, false );
         REQUIRE( veh->turret_query( vp ).query() == turret_data::status::no_ammo );
 
         item mag( itype_glockmag );
@@ -210,7 +210,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         REQUIRE( qry.query() == turret_data::status::ready );
         REQUIRE( qry.range() > 0 );
 
-        const int batt_before = veh->battery_left( here, /* apply_loss = */ false );
+        const int batt_before = veh->battery_left( here, false );
 
         player_character.setpos( here, veh->bub_part_pos( here, vp ) );
         int shots_fired = 0;
@@ -221,8 +221,8 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         }
         CHECK( shots_fired > 0 );
 
-        // Vehicle battery drained per power-pocket per_use (5 kJ DEFAULT).
-        const int batt_after = veh->battery_left( here, /* apply_loss = */ false );
+
+        const int batt_after = veh->battery_left( here, false );
         CHECK( batt_before - batt_after == 5 * shots_fired );
 
         here.destroy_vehicle( veh );
@@ -240,7 +240,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         vehicle_part &vp = veh->part( turr_idx );
 
         const auto& [bat_current, bat_capacity] = veh->battery_power_level();
-        veh->charge_battery( here, bat_capacity, /* apply_loss = */ false );
+        veh->charge_battery( here, bat_capacity, false );
 
         item mag( itype_glockmag );
         const int mag_initial = 15;
@@ -260,11 +260,11 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         }
         REQUIRE( shots_fired > 0 );
 
-        // Player-loaded mag survives post_fire with rounds drawn down by per_use.
+
         const int ammo_after = vp.get_base().ammo_remaining_in_pocket( "ammo" );
         CHECK( ammo_after == mag_initial - shots_fired );
 
-        // Vehicle-bound power well cleared back to empty so next prep starts fresh.
+
         CHECK( vp.get_base().ammo_remaining_in_pocket( "power" ) == 0 );
 
         here.destroy_vehicle( veh );
@@ -282,7 +282,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         vehicle_part &vp = veh->part( turr_idx );
 
         const auto& [bat_current, bat_capacity] = veh->battery_power_level();
-        veh->charge_battery( here, bat_capacity, /* apply_loss = */ false );
+        veh->charge_battery( here, bat_capacity, false );
 
         item mag( itype_glockmag );
         mag.put_in( item( itype_9mm, calendar::turn, 15 ), pocket_type::MAGAZINE );
@@ -290,7 +290,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         REQUIRE( base_copy.put_in( mag, pocket_type::MAGAZINE_WELL ).success() );
         vp.set_base( std::move( base_copy ) );
 
-        // Give the player a charged UPS so available_ups returns nonzero.
+
         player_character.worn.wear_item( player_character, item( itype_backpack ),
                                          false, false );
         item ups( itype_UPS_ON );
@@ -300,7 +300,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         player_character.i_add( ups );
         REQUIRE( units::to_kilojoule( player_character.available_ups() ) == 100 );
 
-        const int batt_before = veh->battery_left( here, /* apply_loss = */ false );
+        const int batt_before = veh->battery_left( here, false );
         const int ups_before = units::to_kilojoule( player_character.available_ups() );
 
         turret_data qry = veh->turret_query( vp );
@@ -314,8 +314,8 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         }
         REQUIRE( shots_fired > 0 );
 
-        // Vehicle pays the full per_use; player UPS is left alone.
-        const int batt_after = veh->battery_left( here, /* apply_loss = */ false );
+
+        const int batt_after = veh->battery_left( here, false );
         const int ups_after = units::to_kilojoule( player_character.available_ups() );
         CHECK( batt_before - batt_after == 5 * shots_fired );
         CHECK( ups_after == ups_before );
@@ -329,8 +329,8 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         vehicle *veh = here.add_vehicle( vehicle_prototype_test_turret_rig, veh_pos,
                                          270_degrees, 0, veh_spawn_status::PRISTINE, false, true );
         REQUIRE( veh );
-        // test_turret_rig already has a tank at (1,0); install a second frame
-        // + tank at (1,1) so the picker has to choose between two siblings.
+
+
         REQUIRE( veh->install_part( here, point_rel_ms( 1, 1 ), vpart_frame ) != -1 );
         const int tank2_idx = veh->install_part( here, point_rel_ms( 1, 1 ), vpart_tank );
         REQUIRE( tank2_idx >= 0 );
@@ -342,9 +342,9 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         vehicle_part &vp = veh->part( turr_idx );
 
         const auto& [bat_current, bat_capacity] = veh->battery_power_level();
-        veh->charge_battery( here, bat_capacity, /* apply_loss = */ false );
+        veh->charge_battery( here, bat_capacity, false );
 
-        // Find both tanks; one gets the meager fill, the other the sufficient.
+
         int tank_meager = -1;
         int tank_full = -1;
         for( const vpart_reference &tvp :
@@ -374,7 +374,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         }
         REQUIRE( shots_fired > 0 );
 
-        // Picker must skip the meager tank; only the sufficient one drains.
+
         CHECK( veh->part( tank_meager ).ammo_remaining() == 1 );
         CHECK( veh->part( tank_full ).ammo_remaining() == 50 - 5 * shots_fired );
 
@@ -392,7 +392,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         REQUIRE( turr_idx >= 0 );
         vehicle_part &vp = veh->part( turr_idx );
         const auto& [bat_current, bat_capacity] = veh->battery_power_level();
-        veh->charge_battery( here, bat_capacity, /* apply_loss = */ false );
+        veh->charge_battery( here, bat_capacity, false );
 
         item mag( itype_glockmag );
         mag.put_in( item( itype_9mm, calendar::turn, 15 ), pocket_type::MAGAZINE );
@@ -411,7 +411,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
 
         turret_data qry = veh->turret_query( vp );
         REQUIRE( qry.query() == turret_data::status::ready );
-        const int batt_before = veh->battery_left( here, /* apply_loss = */ false );
+        const int batt_before = veh->battery_left( here, false );
 
         player_character.setpos( here, veh->bub_part_pos( here, vp ) );
         int shots_fired = 0;
@@ -422,7 +422,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         }
         REQUIRE( shots_fired > 0 );
 
-        const int batt_after = veh->battery_left( here, /* apply_loss = */ false );
+        const int batt_after = veh->battery_left( here, false );
         CHECK( batt_before - batt_after == 15 * shots_fired );
 
         here.destroy_vehicle( veh );
@@ -439,15 +439,15 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         REQUIRE( turr_idx >= 0 );
         vehicle_part &vp = veh->part( turr_idx );
 
-        // Charge vehicle to exactly one BURST worth (15 kJ); next burst must fail.
+
         veh->discharge_battery( here, 100000 );
-        veh->charge_battery( here, 15, /* apply_loss = */ false );
+        veh->charge_battery( here, 15, false );
         REQUIRE( static_cast<int>( veh->battery_left( here, false ) ) == 15 );
 
         item mag( itype_glockmag );
         mag.put_in( item( itype_9mm, calendar::turn, 15 ), pocket_type::MAGAZINE );
         item base_copy( vp.get_base() );
-        // This test should stop firing because the battery is empty, not because the gun jams.
+
         base_copy.set_flag( flag_NEVER_JAMS );
         REQUIRE( base_copy.put_in( mag, pocket_type::MAGAZINE_WELL ).success() );
         vp.set_base( std::move( base_copy ) );
@@ -470,7 +470,7 @@ TEST_CASE( "vehicle_turret_multimag", "[vehicle][turret][multimag]" )
         CHECK( first > 0 );
         CHECK( veh->battery_left( here, false ) == 0 );
 
-        // Vehicle empty; subsequent burst must report no_ammo before firing.
+
         turret_data qry2 = veh->turret_query( vp );
         CHECK( qry2.query() == turret_data::status::no_ammo );
 

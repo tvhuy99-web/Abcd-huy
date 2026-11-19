@@ -47,8 +47,8 @@ class CombineLocalsIntoPointCheck : public ClangTidyCheck
         std::unordered_map<const FunctionDecl *, FunctionReplacementData> alteredFunctions;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_COMBINELOCALSINTOPOINTCHECK_H
+#endif

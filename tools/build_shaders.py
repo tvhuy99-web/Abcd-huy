@@ -125,8 +125,6 @@ def main() -> int:
               ", ".join(unknown)), file=sys.stderr)
         return 2
 
-    # dxil/msl are translated from SPIR-V via SDL_shadercross, so SPIR-V is
-    # required as the intermediate even if the caller didn't list it.
     if formats & {"dxil", "msl"}:
         formats.add("spv")
 

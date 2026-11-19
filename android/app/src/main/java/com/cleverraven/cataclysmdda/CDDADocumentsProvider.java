@@ -15,19 +15,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-/**
- * DocumentsProvider for Cataclysm: Dark Days Ahead.
- * Exposes the app's external private data directory (/storage/emulated/0/Android/data/package/)
- * so that users can back up saves, mods, and configs without root access.
- * <p>
- * Root document ID is "root" (non-empty) for compatibility with third-party file managers.
- * The provider requires the app process to have been started at least once; after that,
- * file managers can access the data as long as the process is alive.
- */
+
+
+
+
+
+
+
+
+
 @TargetApi(Build.VERSION_CODES.KITKAT)
 public class CDDADocumentsProvider extends DocumentsProvider {
 
-    // Root document ID - using a non-empty string for better compatibility with various file managers.
+
     private static final String ROOT_DOCUMENT_ID = "root";
     private File externalDataRoot;
 
@@ -49,11 +49,11 @@ public class CDDADocumentsProvider extends DocumentsProvider {
         }
     }
 
-    /**
-     * Resolves a document ID to an absolute File object.
-     * Document IDs are relative paths under the root, except the root itself which is "root".
-     * Security: prevents path traversal by comparing canonical paths.
-     */
+
+
+
+
+
     private File getFileForDocId(String docId) throws FileNotFoundException {
         ensureRoot();
         File target;
@@ -86,7 +86,7 @@ public class CDDADocumentsProvider extends DocumentsProvider {
             return new MatrixCursor(fallback);
         }
 
-        // Define all possible columns (some may be omitted by the caller's projection)
+
         String[] allColumns = {
                 DocumentsContract.Root.COLUMN_ROOT_ID,
                 DocumentsContract.Root.COLUMN_TITLE,
@@ -116,7 +116,7 @@ public class CDDADocumentsProvider extends DocumentsProvider {
             } else if (DocumentsContract.Root.COLUMN_ICON.equals(col)) {
                 rowValues[i] = R.drawable.ic_launcher;
             } else if (DocumentsContract.Root.COLUMN_AVAILABLE_BYTES.equals(col)) {
-                // Available on API 23+
+
                 rowValues[i] = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? externalDataRoot.getFreeSpace() : 0L;
             } else if (DocumentsContract.Root.COLUMN_CAPACITY_BYTES.equals(col)) {
                 rowValues[i] = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? externalDataRoot.getTotalSpace() : 0L;
@@ -211,10 +211,10 @@ public class CDDADocumentsProvider extends DocumentsProvider {
         file.delete();
     }
 
-    /**
-     * Checks whether a document is a descendant of a parent document.
-     * Root is considered the parent of all documents.
-     */
+
+
+
+
     @Override
     public boolean isChildDocument(String parentDocId, String docId) {
         if (parentDocId == null || docId == null) return false;

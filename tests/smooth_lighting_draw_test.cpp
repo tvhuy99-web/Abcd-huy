@@ -63,7 +63,7 @@ std::vector<std::pair<std::string, tile_type>> plain_tiles( const std::vector<st
     return tiles;
 }
 
-// `center` and its eight neighbours; the small test view draws only some of them
+
 std::vector<tripoint_bub_ms> around( const tripoint_bub_ms &center )
 {
     std::vector<tripoint_bub_ms> tiles;
@@ -75,7 +75,7 @@ std::vector<tripoint_bub_ms> around( const tripoint_bub_ms &center )
     return tiles;
 }
 
-// draws a grass map on the software renderer, logging each sprite's light policy
+
 struct policy_fixture {
     explicit policy_fixture( const std::vector<std::pair<std::string, tile_type>> &tiles =
     plain_tiles( {
@@ -130,7 +130,7 @@ struct policy_fixture {
     light_log log_;
 };
 
-} // namespace
+}
 
 TEST_CASE( "map_sprites_take_scene_light_and_overlays_fixed_light", "[smooth_lighting][tiles]" )
 {
@@ -166,7 +166,7 @@ TEST_CASE( "map_sprites_take_scene_light_and_overlays_fixed_light", "[smooth_lig
         }
     }
     WHEN( "night on unexplored ground hides the tiles round the avatar" ) {
-        // no memory and out of sight, so the tile draws the hidden vision effect
+
         get_avatar().clear_map_memory();
         calendar::turn = calendar::turn_zero;
         g->reset_light_level();
@@ -208,7 +208,7 @@ TEST_CASE( "failed_shader_unbind_stops_the_minimap_before_it_paints",
     }
 }
 
-// grass, and a wall drawn through subtiles that take `subtile_anchor`
+
 static std::vector<std::pair<std::string, tile_type>> wall_tiles(
             const std::optional<smooth_lighting::light_anchor> &subtile_anchor )
 {
@@ -244,7 +244,7 @@ static std::vector<std::optional<smooth_lighting::light_anchor>> wall_subtile_an
 TEST_CASE( "connected_walls_keep_their_anchor_through_subtiles", "[smooth_lighting][tiles]" )
 {
     const auto draw_walls = []( policy_fixture & fx ) {
-        // a ring round the avatar, in the part of the map the small view draws
+
         map &here = get_map();
         for( const tripoint_bub_ms &p : around( player_pos ) ) {
             if( p != player_pos ) {
@@ -301,7 +301,7 @@ TEST_CASE( "what_a_sprite_shows_sets_where_it_takes_its_light", "[smooth_lightin
            light_anchor::base );
     CHECK( cata_tiles::default_light_anchor( TILE_CATEGORY::VEHICLE_PART, "vp_frame" ) ==
            light_anchor::base );
-    // other categories and unknown ids have no default; the sprite's shape decides
+
     CHECK_FALSE( cata_tiles::default_light_anchor( TILE_CATEGORY::ITEM, "rock" ) );
     CHECK_FALSE( cata_tiles::default_light_anchor( TILE_CATEGORY::TERRAIN, "t_no_such_terrain" ) );
 }
@@ -389,7 +389,7 @@ TEST_CASE( "lit_probe_seam_cases_agree", "[smooth_lighting]" )
                     expected( probe_case_named( all, "seam, right cell" ) ) ) );
 }
 
-// `c` with every light texel of every level out of sight
+
 static cata_shader::lit_probe::probe_case unseen( cata_shader::lit_probe::probe_case c )
 {
     const int width = 2 * c.columns;
@@ -456,7 +456,7 @@ TEST_CASE( "lit_probe_cases_reach_each_visual_input", "[smooth_lighting]" )
         const std::vector<rgb> want = expected( c );
         REQUIRE( want.size() == 16 );
         THEN( "fade shows across the quad" ) {
-            // pattern is symmetric, so fade runs in from the corners
+
             bool varies = false;
             for( const rgb &p : want ) {
                 varies = varies || !matches( { want[0] }, { p } );
@@ -488,8 +488,8 @@ TEST_CASE( "filtered_probe_cases_prefilter_their_cell_and_its_neighbours", "[smo
         CHECK( layout.area.p_min.y >= 0 );
         CHECK( layout.area.p_max.x <= c.columns );
         CHECK( layout.area.p_max.y <= c.rows_per_level );
-        // own cell's neighbours are in, so a lookup that leaves its block would
-        // read them
+
+
         for( const point &d : {
                  point::west, point::east, point::north, point::south
              } ) {
@@ -498,7 +498,7 @@ TEST_CASE( "filtered_probe_cases_prefilter_their_cell_and_its_neighbours", "[smo
                 CHECK( layout.area.contains( n ) );
             }
         }
-        // a small target, not the case's whole map
+
         CHECK( layout.size().x <= 3 * ( layout.grid + 1 ) );
         CHECK( layout.size().y <= 3 * ( layout.grid + 1 ) );
     }
@@ -585,4 +585,4 @@ TEST_CASE( "smooth_lighting_frames_on_the_software_renderer", "[smooth_lighting]
     }
 }
 
-#endif // TILES
+#endif

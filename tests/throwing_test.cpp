@@ -61,7 +61,7 @@ std::ostream &operator<<( std::ostream &stream, const throw_test_pstats &pstats 
     return stream << "STR: " << pstats.str << " DEX: " << pstats.dex <<
            " PER: " << pstats.per << " SKL: " << pstats.skill_lvl;
 }
-} // namespace
+}
 
 static void reset_player( Character &you, const throw_test_pstats &pstats,
                           const tripoint_bub_ms &pos )
@@ -79,18 +79,18 @@ static void reset_player( Character &you, const throw_test_pstats &pstats,
     you.set_skill_level( skill_throw, pstats.skill_lvl );
 }
 
-// If tests are routinely failing you should:
-//  1. Make sure some change hasn't caused some regression
-//  2. Make sure test is accurate by testing with a large minimum iterations (min > 5000)
-//  3. Increase bounds on thresholds
-//  4. Increase max iterations which will make the CI smaller and more likely to
-//     fit inside the threshold but also increase the average test length
-// In that order.
+
+
+
+
+
+
+
 static constexpr int min_throw_test_iterations = 100;
 static constexpr int max_throw_test_iterations = 10000;
 
-// tighter thresholds here will increase accuracy but also increase average test
-// time since more samples are required to get a more accurate test
+
+
 static void test_throwing_player_versus(
     Character &you, const std::string &mon_id, const itype_id &throw_id,
     const int range, const throw_test_pstats &pstats,
@@ -120,24 +120,24 @@ static void test_throwing_player_versus(
         data.dmg.add( atk.dealt_dam.total_damage() );
 
         if( data.hits.n() >= min_throws ) {
-            // ideally we should actually still checking the threshold after we
-            // meet it but we're busy people and don't have time for that
+
+
             if( !hit_thresh_met ) {
                 hit_thresh_met = data.hits.test_threshold( hit_thresh );
             }
-            // don't do an else here because it's possible we just made
-            // hit_thresh_met true
+
+
             if( hit_thresh_met ) {
-                // commenting this out is a super easy way to force all the
-                // test to fail if you want to reset the baseline after
-                // making balance changes or if many of the tests are failing
+
+
+
                 dmg_thresh_met = data.dmg.test_threshold( dmg_thresh );
             }
         }
         g->remove_zombie( mon );
         you.remove_weapon();
-        // only need to check dmg_thresh_met because it can only be true if
-        // hit_thresh_met first
+
+
     } while( !dmg_thresh_met && data.hits.n() < max_throws );
 
     INFO( "Monster: '" << mon_id << "' Item: '" << throw_id.c_str() );
@@ -157,18 +157,18 @@ static void test_throwing_player_versus(
     CHECK( dmg_thresh_met );
 }
 
-// Debugging function to force a large sample count.  This will fail but will
-// dump an extremely accurate population sample that can be used to tune a
-// broken test.
-// WARNING: these will take a long time likely
-/*
-static void test_throwing_player_versus(
-    player &p, const std::string &mon_id, const itype_id &throw_id, const int range,
-    const throw_test_pstats &pstats )
-{
-    test_throwing_player_versus( p, mon_id, throw_id, range, pstats, { 0, 0 }, { 0, 0 }, 5000, 5000 );
-}
-*/
+
+
+
+
+
+
+
+
+
+
+
+
 
 static constexpr throw_test_pstats lo_skill_base_stats = { 0, 8, 8, 8 };
 static constexpr throw_test_pstats mid_skill_base_stats = { MAX_SKILL / 2, 8, 8, 8 };
@@ -225,9 +225,9 @@ TEST_CASE( "throwing_skill_impact_test", "[throwing] [balance]" )
     avatar &p = get_avatar();
     clear_map_without_vision();
 
-    // we already cover low stats in the sanity tests and we only cover a few
-    // ranges here because what we're really trying to capture is the effect
-    // the throwing skill has while the sanity tests are more explicit.
+
+
+
     SECTION( "mid_skill_basestats_rock" ) {
         test_throwing_player_versus( p, "mon_zombie", itype_rock, 5, mid_skill_base_stats, { 1.00, 0.10 }, { 12, 6 } );
         test_throwing_player_versus( p, "mon_zombie", itype_rock, 10, mid_skill_base_stats, { 0.86, 0.10 }, { 7.0, 4 } );
@@ -253,9 +253,9 @@ static void test_player_kills_monster(
     item it( item_id );
     int num_failures = 0;
 
-    // We want to be real sure it isn't possible so do it a bunch of times
-    // until we manage to make it happen or if we hit iterations then we're
-    // good.
+
+
+
     for( int i = 0; i < iterations; i++ ) {
         bool mon_is_dead = false;
         int turns = 0;
@@ -276,7 +276,7 @@ static void test_player_kills_monster(
                 mon.move();
             }
 
-            // zombie made it to player, we're done with this iteration
+
             if( ( last_range = rl_dist( you.pos_abs(), mon.pos_abs() ) ) <= dist_thresh ) {
                 break;
             }
