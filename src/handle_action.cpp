@@ -38,6 +38,7 @@
 #include "avatar_action.h"
 #include "bionics.h"
 #include "bodygraph.h"
+#include "body_status_ui.h"
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -2494,7 +2495,7 @@ static void read()
         if( avatar_action::check_stealing( get_player_character(), the_book ) ) {
             item_location parent_loc = loc.parent_item();
             if( loc->type->can_use( "learn_spell" ) ) {
-                the_book.get_use( "learn_spell" )->call( &player_character, the_book, player_character.pos_bub() );
+                the_book.get_use( "learn_spell" )->call( &player_character, loc, player_character.pos_bub() );
             } else if( loc.is_efile() ) {
                 // obtain e-storage device if not allowed to use remotely
                 if( !parent_loc->has_flag( json_flag_ALLOWS_REMOTE_USE ) ) {
@@ -2559,13 +2560,14 @@ static void fire()
         // This also works when a melee weapon is currently wielded.
         std::vector<item_location> guns;
         std::vector<std::string> labels;
-        for( item_location &loc : you.all_items_loc() ) {
+        you.visit_items( [&]( const item_location &loc ) {
             if( loc && loc->is_gun() && !loc->is_gunmod() ) {
                 guns.push_back( loc );
                 labels.push_back( string_format( _( "%1$s. %2$d rounds loaded." ),
                                                  loc->tname(), loc->ammo_remaining() ) );
             }
-        }
+            return VisitResponse::NEXT;
+        } );
         if( !guns.empty() ) {
             int choice = uilist( _( "Choose a gun to fire" ), labels );
             if( choice < 0 || static_cast<std::size_t>( choice ) >= guns.size() ) {
@@ -3917,12 +3919,13 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 // game's location-aware wield rules, retrieval costs and
                 // safe auto-stow when the former weapon fits in inventory.
                 std::vector<item_location> options;
-                for( item_location loc : player_character.all_items_loc() ) {
+                player_character.visit_items( [&]( const item_location &loc ) {
                     if( loc && ( loc->is_gun() || loc->is_melee() ) &&
                         player_character.can_wield( *loc ).success() ) {
                         options.push_back( loc );
                     }
-                }
+                    return VisitResponse::NEXT;
+                } );
                 const int total = static_cast<int>( options.size() ) + 1;
                 int current = 0; // index zero = unarmed
                 for( std::size_t i = 0; i < options.size(); ++i ) {
@@ -4326,15 +4329,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             player_character.disp_morale();
             break;
 
-        case ACTION_MEDICAL:
-            if( player_character.disp_medical() ) {
+        case ACTION_MEDICAL: {
+            body_status_ui bsui( get_player_character(), body_status_tab::BS_TAB_MEDICAL );
+            if( bsui.display() ) {
                 return false;
             }
             break;
+        }
 
-        case ACTION_BODYSTATUS:
-            display_bodygraph( get_player_character() );
+        case ACTION_BODYSTATUS: {
+            body_status_ui bsui( get_player_character() );
+            bsui.display();
             break;
+        }
 
         case ACTION_MESSAGES:
             Messages::display_messages();
