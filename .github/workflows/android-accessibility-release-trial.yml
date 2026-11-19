@@ -207,7 +207,11 @@ jobs:
                   if path not in contents or not archive.read(path).startswith(b'\x7fELF\x02'):
                       raise SystemExit(f'ARM64 library is missing or invalid: {path}')
               for path in ('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
-                           'assets/data/shaders/grayscale.frag.spv'):
+                           'assets/data/shaders/grayscale.frag.spv',:
+               'assets/data/mods/CataclysmPlusPlus/modinfo.json',
+               'assets/data/mods/Arcana_StrangeAeons/modinfo.json',
+               'assets/data/mods/Blazemod/modinfo.json',
+               'assets/data/mods/MST_Extra/modinfo.json')
                   if path not in contents:
                       raise SystemExit(f'Required game asset is missing: {path}')
 
