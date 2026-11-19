@@ -66,7 +66,7 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
         self.assertIn('long request = send("set_value", payload.toString());', CTRL)
         self.assertIn("if (pocketStage == 3 && pocketItems().size() > 1)", CTRL)
         self.assertIn("commitPocketChoices();", CTRL)
-        self.assertIn("cancelPocketPicker(); // Back has the same rollback as Cancel.", CTRL)
+        self.assertIn("cancelPocketPicker();", CTRL)
         self.assertIn("pocketDrafts.clear();", CTRL)
 
         draft = CTRL.split("private void selectPocketAmount(", 1)[1].split(
@@ -103,7 +103,7 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
         self.assertIn("a11y::selected_quantity( instruction.substr( equals + 1 )", SRC)
         self.assertIn("loc.parent_item() != pb->container", SRC)
         self.assertLess(
-            SRC.index("// All changes have been checked against the live pocket"),
+            SRC.index("for( const proposed_change &change : changes ) {"),
             SRC.index("select_count( *multi, change.choice->column"))
 
     def test_parent_child_selection_is_not_double_counted(self):

@@ -79,7 +79,7 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("ViewConfiguration.getLongPressTimeout()", src)
         self.assertIn("multiTrackedCount != fingers || multiFingerMoved", src)
         self.assertIn("if (!listener.directWorldGesturesEnabled()", src)
-        self.assertIn("cancelled = true; // A hold must never", src)
+        self.assertIn("cancelled = true;", src)
         self.assertIn("if (action == MotionEvent.ACTION_POINTER_UP", src)
         self.assertIn("listener.handleCustomGesture(gesture)", src)
         self.assertIn(

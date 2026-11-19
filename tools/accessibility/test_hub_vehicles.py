@@ -55,7 +55,7 @@ class VehicleJourneyHubTest(unittest.TestCase):
         self.assertIn('_( "Release %s" )', self.world)
         self.assertIn("swipe_movement_allowed =", self.world)
         gate = self.world.split("result.swipe_movement_allowed =", 1)[1]
-        gate = gate.split("// Eight-direction combat gestures", 1)[0]
+        gate = gate.split("constexpr std::array<point, 8> combat_steps", 1)[0]
         self.assertNotIn("!viewer.in_vehicle", gate)
         self.assertNotIn("!viewer.controlling_vehicle", gate)
 

@@ -74,8 +74,10 @@ class EatDrinkOutcomeMessages(unittest.TestCase):
     def test_outcome_lines_only_cover_food_and_drink(self):
 
         body = eat_body()
-        block = body[body.index("// The reader speaks every game message"):
-                     body.index("if( item::find_type( food.get_comestible()->tool )")]
+        end = body.index("if( item::find_type( food.get_comestible()->tool )")
+        start = body.rfind("if( chew ) {", 0, end)
+        self.assertGreaterEqual(start, 0)
+        block = body[start:end]
         self.assertIn("if( chew ) {", block)
         self.assertIn("} else if( drinkable ) {", block)
         self.assertNotIn("is_medication()", block)

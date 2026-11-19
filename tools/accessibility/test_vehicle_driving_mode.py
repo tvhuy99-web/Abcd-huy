@@ -25,7 +25,7 @@ GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 class AccessibleVehicleContracts(unittest.TestCase):
     def test_onboard_map_swipes_only_walk_after_release(self):
         gate = WORLD.split("result.swipe_movement_allowed =", 1)[1].split(
-            "// Eight-direction combat gestures", 1
+            "constexpr std::array<point, 8> combat_steps", 1
         )[0]
 
         for forbidden in ("!viewer.in_vehicle", "!viewer.controlling_vehicle",
@@ -83,7 +83,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("a11y_steering_nudge = 3;", ENGINE)
 
         vehicle = CTRL.split(
-            "// The native game still handles acceleration, direction and", 1
+            "if (vehicleMode && directWorldGesturesEnabled()) {", 1
         )[1]
         for gesture, node in (
             ("swipe_up", "forward"), ("swipe_down", "reverse"),
@@ -100,7 +100,8 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("pldrive( point_rel_ms( 0, -1 ) );", ENGINE)
         self.assertIn("pldrive( point_rel_ms( 0, 1 ) );", ENGINE)
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
-        self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
+        self.assertRegex(CTRL, r'requestVehicleAction\("reader:vehicle:horn"\);\s*return true;\s*'
+                          r'default:\s*(?://[^\n]*\n\s*)*return true;')
 
     def test_vehicle_onboarding_uses_touch_instructions(self):
         source = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
@@ -165,7 +166,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_manual_mode_warns_without_applying_sensor_brakes(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving ) {", VEH)
-        sensor = VEH.split("// Manual mode reports hazards", 1)[1].split(
+        sensor = VEH.split("if( a11y_manual_drive && !is_autodriving ) {", 1)[1].split(
             "} else if( is_autodriving ) {", 1
         )[0]
         self.assertIn('_( "Obstacle ahead: %1$s, %2$d tiles." )', sensor)
@@ -251,7 +252,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         for compass in ("north", "northeast", "east", "southeast",
                         "south", "southwest", "west", "northwest"):
             self.assertIn('_( "' + compass + '" )', WORLD)
-        heading = WORLD.split("// A steering gesture must speak", 1)[1].split(
+        heading = WORLD.split("const auto spoken_heading = [](", 1)[1].split(
             'document( "reader:vehicle:heading"', 1
         )[0]
         self.assertIn("spoken_heading( veh.face.dir() )", heading)
@@ -280,7 +281,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
             self.assertIn('reader:scan:vehicle:' + side, WORLD)
 
         vehicle = CTRL.split(
-            "// The native game still handles acceleration, direction and", 1
+            "if (vehicleMode && directWorldGesturesEnabled()) {", 1
         )[1]
         for gesture, action in (
             ("swipe_down_left", 'speakVehicleDocument("reader:vehicle:speed")'),

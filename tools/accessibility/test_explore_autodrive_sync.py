@@ -127,7 +127,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_unreachable_route_pauses_without_obstacle_dialog(self):
         self.assertIn("if( player_vehicle->a11y_obstacle_stop && state == 1 )", ACTOR)
         self.assertIn("state = 2;", ACTOR)
-        self.assertNotIn("state = 4; // obstacle", ACTOR)
+        self.assertNotIn("state = 4;", ACTOR)
         self.assertNotIn('Cannot resume: an obstacle still blocks the vehicle.', ACTOR)
         self.assertIn("player_vehicle->a11y_obstacle_stop = false;", ACTOR)
         self.assertIn("if( state != 1 )", ACTOR)
