@@ -780,13 +780,9 @@ std::string monster::name_with_armor() const
     return ret;
 }
 
-std::string monster::disp_name( bool possessive, bool capitalize_first ) const
+std::string monster::disp_name( bool capitalize_first ) const
 {
-    if( !possessive ) {
-        return string_format( capitalize_first ? _( "The %s" ) : _( "the %s" ), name() );
-    } else {
-        return string_format( capitalize_first ? _( "The %s's" ) : _( "the %s's" ), name() );
-    }
+    return string_format( capitalize_first ? _( "The %s" ) : _( "the %s" ), name() );
 }
 
 std::string monster::skin_name() const
@@ -2314,14 +2310,14 @@ bool monster::melee_attack( Creature &target, float accuracy )
         if( u_see_my_spot && !target.in_sleep_state() ) {
             if( target.is_avatar() ) {
                 if( monster_missed ) {
-                    add_msg( _( "%s misses you." ), u_see_me ? disp_name( false, true ) : _( "Something" ) );
+                    add_msg( _( "%s misses you." ), u_see_me ? disp_name( true ) : _( "Something" ) );
                 } else {
                     add_msg( _( "You dodge %s." ), u_see_me ? disp_name() : _( "something" ) );
                 }
             } else if( target.is_npc() ) {
                 if( monster_missed ) {
                     add_msg( _( "%1$s misses %2$s!" ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ), target.disp_name() );
+                             u_see_me ? disp_name( true ) : _( "Something" ), target.disp_name() );
                 } else {
                     add_msg( _( "%1$s dodges %2$s attack." ),
                              target.disp_name(), u_see_me ? name() : _( "something" ) );
@@ -2345,11 +2341,11 @@ bool monster::melee_attack( Creature &target, float accuracy )
                     // The attack's post-armor damage is authoritative. Do not
                     // read a small bodypart's HP as if it were the parent limb.
                     add_msg( m_bad, _( "%1$s hits your %2$s. You lose %3$d HP." ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ), total_dealt );
                 } else {
                     add_msg( m_bad, _( "%1$s hits your %2$s." ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ) );
                 }
             } else if( target.is_npc() ) {
@@ -2360,7 +2356,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
                              total_dealt );
                 } else {
                     //~ %1$s: attacker name, %2$s: target NPC name, %3$s: bodypart name in accusative
-                    add_msg( _( "%1$s hits %2$s %3$s." ), u_see_me ? disp_name( false, true ) : _( "Something" ),
+                    add_msg( _( "%1$s hits %2$s %3$s." ), u_see_me ? disp_name( true ) : _( "Something" ),
                              target.disp_name( true ),
                              body_part_name_accusative( dealt_dam.bp_hit ) );
                 }
@@ -2394,19 +2390,17 @@ bool monster::melee_attack( Creature &target, float accuracy )
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative, 3$s is armor name
                 if( a11y::enabled() ) {
                     add_msg( m_info, _( "%1$s hits your %2$s. Armor blocks the damage." ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ) );
                 } else {
-                    add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), u_see_me ? disp_name( false,
-                             true ) : _( "Something" ),
+                    add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ), target.skin_name() );
                 }
             } else if( target.is_npc() ) {
                 //~ $1s is monster name, %2$s is that monster target name,
                 //~ $3s is target bodypart name in accusative, $4s is the monster target name,
                 //~ 5$s is target armor name.
-                add_msg( _( "%1$s hits %2$s %3$s but is stopped by %4$s %5$s." ), u_see_me ? disp_name( false,
-                         true ) : _( "Something" ),
+                add_msg( _( "%1$s hits %2$s %3$s but is stopped by %4$s %5$s." ), u_see_me ? disp_name( true ) : _( "Something" ),
                          target.disp_name( true ),
                          body_part_name_accusative( dealt_dam.bp_hit ),
                          target.disp_name( true ),
@@ -2415,7 +2409,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
                 //~ $1s is monster name, %2$s is that monster target name,
                 //~ $3s is target armor name.
                 add_msg( _( "%1$s hits %2$s but is stopped by its %3$s." ),
-                         u_see_me ? disp_name( false, true ) : _( "Something" ),
+                         u_see_me ? disp_name( true ) : _( "Something" ),
                          target.disp_name(),
                          target.skin_name() );
             }
