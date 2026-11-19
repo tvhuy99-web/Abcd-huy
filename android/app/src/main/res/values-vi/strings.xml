@@ -191,7 +191,7 @@
     <string name="a11yContextConfirmUnavailable">Màn hình này không có lệnh xác nhận</string>
     <string name="a11yNativeInputRangeError">Giá trị phải từ %1$s đến %2$s.</string>
     <string name="a11yNativeInputInstructions">Nhập bằng bàn phím Android. Chọn OK để lưu hoặc Hủy để bỏ qua. Bạn có thể tự bật hoặc tắt TalkBack.</string>
-    <string name="a11yCombatOn">Chiến đấu: vuốt một ngón về phía quái vật ở ô sát cạnh để đánh. Vuốt vào ô trống vẫn có thể khiến nhân vật bước tới. Vuốt hai ngón để di chuyển, vuốt gấp khúc để đánh chéo. Trái-phải nạp đạn, phải-trái đọc vũ khí.</string>
+    <string name="a11yCombatOn">Một ngón lên/xuống/trái/phải: đánh kẻ sát, ô trống thì đi. Hai ngón: đi; gấp khúc đánh chéo. Trái-phải nạp đạn; phải-trái đọc vũ khí.</string>
     <string name="a11yCombatOff">Đã bật chế độ bản đồ. Đã khôi phục các cử chỉ gốc.</string>
     <string name="a11yCombatUnavailable">Không thể thực hiện lệnh chiến đấu lúc này. Nhân vật không di chuyển.</string>
     <string name="a11yCombatNoEnemies">Không có kẻ địch nào nhìn thấy ở gần.</string>
