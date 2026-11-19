@@ -14,6 +14,7 @@
 #include <jni.h>
 #include "catacharset.h"
 #include "options.h"
+#include "path_info.h"
 #include "output.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
@@ -50,6 +51,7 @@ bool has_world_token = false;
 bool world_step_ready = false;
 std::atomic<int> active_travel_state{ 0 };
 std::atomic<int> pending_travel_control{ 0 };
+std::atomic<bool> pending_manual_mods_changed{ false };
 std::atomic<std::uint64_t> travel_map_return_deadline_ms{ 0 };
 
 bool matches_last_world( const context_token &token )
@@ -72,6 +74,19 @@ std::mutex sound_settings_mutex;
 std::optional<pending_sound_settings> pending_sound;
 #endif
 } // namespace
+
+void mark_manual_mods_changed()
+{
+    pending_manual_mods_changed.store( true, std::memory_order_release );
+#if defined(__ANDROID__)
+    PushWakeEvent();
+#endif
+}
+
+bool take_manual_mods_changed()
+{
+    return pending_manual_mods_changed.exchange( false, std::memory_order_acq_rel );
+}
 
 bool enabled() { return reader_enabled.load( std::memory_order_acquire ); }
 bool suspended() { return reader_suspended.load( std::memory_order_acquire ); }
@@ -716,6 +731,40 @@ void open_accessibility_settings()
     env->PopLocalFrame( nullptr );
 }
 
+void open_manual_mod_action( const std::string_view action, const std::string_view mod_id )
+{
+#if defined(__ANDROID__)
+    if( ( action != "import" && action != "export" && action != "delete" ) ||
+        mod_id.size() > 100 ) {
+        return;
+    }
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 6 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityManualModAction",
+                                             "(Ljava/lang/String;Ljava/lang/String;)V" );
+        if( method != nullptr ) {
+            jstring op = env->NewStringUTF( std::string( action ).c_str() );
+            jstring id = env->NewStringUTF( std::string( mod_id ).c_str() );
+            if( op != nullptr && id != nullptr ) {
+                env->CallVoidMethod( activity, method, op, id );
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+#else
+    ( void ) action;
+    ( void ) mod_id;
+#endif
+}
+
 void open_backup_restore()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
@@ -939,6 +988,19 @@ std::string from_java( JNIEnv *env, jstring value )
     return utf32_to_utf8( codepoints );
 }
 } // namespace
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeUserModDir( JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( PATH_INFO::user_moddir().c_str() );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueManualModsChanged(
+    JNIEnv *, jclass )
+{
+    a11y::android::mark_manual_mods_changed();
+}
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueSoundSettings(

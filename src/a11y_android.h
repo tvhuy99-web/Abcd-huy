@@ -66,6 +66,10 @@ void publish( std::string_view json );
 void announce( std::string_view text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
 void open_tts_settings();
+// Manual ZIP import and export are handled by Android's document picker.
+void open_manual_mod_action( std::string_view action, std::string_view mod_id );
+void mark_manual_mods_changed();
+bool take_manual_mods_changed();
 #if defined(__ANDROID__)
 // Main menu controls for the bounded, per-launch Android diagnostic journal.
 void open_debug_log();
