@@ -889,6 +889,7 @@ bool main_menu::opening_screen()
     while( !start ) {
 #if defined(__ANDROID__)
         a11y::android::apply_pending_sound_settings();
+        a11y::android::apply_pending_soundpack_selection();
 #endif
         ui_manager::redraw();
         if( a11y::enabled() ) {

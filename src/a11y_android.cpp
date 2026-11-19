@@ -18,6 +18,7 @@
 #include "output.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
+#include "sdlsound.h"
 #endif
 
 namespace a11y::android
@@ -72,6 +73,9 @@ struct pending_sound_settings {
 };
 std::mutex sound_settings_mutex;
 std::optional<pending_sound_settings> pending_sound;
+std::mutex soundpack_mutex;
+std::optional<std::string> pending_soundpack;
+std::string last_soundpack_result;
 #endif
 } // namespace
 
@@ -628,6 +632,64 @@ void apply_pending_sound_settings()
     get_options().save();
 }
 
+void queue_soundpack_selection( std::string id )
+{
+    if( id.empty() || id.size() > 160 ) {
+        return;
+    }
+    {
+        const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+        pending_soundpack = std::move( id );
+        last_soundpack_result.clear();
+    }
+    PushWakeEvent();
+}
+
+std::string take_soundpack_selection_result()
+{
+    const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+    std::string result = std::move( last_soundpack_result );
+    last_soundpack_result.clear();
+    return result;
+}
+
+void apply_pending_soundpack_selection()
+{
+    std::optional<std::string> selection;
+    {
+        const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+        selection = std::move( pending_soundpack );
+        pending_soundpack.reset();
+    }
+    if( !selection ) {
+        return;
+    }
+    // Rescan after the atomic ZIP import before validating a new ID. In
+    // particular, string_select will reject IDs missing from its value list.
+    get_options().refresh_soundpacks();
+    const std::string previous = get_option<std::string>( "SOUNDPACKS" );
+    bool applied = SOUNDPACKS.find( *selection ) != SOUNDPACKS.end();
+    if( applied ) {
+        get_options().get_option( "SOUNDPACKS" ).setValue( *selection );
+        applied = get_option<std::string>( "SOUNDPACKS" ) == *selection;
+        if( applied ) {
+            applied = reload_soundset();
+        }
+    }
+    if( applied ) {
+        get_options().save();
+    } else {
+        get_options().get_option( "SOUNDPACKS" ).setValue( previous );
+        if( previous != *selection ) {
+            reload_soundset();
+        }
+    }
+    {
+        const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+        last_soundpack_result = std::string( applied ? "OK:" : "ERR:" ) + *selection;
+    }
+}
+
 void diagnostic_event( const std::string_view category, const std::string_view detail )
 {
     // Manual OFF disables the entire diagnostic bridge, including failures.
@@ -814,10 +876,12 @@ void open_sound_settings( const int music, const int effects, const bool enabled
     if( activity != nullptr ) {
         jclass cls = env->GetObjectClass( activity );
         jmethodID method = cls == nullptr ? nullptr :
-                           env->GetMethodID( cls, "onAccessibilityOpenSoundSettings", "(IIZ)V" );
+                           env->GetMethodID( cls, "onAccessibilityOpenSoundSettings",
+                                               "(IIZLjava/lang/String;)V" );
         if( method != nullptr ) {
+            jstring selected = env->NewStringUTF( get_option<std::string>( "SOUNDPACKS" ).c_str() );
             env->CallVoidMethod( activity, method, music, effects,
-                                 enabled ? JNI_TRUE : JNI_FALSE );
+                                 enabled ? JNI_TRUE : JNI_FALSE, selected );
         }
     }
     if( env->ExceptionCheck() ) {
@@ -1007,6 +1071,34 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueSoundSettings(
     JNIEnv *, jclass, jint music, jint effects, jboolean enabled )
 {
     a11y::android::queue_sound_settings( music, effects, enabled == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueSoundpackSelection(
+    JNIEnv *env, jclass, jstring id )
+{
+    a11y::android::queue_soundpack_selection( from_java( env, id ) );
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTakeSoundpackSelectionResult(
+    JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( a11y::android::take_soundpack_selection_result().c_str() );
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeUserSoundDir(
+    JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( PATH_INFO::user_sound().get_unrelative_path().u8string().c_str() );
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeDataSoundDir(
+    JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( PATH_INFO::data_sound().get_unrelative_path().u8string().c_str() );
 }
 
 extern "C" JNIEXPORT void JNICALL
