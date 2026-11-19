@@ -1749,17 +1749,17 @@ void Creature::longpull( const std::string &name, const tripoint_bub_ms &p )
         add_msg_if_player( m_good, _( "You pull %1$s towards you with your %2$s!" ), c->disp_name(),
                            name );
         if( c->is_avatar() ) {
-            add_msg( m_warning, _( "%1$s pulls you in with their %2$s!" ), disp_name( false, true ), name );
+            add_msg( m_warning, _( "%1$s pulls you in with their %2$s!" ), disp_name( true ), name );
         }
         c->move_to( tripoint_abs_ms( line_to( pos_abs().raw(), c->pos_abs().raw(), 0,
                                               0 ).front() ) );
         c->add_effect( effect_stunned, 1_seconds );
         sounds::sound( c->pos_bub( here ), 5, sounds::sound_t::combat, _( "Shhhk!" ) );
     } else {
-        add_msg_if_player( m_bad, _( "%s weight makes it difficult to pull towards you." ),
-                           c->disp_name( true, true ) );
+        add_msg_if_player( m_bad, _( "%s is too heavy to pull towards you." ),
+                           c->disp_name( true ) );
         if( c->is_avatar() ) {
-            add_msg( m_info, _( "%1s tries to pull you in, but you resist!" ), disp_name( false, true ) );
+            add_msg( m_info, _( "%1s tries to pull you in, but you resist!" ), disp_name( true ) );
         }
     }
 }
@@ -1777,8 +1777,7 @@ bool Creature::stumble_invis( const Creature &player, const bool stumblemsg )
     }
     if( stumblemsg ) {
         const bool player_sees = player.sees( here, *this );
-        add_msg( m_bad, _( "%s stumbles into you!" ), player_sees ? this->disp_name( false,
-                 true ) : _( "Something" ) );
+        add_msg( m_bad, _( "%s stumbles into you!" ), player_sees ? this->disp_name( true ) : _( "Something" ) );
     }
     add_effect( effect_stumbled_into_invisible, 6_seconds );
     // Mark last known location, or extend duration if exists
@@ -1819,7 +1818,7 @@ bool Creature::attack_air( const tripoint_bub_ms &p )
     }
 
     add_msg_if_player_sees( *this, _( "%s attacks, but there is nothing there!" ),
-                            disp_name( false, true ) );
+                            disp_name( true ) );
     return true;
 }
 
