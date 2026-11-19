@@ -257,6 +257,14 @@ jobs:
                                        'assets/data/mods/MST_Extra/modinfo.json')
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
+                          if os.environ['BUILD_KIND'] == 'candidate':
+                              samples = {
+                                  'assets/data/mods/MST_Extra/items/tools.json': 'lò đất sét',
+                                  'assets/data/mods/Blazemod/items/guns/blaze_weapons.json': 'súng xuyên giáp điện từ',
+                              }
+                              for asset, phrase in samples.items():
+                                  if asset not in names or phrase not in archive.read(asset).decode('utf-8'):
+                                      raise SystemExit(f'APK missing Vietnamese translation in {asset}')
                   signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
                   signature = subprocess.check_output([str(signer), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
                   pathlib.Path('build-evidence/signer.txt').write_text(signature)
