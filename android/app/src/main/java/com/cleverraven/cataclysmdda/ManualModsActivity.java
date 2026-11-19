@@ -188,10 +188,13 @@ public final class ManualModsActivity extends Activity {
     }
 
     private void showControls(LinearLayout controls) {
+        showControls(controls, 0);
+    }
+
+    private void showControls(LinearLayout controls, int initialFocus) {
         visibleControls = controls;
-        // The native voice reader works on each Android sub-screen too,
-        // including confirmation and help. Never use an unspoken AlertDialog.
-        surface.setContent(controls);
+        // The built-in voice reader works on each Android sub-screen too.
+        surface.setContent(controls, initialFocus);
     }
 
     /**
@@ -214,7 +217,8 @@ public final class ManualModsActivity extends Activity {
         instructions.setText(R.string.a11yManualModGestureHelp);
         page.addView(instructions);
         addButton(page, R.string.a11yReaderReturn, view -> showControls(previous));
-        showControls(page);
+        // Speak the actual instructions on entry, not only the heading.
+        showControls(page, 1);
     }
 
     private void openPicker() {
@@ -272,7 +276,8 @@ public final class ManualModsActivity extends Activity {
             return getString(R.string.a11yManualModDeleted, selectedMod);
         }));
         addButton(page, R.string.a11yGestureGuideTitle, view -> showGestureGuide());
-        showControls(page);
+        // Read the irreversible-action warning before the buttons.
+        showControls(page, 1);
     }
 
     private interface FileWork {
