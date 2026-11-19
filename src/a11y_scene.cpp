@@ -105,7 +105,6 @@ std::vector<point> representative_tiles( const std::vector<point> &tiles,
 namespace
 {
 
-constexpr int omt_size = coords::map_squares_per( coords::scale::overmap_terrain );
 // The reality bubble is normally smaller than this limit; the cap is a
 // defensive guard for large modded maps. This is called ONLY on activation.
 constexpr int maximum_survey_tiles = 20000;
