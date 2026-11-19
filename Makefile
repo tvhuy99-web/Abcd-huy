@@ -1266,9 +1266,13 @@ src/version.h: version
 
 src/version.cpp: src/version.h
 
-TEST_MO := data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo
+TEST_MO := \
+  data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo \
+  data/mods/TEST_DATA/lang/mo/ru/LC_MESSAGES/TEST_DATA.mo
 
-$(TEST_MO): data/mods/TEST_DATA/lang/po/en.po
+# Keep the fork's English parser fixture and upstream's Russian plural fixture.
+# Build both using each locale's matching PO file instead of dropping one.
+data/mods/TEST_DATA/lang/mo/%/LC_MESSAGES/TEST_DATA.mo: data/mods/TEST_DATA/lang/po/%.po
 	mkdir -p $(dir $@)
 	msgfmt -f -o $@ $<
 
