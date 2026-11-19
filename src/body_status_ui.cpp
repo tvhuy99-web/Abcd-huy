@@ -58,6 +58,90 @@ static void refresh_header_footer_text( uilist *new_uilist, const body_status_ui
     }
 }
 
+// These helpers serve the combined status tabs.  The fork's existing
+// accessible Character::disp_medical() is a separate screen and remains intact.
+std::string medical_ui::get_modified_limb_name( const Character &who, const bodypart_id &part )
+{
+    const int current = who.get_part_hp_cur( part );
+    const int maximum = who.get_part_hp_max( part );
+    std::string label = string_format( _( "%1$s: %2$d/%3$d HP" ),
+                                      body_part_name( part ), current, maximum );
+    if( who.is_limb_broken( part ) ) {
+        label += string_format( " [%s]", _( "BROKEN" ) );
+    }
+    if( who.has_wounds( part.id() ) ) {
+        label += string_format( " [%s]", _( "WOUNDED" ) );
+    }
+    return label;
+}
+
+std::string medical_ui::get_limb_effects( const Character &who, const bodypart_id &part )
+{
+    std::string description;
+    for( const effect &eff : who.get_effects_from_bp( part ) ) {
+        if( eff.get_id()->is_show_in_info() ) {
+            description += string_format( "%s\n", eff.disp_name() );
+        }
+    }
+    return description;
+}
+
+std::string medical_ui::get_limb_wounds( const Character &who, const bodypart_id &part )
+{
+    std::string description;
+    const bodypart *bp = who.get_part( part );
+    if( bp == nullptr ) {
+        return description;
+    }
+    for( const wound &wd : bp->get_wounds() ) {
+        description += string_format( "%1$s: %2$s\n",
+                                      wd.type->get_name(), wd.type->get_description() );
+    }
+    return description;
+}
+
+std::string medical_ui::get_limb_scores_and_modifiers( const Character &who,
+        const bodypart_id &part )
+{
+    return string_format( _( "Encumbrance: %d" ), who.encumb( part ) );
+}
+
+void medical_ui::summary_tab( const Character &who )
+{
+    int injured = 0;
+    int wounded = 0;
+    for( const bodypart_id &part : who.get_all_body_parts() ) {
+        if( who.get_part_hp_cur( part ) < who.get_part_hp_max( part ) ) {
+            ++injured;
+        }
+        if( who.has_wounds( part.id() ) ) {
+            ++wounded;
+        }
+    }
+    cataimgui::draw_colored_text( string_format( _( "Injured body parts: %d" ), injured ) );
+    cataimgui::draw_colored_text( string_format( _( "Body parts with wounds: %d" ), wounded ) );
+}
+
+void medical_ui::draw_limbs_details( const Character &who, const bodypart_id &part )
+{
+    if( part == bodypart_str_id::NULL_ID() ) {
+        return;
+    }
+    cataimgui::draw_colored_text( get_modified_limb_name( who, part ) );
+    ImGui::Separator();
+    cataimgui::draw_colored_text( get_limb_scores_and_modifiers( who, part ) );
+    const std::string effects = get_limb_effects( who, part );
+    if( !effects.empty() ) {
+        ImGui::Separator();
+        cataimgui::draw_colored_text( effects );
+    }
+    const std::string wounds = get_limb_wounds( who, part );
+    if( !wounds.empty() ) {
+        ImGui::Separator();
+        cataimgui::draw_colored_text( wounds );
+    }
+}
+
 body_status_uistate::body_status_uistate( Character &displayed_character, bodygraph_id bg_id,
         body_status_tab initial_tab ) :
     displayed_character( displayed_character ), initial_tab( initial_tab )
