@@ -94,14 +94,13 @@ public final class ManualModsActivity extends Activity {
         homeControls = controls;
         showControls(homeControls);
         initSpeech();
-        if (state == null) {
-            if ("delete".equals(operation)) {
-                surface.post(this::confirmDelete);
-            } else {
-                // The native section's top button already initiated this
-                // action; open the system picker immediately, not another mod list.
-                surface.post(this::openPicker);
-            }
+        if ("delete".equals(operation)) {
+            // A recreated Activity still needs an explicit, voiced
+            // confirmation. Never delete automatically after rotation.
+            surface.post(this::confirmDelete);
+        } else if (state == null) {
+            // The native section's top button initiated this request.
+            surface.post(this::openPicker);
         }
     }
 
