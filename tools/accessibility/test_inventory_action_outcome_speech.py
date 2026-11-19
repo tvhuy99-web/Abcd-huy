@@ -55,7 +55,6 @@ class InventoryActionOutcomeTests(unittest.TestCase):
         self.assertIn("Unavailable items included.", native)
         self.assertNotIn("Expanded, ", native)
 
-
     def test_native_inventory_outcomes_are_translated_to_vietnamese(self):
         translated = (ROOT / "lang/po/accessibility/vi.po").read_text(
             encoding="utf-8")
