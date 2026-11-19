@@ -151,6 +151,8 @@ def files():
                             '.git', '.gradle', 'build', '__pycache__'}
                    for part in relative.parts):
                 continue
+            if relative.parts[:3] == ('tools', 'clang-tidy-plugin', 'test'):
+                continue
             yield file
 
 
@@ -170,6 +172,7 @@ def main():
         except (SyntaxError, tokenize.TokenError, IndentationError) as error:
             raise RuntimeError(f'Unable to safely clean {file}: {error}') from error
         if n and output != source:
+            output = output.rstrip() + '\n' if output.strip() else ''
             file.write_text(output, encoding='utf-8')
             changed += 1
             removed += n
