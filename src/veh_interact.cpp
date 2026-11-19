@@ -270,6 +270,27 @@ void veh_interact::assign_activity( map &here )
     player_character.assign_activity(
         vehicle_activity_actor( sel_cmd, time, veh, veh->pos_abs() + q,
                                 tripoint_rel_ms( cursor_vp_mount, 0 ), veh->index_of_part( vpt ), vp->id, refill_target ) );
+    // The engine already announces actual success/failure through add_msg
+    // when an activity completes. Speak only this start transition here;
+    // never claim a repair is finished merely because it was scheduled.
+    if( a11y::enabled() && !player_character.activity.is_null() ) {
+        switch( sel_cmd ) {
+            case VEHICLE_INSTALL:
+                a11y::android::announce( string_format( _( "Started installing %s." ), vp->name() ), 1 );
+                break;
+            case VEHICLE_REPAIR:
+                a11y::android::announce( string_format( _( "Started repairing %s." ), pt->name( false ) ), 1 );
+                break;
+            case VEHICLE_REMOVE:
+                a11y::android::announce( string_format( _( "Started removing %s." ), pt->name( false ) ), 1 );
+                break;
+            case VEHICLE_REFILL:
+                a11y::android::announce( string_format( _( "Started refilling %s." ), pt->name( false ) ), 1 );
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 void orient_part( map &here, vehicle *veh, const vpart_info &vpinfo, int partnum,
@@ -490,6 +511,78 @@ struct veh_interact::remove_info_t {
 
 namespace
 {
+
+
+// Only announce an outcome after an explicit user action. The overview itself
+// is read through semantic snapshots; speaking here on redraw would duplicate
+// every swipe.
+void reader_vehicle_rejection( const std::string &reason )
+{
+    if( a11y::enabled() && !reason.empty() ) {
+        a11y::android::announce( remove_color_tags( reason ), 1 );
+    }
+}
+
+// Summarize the first unmet *actual* requirement without reading a whole
+// installation/repair panel on each swipe. A shared item needed by several
+// groups can still make the combined inventory insufficient, so retain a
+// conservative fallback instead of claiming one group is individually empty.
+std::string reader_missing_vehicle_requirements( const requirement_data &reqs,
+        const std::map<skill_id, int> &skills, Character &actor )
+{
+    for( const auto &skill : skills ) {
+        if( actor.get_knowledge_level( skill.first ) < skill.second ) {
+            return string_format( _( "Requires %1$s skill level %2$d." ),
+                                  skill.first.obj().name(), skill.second );
+        }
+    }
+    const temp_crafting_inventory &inventory = actor.crafting_inventory();
+    const auto any_tool = []( const item & ) {
+        return true;
+    };
+    const auto met = [&]( const auto &group, const auto &filter ) {
+        return std::any_of( group.begin(), group.end(), [&]( const auto &alternative ) {
+            return alternative.has( &actor, inventory, filter, 1 );
+        } );
+    };
+    for( const auto &group : reqs.get_qualities() ) {
+        if( !met( group, any_tool ) ) {
+            return _( "Missing a required tool quality." );
+        }
+    }
+    for( const auto &group : reqs.get_tools() ) {
+        if( !met( group, any_tool ) ) {
+            return _( "Missing a required tool." );
+        }
+    }
+    for( const auto &group : reqs.get_components() ) {
+        if( !met( group, is_crafting_component ) ) {
+            return _( "Missing required materials." );
+        }
+    }
+    return _( "Requirements are not met. Read details for the complete list." );
+}
+
+// Short single-line engine errors are informative, but a normal requirements
+// panel begins with time/skill tables. Do not mistake its first line for a
+// reason or read the entire panel during a focus change.
+std::string reader_install_unavailable( const vpart_info &part,
+                                        const std::optional<std::string> &message,
+                                        Character &actor )
+{
+    if( message ) {
+        std::string clean = remove_color_tags( *message );
+        while( !clean.empty() && ( clean.back() == '\n' || clean.back() == '\r' ||
+                                   clean.back() == ' ' ) ) {
+            clean.pop_back();
+        }
+        if( !clean.empty() && clean.size() <= 170 && clean.find( '\n' ) == std::string::npos ) {
+            return clean;
+        }
+    }
+    return reader_missing_vehicle_requirements( part.install_requirements(),
+            part.install_skills, actor );
+}
 
 // Verbal equivalent of the condition the panes show only as a damage
 // symbol and a color. Uses the same damage fraction and the same bands
@@ -1045,7 +1138,10 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                 const bool ok = owner.update_part_requirements( here );
                 node.enabled = ok;
                 if( !ok ) {
-                    node.disabled_reason = _( "This part cannot be installed here.  The requirements say why." );
+                    node.disabled_reason = reader_install_unavailable( *vp, owner.msg,
+                                           get_player_character() );
+                } else {
+                    node.value = _( "Ready to install." );
                 }
                 if( owner.msg ) {
                     node.detail = remove_color_tags( *owner.msg );
@@ -1079,6 +1175,13 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             node.selected = static_cast<int>( j ) == owner.repair_pos;
             if( node.selected ) {
                 snapshot.focus = node.id;
+                node.enabled = owner.repair_can_confirm;
+                if( node.enabled ) {
+                    node.value = _( "Ready to repair." );
+                } else {
+                    node.disabled_reason = owner.repair_block_reason.empty()
+                                           ? _( "Cannot repair this part." ) : owner.repair_block_reason;
+                }
                 if( owner.msg ) {
                     detail += "\n" + remove_color_tags( *owner.msg );
                 }
@@ -1089,9 +1192,12 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
         }
     } else if( current_mode == mode::remove && owner.remove_info ) {
         snapshot.summary = title;
-        // can_remove_part reports its refusal through msg; preserve
-        // whatever message the loop had so the pane is unchanged.
+        // can_remove_part also writes the game-selected part. Treat this
+        // per-row query as read-only: browsing the semantic list must NEVER
+        // silently change the target later passed to assign_activity().
         const std::optional<std::string> saved_msg = owner.msg;
+        const vehicle_part *saved_part = owner.sel_vehicle_part;
+        const vpart_info *saved_part_info = owner.sel_vpart_info;
         for( size_t i = 0; i < owner.parts_here.size(); ++i ) {
             const int part_index = owner.parts_here[i];
             const vehicle_part &pt = veh.part( part_index );
@@ -1105,19 +1211,30 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             node.detail = _( "Condition: " ) + reader_part_condition( pt ) + ".";
             node.enabled = can_remove;
             if( !can_remove ) {
-                node.disabled_reason = owner.msg ? remove_color_tags( *owner.msg )
-                                       : _( "This part cannot be removed." );
+                const std::string short_reason = reader_missing_vehicle_requirements(
+                                                     pt.info().removal_requirements(),
+                                                     pt.info().removal_skills, get_player_character() );
+                node.disabled_reason = owner.msg && owner.msg->find( '\n' ) == std::string::npos
+                                       ? remove_color_tags( *owner.msg ) : short_reason;
+                if( owner.msg ) {
+                    node.detail += "\n" + remove_color_tags( *owner.msg );
+                }
             } else if( owner.msg ) {
                 node.detail += "\n" + remove_color_tags( *owner.msg );
             }
             node.selected = static_cast<int>( i ) == owner.remove_info->pos;
             if( node.selected ) {
                 snapshot.focus = node.id;
+                if( can_remove ) {
+                    node.value = _( "Ready to remove." );
+                }
             }
             part_bindings.push_back( { node.id, part_index, static_cast<int>( i ) } );
             snapshot.nodes.push_back( std::move( node ) );
         }
         owner.msg = saved_msg;
+        owner.sel_vehicle_part = saved_part;
+        owner.sel_vpart_info = saved_part_info;
     }
 
     snapshot.nodes.insert( snapshot.nodes.end(),
@@ -1679,6 +1796,7 @@ void veh_interact::do_install( map &here )
 
     if( reason == task_reason::INVALID_TARGET ) {
         msg = _( "Cannot install any part here." );
+        reader_vehicle_rejection( *msg );
         return;
     }
 
@@ -1728,6 +1846,10 @@ void veh_interact::do_install( map &here )
                          ? tab_vparts[pos] : nullptr;
 
         const bool can_install = update_part_requirements( here );
+        const std::string install_block_reason = !can_install && sel_vpart_info ?
+                                                 reader_install_unavailable( *sel_vpart_info, msg,
+                                                         player_character ) :
+                                                 _( "No part selected for installation." );
         ui_manager::redraw();
         if( reader ) {
             reader->update( here, reader_session::mode::install );
@@ -1750,6 +1872,7 @@ void veh_interact::do_install( map &here )
             pos = 0;
         } else if( action == "INSTALL" || action == "CONFIRM" ) {
             if( !can_install || sel_vpart_info == nullptr ) {
+                reader_vehicle_rejection( install_block_reason );
                 continue;
             }
             switch( reason ) {
@@ -1862,6 +1985,9 @@ void veh_interact::do_repair( map &here )
     };
 
     if( !can_repair() ) {
+        if( msg ) {
+            reader_vehicle_rejection( *msg );
+        }
         return;
     }
 
@@ -1884,9 +2010,15 @@ void veh_interact::do_repair( map &here )
 
         // this will always be set, but the gcc thinks that sometimes it won't be
         bool ok = true;
+        std::string failure_reason;
         if( pt.is_broken() ) {
-            ok = format_reqs( nmsg, vp.install_requirements(), vp.install_skills,
+            const requirement_data requirements = vp.install_requirements();
+            ok = format_reqs( nmsg, requirements, vp.install_skills,
                               vp.install_time( player_character ) );
+            if( !ok ) {
+                failure_reason = reader_missing_vehicle_requirements( requirements,
+                                 vp.install_skills, player_character );
+            }
 
             if( pt.info().has_flag( "NEEDS_JACKING" ) ) {
 
@@ -1894,6 +2026,7 @@ void veh_interact::do_repair( map &here )
                 std::pair<bool, std::string> res = calc_lift_requirements( here, pt.info() );
                 if( !res.first ) {
                     ok = false;
+                    failure_reason = _( "Requires suitable lifting or jacking equipment." );
                 }
                 nmsg += res.second;
             }
@@ -1901,19 +2034,27 @@ void veh_interact::do_repair( map &here )
                 nmsg += colorize( _( "\nUnracking is required before replacing this part.\n" ),
                                   c_red );
                 ok = false;
+                failure_reason = _( "Unrack this part before replacing it." );
             }
 
         } else {
             if( !pt.is_repairable() ) {
                 nmsg += colorize( _( "This part cannot be repaired.\n" ), c_light_red );
                 ok = false;
+                failure_reason = _( "This part cannot be repaired." );
             } else if( veh->has_part( "NO_MODIFY_VEHICLE" ) && !vp.has_flag( "SIMPLE_PART" ) ) {
                 nmsg += colorize( _( "This vehicle cannot be repaired.\n" ), c_light_red );
                 ok = false;
+                failure_reason = _( "This vehicle cannot be repaired." );
             } else {
                 const int levels = pt.base.repairable_levels();
-                ok = format_reqs( nmsg, vp.repair_requirements() * levels, vp.repair_skills,
+                const requirement_data requirements = vp.repair_requirements() * levels;
+                ok = format_reqs( nmsg, requirements, vp.repair_skills,
                                   vp.repair_time( player_character ) * levels );
+                if( !ok ) {
+                    failure_reason = reader_missing_vehicle_requirements( requirements,
+                                     vp.repair_skills, player_character );
+                }
             }
         }
 
@@ -1929,6 +2070,10 @@ void veh_interact::do_repair( map &here )
         vp.format_description( nmsg, desc_color, getmaxx( w_msg ) - 4 );
 
         msg = colorize( nmsg, c_light_gray );
+        repair_can_confirm = ok;
+        repair_block_reason = ok ? std::string() : failure_reason.empty() ?
+                              _( "Requirements are not met. Read details for the complete list." ) :
+                              failure_reason;
 
         highlight_part = need_repair[pos];
 
@@ -1939,7 +2084,9 @@ void veh_interact::do_repair( map &here )
 
         const std::string action = main_context.handle_input();
         msg.reset();
-        if( ( action == "REPAIR" || action == "CONFIRM" ) && ok ) {
+        if( ( action == "REPAIR" || action == "CONFIRM" ) && !ok ) {
+            reader_vehicle_rejection( repair_block_reason );
+        } else if( ( action == "REPAIR" || action == "CONFIRM" ) && ok ) {
             // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
             if( would_prevent_flying ) {
                 // It can only be the player doing this - an npc won't work well with query_yn
@@ -1978,15 +2125,19 @@ void veh_interact::do_mend( map &here )
     switch( cant_do( here, VEHICLE_MEND_FAULTS ) ) {
         case task_reason::LOW_MORALE:
             msg = _( "Your morale is too low to mend…" );
+            reader_vehicle_rejection( *msg );
             return;
         case task_reason::LOW_LIGHT:
             msg = _( "It's too dark to see what you are doing…" );
+            reader_vehicle_rejection( *msg );
             return;
         case task_reason::INVALID_TARGET:
             msg = _( "No faulty parts require mending." );
+            reader_vehicle_rejection( *msg );
             return;
         case task_reason::MOVING_VEHICLE:
             msg = _( "You can't mend stuff while driving." );
+            reader_vehicle_rejection( *msg );
             return;
         default:
             break;
@@ -2018,10 +2169,12 @@ void veh_interact::do_refill( map &here )
     switch( cant_do( here, VEHICLE_REFILL ) ) {
         case task_reason::MOVING_VEHICLE:
             msg = _( "You can't refill a moving vehicle." );
+            reader_vehicle_rejection( *msg );
             return;
 
         case task_reason::INVALID_TARGET:
             msg = _( "No parts can currently be refilled." );
+            reader_vehicle_rejection( *msg );
             return;
 
         default:
@@ -2601,6 +2754,7 @@ void veh_interact::do_remove( map &here )
 
     if( reason == task_reason::INVALID_TARGET ) {
         msg = _( "No parts here." );
+        reader_vehicle_rejection( *msg );
         return;
     }
 
@@ -2648,7 +2802,13 @@ void veh_interact::do_remove( map &here )
         //read input
         const std::string action = main_context.handle_input();
         msg.reset();
-        if( can_remove && ( action == "REMOVE" || action == "CONFIRM" ) ) {
+        const bool confirm = action == "REMOVE" || action == "CONFIRM";
+        // This revalidation both checks the live part and explicitly restores
+        // the chosen target after the reader's per-row availability scans.
+        // Never schedule an activity using the last inspected list row.
+        if( confirm && !can_remove_part( here, part, player_character ) ) {
+            reader_vehicle_rejection( msg ? *msg : _( "This part cannot be removed." ) );
+        } else if( confirm && can_remove ) {
             switch( reason ) {
                 case task_reason::LOW_MORALE:
                     msg = _( "Your morale is too low to construct…" );
@@ -2676,6 +2836,10 @@ void veh_interact::do_remove( map &here )
                     return;
                 }
             }
+            // The specific part was revalidated above. The selected part
+            // and its vpart_info must stay paired until assign_activity().
+            sel_vehicle_part = &veh->part( part );
+            sel_vpart_info = &sel_vehicle_part->info();
             for( const Character *helper : player_character.get_crafting_helpers() ) {
                 add_msg( m_info, _( "%s helps with this task…" ), helper->get_name() );
             }

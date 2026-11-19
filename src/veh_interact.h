@@ -168,6 +168,10 @@ class veh_interact
         // A member (not a do_repair local) so the reader session can keep
         // it in sync when the reader browses the repair list.
         int repair_pos = 0;
+        // The current repair row is checked by the real game requirements
+        // before publishing its availability to the Android reader.
+        bool repair_can_confirm = false;
+        std::string repair_block_reason;
 
         struct remove_info_t;
 

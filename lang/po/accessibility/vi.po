@@ -6459,3 +6459,54 @@ msgstr "Đã bỏ qua các vật phẩm không thể chọn."
 
 msgid "Unavailable items included."
 msgstr "Đã hiển thị cả các vật phẩm không thể chọn."
+
+# Vehicle maintenance outcomes. Native completion uses existing game messages.
+msgid "Ready to repair."
+msgstr "Có thể sửa chữa."
+
+msgid "Ready to install."
+msgstr "Có thể lắp đặt."
+
+msgid "Ready to remove."
+msgstr "Có thể tháo bộ phận."
+
+#, c-format
+msgid "Requires %1$s skill level %2$d."
+msgstr "Cần kỹ năng %1$s cấp %2$d."
+
+msgid "Missing a required tool quality."
+msgstr "Thiếu công cụ có chất lượng yêu cầu."
+
+msgid "Missing a required tool."
+msgstr "Thiếu công cụ cần thiết."
+
+msgid "Missing required materials."
+msgstr "Thiếu vật liệu cần thiết."
+
+msgid "Requirements are not met. Read details for the complete list."
+msgstr "Chưa đủ điều kiện. Đọc chi tiết để biết toàn bộ yêu cầu."
+
+msgid "Requires suitable lifting or jacking equipment."
+msgstr "Cần thiết bị nâng hoặc kích phù hợp."
+
+msgid "Unrack this part before replacing it."
+msgstr "Cần tháo bộ phận khỏi giá chở trước khi thay thế."
+
+msgid "No part selected for installation."
+msgstr "Chưa chọn bộ phận để lắp đặt."
+
+#, c-format
+msgid "Started installing %s."
+msgstr "Đã bắt đầu lắp %s."
+
+#, c-format
+msgid "Started repairing %s."
+msgstr "Đã bắt đầu sửa %s."
+
+#, c-format
+msgid "Started removing %s."
+msgstr "Đã bắt đầu tháo %s."
+
+#, c-format
+msgid "Started refilling %s."
+msgstr "Đã bắt đầu nạp nhiên liệu cho %s."
