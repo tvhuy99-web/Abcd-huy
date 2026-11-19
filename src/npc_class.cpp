@@ -235,6 +235,10 @@ void npc_class::load( const JsonObject &jo, std::string_view )
     mandatory( jo, was_loaded, "name", name );
     mandatory( jo, was_loaded, "job_description", job_description );
 
+    if( jo.has_string( "bye_message_override" ) ) {
+        bye_message_override = jo.get_string( "bye_message_override" );
+    }
+
     optional( jo, was_loaded, "common", common, true );
     if( common ) {
         optional( jo, was_loaded, "common_spawn_weight", common_spawn_weight, 1.0 );
