@@ -2,7 +2,6 @@ package com.cleverraven.cataclysmdda;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -32,6 +31,8 @@ public final class ManualModsActivity extends Activity {
     private String selectedMod;
     private String modsPath;
     private TextView status;
+    private LinearLayout homeControls;
+    private LinearLayout visibleControls;
     private Button pickerButton;
     private boolean busy;
     private boolean foreground;
@@ -90,7 +91,8 @@ public final class ManualModsActivity extends Activity {
         controls.addView(close);
 
         setContentView(surface);
-        surface.setContent(controls);
+        homeControls = controls;
+        showControls(homeControls);
         initSpeech();
         if (state == null) {
             if ("delete".equals(operation)) {
@@ -165,22 +167,54 @@ public final class ManualModsActivity extends Activity {
         }
     }
 
-    /** New modal pages retain an explicit gesture help entry after long hold. */
+    private LinearLayout newControls(int title) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = Math.round(16 * getResources().getDisplayMetrics().density);
+        content.setPadding(padding, padding, padding, padding);
+        TextView label = new TextView(this);
+        label.setText(title);
+        content.addView(label);
+        return content;
+    }
+
+    private Button addButton(LinearLayout content, int label,
+                             android.view.View.OnClickListener listener) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setOnClickListener(listener);
+        content.addView(button);
+        return button;
+    }
+
+    private void showControls(LinearLayout controls) {
+        visibleControls = controls;
+        // The native voice reader works on each Android sub-screen too,
+        // including confirmation and help. Never use an unspoken AlertDialog.
+        surface.setContent(controls);
+    }
+
+    /**
+     * Every held menu retains the universal Gesture guide as its last
+     * action, including the file picker's own confirmation/help panels.
+     */
     private void showContextActions() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.a11yContextCommands)
-                .setItems(new String[] { getString(R.string.a11yGestureGuideTitle) },
-                        (dialog, which) -> showGestureGuide())
-                .setNegativeButton(R.string.a11yManualModCancel, null)
-                .show();
+        if (busy) { return; }
+        final LinearLayout previous = visibleControls;
+        LinearLayout menu = newControls(R.string.a11yContextCommands);
+        addButton(menu, R.string.a11yManualModCancel, view -> showControls(previous));
+        addButton(menu, R.string.a11yGestureGuideTitle, view -> showGestureGuide());
+        showControls(menu);
     }
 
     private void showGestureGuide() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.a11yGestureGuideTitle)
-                .setMessage(R.string.a11yManualModGestureHelp)
-                .setPositiveButton(R.string.a11yContextCommandsClose, null)
-                .show();
+        final LinearLayout previous = visibleControls;
+        LinearLayout page = newControls(R.string.a11yGestureGuideTitle);
+        TextView instructions = new TextView(this);
+        instructions.setText(R.string.a11yManualModGestureHelp);
+        page.addView(instructions);
+        addButton(page, R.string.a11yReaderReturn, view -> showControls(previous));
+        showControls(page);
     }
 
     private void openPicker() {
@@ -227,17 +261,18 @@ public final class ManualModsActivity extends Activity {
 
     private void confirmDelete() {
         if (busy) { return; }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.a11yManualModDelete)
-                .setMessage(getString(R.string.a11yManualModConfirmDelete, selectedMod))
-                .setPositiveButton(R.string.a11yManualModDelete, (dialog, which) ->
-                        runWork(() -> {
-                            ManualModArchive.deleteMod(modsPath, selectedMod);
-                            CataclysmDDA.nativeQueueManualModsChanged();
-                            return getString(R.string.a11yManualModDeleted, selectedMod);
-                        }))
-                .setNegativeButton(R.string.a11yManualModCancel, (dialog, which) -> finish())
-                .show();
+        LinearLayout page = newControls(R.string.a11yManualModDelete);
+        TextView warning = new TextView(this);
+        warning.setText(getString(R.string.a11yManualModConfirmDelete, selectedMod));
+        page.addView(warning);
+        addButton(page, R.string.a11yManualModCancel, view -> finish());
+        addButton(page, R.string.a11yManualModDelete, view -> runWork(() -> {
+            ManualModArchive.deleteMod(modsPath, selectedMod);
+            CataclysmDDA.nativeQueueManualModsChanged();
+            return getString(R.string.a11yManualModDeleted, selectedMod);
+        }));
+        addButton(page, R.string.a11yGestureGuideTitle, view -> showGestureGuide());
+        showControls(page);
     }
 
     private interface FileWork {
@@ -262,6 +297,7 @@ public final class ManualModsActivity extends Activity {
                 if (isFinishing() || isDestroyed()) { return; }
                 busy = false;
                 if (pickerButton != null) { pickerButton.setEnabled(true); }
+                showControls(homeControls);
                 showStatus(result);
             });
         }, "manual-mod-file-io").start();
