@@ -30,8 +30,8 @@ class CuratedVietnameseModsTest(unittest.TestCase):
         for name in ("mst_extra", "blazemod"):
             manifest = apply_vi_overlays.load_overlay(name)
             self.assertFalse(any("MST_Extra_BN" in path for path in manifest))
-            self.assertFalse(any(pointer.endswith(("/id", "/type", "/copy-from",
-                                                     "/dependencies", "/path"))
+            technical = ("/id", "/type", "/copy-from", "/dependencies", "/path")
+            self.assertFalse(any(pointer.endswith(technical)
                                  for patches in manifest.values()
                                  for pointer, _ in patches))
 
