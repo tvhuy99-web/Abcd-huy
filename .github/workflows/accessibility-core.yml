@@ -35,9 +35,16 @@ jobs:
       - name: Compile real speech driver against Android API 35
         run: |
           mkdir -p "$RUNNER_TEMP/speech-classes"
+          # Gradle supplies BuildConfig in full builds; use only its version
+          # constant as a local stub for this standalone Android API check.
+          printf '%s\n' \
+            'package com.cleverraven.cataclysmdda;' \
+            'final class BuildConfig { static final String VERSION_NAME = "ci"; }' \
+            > "$RUNNER_TEMP/speech-classes/BuildConfig.java"
           javac -Xlint:all -Werror -cp "$ANDROID_HOME/platforms/android-35/android.jar" \
             -d "$RUNNER_TEMP/speech-classes" \
-            android/app/src/main/java/com/cleverraven/cataclysmdda/{SpeechSession,AndroidSpeech}.java
+            "$RUNNER_TEMP/speech-classes/BuildConfig.java" \
+            android/app/src/main/java/com/cleverraven/cataclysmdda/{SpeechSession,AndroidSpeech,SessionDebugLog}.java
       - name: Compile Android UI and resources without native rebuild
         working-directory: android
         run: |
