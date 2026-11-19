@@ -24,6 +24,7 @@
 
 #include "action.h"
 #include "activity_actor_definitions.h"
+#include "basecamp.h"
 #include "activity_handlers.h"
 #include "activity_item_handling.h"
 #include "a11y_android.h"
@@ -163,6 +164,7 @@ static const activity_id ACT_BOLTCUTTING( "ACT_BOLTCUTTING" );
 static const activity_id ACT_BUILD( "ACT_BUILD" );
 static const activity_id ACT_BUTCHER( "ACT_BUTCHER" );
 static const activity_id ACT_BUTCHER_FULL( "ACT_BUTCHER_FULL" );
+static const activity_id ACT_CAMP_MEAL( "ACT_CAMP_MEAL" );
 static const activity_id ACT_CHOP_LOGS( "ACT_CHOP_LOGS" );
 static const activity_id ACT_CHOP_PLANKS( "ACT_CHOP_PLANKS" );
 static const activity_id ACT_CHOP_TREE( "ACT_CHOP_TREE" );
@@ -6396,6 +6398,49 @@ std::unique_ptr<activity_actor> close_tile_activity_actor::deserialize( JsonValu
     data.read( "close_success", actor.close_success );
     data.read( "closed_vehicle_part", actor.closed_vehicle_part );
 
+    return actor.clone();
+}
+
+void camp_meal_activity_actor::start( player_activity &act, Character & )
+{
+    // Keep a distinct activity so a threatened NPC can abandon the meal without
+    // deducting any food from the camp.
+    act.moves_total = to_moves<int>( 5_minutes );
+    act.moves_left = act.moves_total;
+}
+
+void camp_meal_activity_actor::finish( player_activity &act, Character &who )
+{
+    // Look up the camp at finish time: it might have been lost or its
+    // stockpile depleted while the NPC was eating.
+    if( meal_kcals > 0 && who.is_npc() ) {
+        const std::optional<basecamp *> camp = overmap_buffer.find_camp( camp_position.xy() );
+        if( camp && ( *camp )->allowed_access_by( who ) ) {
+            const int available = ( *camp )->get_owner()->food_supply().kcal();
+            if( available > 0 ) {
+                const int portion = std::min( meal_kcals, available );
+                ( *camp )->feed_workers( who, ( *camp )->camp_food_supply( -portion ),
+                                        camp_meal::personal );
+            }
+        }
+    }
+    act.set_to_null();
+}
+
+void camp_meal_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "camp_position", camp_position );
+    jsout.member( "meal_kcals", meal_kcals );
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> camp_meal_activity_actor::deserialize( JsonValue &jsin )
+{
+    camp_meal_activity_actor actor;
+    JsonObject data = jsin.get_object();
+    data.read( "camp_position", actor.camp_position );
+    data.read( "meal_kcals", actor.meal_kcals );
     return actor.clone();
 }
 
@@ -15870,6 +15915,7 @@ deserialize_functions = {
     { ACT_BUILD, &build_construction_activity_actor::deserialize },
     { ACT_BUTCHER, &butchery_activity_actor::deserialize },
     { ACT_BUTCHER_FULL, &butchery_activity_actor::deserialize },
+    { ACT_CAMP_MEAL, &camp_meal_activity_actor::deserialize },
     { ACT_CHOP_LOGS, &chop_logs_activity_actor::deserialize },
     { ACT_CHOP_PLANKS, &chop_planks_activity_actor::deserialize },
     { ACT_CHOP_TREE, &chop_tree_activity_actor::deserialize },
