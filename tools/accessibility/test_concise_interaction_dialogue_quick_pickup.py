@@ -15,7 +15,10 @@ class ConciseInteractionDialogueQuickPickupTest(unittest.TestCase):
         cls.action = read("src/action.cpp")
         cls.handle = read("src/handle_action.cpp")
         cls.world = read("src/a11y_world.cpp")
-        cls.dialogue = read("src/npctalk.cpp")
+        cls.dialogue = read("src/dialogue.cpp")
+        cls.npctalk = read("src/npctalk.cpp")
+        cls.map_source = read("src/map.cpp")
+        cls.map_vehicle = read("src/map_vehicle.cpp")
         cls.hub = read(
             "android/app/src/main/java/com/cleverraven/"
             "cataclysmdda/GameActionHub.java"
@@ -55,6 +58,32 @@ class ConciseInteractionDialogueQuickPickupTest(unittest.TestCase):
         self.assertIn('snapshot.summary = remove_color_tags( challenge );',
                       self.dialogue)
         self.assertIn('"dialogue:history"', self.dialogue)
+
+    def test_upstream_dialogue_ownership_preserves_reader_and_single_definition(self):
+        self.assertIn('a11y::screen_scope reader(', self.dialogue)
+        self.assertIn('a11y::append_document(', self.dialogue)
+        self.assertIn('bye_message_override', self.dialogue)
+        self.assertIn('talk_topic_all::get_talk_topic(', self.dialogue)
+        for member in (
+            'void dialogue::add_gen_response(',
+            'talk_trial::name() const',
+            'npc::handle_sound(',
+            'dialog_helper::bye_message(',
+            'talk_topic_all::get_talk_topic(',
+        ):
+            self.assertNotIn(member, self.npctalk)
+
+    def test_vehicle_ownership_preserves_accessible_boarding(self):
+        self.assertIn('void map::board_vehicle(', self.map_vehicle)
+        self.assertIn('a11y::android::enabled()', self.map_vehicle)
+        self.assertIn('You board the driver\'s seat.', self.map_vehicle)
+        self.assertIn('You board the vehicle.', self.map_vehicle)
+        for member in (
+            'void map::board_vehicle(',
+            'void map::do_vehicle_caching(',
+            'VehicleList map::get_vehicles(',
+        ):
+            self.assertNotIn(member, self.map_source)
 
     def test_quick_pickup_only_current_tile_and_auto_single(self):
         code = self.pickup
