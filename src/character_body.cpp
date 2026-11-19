@@ -755,10 +755,7 @@ void Character::update_bodytemp()
             //~ %s is bodypart
             add_msg_if_player( m_warning, _( "You feel your %s getting very cold." ),
                                body_part_name( bp ) );
-        } else if( temp_before > BODYTEMP_COLD && temp_after < BODYTEMP_COLD ) {
-            //~ %s is bodypart
-            add_msg_if_player( m_warning, _( "You feel your %s getting chilly." ),
-                               body_part_name( bp ) );
+
         } else if( temp_before < BODYTEMP_SCORCHING && temp_after > BODYTEMP_SCORCHING ) {
             //~ %s is bodypart
             add_msg_if_player( m_bad, _( "You feel your %s getting red hot from the heat!" ),
@@ -767,10 +764,7 @@ void Character::update_bodytemp()
             //~ %s is bodypart
             add_msg_if_player( m_warning, _( "You feel your %s getting very hot." ),
                                body_part_name( bp ) );
-        } else if( temp_before < BODYTEMP_HOT && temp_after > BODYTEMP_HOT ) {
-            //~ %s is bodypart
-            add_msg_if_player( m_warning, _( "You feel your %s getting warm." ),
-                               body_part_name( bp ) );
+
         }
 
         // Note: Numbers are based off of BODYTEMP at the top of weather.h
