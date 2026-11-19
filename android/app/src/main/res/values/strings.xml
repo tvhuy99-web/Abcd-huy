@@ -91,6 +91,10 @@
     <string name="a11yHubMoveWest">Move west</string>
     <string name="a11yHubMoveNorthwest">Move northwest</string>
     <string name="a11yHubInteraction">Interact with surroundings</string>
+    <!-- Short inventory selection outcomes, not additional controls. -->
+    <string name="a11yInventoryMarked">Marked.</string>
+    <string name="a11yInventoryUnmarked">Unmarked.</string>
+    <string name="a11yInventoryMarkedQuantity">Marked %1$s of %2$d.</string>
     <string name="a11yHubInventory">Inventory and items</string>
     <string name="a11yHubHealth">Food, rest and medical</string>
     <string name="a11yHubEquipment">Equipment and repairs</string>
