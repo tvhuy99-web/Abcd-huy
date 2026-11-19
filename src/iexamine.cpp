@@ -328,7 +328,7 @@ static const time_duration milling_time = 6_hours;
 
 
 
-void iexamine::none( Character & , const tripoint_bub_ms &examp )
+void iexamine::none( Character &, const tripoint_bub_ms &examp )
 {
     add_msg( _( "That is a %s." ), get_map().name( examp ) );
 }
@@ -7507,7 +7507,7 @@ void iexamine::workout( Character &you, const tripoint_bub_ms &examp )
     you.assign_activity( workout_activity_actor( examp ) );
 }
 
-void iexamine::invalid( Character & , const tripoint_bub_ms &examp )
+void iexamine::invalid( Character &, const tripoint_bub_ms &examp )
 {
     debugmsg( "Called invalid iexamine function on %s!", get_map().tername( examp ) );
 }

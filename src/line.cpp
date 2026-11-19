@@ -450,35 +450,62 @@ std::string enum_to_string<direction>( direction data )
 {
     switch( data ) {
 
-        case direction::ABOVENORTHWEST: return "above_north_west";
-        case direction::NORTHWEST: return "north_west";
-        case direction::BELOWNORTHWEST: return "below_north_west";
-        case direction::ABOVENORTH: return "above_north";
-        case direction::NORTH: return "north";
-        case direction::BELOWNORTH: return "below_north";
-        case direction::ABOVENORTHEAST: return "above_north_east";
-        case direction::NORTHEAST: return "north_east";
-        case direction::BELOWNORTHEAST: return "below_north_east";
+        case direction::ABOVENORTHWEST:
+            return "above_north_west";
+        case direction::NORTHWEST:
+            return "north_west";
+        case direction::BELOWNORTHWEST:
+            return "below_north_west";
+        case direction::ABOVENORTH:
+            return "above_north";
+        case direction::NORTH:
+            return "north";
+        case direction::BELOWNORTH:
+            return "below_north";
+        case direction::ABOVENORTHEAST:
+            return "above_north_east";
+        case direction::NORTHEAST:
+            return "north_east";
+        case direction::BELOWNORTHEAST:
+            return "below_north_east";
 
-        case direction::ABOVEWEST: return "above_west";
-        case direction::WEST: return "west";
-        case direction::BELOWWEST: return "below_west";
-        case direction::ABOVECENTER: return "above";
-        case direction::CENTER: return "center";
-        case direction::BELOWCENTER: return "below";
-        case direction::ABOVEEAST: return "above_east";
-        case direction::EAST: return "east";
-        case direction::BELOWEAST: return "below_east";
+        case direction::ABOVEWEST:
+            return "above_west";
+        case direction::WEST:
+            return "west";
+        case direction::BELOWWEST:
+            return "below_west";
+        case direction::ABOVECENTER:
+            return "above";
+        case direction::CENTER:
+            return "center";
+        case direction::BELOWCENTER:
+            return "below";
+        case direction::ABOVEEAST:
+            return "above_east";
+        case direction::EAST:
+            return "east";
+        case direction::BELOWEAST:
+            return "below_east";
 
-        case direction::ABOVESOUTHWEST: return "above_south_west";
-        case direction::SOUTHWEST: return "south_west";
-        case direction::BELOWSOUTHWEST: return "below_south_west";
-        case direction::ABOVESOUTH: return "above_south";
-        case direction::SOUTH: return "south";
-        case direction::BELOWSOUTH: return "below_south";
-        case direction::ABOVESOUTHEAST: return "above_south_east";
-        case direction::SOUTHEAST: return "south_east";
-        case direction::BELOWSOUTHEAST: return "below_south_east";
+        case direction::ABOVESOUTHWEST:
+            return "above_south_west";
+        case direction::SOUTHWEST:
+            return "south_west";
+        case direction::BELOWSOUTHWEST:
+            return "below_south_west";
+        case direction::ABOVESOUTH:
+            return "above_south";
+        case direction::SOUTH:
+            return "south";
+        case direction::BELOWSOUTH:
+            return "below_south";
+        case direction::ABOVESOUTHEAST:
+            return "above_south_east";
+        case direction::SOUTHEAST:
+            return "south_east";
+        case direction::BELOWSOUTHEAST:
+            return "below_south_east";
 
         case direction::last:
             break;

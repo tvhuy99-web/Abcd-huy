@@ -279,27 +279,30 @@ void avatar::power_mutations()
             scroll_position = cursor - list_height + 1;
         }
         scroll_position = std::max( 0, std::min( scroll_position,
-                                                  std::max( 0, max_scroll_position ) ) );
+                                    std::max( 0, max_scroll_position ) ) );
     };
     a11y::screen_scope reader( &ctxt, "mutations",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.node == "mutations:tab:active" || intent.node == "mutations:tab:passive" ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "mutations:tab:active" || intent.node == "mutations:tab:passive" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
             if( intent.action == "activate" ) {
                 const mutation_tab_mode target = intent.node == "mutations:tab:active"
-                        ? mutation_tab_mode::active : mutation_tab_mode::passive;
+                                                 ? mutation_tab_mode::active : mutation_tab_mode::passive;
                 return target == tab_mode ? std::optional<std::string>( "TIMEOUT" )
                        : std::optional<std::string>( "NEXT_TAB" );
             }
         }
         if( intent.node == "mutations:empty" &&
-            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            ( intent.action == "focus" || intent.action == "activate" ) )
+        {
             return std::string( "TIMEOUT" );
         }
         if( intent.node.compare( 0, 16, "mutations:entry:" ) == 0 &&
-            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            ( intent.action == "focus" || intent.action == "activate" ) )
+        {
 
 
 
@@ -358,11 +361,11 @@ void avatar::power_mutations()
 
 
             snapshot.summary += " " + remove_color_tags(
-                                      _( "Select a mutation to reassign or press [<color_yellow>SPACE</color>] to cancel." ) );
+                                    _( "Select a mutation to reassign or press [<color_yellow>SPACE</color>] to cancel." ) );
         }
-        const auto append_tab = [&]( const char *id, const std::string &label,
+        const auto append_tab = [&]( const char *id, const std::string & label,
                                      const mutation_tab_mode tab, const std::size_t count,
-                                     const int position ) {
+        const int position ) {
             a11y::semantic_node node;
             node.id = id;
             node.role = "tab";
@@ -645,21 +648,26 @@ void avatar::power_mutations()
 
 
 
-    const auto activation_shortage = [this]( const mutation_branch &mut_data ) -> std::string {
+    const auto activation_shortage = [this]( const mutation_branch & mut_data ) -> std::string {
         const std::string name = mutation_name( mut_data.id );
-        if( mut_data.hunger && get_kcal_percent() < 0.8f ) {
+        if( mut_data.hunger && get_kcal_percent() < 0.8f )
+        {
             return string_format( _( "Too hungry to activate %s." ), name );
         }
-        if( mut_data.thirst && get_thirst() > 400 ) {
+        if( mut_data.thirst && get_thirst() > 400 )
+        {
             return string_format( _( "Too thirsty to activate %s." ), name );
         }
-        if( mut_data.sleepiness && get_sleepiness() > 400 ) {
+        if( mut_data.sleepiness && get_sleepiness() > 400 )
+        {
             return string_format( _( "Too sleepy to activate %s." ), name );
         }
-        if( mut_data.mana && magic->available_mana() < mut_data.cost ) {
+        if( mut_data.mana && magic->available_mana() < mut_data.cost )
+        {
             return string_format( _( "Not enough mana to activate %s." ), name );
         }
-        if( mut_data.stamina && get_stamina() < mut_data.cost ) {
+        if( mut_data.stamina && get_stamina() < mut_data.cost )
+        {
             return string_format( _( "Not enough stamina to activate %s." ), name );
         }
         return string_format( _( "Not enough resources to activate %s." ), name );
@@ -745,8 +753,8 @@ void avatar::power_mutations()
                                                    mutation_name( mut_data.id ) );
                             } else {
                                 popup( _( "You cannot activate %1$s!  To read a description of "
-                                "%1$s, press '%2$s', then '%3$c'." ),
-                                mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ), cached_mutations[mut_id].key );
+                                          "%1$s, press '%2$s', then '%3$c'." ),
+                                       mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ), cached_mutations[mut_id].key );
                             }
                         }
                         break;
@@ -914,8 +922,8 @@ void avatar::power_mutations()
                                                        mutation_name( mut_data.id ) );
                                 } else {
                                     popup( _( "You cannot activate %1$s!  To read a description of "
-                                    "%1$s, press '%2$s'." ),
-                                    mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+                                              "%1$s, press '%2$s'." ),
+                                           mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ) );
                                 }
                             }
                             break;

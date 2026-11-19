@@ -1643,12 +1643,12 @@ void Item_factory::finalize()
 #if defined(__ANDROID__)
     const auto item_post_ready = std::chrono::steady_clock::now();
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=items repairs_index_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  repair_index_ready - finalize_started ).count() <<
-                              " finalize_post_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  item_post_ready - repair_index_ready ).count() <<
-                              " repair_tools=" << repair_tools.size();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   repair_index_ready - finalize_started ).count() <<
+                               " finalize_post_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   item_post_ready - repair_index_ready ).count() <<
+                               " repair_tools=" << repair_tools.size();
 #endif
 
 
@@ -1899,7 +1899,7 @@ class iuse_function_wrapper : public iuse_actor
             : iuse_actor( type ), cpp_function( f ) { }
 
         ~iuse_function_wrapper() override = default;
-        std::optional<int> use( Character *p, item &it, map * ,
+        std::optional<int> use( Character *p, item &it, map *,
                                 const tripoint_bub_ms &pos ) const override {
 
             return cpp_function( p, &it, pos );
@@ -4305,11 +4305,16 @@ template<>
 std::string enum_to_string<grip_val>( grip_val val )
 {
     switch( val ) {
-        case grip_val::BAD: return "bad";
-        case grip_val::NONE: return "none";
-        case grip_val::SOLID: return "solid";
-        case grip_val::WEAPON: return "weapon";
-        default: break;
+        case grip_val::BAD:
+            return "bad";
+        case grip_val::NONE:
+            return "none";
+        case grip_val::SOLID:
+            return "solid";
+        case grip_val::WEAPON:
+            return "weapon";
+        default:
+            break;
     }
     cata_fatal( "Invalid grip val" );
 }
@@ -4318,10 +4323,14 @@ template<>
 std::string enum_to_string<length_val>( length_val val )
 {
     switch( val ) {
-        case length_val::HAND: return "hand";
-        case length_val::SHORT: return "short";
-        case length_val::LONG: return "long";
-        default: break;
+        case length_val::HAND:
+            return "hand";
+        case length_val::SHORT:
+            return "short";
+        case length_val::LONG:
+            return "long";
+        default:
+            break;
     }
     cata_fatal( "Invalid length val" );
 }
@@ -4330,11 +4339,16 @@ template<>
 std::string enum_to_string<surface_val>( surface_val val )
 {
     switch( val ) {
-        case surface_val::POINT: return "point";
-        case surface_val::LINE: return "line";
-        case surface_val::ANY: return "any";
-        case surface_val::EVERY: return "every";
-        default: break;
+        case surface_val::POINT:
+            return "point";
+        case surface_val::LINE:
+            return "line";
+        case surface_val::ANY:
+            return "any";
+        case surface_val::EVERY:
+            return "every";
+        default:
+            break;
     }
     cata_fatal( "Invalid surface val" );
 }
@@ -4343,11 +4357,16 @@ template<>
 std::string enum_to_string<balance_val>( balance_val val )
 {
     switch( val ) {
-        case balance_val::CLUMSY: return "clumsy";
-        case balance_val::UNEVEN: return "uneven";
-        case balance_val::NEUTRAL: return "neutral";
-        case balance_val::GOOD: return "good";
-        default: break;
+        case balance_val::CLUMSY:
+            return "clumsy";
+        case balance_val::UNEVEN:
+            return "uneven";
+        case balance_val::NEUTRAL:
+            return "neutral";
+        case balance_val::GOOD:
+            return "good";
+        default:
+            break;
     }
     cata_fatal( "Invalid balance val" );
 }
@@ -5273,11 +5292,16 @@ std::string enum_to_string<phase_id>( phase_id data )
 {
     switch( data ) {
 
-        case phase_id::PNULL: return "null";
-        case phase_id::LIQUID: return "liquid";
-        case phase_id::SOLID: return "solid";
-        case phase_id::GAS: return "gas";
-        case phase_id::PLASMA: return "plasma";
+        case phase_id::PNULL:
+            return "null";
+        case phase_id::LIQUID:
+            return "liquid";
+        case phase_id::SOLID:
+            return "solid";
+        case phase_id::GAS:
+            return "gas";
+        case phase_id::PLASMA:
+            return "plasma";
 
         case phase_id::num_phases:
             break;

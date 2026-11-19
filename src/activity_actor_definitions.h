@@ -733,7 +733,7 @@ class hacksaw_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character &who ) override;
-        void do_turn( player_activity & , Character &who ) override;
+        void do_turn( player_activity &, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
         float exertion_level() const override;
         int get_tool_quality() const;
@@ -1297,7 +1297,7 @@ class boltcutting_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character & ) override;
-        void do_turn( player_activity & , Character &who ) override;
+        void do_turn( player_activity &, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -1613,12 +1613,12 @@ class efile_activity_actor : public activity_actor
         int turns_left_on_current_efile = 0;
 
         void start_processing_next_edevice();
-        void start_processing_next_efile( player_activity & , Character &who );
+        void start_processing_next_efile( player_activity &, Character &who );
         void failed_processing_current_edevice();
         void completed_processing_current_edevice();
         void failed_processing_current_efile( player_activity &act, Character &who );
 
-        void completed_processing_current_efile( player_activity & , Character &who );
+        void completed_processing_current_efile( player_activity &, Character &who );
 
         item_location &get_currently_processed_edevice();
         item_location &get_currently_processed_efile();
@@ -2120,7 +2120,7 @@ class craft_activity_actor : public activity_actor
         void start( player_activity &act, Character &crafter ) override;
         void do_turn( player_activity &act, Character &crafter ) override;
         void finish( player_activity &act, Character &crafter ) override;
-        void canceled( player_activity & , Character & ) override;
+        void canceled( player_activity &, Character & ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
             return std::make_unique<craft_activity_actor>( *this );
@@ -2162,7 +2162,7 @@ class workout_activity_actor : public activity_actor
         void start( player_activity &act, Character &who ) override;
         void do_turn( player_activity &act, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
-        void canceled( player_activity & , Character & ) override;
+        void canceled( player_activity &, Character & ) override;
 
         bool query_keep_training( player_activity &act, Character &who );
 
@@ -2220,9 +2220,9 @@ class drop_activity_actor : public activity_actor
             return ACT_DROP;
         }
 
-        void start( player_activity & , Character & ) override {}
+        void start( player_activity &, Character & ) override {}
         void do_turn( player_activity &act, Character &who ) override;
-        void finish( player_activity & , Character & ) override {}
+        void finish( player_activity &, Character & ) override {}
         void canceled( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -2257,9 +2257,9 @@ class stash_activity_actor: public activity_actor
             return ACT_STASH;
         }
 
-        void start( player_activity & , Character & ) override {}
+        void start( player_activity &, Character & ) override {}
         void do_turn( player_activity &act, Character &who ) override;
-        void finish( player_activity & , Character & ) override {}
+        void finish( player_activity &, Character & ) override {}
         void canceled( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -2292,8 +2292,8 @@ class harvest_activity_actor : public activity_actor
             return ACT_HARVEST;
         }
 
-        void start( player_activity & , Character & ) override;
-        void do_turn( player_activity & , Character & ) override {};
+        void start( player_activity &, Character & ) override;
+        void do_turn( player_activity &, Character & ) override {};
         void finish( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -2360,8 +2360,8 @@ class reload_activity_actor : public activity_actor
             return ACT_RELOAD;
         }
 
-        void start( player_activity & , Character & ) override;
-        void do_turn( player_activity & , Character & ) override;
+        void start( player_activity &, Character & ) override;
+        void do_turn( player_activity &, Character & ) override;
         void finish( player_activity &act, Character &who ) override;
         void canceled( player_activity &act, Character &who ) override;
 
@@ -2415,9 +2415,9 @@ class milk_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character & ) override;
-        void do_turn( player_activity & , Character & ) override;
+        void do_turn( player_activity &, Character & ) override;
         void finish( player_activity &act, Character &who ) override;
-        void canceled( player_activity & , Character & ) override {}
+        void canceled( player_activity &, Character & ) override {}
 
         std::unique_ptr<activity_actor> clone() const override {
             return std::make_unique<milk_activity_actor>( *this );
@@ -2452,9 +2452,9 @@ class shearing_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character &who ) override;
-        void do_turn( player_activity & , Character &who ) override;
+        void do_turn( player_activity &, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
-        void canceled( player_activity & , Character & ) override;
+        void canceled( player_activity &, Character & ) override;
 
         bool can_resume_with_internal( const activity_actor &other,
                                        const Character & ) const override {
@@ -2589,9 +2589,9 @@ class insert_item_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character &who ) override;
-        void do_turn( player_activity & , Character & ) override {};
+        void do_turn( player_activity &, Character & ) override {};
         void finish( player_activity &act, Character &who ) override;
-        void canceled( player_activity & , Character &who ) override;
+        void canceled( player_activity &, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
             return std::make_unique<insert_item_activity_actor>( *this );
@@ -2650,7 +2650,7 @@ class oxytorch_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character &who ) override;
-        void do_turn( player_activity & , Character &who ) override;
+        void do_turn( player_activity &, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -2800,7 +2800,7 @@ class prying_activity_actor : public activity_actor
                                           const Character &who );
 
         void start( player_activity &act, Character &who ) override;
-        void do_turn( player_activity & , Character &who ) override;
+        void do_turn( player_activity &, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -3723,7 +3723,7 @@ class disable_activity_actor : public activity_actor
         }
 
         void start( player_activity &act, Character &who ) override;
-        void do_turn( player_activity & , Character &who ) override;
+        void do_turn( player_activity &, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
 
         std::unique_ptr<activity_actor> clone() const override {
@@ -4090,7 +4090,7 @@ class butchery_activity_actor : public activity_actor
         explicit butchery_activity_actor( std::vector<butchery_data> bd ) : bd( std::move( bd ) ) {}
 
         const activity_id &get_type() const override;
-        void start( player_activity & , Character & ) override {};
+        void start( player_activity &, Character & ) override {};
         void do_turn( player_activity &act, Character &you ) override;
         void finish( player_activity &act, Character & ) override;
         void canceled( player_activity &act, Character &you ) override;

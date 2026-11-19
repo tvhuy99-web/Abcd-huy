@@ -82,11 +82,16 @@ std::string enum_to_string<editmap_shapetype>( editmap_shapetype data )
 {
     switch( data ) {
 
-        case editmap_shapetype::editmap_point: return _("Point");
-        case editmap_shapetype::editmap_rect: return _("Rectangle");
-        case editmap_shapetype::editmap_rect_filled: return _("Rectangle, Filled");
-        case editmap_shapetype::editmap_line: return _("Line");
-        case editmap_shapetype::editmap_circle: return _("Circle");
+        case editmap_shapetype::editmap_point:
+            return _( "Point" );
+        case editmap_shapetype::editmap_rect:
+            return _( "Rectangle" );
+        case editmap_shapetype::editmap_rect_filled:
+            return _( "Rectangle, Filled" );
+        case editmap_shapetype::editmap_line:
+            return _( "Line" );
+        case editmap_shapetype::editmap_circle:
+            return _( "Circle" );
 
         default:
             cata_fatal( "Invalid editmap_shapetype in enum_to_string" );
@@ -97,14 +102,22 @@ std::string enum_to_string<editmap_action>( editmap_action data )
 {
     switch( data ) {
 
-        case editmap_action::EDIT_ITEMS: return _("EDIT_ITEMS");
-        case editmap_action::EDIT_MAPGEN: return _("EDIT_MAPGEN");
-        case editmap_action::SELECT_BRUSH: return _("SELECT_BRUSH");
-        case editmap_action::SELECT_TERRAIN: return _("SELECT_TERRAIN");
-        case editmap_action::SELECT_FURNITURE: return _("SELECT_FURNITURE");
-        case editmap_action::SELECT_TRAP: return _("SELECT_TRAP");
-        case editmap_action::SELECT_FIELD: return _("SELECT_FIELD");
-        case editmap_action::SELECT_RADIATION: return _("SELECT_RADIATION");
+        case editmap_action::EDIT_ITEMS:
+            return _( "EDIT_ITEMS" );
+        case editmap_action::EDIT_MAPGEN:
+            return _( "EDIT_MAPGEN" );
+        case editmap_action::SELECT_BRUSH:
+            return _( "SELECT_BRUSH" );
+        case editmap_action::SELECT_TERRAIN:
+            return _( "SELECT_TERRAIN" );
+        case editmap_action::SELECT_FURNITURE:
+            return _( "SELECT_FURNITURE" );
+        case editmap_action::SELECT_TRAP:
+            return _( "SELECT_TRAP" );
+        case editmap_action::SELECT_FIELD:
+            return _( "SELECT_FIELD" );
+        case editmap_action::SELECT_RADIATION:
+            return _( "SELECT_RADIATION" );
 
         default:
             cata_fatal( "Invalid editmap_action in enum_to_string" );
@@ -115,8 +128,10 @@ std::string enum_to_string<editmap_mode>( editmap_mode data )
 {
     switch( data ) {
 
-        case editmap_mode::EMM_DRAWING: return _("EMM_DRAWING");
-        case editmap_mode::EMM_SELECTING: return _("EMM_SELECTING");
+        case editmap_mode::EMM_DRAWING:
+            return _( "EMM_DRAWING" );
+        case editmap_mode::EMM_SELECTING:
+            return _( "EMM_SELECTING" );
 
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );

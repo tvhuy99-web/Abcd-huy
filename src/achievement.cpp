@@ -100,10 +100,14 @@ std::string enum_to_string<achievement_comparison>( achievement_comparison data 
 {
     switch( data ) {
 
-        case achievement_comparison::equal: return "==";
-        case achievement_comparison::less_equal: return "<=";
-        case achievement_comparison::greater_equal: return ">=";
-        case achievement_comparison::anything: return "anything";
+        case achievement_comparison::equal:
+            return "==";
+        case achievement_comparison::less_equal:
+            return "<=";
+        case achievement_comparison::greater_equal:
+            return ">=";
+        case achievement_comparison::anything:
+            return "anything";
 
         case achievement_comparison::last:
             break;
@@ -116,8 +120,10 @@ std::string enum_to_string<achievement::time_bound::epoch>( achievement::time_bo
 {
     switch( data ) {
 
-        case achievement::time_bound::epoch::cataclysm: return "cataclysm";
-        case achievement::time_bound::epoch::game_start: return "game_start";
+        case achievement::time_bound::epoch::cataclysm:
+            return "cataclysm";
+        case achievement::time_bound::epoch::game_start:
+            return "game_start";
 
         case achievement::time_bound::epoch::last:
             break;
@@ -130,10 +136,14 @@ std::string enum_to_string<requirement_visibility>( requirement_visibility data 
 {
     switch( data ) {
 
-        case requirement_visibility::always: return "always";
-        case requirement_visibility::when_requirement_completed: return "when_requirement_completed";
-        case requirement_visibility::when_achievement_completed: return "when_achievement_completed";
-        case requirement_visibility::never: return "never";
+        case requirement_visibility::always:
+            return "always";
+        case requirement_visibility::when_requirement_completed:
+            return "when_requirement_completed";
+        case requirement_visibility::when_achievement_completed:
+            return "when_achievement_completed";
+        case requirement_visibility::never:
+            return "never";
 
         case requirement_visibility::last:
             break;
@@ -583,9 +593,12 @@ std::string enum_to_string<achievement_completion>( achievement_completion data 
 {
     switch( data ) {
 
-        case achievement_completion::pending: return "pending";
-        case achievement_completion::completed: return "completed";
-        case achievement_completion::failed: return "failed";
+        case achievement_completion::pending:
+            return "pending";
+        case achievement_completion::completed:
+            return "completed";
+        case achievement_completion::failed:
+            return "failed";
 
         case achievement_completion::last:
             break;

@@ -41,7 +41,9 @@ TEST_CASE( "a11y_snapshot_json_preserves_vietnamese_utf8", "[a11y][unicode]" )
     const std::string decomposed = "Nguye\xcc\x82\xcc\x83n";
     const std::string outside_bmp = "Mục tiêu \xf0\x9f\x98\x80";
 
-    for( const std::string &text : { precomposed, decomposed, outside_bmp } ) {
+    for( const std::string &text : {
+             precomposed, decomposed, outside_bmp
+         } ) {
         const std::string json = a11y::snapshot_json( snapshot_with_label( text ) );
         CHECK( json.find( text ) != std::string::npos );
     }

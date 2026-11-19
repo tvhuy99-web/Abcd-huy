@@ -732,7 +732,7 @@ void vehicle::turn( units::angle deg )
 }
 
 bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
-                                   const bool preview_only )
+                                    const bool preview_only )
 {
 
 
@@ -742,8 +742,8 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
     }
 
 
-    const auto record_block = [&]( const char *kind, const tripoint_bub_ms &tile,
-                                   const int intermediate, const units::angle heading ) {
+    const auto record_block = [&]( const char *kind, const tripoint_bub_ms & tile,
+    const int intermediate, const units::angle heading ) {
         if( !a11y::android::enabled() ) {
             return;
         }
@@ -772,14 +772,14 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
             }
         }
         a11y::android::diagnostic_event( "AUTODRIVE_PIVOT_BLOCK",
-                "preview=" + std::string( preview_only ? "true" : "false" ) +
-                " turn_steps=" + std::to_string( steering_steps ) +
-                " intermediate=" + std::to_string( intermediate ) +
-                " heading_deg=" + std::to_string( units::to_degrees( heading ) ) +
-                " tile=" + tile.to_string() +
-                " kind=" + kind +
-                " terrain_name=" + terrain_name +
-                " blocker_name=" + obstacle_name );
+                                         "preview=" + std::string( preview_only ? "true" : "false" ) +
+                                         " turn_steps=" + std::to_string( steering_steps ) +
+                                         " intermediate=" + std::to_string( intermediate ) +
+                                         " heading_deg=" + std::to_string( units::to_degrees( heading ) ) +
+                                         " tile=" + tile.to_string() +
+                                         " kind=" + kind +
+                                         " terrain_name=" + terrain_name +
+                                         " blocker_name=" + obstacle_name );
     };
     const auto blocker_kind = []( const vehicle_autodrive::tile_blocker kind ) {
         switch( kind ) {
@@ -803,39 +803,39 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
     if( velocity != 0 ) {
         record_block( "vehicle_moving", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
-                    add_msg( m_warning, _( "Cannot turn in place while moving. Brake to a stop first." ) );
-                }
+            add_msg( m_warning, _( "Cannot turn in place while moving. Brake to a stop first." ) );
+        }
         return false;
     }
     if( skidding || is_on_ramp || is_rotorcraft( here ) || is_towed() || is_towing() ) {
         record_block( "vehicle_state", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
-                    add_msg( m_warning, _( "Cannot turn in place in the current vehicle state." ) );
-                }
+            add_msg( m_warning, _( "Cannot turn in place in the current vehicle state." ) );
+        }
         return false;
     }
     const float steering = steering_effectiveness( here );
     if( steering == -2.0f ) {
         record_block( "no_animal_harness", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
-                    add_msg( m_warning,
-                 _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
-                }
+            add_msg( m_warning,
+                     _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
+        }
         return false;
     }
     if( steering < 0.0f ) {
         record_block( "no_steering", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
-                    add_msg( m_warning,
-                 _( "This vehicle has no steering system installed, you can't turn it." ) );
-                }
+            add_msg( m_warning,
+                     _( "This vehicle has no steering system installed, you can't turn it." ) );
+        }
         return false;
     }
     if( steering == 0.0f || !valid_wheel_config( here ) ) {
         record_block( "broken_steering_or_wheels", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
-                    add_msg( m_warning, _( "Cannot turn in place: steering or wheels are broken." ) );
-                }
+            add_msg( m_warning, _( "Cannot turn in place: steering or wheels are broken." ) );
+        }
         return false;
     }
 
@@ -906,7 +906,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
                 record_block( "creature", tile, step, heading );
                 if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
-                         creature->disp_name() );
+                             creature->disp_name() );
                 }
                 return false;
             }
@@ -919,7 +919,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
         return true;
     }
     const units::angle target = normalize(
-        face.dir() + vehicles::steer_increment * sign * count );
+                                    face.dir() + vehicles::steer_increment * sign * count );
     precalc_mounts( 1, target, pivot );
 
 
@@ -1232,7 +1232,7 @@ veh_collision vehicle::part_collision( map &here, int part, const tripoint_abs_m
     if( is_autodriving && a11y::android::enabled() &&
         get_driver( here ) == &get_player_character() ) {
         a11y::android::diagnostic_event( "AUTODRIVE_STOP",
-                "reason=physical_collision velocity=" + std::to_string( velocity ) );
+                                         "reason=physical_collision velocity=" + std::to_string( velocity ) );
     }
     stop_autodriving();
 

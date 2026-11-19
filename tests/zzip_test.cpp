@@ -246,7 +246,7 @@ TEST_CASE( "zzip_corruption_recovery", "[.][zzip]" )
                                        mem_file->len(),
                                        buf.data(),
                                        sizeof( buf ),
- 15 );
+                                       15 );
         REQUIRE( !ZSTD_isError( footer_frame_size ) );
 
         SECTION( "Recovery works" ) {

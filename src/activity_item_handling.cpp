@@ -3246,7 +3246,7 @@ std::vector<std::tuple<tripoint_bub_ms, itype_id, int>>
     return final_map;
 }
 
-static bool construction_activity( Character &you, const zone_data * ,
+static bool construction_activity( Character &you, const zone_data *,
                                    const tripoint_bub_ms &src_loc,
                                    const activity_reason_info &act_info,
                                    const activity_id &activity_to_restore )

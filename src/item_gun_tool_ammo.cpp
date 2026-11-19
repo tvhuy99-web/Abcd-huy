@@ -668,12 +668,18 @@ std::string item::dirt_symbol() const
 
     switch( static_cast<int>( get_var( "dirt", 0 ) / 2000 ) ) {
 
-        case 1:  return "<color_white>\u2581</color>";
-        case 2:  return "<color_light_gray>\u2583</color>";
-        case 3:  return "<color_light_gray>\u2585</color>";
-        case 4:  return "<color_dark_gray>\u2587</color>";
-        case 5:  return "<color_brown>\u2588</color>";
-        default: return "";
+        case 1:
+            return "<color_white>\u2581</color>";
+        case 2:
+            return "<color_light_gray>\u2583</color>";
+        case 3:
+            return "<color_light_gray>\u2585</color>";
+        case 4:
+            return "<color_dark_gray>\u2587</color>";
+        case 5:
+            return "<color_brown>\u2588</color>";
+        default:
+            return "";
 
     }
 }
@@ -4287,7 +4293,7 @@ bool item::reset_link( bool unspool_if_too_long, Character *p, int vpart_index,
     return has_flag( flag_NO_DROP );
 }
 
-bool item::process_linked_item( Character *carrier, const tripoint_bub_ms & ,
+bool item::process_linked_item( Character *carrier, const tripoint_bub_ms &,
                                 const link_state required_state )
 {
     if( carrier == nullptr ) {

@@ -724,7 +724,7 @@ class wish_monster_callback: public uilist_callback
             lastent = -2;
         }
 
-        bool key( const input_context &ctxt, const input_event &event, int ,
+        bool key( const input_context &ctxt, const input_event &event, int,
                   uilist * ) override {
             const std::string &action = ctxt.input_to_action( event );
             if( action == "SCROLL_DESC_UP" ) {
@@ -1049,7 +1049,7 @@ class wish_item_callback: public uilist_callback
             } );
         }
 
-        bool key( const input_context &ctxt, const input_event &event, int ,
+        bool key( const input_context &ctxt, const input_event &event, int,
                   uilist *menu ) override {
 
             const std::string &action = ctxt.input_to_action( event );

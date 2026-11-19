@@ -131,15 +131,24 @@ struct parse_state {
     static constexpr std::string_view expect_to_string( expect e ) {
         switch( e ) {
 
-            case expect::oper: return "operator";
-            case expect::operand: return "operand";
-            case expect::identifier: return "identifier";
-            case expect::lparen: return "left parenthesis";
-            case expect::rparen: return "right parenthesis";
-            case expect::lbracket: return "left bracket";
-            case expect::rbracket: return "right bracket";
-            case expect::string: return "string delimiter";
-            case expect::eof: return "EOF";
+            case expect::oper:
+                return "operator";
+            case expect::operand:
+                return "operand";
+            case expect::identifier:
+                return "identifier";
+            case expect::lparen:
+                return "left parenthesis";
+            case expect::rparen:
+                return "right parenthesis";
+            case expect::lbracket:
+                return "left bracket";
+            case expect::rbracket:
+                return "right bracket";
+            case expect::string:
+                return "string delimiter";
+            case expect::eof:
+                return "EOF";
 
         }
         return "cookies";

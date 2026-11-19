@@ -2964,15 +2964,17 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                !response_condition_exists[index] ||
                ( index < response_condition_eval.size() && response_condition_eval[index] );
     };
-    a11y::screen_scope reader( &ctxt, "dialogue", [&]( const a11y::semantic_intent &intent ) ->
+    a11y::screen_scope reader( &ctxt, "dialogue", [&]( const a11y::semantic_intent & intent ) ->
     std::optional<std::string> {
         if( ( intent.node == "dialogue:history" || intent.node == "dialogue:about" ) &&
-            intent.action == "focus" ) {
+            intent.action == "focus" )
+        {
             return std::optional<std::string>( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
         }
         const std::string response_prefix = "dialogue:response:";
         if( intent.node.rfind( response_prefix, 0 ) == 0 &&
-            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            ( intent.action == "focus" || intent.action == "activate" ) )
+        {
             for( size_t index = 0; index < response_lines.size(); ++index ) {
                 if( intent.node != response_prefix + std::to_string( index ) ) {
                     continue;
@@ -3037,7 +3039,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
 
         {
             std::string about_text;
-            const auto append_about_part = [&about_text]( const std::string &part ) {
+            const auto append_about_part = [&about_text]( const std::string & part ) {
                 if( part.empty() ) {
                     return;
                 }
@@ -3093,9 +3095,11 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                 const std::set<dialogue_consequence> consequences =
                     responses[index].get_consequences( *this );
                 if( consequences.count( dialogue_consequence::hostile ) > 0 ) {
-                    node.detail = _( "Warning: this response may provoke an attack.  The game will ask for confirmation before it takes effect." );
+                    node.detail =
+                        _( "Warning: this response may provoke an attack.  The game will ask for confirmation before it takes effect." );
                 } else if( consequences.count( dialogue_consequence::helpless ) > 0 ) {
-                    node.detail = _( "Warning: this response may leave you helpless.  The game will ask for confirmation before it takes effect." );
+                    node.detail =
+                        _( "Warning: this response may leave you helpless.  The game will ask for confirmation before it takes effect." );
                 }
             }
             node.selected = d_img.sel_response == static_cast<int>( index );
@@ -7786,7 +7790,7 @@ talk_effect_fun_t::func f_custom_light_level( const JsonObject &jo,
     return [dov_length, dov, key]( dialogue & d ) {
         get_timed_events().add( timed_event_type::CUSTOM_LIGHT_LEVEL,
                                 calendar::turn + dov_length.evaluate( d ) +
-                                1_seconds ,
+                                1_seconds,
                                 -1, dov.evaluate( d ), key.evaluate( d ) );
     };
 }

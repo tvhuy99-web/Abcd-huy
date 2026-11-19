@@ -50,7 +50,7 @@ void cancel_accessible_drive_to_place();
 
 
 std::vector<std::vector<tripoint_abs_omt>> accessible_vehicle_alternative_routes(
-    const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step );
+        const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step );
 
 
 

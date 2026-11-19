@@ -33,8 +33,8 @@ std::string text_style_check_reader::get_next( const JsonValue &jv ) const
         const auto text_style_callback =
             [&jsin]
             ( const text_style_fix type, const std::string & msg,
-              const std::u32string::const_iterator & beg, const std::u32string::const_iterator & ,
-              const std::u32string::const_iterator & ,
+              const std::u32string::const_iterator & beg, const std::u32string::const_iterator &,
+              const std::u32string::const_iterator &,
               const std::u32string::const_iterator & from, const std::u32string::const_iterator & to,
               const std::string & fix
         ) {

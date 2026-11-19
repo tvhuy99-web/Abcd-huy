@@ -40,8 +40,10 @@ std::string enum_to_string<join_type>( join_type data )
 {
     switch( data ) {
 
-        case join_type::mandatory: return "mandatory";
-        case join_type::available: return "available";
+        case join_type::mandatory:
+            return "mandatory";
+        case join_type::available:
+            return "available";
 
         case join_type::last:
             break;
@@ -774,7 +776,7 @@ int mutable_overmap_special_data::score_rotation_at( const overmap &, const trip
 
 
 special_placement_result mutable_overmap_special_data::place(
-    overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool ,
+    overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool,
     const city &cit, bool must_be_unexplored ) const
 {
 

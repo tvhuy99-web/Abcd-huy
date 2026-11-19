@@ -854,16 +854,26 @@ TEST_CASE( "targeting_graph_complex_linear_distribution", "[targeting_graph][ran
         static double weight( const int &i ) {
             switch( i ) {
 
-                case 0: return 10;
-                case 1: return 40;
-                case 2: return 8;
-                case 3: return 9;
-                case 4: return 2;
-                case 6: return 10;
-                case 5: return 1;
-                case 7: return 10;
-                case 8: return 4;
-                case 9: return 6;
+                case 0:
+                    return 10;
+                case 1:
+                    return 40;
+                case 2:
+                    return 8;
+                case 3:
+                    return 9;
+                case 4:
+                    return 2;
+                case 6:
+                    return 10;
+                case 5:
+                    return 1;
+                case 7:
+                    return 10;
+                case 8:
+                    return 4;
+                case 9:
+                    return 6;
 
             }
             return 0;
@@ -918,16 +928,26 @@ TEST_CASE( "targeting_graph_complex_limb_distribution", "[targeting_graph][rando
         static double weight( const int &i ) {
             switch( i ) {
 
-                case 0: return 10;
-                case 1: return 40;
-                case 2: return 8;
-                case 3: return 9;
-                case 4: return 7;
-                case 7: return 10;
-                case 5: return 3;
-                case 6: return 10;
-                case 8: return 8;
-                case 9: return 5;
+                case 0:
+                    return 10;
+                case 1:
+                    return 40;
+                case 2:
+                    return 8;
+                case 3:
+                    return 9;
+                case 4:
+                    return 7;
+                case 7:
+                    return 10;
+                case 5:
+                    return 3;
+                case 6:
+                    return 10;
+                case 8:
+                    return 8;
+                case 9:
+                    return 5;
 
             }
             return 0;

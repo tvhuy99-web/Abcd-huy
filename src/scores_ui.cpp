@@ -130,7 +130,9 @@ void scores_ui::draw_scores_ui()
     ctxt.set_timeout( 10 );
 
     a11y::screen_scope reader( &ctxt, "scores",
-    [&]( const a11y::semantic_intent &intent ) { return p_impl.reader_intent( intent, ctxt ); } );
+    [&]( const a11y::semantic_intent & intent ) {
+        return p_impl.reader_intent( intent, ctxt );
+    } );
 
     while( true ) {
         ui_manager::redraw_invalidated();
@@ -314,8 +316,8 @@ void scores_ui_impl::draw_memorial_text() const
 a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ctxt ) const
 {
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Your scores" ) );
-    const auto append_tab = [&]( const char *id, const std::string &label,
-                                 const scores_ui_tab tab, const int position ) {
+    const auto append_tab = [&]( const char *id, const std::string & label,
+    const scores_ui_tab tab, const int position ) {
         a11y::semantic_node node;
         node.id = id;
         node.role = "tab";
@@ -346,8 +348,8 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
         }
     }
 
-    const auto append_entry = [&]( const std::string &id, const std::string &label,
-                                   const std::string &detail, const int position, const int total ) {
+    const auto append_entry = [&]( const std::string & id, const std::string & label,
+    const std::string & detail, const int position, const int total ) {
         a11y::semantic_node node;
         node.id = id;
         node.role = "document";
@@ -364,7 +366,7 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
             const bool use_conducts = selected_tab == scores_ui_tab::conducts;
             const std::vector<std::string> &entries = use_conducts ? conducts_text : achievements_text;
             const std::vector<std::string> &labels = use_conducts ? conducts_labels :
-                                                     achievements_labels;
+                    achievements_labels;
             snapshot.summary = use_conducts ? _( "Conducts" ) : _( "Achievements" );
             if( !g->achievements().is_enabled() ) {
                 append_entry( "scores:empty:achievements", _( "Achievements and conducts are disabled" ),
@@ -383,7 +385,8 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
                 }
                 append_entry( "scores:note:achievements", _( "About this list" ),
                               use_conducts ?
-                              _( "Note that only conducts that existed when you started this game and still exist now will appear here." ) :
+                              _( "Note that only conducts that existed when you started this game and still exist now will appear here." )
+                              :
                               _( "Note that only achievements that existed when you started this game and still exist now will appear here." ),
                               total, total );
             }
@@ -392,7 +395,8 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
         case scores_ui_tab::scores:
             snapshot.summary = _( "Scores" );
             if( scores_text.empty() ) {
-                append_entry( "scores:empty:scores", _( "No scores" ), _( "This game has no valid scores." ), 1, 1 );
+                append_entry( "scores:empty:scores", _( "No scores" ), _( "This game has no valid scores." ), 1,
+                              1 );
             } else {
                 const int total = static_cast<int>( scores_text.size() + 1 );
                 for( std::size_t i = 0; i < scores_text.size(); ++i ) {
@@ -432,7 +436,7 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
                         const int position = static_cast<int>( i + 1 );
                         append_entry( "scores:kills:monster:" + std::to_string( i ),
                                       string_format( _( "Monster: %1$s. Kills: %2$d." ),
-                                              std::get<3>( entry ), std::get<0>( entry ) ),
+                                                     std::get<3>( entry ), std::get<0>( entry ) ),
                                       std::get<3>( entry ), position, total );
                     }
                 }

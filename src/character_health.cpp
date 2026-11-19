@@ -241,11 +241,16 @@ std::string enum_to_string<blood_type>( blood_type data )
 {
     switch( data ) {
 
-        case blood_type::blood_O: return "O";
-        case blood_type::blood_A: return "A";
-        case blood_type::blood_B: return "B";
-        case blood_type::blood_AB: return "AB";
-        case blood_type::blood_acid: return "Acid";
+        case blood_type::blood_O:
+            return "O";
+        case blood_type::blood_A:
+            return "A";
+        case blood_type::blood_B:
+            return "B";
+        case blood_type::blood_AB:
+            return "AB";
+        case blood_type::blood_acid:
+            return "Acid";
 
         case blood_type::num_bt:
             break;

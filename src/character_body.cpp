@@ -1104,7 +1104,7 @@ void Character::update_stomach( const time_point &from, const time_point &to )
 
 bodypart_id Character::body_window( const std::string &menu_header,
                                     bool show_all, bool precise,
-                                    int normal_bonus, int , int ,
+                                    int normal_bonus, int, int,
                                     int bleed, float bite, float infect, float bandage_power, float disinfectant_power ) const
 {
 

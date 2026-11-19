@@ -1182,16 +1182,26 @@ static int utf32_to_ncurses_ACS( char32_t sym )
 {
     switch( sym ) {
 
-        case 0x2500: return LINE_OXOX;
-        case 0x2501: return '=';
-        case 0x2502: return LINE_XOXO;
-        case 0x2503: return 'H';
-        case 0x253C: return LINE_XXXX;
-        case 0x250C: return LINE_OXXO;
-        case 0x2510: return LINE_OOXX;
-        case 0x2518: return LINE_XOOX;
-        case 0x2514: return LINE_XXOO;
-        default:     return static_cast<int>(sym);
+        case 0x2500:
+            return LINE_OXOX;
+        case 0x2501:
+            return '=';
+        case 0x2502:
+            return LINE_XOXO;
+        case 0x2503:
+            return 'H';
+        case 0x253C:
+            return LINE_XXXX;
+        case 0x250C:
+            return LINE_OXXO;
+        case 0x2510:
+            return LINE_OOXX;
+        case 0x2518:
+            return LINE_XOOX;
+        case 0x2514:
+            return LINE_XXOO;
+        default:
+            return static_cast<int>( sym );
 
     }
 }
@@ -1678,11 +1688,11 @@ void vehicles::finalize_prototypes()
     }
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=vehicle_prototypes" <<
-                              " fuel_hits=" << fuel_hits <<
-                              " fuel_misses=" << fuel_misses <<
-                              " elapsed_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - prototype_started ).count();
+                               " fuel_hits=" << fuel_hits <<
+                               " fuel_misses=" << fuel_misses <<
+                               " elapsed_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - prototype_started ).count();
 #endif
 }
 

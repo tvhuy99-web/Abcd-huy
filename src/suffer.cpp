@@ -366,7 +366,7 @@ void suffer::while_grabbed( Character &you )
 
     crush_grabs_req = std::max( 1, crush_grabs_req );
 
-    for( auto&& dest : here.points_in_radius( you.pos_bub(), 1, 0 ) ) {
+    for( auto &&dest : here.points_in_radius( you.pos_bub(), 1, 0 ) ) {
         const monster *const mon = creatures.creature_at<monster>( dest );
         if( mon && mon->has_flag( mon_flag_GROUP_BASH ) ) {
             crowd++;

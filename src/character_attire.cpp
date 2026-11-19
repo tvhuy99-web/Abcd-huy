@@ -2475,7 +2475,7 @@ void outfit::add_stash( Character &guy, const item &newit, int &remaining_charge
         if( carried_item && !carried_item->has_pocket_type( pocket_type::MAGAZINE ) &&
             carried_item->can_contain_partial( newit ).success() ) {
             int used_charges = carried_item->fill_with( newit, remaining_charges, false,
- false, false, false, true,
+                               false, false, false, true,
                                &guy );
             remaining_charges -= used_charges;
         }

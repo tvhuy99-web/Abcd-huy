@@ -157,11 +157,16 @@ std::string enum_to_string<map_extra_method>( map_extra_method data )
 {
     switch( data ) {
 
-        case map_extra_method::null: return "null";
-        case map_extra_method::map_extra_function: return "map_extra_function";
-        case map_extra_method::mapgen: return "mapgen";
-        case map_extra_method::update_mapgen: return "update_mapgen";
-        case map_extra_method::num_map_extra_methods: break;
+        case map_extra_method::null:
+            return "null";
+        case map_extra_method::map_extra_function:
+            return "map_extra_function";
+        case map_extra_method::mapgen:
+            return "mapgen";
+        case map_extra_method::update_mapgen:
+            return "update_mapgen";
+        case map_extra_method::num_map_extra_methods:
+            break;
 
     }
     cata_fatal( "Invalid map_extra_method" );

@@ -948,7 +948,7 @@ struct fixed_overmap_special_data : overmap_special_data {
     }
 
     void finalize(
-        const std::string & ,
+        const std::string &,
         const cata::flat_set<string_id<overmap_location>> &default_locations ) override;
     void finalize_mapgen_parameters( mapgen_parameters &params,
                                      const std::string &context ) const override;
@@ -1348,7 +1348,7 @@ struct mutable_overmap_special_data : overmap_special_data {
     int score_rotation_at( const overmap &, const tripoint_om_omt &,
                            om_direction::type ) const override;
     special_placement_result place(
-        overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool ,
+        overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool,
         const city &cit, bool must_be_unexplored ) const override;
     void load( const JsonObject &jo, bool was_loaded );
 };

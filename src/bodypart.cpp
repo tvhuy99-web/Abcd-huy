@@ -64,9 +64,12 @@ std::string enum_to_string<side>( side data )
 {
     switch( data ) {
 
-        case side::LEFT: return "left";
-        case side::RIGHT: return "right";
-        case side::BOTH: return "both";
+        case side::LEFT:
+            return "left";
+        case side::RIGHT:
+            return "right";
+        case side::BOTH:
+            return "both";
 
         case side::num_sides:
             break;
@@ -79,17 +82,28 @@ std::string enum_to_string<bp_type>( bp_type data )
 {
     switch( data ) {
 
-        case bp_type::arm: return "arm";
-        case bp_type::other: return "other";
-        case bp_type::foot: return "foot";
-        case bp_type::hand: return "hand";
-        case bp_type::head: return "head";
-        case bp_type::leg: return "leg";
-        case bp_type::mouth: return "mouth";
-        case bp_type::sensor: return "sensor";
-        case bp_type::tail: return "tail";
-        case bp_type::torso: return "torso";
-        case bp_type::wing: return "wing";
+        case bp_type::arm:
+            return "arm";
+        case bp_type::other:
+            return "other";
+        case bp_type::foot:
+            return "foot";
+        case bp_type::hand:
+            return "hand";
+        case bp_type::head:
+            return "head";
+        case bp_type::leg:
+            return "leg";
+        case bp_type::mouth:
+            return "mouth";
+        case bp_type::sensor:
+            return "sensor";
+        case bp_type::tail:
+            return "tail";
+        case bp_type::torso:
+            return "torso";
+        case bp_type::wing:
+            return "wing";
 
         case bp_type::num_types:
             break;

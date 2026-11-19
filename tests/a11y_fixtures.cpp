@@ -130,7 +130,7 @@ knowledge_pair_fixture build_knowledge_pair( const knowledge_variant variant )
     result.hidden_trap_pos = tripoint_bub_ms( fixture_origin.x() + 4,
                              fixture_origin.y() + ( is_a ? -5 : 5 ), 0 );
     result.mine_pos = tripoint_bub_ms( fixture_origin.x() + 6,
-                                      fixture_origin.y() + ( is_a ? 5 : -5 ), 0 );
+                                       fixture_origin.y() + ( is_a ? 5 : -5 ), 0 );
     result.crate_pos = tripoint_bub_ms( fixture_origin.x() + 5, fixture_origin.y(), 0 );
     result.crate_content = is_a ? itype_knife_combat : itype_bandages;
 

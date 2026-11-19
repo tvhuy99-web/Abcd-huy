@@ -600,7 +600,7 @@ bool perform_liquid_transfer( item_location &liquid, liquid_dest_opt &target )
 
 bool perform_liquid_transfer( item &liquid, const tripoint_bub_ms *const source_pos,
                               const vehicle *const source_veh, const int part_num,
-                              const monster *const , liquid_dest_opt &target, bool silent )
+                              const monster *const, liquid_dest_opt &target, bool silent )
 {
     if( !check_liquid( liquid ) ) {
 

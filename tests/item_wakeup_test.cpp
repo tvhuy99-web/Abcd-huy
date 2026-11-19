@@ -651,7 +651,7 @@ TEST_CASE( "item_wakeup_no_registered_handler_is_noop",
 
 namespace
 {
-std::vector<desired_wakeup> dummy_enumerator( const item & ,
+std::vector<desired_wakeup> dummy_enumerator( const item &,
         const item_location & )
 {
     return {
@@ -999,8 +999,8 @@ std::vector<location_record> &location_log()
     return log;
 }
 
-void location_capturing_handler( item &it, item_wakeup_kind ,
-                                 time_point , const item_location &loc )
+void location_capturing_handler( item &it, item_wakeup_kind,
+                                 time_point, const item_location &loc )
 {
     location_record r;
     r.uid = it.uid().get_value();
@@ -1047,7 +1047,7 @@ TEST_CASE( "item_wakeup_enumerator_observes_resolved_location",
 {
     static std::vector<tripoint_abs_ms> seen_locs;
     seen_locs.clear();
-    auto loc_enumerator = []( const item & , const item_location & loc )
+    auto loc_enumerator = []( const item &, const item_location & loc )
     -> std::vector<desired_wakeup> {
         if( loc )
         {
@@ -1081,7 +1081,7 @@ TEST_CASE( "item_wakeup_enumerator_observes_resolved_location",
 TEST_CASE( "item_wakeup_map_load_reconciles_dropped_entries",
            "[item_wakeup][reconcile]" )
 {
-    auto reconcile_enumerator = []( const item & , const item_location & )
+    auto reconcile_enumerator = []( const item &, const item_location & )
     -> std::vector<desired_wakeup> {
         return {
             desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },
@@ -1120,7 +1120,7 @@ TEST_CASE( "item_wakeup_map_load_reconciles_dropped_entries",
 TEST_CASE( "item_wakeup_shift_reconciles_dropped_entries",
            "[item_wakeup][reconcile][shift]" )
 {
-    auto enumerator = []( const item & , const item_location & )
+    auto enumerator = []( const item &, const item_location & )
     -> std::vector<desired_wakeup> {
         return {
             desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },
@@ -1155,7 +1155,7 @@ TEST_CASE( "item_wakeup_shift_reconciles_dropped_entries",
 TEST_CASE( "item_wakeup_map_load_recurses_into_containers",
            "[item_wakeup][reconcile][container]" )
 {
-    auto enumerator = []( const item & , const item_location & )
+    auto enumerator = []( const item &, const item_location & )
     -> std::vector<desired_wakeup> {
         return {
             desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },

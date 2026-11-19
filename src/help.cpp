@@ -369,9 +369,10 @@ void help_window::show()
     std::string reader_filter;
     std::optional<std::string> reader_filter_draft;
     int reader_last_topic = -1;
-    const auto reader_handle_intent = [&]( const a11y::semantic_intent &intent )
+    const auto reader_handle_intent = [&]( const a11y::semantic_intent & intent )
     -> std::optional<std::string> {
-        if( intent.node == "help:filter" ) {
+        if( intent.node == "help:filter" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -392,7 +393,8 @@ void help_window::show()
             }
             return std::nullopt;
         }
-        if( intent.node == "help:no_results" || intent.node == "help:document" ) {
+        if( intent.node == "help:no_results" || intent.node == "help:document" )
+        {
 
 
             if( intent.action == "focus" || intent.action == "activate" ) {
@@ -401,7 +403,8 @@ void help_window::show()
             return std::nullopt;
         }
         if( intent.node == "help:nav:prev" || intent.node == "help:nav:next" ||
-            intent.node == "help:nav:back" ) {
+            intent.node == "help:nav:back" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -422,7 +425,8 @@ void help_window::show()
         static const std::string topic_prefix = "help:topic:";
         if( intent.node.rfind( topic_prefix, 0 ) == 0 &&
             ( intent.action == "focus" || intent.action == "activate" ||
-              intent.action == "read_detail" ) ) {
+              intent.action == "read_detail" ) )
+        {
             const std::string suffix = intent.node.substr( topic_prefix.size() );
             int option = -1;
             const char *const begin = suffix.data();
@@ -592,8 +596,8 @@ void help_window::show()
                 a11y::append_document( snapshot, "help:document", cat.name.translated(),
                                        document_text );
             }
-            const auto append_nav = [&]( const char *id, const std::string &label,
-                                         const std::string &detail ) {
+            const auto append_nav = [&]( const char *id, const std::string & label,
+            const std::string & detail ) {
                 a11y::semantic_node node;
                 node.id = id;
                 node.role = "command";

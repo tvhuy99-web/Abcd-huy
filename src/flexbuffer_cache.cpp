@@ -350,7 +350,7 @@ class flexbuffer_disk_cache
 
 
             const std::uintmax_t source_size = std::filesystem::file_size(
-                                                    lexically_normal_json_source_path, ec );
+                                                   lexically_normal_json_source_path, ec );
             if( ec ) {
                 return storage;
             }

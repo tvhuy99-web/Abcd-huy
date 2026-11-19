@@ -713,7 +713,7 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
 
     std::array<std::pair<clock::duration, std::string>, 5> slowest{};
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe_internal step=start kind=" <<
-                              kind << " count=" << obj.size();
+                               kind << " count=" << obj.size();
 #endif
     for( auto &elem : obj ) {
 #if defined(__ANDROID__)
@@ -748,9 +748,9 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
         ++processed;
         if( processed % 512 == 0 && now - last_progress >= std::chrono::seconds( 15 ) ) {
             DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe_internal step=progress kind=" <<
-                                      kind << " done=" << processed << " total=" << obj.size() <<
-                                      " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                          now - loop_started ).count();
+                                       kind << " done=" << processed << " total=" << obj.size() <<
+                                       " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           now - loop_started ).count();
 
 
 
@@ -765,23 +765,23 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
 #if defined(__ANDROID__)
     const auto prune_started = clock::now();
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe_internal step=iteration kind=" <<
-                              kind << " count=" << processed << " elapsed_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  prune_started - loop_started ).count() << " cleanup_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  cleanup_elapsed ).count() << " finalize_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  finalize_elapsed ).count() << " input_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  input_elapsed ).count();
+                               kind << " count=" << processed << " elapsed_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   prune_started - loop_started ).count() << " cleanup_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   cleanup_elapsed ).count() << " finalize_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   finalize_elapsed ).count() << " input_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   input_elapsed ).count();
     for( std::size_t rank = 0; rank < slowest.size(); ++rank ) {
         if( slowest[rank].second.empty() ) {
             break;
         }
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe_internal step=slow_recipe kind=" <<
-                                  kind << " rank=" << rank + 1 << " id=" << slowest[rank].second <<
-                                  " elapsed_us=" << std::chrono::duration_cast<std::chrono::microseconds>(
-                                      slowest[rank].first ).count();
+                                   kind << " rank=" << rank + 1 << " id=" << slowest[rank].second <<
+                                   " elapsed_us=" << std::chrono::duration_cast<std::chrono::microseconds>(
+                                       slowest[rank].first ).count();
     }
 #endif
 
@@ -804,8 +804,8 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
     } );
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe_internal step=prune kind=" <<
-                              kind << " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  clock::now() - prune_started ).count() << " retained=" << obj.size();
+                               kind << " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   clock::now() - prune_started ).count() << " retained=" << obj.size();
 #endif
 }
 
@@ -871,14 +871,14 @@ void recipe_dictionary::find_items_on_loops()
 #if defined(__ANDROID__)
     const auto done = clock::now();
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe step=food_loops" <<
-                              " foods=" << food_count << " edges=" << component_edges <<
-                              " cycles=" << loops.size() << " graph_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  cycle_started - graph_started ).count() << " detect_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  reporting_started - cycle_started ).count() << " report_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  done - reporting_started ).count();
+                               " foods=" << food_count << " edges=" << component_edges <<
+                               " cycles=" << loops.size() << " graph_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   cycle_started - graph_started ).count() << " detect_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   reporting_started - cycle_started ).count() << " report_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   done - reporting_started ).count();
 #endif
 }
 
@@ -891,13 +891,13 @@ void recipe_dictionary::finalize()
     const auto log_step = [&]( const char *step ) {
         const auto now = clock::now();
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe step=" << step <<
-                                  " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      now - checkpoint ).count();
+                                   " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       now - checkpoint ).count();
         checkpoint = now;
     };
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe step=start" <<
-                              " crafts=" << recipe_dict.recipes.size() <<
-                              " uncrafts=" << recipe_dict.uncraft.size();
+                               " crafts=" << recipe_dict.recipes.size() <<
+                               " uncrafts=" << recipe_dict.uncraft.size();
 #endif
     DynamicDataLoader::get_instance().load_deferred( deferred );
 #if defined(__ANDROID__)
@@ -1006,8 +1006,8 @@ void recipe_dictionary::finalize()
 #if defined(__ANDROID__)
     log_step( "nested_category_search" );
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe step=nested_counts" <<
-                              " candidates=" << nested_candidates <<
-                              " comparisons=" << nested_comparisons;
+                               " candidates=" << nested_candidates <<
+                               " comparisons=" << nested_comparisons;
 #endif
 
     for( const auto &e : recipe_dict.recipes ) {
@@ -1032,10 +1032,10 @@ void recipe_dictionary::finalize()
 #if defined(__ANDROID__)
     log_step( "food_loops" );
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe step=total" <<
-                              " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  clock::now() - total_started ).count() <<
-                              " crafts=" << recipe_dict.recipes.size() <<
-                              " uncrafts=" << recipe_dict.uncraft.size();
+                               " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   clock::now() - total_started ).count() <<
+                               " crafts=" << recipe_dict.recipes.size() <<
+                               " uncrafts=" << recipe_dict.uncraft.size();
 #endif
 }
 

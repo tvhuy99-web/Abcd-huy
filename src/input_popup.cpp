@@ -449,11 +449,16 @@ std::string string_input_popup_imgui::query()
 #endif
     a11y::screen_scope reader( &ctxt, "STRING_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) )
+        {
             return "TEXT.QUIT";
         }
-        if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
-        if( intent.node == "text" && intent.action == "set_text" ) {
+        if( intent.node == "confirm" && intent.action == "activate" )
+        {
+            return "TEXT.CONFIRM";
+        }
+        if( intent.node == "text" && intent.action == "set_text" )
+        {
             if( max_input_length > 0 && intent.value.size() > static_cast<std::size_t>( max_input_length ) ) {
                 a11y::android::status( "invalid_value", &intent );
                 return std::nullopt;
@@ -468,7 +473,7 @@ std::string string_input_popup_imgui::query()
     while( true ) {
         ui_manager::redraw_invalidated();
         reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
-                       remove_color_tags( reader_description() ), text, false ) );
+                                            remove_color_tags( reader_description() ), text, false ) );
 
         std::string action = ctxt.handle_input();
         if( handle_custom_callbacks( action ) ) {
@@ -586,14 +591,19 @@ T number_input_popup<T>::query()
 #endif
     a11y::screen_scope reader( &ctxt, "NUMBER_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) )
+        {
             return "TEXT.QUIT";
         }
-        if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
+        if( intent.node == "confirm" && intent.action == "activate" )
+        {
+            return "TEXT.CONFIRM";
+        }
         if( accessible_quantity_max && std::is_integral_v<T> &&
-            intent.node == "quantity" && intent.action == "set_value" ) {
+            intent.node == "quantity" && intent.action == "set_value" )
+        {
             const auto count = a11y::selected_quantity( intent.value,
-                               static_cast<std::size_t>( *accessible_quantity_max ) );
+                    static_cast<std::size_t>( *accessible_quantity_max ) );
             if( !count ) {
                 a11y::android::status( "invalid_value", &intent );
                 return std::nullopt;
@@ -602,7 +612,8 @@ T number_input_popup<T>::query()
 
             return "TEXT.CONFIRM";
         }
-        if( intent.node == "text" && intent.action == "set_text" ) {
+        if( intent.node == "text" && intent.action == "set_text" )
+        {
             std::istringstream parser( intent.value );
             parser.imbue( std::locale::classic() );
             T parsed{};
@@ -651,9 +662,9 @@ T number_input_popup<T>::query()
             reader.update( std::move( snapshot ) );
         } else {
             reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
-                           remove_color_tags( reader_description() ), reader_value.str(), true,
-                           step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
-                           std::is_integral_v<T> ) );
+                                                remove_color_tags( reader_description() ), reader_value.str(), true,
+                                                step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
+                                                std::is_integral_v<T> ) );
         }
         std::string action = ctxt.handle_input();
 
@@ -681,7 +692,7 @@ T number_input_popup<T>::query()
 template<typename T>
 void number_input_popup<T>::set_accessible_quantity_max( const T available )
 {
-    if( std::is_integral_v<T> && available > 0 ) {
+    if( std::is_integral_v<T> &&available > 0 ) {
         accessible_quantity_max = available;
     }
 }

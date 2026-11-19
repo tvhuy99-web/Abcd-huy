@@ -25,7 +25,7 @@ class talker_topic_const: public const_talker_cloner<talker_topic_const>
         ~talker_topic_const() override = default;
 
         std::vector<std::string> get_topics( bool radio_contact ) const override;
-        bool will_talk_to_u( const Character & , bool ) const override {
+        bool will_talk_to_u( const Character &, bool ) const override {
             return true;
         }
 

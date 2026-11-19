@@ -635,8 +635,9 @@ void bodygraph_display::display()
 
 
     a11y::screen_scope reader( &ctxt, "body-status",
-    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        for( std::size_t i = 0; i < partlist.size(); ++i ) {
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( std::size_t i = 0; i < partlist.size(); ++i )
+        {
             if( intent.node != "body:part:" + std::to_string( i ) ) {
                 continue;
             }
@@ -658,7 +659,7 @@ void bodygraph_display::display()
     while( !done ) {
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                                                    ctxt, _( "Body status" ) );
+                                                   ctxt, _( "Body status" ) );
             snapshot.summary = _( "Body parts in a list.  Select a part to hear its condition.  "
                                   "Browsing never treats wounds." );
             for( std::size_t i = 0; i < partlist.size(); ++i ) {

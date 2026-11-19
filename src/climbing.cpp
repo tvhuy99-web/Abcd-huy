@@ -152,12 +152,18 @@ std::string enum_to_string<climbing_aid::category>( climbing_aid::category data 
 {
     switch( data ) {
 
-    case climbing_aid::category::special: return "special";
-    case climbing_aid::category::ter_furn: return "ter_furn";
-    case climbing_aid::category::veh: return "veh";
-    case climbing_aid::category::item: return "item";
-    case climbing_aid::category::character: return "character";
-    case climbing_aid::category::trait: return "trait";
+        case climbing_aid::category::special:
+            return "special";
+        case climbing_aid::category::ter_furn:
+            return "ter_furn";
+        case climbing_aid::category::veh:
+            return "veh";
+        case climbing_aid::category::item:
+            return "item";
+        case climbing_aid::category::character:
+            return "character";
+        case climbing_aid::category::trait:
+            return "trait";
 
         case climbing_aid::category::last:
             break;

@@ -90,9 +90,12 @@ std::string enum_to_string<aim_exit>( const aim_exit v )
 {
     switch( v ) {
 
-        case aim_exit::none: return "none";
-        case aim_exit::okay: return "okay";
-        case aim_exit::re_entry: return "re_entry";
+        case aim_exit::none:
+            return "none";
+        case aim_exit::okay:
+            return "okay";
+        case aim_exit::re_entry:
+            return "re_entry";
 
         case aim_exit::last:
             break;
@@ -105,10 +108,14 @@ std::string enum_to_string<aim_entry>( const aim_entry v )
 {
     switch( v ) {
 
-        case aim_entry::START: return "START";
-        case aim_entry::VEHICLE: return "VEHICLE";
-        case aim_entry::MAP: return "MAP";
-        case aim_entry::RESET: return "RESET";
+        case aim_entry::START:
+            return "START";
+        case aim_entry::VEHICLE:
+            return "VEHICLE";
+        case aim_entry::MAP:
+            return "MAP";
+        case aim_entry::RESET:
+            return "RESET";
 
         case aim_entry::last:
             break;
@@ -1522,7 +1529,7 @@ void advanced_inventory::change_square( const aim_location changeSquare,
 
 void advanced_inventory::start_activity(
     const aim_location destarea,
-    const aim_location ,
+    const aim_location,
     advanced_inv_listitem *sitem, int &amount_to_move,
     const bool from_vehicle, const bool to_vehicle ) const
 {
@@ -2151,7 +2158,7 @@ class advanced_inventory::reader_session
         reader_session( advanced_inventory &owner, input_context &context ) :
             owner( owner ), context( context ),
             screen( &context, "advanced-inventory",
-        [this]( const a11y::semantic_intent &intent ) {
+                    [this]( const a11y::semantic_intent & intent ) {
             return handle( intent );
         } ) {}
 
@@ -2160,7 +2167,7 @@ class advanced_inventory::reader_session
                 return;
             }
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( context,
-                                                 _( "Advanced inventory" ) );
+                                               _( "Advanced inventory" ) );
             std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
             for( a11y::semantic_node &command : commands ) {
                 std::string effect;
@@ -2203,7 +2210,7 @@ class advanced_inventory::reader_session
                 node.role = "button";
                 node.actions = { "focus", "activate", "read_detail" };
                 node.label = remove_color_tags( entry.name.empty() ?
-                                                 location->display_name() : entry.name );
+                                                location->display_name() : entry.name );
                 node.value = string_format(
                                  _( "Stacks: %1$d. Volume: %2$s. Weight: %3$s." ),
                                  entry.stacks, format_volume( entry.volume ),
@@ -2243,7 +2250,7 @@ class advanced_inventory::reader_session
 
         std::string bind( const item_location &location ) {
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
-            [&]( const row_binding &b ) {
+            [&]( const row_binding & b ) {
                 return b.location == location;
             } );
             if( binding != bindings.end() ) {
@@ -2312,7 +2319,7 @@ class advanced_inventory::reader_session
                 return std::nullopt;
             }
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
-            [&]( const row_binding &b ) {
+            [&]( const row_binding & b ) {
                 return b.id == intent.node;
             } );
             if( binding == bindings.end() ) {
@@ -2324,7 +2331,7 @@ class advanced_inventory::reader_session
 
             advanced_inventory_pane &spane = owner.panes[owner.src];
             const auto found = std::find_if( spane.items.begin(), spane.items.end(),
-            [&]( const advanced_inv_listitem &entry ) {
+            [&]( const advanced_inv_listitem & entry ) {
                 return !entry.items.empty() && entry.items.front() == binding->location;
             } );
             if( found == spane.items.end() ) {

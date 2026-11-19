@@ -58,33 +58,43 @@ std::string command_group_name( const std::string &id )
 const std::array<command_group, 7> &command_groups()
 {
     static const std::array<command_group, 7> groups = {{
-            { "movement",
-              { "UP", "DOWN", "LEFT", "RIGHT", "LEFTUP", "RIGHTUP", "LEFTDOWN", "RIGHTDOWN",
-                "LEVEL_UP", "LEVEL_DOWN", "center", "look", "peek", "toggle_run",
-                "toggle_crouch", "haul"
-              }
+            {
+                "movement",
+                {
+                    "UP", "DOWN", "LEFT", "RIGHT", "LEFTUP", "RIGHTUP", "LEFTDOWN", "RIGHTDOWN",
+                    "LEVEL_UP", "LEVEL_DOWN", "center", "look", "peek", "toggle_run",
+                    "toggle_crouch", "haul"
+                }
             },
-            { "interaction",
-              { "open", "close", "examine", "pickup", "pickup_all", "inventory", "wear",
-                "wield", "drop", "grab", "eat", "read", "unload", "smash", "butcher",
-                "chat", "sort_armor", "workout"
-              }
+            {
+                "interaction",
+                {
+                    "open", "close", "examine", "pickup", "pickup_all", "inventory", "wear",
+                    "wield", "drop", "grab", "eat", "read", "unload", "smash", "butcher",
+                    "chat", "sort_armor", "workout"
+                }
             },
-            { "combat",
-              { "fire", "throw", "autoattack", "safemode" }
+            {
+                "combat",
+                { "fire", "throw", "autoattack", "safemode" }
             },
-            { "character",
-              { "player_data", "messages", "diary", "factions", "missions", "map", "zones",
-                "bionics", "mutations"
-              }
+            {
+                "character",
+                {
+                    "player_data", "messages", "diary", "factions", "missions", "map", "zones",
+                    "bionics", "mutations"
+                }
             },
-            { "making",
-              { "craft", "construct", "disassemble", "control_vehicle" }
+            {
+                "making",
+                { "craft", "construct", "disassemble", "control_vehicle" }
             },
-            { "system",
-              { "wait", "sleep", "save", "help", "HELP_KEYBINDINGS", "debug", "QUIT",
-                "CANCEL", "CONFIRM"
-              }
+            {
+                "system",
+                {
+                    "wait", "sleep", "save", "help", "HELP_KEYBINDINGS", "debug", "QUIT",
+                    "CANCEL", "CONFIRM"
+                }
             },
             { "other", {} },
         }
@@ -268,7 +278,9 @@ std::optional<std::string> registered_intent( const input_context &context,
             std::find( actions.begin(), actions.end(), "WORLDGEN_CONFIRM.QUIT" ) != actions.end() ) {
             return "WORLDGEN_CONFIRM.QUIT";
         }
-        for( const char *const candidate : { "QUIT", "UILIST.QUIT", "TEXT.QUIT", "CANCEL" } ) {
+        for( const char *const candidate : {
+                 "QUIT", "UILIST.QUIT", "TEXT.QUIT", "CANCEL"
+             } ) {
             if( std::find( actions.begin(), actions.end(), candidate ) != actions.end() ) {
                 return candidate;
             }

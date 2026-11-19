@@ -85,22 +85,31 @@ static const skill_id skill_survival( "survival" );
 namespace io
 {
 
-    template<>
-    std::string enum_to_string<butcher_type>( butcher_type data )
-    {
-        switch( data ) {
-        case butcher_type::BLEED: return "BLEED";
-        case butcher_type::DISMEMBER: return "DISMEMBER";
-        case butcher_type::DISSECT: return "DISSECT";
-        case butcher_type::FIELD_DRESS: return "FIELD_DRESS";
-        case butcher_type::FULL: return "FULL";
-        case butcher_type::QUARTER: return "QUARTER";
-        case butcher_type::QUICK: return "QUICK";
-        case butcher_type::SKIN: return "SKIN";
-        case butcher_type::NUM_TYPES: break;
-        }
-        cata_fatal( "Invalid valid_target" );
+template<>
+std::string enum_to_string<butcher_type>( butcher_type data )
+{
+    switch( data ) {
+        case butcher_type::BLEED:
+            return "BLEED";
+        case butcher_type::DISMEMBER:
+            return "DISMEMBER";
+        case butcher_type::DISSECT:
+            return "DISSECT";
+        case butcher_type::FIELD_DRESS:
+            return "FIELD_DRESS";
+        case butcher_type::FULL:
+            return "FULL";
+        case butcher_type::QUARTER:
+            return "QUARTER";
+        case butcher_type::QUICK:
+            return "QUICK";
+        case butcher_type::SKIN:
+            return "SKIN";
+        case butcher_type::NUM_TYPES:
+            break;
     }
+    cata_fatal( "Invalid valid_target" );
+}
 
 
 }

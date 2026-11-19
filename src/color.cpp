@@ -908,14 +908,16 @@ void color_manager::show_gui()
     };
     std::unordered_map<std::string, reader_target> reader_targets;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "COLORS",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "COLORS",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             if( selected.kind != reader_target_kind::load_theme &&
                 selected.kind != reader_target_kind::load_template ) {
                 iCurrentLine = selected.line;
@@ -929,10 +931,12 @@ void color_manager::show_gui()
             }
             return std::string( "A11Y_INTERNAL_COLOR_FOCUS" );
         }
-        if( intent.action != "activate" ) {
+        if( intent.action != "activate" )
+        {
             return std::nullopt;
         }
-        switch( selected.kind ) {
+        switch( selected.kind )
+        {
             case reader_target_kind::load_theme:
                 return std::string( "LOAD_BASE_COLORS" );
             case reader_target_kind::load_template:
@@ -960,12 +964,14 @@ void color_manager::show_gui()
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Color manager" );
-        snapshot.summary = _( "Each entry names a game color, its custom normal replacement and its custom inverted replacement, or default when there is no custom replacement. Activate Normal or Invert to choose a replacement from the original list, or remove a custom replacement. Some color changes may require a restart. Changes are saved when you exit and confirm, as on the original screen." );
+        snapshot.summary =
+            _( "Each entry names a game color, its custom normal replacement and its custom inverted replacement, or default when there is no custom replacement. Activate Normal or Invert to choose a replacement from the original list, or remove a custom replacement. Some color changes may require a restart. Changes are saved when you exit and confirm, as on the original screen." );
         a11y::semantic_table colors_table;
         colors_table.id = "colors:entries";
         colors_table.columns = { { "name", _( "Color name" ), "" },
-                                 { "normal", _( "Normal" ), "" },
-                                 { "invert", _( "Invert" ), "" } };
+            { "normal", _( "Normal" ), "" },
+            { "invert", _( "Invert" ), "" }
+        };
         snapshot.tables.push_back( colors_table );
         int line = 0;
         for( const auto &pr : name_color_map ) {
@@ -976,7 +982,9 @@ void color_manager::show_gui()
                                               _( "default" ) : entry.name_invert_custom;
             const std::string row_id = "colors:entry:" + std::to_string( line );
             std::vector<a11y::semantic_node> children;
-            for( const int col : { 1, 2 } ) {
+            for( const int col : {
+                     1, 2
+                 } ) {
                 const bool normal_col = col == 1;
                 a11y::semantic_node child;
                 child.id = row_id + ( normal_col ? ":normal" : ":invert" );
@@ -1030,8 +1038,9 @@ void color_manager::show_gui()
             row.table_id = "colors:entries";
             row.row_index = line;
             row.cells = { { "name", pr.first, "", "" },
-                          { "normal", normal_spoken, "", "" },
-                          { "invert", invert_spoken, "", "" } };
+                { "normal", normal_spoken, "", "" },
+                { "invert", invert_spoken, "", "" }
+            };
             row.depth = 0;
             row.expanded = true;
             row.has_children = true;
@@ -1049,13 +1058,16 @@ void color_manager::show_gui()
             }
             line++;
         }
-        for( const bool theme : { true, false } ) {
+        for( const bool theme : {
+                 true, false
+             } ) {
             a11y::semantic_node node;
             node.id = theme ? "colors:load_theme" : "colors:load_template";
             node.role = "button";
             node.label = theme ? _( "Load a color theme" ) : _( "Load template" );
             node.detail = theme ?
-                          _( "Activate to choose a color theme from the original list. The chosen theme replaces the base colors file immediately, as on the original screen." ) :
+                          _( "Activate to choose a color theme from the original list. The chosen theme replaces the base colors file immediately, as on the original screen." )
+                          :
                           _( "Activate to choose a color template from the original list and load it into this screen." );
             node.actions = { "focus", "activate" };
             reader_targets.emplace( node.id,
@@ -1072,7 +1084,7 @@ void color_manager::show_gui()
         if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(),
         [&]( const a11y::semantic_node & node ) {
         return node.id == snapshot.focus;
-        } ) ) {
+    } ) ) {
             snapshot.focus = snapshot.nodes.empty() ? std::string() :
                              snapshot.nodes.front().id;
         }

@@ -385,7 +385,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 }
 
-void item::debug_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::debug_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                        bool debug ) const
 {
     if( debug && parts->test( iteminfo_parts::BASE_DEBUG ) ) {
@@ -734,7 +734,7 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
 }
 
 void item::rot_info( const item *const food_item, std::vector<iteminfo> &info,
-                     const iteminfo_query *const parts, const int , const bool ) const
+                     const iteminfo_query *const parts, const int, const bool ) const
 {
     Character &player_character = get_player_character();
 
@@ -786,7 +786,7 @@ void item::rot_info( const item *const food_item, std::vector<iteminfo> &info,
     }
 }
 
-void item::magazine_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::magazine_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                           bool ) const
 {
     if( !is_magazine() || has_flag( flag_NO_RELOAD ) || is_tool() ) {
@@ -909,7 +909,7 @@ static std::string ammo_by_barrel_info( const islot_ammo &ammo )
     return info;
 }
 
-void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                       bool ) const
 {
 
@@ -1091,7 +1091,7 @@ std::string item::print_compatible_mags_or_flags() const
 
 
 void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminfo_query *parts,
-                     int , bool ) const
+                     int, bool ) const
 {
     const std::string space = "  ";
     const islot_gun &gun = *mod->type->gun;
@@ -1567,7 +1567,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 }
 
-void item::gunmod_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::gunmod_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                         bool ) const
 {
     if( !is_gunmod() ) {
@@ -1873,7 +1873,7 @@ std::string item::layer_to_string( layer_level data )
 }
 
 void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                                  int , bool , const sub_bodypart_id &sbp ) const
+                                  int, bool, const sub_bodypart_id &sbp ) const
 {
     if( !is_armor() && !is_pet_armor() ) {
         return;
@@ -2023,7 +2023,7 @@ void item::armor_protection_info( std::vector<iteminfo> &info, const iteminfo_qu
     }
 }
 void item::armor_material_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                                int , bool , const sub_bodypart_id &sbp ) const
+                                int, bool, const sub_bodypart_id &sbp ) const
 {
     if( !is_armor() && !is_pet_armor() ) {
         return;
@@ -2047,7 +2047,7 @@ void item::armor_material_info( std::vector<iteminfo> &info, const iteminfo_quer
 }
 
 void item::armor_attribute_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                                 int , bool , const sub_bodypart_id &sbp ) const
+                                 int, bool, const sub_bodypart_id &sbp ) const
 {
     if( !is_armor() && !is_pet_armor() ) {
         return;
@@ -2471,7 +2471,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
 }
 
 void item::animal_armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                              int , bool ) const
+                              int, bool ) const
 {
     if( !is_pet_armor() ) {
         return;
@@ -2479,7 +2479,7 @@ void item::animal_armor_info( std::vector<iteminfo> &info, const iteminfo_query 
     pet_armor_protection_info( info, parts );
 }
 
-void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                            bool ) const
 {
     if( !is_armor() ) {
@@ -2631,7 +2631,7 @@ void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *pa
     }
 }
 
-void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                       bool ) const
 {
     if( !is_book() ) {
@@ -2815,8 +2815,8 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
     }
 }
 
-void item::battery_info( std::vector<iteminfo> &info, const iteminfo_query * ,
-                         int , bool ) const
+void item::battery_info( std::vector<iteminfo> &info, const iteminfo_query *,
+                         int, bool ) const
 {
     if( !is_vehicle_battery() ) {
         return;
@@ -2837,7 +2837,7 @@ void item::battery_info( std::vector<iteminfo> &info, const iteminfo_query * ,
     info.emplace_back( "BATTERY", info_string );
 }
 
-void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                       bool ) const
 {
     avatar &player_character = get_avatar();
@@ -3126,7 +3126,7 @@ void item::tool_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 }
 
 void item::actions_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                         int , bool ) const
+                         int, bool ) const
 {
 
     const std::map<std::string, use_function> &use_methods = type->use_methods;
@@ -3141,7 +3141,7 @@ void item::actions_info( std::vector<iteminfo> &info, const iteminfo_query *part
     info.emplace_back( "DESCRIPTION", string_format( _( "<bold>Actions</bold>: %s" ), actions ) );
 }
 
-void item::component_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::component_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                            bool ) const
 {
     if( components.empty() || !parts->test( iteminfo_parts::DESCRIPTION_COMPONENTS_MADEFROM ) ) {
@@ -3250,7 +3250,7 @@ static void enchantment_info_printer( std::vector<iteminfo> &info,
 }
 
 void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                             int , bool ) const
+                             int, bool ) const
 {
     if( !parts->test( iteminfo_parts::DESCRIPTION_ENCHANTMENTS ) ) {
         return;
@@ -3290,7 +3290,7 @@ void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query *
 }
 
 void item::repair_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                        int , bool ) const
+                        int, bool ) const
 {
     if( !parts->test( iteminfo_parts::DESCRIPTION_REPAIREDWITH ) ) {
         return;
@@ -3322,7 +3322,7 @@ void item::repair_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 }
 
 void item::disassembly_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                             int , bool ) const
+                             int, bool ) const
 {
     if( !components.empty() && parts->test( iteminfo_parts::DESCRIPTION_COMPONENTS_MADEFROM ) ) {
         return;
@@ -3376,7 +3376,7 @@ void item::disassembly_info( std::vector<iteminfo> &info, const iteminfo_query *
     }
 }
 
-void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                            bool ) const
 {
 
@@ -3463,7 +3463,7 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
     }
 }
 
-void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int ,
+void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int,
                         bool ) const
 {
     if( !is_bionic() ) {
@@ -3559,7 +3559,7 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 }
 
 void item::melee_combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
-                              int ,
+                              int,
                               bool ) const
 {
     const std::string space = "  ";
@@ -4340,8 +4340,8 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 }
 
-void item::ascii_art_info( std::vector<iteminfo> &info, const iteminfo_query * ,
-                           int ,
+void item::ascii_art_info( std::vector<iteminfo> &info, const iteminfo_query *,
+                           int,
                            bool ) const
 {
     if( is_null() ) {
@@ -4583,7 +4583,7 @@ iteminfo vol_to_info( const std::string &type, const std::string &left,
 }
 
 iteminfo weight_to_info( const std::string &type, const std::string &left,
-                         const units::mass &weight, int , bool lower_is_better )
+                         const units::mass &weight, int, bool lower_is_better )
 {
     iteminfo::flags f = iteminfo::no_newline;
     if( lower_is_better ) {

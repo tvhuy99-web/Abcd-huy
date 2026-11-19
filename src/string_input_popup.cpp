@@ -427,15 +427,19 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
     if( !draw_only ) {
         reader = std::make_unique<a11y::screen_scope>( ctxt, "STRING_INPUT",
         [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-            if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+            if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) )
+            {
                 return "TEXT.QUIT";
             }
-            if( intent.node == "confirm" && intent.action == "activate" ) {
+            if( intent.node == "confirm" && intent.action == "activate" )
+            {
                 return "TEXT.CONFIRM";
             }
-            if( intent.node == "text" && intent.action == "set_text" ) {
+            if( intent.node == "text" && intent.action == "set_text" )
+            {
                 const utf8_wrapper replacement( intent.value );
-                bool valid = _max_length <= 0 || replacement.display_width() <= static_cast<std::size_t>( _max_length );
+                bool valid = _max_length <= 0 ||
+                replacement.display_width() <= static_cast<std::size_t>( _max_length );
                 for( const char32_t cp : utf8_to_utf32( intent.value ) ) {
                     if( _only_digits ? !( cp == '-' || ( cp >= '0' && cp <= '9' ) ) : mk_wcwidth( cp ) < 0 ) {
                         valid = false;
@@ -505,7 +509,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
         if( reader ) {
             reader->update( a11y::text_snapshot( remove_color_tags( _title ),
-                            remove_color_tags( _description ), ret.str(), _only_digits ) );
+                                                 remove_color_tags( _description ), ret.str(), _only_digits ) );
         }
         const std::string action = ctxt->handle_input();
         const input_event ev = ctxt->get_raw_input();

@@ -39,12 +39,18 @@ std::string enum_to_string<mission_origin>( mission_origin data )
 {
     switch( data ) {
 
-        case ORIGIN_NULL: return "ORIGIN_NULL";
-        case ORIGIN_GAME_START: return "ORIGIN_GAME_START";
-        case ORIGIN_OPENER_NPC: return "ORIGIN_OPENER_NPC";
-        case ORIGIN_ANY_NPC: return "ORIGIN_ANY_NPC";
-        case ORIGIN_SECONDARY: return "ORIGIN_SECONDARY";
-        case ORIGIN_COMPUTER: return "ORIGIN_COMPUTER";
+        case ORIGIN_NULL:
+            return "ORIGIN_NULL";
+        case ORIGIN_GAME_START:
+            return "ORIGIN_GAME_START";
+        case ORIGIN_OPENER_NPC:
+            return "ORIGIN_OPENER_NPC";
+        case ORIGIN_ANY_NPC:
+            return "ORIGIN_ANY_NPC";
+        case ORIGIN_SECONDARY:
+            return "ORIGIN_SECONDARY";
+        case ORIGIN_COMPUTER:
+            return "ORIGIN_COMPUTER";
 
         case mission_origin::NUM_ORIGIN:
             break;
@@ -57,25 +63,44 @@ std::string enum_to_string<mission_goal>( mission_goal data )
 {
     switch( data ) {
 
-        case MGOAL_NULL: return "MGOAL_NULL";
-        case MGOAL_GO_TO: return "MGOAL_GO_TO";
-        case MGOAL_GO_TO_TYPE: return "MGOAL_GO_TO_TYPE";
-        case MGOAL_FIND_ITEM: return "MGOAL_FIND_ITEM";
-        case MGOAL_FIND_ANY_ITEM: return "MGOAL_FIND_ANY_ITEM";
-        case MGOAL_FIND_ITEM_GROUP: return "MGOAL_FIND_ITEM_GROUP";
-        case MGOAL_FIND_MONSTER: return "MGOAL_FIND_MONSTER";
-        case MGOAL_FIND_NPC: return "MGOAL_FIND_NPC";
-        case MGOAL_ASSASSINATE: return "MGOAL_ASSASSINATE";
-        case MGOAL_KILL_MONSTER: return "MGOAL_KILL_MONSTER";
-        case MGOAL_KILL_MONSTERS: return "MGOAL_KILL_MONSTERS";
-        case MGOAL_KILL_MONSTER_TYPE: return "MGOAL_KILL_MONSTER_TYPE";
-        case MGOAL_KILL_MONSTER_SPEC: return "MGOAL_KILL_MONSTER_SPEC";
-        case MGOAL_KILL_NEMESIS: return "MGOAL_KILL_NEMESIS";
-        case MGOAL_RECRUIT_NPC: return "MGOAL_RECRUIT_NPC";
-        case MGOAL_RECRUIT_NPC_CLASS: return "MGOAL_RECRUIT_NPC_CLASS";
-        case MGOAL_COMPUTER_TOGGLE: return "MGOAL_COMPUTER_TOGGLE";
-        case MGOAL_TALK_TO_NPC: return "MGOAL_TALK_TO_NPC";
-        case MGOAL_CONDITION: return "MGOAL_CONDITION";
+        case MGOAL_NULL:
+            return "MGOAL_NULL";
+        case MGOAL_GO_TO:
+            return "MGOAL_GO_TO";
+        case MGOAL_GO_TO_TYPE:
+            return "MGOAL_GO_TO_TYPE";
+        case MGOAL_FIND_ITEM:
+            return "MGOAL_FIND_ITEM";
+        case MGOAL_FIND_ANY_ITEM:
+            return "MGOAL_FIND_ANY_ITEM";
+        case MGOAL_FIND_ITEM_GROUP:
+            return "MGOAL_FIND_ITEM_GROUP";
+        case MGOAL_FIND_MONSTER:
+            return "MGOAL_FIND_MONSTER";
+        case MGOAL_FIND_NPC:
+            return "MGOAL_FIND_NPC";
+        case MGOAL_ASSASSINATE:
+            return "MGOAL_ASSASSINATE";
+        case MGOAL_KILL_MONSTER:
+            return "MGOAL_KILL_MONSTER";
+        case MGOAL_KILL_MONSTERS:
+            return "MGOAL_KILL_MONSTERS";
+        case MGOAL_KILL_MONSTER_TYPE:
+            return "MGOAL_KILL_MONSTER_TYPE";
+        case MGOAL_KILL_MONSTER_SPEC:
+            return "MGOAL_KILL_MONSTER_SPEC";
+        case MGOAL_KILL_NEMESIS:
+            return "MGOAL_KILL_NEMESIS";
+        case MGOAL_RECRUIT_NPC:
+            return "MGOAL_RECRUIT_NPC";
+        case MGOAL_RECRUIT_NPC_CLASS:
+            return "MGOAL_RECRUIT_NPC_CLASS";
+        case MGOAL_COMPUTER_TOGGLE:
+            return "MGOAL_COMPUTER_TOGGLE";
+        case MGOAL_TALK_TO_NPC:
+            return "MGOAL_TALK_TO_NPC";
+        case MGOAL_CONDITION:
+            return "MGOAL_CONDITION";
 
         case mission_goal::NUM_MGOAL:
             break;

@@ -322,14 +322,16 @@ void handle_key_blocking_activity()
             if( !state.reader ) {
                 state.reader_is_autodrive = drive_reader;
                 state.reader = std::make_unique<a11y::screen_scope>(
-                    &ctxt, drive_reader ? "DEFAULTMODE" : "activity",
-                []( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-                    if( intent.action == "cancel" ) {
+                                   &ctxt, drive_reader ? "DEFAULTMODE" : "activity",
+                []( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                    if( intent.action == "cancel" )
+                    {
                         const avatar &player = get_avatar();
                         if( player.activity.is_interruptible_with_kb() || player.has_destination() ) {
                             return "pause";
                         }
-                    } else if( intent.action == "activate" ) {
+                    } else if( intent.action == "activate" )
+                    {
                         const avatar &driver = get_avatar();
                         if( driver.activity && driver.activity.id() == ACT_AUTODRIVE &&
                             intent.node == "control_vehicle" ) {
@@ -347,7 +349,7 @@ void handle_key_blocking_activity()
 
                             if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
                                 a11y::announce_vehicle_relative_scan( intent.node.substr(
-                                            std::string( "reader:scan:vehicle:" ).size() ) );
+                                        std::string( "reader:scan:vehicle:" ).size() ) );
                                 return std::string( "TIMEOUT" );
                             }
                             if( intent.node == "reader:coordinates" ) {
@@ -380,7 +382,7 @@ void handle_key_blocking_activity()
                 drive.summary.clear();
                 drive.focus = "world:here";
                 drive.nodes.erase( std::remove_if( drive.nodes.begin(), drive.nodes.end(),
-                []( const a11y::semantic_node &node ) {
+                []( const a11y::semantic_node & node ) {
                     return node.id != "world:here" &&
                            node.id != "activity:autodrive" &&
                            node.id != "world:status" &&
@@ -595,10 +597,10 @@ void monmove()
                                         std::chrono::steady_clock::now() - monster_started ).count();
             if( monster_ms >= 40 ) {
                 a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
-                        "kind=monster name=" + critter.name() +
-                        " elapsed_ms=" + std::to_string( monster_ms ) +
-                        " x=" + std::to_string( critter.pos_abs().x() ) +
-                        " y=" + std::to_string( critter.pos_abs().y() ) );
+                                                 "kind=monster name=" + critter.name() +
+                                                 " elapsed_ms=" + std::to_string( monster_ms ) +
+                                                 " x=" + std::to_string( critter.pos_abs().x() ) +
+                                                 " y=" + std::to_string( critter.pos_abs().y() ) );
             }
         }
 #endif
@@ -625,9 +627,9 @@ void monmove()
                                     std::chrono::steady_clock::now() - npc_started ).count();
             if( npc_ms >= 40 ) {
                 a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
-                        "kind=npc elapsed_ms=" + std::to_string( npc_ms ) +
-                        " x=" + std::to_string( guy.pos_abs().x() ) +
-                        " y=" + std::to_string( guy.pos_abs().y() ) );
+                                                 "kind=npc elapsed_ms=" + std::to_string( npc_ms ) +
+                                                 " x=" + std::to_string( guy.pos_abs().x() ) +
+                                                 " y=" + std::to_string( guy.pos_abs().y() ) );
             }
         }
 #endif
@@ -636,8 +638,8 @@ void monmove()
 #if defined(__ANDROID__)
     if( profile_ai ) {
         a11y::android::diagnostic_event( "WORLD_AI_COUNTS",
-                "monsters=" + std::to_string( active_monsters ) +
-                " npcs=" + std::to_string( active_npcs ) );
+                                         "monsters=" + std::to_string( active_monsters ) +
+                                         " npcs=" + std::to_string( active_npcs ) );
     }
 #endif
 }
@@ -905,8 +907,8 @@ bool game::do_turn()
                                                  std::chrono::steady_clock::now() - draw_started ).count();
                         a11y::android::performance_draw_sample( draw_ms );
                         a11y::android::diagnostic_event( "WORLD_DRAW_TIMING",
-                                "draw_ms=" + std::to_string( draw_ms ) +
-                                ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
+                                                         "draw_ms=" + std::to_string( draw_ms ) +
+                                                         ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
                     }
 #else
                     ui_manager::redraw();
@@ -1047,14 +1049,14 @@ bool game::do_turn()
         const auto total_ms = ms( world_sim_started, now );
         a11y::android::performance_sim_sample( total_ms );
         a11y::android::diagnostic_event( "WORLD_SIM_TIMING",
-                "total_ms=" + std::to_string( total_ms ) +
-                " before_cache_ms=" + std::to_string(
-                    ms( world_sim_started, before_monster_cache ) ) +
-                " cache_ms=" + std::to_string(
-                    ms( before_monster_cache, after_monster_cache ) ) +
-                " monsters_ms=" + std::to_string(
-                    ms( after_monster_cache, after_monster_turn ) ) +
-                " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
+                                         "total_ms=" + std::to_string( total_ms ) +
+                                         " before_cache_ms=" + std::to_string(
+                                             ms( world_sim_started, before_monster_cache ) ) +
+                                         " cache_ms=" + std::to_string(
+                                             ms( before_monster_cache, after_monster_cache ) ) +
+                                         " monsters_ms=" + std::to_string(
+                                             ms( after_monster_cache, after_monster_turn ) ) +
+                                         " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
     }
 #endif
 

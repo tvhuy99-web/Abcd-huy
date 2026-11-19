@@ -220,7 +220,7 @@ bool decode( const std::string &data, std::uint64_t signature,
                             return false;
                         }
                     } else if( !req.raw_reqs.emplace( requirement_id( id ),
-                                                     static_cast<int>( number ) ).second ) {
+                                                      static_cast<int>( number ) ).second ) {
                         return false;
                     }
                 }
@@ -354,10 +354,10 @@ void finish_sources()
     }
     cache.ready = true;
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=json parse_ms=" <<
-                              cache.json_parse_us / 1000 << " load_ms=" <<
-                              cache.json_load_us / 1000 << " hash_ms=" <<
-                              cache.hash_us / 1000 << " source_files=" <<
-                              cache.source_files;
+                               cache.json_parse_us / 1000 << " load_ms=" <<
+                               cache.json_load_us / 1000 << " hash_ms=" <<
+                               cache.hash_us / 1000 << " source_files=" <<
+                               cache.source_files;
     if( !cache.usable ) {
         DebugLog( D_WARNING, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=bypass reason=source_unreadable";
         return;
@@ -385,7 +385,7 @@ void finish_sources()
     }
     cache.entries = std::move( loaded );
     DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=ready recipes=" <<
-                              cache.entries.size() << " sources=" << cache.source_files;
+                               cache.entries.size() << " sources=" << cache.source_files;
 }
 
 const std::vector<build_reqs> *find( const std::string &recipe_id )
@@ -422,8 +422,8 @@ void persist()
         return;
     }
     DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=summary hits=" <<
-                              cache.hits << " misses=" << cache.misses <<
-                              " recipes=" << cache.entries.size();
+                               cache.hits << " misses=" << cache.misses <<
+                               " recipes=" << cache.entries.size();
     if( !cache.dirty ) {
         clear();
         return;
@@ -454,8 +454,8 @@ void persist()
         std::filesystem::remove( temp, ec );
     }
     DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=" <<
-                              ( ok ? "written" : "write_failed" ) <<
-                              " bytes=" << bytes.size();
+                               ( ok ? "written" : "write_failed" ) <<
+                               " bytes=" << bytes.size();
     clear();
 }
 }

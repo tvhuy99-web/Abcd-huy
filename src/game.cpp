@@ -628,8 +628,8 @@ void game::reload_tileset()
     try {
         closetilecontext->reinit();
         closetilecontext->load_tileset( get_option<std::string>( "TILES" ),
- false, true,
- true, false );
+                                        false, true,
+                                        true, false );
         closetilecontext->do_tile_loading_report();
 
         tilecontext = closetilecontext;
@@ -642,8 +642,8 @@ void game::reload_tileset()
                 fartilecontext->reinit();
             }
             fartilecontext->load_tileset( get_option<std::string>( "DISTANT_TILES" ),
- false, true,
- true, false );
+                                          false, true,
+                                          true, false );
             fartilecontext->do_tile_loading_report();
         } catch( const std::exception &err ) {
             popup( _( "Loading the zoomed out tileset failed: %s" ), err.what() );
@@ -652,16 +652,16 @@ void game::reload_tileset()
     try {
         portrait_tilecontext->reinit();
         portrait_tilecontext->load_tileset( get_option<std::string>( "PORTRAIT_TILES" ),
- false, true,
- true, false );
+                                            false, true,
+                                            true, false );
     } catch( const std::exception &err ) {
         popup( _( "Loading the portrait tileset failed: %s" ), err.what() );
     }
     try {
         overmap_tilecontext->reinit();
         overmap_tilecontext->load_tileset( get_option<std::string>( "OVERMAP_TILES" ),
- false, true,
- true, true );
+                                           false, true,
+                                           true, true );
         overmap_tilecontext->do_tile_loading_report();
     } catch( const std::exception &err ) {
         popup( _( "Loading the overmap tileset failed: %s" ), err.what() );
@@ -713,7 +713,7 @@ void game::setup( bool loading_saved_character )
         get_options().save();
     }
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_FASTPATH skip_verification=" <<
-                              get_option<bool>( "SKIP_VERIFICATION" );
+                               get_option<bool>( "SKIP_VERIFICATION" );
 #endif
     new_game = true;
     if( a11y::android::enabled() && !a11y::android::suspended() ) {
@@ -749,19 +749,19 @@ void game::setup( bool loading_saved_character )
     const auto mods_loaded_at = std::chrono::steady_clock::now();
     const flexbuffer_cache_stats cache_after = flexbuffer_cache::statistics();
     DebugLog( D_INFO, D_MAIN ) << "A11Y_JSON_CACHE hits=" <<
-                              ( cache_after.hits - cache_before.hits ) <<
-                              " misses=" << ( cache_after.misses - cache_before.misses ) <<
-                              " writes=" << ( cache_after.writes - cache_before.writes );
+                               ( cache_after.hits - cache_before.hits ) <<
+                               " misses=" << ( cache_after.misses - cache_before.misses ) <<
+                               " writes=" << ( cache_after.writes - cache_before.writes );
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=" <<
-                              ( loading_saved_character ? "resume" : "new" ) <<
-                              " core_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  core_data_loaded_at - setup_started_at ).count() <<
-                              " mods_check_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  mods_checked_at - core_data_loaded_at ).count() <<
-                              " mods_load_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  mods_loaded_at - mods_checked_at ).count() <<
-                              " mods_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  mods_loaded_at - core_data_loaded_at ).count();
+                               ( loading_saved_character ? "resume" : "new" ) <<
+                               " core_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   core_data_loaded_at - setup_started_at ).count() <<
+                               " mods_check_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   mods_checked_at - core_data_loaded_at ).count() <<
+                               " mods_load_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   mods_loaded_at - mods_checked_at ).count() <<
+                               " mods_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   mods_loaded_at - core_data_loaded_at ).count();
 #endif
 
     panel_manager::get_manager().init();
@@ -1148,8 +1148,8 @@ bool game::start_game()
     }
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=new phase=character_and_world_ms " <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - new_game_started_at ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - new_game_started_at ).count();
 #endif
     return true;
 }
@@ -3534,13 +3534,13 @@ void game::draw( ui_adaptor &ui )
             const auto total_ms = ms( render_started, render_sonar_ready );
             if( profile_render ) {
                 a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
-                        "mode=headless cache_ms=" + std::to_string(
-                            ms( render_started, render_cache_ready ) ) +
-                        " visibility_ms=" + std::to_string(
-                            ms( render_cache_ready, render_vision_ready ) ) +
-                        " sonar_ms=" + std::to_string(
-                            ms( render_vision_ready, render_sonar_ready ) ) +
-                        " total_ms=" + std::to_string( total_ms ) );
+                                                 "mode=headless cache_ms=" + std::to_string(
+                                                     ms( render_started, render_cache_ready ) ) +
+                                                 " visibility_ms=" + std::to_string(
+                                                     ms( render_cache_ready, render_vision_ready ) ) +
+                                                 " sonar_ms=" + std::to_string(
+                                                     ms( render_vision_ready, render_sonar_ready ) ) +
+                                                 " total_ms=" + std::to_string( total_ms ) );
             }
         }
         return;
@@ -3578,17 +3578,17 @@ void game::draw( ui_adaptor &ui )
         const auto total_ms = ms( render_started, render_finished );
         if( profile_render ) {
             a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
-                    "mode=visual cache_ms=" + std::to_string(
-                        ms( render_started, render_cache_ready ) ) +
-                    " visibility_ms=" + std::to_string(
-                        ms( render_cache_ready, render_vision_ready ) ) +
-                    " sonar_ms=" + std::to_string(
-                        ms( render_vision_ready, render_sonar_ready ) ) +
-                    " terrain_ms=" + std::to_string(
-                        ms( render_sonar_ready, render_terrain_ready ) ) +
-                    " panels_ms=" + std::to_string(
-                        ms( render_terrain_ready, render_finished ) ) +
-                    " total_ms=" + std::to_string( total_ms ) );
+                                             "mode=visual cache_ms=" + std::to_string(
+                                                 ms( render_started, render_cache_ready ) ) +
+                                             " visibility_ms=" + std::to_string(
+                                                 ms( render_cache_ready, render_vision_ready ) ) +
+                                             " sonar_ms=" + std::to_string(
+                                                 ms( render_vision_ready, render_sonar_ready ) ) +
+                                             " terrain_ms=" + std::to_string(
+                                                 ms( render_sonar_ready, render_terrain_ready ) ) +
+                                             " panels_ms=" + std::to_string(
+                                                 ms( render_terrain_ready, render_finished ) ) +
+                                             " total_ms=" + std::to_string( total_ms ) );
         }
     }
 #endif
@@ -5387,7 +5387,9 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
                 break;
             }
             const std::optional<std::vector<tripoint_bub_ms>> route = safe_route_to(
-                        u, selected, 0, []( const std::string &msg ) { add_msg( msg ); } );
+            u, selected, 0, []( const std::string & msg ) {
+                add_msg( msg );
+            } );
             if( !route || route->empty() ) {
                 continue;
             }
@@ -5774,7 +5776,7 @@ void game::examine( bool with_pickup )
         examp = choose_accessible_nearby_target(
                     with_pickup ? _( "Examine or pick up nearby objects" )
                     : _( "Examine nearby objects" ),
-        [&]( const tripoint_bub_ms &target ) {
+        [&]( const tripoint_bub_ms & target ) {
             return can_examine_at( here, target, with_pickup );
         }, _( "Nothing to examine." ) );
     } else if( with_pickup ) {
@@ -6102,13 +6104,16 @@ void game::peek()
         };
         a11y::screen_scope direction_reader( &direction_input, "peek-direction",
         [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-            if( intent.action == "focus" ) {
+            if( intent.action == "focus" )
+            {
                 return std::string( "TIMEOUT" );
             }
-            if( intent.action != "activate" ) {
+            if( intent.action != "activate" )
+            {
                 return std::nullopt;
             }
-            for( std::size_t i = 0; i < directions.size(); ++i ) {
+            for( std::size_t i = 0; i < directions.size(); ++i )
+            {
                 if( intent.node == "peek:direction:" + std::to_string( i ) ) {
                     p = directions[i].second;
                     return std::string( "CONFIRM" );
@@ -6567,7 +6572,8 @@ look_around_result game::look_around(
 
     a11y::screen_scope reader( &ctxt, "look-around",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.node == "look:return_to_map" && intent.action == "activate" ) {
+        if( intent.node == "look:return_to_map" && intent.action == "activate" )
+        {
             return "QUIT";
         }
         return a11y::registered_intent( ctxt, intent );
@@ -6632,7 +6638,7 @@ look_around_result game::look_around(
         }
 
         const auto add_selection = [&]( const tripoint_bub_ms & first,
-                                        const tripoint_bub_ms & second ) {
+        const tripoint_bub_ms & second ) {
             a11y::semantic_node selection;
             selection.id = "look:selection";
             selection.role = "status";
@@ -7182,7 +7188,7 @@ void game::unload_container( const std::optional<tripoint_bub_ms> &p )
         if( !chosen.empty() ) {
             if( a11y::enabled() ) {
                 add_msg( m_info, _( "Unloading %1$d item stacks onto %2$s. "
-                                     "Favorite items and liquids remain in their containers." ),
+                                    "Favorite items and liquids remain in their containers." ),
                          static_cast<int>( chosen.size() ),
                          a11y::describe_tile( a11y::observe_tile( *pnt ) ) );
             }
@@ -7203,7 +7209,7 @@ void game::drop_in_direction( const tripoint_bub_ms &pnt )
             total_count += entry.second;
         }
         add_msg( m_info, _( "Dropping %1$d items at %2$s. The game will confirm "
-                             "each move when it completes." ),
+                            "each move when it completes." ),
                  total_count, a11y::describe_tile( a11y::observe_tile( pnt ) ) );
     }
     u.drop( chosen, pnt );
@@ -7818,11 +7824,12 @@ void game::auto_reload_wielded( int steps_remaining )
         }
     }
     auto selected = std::find_if( choices.begin(), choices.end(),
-    []( const item::reload_option &opt ) {
+    []( const item::reload_option & opt ) {
         return static_cast<bool>( opt ) && opt.qty() > 0 && opt.target && opt.ammo;
     } );
     if( selected == choices.end() ) {
-        add_msg( m_info, _( "Automatic reload stopped. %d rounds loaded; no compatible ammunition available." ),
+        add_msg( m_info,
+                 _( "Automatic reload stopped. %d rounds loaded; no compatible ammunition available." ),
                  gun->ammo_remaining() );
         if( gun->ammo_remaining() > 0 ) {
             avatar_action::fire_wielded_weapon( u );
@@ -8256,7 +8263,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 {
 #if defined(__ANDROID__)
     const auto walk_started = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                              std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     if( u.has_flag( json_flag_PHASE_MOVEMENT ) ) {
         place_player( dest_loc );
@@ -8563,12 +8570,12 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 
 #if defined(__ANDROID__)
     const auto before_place = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                              std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     point_rel_sm submap_shift = place_player( dest_loc );
 #if defined(__ANDROID__)
     const auto after_place = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                             std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     point_rel_ms ms_shift = coords::project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift.raw();
@@ -8642,7 +8649,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 
 #if defined(__ANDROID__)
     const auto walk_finished = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                               std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               walk_finished - walk_started ).count();
     if( a11y::android::performance_profiling_enabled() ) {
@@ -8653,12 +8660,12 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
         const auto after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                   walk_finished - after_place ).count();
         a11y::android::diagnostic_event( "WORLD_WALK_PROFILE",
-                "total_ms=" + std::to_string( total_ms ) +
-                " before_place_ms=" + std::to_string( before_ms ) +
-                " place_player_ms=" + std::to_string( place_ms ) +
-                " after_place_ms=" + std::to_string( after_ms ) +
-                " shift_x=" + std::to_string( submap_shift.x() ) +
-                " shift_y=" + std::to_string( submap_shift.y() ) );
+                                         "total_ms=" + std::to_string( total_ms ) +
+                                         " before_place_ms=" + std::to_string( before_ms ) +
+                                         " place_player_ms=" + std::to_string( place_ms ) +
+                                         " after_place_ms=" + std::to_string( after_ms ) +
+                                         " shift_x=" + std::to_string( submap_shift.x() ) +
+                                         " shift_y=" + std::to_string( submap_shift.y() ) );
     }
 #endif
     return true;
@@ -8820,7 +8827,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 {
 #if defined(__ANDROID__)
     const auto place_started = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                               std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     map &here = get_map();
     const optional_vpart_position vp1 = here.veh_at( dest_loc );
@@ -8999,12 +9006,12 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
     }
 #if defined(__ANDROID__)
     const auto before_map_update = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                   std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     point_rel_sm submap_shift = update_map( u, z_level_changed );
 #if defined(__ANDROID__)
     const auto after_map_update = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                  std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
 
@@ -9071,12 +9078,12 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 
 #if defined(__ANDROID__)
     const auto before_search = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                               std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     u.search_surroundings();
 #if defined(__ANDROID__)
     const auto after_search = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                              std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     if( u.is_mounted() ) {
         here.creature_on_trap( *u.mounted_creature );
@@ -9189,7 +9196,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
     }
 #if defined(__ANDROID__)
     const auto place_finished = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               place_finished - place_started ).count();
     if( a11y::android::performance_profiling_enabled() ) {
@@ -9198,15 +9205,15 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
         const auto search_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                    after_search - before_search ).count();
         a11y::android::diagnostic_event( "WORLD_PLACE_PROFILE",
-                "total_ms=" + std::to_string( total_ms ) +
-                " update_map_ms=" + std::to_string( update_ms ) +
-                " search_ms=" + std::to_string( search_ms ) +
-                " before_update_ms=" + std::to_string(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        before_map_update - place_started ).count() ) +
-                " after_update_ms=" + std::to_string(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        place_finished - after_map_update ).count() ) );
+                                         "total_ms=" + std::to_string( total_ms ) +
+                                         " update_map_ms=" + std::to_string( update_ms ) +
+                                         " search_ms=" + std::to_string( search_ms ) +
+                                         " before_update_ms=" + std::to_string(
+                                             std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                     before_map_update - place_started ).count() ) +
+                                         " after_update_ms=" + std::to_string(
+                                             std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                     place_finished - after_map_update ).count() ) );
     }
 #endif
     return submap_shift;
@@ -11034,7 +11041,7 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
 #if defined(__ANDROID__)
     a11y::android::performance_world_shift();
     const auto shift_started = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                               std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
     // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -11048,7 +11055,7 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
 
 #if defined(__ANDROID__)
     const auto after_map_shift = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                 std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
     shift_monsters( { shift, 0 } );
@@ -11086,7 +11093,7 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
 
 #if defined(__ANDROID__)
     const auto after_npc_load = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
     for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; ++zlev ) {
@@ -11095,7 +11102,7 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     here.build_map_cache( here.get_abs_sub().z() );
 #if defined(__ANDROID__)
     const auto after_cache_build = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                   std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
 
@@ -11103,14 +11110,14 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     here.spawn_monsters( false );
 #if defined(__ANDROID__)
     const auto after_monster_spawn = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                     std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
 
     update_overmap_seen();
 #if defined(__ANDROID__)
     const auto shift_finished = a11y::android::performance_profiling_enabled() ?
-                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+                                std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               shift_finished - shift_started ).count();
     if( a11y::android::performance_profiling_enabled() ) {
@@ -11118,12 +11125,12 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
         a11y::android::diagnostic_event( "WORLD_SHIFT_PROFILE",
-                "total_ms=" + std::to_string( total_ms ) +
-                " map_shift_ms=" + std::to_string( ms( shift_started, after_map_shift ) ) +
-                " npcs_ms=" + std::to_string( ms( after_map_shift, after_npc_load ) ) +
-                " cache_ms=" + std::to_string( ms( after_npc_load, after_cache_build ) ) +
-                " spawn_ms=" + std::to_string( ms( after_cache_build, after_monster_spawn ) ) +
-                " reveal_ms=" + std::to_string( ms( after_monster_spawn, shift_finished ) ) );
+                                         "total_ms=" + std::to_string( total_ms ) +
+                                         " map_shift_ms=" + std::to_string( ms( shift_started, after_map_shift ) ) +
+                                         " npcs_ms=" + std::to_string( ms( after_map_shift, after_npc_load ) ) +
+                                         " cache_ms=" + std::to_string( ms( after_npc_load, after_cache_build ) ) +
+                                         " spawn_ms=" + std::to_string( ms( after_cache_build, after_monster_spawn ) ) +
+                                         " reveal_ms=" + std::to_string( ms( after_monster_spawn, shift_finished ) ) );
     }
 #endif
 
@@ -11316,7 +11323,7 @@ void game::perhaps_add_random_npc( bool ignore_spawn_timers_and_rates )
 }
 
 
-void game::display_om_pathfinding_progress( size_t , size_t )
+void game::display_om_pathfinding_progress( size_t, size_t )
 {
     ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
     static_popup pop;

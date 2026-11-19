@@ -32,16 +32,25 @@ int angle_to_dir4( const units::angle direction )
     // NOLINTBEGIN(bugprone-branch-clone)
     switch( dir8 ) {
 
-        case 0:  return 0;
-        case 1:  return 0;
-        case 2:  return 1;
-        case 3:  return 2;
-        case 4:  return 2;
-        case 5:  return 2;
-        case 6:  return 3;
-        case 7:  return 0;
+        case 0:
+            return 0;
+        case 1:
+            return 0;
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 2;
+        case 5:
+            return 2;
+        case 6:
+            return 3;
+        case 7:
+            return 0;
 
-        default: return 0;
+        default:
+            return 0;
 
     }
     // NOLINTEND(bugprone-branch-clone)
@@ -58,32 +67,57 @@ int angle_to_dir8( const units::angle direction )
     // NOLINTBEGIN(bugprone-branch-clone)
     switch( snap ) {
 
-        case 22: return 0;
-        case 23: return 0;
-        case 24: return 0;
-        case 1:  return 0;
-        case 2:  return 0;
-        case 3:  return 1;
-        case 4:  return 2;
-        case 5:  return 2;
-        case 6:  return 2;
-        case 7:  return 2;
-        case 8:  return 2;
-        case 9:  return 3;
-        case 10: return 4;
-        case 11: return 4;
-        case 12: return 4;
-        case 13: return 4;
-        case 14: return 4;
-        case 15: return 5;
-        case 16: return 6;
-        case 17: return 6;
-        case 18: return 6;
-        case 19: return 6;
-        case 20: return 6;
-        case 21: return 7;
+        case 22:
+            return 0;
+        case 23:
+            return 0;
+        case 24:
+            return 0;
+        case 1:
+            return 0;
+        case 2:
+            return 0;
+        case 3:
+            return 1;
+        case 4:
+            return 2;
+        case 5:
+            return 2;
+        case 6:
+            return 2;
+        case 7:
+            return 2;
+        case 8:
+            return 2;
+        case 9:
+            return 3;
+        case 10:
+            return 4;
+        case 11:
+            return 4;
+        case 12:
+            return 4;
+        case 13:
+            return 4;
+        case 14:
+            return 4;
+        case 15:
+            return 5;
+        case 16:
+            return 6;
+        case 17:
+            return 6;
+        case 18:
+            return 6;
+        case 19:
+            return 6;
+        case 20:
+            return 6;
+        case 21:
+            return 7;
 
-        default: return 0;
+        default:
+            return 0;
 
     }
     // NOLINTEND(bugprone-branch-clone)

@@ -32,14 +32,16 @@ TEST_CASE( "vehicle_driving_uses_shared_tile_classifier", "[vehicle][a11y][autod
     const vehicle_autodrive::mobility_profile road{ true, false, false, true };
     const vehicle_autodrive::mobility_profile boat{ false, true, false, true };
     const vehicle_autodrive::mobility_profile rotor{ false, false, true, true };
-    const auto classify = [&]( const vehicle_autodrive::mobility_profile &profile ) {
+    const auto classify = [&]( const vehicle_autodrive::mobility_profile & profile ) {
         return vehicle_autodrive::classify_tile( *car, here, target, driver, profile );
     };
     using vehicle_autodrive::tile_blocker;
 
     SECTION( "normal_pavement_sidewalks_and_dirt_are_not_obstacles" ) {
-        for( const char *terrain : { "t_pavement", "t_pavement_y", "t_zebra",
-                                     "t_sidewalk", "t_dirt" } ) {
+        for( const char *terrain : {
+                 "t_pavement", "t_pavement_y", "t_zebra",
+                 "t_sidewalk", "t_dirt"
+             } ) {
             REQUIRE( here.ter_set( target, ter_str_id( terrain ).id() ) );
             CHECK( classify( road ) == tile_blocker::none );
         }

@@ -178,14 +178,18 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
             const Creature *creature = get_creature_tracker().creature_at( position, true );
             if( creature != nullptr && creature != &viewer ) {
                 const std::string perception = describe_special_perception( viewer, *creature, position );
-                if( !perception.empty() ) { result.special_perceptions.push_back( perception ); }
+                if( !perception.empty() ) {
+                    result.special_perceptions.push_back( perception );
+                }
             }
         }
         return result;
     }
     result.source = observation_source::visible;
     result.terrain = here.tername( position );
-    if( here.has_furn( position ) ) { result.furniture = here.furnname( position ); }
+    if( here.has_furn( position ) ) {
+        result.furniture = here.furnname( position );
+    }
     result.route_feature = here.has_flag( ter_furn_flag::TFLAG_GOES_UP, position ) ||
                            here.has_flag( ter_furn_flag::TFLAG_GOES_DOWN, position ) ||
                            here.has_flag( ter_furn_flag::TFLAG_DOOR, position );
@@ -222,7 +226,9 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
         result.seen_creatures.push_back( creature->disp_name() );
     } else if( creature != nullptr && creature != &viewer ) {
         const std::string perception = describe_special_perception( viewer, *creature, position );
-        if( !perception.empty() ) { result.special_perceptions.push_back( perception ); }
+        if( !perception.empty() ) {
+            result.special_perceptions.push_back( perception );
+        }
     }
     const optional_vpart_position vehicle_part = here.veh_at( position );
     if( vehicle_part ) {
@@ -234,12 +240,16 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
                                   static_cast<int>( vehicle_part->part_index() ) ).name( false );
     }
     if( here.sees_some_items( position, viewer ) &&
-        !( here.has_flag( ter_furn_flag::TFLAG_CONTAINER, position ) && !here.could_see_items( position, viewer ) ) &&
+        !( here.has_flag( ter_furn_flag::TFLAG_CONTAINER, position ) &&
+           !here.could_see_items( position, viewer ) ) &&
         !viewer.has_effect_with_flag( json_flag_BLIND ) && !viewer.worn_with_flag( flag_BLIND ) ) {
         std::map<std::string, int> names;
-        for( const item &value : here.i_at( position ) ) { add_known_items( names, value ); }
+        for( const item &value : here.i_at( position ) ) {
+            add_known_items( names, value );
+        }
         for( const auto &name : names ) {
-            result.seen_items.push_back( name.second > 1 ? string_format( _( "%s [%d]" ), name.first, name.second ) : name.first );
+            result.seen_items.push_back( name.second > 1 ? string_format( _( "%s [%d]" ), name.first,
+                                         name.second ) : name.first );
         }
     }
     return result;
@@ -257,7 +267,7 @@ directional_sonar_result scan_directional_sonar( const tripoint_bub_ms &origin )
     for( int direction = 0; direction < 8; ++direction ) {
         for( int distance = 1; distance <= 16; ++distance ) {
             const tripoint_bub_ms target = origin + tripoint_rel_ms(
-                    dx[direction] * distance, dy[direction] * distance, 0 );
+                                               dx[direction] * distance, dy[direction] * distance, 0 );
             if( !here.inbounds( target ) ) {
                 break;
             }
@@ -319,20 +329,36 @@ std::string describe_tile( const tile_observation &observation )
 
             result += ". " + std::string( _( "Impassable" ) );
         }
-        for( const auto &field : observation.fields ) { result += ". " + field; }
-        for( const auto &trap : observation.known_traps ) { result += ". " + string_format( _( "Trap: %s" ), trap ); }
-        for( const auto &creature : observation.seen_creatures ) { result += ". " + creature; }
-        for( const auto &perception : observation.special_perceptions ) { result += ". " + perception; }
-        if( !observation.vehicle.empty() ) { result += ". " + string_format( _( "Vehicle: %s" ), observation.vehicle ); }
-        if( !observation.vehicle_part.empty() ) { result += ". " + string_format( _( "Vehicle part: %s" ), observation.vehicle_part ); }
-        for( const auto &item : observation.seen_items ) { result += ". " + item; }
+        for( const auto &field : observation.fields ) {
+            result += ". " + field;
+        }
+        for( const auto &trap : observation.known_traps ) {
+            result += ". " + string_format( _( "Trap: %s" ), trap );
+        }
+        for( const auto &creature : observation.seen_creatures ) {
+            result += ". " + creature;
+        }
+        for( const auto &perception : observation.special_perceptions ) {
+            result += ". " + perception;
+        }
+        if( !observation.vehicle.empty() ) {
+            result += ". " + string_format( _( "Vehicle: %s" ), observation.vehicle );
+        }
+        if( !observation.vehicle_part.empty() ) {
+            result += ". " + string_format( _( "Vehicle part: %s" ), observation.vehicle_part );
+        }
+        for( const auto &item : observation.seen_items ) {
+            result += ". " + item;
+        }
     }
     if( observation.source == observation_source::unknown ) {
-        for( const auto &perception : observation.special_perceptions ) { result += ". " + perception; }
+        for( const auto &perception : observation.special_perceptions ) {
+            result += ". " + perception;
+        }
     }
     if( !observation.heard_marker.empty() ) {
         result += ". " + string_format( _( "Heard near here: %s. Position approximate." ),
-                                         observation.heard_marker );
+                                        observation.heard_marker );
     }
     return remove_color_tags( result );
 }

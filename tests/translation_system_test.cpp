@@ -89,7 +89,8 @@ TEST_CASE( "TranslationManager_translate_benchmark", "[.][benchmark][translation
     TranslationManager manager;
 
 
-    REQUIRE( file_exist( std::filesystem::u8path( "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" ) ) );
+    REQUIRE( file_exist(
+                 std::filesystem::u8path( "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" ) ) );
     manager.LoadDocuments( std::vector<std::string> {"./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo"} );
     REQUIRE( strcmp( manager.Translate( "battery" ), "battery" ) != 0 );
     BENCHMARK( "English fixture" ) {
@@ -97,7 +98,8 @@ TEST_CASE( "TranslationManager_translate_benchmark", "[.][benchmark][translation
     };
 
 
-    REQUIRE( file_exist( std::filesystem::u8path( "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" ) ) );
+    REQUIRE( file_exist(
+                 std::filesystem::u8path( "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" ) ) );
     manager.LoadDocuments( std::vector<std::string> {"./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo"} );
     REQUIRE( strcmp( manager.Translate( "battery" ), "battery" ) != 0 );
     BENCHMARK( "English fixture reload" ) {

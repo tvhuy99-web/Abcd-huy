@@ -205,113 +205,220 @@ std::string enum_to_string<debug_menu::debug_menu_index>( debug_menu::debug_menu
 {
     switch( v ) {
 
-        case debug_menu::debug_menu_index::WISH: return "WISH";
-        case debug_menu::debug_menu_index::SPAWN_ITEM_GROUP: return "SPAWN_ITEM_GROUP";
-        case debug_menu::debug_menu_index::SHORT_TELEPORT: return "SHORT_TELEPORT";
-        case debug_menu::debug_menu_index::LONG_TELEPORT: return "LONG_TELEPORT";
-        case debug_menu::debug_menu_index::SPAWN_NPC: return "SPAWN_NPC";
-        case debug_menu::debug_menu_index::SPAWN_NPC_FOLLOWER: return "SPAWN_NPC_FOLLOWER";
-        case debug_menu::debug_menu_index::SPAWN_NAMED_NPC: return "SPAWN_NAMED_NPC";
-        case debug_menu::debug_menu_index::SPAWN_OM_NPC: return "SPAWN_OM_NPC";
-        case debug_menu::debug_menu_index::SPAWN_MON: return "SPAWN_MON";
-        case debug_menu::debug_menu_index::GAME_STATE: return "GAME_STATE";
-        case debug_menu::debug_menu_index::KILL_AREA: return "KILL_AREA";
-        case debug_menu::debug_menu_index::KILL_NPCS: return "KILL_NPCS";
-        case debug_menu::debug_menu_index::MUTATE: return "MUTATE";
-        case debug_menu::debug_menu_index::SPAWN_VEHICLE: return "SPAWN_VEHICLE";
-        case debug_menu::debug_menu_index::CHANGE_SKILLS: return "CHANGE_SKILLS";
-        case debug_menu::debug_menu_index::CHANGE_THEORY: return "CHANGE_THEORY";
-        case debug_menu::debug_menu_index::LEARN_MA: return "LEARN_MA";
-        case debug_menu::debug_menu_index::UNLOCK_RECIPES: return "UNLOCK_RECIPES";
-        case debug_menu::debug_menu_index::FORGET_ALL_RECIPES: return "FORGET_ALL_RECIPES";
-        case debug_menu::debug_menu_index::FORGET_ALL_ITEMS: return "FORGET_ALL_ITEMS";
-        case debug_menu::debug_menu_index::EDIT_PLAYER: return "EDIT_PLAYER";
-        case debug_menu::debug_menu_index::EDIT_MONSTER: return "EDIT_MONSTER";
-        case debug_menu::debug_menu_index::CONTROL_NPC: return "CONTROL_NPC";
-        case debug_menu::debug_menu_index::SPAWN_ARTIFACT: return "SPAWN_ARTIFACT";
-        case debug_menu::debug_menu_index::SPAWN_CLAIRVOYANCE: return "SPAWN_CLAIRVOYANCE";
-        case debug_menu::debug_menu_index::SPAWN_HORDE: return "SPAWN_HORDE";
-        case debug_menu::debug_menu_index::MAP_EDITOR: return "MAP_EDITOR";
-        case debug_menu::debug_menu_index::PALETTE_VIEWER: return "PALETTE_VIEWER";
-        case debug_menu::debug_menu_index::CHANGE_WEATHER: return "CHANGE_WEATHER";
-        case debug_menu::debug_menu_index::WIND_DIRECTION: return "WIND_DIRECTION";
-        case debug_menu::debug_menu_index::WIND_SPEED: return "WIND_SPEED";
-        case debug_menu::debug_menu_index::GEN_SOUND: return "GEN_SOUND";
-        case debug_menu::debug_menu_index::KILL_MONS: return "KILL_MONS";
-        case debug_menu::debug_menu_index::DISPLAY_HORDES: return "DISPLAY_HORDES";
-        case debug_menu::debug_menu_index::TEST_IT_GROUP: return "TEST_IT_GROUP";
-        case debug_menu::debug_menu_index::DAMAGE_SELF: return "DAMAGE_SELF";
-        case debug_menu::debug_menu_index::BLEED_SELF: return "BLEED_SELF";
-        case debug_menu::debug_menu_index::SHOW_SOUND: return "SHOW_SOUND";
-        case debug_menu::debug_menu_index::DISPLAY_WEATHER: return "DISPLAY_WEATHER";
-        case debug_menu::debug_menu_index::DISPLAY_SCENTS: return "DISPLAY_SCENTS";
-        case debug_menu::debug_menu_index::CHANGE_TIME: return "CHANGE_TIME";
-        case debug_menu::debug_menu_index::FORCE_TEMP: return "FORCE_TEMP";
-        case debug_menu::debug_menu_index::SET_AUTOMOVE: return "SET_AUTOMOVE";
-        case debug_menu::debug_menu_index::SHOW_MUT_CAT: return "SHOW_MUT_CAT";
-        case debug_menu::debug_menu_index::OM_EDITOR: return "OM_EDITOR";
-        case debug_menu::debug_menu_index::BENCHMARK: return "BENCHMARK";
-        case debug_menu::debug_menu_index::OM_TELEPORT: return "OM_TELEPORT";
-        case debug_menu::debug_menu_index::OM_TELEPORT_COORDINATES: return "OM_TELEPORT_COORDINATES";
-        case debug_menu::debug_menu_index::OM_TELEPORT_CITY: return "OM_TELEPORT_CITY";
-        case debug_menu::debug_menu_index::PRINT_OVERMAPS: return "PRINT_OVERMAP";
-        case debug_menu::debug_menu_index::PRINT_REGION_LAYOUT: return "PRINT_REGION_LAYOUT";
-        case debug_menu::debug_menu_index::TRAIT_GROUP: return "TRAIT_GROUP";
-        case debug_menu::debug_menu_index::ENABLE_ACHIEVEMENTS: return "ENABLE_ACHIEVEMENTS";
-        case debug_menu::debug_menu_index::UNLOCK_ALL: return "UNLOCK_ALL";
-        case debug_menu::debug_menu_index::SHOW_MSG: return "SHOW_MSG";
-        case debug_menu::debug_menu_index::CRASH_GAME: return "CRASH_GAME";
-        case debug_menu::debug_menu_index::TEST_END_SCREEN: return "TEST_END_SCREEN";
-        case debug_menu::debug_menu_index::MAP_EXTRA: return "MAP_EXTRA";
-        case debug_menu::debug_menu_index::DISPLAY_NPC_PATH: return "DISPLAY_NPC_PATH";
-        case debug_menu::debug_menu_index::DISPLAY_NPC_ATTACK: return "DISPLAY_NPC_ATTACK";
-        case debug_menu::debug_menu_index::PRINT_FACTION_INFO: return "PRINT_FACTION_INFO";
-        case debug_menu::debug_menu_index::PRINT_NPC_MAGIC: return "PRINT_NPC_MAGIC";
-        case debug_menu::debug_menu_index::QUIT_NOSAVE: return "QUIT_NOSAVE";
-        case debug_menu::debug_menu_index::QUICKLOAD: return "QUICKLOAD";
-        case debug_menu::debug_menu_index::TEST_WEATHER: return "TEST_WEATHER";
-        case debug_menu::debug_menu_index::WRITE_GLOBAL_EOCS: return "WRITE_GLOBAL_EOCS";
-        case debug_menu::debug_menu_index::WRITE_GLOBAL_VARS: return "WRITE_GLOBAL_VARS";
-        case debug_menu::debug_menu_index::EDIT_GLOBAL_VARS: return "SET_GLOBAL_VARS";
-        case debug_menu::debug_menu_index::WRITE_TIMED_EVENTS: return "WRITE_TIMED_EVENTS";
-        case debug_menu::debug_menu_index::SAVE_SCREENSHOT: return "SAVE_SCREENSHOT";
-        case debug_menu::debug_menu_index::GAME_REPORT: return "GAME_REPORT";
-        case debug_menu::debug_menu_index::GAME_MIN_ARCHIVE: return "GAME_MIN_ARCHIVE";
-        case debug_menu::debug_menu_index::DISPLAY_SCENTS_LOCAL: return "DISPLAY_SCENTS_LOCAL";
-        case debug_menu::debug_menu_index::DISPLAY_SCENTS_TYPE_LOCAL: return "DISPLAY_SCENTS_TYPE_LOCAL";
-        case debug_menu::debug_menu_index::DISPLAY_TEMP: return "DISPLAY_TEMP";
-        case debug_menu::debug_menu_index::DISPLAY_SNOW_DEPTH: return "DISPLAY_SNOW_DEPTH";
-        case debug_menu::debug_menu_index::DISPLAY_VEHICLE_AI: return "DISPLAY_VEHICLE_AI";
-        case debug_menu::debug_menu_index::DISPLAY_VISIBILITY: return "DISPLAY_VISIBILITY";
-        case debug_menu::debug_menu_index::DISPLAY_LIGHTING: return "DISPLAY_LIGHTING";
-        case debug_menu::debug_menu_index::DISPLAY_TRANSPARENCY: return "DISPLAY_TRANSPARENCY";
-        case debug_menu::debug_menu_index::DISPLAY_RADIATION: return "DISPLAY_RADIATION";
-        case debug_menu::debug_menu_index::HOUR_TIMER: return "HOUR_TIMER";
-        case debug_menu::debug_menu_index::CHANGE_SPELLS: return "CHANGE_SPELLS";
-        case debug_menu::debug_menu_index::TEST_MAP_EXTRA_DISTRIBUTION: return "TEST_MAP_EXTRA_DISTRIBUTION";
-        case debug_menu::debug_menu_index::NESTED_MAPGEN: return "NESTED_MAPGEN";
-        case debug_menu::debug_menu_index::VEHICLE_EXPORT: return "VEHICLE_EXPORT";
-        case debug_menu::debug_menu_index::VEHICLE_DELETE: return "VEHICLE_DELETE";
-        case debug_menu::debug_menu_index::VEHICLE_BATTERY_CHARGE: return "VEHICLE_BATTERY_CHARGE";
-        case debug_menu::debug_menu_index::GENERATE_EFFECT_LIST: return "GENERATE_EFFECT_LIST";
-        case debug_menu::debug_menu_index::ACTIVATE_EOC: return "ACTIVATE_EOC";
-        case debug_menu::debug_menu_index::IMPORT_FOLLOWER: return "IMPORT_FOLLOWER";
-        case debug_menu::debug_menu_index::EXPORT_FOLLOWER: return "EXPORT_FOLLOWER";
-        case debug_menu::debug_menu_index::EXPORT_SELF: return "EXPORT_SELF";
-		case debug_menu::debug_menu_index::QUICK_SETUP: return "QUICK_SETUP";
-		case debug_menu::debug_menu_index::QUICK_SETUP_FLAG_DIRTY: return "QUICK_SETUP_FLAG_DIRTY";
-		case debug_menu::debug_menu_index::QUICK_SETUP_CLEAR_MAP: return "QUICK_SETUP_CLEAR_MAP";
-		case debug_menu::debug_menu_index::TOGGLE_SETUP_MUTATION: return "TOGGLE_SETUP_MUTATION";
-		case debug_menu::debug_menu_index::NORMALIZE_BODY_STAT: return "NORMALIZE_BODY_STAT";
-		case debug_menu::debug_menu_index::SIX_MILLION_DOLLAR_SURVIVOR: return "SIX_MILLION_DOLLAR_SURVIVOR";
-		case debug_menu::debug_menu_index::EDIT_FACTION: return "EDIT_FACTION";
-		case debug_menu::debug_menu_index::WRITE_CITY_LIST: return "WRITE_CITY_LIST";
-        case debug_menu::debug_menu_index::TALK_TOPIC: return "TALK_TOPIC";
-        case debug_menu::debug_menu_index::IMGUI_DEMO: return "IMGUI_DEMO";
-        case debug_menu::debug_menu_index::VEHICLE_EFFECTS: return "VEHICLE_EFFECTS";
-        case debug_menu::debug_menu_index::WISHPROFICIENCY: return "WISHPROFICIENCY";
-        case debug_menu::debug_menu_index::RELOAD_GPU_SHADERS: return "RELOAD_GPU_SHADERS";
-        case debug_menu::debug_menu_index::SHADER_TINT_SELF_TEST: return "SHADER_TINT_SELF_TEST";
+        case debug_menu::debug_menu_index::WISH:
+            return "WISH";
+        case debug_menu::debug_menu_index::SPAWN_ITEM_GROUP:
+            return "SPAWN_ITEM_GROUP";
+        case debug_menu::debug_menu_index::SHORT_TELEPORT:
+            return "SHORT_TELEPORT";
+        case debug_menu::debug_menu_index::LONG_TELEPORT:
+            return "LONG_TELEPORT";
+        case debug_menu::debug_menu_index::SPAWN_NPC:
+            return "SPAWN_NPC";
+        case debug_menu::debug_menu_index::SPAWN_NPC_FOLLOWER:
+            return "SPAWN_NPC_FOLLOWER";
+        case debug_menu::debug_menu_index::SPAWN_NAMED_NPC:
+            return "SPAWN_NAMED_NPC";
+        case debug_menu::debug_menu_index::SPAWN_OM_NPC:
+            return "SPAWN_OM_NPC";
+        case debug_menu::debug_menu_index::SPAWN_MON:
+            return "SPAWN_MON";
+        case debug_menu::debug_menu_index::GAME_STATE:
+            return "GAME_STATE";
+        case debug_menu::debug_menu_index::KILL_AREA:
+            return "KILL_AREA";
+        case debug_menu::debug_menu_index::KILL_NPCS:
+            return "KILL_NPCS";
+        case debug_menu::debug_menu_index::MUTATE:
+            return "MUTATE";
+        case debug_menu::debug_menu_index::SPAWN_VEHICLE:
+            return "SPAWN_VEHICLE";
+        case debug_menu::debug_menu_index::CHANGE_SKILLS:
+            return "CHANGE_SKILLS";
+        case debug_menu::debug_menu_index::CHANGE_THEORY:
+            return "CHANGE_THEORY";
+        case debug_menu::debug_menu_index::LEARN_MA:
+            return "LEARN_MA";
+        case debug_menu::debug_menu_index::UNLOCK_RECIPES:
+            return "UNLOCK_RECIPES";
+        case debug_menu::debug_menu_index::FORGET_ALL_RECIPES:
+            return "FORGET_ALL_RECIPES";
+        case debug_menu::debug_menu_index::FORGET_ALL_ITEMS:
+            return "FORGET_ALL_ITEMS";
+        case debug_menu::debug_menu_index::EDIT_PLAYER:
+            return "EDIT_PLAYER";
+        case debug_menu::debug_menu_index::EDIT_MONSTER:
+            return "EDIT_MONSTER";
+        case debug_menu::debug_menu_index::CONTROL_NPC:
+            return "CONTROL_NPC";
+        case debug_menu::debug_menu_index::SPAWN_ARTIFACT:
+            return "SPAWN_ARTIFACT";
+        case debug_menu::debug_menu_index::SPAWN_CLAIRVOYANCE:
+            return "SPAWN_CLAIRVOYANCE";
+        case debug_menu::debug_menu_index::SPAWN_HORDE:
+            return "SPAWN_HORDE";
+        case debug_menu::debug_menu_index::MAP_EDITOR:
+            return "MAP_EDITOR";
+        case debug_menu::debug_menu_index::PALETTE_VIEWER:
+            return "PALETTE_VIEWER";
+        case debug_menu::debug_menu_index::CHANGE_WEATHER:
+            return "CHANGE_WEATHER";
+        case debug_menu::debug_menu_index::WIND_DIRECTION:
+            return "WIND_DIRECTION";
+        case debug_menu::debug_menu_index::WIND_SPEED:
+            return "WIND_SPEED";
+        case debug_menu::debug_menu_index::GEN_SOUND:
+            return "GEN_SOUND";
+        case debug_menu::debug_menu_index::KILL_MONS:
+            return "KILL_MONS";
+        case debug_menu::debug_menu_index::DISPLAY_HORDES:
+            return "DISPLAY_HORDES";
+        case debug_menu::debug_menu_index::TEST_IT_GROUP:
+            return "TEST_IT_GROUP";
+        case debug_menu::debug_menu_index::DAMAGE_SELF:
+            return "DAMAGE_SELF";
+        case debug_menu::debug_menu_index::BLEED_SELF:
+            return "BLEED_SELF";
+        case debug_menu::debug_menu_index::SHOW_SOUND:
+            return "SHOW_SOUND";
+        case debug_menu::debug_menu_index::DISPLAY_WEATHER:
+            return "DISPLAY_WEATHER";
+        case debug_menu::debug_menu_index::DISPLAY_SCENTS:
+            return "DISPLAY_SCENTS";
+        case debug_menu::debug_menu_index::CHANGE_TIME:
+            return "CHANGE_TIME";
+        case debug_menu::debug_menu_index::FORCE_TEMP:
+            return "FORCE_TEMP";
+        case debug_menu::debug_menu_index::SET_AUTOMOVE:
+            return "SET_AUTOMOVE";
+        case debug_menu::debug_menu_index::SHOW_MUT_CAT:
+            return "SHOW_MUT_CAT";
+        case debug_menu::debug_menu_index::OM_EDITOR:
+            return "OM_EDITOR";
+        case debug_menu::debug_menu_index::BENCHMARK:
+            return "BENCHMARK";
+        case debug_menu::debug_menu_index::OM_TELEPORT:
+            return "OM_TELEPORT";
+        case debug_menu::debug_menu_index::OM_TELEPORT_COORDINATES:
+            return "OM_TELEPORT_COORDINATES";
+        case debug_menu::debug_menu_index::OM_TELEPORT_CITY:
+            return "OM_TELEPORT_CITY";
+        case debug_menu::debug_menu_index::PRINT_OVERMAPS:
+            return "PRINT_OVERMAP";
+        case debug_menu::debug_menu_index::PRINT_REGION_LAYOUT:
+            return "PRINT_REGION_LAYOUT";
+        case debug_menu::debug_menu_index::TRAIT_GROUP:
+            return "TRAIT_GROUP";
+        case debug_menu::debug_menu_index::ENABLE_ACHIEVEMENTS:
+            return "ENABLE_ACHIEVEMENTS";
+        case debug_menu::debug_menu_index::UNLOCK_ALL:
+            return "UNLOCK_ALL";
+        case debug_menu::debug_menu_index::SHOW_MSG:
+            return "SHOW_MSG";
+        case debug_menu::debug_menu_index::CRASH_GAME:
+            return "CRASH_GAME";
+        case debug_menu::debug_menu_index::TEST_END_SCREEN:
+            return "TEST_END_SCREEN";
+        case debug_menu::debug_menu_index::MAP_EXTRA:
+            return "MAP_EXTRA";
+        case debug_menu::debug_menu_index::DISPLAY_NPC_PATH:
+            return "DISPLAY_NPC_PATH";
+        case debug_menu::debug_menu_index::DISPLAY_NPC_ATTACK:
+            return "DISPLAY_NPC_ATTACK";
+        case debug_menu::debug_menu_index::PRINT_FACTION_INFO:
+            return "PRINT_FACTION_INFO";
+        case debug_menu::debug_menu_index::PRINT_NPC_MAGIC:
+            return "PRINT_NPC_MAGIC";
+        case debug_menu::debug_menu_index::QUIT_NOSAVE:
+            return "QUIT_NOSAVE";
+        case debug_menu::debug_menu_index::QUICKLOAD:
+            return "QUICKLOAD";
+        case debug_menu::debug_menu_index::TEST_WEATHER:
+            return "TEST_WEATHER";
+        case debug_menu::debug_menu_index::WRITE_GLOBAL_EOCS:
+            return "WRITE_GLOBAL_EOCS";
+        case debug_menu::debug_menu_index::WRITE_GLOBAL_VARS:
+            return "WRITE_GLOBAL_VARS";
+        case debug_menu::debug_menu_index::EDIT_GLOBAL_VARS:
+            return "SET_GLOBAL_VARS";
+        case debug_menu::debug_menu_index::WRITE_TIMED_EVENTS:
+            return "WRITE_TIMED_EVENTS";
+        case debug_menu::debug_menu_index::SAVE_SCREENSHOT:
+            return "SAVE_SCREENSHOT";
+        case debug_menu::debug_menu_index::GAME_REPORT:
+            return "GAME_REPORT";
+        case debug_menu::debug_menu_index::GAME_MIN_ARCHIVE:
+            return "GAME_MIN_ARCHIVE";
+        case debug_menu::debug_menu_index::DISPLAY_SCENTS_LOCAL:
+            return "DISPLAY_SCENTS_LOCAL";
+        case debug_menu::debug_menu_index::DISPLAY_SCENTS_TYPE_LOCAL:
+            return "DISPLAY_SCENTS_TYPE_LOCAL";
+        case debug_menu::debug_menu_index::DISPLAY_TEMP:
+            return "DISPLAY_TEMP";
+        case debug_menu::debug_menu_index::DISPLAY_SNOW_DEPTH:
+            return "DISPLAY_SNOW_DEPTH";
+        case debug_menu::debug_menu_index::DISPLAY_VEHICLE_AI:
+            return "DISPLAY_VEHICLE_AI";
+        case debug_menu::debug_menu_index::DISPLAY_VISIBILITY:
+            return "DISPLAY_VISIBILITY";
+        case debug_menu::debug_menu_index::DISPLAY_LIGHTING:
+            return "DISPLAY_LIGHTING";
+        case debug_menu::debug_menu_index::DISPLAY_TRANSPARENCY:
+            return "DISPLAY_TRANSPARENCY";
+        case debug_menu::debug_menu_index::DISPLAY_RADIATION:
+            return "DISPLAY_RADIATION";
+        case debug_menu::debug_menu_index::HOUR_TIMER:
+            return "HOUR_TIMER";
+        case debug_menu::debug_menu_index::CHANGE_SPELLS:
+            return "CHANGE_SPELLS";
+        case debug_menu::debug_menu_index::TEST_MAP_EXTRA_DISTRIBUTION:
+            return "TEST_MAP_EXTRA_DISTRIBUTION";
+        case debug_menu::debug_menu_index::NESTED_MAPGEN:
+            return "NESTED_MAPGEN";
+        case debug_menu::debug_menu_index::VEHICLE_EXPORT:
+            return "VEHICLE_EXPORT";
+        case debug_menu::debug_menu_index::VEHICLE_DELETE:
+            return "VEHICLE_DELETE";
+        case debug_menu::debug_menu_index::VEHICLE_BATTERY_CHARGE:
+            return "VEHICLE_BATTERY_CHARGE";
+        case debug_menu::debug_menu_index::GENERATE_EFFECT_LIST:
+            return "GENERATE_EFFECT_LIST";
+        case debug_menu::debug_menu_index::ACTIVATE_EOC:
+            return "ACTIVATE_EOC";
+        case debug_menu::debug_menu_index::IMPORT_FOLLOWER:
+            return "IMPORT_FOLLOWER";
+        case debug_menu::debug_menu_index::EXPORT_FOLLOWER:
+            return "EXPORT_FOLLOWER";
+        case debug_menu::debug_menu_index::EXPORT_SELF:
+            return "EXPORT_SELF";
+        case debug_menu::debug_menu_index::QUICK_SETUP:
+            return "QUICK_SETUP";
+        case debug_menu::debug_menu_index::QUICK_SETUP_FLAG_DIRTY:
+            return "QUICK_SETUP_FLAG_DIRTY";
+        case debug_menu::debug_menu_index::QUICK_SETUP_CLEAR_MAP:
+            return "QUICK_SETUP_CLEAR_MAP";
+        case debug_menu::debug_menu_index::TOGGLE_SETUP_MUTATION:
+            return "TOGGLE_SETUP_MUTATION";
+        case debug_menu::debug_menu_index::NORMALIZE_BODY_STAT:
+            return "NORMALIZE_BODY_STAT";
+        case debug_menu::debug_menu_index::SIX_MILLION_DOLLAR_SURVIVOR:
+            return "SIX_MILLION_DOLLAR_SURVIVOR";
+        case debug_menu::debug_menu_index::EDIT_FACTION:
+            return "EDIT_FACTION";
+        case debug_menu::debug_menu_index::WRITE_CITY_LIST:
+            return "WRITE_CITY_LIST";
+        case debug_menu::debug_menu_index::TALK_TOPIC:
+            return "TALK_TOPIC";
+        case debug_menu::debug_menu_index::IMGUI_DEMO:
+            return "IMGUI_DEMO";
+        case debug_menu::debug_menu_index::VEHICLE_EFFECTS:
+            return "VEHICLE_EFFECTS";
+        case debug_menu::debug_menu_index::WISHPROFICIENCY:
+            return "WISHPROFICIENCY";
+        case debug_menu::debug_menu_index::RELOAD_GPU_SHADERS:
+            return "RELOAD_GPU_SHADERS";
+        case debug_menu::debug_menu_index::SHADER_TINT_SELF_TEST:
+            return "SHADER_TINT_SELF_TEST";
 
         case debug_menu::debug_menu_index::last:
             break;
@@ -5074,7 +5181,7 @@ void execute_action( debug_menu_index action )
         return;
     }
     if( a11y::enabled() && !query_yn( _( "Run this debug command? It may permanently "
-                                          "change your character or world. Continue?" ) ) ) {
+                                         "change your character or world. Continue?" ) ) ) {
         return;
     }
     achievements_tracker &achievements = get_achievements();

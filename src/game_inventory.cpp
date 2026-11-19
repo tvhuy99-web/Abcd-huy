@@ -2086,7 +2086,7 @@ drop_locations game_menus::inv::holster( const item_location &holster )
     inventory_holster_preset holster_preset( holster, &get_avatar() );
 
     inventory_insert_selector insert_menu( you, holster_preset, _( "ITEMS TO INSERT" ),
- false );
+                                           false );
     insert_menu.add_character_items( you );
     insert_menu.add_nearby_items( 1 );
     insert_menu.set_display_stats( true );
@@ -2134,7 +2134,7 @@ drop_locations game_menus::inv::unload_container()
     inventory_filter_preset unload_preset( valid_unload_container );
 
     inventory_drop_selector insert_menu( you, unload_preset, _( "CONTAINERS TO UNLOAD" ),
- false );
+                                         false );
     insert_menu.add_character_items( you );
     insert_menu.add_nearby_items( 1 );
     insert_menu.set_display_stats( false );
@@ -2729,12 +2729,12 @@ cataimgui::bounds game_menus::inv::compare_item_menu::get_bounds()
 bool game_menus::inv::compare_item_menu::show()
 {
     a11y::screen_scope reader( &ctxt, "item-compare",
-    [&]( const a11y::semantic_intent &intent ) {
+    [&]( const a11y::semantic_intent & intent ) {
         return a11y::registered_intent( ctxt, intent );
     } );
     if( a11y::enabled() ) {
         a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                                            ctxt, _( "Compare two items" ) );
+                                               ctxt, _( "Compare two items" ) );
         snapshot.summary = string_format( _( "Comparing %1$s with %2$s." ),
                                           first.tname(), second.tname() );
         a11y::append_document( snapshot, "compare:first",

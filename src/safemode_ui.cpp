@@ -78,7 +78,7 @@ std::string safemode::attitude_value_of( const Creature::Attitude attitude )
 }
 
 bool safemode::attitude_from_value( const std::string &value,
-                                   Creature::Attitude &attitude )
+                                    Creature::Attitude &attitude )
 {
     if( value == "hostile" ) {
         attitude = Creature::Attitude::HOSTILE;
@@ -202,13 +202,13 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         std::string rule;
     };
     std::map<std::string, reader_binding> reader_bindings;
-    const auto binding_live = [&]( const reader_binding &binding ) -> bool {
+    const auto binding_live = [&]( const reader_binding & binding ) -> bool {
         const std::vector<rules_class> &rules =
-            binding.tab == GLOBAL_TAB ? global_rules : character_rules;
+        binding.tab == GLOBAL_TAB ? global_rules : character_rules;
         return binding.line >= 0 && binding.line < static_cast<int>( rules.size() ) &&
-               rules[binding.line].rule == binding.rule;
+        rules[binding.line].rule == binding.rule;
     };
-    const auto binding_is_current = [&]( const reader_binding &binding ) -> bool {
+    const auto binding_is_current = [&]( const reader_binding & binding ) -> bool {
         return binding.tab == tab && binding.line == line && binding_live( binding );
     };
     std::optional<std::string> draft_rule;
@@ -231,13 +231,15 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
     bool remove_armed = false;
     reader_binding remove_binding;
     a11y::screen_scope reader( &ctxt, "safe-mode-manager",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "activate" && intent.node != "safemode:remove:confirm" &&
-            intent.node != "REMOVE_RULE" ) {
+            intent.node != "REMOVE_RULE" )
+        {
 
             remove_armed = false;
         }
-        if( intent.node == "safemode:remove:confirm" ) {
+        if( intent.node == "safemode:remove:confirm" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -251,7 +253,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             }
             return std::nullopt;
         }
-        if( intent.node == "REMOVE_RULE" && intent.action == "activate" ) {
+        if( intent.node == "REMOVE_RULE" && intent.action == "activate" )
+        {
             const std::vector<rules_class> &rules =
                 tab == GLOBAL_TAB ? global_rules : character_rules;
             if( rules.empty() || line < 0 || line >= static_cast<int>( rules.size() ) ) {
@@ -261,7 +264,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             remove_binding = reader_binding { tab, line, rules[line].rule };
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "safemode:tab:global" || intent.node == "safemode:tab:character" ) {
+        if( intent.node == "safemode:tab:global" || intent.node == "safemode:tab:character" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -277,7 +281,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             return std::nullopt;
         }
         const auto bound = reader_bindings.find( intent.node );
-        if( bound != reader_bindings.end() ) {
+        if( bound != reader_bindings.end() )
+        {
             const reader_binding binding = bound->second;
             if( !binding_live( binding ) ) {
                 return std::nullopt;
@@ -414,7 +419,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                             return std::nullopt;
                         }
                         rules[binding.line].category = *draft_category == "sound" ?
-                                                        Categories::SOUND : Categories::HOSTILE_SPOTTED;
+                                                       Categories::SOUND : Categories::HOSTILE_SPOTTED;
                         draft_category.reset();
                     } else if( field == "mode" ) {
                         if( !draft_mode || !binding_is_current( draft_mode_binding ) ||
@@ -455,13 +460,15 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         snapshot.nodes.clear();
         for( a11y::semantic_node &node : commands ) {
             if( node.id == "TEST_RULE" ) {
-                node.detail = _( "List every monster type whose name matches the selected rule, regardless of attitude." );
+                node.detail =
+                    _( "List every monster type whose name matches the selected rule, regardless of attitude." );
             } else if( node.id == "ENABLE_RULE" ) {
                 node.detail = _( "Enable the selected rule, marking it active so it takes effect." );
             } else if( node.id == "DISABLE_RULE" ) {
                 node.detail = _( "Disable the selected rule, marking it inactive so it no longer takes effect." );
             } else if( node.id == "ADD_DEFAULT_RULESET" ) {
-                node.detail = _( "Add the two default rules: a blacklist rule matching every hostile-spotted creature, and a whitelist rule matching every sound." );
+                node.detail =
+                    _( "Add the two default rules: a blacklist rule matching every hostile-spotted creature, and a whitelist rule matching every sound." );
             }
         }
         reader_bindings.clear();
@@ -475,7 +482,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             snapshot.summary += " " + std::string( _( "Safe mode manager is currently inactive." ) ) +
                                 " " + _( "Default rules are used.  Add a rule to activate." );
         }
-        const auto append_tab = [&]( const int target, const char *id, const std::string &label ) {
+        const auto append_tab = [&]( const int target, const char *id, const std::string & label ) {
             a11y::semantic_node node;
             node.id = id;
             node.role = "tab";
@@ -492,11 +499,12 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         a11y::semantic_table rules_table;
         rules_table.id = "safemode:rules";
         rules_table.columns = { { "rule", _( "Rules" ), "" },
-                                { "attitude", _( "Attitude" ), "" },
-                                { "distance", _( "Dist" ), "" },
-                                { "list", _( "B/W" ), "" },
-                                { "category", _( "Category" ), "" },
-                                { "mode", _( "Mode" ), "" } };
+            { "attitude", _( "Attitude" ), "" },
+            { "distance", _( "Dist" ), "" },
+            { "list", _( "B/W" ), "" },
+            { "category", _( "Category" ), "" },
+            { "mode", _( "Mode" ), "" }
+        };
         snapshot.tables.push_back( rules_table );
         const std::vector<rules_class> &current_rules =
             tab == GLOBAL_TAB ? global_rules : character_rules;
@@ -533,13 +541,18 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             node.table_id = "safemode:rules";
             node.row_index = i;
             node.cells = { { "rule", node.label, "", "" },
-                           { "attitude", rule.category == Categories::HOSTILE_SPOTTED ?
-                             attitude_text : "---", "", "" },
-                           { "distance", distance_text, "", distance_applies ?
-                             std::to_string( rule.proximity ) : "" },
-                           { "list", list_text, "", "" },
-                           { "category", category_text, "", "" },
-                           { "mode", mode_text, "", "" } };
+                {
+                    "attitude", rule.category == Categories::HOSTILE_SPOTTED ?
+                    attitude_text : "---", "", ""
+                },
+                {
+                    "distance", distance_text, "", distance_applies ?
+                    std::to_string( rule.proximity ) : ""
+                },
+                { "list", list_text, "", "" },
+                { "category", category_text, "", "" },
+                { "mode", mode_text, "", "" }
+            };
             node.selected = line == i;
             reader_bindings.emplace( node.id, reader_binding { tab, i, rule.rule } );
             snapshot.nodes.push_back( std::move( node ) );
@@ -562,7 +575,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.role = "text";
                 node.label = _( "Rule" );
                 node.detail = selected_rule.category == Categories::SOUND ?
-                              _( "* is used as a wildcard and matching is case insensitive.  Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed." ) :
+                              _( "* is used as a wildcard and matching is case insensitive.  Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed." )
+                              :
                               _( "* is used as a wildcard and matching is case insensitive.  Examples: 'human' matches every NPC, 'zombie' matches the monster name exactly, 'acidic zo*' matches monsters beginning with 'acidic zo', '*mbie' matches monsters ending with 'mbie', and '*cid*zo*ie' shows that multiple * are allowed." );
                 node.field_type = "text";
                 node.applied_value = selected_rule.rule;
@@ -583,9 +597,10 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.applied_value = attitude_value_of( selected_rule.attitude );
                 node.value = attitude_text;
                 node.choices = { { "hostile", Creature::get_attitude_ui_data( Creature::Attitude::HOSTILE ).first.translated() },
-                                 { "neutral", Creature::get_attitude_ui_data( Creature::Attitude::NEUTRAL ).first.translated() },
-                                 { "friendly", Creature::get_attitude_ui_data( Creature::Attitude::FRIENDLY ).first.translated() },
-                                 { "any", Creature::get_attitude_ui_data( Creature::Attitude::ANY ).first.translated() } };
+                    { "neutral", Creature::get_attitude_ui_data( Creature::Attitude::NEUTRAL ).first.translated() },
+                    { "friendly", Creature::get_attitude_ui_data( Creature::Attitude::FRIENDLY ).first.translated() },
+                    { "any", Creature::get_attitude_ui_data( Creature::Attitude::ANY ).first.translated() }
+                };
                 node.actions = { "focus", "select_choice", "apply", "cancel_draft" };
                 node.depends_on = { "safemode:field:category" };
                 node.enabled = attitude_applies;
@@ -615,7 +630,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.depends_on = { "safemode:field:category", "safemode:field:list" };
                 node.enabled = distance_applies;
                 if( !distance_applies ) {
-                    node.disabled_reason = _( "Proximity distance does not apply to whitelisted hostile-spotted rules." );
+                    node.disabled_reason =
+                        _( "Proximity distance does not apply to whitelisted hostile-spotted rules." );
                 }
                 if( draft_proximity && binding_is_current( draft_proximity_binding ) ) {
                     node.has_draft = true;
@@ -665,7 +681,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.value = selected_rule.movement_mode == MovementModes::WALKING ? _( "Walking" ) :
                              selected_rule.movement_mode == MovementModes::DRIVING ? _( "Driving" ) : _( "Both" );
                 node.choices = { { "walking", _( "Walking" ) }, { "driving", _( "Driving" ) },
-                                 { "both", _( "Both" ) } };
+                    { "both", _( "Both" ) }
+                };
                 node.actions = { "focus", "select_choice", "apply", "cancel_draft" };
                 if( draft_mode && binding_is_current( draft_mode_binding ) ) {
                     node.has_draft = true;
@@ -696,7 +713,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.role = "button";
                 node.label = string_format( _( "Confirm removal of rule %s" ),
                                             selected_rule.rule.empty() ? _( "<empty rule>" ) : selected_rule.rule );
-                node.detail = _( "The rule is removed from the list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No restores the rules as they were." );
+                node.detail =
+                    _( "The rule is removed from the list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No restores the rules as they were." );
                 node.actions = { "focus", "activate" };
                 snapshot.nodes.push_back( std::move( node ) );
             }
@@ -1162,7 +1180,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
 
 
     a11y::screen_scope reader( &ctxt, "safe-mode-test",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
     const auto build_snapshot = [&]() {

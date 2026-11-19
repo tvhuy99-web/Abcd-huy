@@ -71,16 +71,26 @@ std::string enum_to_string<game_message_type>( game_message_type data )
 {
     switch( data ) {
 
-        case game_message_type::m_good: return "good";
-        case game_message_type::m_bad: return "bad";
-        case game_message_type::m_mixed: return "mixed";
-        case game_message_type::m_warning: return "warning";
-        case game_message_type::m_info: return "info";
-        case game_message_type::m_neutral: return "neutral";
-        case game_message_type::m_debug: return "debug";
-        case game_message_type::m_headshot: return "headshot";
-        case game_message_type::m_critical: return "critical";
-        case game_message_type::m_grazing: return "grazing";
+        case game_message_type::m_good:
+            return "good";
+        case game_message_type::m_bad:
+            return "bad";
+        case game_message_type::m_mixed:
+            return "mixed";
+        case game_message_type::m_warning:
+            return "warning";
+        case game_message_type::m_info:
+            return "info";
+        case game_message_type::m_neutral:
+            return "neutral";
+        case game_message_type::m_debug:
+            return "debug";
+        case game_message_type::m_headshot:
+            return "headshot";
+        case game_message_type::m_critical:
+            return "critical";
+        case game_message_type::m_grazing:
+            return "grazing";
 
         case game_message_type::num_game_message_type:
             break;
@@ -93,11 +103,16 @@ std::string enum_to_string<description_affix>( description_affix data )
 {
     switch( data ) {
 
-        case description_affix::DESCRIPTION_AFFIX_IN: return "in";
-        case description_affix::DESCRIPTION_AFFIX_COVERED_IN: return "covered_in";
-        case description_affix::DESCRIPTION_AFFIX_ON: return "on";
-        case description_affix::DESCRIPTION_AFFIX_UNDER: return "under";
-        case description_affix::DESCRIPTION_AFFIX_ILLUMINATED_BY: return "illuminated_by";
+        case description_affix::DESCRIPTION_AFFIX_IN:
+            return "in";
+        case description_affix::DESCRIPTION_AFFIX_COVERED_IN:
+            return "covered_in";
+        case description_affix::DESCRIPTION_AFFIX_ON:
+            return "on";
+        case description_affix::DESCRIPTION_AFFIX_UNDER:
+            return "under";
+        case description_affix::DESCRIPTION_AFFIX_ILLUMINATED_BY:
+            return "illuminated_by";
 
         case description_affix::DESCRIPTION_AFFIX_NUM:
             break;

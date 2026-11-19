@@ -228,7 +228,7 @@ static std::vector<const mtype_id *> get_known_creatures()
     for( const mtype_id &monster : known_monsters ) {
         creatures.emplace_back( &monster );
     }
-    std::sort( creatures.begin(), creatures.end(), []( const mtype_id *lhs, const mtype_id *rhs ) {
+    std::sort( creatures.begin(), creatures.end(), []( const mtype_id * lhs, const mtype_id * rhs ) {
         return localized_compare( lhs->obj().nname(), rhs->obj().nname() );
     } );
     return creatures;
@@ -254,7 +254,9 @@ bool faction_ui::execute()
     ctxt.set_timeout( 16 );
 
     a11y::screen_scope reader( &ctxt, "faction",
-    [&]( const a11y::semantic_intent &intent ) { return reader_intent( intent ); } );
+    [&]( const a11y::semantic_intent & intent ) {
+        return reader_intent( intent );
+    } );
 
     while( true ) {
         ui_manager::redraw_invalidated();
@@ -980,9 +982,11 @@ void faction_ui::creature_display() const
 a11y::semantic_snapshot faction_ui::reader_snapshot() const
 {
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Faction" ) );
-    const std::array<std::string, 4> tab_labels = {{ _( "Your Faction" ), _( "Your Followers" ),
+    const std::array<std::string, 4> tab_labels = {{
+            _( "Your Faction" ), _( "Your Followers" ),
             _( "Other Factions" ), _( "Creatures" )
-        }};
+        }
+    };
     for( int tab_index = 0; tab_index < static_cast<int>( tab_labels.size() ); ++tab_index ) {
         a11y::semantic_node tab;
         tab.id = "faction:tab:" + std::to_string( tab_index );
@@ -998,7 +1002,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
     }
     snapshot.summary = tab_labels[static_cast<int>( selected_tab )];
 
-    const auto append_field = []( std::string &text, const std::string &line ) {
+    const auto append_field = []( std::string & text, const std::string & line ) {
         if( line.empty() ) {
             return;
         }
@@ -1007,13 +1011,13 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
         }
         text += line;
     };
-    const auto append_labeled_value = [&]( std::string &text, const std::string &label,
-                                           const std::string &value ) {
+    const auto append_labeled_value = [&]( std::string & text, const std::string & label,
+    const std::string & value ) {
         append_field( text, label + " " + value );
     };
-    const auto append_list_row = [&]( const std::string &id, const std::string &label,
-                                      const std::string &detail, const bool selected,
-                                      const int position, const int total ) {
+    const auto append_list_row = [&]( const std::string & id, const std::string & label,
+                                      const std::string & detail, const bool selected,
+    const int position, const int total ) {
         a11y::semantic_node row;
         row.id = id;
         row.role = "listitem";
@@ -1051,10 +1055,10 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 details_title = camp->camp_name();
                 const tripoint_abs_omt camp_pos = camp->camp_omt_pos();
                 const std::string direction = direction_name( direction_from(
-                                                get_player_character().pos_abs_omt(), camp_pos ) );
+                                                  get_player_character().pos_abs_omt(), camp_pos ) );
                 append_field( details, camp->camp_name() );
                 append_field( details, string_format( _( "Press [%s] to rename this camp" ),
-                               ctxt.get_desc( "CONFIRM" ) ) );
+                                                      ctxt.get_desc( "CONFIRM" ) ) );
                 if( direction != "center" ) {
                     append_field( details, string_format( _( "Direction: to the %s" ), direction ) );
                 }
@@ -1062,7 +1066,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 const faction *yours = get_player_character().get_faction();
                 if( yours != nullptr ) {
                     append_field( details, string_format( _( "Food Supply: %s (%d kcal)" ),
-                                   yours->food_supply_text(), yours->food_supply().kcal() ) );
+                                                          yours->food_supply_text(), yours->food_supply().kcal() ) );
                     const auto &[vit_color, vitamin] = yours->vitamin_stores( vitamin_type::VITAMIN );
                     static_cast<void>( vit_color );
                     append_labeled_value( details, string_format( "%s:", _( "Worst vitamin" ) ), vitamin );
@@ -1121,8 +1125,8 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                         const std::optional<basecamp *> destination_camp =
                             overmap_buffer.find_camp( destination->xy() );
                         const std::string destination_text = destination_camp ?
-                                _( "traveling to: " ) + ( *destination_camp )->camp_name() :
-                                string_format( _( "traveling to: %s" ), destination->to_string() );
+                                                             _( "traveling to: " ) + ( *destination_camp )->camp_name() :
+                                                             string_format( _( "traveling to: %s" ), destination->to_string() );
                         mission_text = _( "Current Mission: " ) + destination_text;
                     } else {
                         const npc_companion_mission mission = follower.get_companion_mission();
@@ -1184,7 +1188,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 if( can_interact || radio_result == radio_contact_result::YES ) {
                     if( !follower.has_companion_mission() ) {
                         append_field( details, string_format( _( "Press [%s] to talk to this follower" ),
-                                       ctxt.get_desc( "CONFIRM" ) ) );
+                                                              ctxt.get_desc( "CONFIRM" ) ) );
                     }
                     can_confirm = true;
                 }
@@ -1204,25 +1208,25 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 static_cast<void>( sleepiness_color );
                 const std::string nominal = pgettext( "needs", "Nominal" );
                 append_field( details, string_format( "%s: %s", _( "Hunger" ),
-                               hunger.empty() ? nominal : hunger ) );
+                                                      hunger.empty() ? nominal : hunger ) );
                 append_field( details, string_format( "%s: %s", _( "Thirst" ),
-                               thirst.empty() ? nominal : thirst ) );
+                                                      thirst.empty() ? nominal : thirst ) );
                 append_field( details, string_format( _( "%s: %s" ), _( "Sleepiness" ),
-                               sleepiness.empty() ? nominal : sleepiness ) );
+                                                      sleepiness.empty() ? nominal : sleepiness ) );
                 append_field( details, string_format( _( "Wielding: %s" ), follower.weapname_simple() ) );
 
-                const auto skills = Skill::get_skills_sorted_by( [&]( const Skill &lhs, const Skill &rhs ) {
+                const auto skills = Skill::get_skills_sorted_by( [&]( const Skill & lhs, const Skill & rhs ) {
                     return localized_compare( std::make_pair( -follower.get_skill_level( lhs.ident() ),
                                               lhs.name() ),
                                               std::make_pair( -follower.get_skill_level( rhs.ident() ),
-                                                              rhs.name() ) );
+                                                      rhs.name() ) );
                 } );
                 std::vector<std::string> other_skills;
                 for( const Skill *skill : skills ) {
                     if( !skill->is_combat_skill() ) {
                         other_skills.push_back( string_format( "%s: %d", skill->name(),
-                                               static_cast<int>( follower.get_skill_level(
-                                                       skill->ident() ) ) ) );
+                                                               static_cast<int>( follower.get_skill_level(
+                                                                       skill->ident() ) ) ) );
                         if( other_skills.size() == 3 ) {
                             break;
                         }
@@ -1254,7 +1258,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 const faction *other = factions[selected_index];
                 details_title = other->get_name();
                 append_field( details, string_format( _( "Attitude to you: %s" ),
-                               fac_ranking_text( other->likes_u ) ) );
+                                                      fac_ranking_text( other->likes_u ) ) );
                 const std::vector<npc *> representatives = get_known_faction_radio_representative( other );
                 if( !representatives.empty() ) {
                     append_field( details,
@@ -1267,8 +1271,8 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                         append_field( details, _( "You need a radio to contact them." ) );
                     } else {
                         append_field( details, string_format(
-                                           _( "Press [%s] to radio the faction representative" ),
-                                           ctxt.get_desc( "CONFIRM" ) ) );
+                                          _( "Press [%s] to radio the faction representative" ),
+                                          ctxt.get_desc( "CONFIRM" ) ) );
                         can_confirm = true;
                     }
                 }
@@ -1294,7 +1298,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 details_title = creature.nname();
                 append_field( details, creature.nname() );
                 append_field( details, string_format( "%s: %s", _( "Difficulty" ),
-                               creature.get_difficulty_description() ) );
+                                                      creature.get_difficulty_description() ) );
                 const std::string origins = enumerate_as_string( creature.src.begin(), creature.src.end(),
                 []( const std::pair<mtype_id, mod_id> &source ) {
                     return string_format( "'%s'", source.second->name() );
@@ -1302,7 +1306,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 append_field( details, string_format( "%s: %s", _( "Origin" ), origins ) );
                 append_field( details, string_format( "%s: %s", _( "Size" ), creature.get_size_name() ) );
                 append_field( details, string_format( "%s: %s", _( "Species" ),
-                               enumerate_as_string( creature.species_descriptions() ) ) );
+                                                      enumerate_as_string( creature.species_descriptions() ) ) );
                 std::vector<std::string> senses;
                 if( creature.has_flag( mon_flag_HEARS ) ) {
                     senses.emplace_back( _( "hearing" ) );
@@ -1314,7 +1318,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                     senses.emplace_back( _( "smell" ) );
                 }
                 append_field( details, string_format( "%s: %s", _( "Senses" ),
-                               enumerate_as_string( senses ) ) );
+                                                      enumerate_as_string( senses ) ) );
                 if( creature.has_flag( mon_flag_SWIMS ) || creature.move_skills.swim.has_value() ) {
                     append_field( details, _( "It can swim." ) );
                 }
@@ -1355,7 +1359,7 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
         a11y::append_document( snapshot, "faction:details", details_title, details );
     }
     snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
-    [&]( const a11y::semantic_node &node ) {
+    [&]( const a11y::semantic_node & node ) {
         return node.id == "CONFIRM" && !can_confirm;
     } ), snapshot.nodes.end() );
     return snapshot;

@@ -327,13 +327,16 @@ query_popup::result query_popup::query_once()
 
     a11y::screen_scope reader( &ctxt, category,
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
             return cancel ? std::optional<std::string>( "QUIT" ) : std::nullopt;
         }
-        if( anykey && intent.node == "continue" && intent.action == "activate" ) {
+        if( anykey && intent.node == "continue" && intent.action == "activate" )
+        {
             return "ANY_INPUT";
         }
-        for( std::size_t i = 0; i < options.size(); ++i ) {
+        for( std::size_t i = 0; i < options.size(); ++i )
+        {
             if( intent.node == "option:" + std::to_string( i ) ) {
                 cur = i;
                 impl->keyboard_selected_option = i;
@@ -464,7 +467,7 @@ query_popup::result query_popup::query()
 
 
     const bool has_no_option = std::any_of( options.begin(), options.end(),
-    []( const query_option &option ) {
+    []( const query_option & option ) {
         return option.action == "NO";
     } );
     const bool remember_no = a11y::enabled() && g != nullptr &&

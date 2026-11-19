@@ -22,11 +22,21 @@ std::string quote( const std::string_view text )
     std::string result = "\"";
     for( const unsigned char ch : text ) {
         switch( ch ) {
-            case '"': result += "\\\""; break;
-            case '\\': result += "\\\\"; break;
-            case '\n': result += "\\n"; break;
-            case '\r': result += "\\r"; break;
-            case '\t': result += "\\t"; break;
+            case '"':
+                result += "\\\"";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
             default:
                 if( ch < 0x20 ) {
                     result += "\\u00";
@@ -116,7 +126,9 @@ bool check_field_value( const semantic_node &node, const std::string &raw, std::
     }
     if( node.field_type == "choice" ) {
         if( std::none_of( node.choices.begin(), node.choices.end(),
-        [&raw]( const semantic_choice & choice ) { return choice.value == raw; } ) ) {
+        [&raw]( const semantic_choice & choice ) {
+        return choice.value == raw;
+    } ) ) {
             reason = "not_a_choice";
             return false;
         }
@@ -258,7 +270,9 @@ bool validate_snapshot( const semantic_snapshot &snapshot, std::string &reason )
         }
         for( const semantic_cell &cell : node.cells ) {
             if( std::none_of( table->second->columns.begin(), table->second->columns.end(),
-            [&cell]( const semantic_column & column ) { return column.id == cell.column; } ) ) {
+            [&cell]( const semantic_column & column ) {
+            return column.id == cell.column;
+        } ) ) {
                 reason = "undeclared_column";
                 return false;
             }
@@ -338,8 +352,9 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
         }
         first = false;
         result += "{\"id\":" + quote( node.id ) + ",\"role\":" + quote( node.role ) +
-                  ",\"label\":" + quote_spoken( node.label ) + ",\"value\":" + ( node.role == "text" || node.role == "number" || !node.field_type.empty() ?
-                                    quote( node.value ) : quote_spoken( node.value ) ) +
+                  ",\"label\":" + quote_spoken( node.label ) + ",\"value\":" + ( node.role == "text" ||
+                          node.role == "number" || !node.field_type.empty() ?
+                          quote( node.value ) : quote_spoken( node.value ) ) +
                   ",\"detail\":" + quote_spoken( node.detail ) +
                   ",\"disabledReason\":" + quote_spoken( node.disabled_reason ) +
                   ",\"enabled\":" + boolean( node.enabled ) +
@@ -388,7 +403,8 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                     result += ',';
                 }
                 first_choice = false;
-                result += "{\"value\":" + quote( choice.value ) + ",\"label\":" + quote_spoken( choice.label ) + '}';
+                result += "{\"value\":" + quote( choice.value ) + ",\"label\":" + quote_spoken(
+                              choice.label ) + '}';
             }
             result += ']';
             if( node.has_draft ) {

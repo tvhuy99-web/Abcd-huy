@@ -206,10 +206,11 @@ int minesweeper_game::start_game()
 
 
     a11y::screen_scope reader( &ctxt, "minesweeper",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.node.rfind( "mine:cell:", 0 ) == 0 &&
             ( intent.action == "focus" || intent.action == "activate" ||
-              intent.action == "flag" ) ) {
+              intent.action == "flag" ) )
+        {
 
 
 
@@ -277,7 +278,7 @@ int minesweeper_game::start_game()
 
 
 
-        const auto reveal_at = [&]( const point &cell ) {
+        const auto reveal_at = [&]( const point & cell ) {
             const auto row_it = mLevelReveal.find( cell.y );
             if( row_it != mLevelReveal.end() ) {
                 const auto cell_it = row_it->second.find( cell.x );
@@ -287,7 +288,7 @@ int minesweeper_game::start_game()
             }
             return unknown;
         };
-        const auto level_at = [&]( const point &cell ) {
+        const auto level_at = [&]( const point & cell ) {
             const auto row_it = mLevel.find( cell.y );
             if( row_it != mLevel.end() ) {
                 const auto cell_it = row_it->second.find( cell.x );
@@ -301,9 +302,10 @@ int minesweeper_game::start_game()
 
 
 
-        const auto cell_value_text = [&]( const point &cell ) -> std::string {
+        const auto cell_value_text = [&]( const point & cell ) -> std::string {
             const reveal cell_reveal = reveal_at( cell );
-            if( cell_reveal == seen ) {
+            if( cell_reveal == seen )
+            {
                 const int num = level_at( cell );
                 if( num == bomb ) {
                     return _( "Mine" );
@@ -313,10 +315,12 @@ int minesweeper_game::start_game()
                 }
                 return std::to_string( num );
             }
-            if( boom && level_at( cell ) == bomb ) {
+            if( boom && level_at( cell ) == bomb )
+            {
                 return _( "Mine" );
             }
-            if( cell_reveal == flag ) {
+            if( cell_reveal == flag )
+            {
                 return _( "Flagged" );
             }
             return _( "Covered" );
@@ -377,10 +381,10 @@ int minesweeper_game::start_game()
                                cell_value_text( point( iPlayerX, iPlayerY ) ) );
         if( windowed ) {
             snapshot.summary += " " + string_format(
-                                      _( "The board is too large to list in full; only the "
-                                         "area around the cursor is listed: rows %1$d to "
-                                         "%2$d, columns %3$d to %4$d." ),
-                                      win_y0 + 1, win_y1 + 1, win_x0 + 1, win_x1 + 1 );
+                                    _( "The board is too large to list in full; only the "
+                                       "area around the cursor is listed: rows %1$d to "
+                                       "%2$d, columns %3$d to %4$d." ),
+                                    win_y0 + 1, win_y1 + 1, win_x0 + 1, win_x1 + 1 );
         }
 
         a11y::append_document( snapshot, "mine:rules", _( "Minesweeper rules" ),

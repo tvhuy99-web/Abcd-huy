@@ -39,20 +39,27 @@
 namespace io
 {
 
-    template<>
-    std::string enum_to_string<eoc_type>( eoc_type data )
-    {
-        switch ( data ) {
-        case eoc_type::ACTIVATION: return "ACTIVATION";
-        case eoc_type::RECURRING: return "RECURRING";
-        case eoc_type::AVATAR_DEATH: return "AVATAR_DEATH";
-        case eoc_type::NPC_DEATH: return "NPC_DEATH";
-        case eoc_type::PREVENT_DEATH: return "PREVENT_DEATH";
-        case eoc_type::EVENT: return "EVENT";
-        case eoc_type::NUM_EOC_TYPES: break;
-        }
-        cata_fatal( "Invalid eoc_type" );
-    }    
+template<>
+std::string enum_to_string<eoc_type>( eoc_type data )
+{
+    switch( data ) {
+        case eoc_type::ACTIVATION:
+            return "ACTIVATION";
+        case eoc_type::RECURRING:
+            return "RECURRING";
+        case eoc_type::AVATAR_DEATH:
+            return "AVATAR_DEATH";
+        case eoc_type::NPC_DEATH:
+            return "NPC_DEATH";
+        case eoc_type::PREVENT_DEATH:
+            return "PREVENT_DEATH";
+        case eoc_type::EVENT:
+            return "EVENT";
+        case eoc_type::NUM_EOC_TYPES:
+            break;
+    }
+    cata_fatal( "Invalid eoc_type" );
+}
 
 }
 

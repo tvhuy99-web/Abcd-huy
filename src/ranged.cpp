@@ -1267,9 +1267,9 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
         if( is_avatar() && a11y::android::performance_profiling_enabled() ) {
             a11y::android::diagnostic_event( "COMBAT_SHOT",
                                              string_format( "weapon=%s ammo=%s range=%d recoil=%.1f raw_impact=%.1f",
-                                                            gun.typeId().str(), projectile_use_ammo_id.str(),
-                                                            rl_dist( pos_bub( here ), aim ), recoil_total(),
-                                                            static_cast<double>( proj.impact.total_damage() ) ) );
+                                                     gun.typeId().str(), projectile_use_ammo_id.str(),
+                                                     rl_dist( pos_bub( here ), aim ), recoil_total(),
+                                                     static_cast<double>( proj.impact.total_damage() ) ) );
         }
 
 
@@ -3122,7 +3122,7 @@ target_handler::trajectory target_ui::run()
     }
     std::unique_ptr<a11y::screen_scope> reader;
     const auto refresh_reader = [this, &reader, &accessible_target_selection,
-                                 &accessible_cursor_delta, &accessible_fire_direction, &accessible_auto_reload]() {
+          &accessible_cursor_delta, &accessible_fire_direction, &accessible_auto_reload]() {
         if( !a11y::enabled() ) {
             reader.reset();
             return;
@@ -3151,11 +3151,12 @@ target_handler::trajectory target_ui::run()
         }
         if( !reader ) {
             reader = std::make_unique<a11y::screen_scope>( &ctxt, "targeting",
-            [this, &accessible_target_selection,
-             &accessible_cursor_delta, &accessible_fire_direction,
-             &accessible_auto_reload]( const a11y::semantic_intent &intent )
+                     [this, &accessible_target_selection,
+                            &accessible_cursor_delta, &accessible_fire_direction,
+                            &accessible_auto_reload]( const a11y::semantic_intent & intent )
             -> std::optional<std::string> {
-                if( intent.action == "activate" && mode == TargetMode::Fire ) {
+                if( intent.action == "activate" && mode == TargetMode::Fire )
+                {
                     if( intent.node == "target:aimed-shot" ) {
 
 
@@ -3172,7 +3173,8 @@ target_handler::trajectory target_ui::run()
                         }
                     }
                 }
-                if( intent.action == "activate" && status != Status::OutOfAmmo ) {
+                if( intent.action == "activate" && status != Status::OutOfAmmo )
+                {
                     for( std::size_t i = 0; i < targets.size(); ++i ) {
                         if( intent.node == "target:" + std::to_string( i ) ) {
                             accessible_target_selection = targets[i];
@@ -3603,7 +3605,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
             int creature_count = 0;
             for( int step = 1; step <= range; ++step ) {
                 const tripoint_bub_ms tile = src + tripoint_rel_ms( tripoint(
-                        step * accessible_shot_directions[i], 0 ) );
+                                                 step * accessible_shot_directions[i], 0 ) );
                 if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
                     break;
                 }
@@ -3632,7 +3634,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
                 direction.value += " " + seen;
                 if( creature_count > 3 ) {
                     direction.value += string_format( _( " and %d more visible creatures." ),
-                                                     creature_count - 3 );
+                                                      creature_count - 3 );
                 }
             } else if( shot != src && you->sees( here, shot ) ) {
                 direction.value += " " + string_format(
@@ -3654,7 +3656,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         aimed.id = "target:aimed-shot";
         aimed.role = "button";
         aimed.label = _( "Aim carefully and fire" );
-        aimed.detail = _( "Aim at the current target and fire when steady.  Uses normal aiming time and ammunition." );
+        aimed.detail =
+            _( "Aim at the current target and fire when steady.  Uses normal aiming time and ammunition." );
         aimed.enabled = status == Status::Good && dst != src;
         aimed.actions = { "focus", "activate" };
         if( !aimed.enabled ) {
@@ -3763,7 +3766,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         }
         if( known_friendlies.empty() ) {
             aoe.detail += _( " No known friendly creature is in the area.  This counts only "
-                            "creatures you can see, so it does not guarantee the area is safe." );
+                             "creatures you can see, so it does not guarantee the area is safe." );
         } else {
             std::string names;
             for( std::size_t i = 0; i < known_friendlies.size(); ++i ) {
@@ -3783,8 +3786,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
 
 
         const bool cursor_locked = status == Status::OutOfAmmo;
-        const auto add_cursor_control = [&]( const std::string &id, const std::string &label,
-        const std::string &detail ) {
+        const auto add_cursor_control = [&]( const std::string & id, const std::string & label,
+        const std::string & detail ) {
             a11y::semantic_node node;
             node.id = id;
             node.role = "button";
@@ -3831,8 +3834,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         node.total = static_cast<int>( targets.size() );
         node.selected = position == dst;
         const std::string location = string_format( _( "%1$s, distance %2$d" ),
-                                         target_direction_description( src, position ),
-                                         dist_fn( position ) );
+                                     target_direction_description( src, position ),
+                                     dist_fn( position ) );
         Creature *creature = get_creature_tracker().creature_at( position, true );
         if( creature != nullptr && pl_sees( *creature ) ) {
             node.label = creature->disp_name();
@@ -3878,7 +3881,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
 
 
     snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
-    []( const a11y::semantic_node &node ) {
+    []( const a11y::semantic_node & node ) {
         return node.id == "A11Y_INTERNAL_SELECT_TARGET" || node.id == "A11Y_INTERNAL_MOVE_CURSOR" ||
                node.id == "A11Y_INTERNAL_FIRE_DIRECTION" ||
                node.id == "A11Y_INTERNAL_AUTO_RELOAD";
@@ -5396,7 +5399,7 @@ bool gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::string> 
             messages.push_back( string_format( _( "Your %s needs to fire: %s." ),
                                                gmode->tname(),
                                                gmode->format_consumption_requirements(
- "", gmode->gun_get_mode_id() ) ) );
+                                                   "", gmode->gun_get_mode_id() ) ) );
         } else {
             messages.push_back( string_format( _( "Your %s needs %i charges to fire!" ),
                                                gmode->tname(), gmode->ammo_required() ) );

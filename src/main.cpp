@@ -887,8 +887,8 @@ void run_game_loop( cli_opts &cli )
 }
 
 #if defined(USE_WINMAIN)
-int APIENTRY WinMain( _In_ HINSTANCE , _In_opt_ HINSTANCE ,
-                      _In_ LPSTR , _In_ int )
+int APIENTRY WinMain( _In_ HINSTANCE, _In_opt_ HINSTANCE,
+                      _In_ LPSTR, _In_ int )
 {
     int argc = __argc;
     char **argv = __argv;

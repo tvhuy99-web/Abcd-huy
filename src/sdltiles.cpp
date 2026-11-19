@@ -5849,25 +5849,25 @@ static void CheckMessages()
 
     if( !a11y::enabled() ) {
 
-    input_context *new_input_context = input_context::input_context_stack.back();
+        input_context *new_input_context = input_context::input_context_stack.back();
 
 
-    if( new_input_context &&
-        !touch_joystick::is_bare_context( new_input_context->get_registered_actions() ) &&
-        *new_input_context != touch_input_context ) {
+        if( new_input_context &&
+            !touch_joystick::is_bare_context( new_input_context->get_registered_actions() ) &&
+            *new_input_context != touch_input_context ) {
 
 
-        if( touch_input_context.allow_text_entry &&
-            !android_wants_text_input( *new_input_context ) &&
-            IsTextInputActive( ::window.get() ) &&
-            get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-            focus_aware_stop_text_input();
+            if( touch_input_context.allow_text_entry &&
+                !android_wants_text_input( *new_input_context ) &&
+                IsTextInputActive( ::window.get() ) &&
+                get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
+                focus_aware_stop_text_input();
+            }
+
+            touch_input_context = *new_input_context;
+            needupdate = true;
+            ui_manager::redraw_invalidated();
         }
-
-        touch_input_context = *new_input_context;
-        needupdate = true;
-        ui_manager::redraw_invalidated();
-    }
 
     }
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
@@ -5876,261 +5876,261 @@ static void CheckMessages()
 
     if( !a11y::enabled() ) {
 
-    if( !needupdate ) {
+        if( !needupdate ) {
 
 
 
-        if( is_default_mode && get_option<bool>( "ANDROID_SHORTCUT_AUTOADD" ) ) {
-            static int last_moves_since_last_save = -1;
-            if( last_moves_since_last_save != g->get_moves_since_last_save() ) {
-                last_moves_since_last_save = g->get_moves_since_last_save();
+            if( is_default_mode && get_option<bool>( "ANDROID_SHORTCUT_AUTOADD" ) ) {
+                static int last_moves_since_last_save = -1;
+                if( last_moves_since_last_save != g->get_moves_since_last_save() ) {
+                    last_moves_since_last_save = g->get_moves_since_last_save();
 
 
-                std::set<action_id> actions;
+                    std::set<action_id> actions;
 
 
-                std::set<action_id> actions_remove;
+                    std::set<action_id> actions_remove;
 
-                Character &player_character = get_player_character();
+                    Character &player_character = get_player_character();
 
-                if( !player_character.get_hostile_creatures( MAX_VIEW_DISTANCE ).empty() ) {
+                    if( !player_character.get_hostile_creatures( MAX_VIEW_DISTANCE ).empty() ) {
 
-                    if( !player_character.controlling_vehicle ) {
-                        actions.insert( ACTION_CYCLE_MOVE );
-                    }
+                        if( !player_character.controlling_vehicle ) {
+                            actions.insert( ACTION_CYCLE_MOVE );
+                        }
 
-                    item_location wielded = player_character.get_wielded_item();
-                    if( wielded ) {
-                        if( wielded->is_gun() || wielded->has_flag( flag_REACH_ATTACK ) ) {
-                            actions.insert( ACTION_FIRE );
+                        item_location wielded = player_character.get_wielded_item();
+                        if( wielded ) {
+                            if( wielded->is_gun() || wielded->has_flag( flag_REACH_ATTACK ) ) {
+                                actions.insert( ACTION_FIRE );
+                            }
                         }
                     }
-                }
 
 
-                if( player_character.is_running() ) {
-                    actions.insert( ACTION_TOGGLE_RUN );
-                }
+                    if( player_character.is_running() ) {
+                        actions.insert( ACTION_TOGGLE_RUN );
+                    }
 
-                if( player_character.is_crouching() ) {
-                    actions.insert( ACTION_TOGGLE_CROUCH );
-                }
+                    if( player_character.is_crouching() ) {
+                        actions.insert( ACTION_TOGGLE_CROUCH );
+                    }
 
-                if( player_character.is_prone() ) {
-                    actions.insert( ACTION_TOGGLE_PRONE );
-                }
-
-
-                if( std::find( actions.begin(), actions.end(), ACTION_CYCLE_MOVE ) == actions.end() ) {
-                    actions_remove.insert( ACTION_CYCLE_MOVE );
-                }
-
-                map &here = get_map();
+                    if( player_character.is_prone() ) {
+                        actions.insert( ACTION_TOGGLE_PRONE );
+                    }
 
 
-                for( int dx = -1; dx <= 1; dx++ ) {
-                    for( int dy = -1; dy <= 1; dy++ ) {
-                        int x = player_character.posx( here ) + dx;
-                        int y = player_character.posy( here ) + dy;
-                        int z = player_character.posz();
-                        const tripoint pos( x, y, z );
-                        const tripoint_bub_ms bub_pos( pos );
+                    if( std::find( actions.begin(), actions.end(), ACTION_CYCLE_MOVE ) == actions.end() ) {
+                        actions_remove.insert( ACTION_CYCLE_MOVE );
+                    }
 
-                        {
-                            const optional_vpart_position vp = here.veh_at( bub_pos );
-                            if( vp ) {
-                                if( const std::optional<vpart_reference> controlpart = vp.part_with_feature( "CONTROLS", true ) ) {
-                                    actions.insert( ACTION_CONTROL_VEHICLE );
+                    map &here = get_map();
+
+
+                    for( int dx = -1; dx <= 1; dx++ ) {
+                        for( int dy = -1; dy <= 1; dy++ ) {
+                            int x = player_character.posx( here ) + dx;
+                            int y = player_character.posy( here ) + dy;
+                            int z = player_character.posz();
+                            const tripoint pos( x, y, z );
+                            const tripoint_bub_ms bub_pos( pos );
+
+                            {
+                                const optional_vpart_position vp = here.veh_at( bub_pos );
+                                if( vp ) {
+                                    if( const std::optional<vpart_reference> controlpart = vp.part_with_feature( "CONTROLS", true ) ) {
+                                        actions.insert( ACTION_CONTROL_VEHICLE );
+                                    }
+                                    const std::optional<vpart_reference> openablepart = vp.part_with_feature( "OPENABLE", true );
+                                    if( openablepart && openablepart->part().open && ( dx != 0 ||
+                                            dy != 0 ) ) {
+                                        actions.insert( ACTION_CLOSE );
+                                    }
+                                    const std::optional<vpart_reference> curtainpart = vp.part_with_feature( "CURTAIN", true );
+                                    if( curtainpart && curtainpart->part().open && ( dx != 0 || dy != 0 ) ) {
+                                        actions.insert( ACTION_CLOSE );
+                                    }
+                                    const std::optional<vpart_reference> cargopart = vp.cargo();
+                                    if( cargopart && ( !cargopart->items().empty() ) ) {
+                                        actions.insert( ACTION_PICKUP );
+                                    }
                                 }
-                                const std::optional<vpart_reference> openablepart = vp.part_with_feature( "OPENABLE", true );
-                                if( openablepart && openablepart->part().open && ( dx != 0 ||
-                                        dy != 0 ) ) {
+                            }
+
+                            if( dx != 0 || dy != 0 ) {
+
+
+
+
+                                if( can_interact_at( ACTION_CLOSE, here, bub_pos ) ) {
                                     actions.insert( ACTION_CLOSE );
                                 }
-                                const std::optional<vpart_reference> curtainpart = vp.part_with_feature( "CURTAIN", true );
-                                if( curtainpart && curtainpart->part().open && ( dx != 0 || dy != 0 ) ) {
-                                    actions.insert( ACTION_CLOSE );
+                                if( can_interact_at( ACTION_EXAMINE, here, bub_pos ) ) {
+                                    actions.insert( ACTION_EXAMINE );
                                 }
-                                const std::optional<vpart_reference> cargopart = vp.cargo();
-                                if( cargopart && ( !cargopart->items().empty() ) ) {
-                                    actions.insert( ACTION_PICKUP );
+                            } else {
+
+                                if( can_interact_at( ACTION_BUTCHER, here, bub_pos ) ) {
+                                    actions.insert( ACTION_BUTCHER );
+                                } else {
+                                    actions_remove.insert( ACTION_BUTCHER );
+                                }
+
+                                if( can_interact_at( ACTION_MOVE_UP, here, bub_pos ) ) {
+                                    actions.insert( ACTION_MOVE_UP );
+                                } else {
+                                    actions_remove.insert( ACTION_MOVE_UP );
+                                }
+
+                                if( can_interact_at( ACTION_MOVE_DOWN, here, bub_pos ) ) {
+                                    actions.insert( ACTION_MOVE_DOWN );
+                                } else {
+                                    actions_remove.insert( ACTION_MOVE_DOWN );
                                 }
                             }
-                        }
-
-                        if( dx != 0 || dy != 0 ) {
 
 
-
-
-                            if( can_interact_at( ACTION_CLOSE, here, bub_pos ) ) {
-                                actions.insert( ACTION_CLOSE );
+                            if( can_interact_at( ACTION_PICKUP, here, bub_pos ) ) {
+                                actions.insert( ACTION_PICKUP );
                             }
-                            if( can_interact_at( ACTION_EXAMINE, here, bub_pos ) ) {
-                                actions.insert( ACTION_EXAMINE );
-                            }
-                        } else {
-
-                            if( can_interact_at( ACTION_BUTCHER, here, bub_pos ) ) {
-                                actions.insert( ACTION_BUTCHER );
-                            } else {
-                                actions_remove.insert( ACTION_BUTCHER );
-                            }
-
-                            if( can_interact_at( ACTION_MOVE_UP, here, bub_pos ) ) {
-                                actions.insert( ACTION_MOVE_UP );
-                            } else {
-                                actions_remove.insert( ACTION_MOVE_UP );
-                            }
-
-                            if( can_interact_at( ACTION_MOVE_DOWN, here, bub_pos ) ) {
-                                actions.insert( ACTION_MOVE_DOWN );
-                            } else {
-                                actions_remove.insert( ACTION_MOVE_DOWN );
-                            }
-                        }
-
-
-                        if( can_interact_at( ACTION_PICKUP, here, bub_pos ) ) {
-                            actions.insert( ACTION_PICKUP );
                         }
                     }
-                }
 
 
-                if( std::find( actions.begin(), actions.end(), ACTION_CONTROL_VEHICLE ) == actions.end() ) {
-                    actions_remove.insert( ACTION_CONTROL_VEHICLE );
-                }
+                    if( std::find( actions.begin(), actions.end(), ACTION_CONTROL_VEHICLE ) == actions.end() ) {
+                        actions_remove.insert( ACTION_CONTROL_VEHICLE );
+                    }
 
 
-                if( std::find( actions.begin(), actions.end(), ACTION_CLOSE ) == actions.end() ) {
-                    actions_remove.insert( ACTION_CLOSE );
-                }
+                    if( std::find( actions.begin(), actions.end(), ACTION_CLOSE ) == actions.end() ) {
+                        actions_remove.insert( ACTION_CLOSE );
+                    }
 
 
-                if( std::find( actions.begin(), actions.end(), ACTION_EXAMINE ) == actions.end() ) {
-                    actions_remove.insert( ACTION_EXAMINE );
-                }
+                    if( std::find( actions.begin(), actions.end(), ACTION_EXAMINE ) == actions.end() ) {
+                        actions_remove.insert( ACTION_EXAMINE );
+                    }
 
 
-                if( std::find( actions.begin(), actions.end(), ACTION_PICKUP ) == actions.end() ) {
-                    actions_remove.insert( ACTION_PICKUP );
-                }
+                    if( std::find( actions.begin(), actions.end(), ACTION_PICKUP ) == actions.end() ) {
+                        actions_remove.insert( ACTION_PICKUP );
+                    }
 
 
-                if( g && !g->check_safe_mode_allowed( false ) ) {
-                    actions.insert( ACTION_IGNORE_ENEMY );
-                    actions.insert( ACTION_TOGGLE_SAFEMODE );
-                } else {
-                    actions_remove.insert( ACTION_IGNORE_ENEMY );
-                    actions_remove.insert( ACTION_TOGGLE_SAFEMODE );
-                }
+                    if( g && !g->check_safe_mode_allowed( false ) ) {
+                        actions.insert( ACTION_IGNORE_ENEMY );
+                        actions.insert( ACTION_TOGGLE_SAFEMODE );
+                    } else {
+                        actions_remove.insert( ACTION_IGNORE_ENEMY );
+                        actions_remove.insert( ACTION_TOGGLE_SAFEMODE );
+                    }
 
 
-                if( player_character.get_hunger() > 100 || player_character.get_thirst() > 40 ) {
-                    actions.insert( ACTION_EAT );
-                }
+                    if( player_character.get_hunger() > 100 || player_character.get_thirst() > 40 ) {
+                        actions.insert( ACTION_EAT );
+                    }
 
 
-                if( player_character.get_sleepiness() > sleepiness_levels::DEAD_TIRED ) {
-                    actions.insert( ACTION_SLEEP );
-                }
+                    if( player_character.get_sleepiness() > sleepiness_levels::DEAD_TIRED ) {
+                        actions.insert( ACTION_SLEEP );
+                    }
 
-                for( const auto &action : actions ) {
-                    if( add_best_key_for_action_to_quick_shortcuts( action, touch_input_context.get_category(),
-                            !get_option<bool>( "ANDROID_SHORTCUT_AUTOADD_FRONT" ) ) ) {
+                    for( const auto &action : actions ) {
+                        if( add_best_key_for_action_to_quick_shortcuts( action, touch_input_context.get_category(),
+                                !get_option<bool>( "ANDROID_SHORTCUT_AUTOADD_FRONT" ) ) ) {
+                            needupdate = true;
+                        }
+                    }
+
+                    size_t old_size = qsl.size();
+                    for( const auto &action_remove : actions_remove ) {
+                        remove_action_from_quick_shortcuts( action_remove, touch_input_context.get_category() );
+                    }
+                    if( qsl.size() != old_size ) {
                         needupdate = true;
                     }
                 }
-
-                size_t old_size = qsl.size();
-                for( const auto &action_remove : actions_remove ) {
-                    remove_action_from_quick_shortcuts( action_remove, touch_input_context.get_category() );
-                }
-                if( qsl.size() != old_size ) {
-                    needupdate = true;
-                }
             }
-        }
 
-        if( remove_expired_actions_from_quick_shortcuts( touch_input_context.get_category() ) ) {
-            needupdate = true;
-        }
-
-
-        if( ac_back_down_time > 0 &&
-            ticks - ac_back_down_time > static_cast<uint32_t>
-            ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
-            if( !quick_shortcuts_toggle_handled ) {
-                quick_shortcuts_enabled = !quick_shortcuts_enabled;
-
-                request_terminal_relayout();
-                quick_shortcuts_toggle_handled = true;
-                android_request_repaint();
-                refresh_display();
-
-
-                {
-                    JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
-                    jobject activity = ( jobject )GetAndroidActivity();
-                    jclass clazz( env->GetObjectClass( activity ) );
-                    jstring toast_message = env->NewStringUTF( quick_shortcuts_enabled ? "Shortcuts visible" :
-                                            "Shortcuts hidden" );
-                    jmethodID method_id = env->GetMethodID( clazz, "toast", "(Ljava/lang/String;)V" );
-                    env->CallVoidMethod( activity, method_id, toast_message );
-                    env->DeleteLocalRef( activity );
-                    env->DeleteLocalRef( clazz );
-                }
+            if( remove_expired_actions_from_quick_shortcuts( touch_input_context.get_category() ) ) {
+                needupdate = true;
             }
-        }
 
 
-        if( !is_quick_shortcut_touch && !is_two_finger_touch && !is_three_finger_touch &&
-            finger_down_time > 0 &&
-            ticks - finger_down_time > static_cast<uint32_t>
-            ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+            if( ac_back_down_time > 0 &&
+                ticks - ac_back_down_time > static_cast<uint32_t>
+                ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+                if( !quick_shortcuts_toggle_handled ) {
+                    quick_shortcuts_enabled = !quick_shortcuts_enabled;
+
+                    request_terminal_relayout();
+                    quick_shortcuts_toggle_handled = true;
+                    android_request_repaint();
+                    refresh_display();
 
 
-            if( ticks - finger_repeat_time > finger_repeat_delay && !HasEvent( CATA_FINGERCANCELED ) ) {
-                handle_finger_input( ticks );
-                finger_repeat_time = ticks;
-
-                while( SDL_PollEvent( &ev ) ) {
-                    if( ev.type == CATA_FINGERUP ) {
-                        reset_touch_state();
-                        finger_slot_clear( GetFingerID( ev ) );
-
-                        break;
-                    }
-                    if( ev.type == CATA_FINGERCANCELED ) {
-                        cancel_touch();
-                        break;
+                    {
+                        JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
+                        jobject activity = ( jobject )GetAndroidActivity();
+                        jclass clazz( env->GetObjectClass( activity ) );
+                        jstring toast_message = env->NewStringUTF( quick_shortcuts_enabled ? "Shortcuts visible" :
+                                                "Shortcuts hidden" );
+                        jmethodID method_id = env->GetMethodID( clazz, "toast", "(Ljava/lang/String;)V" );
+                        env->CallVoidMethod( activity, method_id, toast_message );
+                        env->DeleteLocalRef( activity );
+                        env->DeleteLocalRef( clazz );
                     }
                 }
+            }
+
+
+            if( !is_quick_shortcut_touch && !is_two_finger_touch && !is_three_finger_touch &&
+                finger_down_time > 0 &&
+                ticks - finger_down_time > static_cast<uint32_t>
+                ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+
+
+                if( ticks - finger_repeat_time > finger_repeat_delay && !HasEvent( CATA_FINGERCANCELED ) ) {
+                    handle_finger_input( ticks );
+                    finger_repeat_time = ticks;
+
+                    while( SDL_PollEvent( &ev ) ) {
+                        if( ev.type == CATA_FINGERUP ) {
+                            reset_touch_state();
+                            finger_slot_clear( GetFingerID( ev ) );
+
+                            break;
+                        }
+                        if( ev.type == CATA_FINGERCANCELED ) {
+                            cancel_touch();
+                            break;
+                        }
+                    }
+                    return;
+                }
+            }
+
+
+            if( !is_quick_shortcut_touch && !is_two_finger_touch && !is_three_finger_touch &&
+                last_tap_time > 0 &&
+                ticks - last_tap_time >= static_cast<uint32_t>
+                ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+
+                last_tap_time = ticks;
+                last_input = input_event( is_default_mode ? get_key_event_from_string(
+                                              get_option<std::string>( "ANDROID_TAP_KEY" ) ) : '\n', input_event_t::keyboard_char );
+                last_tap_time = 0;
                 return;
             }
+
+
+            if( is_quick_shortcut_touch && finger_down_time > 0 &&
+                ticks - finger_down_time > static_cast<uint32_t>
+                ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+                needupdate = true;
+            }
         }
-
-
-        if( !is_quick_shortcut_touch && !is_two_finger_touch && !is_three_finger_touch &&
-            last_tap_time > 0 &&
-            ticks - last_tap_time >= static_cast<uint32_t>
-            ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
-
-            last_tap_time = ticks;
-            last_input = input_event( is_default_mode ? get_key_event_from_string(
-                                          get_option<std::string>( "ANDROID_TAP_KEY" ) ) : '\n', input_event_t::keyboard_char );
-            last_tap_time = 0;
-            return;
-        }
-
-
-        if( is_quick_shortcut_touch && finger_down_time > 0 &&
-            ticks - finger_down_time > static_cast<uint32_t>
-            ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
-            needupdate = true;
-        }
-    }
     } else {
         finger_down_time = 0;
         last_tap_time = 0;
@@ -6161,10 +6161,10 @@ static void CheckMessages()
 
 
         if( a11y::enabled() && ( ev.type == CATA_FINGERDOWN ||
-                                ev.type == CATA_FINGERMOTION || ev.type == CATA_FINGERUP ||
-                                ev.type == CATA_FINGERCANCELED || ev.type == CATA_MOUSEBUTTONDOWN ||
-                                ev.type == CATA_MOUSEBUTTONUP || ev.type == CATA_MOUSEMOTION ||
-                                ev.type == CATA_MOUSEWHEEL ) ) {
+                                 ev.type == CATA_FINGERMOTION || ev.type == CATA_FINGERUP ||
+                                 ev.type == CATA_FINGERCANCELED || ev.type == CATA_MOUSEBUTTONDOWN ||
+                                 ev.type == CATA_MOUSEBUTTONUP || ev.type == CATA_MOUSEMOTION ||
+                                 ev.type == CATA_MOUSEWHEEL ) ) {
             continue;
         }
 #endif
@@ -6968,8 +6968,8 @@ void catacurses::init_interface()
 
             ui_adaptor dummy( ui_adaptor::disable_uis_below{} );
             fartilecontext->load_tileset( get_option<std::string>( "DISTANT_TILES" ),
- true, false,
- true, false );
+                                          true, false,
+                                          true, false );
         } catch( const std::exception &err ) {
             dbg( D_ERROR ) << "failed to check for tileset: " << err.what();
 
@@ -6983,8 +6983,8 @@ void catacurses::init_interface()
 
         ui_adaptor dummy( ui_adaptor::disable_uis_below{} );
         closetilecontext->load_tileset( get_option<std::string>( "TILES" ),
- true, false,
- true, false );
+                                        true, false,
+                                        true, false );
         tilecontext = closetilecontext;
     } catch( const std::exception &err ) {
         dbg( D_ERROR ) << "failed to check for tileset: " << err.what();
@@ -6998,8 +6998,8 @@ void catacurses::init_interface()
 
         ui_adaptor dummy( ui_adaptor::disable_uis_below{} );
         portrait_tilecontext->load_tileset( get_option<std::string>( "TILES" ),
- true, false,
- true, false );
+                                            true, false,
+                                            true, false );
     } catch( const std::exception &err ) {
         dbg( D_ERROR ) << "failed to check for tileset: " << err.what();
     }
@@ -7008,8 +7008,8 @@ void catacurses::init_interface()
 
         ui_adaptor dummy( ui_adaptor::disable_uis_below{} );
         overmap_tilecontext->load_tileset( get_option<std::string>( "OVERMAP_TILES" ),
- true, false,
- true, true );
+                                           true, false,
+                                           true, true );
     } catch( const std::exception &err ) {
         dbg( D_ERROR ) << "failed to check for overmap tileset: " << err.what();
 
@@ -7058,25 +7058,25 @@ void load_tileset()
         return;
     }
     closetilecontext->load_tileset( get_option<std::string>( "TILES" ),
- false, false,
- true, false );
+                                    false, false,
+                                    true, false );
     if( use_far_tiles ) {
         fartilecontext->load_tileset( get_option<std::string>( "DISTANT_TILES" ),
- false, false,
- true, false );
+                                      false, false,
+                                      true, false );
     }
     if( use_tiles ) {
         portrait_tilecontext->load_tileset( get_option<std::string>( "PORTRAIT_TILES" ),
- false, false,
- true, false );
+                                            false, false,
+                                            true, false );
     }
     tilecontext = closetilecontext;
     tilecontext->do_tile_loading_report();
 
     if( overmap_tilecontext ) {
         overmap_tilecontext->load_tileset( get_option<std::string>( "OVERMAP_TILES" ),
- false, false,
- true, true );
+                                           false, false,
+                                           true, true );
         overmap_tilecontext->do_tile_loading_report();
     }
 }

@@ -70,7 +70,7 @@ class actmenu_cb : public uilist_callback
         explicit actmenu_cb( const action_map &acm ) : am( acm ) { }
         ~actmenu_cb() override = default;
 
-        bool key( const input_context &ctxt, const input_event &event, int ,
+        bool key( const input_context &ctxt, const input_event &event, int,
                   uilist * ) override {
             const std::string &action = ctxt.input_to_action( event );
 

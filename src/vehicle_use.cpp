@@ -1653,7 +1653,7 @@ void vehicle::use_nl_boiler( map &here, int p )
     }
 }
 
-void vehicle::use_monster_capture( int part, map * , const tripoint_bub_ms &pos )
+void vehicle::use_monster_capture( int part, map *, const tripoint_bub_ms &pos )
 {
     if( parts[part].is_broken() || parts[part].removed ) {
         return;
@@ -3054,15 +3054,18 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
         .on_submit( [this] {
             uilist guide;
             guide.title = is_autodriving ? _( "Gesture guide: autonomous driving" ) :
-                          _( "Gesture guide: driving" );
+            _( "Gesture guide: driving" );
             int index = 0;
-            if( is_autodriving ) {
+            if( is_autodriving )
+            {
 
 
-                guide.addentry( index++, true, 0, _( "Autonomous driving: four straight one-finger swipes are disabled." ) );
-            } else {
+                guide.addentry( index++, true, 0,
+                                _( "Autonomous driving: four straight one-finger swipes are disabled." ) );
+            } else
+            {
                 for( const std::string &line : std::initializer_list<std::string> {
-                    _( "Swipe one finger up: Drive forward." ),
+                _( "Swipe one finger up: Drive forward." ),
                     _( "Swipe one finger down: Drive reverse." ),
                     _( "Swipe one finger left: Steer left." ),
                     _( "Swipe one finger right: Steer right." )
@@ -3071,7 +3074,7 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                 }
             }
             for( const std::string &line : std::initializer_list<std::string> {
-                is_autodriving ? _( "Swipe one finger up then down: Read vehicle speed." ) :
+            is_autodriving ? _( "Swipe one finger up then down: Read vehicle speed." ) :
                 _( "Swipe one finger up then down: Increase target speed." ),
                 is_autodriving ? _( "Swipe one finger down then up: Read vehicle speed." ) :
                 _( "Swipe one finger down then up: Decrease target speed." ),
@@ -3102,7 +3105,8 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                 _( "Double tap three fingers: Read player information." ),
                 _( "Swipe two fingers up in a menu: Confirm the selected action." ),
                 _( "Swipe two fingers down in a menu: Go back." )
-            } ) {
+            } )
+            {
                 guide.addentry( index++, true, 0, line );
             }
             guide.query();

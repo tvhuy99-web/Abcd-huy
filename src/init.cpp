@@ -1004,7 +1004,7 @@ void DynamicDataLoader::finalize_loaded_data()
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - started ).count();
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_GROUP phase=finalize name=" << e.first <<
-                                  " ms=" << ms;
+                                   " ms=" << ms;
 #endif
     }
 
@@ -1125,7 +1125,7 @@ void DynamicDataLoader::check_consistency()
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - started ).count();
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_GROUP phase=verify name=" << e.first <<
-                                  " ms=" << ms;
+                                   " ms=" << ms;
 #endif
     }
 }

@@ -128,15 +128,24 @@ template<>
 std::string enum_to_string<spell_target>( spell_target data )
 {
     switch( data ) {
-        case spell_target::ally: return "ally";
-        case spell_target::hostile: return "hostile";
-        case spell_target::self: return "self";
-        case spell_target::ground: return "ground";
-        case spell_target::none: return "none";
-        case spell_target::item: return "item";
-        case spell_target::field: return "field";
-        case spell_target::vehicle: return "vehicle";
-        case spell_target::num_spell_targets: break;
+        case spell_target::ally:
+            return "ally";
+        case spell_target::hostile:
+            return "hostile";
+        case spell_target::self:
+            return "self";
+        case spell_target::ground:
+            return "ground";
+        case spell_target::none:
+            return "none";
+        case spell_target::item:
+            return "item";
+        case spell_target::field:
+            return "field";
+        case spell_target::vehicle:
+            return "vehicle";
+        case spell_target::num_spell_targets:
+            break;
     }
     cata_fatal( "Invalid valid_target" );
 }
@@ -144,10 +153,14 @@ template<>
 std::string enum_to_string<spell_shape>( spell_shape data )
 {
     switch( data ) {
-        case spell_shape::blast: return "blast";
-        case spell_shape::cone: return "cone";
-        case spell_shape::line: return "line";
-        case spell_shape::num_shapes: break;
+        case spell_shape::blast:
+            return "blast";
+        case spell_shape::cone:
+            return "cone";
+        case spell_shape::line:
+            return "line";
+        case spell_shape::num_shapes:
+            break;
     }
     cata_fatal( "Invalid spell_shape" );
 }
@@ -155,57 +168,108 @@ template<>
 std::string enum_to_string<spell_flag>( spell_flag data )
 {
     switch( data ) {
-        case spell_flag::PERMANENT: return "PERMANENT";
-        case spell_flag::PERMANENT_ALL_LEVELS: return "PERMANENT_ALL_LEVELS";
-        case spell_flag::PERCENTAGE_DAMAGE: return "PERCENTAGE_DAMAGE";
-        case spell_flag::SPLIT_DAMAGE: return "SPLIT_DAMAGE";
-        case spell_flag::IGNORE_WALLS: return "IGNORE_WALLS";
-        case spell_flag::NO_PROJECTILE: return "NO_PROJECTILE";
-        case spell_flag::HOSTILE_SUMMON: return "HOSTILE_SUMMON";
-        case spell_flag::HOSTILE_50: return "HOSTILE_50";
-        case spell_flag::FRIENDLY_POLY: return "FRIENDLY_POLY";
-        case spell_flag::POLYMORPH_GROUP: return "POLYMORPH_GROUP";
-        case spell_flag::SILENT: return "SILENT";
-        case spell_flag::NO_EXPLOSION_SFX: return "NO_EXPLOSION_SFX";
-        case spell_flag::LOUD: return "LOUD";
-        case spell_flag::VERBAL: return "VERBAL";
-        case spell_flag::SOMATIC: return "SOMATIC";
-        case spell_flag::NO_HANDS: return "NO_HANDS";
-        case spell_flag::NO_LEGS: return "NO_LEGS";
-        case spell_flag::UNSAFE_TELEPORT: return "UNSAFE_TELEPORT";
-        case spell_flag::TARGET_TELEPORT: return "TARGET_TELEPORT";
-        case spell_flag::SWAP_POS: return "SWAP_POS";
-        case spell_flag::CONCENTRATE: return "CONCENTRATE";
-        case spell_flag::TOUCH_REQUIRED: return "TOUCH_REQUIRED";
-        case spell_flag::RANDOM_AOE: return "RANDOM_AOE";
-        case spell_flag::RANDOM_DAMAGE: return "RANDOM_DAMAGE";
-        case spell_flag::RANDOM_DURATION: return "RANDOM_DURATION";
-        case spell_flag::RANDOM_TARGET: return "RANDOM_TARGET";
-        case spell_flag::RANDOM_CRITTER: return "RANDOM_CRITTER";
-        case spell_flag::MUTATE_TRAIT: return "MUTATE_TRAIT";
-        case spell_flag::PAIN_NORESIST: return "PAIN_NORESIST";
-        case spell_flag::SPAWN_GROUP: return "SPAWN_GROUP";
-        case spell_flag::IGNITE_FLAMMABLE: return "IGNITE_FLAMMABLE";
-        case spell_flag::NO_FAIL: return "NO_FAIL";
-        case spell_flag::HIDDEN_SPELL: return "HIDDEN_SPELL";
-        case spell_flag::WONDER: return "WONDER";
-        case spell_flag::EXTRA_EFFECTS_FIRST: return "EXTRA_EFFECTS_FIRST";
-        case spell_flag::MUST_HAVE_CLASS_TO_LEARN: return "MUST_HAVE_CLASS_TO_LEARN";
-        case spell_flag::SPAWN_WITH_DEATH_DROPS: return "SPAWN_WITH_DEATH_DROPS";
-        case spell_flag::NO_CORPSE_QUIET: return "NO_CORPSE_QUIET";
-        case spell_flag::NON_MAGICAL: return "NON_MAGICAL";
-        case spell_flag::PSIONIC: return "PSIONIC";
-        case spell_flag::RECHARM: return "RECHARM";
-        case spell_flag::CHARM_PET: return "CHARM_PET";
-        case spell_flag::EVOCATION_SPELL: return "EVOCATION_SPELL";
-        case spell_flag::CHANNELING_SPELL: return "CHANNELING_SPELL";
-        case spell_flag::CONJURATION_SPELL: return "CONJURATION_SPELL";
-        case spell_flag::ENHANCEMENT_SPELL: return "ENHANCEMENT_SPELL";
-        case spell_flag::ENERVATION_SPELL: return "ENERVATION_SPELL";
-        case spell_flag::CONVEYANCE_SPELL: return "CONVEYANCE_SPELL";
-        case spell_flag::RESTORATION_SPELL: return "RESTORATION_SPELL";
-        case spell_flag::TRANSFORMATION_SPELL: return "TRANSFORMATION_SPELL";
-        case spell_flag::LAST: break;
+        case spell_flag::PERMANENT:
+            return "PERMANENT";
+        case spell_flag::PERMANENT_ALL_LEVELS:
+            return "PERMANENT_ALL_LEVELS";
+        case spell_flag::PERCENTAGE_DAMAGE:
+            return "PERCENTAGE_DAMAGE";
+        case spell_flag::SPLIT_DAMAGE:
+            return "SPLIT_DAMAGE";
+        case spell_flag::IGNORE_WALLS:
+            return "IGNORE_WALLS";
+        case spell_flag::NO_PROJECTILE:
+            return "NO_PROJECTILE";
+        case spell_flag::HOSTILE_SUMMON:
+            return "HOSTILE_SUMMON";
+        case spell_flag::HOSTILE_50:
+            return "HOSTILE_50";
+        case spell_flag::FRIENDLY_POLY:
+            return "FRIENDLY_POLY";
+        case spell_flag::POLYMORPH_GROUP:
+            return "POLYMORPH_GROUP";
+        case spell_flag::SILENT:
+            return "SILENT";
+        case spell_flag::NO_EXPLOSION_SFX:
+            return "NO_EXPLOSION_SFX";
+        case spell_flag::LOUD:
+            return "LOUD";
+        case spell_flag::VERBAL:
+            return "VERBAL";
+        case spell_flag::SOMATIC:
+            return "SOMATIC";
+        case spell_flag::NO_HANDS:
+            return "NO_HANDS";
+        case spell_flag::NO_LEGS:
+            return "NO_LEGS";
+        case spell_flag::UNSAFE_TELEPORT:
+            return "UNSAFE_TELEPORT";
+        case spell_flag::TARGET_TELEPORT:
+            return "TARGET_TELEPORT";
+        case spell_flag::SWAP_POS:
+            return "SWAP_POS";
+        case spell_flag::CONCENTRATE:
+            return "CONCENTRATE";
+        case spell_flag::TOUCH_REQUIRED:
+            return "TOUCH_REQUIRED";
+        case spell_flag::RANDOM_AOE:
+            return "RANDOM_AOE";
+        case spell_flag::RANDOM_DAMAGE:
+            return "RANDOM_DAMAGE";
+        case spell_flag::RANDOM_DURATION:
+            return "RANDOM_DURATION";
+        case spell_flag::RANDOM_TARGET:
+            return "RANDOM_TARGET";
+        case spell_flag::RANDOM_CRITTER:
+            return "RANDOM_CRITTER";
+        case spell_flag::MUTATE_TRAIT:
+            return "MUTATE_TRAIT";
+        case spell_flag::PAIN_NORESIST:
+            return "PAIN_NORESIST";
+        case spell_flag::SPAWN_GROUP:
+            return "SPAWN_GROUP";
+        case spell_flag::IGNITE_FLAMMABLE:
+            return "IGNITE_FLAMMABLE";
+        case spell_flag::NO_FAIL:
+            return "NO_FAIL";
+        case spell_flag::HIDDEN_SPELL:
+            return "HIDDEN_SPELL";
+        case spell_flag::WONDER:
+            return "WONDER";
+        case spell_flag::EXTRA_EFFECTS_FIRST:
+            return "EXTRA_EFFECTS_FIRST";
+        case spell_flag::MUST_HAVE_CLASS_TO_LEARN:
+            return "MUST_HAVE_CLASS_TO_LEARN";
+        case spell_flag::SPAWN_WITH_DEATH_DROPS:
+            return "SPAWN_WITH_DEATH_DROPS";
+        case spell_flag::NO_CORPSE_QUIET:
+            return "NO_CORPSE_QUIET";
+        case spell_flag::NON_MAGICAL:
+            return "NON_MAGICAL";
+        case spell_flag::PSIONIC:
+            return "PSIONIC";
+        case spell_flag::RECHARM:
+            return "RECHARM";
+        case spell_flag::CHARM_PET:
+            return "CHARM_PET";
+        case spell_flag::EVOCATION_SPELL:
+            return "EVOCATION_SPELL";
+        case spell_flag::CHANNELING_SPELL:
+            return "CHANNELING_SPELL";
+        case spell_flag::CONJURATION_SPELL:
+            return "CONJURATION_SPELL";
+        case spell_flag::ENHANCEMENT_SPELL:
+            return "ENHANCEMENT_SPELL";
+        case spell_flag::ENERVATION_SPELL:
+            return "ENERVATION_SPELL";
+        case spell_flag::CONVEYANCE_SPELL:
+            return "CONVEYANCE_SPELL";
+        case spell_flag::RESTORATION_SPELL:
+            return "RESTORATION_SPELL";
+        case spell_flag::TRANSFORMATION_SPELL:
+            return "TRANSFORMATION_SPELL";
+        case spell_flag::LAST:
+            break;
     }
     cata_fatal( "Invalid spell_flag" );
 }
@@ -213,13 +277,20 @@ template<>
 std::string enum_to_string<magic_energy_type>( magic_energy_type data )
 {
     switch( data ) {
-    case magic_energy_type::bionic: return "BIONIC";
-    case magic_energy_type::hp: return "HP";
-    case magic_energy_type::mana: return "MANA";
-    case magic_energy_type::none: return "NONE";
-    case magic_energy_type::stamina: return "STAMINA";
-    case magic_energy_type::vitamin: return "VITAMIN";
-    case magic_energy_type::last: break;
+        case magic_energy_type::bionic:
+            return "BIONIC";
+        case magic_energy_type::hp:
+            return "HP";
+        case magic_energy_type::mana:
+            return "MANA";
+        case magic_energy_type::none:
+            return "NONE";
+        case magic_energy_type::stamina:
+            return "STAMINA";
+        case magic_energy_type::vitamin:
+            return "VITAMIN";
+        case magic_energy_type::last:
+            break;
     }
     cata_fatal( "Invalid magic_energy_type" );
 }
@@ -2854,7 +2925,7 @@ class spellcasting_callback : public uilist_callback
                 return true;
             } else if( action == "CHOOSE_INVLET" ) {
                 const int invlet = choose_key_from_user( _( "Choose a new hotkey for this spell." ),
-                                  inv_chars.get_allowed_chars(), ' ' );
+                                   inv_chars.get_allowed_chars(), ' ' );
                 if( invlet == KEY_ESCAPE ) {
                     return true;
                 }
@@ -3682,7 +3753,8 @@ static std::string spell_reader_disabled_reason( const spell &sp, Character &guy
     if( !sp.valid_caster_condition( guy ) ) {
         return sp.failed_caster_condition_message();
     }
-    if( guy.is_mute() && !guy.has_flag( json_flag_SILENT_SPELL ) && sp.has_flag( spell_flag::VERBAL ) ) {
+    if( guy.is_mute() && !guy.has_flag( json_flag_SILENT_SPELL ) &&
+        sp.has_flag( spell_flag::VERBAL ) ) {
         return _( "You cannot cast this spell while mute because it requires spoken words." );
     }
     if( !sp_type.spell_components.is_empty() &&
@@ -4148,7 +4220,8 @@ static std::string spellbook_reader_info( const spell_type &sp )
                                sp.max_duration, minmax_row_type::DURATION, true, false );
     add_spellbook_minmax_line( lines, d, _( "Cast Cost" ), sp.base_energy_cost, sp.energy_increment,
                                sp.final_energy_cost, minmax_row_type::ENERGY, false, false, &sp );
-    add_spellbook_minmax_line( lines, d, _( "Cast Time" ), sp.base_casting_time, sp.casting_time_increment,
+    add_spellbook_minmax_line( lines, d, _( "Cast Time" ), sp.base_casting_time,
+                               sp.casting_time_increment,
                                sp.final_casting_time, minmax_row_type::DURATION, false );
 
     std::string ret;

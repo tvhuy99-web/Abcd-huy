@@ -1075,7 +1075,7 @@ class npc : public Character
         bool wants_to_sell( const item_location &it ) const;
         ret_val<void> wants_to_sell( const item_location &it, int at_price ) const;
         bool wants_to_buy( const item &it ) const;
-        ret_val<void> wants_to_buy( const item & , int at_price ) const;
+        ret_val<void> wants_to_buy( const item &, int at_price ) const;
 
         bool will_exchange_items_freely() const;
         int max_credit_extended() const;
@@ -1405,7 +1405,7 @@ class npc : public Character
                                     const std::string &npc_msg ) const override;
         using Character::add_msg_if_player;
         void add_msg_if_player( const std::string & ) const override {}
-        void add_msg_if_player( const game_message_params & ,
+        void add_msg_if_player( const game_message_params &,
                                 const std::string & ) const override {}
         using Character::add_msg_player_or_say;
         void add_msg_player_or_say( const std::string &player_msg,

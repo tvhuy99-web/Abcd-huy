@@ -509,8 +509,8 @@ void draw_bullet_curses( map &m, const tripoint_bub_ms &t, const char bullet,
 #if defined(TILES)
 
 
-void game::draw_bullet( const tripoint_bub_ms &t, const int ,
-                        const std::vector<tripoint_bub_ms> & , const char bullet )
+void game::draw_bullet( const tripoint_bub_ms &t, const int,
+                        const std::vector<tripoint_bub_ms> &, const char bullet )
 {
     if( test_mode ) {
 
@@ -615,7 +615,7 @@ void game::draw_hit_mon( const tripoint_bub_ms &p, const monster &m, const bool 
 
 namespace
 {
-void draw_hit_player_curses( const game & , const Character &p, const int dam )
+void draw_hit_player_curses( const game &, const Character &p, const int dam )
 {
     nc_color const col = !dam ? yellow_background( p.symbol_color() ) : red_background(
                              p.symbol_color() );
@@ -736,7 +736,7 @@ void game::draw_line( const tripoint_bub_ms &p, const std::vector<tripoint_bub_m
     tilecontext->init_draw_line( p, points, "line_trail", false );
 }
 #else
-void game::draw_line( const tripoint_bub_ms & , const std::vector<tripoint_bub_ms> &points )
+void game::draw_line( const tripoint_bub_ms &, const std::vector<tripoint_bub_ms> &points )
 {
     draw_line_curses( *this, points );
 }

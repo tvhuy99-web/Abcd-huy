@@ -454,7 +454,8 @@ bool message_exceeds_ttl( const game_message &message )
 
 }
 
-Messages::mute_combat_speech::mute_combat_speech( const bool mute ) : muted( mute && a11y::enabled() )
+Messages::mute_combat_speech::mute_combat_speech( const bool mute ) : muted( mute &&
+            a11y::enabled() )
 {
     if( muted ) {
         ++muted_combat_speech_depth;
@@ -1010,7 +1011,7 @@ void Messages::dialog::run()
 
 
     a11y::screen_scope reader( &ctxt, "MESSAGE_LOG",
-    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
 

@@ -167,7 +167,7 @@ struct thingie {
     template <class U>
     explicit thingie( U u ) : data( std::in_place_type<U>, std::forward<U>( u ) ) {}
     template <class T, class... Args>
-    explicit thingie( std::in_place_type_t<T> , Args &&...args )
+    explicit thingie( std::in_place_type_t<T>, Args &&...args )
         : data( std::in_place_type<T>, std::forward<Args>( args )... ) {}
 
     constexpr double eval( dialogue &d ) const;
@@ -246,12 +246,12 @@ constexpr bool operator>( op_t const &lhs, paren const &rhs )
 
 namespace math_opers
 {
-constexpr double neg( double , double r )
+constexpr double neg( double, double r )
 {
     return -r;
 }
 
-constexpr double pos( double , double r )
+constexpr double pos( double, double r )
 {
     return r;
 }
@@ -316,7 +316,7 @@ inline double neq( double l, double r )
     return static_cast<double>( l != r );
 }
 
-inline double b_neg( double , double r )
+inline double b_neg( double, double r )
 {
     return static_cast<double>( float_equals( r, 0 ) );
 }

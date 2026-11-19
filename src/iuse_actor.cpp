@@ -2860,7 +2860,7 @@ std::string cast_spell_actor::get_name() const
 }
 
 
-std::optional<int> cast_spell_actor::use( Character *p, item &it, map * ,
+std::optional<int> cast_spell_actor::use( Character *p, item &it, map *,
         const tripoint_bub_ms &pos ) const
 {
     if( need_worn && !p->is_worn( it ) ) {
@@ -4788,7 +4788,7 @@ void detach_gunmods_actor::finalize( const itype_id &my_item_type )
 
 
 std::optional<int> modify_gunmods_actor::use( Character *p, item &it,
-        map * , const tripoint_bub_ms &pos ) const
+        map *, const tripoint_bub_ms &pos ) const
 {
 
     std::vector<item *> mods;

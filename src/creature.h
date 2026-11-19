@@ -1018,10 +1018,10 @@ class Creature : public viewer
 
 
         virtual void add_msg_if_player( const std::string & ) const {}
-        virtual void add_msg_if_player( const game_message_params & ,
+        virtual void add_msg_if_player( const game_message_params &,
                                         const std::string & ) const {}
         void add_msg_if_player( const translation & ) const;
-        void add_msg_if_player( const game_message_params & , const translation & ) const;
+        void add_msg_if_player( const game_message_params &, const translation & ) const;
         template<typename ...Args>
         void add_msg_if_player( const char *const msg, Args &&... args ) const {
             return add_msg_if_player( string_format( msg, std::forward<Args>( args )... ) );
@@ -1061,10 +1061,10 @@ class Creature : public viewer
         }
 
         virtual void add_msg_if_npc( const std::string & ) const {}
-        virtual void add_msg_if_npc( const game_message_params & ,
+        virtual void add_msg_if_npc( const game_message_params &,
                                      const std::string & ) const {}
         void add_msg_if_npc( const translation & ) const;
-        void add_msg_if_npc( const game_message_params & , const translation & ) const;
+        void add_msg_if_npc( const game_message_params &, const translation & ) const;
         template<typename ...Args>
         void add_msg_if_npc( const char *const msg, Args &&... args ) const {
             return add_msg_if_npc( string_format( msg, std::forward<Args>( args )... ) );
@@ -1102,15 +1102,15 @@ class Creature : public viewer
             return add_msg_if_npc( params, string_format( msg.translated(), std::forward<Args>( args )... ) );
         }
 
-        virtual void add_msg_player_or_npc( const std::string & ,
+        virtual void add_msg_player_or_npc( const std::string &,
                                             const std::string & ) const {}
-        virtual void add_msg_player_or_npc( const game_message_params & ,
-                                            const std::string & ,
+        virtual void add_msg_player_or_npc( const game_message_params &,
+                                            const std::string &,
                                             const std::string & ) const {}
-        void add_msg_player_or_npc( const translation & ,
+        void add_msg_player_or_npc( const translation &,
                                     const translation & ) const;
-        void add_msg_player_or_npc( const game_message_params & ,
-                                    const translation & ,
+        void add_msg_player_or_npc( const game_message_params &,
+                                    const translation &,
                                     const translation & ) const;
         template<typename ...Args>
         void add_msg_player_or_npc( const char *const player_msg, const char *const npc_msg,
@@ -1158,15 +1158,15 @@ class Creature : public viewer
                                           string_format( npc_msg.translated(), args... ) );
         }
 
-        virtual void add_msg_player_or_say( const std::string & ,
+        virtual void add_msg_player_or_say( const std::string &,
                                             const std::string & ) const {}
-        virtual void add_msg_player_or_say( const game_message_params & ,
-                                            const std::string & ,
+        virtual void add_msg_player_or_say( const game_message_params &,
+                                            const std::string &,
                                             const std::string & ) const {}
-        void add_msg_player_or_say( const translation & ,
+        void add_msg_player_or_say( const translation &,
                                     const translation & ) const;
-        void add_msg_player_or_say( const game_message_params & ,
-                                    const translation & ,
+        void add_msg_player_or_say( const game_message_params &,
+                                    const translation &,
                                     const translation & ) const;
         template<typename ...Args>
         void add_msg_player_or_say( const char *const player_msg, const char *const npc_speech,

@@ -461,7 +461,7 @@ bool map::can_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
     return cost_to_pass( cur, p, settings, pf_cache.special[p.x()][p.y()] ) >= 0;
 }
 
-int map::cost_to_avoid( const tripoint_bub_ms & , const tripoint_bub_ms &p,
+int map::cost_to_avoid( const tripoint_bub_ms &, const tripoint_bub_ms &p,
                         const pathfinding_settings &settings, PathfindingFlags p_special ) const
 {
     if( settings.avoid_traps && ( p_special & PathfindingFlag::DangerousTrap ) ) {

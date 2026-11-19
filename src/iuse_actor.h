@@ -776,7 +776,7 @@ class cast_spell_actor : public iuse_actor
         ~cast_spell_actor() override = default;
         void load( const JsonObject &obj, const std::string & ) override;
         using iuse_actor::use;
-        std::optional<int> use( Character *p, item &it, map * ,
+        std::optional<int> use( Character *p, item &it, map *,
                                 const tripoint_bub_ms &pos ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
         void info( const item &, std::vector<iteminfo> & ) const override;
@@ -1149,7 +1149,7 @@ class modify_gunmods_actor : public iuse_actor
 
         void load( const JsonObject &, const std::string & ) override {}
         using iuse_actor::use;
-        std::optional<int> use( Character *p, item &it, map * ,
+        std::optional<int> use( Character *p, item &it, map *,
                                 const tripoint_bub_ms &pos ) const override;
         using iuse_actor::can_use;
         ret_val<void> can_use( const Character &, const item &it, map *,

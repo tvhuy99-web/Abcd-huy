@@ -1765,13 +1765,17 @@ void options_manager::add_options_general()
 
         std::vector<id_and_option> const soundpacks = build_soundpacks_list();
         const bool has_black_edition = std::any_of( soundpacks.begin(), soundpacks.end(),
-        []( const id_and_option & option ) { return option.first == "Bl@ck Edition soundpack"; } );
+        []( const id_and_option & option ) {
+            return option.first == "Bl@ck Edition soundpack";
+        } );
         const bool has_otopack = std::any_of( soundpacks.begin(), soundpacks.end(),
-        []( const id_and_option & option ) { return option.first == "otopack"; } );
+        []( const id_and_option & option ) {
+            return option.first == "otopack";
+        } );
         add( "SOUNDPACKS", page_id, to_translation( "Choose soundpack" ),
              to_translation( "Choose the soundpack you want to use.  Requires restart." ),
              soundpacks, has_black_edition ? "Bl@ck Edition soundpack" : ( has_otopack ? "otopack" : (
-                 std::any_of( soundpacks.begin(), soundpacks.end(),
+                         std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) {
             return option.first == "CC-Sounds";
         } )  ? "CC-Sounds" : "basic" ) ),
@@ -3348,8 +3352,8 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
         try {
             closetilecontext->reinit();
             closetilecontext->load_tileset( get_option<std::string>( "TILES" ),
- false, false,
- true, false );
+                                            false, false,
+                                            true, false );
 
             g->reset_zoom();
             g->mark_main_ui_adaptor_resize();
@@ -3365,8 +3369,8 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
                     fartilecontext->reinit();
                 }
                 fartilecontext->load_tileset( get_option<std::string>( "DISTANT_TILES" ),
- false, false,
- true, false );
+                                              false, false,
+                                              true, false );
 
                 g->reset_zoom();
                 g->mark_main_ui_adaptor_resize();
@@ -3380,8 +3384,8 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
         try {
             portrait_tilecontext->reinit();
             portrait_tilecontext->load_tileset( get_option<std::string>( "PORTRAIT_TILES" ),
- false, false,
- true, true );
+                                                false, false,
+                                                true, true );
 
             g->reset_zoom();
             g->mark_main_ui_adaptor_resize();
@@ -3392,8 +3396,8 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
         try {
             overmap_tilecontext->reinit();
             overmap_tilecontext->load_tileset( get_option<std::string>( "OVERMAP_TILES" ),
- false, false,
- true, true );
+                                               false, false,
+                                               true, true );
 
             g->reset_zoom();
             g->mark_main_ui_adaptor_resize();
@@ -3576,17 +3580,19 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
     std::unordered_map<std::string, std::string> reader_drafts;
     bool recalc_startpos = false;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, world_options_only ? "world-options" : "OPTIONS",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, world_options_only ? "world-options" : "OPTIONS",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
 
         // fall through to the focus/activate handling below, and a draft
 
-        if( selected.kind == reader_target_kind::group ) {
+        if( selected.kind == reader_target_kind::group )
+        {
             const bool expand = intent.action == "expand" || intent.action == "open_tree";
             if( expand || intent.action == "collapse" ) {
                 if( groups_state[selected.data] == expand ) {
@@ -3600,7 +3606,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 return "A11Y_INTERNAL_OPTIONS_FOCUS";
             }
         }
-        if( selected.kind == reader_target_kind::option ) {
+        if( selected.kind == reader_target_kind::option )
+        {
             if( intent.action == "set_value" || intent.action == "select_choice" ) {
                 reader_drafts[intent.node] = intent.value;
                 return "A11Y_INTERNAL_OPTIONS_FOCUS";
@@ -3650,11 +3657,13 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 return "A11Y_INTERNAL_OPTIONS_FOCUS";
             }
         }
-        if( selected.kind == reader_target_kind::world_mods_tab ) {
+        if( selected.kind == reader_target_kind::world_mods_tab )
+        {
             return intent.action == "activate" ? std::optional<std::string>( "PREV_TAB" ) :
                    std::nullopt;
         }
-        if( selected.kind == reader_target_kind::page ) {
+        if( selected.kind == reader_target_kind::page )
+        {
             if( intent.action != "focus" && intent.action != "activate" ) {
                 return std::nullopt;
             }
@@ -3673,17 +3682,20 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             recalc_startpos = true;
             return "A11Y_INTERNAL_OPTIONS_FOCUS";
         }
-        if( intent.action != "focus" && intent.action != "activate" ) {
+        if( intent.action != "focus" && intent.action != "activate" )
+        {
             return std::nullopt;
         }
         iCurrentPage = selected.page;
         iCurrentLine = selected.line;
         iStartPos = 0;
         recalc_startpos = true;
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             return "A11Y_INTERNAL_OPTIONS_FOCUS";
         }
-        switch( selected.kind ) {
+        switch( selected.kind )
+        {
             case reader_target_kind::option:
             case reader_target_kind::group:
                 return "CONFIRM";
@@ -3704,7 +3716,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = world_options_only ? _( "World options" ) : _( "Options" );
-        snapshot.summary = _( "Focus an option to hear its current value and description. Use previous or next value to change it, or activate to open its editor. The game's normal options flow handles saving when applicable." );
+        snapshot.summary =
+            _( "Focus an option to hear its current value and description. Use previous or next value to change it, or activate to open its editor. The game's normal options flow handles saving when applicable." );
 
         if( world_options_only && with_tabs ) {
             a11y::semantic_node mods_tab;
@@ -3908,7 +3921,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                                     reader_target{ reader_target_kind::option, iCurrentPage, static_cast<int>( i ), item.data } );
             snapshot.nodes.push_back( std::move( row ) );
 
-            for( const bool next : { false, true } ) {
+            for( const bool next : {
+                     false, true
+                 } ) {
                 const std::string adjustment_id = row_id + ( next ? ":next" : ":previous" );
                 a11y::semantic_node adjustment;
                 adjustment.id = adjustment_id;
@@ -3917,7 +3932,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 adjustment.value = option.getValueName();
                 adjustment.enabled = prerequisite_met;
                 adjustment.detail = next ? _( "Activate to select the next value." ) :
-                                   _( "Activate to select the previous value." );
+                                    _( "Activate to select the previous value." );
                 adjustment.parent_id = row_id;
                 adjustment.depth = row.depth + 1;
                 adjustment.expanded = true;
@@ -3953,7 +3968,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 if( entry.second.kind == reader_target_kind::option &&
                     entry.second.data == prerequisite && entry.first != node.id &&
                     std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
-                [&entry]( const a11y::semantic_node & candidate ) { return candidate.id == entry.first; } ) ) {
+                [&entry]( const a11y::semantic_node & candidate ) {
+                return candidate.id == entry.first;
+            } ) ) {
                     node.depends_on.push_back( entry.first );
                     break;
                 }
@@ -4000,14 +4017,16 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         }
         snapshot.focus = "options:line:" + std::to_string( iCurrentPage ) + ":" +
                          std::to_string( iCurrentLine );
-        if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(), [&]( const a11y::semantic_node &node ) {
+        if( std::none_of( snapshot.nodes.begin(),
+        snapshot.nodes.end(), [&]( const a11y::semantic_node & node ) {
         return node.id == snapshot.focus;
-        } ) ) {
+    } ) ) {
             snapshot.focus = world_options_only && with_tabs ? "options:worldgen:options" :
-                            "options:page:" + std::to_string( iCurrentPage );
-            if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(), [&]( const a11y::semantic_node &node ) {
+                             "options:page:" + std::to_string( iCurrentPage );
+            if( std::none_of( snapshot.nodes.begin(),
+            snapshot.nodes.end(), [&]( const a11y::semantic_node & node ) {
             return node.id == snapshot.focus;
-            } ) ) {
+        } ) ) {
                 snapshot.focus = snapshot.nodes.empty() ? std::string() : snapshot.nodes.front().id;
             }
         }

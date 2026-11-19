@@ -35,13 +35,17 @@
 
 
 static const itype_id itype_test_liquid_1ml( "test_liquid_1ml" );
-static const itype_id itype_test_rag("test_rag");
+static const itype_id itype_test_rag( "test_rag" );
 static const itype_id itype_test_restricted_container_holder( "test_restricted_container_holder" );
 static const itype_id itype_test_solid_1ml( "test_solid_1ml" );
-static const itype_id itype_test_watertight_open_sealed_container_1L( "test_watertight_open_sealed_container_1L" );
-static const itype_id itype_test_watertight_open_sealed_container_250ml( "test_watertight_open_sealed_container_250ml" );
-static const itype_id itype_test_watertight_open_sealed_multipocket_container_2x1L( "test_watertight_open_sealed_multipocket_container_2x1L" );
-static const itype_id itype_test_watertight_open_sealed_multipocket_container_2x250ml( "test_watertight_open_sealed_multipocket_container_2x250ml" );
+static const itype_id
+itype_test_watertight_open_sealed_container_1L( "test_watertight_open_sealed_container_1L" );
+static const itype_id
+itype_test_watertight_open_sealed_container_250ml( "test_watertight_open_sealed_container_250ml" );
+static const itype_id
+itype_test_watertight_open_sealed_multipocket_container_2x1L( "test_watertight_open_sealed_multipocket_container_2x1L" );
+static const itype_id
+itype_test_watertight_open_sealed_multipocket_container_2x250ml( "test_watertight_open_sealed_multipocket_container_2x250ml" );
 
 static const vproto_id vehicle_prototype_test_cargo_space( "test_cargo_space" );
 
@@ -65,7 +69,7 @@ class enum_tuple
             if( val == enum_t::end && ind > 0 ) {
                 val = enum_t::begin;
 
-                increment<( ind > 0 ? ind - 1 : 0 )>();
+                increment < ( ind > 0 ? ind - 1 : 0 ) > ();
 
             }
         }
@@ -82,7 +86,7 @@ class enum_tuple
 
         enum_tuple operator++() {
 
-            increment<std::tuple_size_v<tuple_type> - 1>();
+            increment < std::tuple_size_v<tuple_type> - 1 > ();
 
             return *this;
         }

@@ -1575,9 +1575,9 @@ void Creature::deal_projectile_attack( map *here, Creature *source, dealt_projec
 
         a11y::android::diagnostic_event( "COMBAT_BALLISTIC",
                                          string_format( "target_monster=%d aim=%.3f hit_multiplier=%.3f raw=%.1f after_accuracy=%.1f post_armor=%d hp_after=%d",
-                                                        is_monster() ? 1 : 0, goodhit, hit_selection.damage_mult,
-                                                        static_cast<double>( proj.impact.total_damage() ),
-                                                        impact_after_accuracy, total_dam, get_hp() ) );
+                                                 is_monster() ? 1 : 0, goodhit, hit_selection.damage_mult,
+                                                 static_cast<double>( proj.impact.total_damage() ),
+                                                 impact_after_accuracy, total_dam, get_hp() ) );
     }
 
     if( print_messages ) {
@@ -1708,7 +1708,7 @@ void Creature::deal_damage_handle_type( const effect_source &source, const damag
     pain += roll_remainder( adjusted_damage / div );
 }
 
-void Creature::heal_bp( bodypart_id , int )
+void Creature::heal_bp( bodypart_id, int )
 {
 }
 

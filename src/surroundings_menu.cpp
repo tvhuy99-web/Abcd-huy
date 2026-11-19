@@ -1257,8 +1257,8 @@ void surroundings_menu::execute_accessible()
     const tripoint_bub_ms origin = you.pos_bub();
     map &here = get_map();
     std::set<const vehicle *> seen_vehicles;
-    const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
-                              int stop_distance, nearby_kind kind ) {
+    const auto add_row = [&]( const std::string & name, const tripoint_rel_ms & relative,
+    int stop_distance, nearby_kind kind ) {
         if( !name.empty() ) {
             nearby.push_back( { kind, name, origin + relative, relative,
                                 std::max( std::abs( relative.x() ), std::abs( relative.y() ) ),
@@ -1330,7 +1330,7 @@ void surroundings_menu::execute_accessible()
 
 
     std::stable_sort( nearby.begin(), nearby.end(),
-    []( const nearby_row &lhs, const nearby_row &rhs ) {
+    []( const nearby_row & lhs, const nearby_row & rhs ) {
         return lhs.distance < rhs.distance;
     } );
     constexpr std::size_t page_size = 80;
@@ -1355,13 +1355,17 @@ void surroundings_menu::execute_accessible()
     };
     const auto category_label = [&]() {
         switch( selected_category ) {
-            case 1: return std::string( _( "Creatures and NPCs" ) );
-            case 2: return std::string( _( "Places and environment" ) );
-            case 3: return std::string( _( "Items" ) );
-            default: return std::string( _( "All" ) );
+            case 1:
+                return std::string( _( "Creatures and NPCs" ) );
+            case 2:
+                return std::string( _( "Places and environment" ) );
+            case 3:
+                return std::string( _( "Items" ) );
+            default:
+                return std::string( _( "All" ) );
         }
     };
-    const auto relative_words = []( const tripoint_rel_ms &relative ) {
+    const auto relative_words = []( const tripoint_rel_ms & relative ) {
         if( relative == tripoint_rel_ms() ) {
             return std::string( _( "Current tile" ) );
         }
@@ -1406,14 +1410,17 @@ void surroundings_menu::execute_accessible()
     ctxt.register_action( "HELP_KEYBINDINGS" );
     a11y::screen_scope reader( &ctxt, "surroundings",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             return std::string( "TIMEOUT" );
         }
-        if( intent.action != "activate" && intent.action != "read_detail" ) {
+        if( intent.action != "activate" && intent.action != "read_detail" )
+        {
             return std::nullopt;
         }
         if( intent.node == "nearby:filter:next" ||
-            intent.node == "nearby:filter:previous" ) {
+            intent.node == "nearby:filter:previous" )
+        {
             selected_category = ( selected_category +
                                   ( intent.node == "nearby:filter:next" ? 1 : 3 ) ) % 4;
             page = 0;
@@ -1424,19 +1431,22 @@ void surroundings_menu::execute_accessible()
 
 
         const std::size_t page_count = ( filtered.size() + page_size - 1 ) / page_size;
-        if( intent.node == "nearby:page:next" && page_count > 1 ) {
+        if( intent.node == "nearby:page:next" && page_count > 1 )
+        {
             page = ( page + 1 ) % page_count;
             focus_last_on_page = false;
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "nearby:page:previous" && page_count > 1 ) {
+        if( intent.node == "nearby:page:previous" && page_count > 1 )
+        {
             page = ( page + page_count - 1 ) % page_count;
             focus_last_on_page = true;
             return std::string( "TIMEOUT" );
         }
-        const std::size_t start = page * page_size;
+        const std::size_t start = page *page_size;
         const std::size_t end = std::min( start + page_size, filtered.size() );
-        for( std::size_t i = start; i < end; ++i ) {
+        for( std::size_t i = start; i < end; ++i )
+        {
             const std::size_t row_index = filtered[i];
             if( intent.node != "nearby:target:" + std::to_string( row_index ) ) {
                 continue;
@@ -1456,9 +1466,9 @@ void surroundings_menu::execute_accessible()
                     return std::string( "TIMEOUT" );
                 }
                 a11y::announce_full_detail_text( string_format(
-                    _( "%1$s, %2$s, %3$d HP remaining." ),
-                    creature->disp_name(), relative_words( target.relative ),
-                    std::max( 0, creature->get_hp() ) ) );
+                                                     _( "%1$s, %2$s, %3$d HP remaining." ),
+                                                     creature->disp_name(), relative_words( target.relative ),
+                                                     std::max( 0, creature->get_hp() ) ) );
                 return std::string( "TIMEOUT" );
             }
             if( intent.action == "read_detail" && target.kind == nearby_kind::item ) {
@@ -1506,7 +1516,7 @@ void surroundings_menu::execute_accessible()
 
 
             const std::optional<std::vector<tripoint_bub_ms>> route =
-            g->safe_route_to( you, target.target, target.stop_distance,
+                        g->safe_route_to( you, target.target, target.stop_distance,
             []( const std::string & reason ) {
                 add_msg( m_info, "%s", reason );
             }, false );

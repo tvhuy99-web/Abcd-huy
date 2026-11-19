@@ -86,8 +86,9 @@ void distraction_manager_gui::show()
 
 
     a11y::screen_scope reader( &ctxt, "distraction-manager",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        for( int i = 0; i < number_of_distractions; ++i ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( int i = 0; i < number_of_distractions; ++i )
+        {
             if( intent.node == "distraction:item:" + std::to_string( i ) ) {
                 if( intent.action == "focus" || intent.action == "activate" ) {
                     currentLine = i;
@@ -157,7 +158,7 @@ void distraction_manager_gui::show()
         ui_manager::redraw();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                    ctxt, _( "Distractions manager" ) );
+                                                   ctxt, _( "Distractions manager" ) );
             snapshot.summary = _( "Select a condition to enable or disable interruption.  "
                                   "Toggle all affects every condition." );
             for( int i = 0; i < number_of_distractions; ++i ) {
@@ -210,8 +211,8 @@ void distraction_manager_gui::show()
             if( a11y::enabled() ) {
                 const configurable_distraction &item = get_configurable_distractions()[currentLine];
                 a11y::announce_game_message( string_format( _( "%1$s: %2$s." ),
-                                              _( item.name.c_str() ),
-                                              *item.state ? _( "Enabled" ) : _( "Disabled" ) ), false );
+                                             _( item.name.c_str() ),
+                                             *item.state ? _( "Enabled" ) : _( "Disabled" ) ), false );
             }
         }
     }

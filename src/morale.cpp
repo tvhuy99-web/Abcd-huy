@@ -859,7 +859,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_pena
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Morale" ) );
         std::string sources;
         const auto append_sources = [&sources]( const std::string & header, const int total,
-                                                const std::vector<morale_point> &group ) {
+        const std::vector<morale_point> &group ) {
             if( !sources.empty() ) {
                 sources += "\n";
             }

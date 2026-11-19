@@ -218,9 +218,9 @@ TEST_CASE( "a11y_intent_value_domain_checks", "[a11y][schema]" )
         pick.choices.push_back( a11y::semantic_choice{ "a", "A" } );
         pick.choices.push_back( a11y::semantic_choice{ "b", "B" } );
         CHECK( a11y::validate_intent_value( pick, value_intent( "pick", "b", "select_choice" ),
-                                           reason ) );
+                                            reason ) );
         CHECK_FALSE( a11y::validate_intent_value( pick, value_intent( "pick", "c", "select_choice" ),
-                       reason ) );
+                     reason ) );
         CHECK( reason == "not_a_choice" );
     }
     SECTION( "a value aimed at a non-field node is refused" ) {

@@ -329,7 +329,7 @@ static void pickup_here_accessible()
 
 
         const auto found = std::find_if( choices.begin(), choices.end(),
-        [&]( const pickup_choice &choice ) {
+        [&]( const pickup_choice & choice ) {
             return choice.name == label;
         } );
         if( found != choices.end() ) {
@@ -337,7 +337,7 @@ static void pickup_here_accessible()
             found->available += quantity;
         } else {
             choices.push_back( { { { location, quantity } }, label,
-                                 quantity, 0 } );
+                quantity, 0 } );
         }
     }
     if( choices.empty() ) {
@@ -358,19 +358,22 @@ static void pickup_here_accessible()
     ctxt.register_action( "CONFIRM" );
     a11y::screen_scope reader( &ctxt, "pickup-here",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
             return std::string( "QUIT" );
         }
-        if( intent.node == "pickup-here:confirm" && intent.action == "activate" ) {
-            if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice &choice ) {
+        if( intent.node == "pickup-here:confirm" && intent.action == "activate" )
+        {
+            if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice & choice ) {
             return choice.selected > 0;
-            } ) ) {
+        } ) ) {
                 add_msg( m_info, _( "No items selected." ) );
                 return std::string( "TIMEOUT" );
             }
             return std::string( "CONFIRM" );
         }
-        for( std::size_t i = 0; i < choices.size(); ++i ) {
+        for( std::size_t i = 0; i < choices.size(); ++i )
+        {
             if( intent.node != "pickup-here:item:" + std::to_string( i ) ) {
                 continue;
             }
@@ -538,18 +541,18 @@ input_context game::get_player_input( std::string &action )
 
 
         for( const action_id id : {
-            ACTION_CENTER,
-            ACTION_SHIFT_N,
-            ACTION_SHIFT_NE,
-            ACTION_SHIFT_E,
-            ACTION_SHIFT_SE,
-            ACTION_SHIFT_S,
-            ACTION_SHIFT_SW,
-            ACTION_SHIFT_W,
-            ACTION_SHIFT_NW,
-            ACTION_LOOK,
-            ACTION_KEYBINDINGS,
-        } ) {
+                 ACTION_CENTER,
+                 ACTION_SHIFT_N,
+                 ACTION_SHIFT_NE,
+                 ACTION_SHIFT_E,
+                 ACTION_SHIFT_SE,
+                 ACTION_SHIFT_S,
+                 ACTION_SHIFT_SW,
+                 ACTION_SHIFT_W,
+                 ACTION_SHIFT_NW,
+                 ACTION_LOOK,
+                 ACTION_KEYBINDINGS,
+             } ) {
             ctxt.register_action( action_ident( id ) );
         }
 
@@ -629,7 +632,7 @@ input_context game::get_player_input( std::string &action )
     };
 
 
-    const auto parse_reader_explore_pair = []( const std::string_view text, point &delta ) {
+    const auto parse_reader_explore_pair = []( const std::string_view text, point & delta ) {
         const std::size_t colon = text.find( ':' );
         if( colon == std::string::npos ) {
             return false;
@@ -649,7 +652,8 @@ input_context game::get_player_input( std::string &action )
     a11y::screen_scope *reader = nullptr;
     reader = &a11y::bind_world_screen( &ctxt,
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "activate" && intent.node.rfind( "reader:combat:", 0 ) == 0 ) {
+        if( intent.action == "activate" && intent.node.rfind( "reader:combat:", 0 ) == 0 )
+        {
 
 
             if( !make_reader_snapshot().swipe_movement_allowed ) {
@@ -684,7 +688,8 @@ input_context game::get_player_input( std::string &action )
 
         if( intent.action == "activate" &&
             ( intent.node == "reader:vehicle:begin" ||
-              intent.node == "reader:vehicle:release" ) ) {
+              intent.node == "reader:vehicle:release" ) )
+        {
             const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
             if( !u.in_vehicle || !seat || ( g && g->remoteveh() == &seat->vehicle() ) ) {
                 a11y::android::status( "blocked", &intent );
@@ -717,7 +722,8 @@ input_context game::get_player_input( std::string &action )
               intent.node == "reader:vehicle:horn" ||
               intent.node == "reader:vehicle:engine" ||
               intent.node == "reader:vehicle:heading:left" ||
-              intent.node == "reader:vehicle:heading:right" ) ) {
+              intent.node == "reader:vehicle:heading:right" ) )
+        {
             const optional_vpart_position seated = get_map().veh_at( u.pos_bub( get_map() ) );
             if( !seated || !u.controlling_vehicle ||
                 !seated->vehicle().player_in_control( get_map(), u ) ||
@@ -761,7 +767,8 @@ input_context game::get_player_input( std::string &action )
         }
 
 
-        if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
+        if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 )
+        {
             if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
                 const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
                 if( !u.in_vehicle || !u.controlling_vehicle || !seat ||
@@ -793,7 +800,8 @@ input_context game::get_player_input( std::string &action )
 
         // registered_intent so an explore node can never fall through to
 
-        if( intent.action == "activate" && intent.node.rfind( "explore:", 0 ) == 0 ) {
+        if( intent.action == "activate" && intent.node.rfind( "explore:", 0 ) == 0 )
+        {
             bool changed = false;
             if( intent.node == "explore:enter" ) {
                 if( !reader_explore_cursor ) {
@@ -859,7 +867,8 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        if( intent.node == "world:radius" && intent.action == "set_text" ) {
+        if( intent.node == "world:radius" && intent.action == "set_text" )
+        {
             try {
                 std::size_t consumed = 0;
                 const int radius = std::stoi( intent.value, &consumed );
@@ -875,7 +884,8 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        if( intent.node == "world:depth" && intent.action == "set_text" ) {
+        if( intent.node == "world:depth" && intent.action == "set_text" )
+        {
             try {
                 std::size_t consumed = 0;
                 const int depth = std::stoi( intent.value, &consumed );
@@ -891,7 +901,8 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
-        if( intent.action == "activate" ) {
+        if( intent.action == "activate" )
+        {
             if( intent.node == "world:filter:all" ) {
                 reader_scan_filter = a11y::world_scan_filter::all;
             } else if( intent.node == "world:filter:known" ) {
@@ -944,21 +955,24 @@ input_context game::get_player_input( std::string &action )
                                                    std::chrono::steady_clock::now() - vision_started ).count();
                         a11y::android::performance_vision_sample( vision_ms );
                         a11y::android::diagnostic_event( "WORLD_VISION_TIMING",
-                                "cache_visibility_ms=" + std::to_string( vision_ms ) +
-                                " mode=headless_reader" );
+                                                         "cache_visibility_ms=" + std::to_string( vision_ms ) +
+                                                         " mode=headless_reader" );
                     }
                 }
 #endif
                 const bool profile_reader = a11y::android::performance_profiling_enabled();
-                const std::chrono::steady_clock::time_point started = profile_reader ? std::chrono::steady_clock::now() :
-                                     std::chrono::steady_clock::time_point{};
+                const std::chrono::steady_clock::time_point started = profile_reader ?
+                        std::chrono::steady_clock::now() :
+                        std::chrono::steady_clock::time_point{};
                 a11y::semantic_snapshot next = make_reader_snapshot();
-                const std::chrono::steady_clock::time_point built = profile_reader ? std::chrono::steady_clock::now() :
-                                   std::chrono::steady_clock::time_point{};
+                const std::chrono::steady_clock::time_point built = profile_reader ?
+                        std::chrono::steady_clock::now() :
+                        std::chrono::steady_clock::time_point{};
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
-                const std::chrono::steady_clock::time_point published = profile_reader ? std::chrono::steady_clock::now() :
-                                       std::chrono::steady_clock::time_point{};
+                const std::chrono::steady_clock::time_point published = profile_reader ?
+                        std::chrono::steady_clock::now() :
+                        std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
                     const auto ms = []( const auto from, const auto to ) {
                         return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
@@ -967,9 +981,9 @@ input_context game::get_player_input( std::string &action )
                     const std::chrono::milliseconds::rep publish_ms = ms( built, published );
                     a11y::android::performance_reader_sample( build_ms + publish_ms );
                     a11y::android::diagnostic_event( "WORLD_READER_TIMING",
-                            "build_ms=" + std::to_string( build_ms ) +
-                            " update_publish_ms=" + std::to_string( publish_ms ) +
-                            " nodes=" + std::to_string( nodes ) );
+                                                     "build_ms=" + std::to_string( build_ms ) +
+                                                     " update_publish_ms=" + std::to_string( publish_ms ) +
+                                                     " nodes=" + std::to_string( nodes ) );
                 }
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
@@ -2027,7 +2041,8 @@ static void wait()
                                            to_string_time_of_day( calendar::turn ) ) : "";
     as_m.text += setting_alarm ? _( "Set alarm for when?" ) : _( "Wait for how long?" );
     if( !setting_alarm && a11y::enabled() ) {
-        as_m.text += "\n\n" + std::string( _( "Waiting advances game time.  The world may change while you wait." ) );
+        as_m.text += "\n\n" + std::string(
+                         _( "Waiting advances game time.  The world may change while you wait." ) );
     }
     as_m.query();
 
@@ -2169,12 +2184,12 @@ static void sleep()
             data << std::endl;
         }
         data << string_format(
-                    _( "Before sleep.  Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
-                       "Location: %4$s." ),
-                    display::sleepiness_text_color( player_character ).first,
-                    display::thirst_text_color( player_character ).first,
-                    display::pain_text_color( player_character ).first,
-                    here.tername( p ) ) << std::endl;
+                 _( "Before sleep.  Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
+                    "Location: %4$s." ),
+                 display::sleepiness_text_color( player_character ).first,
+                 display::thirst_text_color( player_character ).first,
+                 display::pain_text_color( player_character ).first,
+                 here.tername( p ) ) << std::endl;
         data << _( "Sleeping advances game time.  You cannot issue ordinary commands until you wake; "
                    "scheduled events and world changes may occur." );
     }
@@ -3198,93 +3213,93 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     }
 
                     switch( throttle ) {
-                    case a11y_vehicle_throttle::forward:
-                        if( force_forward && car.velocity >= 0 ) {
+                        case a11y_vehicle_throttle::forward:
+                            if( force_forward && car.velocity >= 0 ) {
 
 
 
-                            if( car.cruise_velocity == 0 ) {
-                                pldrive( point_rel_ms( 0, -1 ) );
-                            }
-                            const int safe_speed = std::max( 0, car.safe_velocity( here ) );
-                            car.cruise_velocity = std::min( safe_speed,
-                                                          std::max( car.cruise_velocity,
-                                                                  car.a11y_obstacle_resume_speed ) );
-                            car.a11y_continuous_drive = !car.a11y_manual_drive &&
-                                                       car.cruise_velocity > 0;
-                        } else if( car.cruise_velocity < 0 || car.velocity < 0 ) {
-                            car.cruise_velocity = 0;
-                            add_msg( m_info, _( "Slowing down before driving forward." ) );
-                        } else if( car.cruise_velocity == 0 ) {
-
-
-
-                            const std::optional<a11y::vehicle_obstacle> obstruction =
-                                a11y::vehicle_obstacle_ahead( car, here );
-                            if( !car.a11y_manual_drive && obstruction &&
-                                obstruction->distance <= 8 ) {
-                                car.a11y_obstacle_stop = true;
-                                car.a11y_stopped_obstacle_name = obstruction->label;
-                                car.a11y_stopped_heading = car.turn_dir;
-                                car.a11y_obstacle_resume_speed = 400;
-                                car.a11y_continuous_drive = false;
-                                add_msg( m_warning,
-                                         _( "Cannot move forward: %1$s, about %2$d tiles." ),
-                                         obstruction->label, obstruction->distance );
-                            } else {
-                                pldrive( point_rel_ms( 0, -1 ) );
-                                car.a11y_obstacle_stop = false;
-                                car.a11y_continuous_drive = !car.a11y_manual_drive &&
-                                                           car.cruise_velocity > 0;
-                                if( !car.a11y_manual_drive ) {
-                                    add_msg( m_info, _( "Forward selected." ) );
+                                if( car.cruise_velocity == 0 ) {
+                                    pldrive( point_rel_ms( 0, -1 ) );
                                 }
-                            }
-                        } else if( car.cruise_velocity > 0 ) {
-                            car.a11y_continuous_drive = !car.a11y_manual_drive;
-                        }
-                        break;
-                    case a11y_vehicle_throttle::reverse:
-                        car.a11y_obstacle_stop = false;
-                        car.a11y_obstacle_override = false;
-                        if( car.cruise_velocity > 0 || car.velocity > 0 ) {
-                            car.cruise_velocity = 0;
-                            add_msg( m_info, _( "Slowing down before reversing." ) );
-                        } else if( car.cruise_velocity == 0 ) {
-                            const std::optional<a11y::vehicle_obstacle> obstruction =
-                                a11y::vehicle_obstacle_ahead( car, here, true );
-                            if( !car.a11y_manual_drive && obstruction &&
-                                obstruction->distance <= 8 ) {
-                                car.a11y_obstacle_stop = true;
-                                car.a11y_stopped_obstacle_name = obstruction->label;
-                                car.a11y_stopped_heading = car.turn_dir;
-                                car.a11y_obstacle_resume_speed = -400;
-                                car.a11y_continuous_drive = false;
-                                add_msg( m_warning,
-                                         _( "Cannot reverse: %1$s, about %2$d tiles." ),
-                                         obstruction->label, obstruction->distance );
-                            } else {
-                                pldrive( point_rel_ms( 0, 1 ) );
+                                const int safe_speed = std::max( 0, car.safe_velocity( here ) );
+                                car.cruise_velocity = std::min( safe_speed,
+                                                                std::max( car.cruise_velocity,
+                                                                        car.a11y_obstacle_resume_speed ) );
                                 car.a11y_continuous_drive = !car.a11y_manual_drive &&
-                                                           car.cruise_velocity < 0;
-                                if( !car.a11y_manual_drive ) {
-                                    add_msg( m_info, _( "Reverse selected." ) );
+                                                            car.cruise_velocity > 0;
+                            } else if( car.cruise_velocity < 0 || car.velocity < 0 ) {
+                                car.cruise_velocity = 0;
+                                add_msg( m_info, _( "Slowing down before driving forward." ) );
+                            } else if( car.cruise_velocity == 0 ) {
+
+
+
+                                const std::optional<a11y::vehicle_obstacle> obstruction =
+                                    a11y::vehicle_obstacle_ahead( car, here );
+                                if( !car.a11y_manual_drive && obstruction &&
+                                    obstruction->distance <= 8 ) {
+                                    car.a11y_obstacle_stop = true;
+                                    car.a11y_stopped_obstacle_name = obstruction->label;
+                                    car.a11y_stopped_heading = car.turn_dir;
+                                    car.a11y_obstacle_resume_speed = 400;
+                                    car.a11y_continuous_drive = false;
+                                    add_msg( m_warning,
+                                             _( "Cannot move forward: %1$s, about %2$d tiles." ),
+                                             obstruction->label, obstruction->distance );
+                                } else {
+                                    pldrive( point_rel_ms( 0, -1 ) );
+                                    car.a11y_obstacle_stop = false;
+                                    car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                                car.cruise_velocity > 0;
+                                    if( !car.a11y_manual_drive ) {
+                                        add_msg( m_info, _( "Forward selected." ) );
+                                    }
                                 }
+                            } else if( car.cruise_velocity > 0 ) {
+                                car.a11y_continuous_drive = !car.a11y_manual_drive;
                             }
-                        } else if( car.cruise_velocity < 0 ) {
-                            car.a11y_continuous_drive = !car.a11y_manual_drive;
-                        }
-                        break;
-                    case a11y_vehicle_throttle::faster:
-                        pldrive( point_rel_ms( 0, car.cruise_velocity < 0 ? 1 : -1 ) );
-                        break;
-                    case a11y_vehicle_throttle::slower:
-                        if( car.cruise_velocity != 0 ) {
-                            pldrive( point_rel_ms( 0, car.cruise_velocity > 0 ? 1 : -1 ) );
-                        }
-                        break;
-                    case a11y_vehicle_throttle::none:
-                        break;
+                            break;
+                        case a11y_vehicle_throttle::reverse:
+                            car.a11y_obstacle_stop = false;
+                            car.a11y_obstacle_override = false;
+                            if( car.cruise_velocity > 0 || car.velocity > 0 ) {
+                                car.cruise_velocity = 0;
+                                add_msg( m_info, _( "Slowing down before reversing." ) );
+                            } else if( car.cruise_velocity == 0 ) {
+                                const std::optional<a11y::vehicle_obstacle> obstruction =
+                                    a11y::vehicle_obstacle_ahead( car, here, true );
+                                if( !car.a11y_manual_drive && obstruction &&
+                                    obstruction->distance <= 8 ) {
+                                    car.a11y_obstacle_stop = true;
+                                    car.a11y_stopped_obstacle_name = obstruction->label;
+                                    car.a11y_stopped_heading = car.turn_dir;
+                                    car.a11y_obstacle_resume_speed = -400;
+                                    car.a11y_continuous_drive = false;
+                                    add_msg( m_warning,
+                                             _( "Cannot reverse: %1$s, about %2$d tiles." ),
+                                             obstruction->label, obstruction->distance );
+                                } else {
+                                    pldrive( point_rel_ms( 0, 1 ) );
+                                    car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                                car.cruise_velocity < 0;
+                                    if( !car.a11y_manual_drive ) {
+                                        add_msg( m_info, _( "Reverse selected." ) );
+                                    }
+                                }
+                            } else if( car.cruise_velocity < 0 ) {
+                                car.a11y_continuous_drive = !car.a11y_manual_drive;
+                            }
+                            break;
+                        case a11y_vehicle_throttle::faster:
+                            pldrive( point_rel_ms( 0, car.cruise_velocity < 0 ? 1 : -1 ) );
+                            break;
+                        case a11y_vehicle_throttle::slower:
+                            if( car.cruise_velocity != 0 ) {
+                                pldrive( point_rel_ms( 0, car.cruise_velocity > 0 ? 1 : -1 ) );
+                            }
+                            break;
+                        case a11y_vehicle_throttle::none:
+                            break;
                     }
 
 
@@ -3337,7 +3352,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             }
         } else {
             const optional_vpart_position seated = here.veh_at(
-                        player_character.pos_bub( here ) );
+                    player_character.pos_bub( here ) );
             if( a11y::enabled() && seated && player_character.in_vehicle &&
                 player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( here, player_character ) &&
@@ -3617,7 +3632,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
 
             const optional_vpart_position seat = here.veh_at(
-                        player_character.pos_bub( here ) );
+                    player_character.pos_bub( here ) );
             const bool braking_to_release = seat && player_character.controlling_vehicle &&
                                             seat->vehicle().a11y_release_controls_pending &&
                                             seat->vehicle().velocity != 0;
@@ -4621,7 +4636,7 @@ bool game::handle_action()
 
     if( action == "TIMEOUT" && safe_mode == SAFE_MODE_STOP ) {
         const optional_vpart_position seat = here.veh_at(
-                    player_character.pos_bub( here ) );
+                player_character.pos_bub( here ) );
         if( seat && seat->vehicle().a11y_continuous_drive ) {
             vehicle &car = seat->vehicle();
             car.cruise_velocity = 0;
@@ -4770,7 +4785,7 @@ bool game::handle_action()
 
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
-                        player_character.pos_bub( vehicle_map ) );
+                    player_character.pos_bub( vehicle_map ) );
             if( !veh_ctrl || !seated || !player_character.in_vehicle ||
                 !player_character.controlling_vehicle ||
                 !seated->vehicle().player_in_control( vehicle_map, player_character ) ||
@@ -4831,7 +4846,7 @@ bool game::handle_action()
 
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
-                        player_character.pos_bub( vehicle_map ) );
+                    player_character.pos_bub( vehicle_map ) );
             if( veh_ctrl && seated && player_character.in_vehicle &&
                 player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( vehicle_map, player_character ) &&
@@ -4861,7 +4876,7 @@ bool game::handle_action()
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_HORN" ) {
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
-                        player_character.pos_bub( vehicle_map ) );
+                    player_character.pos_bub( vehicle_map ) );
             if( veh_ctrl && seated && player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( vehicle_map, player_character ) &&
                 ( !g || g->remoteveh() != &seated->vehicle() ) &&
@@ -4883,7 +4898,7 @@ bool game::handle_action()
         if( act != ACTION_NULL ) {
             user_action_counter += 1;
             a11y::android::diagnostic_event( "COMBAT_NATIVE",
-                    "action=" + action );
+                                             "action=" + action );
         } else {
             act = look_up_action( action );
         }
@@ -4946,11 +4961,11 @@ bool game::handle_action()
 
                 mouse_target = choose_accessible_nearby_target(
                                    _( "Interact with nearby objects" ),
-                [&]( const tripoint_bub_ms &target ) {
+                [&]( const tripoint_bub_ms & target ) {
                     for( const action_id candidate : {
-                                ACTION_EXAMINE, ACTION_PICKUP, ACTION_OPEN,
-                                ACTION_CLOSE, ACTION_BUTCHER, ACTION_CHAT
-                            } ) {
+                             ACTION_EXAMINE, ACTION_PICKUP, ACTION_OPEN,
+                             ACTION_CLOSE, ACTION_BUTCHER, ACTION_CHAT
+                         } ) {
                         if( can_interact_at( candidate, here, target ) ) {
                             return true;
                         }
@@ -5060,7 +5075,7 @@ bool game::handle_action()
 #if defined(__ANDROID__)
     const bool diagnostic_profile = a11y::android::performance_profiling_enabled();
     const auto diagnostic_action_started = diagnostic_profile ? std::chrono::steady_clock::now() :
-                                            std::chrono::steady_clock::time_point{};
+                                           std::chrono::steady_clock::time_point{};
     const std::string diagnostic_action_name = diagnostic_profile ? action_ident( act ) : "";
 
 
@@ -5102,8 +5117,8 @@ bool game::handle_action()
                 a11y::android::performance_step_sample( false );
                 if( diagnostic_profile ) {
                     a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
-                            "action=" + diagnostic_action_name +
-                            " result=action_rejected changed=false" );
+                                                     "action=" + diagnostic_action_name +
+                                                     " result=action_rejected changed=false" );
                 }
             }
             if( diagnostic_profile && act != ACTION_TIMEOUT ) {
@@ -5152,20 +5167,20 @@ bool game::handle_action()
             const int dz = after.z() - diagnostic_before_position->z();
             a11y::android::performance_step_sample( dx != 0 || dy != 0 || dz != 0 );
             a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
-                    "action=" + diagnostic_action_name +
-                    " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
-                                   std::string( "same_tile" ) ) +
-                    " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
-                                     std::string( "false" ) ) +
-                    " from_x=" + std::to_string( diagnostic_before_position->x() ) +
-                    " from_y=" + std::to_string( diagnostic_before_position->y() ) +
-                    " from_z=" + std::to_string( diagnostic_before_position->z() ) +
-                    " to_x=" + std::to_string( after.x() ) +
-                    " to_y=" + std::to_string( after.y() ) +
-                    " to_z=" + std::to_string( after.z() ) +
-                    " moves_spent=" + std::to_string( before_action_moves -
+                                             "action=" + diagnostic_action_name +
+                                             " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
+                                                     std::string( "same_tile" ) ) +
+                                             " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
+                                                     std::string( "false" ) ) +
+                                             " from_x=" + std::to_string( diagnostic_before_position->x() ) +
+                                             " from_y=" + std::to_string( diagnostic_before_position->y() ) +
+                                             " from_z=" + std::to_string( diagnostic_before_position->z() ) +
+                                             " to_x=" + std::to_string( after.x() ) +
+                                             " to_y=" + std::to_string( after.y() ) +
+                                             " to_z=" + std::to_string( after.z() ) +
+                                             " moves_spent=" + std::to_string( before_action_moves -
                                                      player_character.get_moves() ) +
-                    " action_ms=" + std::to_string( elapsed ) );
+                                             " action_ms=" + std::to_string( elapsed ) );
         }
     }
 #endif

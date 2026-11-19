@@ -28,10 +28,10 @@ template <typename Iter>
 void text_style_check( Iter beg, Iter end,
                        const fix_end_of_string_spaces eos_spaces,
                        const escape_unicode esc_unicode,
-                       const std::function<void( text_style_fix, const std::string & ,
-                               const Iter & , const Iter & ,
-                               const Iter & ,
-                               const Iter & , const Iter & ,
+                       const std::function<void( text_style_fix, const std::string &,
+                               const Iter &, const Iter &,
+                               const Iter &,
+                               const Iter &, const Iter &,
                                const std::string & )> &suggest_fix )
 {
     struct punctuation {
@@ -71,26 +71,27 @@ void text_style_check( Iter beg, Iter end,
     static const std::array<punctuation, 19> punctuations = {{
 
 
-        { U"...",    U"",   {  true, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0 }, {  true, "\u2026", R"(\u2026)", "three dots",      "ellipsis" } },
-        { U"::",     U"",   { false,                              }, { false,                                                      } },
-        { U"!=",     U"",   { false,                              }, { false,                                                      } },
-        { U"\r\n",   U"",   { false,                              }, {  true, R"(\n)",  R"(\n)",     "carriage return", "new line" } },
-        { U"\u2026", U"",   {  true, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0 }, { false,                                                      } },
-        { U"‘",      U"",   { false,                              }, {  true,     "'",     "'",  "left single quote", "single quote" } },
-        { U"’",      U"",   { false,                              }, {  true,     "'",     "'", "right single quote", "single quote" } },
-        { U"“",      U"",   { false,                              }, {  true, R"(\")", R"(\")",  "left double quote", "double quote" } },
-        { U"”",      U"",   { false,                              }, {  true, R"(\")", R"(\")", "right double quote", "double quote" } },
-        { U".",      U"",   {  true, 0, 3, 1, 3, 2, 2, 2, 0, 0, 0 }, { false,                                                      } },
-        { U";",      U"",   {  true, 0, 1, 1, 2, 1, 1, 1, 0, 0, 1 }, { false,                                                      } },
-        { U"!",      U"!?", {  true, 0, 1, 1, 3, 2, 2, 2, 0, 0, 1 }, { false,                                                      } },
-        { U"?",      U"!?", {  true, 0, 1, 1, 3, 2, 2, 2, 0, 0, 1 }, { false,                                                      } },
-        { U":",      U"",   {  true, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0 }, { false,                                                      } },
-        { U",",      U"",   {  true, 0, 1, 1, 2, 1, 0, 1, 0, 0, 1 }, { false,                                                      } },
-        { U"�",      U"",   { false,                              }, {  true, "\u2026", R"(\u2026)", "replacement character", "ANYTHING" } },
-        { U"\r",     U"",   { false,                              }, {  true, R"(\n)",  R"(\n)",     "carriage return", "new line" } },
-        { U"\n",     U"",   {  true, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1 }, { false,                                                      } },
-        { U"\t",     U"",   { false,                              }, {  true, "    ",   "    ",      "tab",             "spaces"   } },
-    }};
+            { U"...",    U"",   {  true, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0 }, {  true, "\u2026", R"(\u2026)", "three dots",      "ellipsis" } },
+            { U"::",     U"",   { false,                              }, { false,                                                      } },
+            { U"!=",     U"",   { false,                              }, { false,                                                      } },
+            { U"\r\n",   U"",   { false,                              }, {  true, R"(\n)",  R"(\n)",     "carriage return", "new line" } },
+            { U"\u2026", U"",   {  true, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0 }, { false,                                                      } },
+            { U"‘",      U"",   { false,                              }, {  true,     "'",     "'",  "left single quote", "single quote" } },
+            { U"’",      U"",   { false,                              }, {  true,     "'",     "'", "right single quote", "single quote" } },
+            { U"“",      U"",   { false,                              }, {  true, R"(\")", R"(\")",  "left double quote", "double quote" } },
+            { U"”",      U"",   { false,                              }, {  true, R"(\")", R"(\")", "right double quote", "double quote" } },
+            { U".",      U"",   {  true, 0, 3, 1, 3, 2, 2, 2, 0, 0, 0 }, { false,                                                      } },
+            { U";",      U"",   {  true, 0, 1, 1, 2, 1, 1, 1, 0, 0, 1 }, { false,                                                      } },
+            { U"!",      U"!?", {  true, 0, 1, 1, 3, 2, 2, 2, 0, 0, 1 }, { false,                                                      } },
+            { U"?",      U"!?", {  true, 0, 1, 1, 3, 2, 2, 2, 0, 0, 1 }, { false,                                                      } },
+            { U":",      U"",   {  true, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0 }, { false,                                                      } },
+            { U",",      U"",   {  true, 0, 1, 1, 2, 1, 0, 1, 0, 0, 1 }, { false,                                                      } },
+            { U"�",      U"",   { false,                              }, {  true, "\u2026", R"(\u2026)", "replacement character", "ANYTHING" } },
+            { U"\r",     U"",   { false,                              }, {  true, R"(\n)",  R"(\n)",     "carriage return", "new line" } },
+            { U"\n",     U"",   {  true, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1 }, { false,                                                      } },
+            { U"\t",     U"",   { false,                              }, {  true, "    ",   "    ",      "tab",             "spaces"   } },
+        }
+    };
 
 
     const size_t text_length = std::distance( beg, end );

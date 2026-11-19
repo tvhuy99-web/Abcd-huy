@@ -30,7 +30,9 @@ inline bool enabled_world_step_node( const semantic_snapshot &snapshot,
                                      const std::string &node_id )
 {
     const auto node = std::find_if( snapshot.nodes.begin(), snapshot.nodes.end(),
-    [&node_id]( const semantic_node & n ) { return n.id == node_id; } );
+    [&node_id]( const semantic_node & n ) {
+        return n.id == node_id;
+    } );
     return node != snapshot.nodes.end() && node->enabled &&
            std::find( node->actions.begin(), node->actions.end(), "activate" ) != node->actions.end();
 }

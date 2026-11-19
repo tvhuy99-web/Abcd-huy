@@ -231,7 +231,7 @@ robot_finds_kitten::robot_finds_kitten() : ctxt( "IUSE_SOFTWARE_KITTEN" )
         switch( current_ui_state ) {
             case ui_state::instructions: {
                 snapshot.summary = _( "Robot Finds Kitten: instructions. "
-                                       "Read the rules, then start the game." );
+                                      "Read the rules, then start the game." );
                 a11y::append_document( snapshot, "kitten:rules", _( "How to play" ),
                                        string_format(
                                            _( "Your job is to find kitten.  This task is complicated by the existence of various things "
@@ -291,12 +291,14 @@ robot_finds_kitten::robot_finds_kitten() : ctxt( "IUSE_SOFTWARE_KITTEN" )
 
     a11y::screen_scope reader( &ctxt, "robot-finds-kitten",
     [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.node == "kitten:start" && intent.action == "activate" ) {
+        if( intent.node == "kitten:start" && intent.action == "activate" )
+        {
 
 
             return std::string( "UP" );
         }
-        if( intent.action == "focus" && intent.node.rfind( "kitten:", 0 ) == 0 ) {
+        if( intent.action == "focus" && intent.node.rfind( "kitten:", 0 ) == 0 )
+        {
 
 
 

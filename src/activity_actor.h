@@ -72,7 +72,7 @@ class activity_actor
 
 
 
-        virtual void canceled( player_activity & , Character & ) {}
+        virtual void canceled( player_activity &, Character & ) {}
 
 
 

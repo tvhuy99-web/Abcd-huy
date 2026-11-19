@@ -349,12 +349,14 @@ void auto_note_manager_gui::show()
 
 
     a11y::screen_scope reader( &ctxt, "auto-notes-manager",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.node == "autonotes:enabled" ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "autonotes:enabled" )
+        {
             return intent.action == "activate" ? "SWITCH_AUTO_NOTE_OPTION" : "TIMEOUT";
         }
         if( intent.node == "autonotes:tab:character" ||
-            intent.node == "autonotes:tab:global" ) {
+            intent.node == "autonotes:tab:global" )
+        {
             if( intent.action == "activate" ) {
                 bCharacter = intent.node == "autonotes:tab:character";
                 currentLine = 0;
@@ -363,7 +365,8 @@ void auto_note_manager_gui::show()
             return "TIMEOUT";
         }
         const std::vector<map_extra_id> &shown = bCharacter ? char_displayCache : global_displayCache;
-        for( std::size_t i = 0; i < shown.size(); ++i ) {
+        for( std::size_t i = 0; i < shown.size(); ++i )
+        {
             if( intent.node == "autonotes:item:" + std::to_string( i ) ) {
                 if( intent.action == "focus" || intent.action == "activate" ) {
                     currentLine = static_cast<int>( i );
@@ -504,13 +507,13 @@ void auto_note_manager_gui::show()
         ui_manager::redraw();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                    ctxt, _( "Auto notes manager" ) );
+                                                   ctxt, _( "Auto notes manager" ) );
             const bool globally_enabled = get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" );
             const std::vector<map_extra_id> &shown = bCharacter ? char_displayCache : global_displayCache;
             const auto &entries = bCharacter ? char_mapExtraCache : global_mapExtraCache;
             const auto &symbols = bCharacter ? char_custom_symbol_cache : global_custom_symbol_cache;
             snapshot.summary = string_format( _( "%1$s tab.  %2$d discovered map extras.  "
-                                                  "Automatic map-extra notes: %3$s." ),
+                                                 "Automatic map-extra notes: %3$s." ),
                                               bCharacter ? _( "Character" ) : _( "Global" ),
                                               static_cast<int>( shown.size() ),
                                               globally_enabled ? _( "Enabled" ) : _( "Disabled" ) );
@@ -645,11 +648,11 @@ void auto_note_manager_gui::show()
             ( bCharacter ? charwasChanged : globalwasChanged ) = true;
         }
         if( a11y::enabled() && ( action == "CONFIRM" ||
-                                  action == "ENABLE_MAPEXTRA_NOTE" ||
-                                  action == "DISABLE_MAPEXTRA_NOTE" ) ) {
+                                 action == "ENABLE_MAPEXTRA_NOTE" ||
+                                 action == "DISABLE_MAPEXTRA_NOTE" ) ) {
             a11y::announce_game_message( string_format( _( "%1$s: %2$s." ),
-                                          entry.first.name(),
-                                          entry.second ? _( "Enabled" ) : _( "Disabled" ) ), false );
+                                         entry.first.name(),
+                                         entry.second ? _( "Enabled" ) : _( "Disabled" ) ), false );
         }
     }
 

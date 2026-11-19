@@ -41,34 +41,49 @@ static bool item_can_not_load_ammo( const item &gun )
 namespace io
 {
 
-    template<>
-    std::string enum_to_string<relic_procgen_data::type>( relic_procgen_data::type data )
-    {
-        switch( data ) {
-        case relic_procgen_data::type::active_enchantment: return "active_enchantment";
-        case relic_procgen_data::type::hit_me: return "hit_me";
-        case relic_procgen_data::type::hit_you: return "hit_you";
-        case relic_procgen_data::type::passive_enchantment_add: return "passive_enchantment_add";
-        case relic_procgen_data::type::passive_enchantment_mult: return "passive_enchantment_mult";
-        case relic_procgen_data::type::last: break;
-        }
-        cata_fatal( "Invalid relic procgen data type" );
+template<>
+std::string enum_to_string<relic_procgen_data::type>( relic_procgen_data::type data )
+{
+    switch( data ) {
+        case relic_procgen_data::type::active_enchantment:
+            return "active_enchantment";
+        case relic_procgen_data::type::hit_me:
+            return "hit_me";
+        case relic_procgen_data::type::hit_you:
+            return "hit_you";
+        case relic_procgen_data::type::passive_enchantment_add:
+            return "passive_enchantment_add";
+        case relic_procgen_data::type::passive_enchantment_mult:
+            return "passive_enchantment_mult";
+        case relic_procgen_data::type::last:
+            break;
     }
+    cata_fatal( "Invalid relic procgen data type" );
+}
 
 template<>
 std::string enum_to_string<relic_recharge_type>( relic_recharge_type type )
 {
 
     switch( type ) {
-        case relic_recharge_type::NONE: return "none";
-        case relic_recharge_type::PERIODIC: return "periodic";
-        case relic_recharge_type::SOLAR_SUNNY: return "solar_sunny";
-        case relic_recharge_type::LUNAR: return "lunar";
-        case relic_recharge_type::FULL_MOON: return "full_moon";
-        case relic_recharge_type::NEW_MOON: return "new_moon";
-        case relic_recharge_type::SOLAR_CLOUDY: return "solar_cloudy";
-        case relic_recharge_type::FOREST: return "forest";
-        case relic_recharge_type::NUM: break;
+        case relic_recharge_type::NONE:
+            return "none";
+        case relic_recharge_type::PERIODIC:
+            return "periodic";
+        case relic_recharge_type::SOLAR_SUNNY:
+            return "solar_sunny";
+        case relic_recharge_type::LUNAR:
+            return "lunar";
+        case relic_recharge_type::FULL_MOON:
+            return "full_moon";
+        case relic_recharge_type::NEW_MOON:
+            return "new_moon";
+        case relic_recharge_type::SOLAR_CLOUDY:
+            return "solar_cloudy";
+        case relic_recharge_type::FOREST:
+            return "forest";
+        case relic_recharge_type::NUM:
+            break;
     }
 
     cata_fatal( "Invalid relic recharge type" );
@@ -78,11 +93,15 @@ template<>
 std::string enum_to_string<relic_has>( relic_has has )
 {
 
-    switch (has) {
-    case relic_has::WIELD: return "wield";
-    case relic_has::WORN: return "worn";
-    case relic_has::HELD: return "held";
-    case relic_has::NUM: break;
+    switch( has ) {
+        case relic_has::WIELD:
+            return "wield";
+        case relic_has::WORN:
+            return "worn";
+        case relic_has::HELD:
+            return "held";
+        case relic_has::NUM:
+            break;
     }
 
     cata_fatal( "Invalid relic recharge has condition" );

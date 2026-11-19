@@ -117,7 +117,7 @@ void TextStyleCheck::check( const MatchFinder::MatchResult &Result )
     const auto text_style_check_callback =
         [this, fixit, location]
         ( const text_style_fix type, const std::string & msg,
-          const StringLiteralIterator & , const StringLiteralIterator & ,
+          const StringLiteralIterator &, const StringLiteralIterator &,
           const StringLiteralIterator & at,
           const StringLiteralIterator & from, const StringLiteralIterator & to,
           const std::string & fix

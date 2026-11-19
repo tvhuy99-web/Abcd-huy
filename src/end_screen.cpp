@@ -73,14 +73,16 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
     ctxt.set_timeout( 50 );
     end_screen_ui_impl p_impl;
     a11y::screen_scope reader( &ctxt, "end_screen",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
 
 
         if( intent.action == "cancel" ||
-            ( intent.action == "activate" && intent.node == "end:continue" ) ) {
+            ( intent.action == "activate" && intent.node == "end:continue" ) )
+        {
             return "TEXT.CONFIRM";
         }
-        if( intent.action == "set_text" && intent.node == "end:last_words" ) {
+        if( intent.action == "set_text" && intent.node == "end:last_words" )
+        {
             p_impl.text = intent.value;
             return "TIMEOUT";
         }
@@ -91,7 +93,7 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
         ui_manager::redraw_invalidated();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
-                    ctxt, actually_dead ? _( "Your character has died" ) : _( "The End" ) );
+                                                   ctxt, actually_dead ? _( "Your character has died" ) : _( "The End" ) );
             snapshot.summary = p_impl.accessibility_description;
             a11y::append_document( snapshot, "end:details", _( "End-screen details" ),
                                    p_impl.accessibility_description );

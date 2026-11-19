@@ -212,7 +212,7 @@ static void send_game_start( event_bus &b, const character_id &u_id )
 {
     b.send<event_type::game_start>( "VERION_STRING" );
     b.send<event_type::game_avatar_new>( true, false, u_id, "Avatar name",
-            "CUSTOM_PROFESSION" );
+                                         "CUSTOM_PROFESSION" );
 }
 
 TEST_CASE( "stats_tracker_with_event_statistics", "[stats]" )

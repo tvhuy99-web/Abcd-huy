@@ -300,7 +300,7 @@ TEST_CASE( "charged_item_pickup_partial_merge_no_debugmsg", "[pickup][charges]" 
     item prefill_nails( itype_nail );
     prefill_nails.charges = total_capacity - margin;
     they.i_add_or_fill( prefill_nails, true, nullptr, nullptr,
- false, false );
+                        false, false );
 
     const int inv_before = they.charges_of( itype_nail );
     REQUIRE( inv_before > 0 );

@@ -40,7 +40,7 @@ std::string json_quoted( std::string_view s )
 {
     std::string out;
     flatbuffers::EscapeString( s.data(), s.size(), &out,
- true, false );
+                               true, false );
     return out;
 }
 }

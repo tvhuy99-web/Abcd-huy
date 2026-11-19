@@ -28,12 +28,15 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
                           int batch,
                           const deduped_requirement_data *deduped )
 {
-    const auto tools_filter = []( const item & ) { return true; };
-    const auto append_groups = [&]( const auto &groups, const std::string &kind,
-                                    const std::string &title, const auto &filter ) {
+    const auto tools_filter = []( const item & ) {
+        return true;
+    };
+    const auto append_groups = [&]( const auto & groups, const std::string & kind,
+    const std::string & title, const auto & filter ) {
         std::size_t group_index = 0;
         for( const auto &group : groups ) {
-            std::string text = _( "Each requirement group must be met.  Within this group, choose one alternative:" );
+            std::string text =
+                _( "Each requirement group must be met.  Within this group, choose one alternative:" );
             for( const auto &alternative : group ) {
                 const bool present = alternative.has( &actor, inventory, filter, batch );
                 text += '\n';
@@ -85,7 +88,7 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
                          : inventory.amount_of( entry.first, false, INT_MAX, component_filter );
         totals += '\n';
         totals += string_format( _( "%1$s: need %2$d in total across groups; available %3$d." ),
-                                        entry.first.obj().nname( entry.second ), entry.second, have );
+                                 entry.first.obj().nname( entry.second ), entry.second, have );
     }
     append_document( snapshot, prefix + ":total", _( "Shared total" ), totals );
 }

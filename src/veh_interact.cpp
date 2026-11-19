@@ -683,7 +683,8 @@ std::string reader_cargo_data( const vehicle &veh, const vehicle_part &pt )
 veh_interact::reader_session::reader_session( veh_interact &owner ) :
     owner( owner ),
     screen( &owner.main_context, "vehicle-interact",
-[this]( const a11y::semantic_intent &intent ) {
+            [this]( const a11y::semantic_intent & intent )
+{
     return handle( intent );
 } ) {}
 
@@ -936,7 +937,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             std::string detail = string_format( _( "Terrain: %s." ), owner.terrain_here.name() );
             if( owner.cpart >= 0 ) {
                 if( const std::optional<std::string> tile_label =
-                            vpart_position( veh, owner.cpart ).get_label() ) {
+                        vpart_position( veh, owner.cpart ).get_label() ) {
                     detail += string_format( _( " Label: %s." ), *tile_label );
                 }
             }

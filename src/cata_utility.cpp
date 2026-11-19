@@ -757,13 +757,20 @@ std::string io::enum_to_string<holiday>( holiday data )
 {
     switch( data ) {
 
-        case holiday::none:             return "none";
-        case holiday::new_year:         return "new_year";
-        case holiday::easter:           return "easter";
-        case holiday::independence_day: return "independence_day";
-        case holiday::halloween:        return "halloween";
-        case holiday::thanksgiving:     return "thanksgiving";
-        case holiday::christmas:        return "christmas";
+        case holiday::none:
+            return "none";
+        case holiday::new_year:
+            return "new_year";
+        case holiday::easter:
+            return "easter";
+        case holiday::independence_day:
+            return "independence_day";
+        case holiday::halloween:
+            return "halloween";
+        case holiday::thanksgiving:
+            return "thanksgiving";
+        case holiday::christmas:
+            return "christmas";
 
         case holiday::num_holiday:
             break;
@@ -777,23 +784,35 @@ static bool is_easter( int day, int month, int year )
     if( month == 3 ) {
         switch( year ) {
 
-            case 2024: return day == 31;
-            case 2027: return day == 28;
-            default: break;
+            case 2024:
+                return day == 31;
+            case 2027:
+                return day == 28;
+            default:
+                break;
 
         }
     } else if( month == 4 ) {
         switch( year ) {
 
-            case 2021: return day == 4;
-            case 2022: return day == 17;
-            case 2023: return day == 9;
-            case 2025: return day == 20;
-            case 2026: return day == 5;
-            case 2028: return day == 16;
-            case 2029: return day == 1;
-            case 2030: return day == 21;
-            default: break;
+            case 2021:
+                return day == 4;
+            case 2022:
+                return day == 17;
+            case 2023:
+                return day == 9;
+            case 2025:
+                return day == 20;
+            case 2026:
+                return day == 5;
+            case 2028:
+                return day == 16;
+            case 2029:
+                return day == 1;
+            case 2030:
+                return day == 21;
+            default:
+                break;
 
         }
     }
@@ -896,12 +915,18 @@ std::string io::enum_to_string<aggregate_type>( aggregate_type agg )
 {
     switch( agg ) {
 
-        case aggregate_type::FIRST:   return "first";
-        case aggregate_type::LAST:    return "last";
-        case aggregate_type::MIN:     return "min";
-        case aggregate_type::MAX:     return "max";
-        case aggregate_type::SUM:     return "sum";
-        case aggregate_type::AVERAGE: return "average";
+        case aggregate_type::FIRST:
+            return "first";
+        case aggregate_type::LAST:
+            return "last";
+        case aggregate_type::MIN:
+            return "min";
+        case aggregate_type::MAX:
+            return "max";
+        case aggregate_type::SUM:
+            return "sum";
+        case aggregate_type::AVERAGE:
+            return "average";
 
         case aggregate_type::num_aggregate_types:
             break;

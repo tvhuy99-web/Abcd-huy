@@ -149,7 +149,7 @@ vpart_display vehicle::get_display_of_tile( const point_rel_ms &dp, bool rotate,
 
 int vehicle::print_part_list( const catacurses::window &win, int y1,
                               const int max_y, int width,
-                              int p, int hl , bool detail, bool include_fakes ) const
+                              int p, int hl, bool detail, bool include_fakes ) const
 {
     if( p < 0 || p >= static_cast<int>( parts.size() ) ) {
         return y1;

@@ -932,7 +932,7 @@ void crafting_ui_impl::draw_category_tabs()
         if( a11y::enabled() ) {
             const std::string all_label = std::string( _( "All categories" ) ) + "###cat_reader_all";
             if( cataimgui::BeginTabItem( all_label.c_str(),
-                                        force_select_tab && reader_all_categories ) ) {
+                                         force_select_tab && reader_all_categories ) ) {
 
 
 
@@ -2734,7 +2734,7 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
         const temp_crafting_inventory &inventory,
         const std::function<bool( const item & )> &filter, int batch )
 {
-    const auto add_node = [&]( const std::string &id, const std::string &label ) {
+    const auto add_node = [&]( const std::string & id, const std::string & label ) {
         a11y::semantic_node node;
         node.id = id;
         node.role = "button";
@@ -2805,7 +2805,7 @@ static bool reader_requirement_detail( const requirement_data &requirements,
                                        const std::string &kind, std::size_t group_want,
                                        std::size_t alt_want, std::string &label, itype_id &type )
 {
-    const auto pick = [&]( const auto &groups, const auto &type_of ) {
+    const auto pick = [&]( const auto & groups, const auto & type_of ) {
         std::size_t group_index = 0;
         for( const auto &group : groups ) {
             if( group_index == group_want ) {
@@ -2830,12 +2830,12 @@ static bool reader_requirement_detail( const requirement_data &requirements,
         } );
     }
     if( kind == "tool" ) {
-        return pick( requirements.get_tools(), []( const tool_comp &alternative ) {
+        return pick( requirements.get_tools(), []( const tool_comp & alternative ) {
             return alternative.type;
         } );
     }
     if( kind == "component" ) {
-        return pick( requirements.get_components(), []( const item_comp &alternative ) {
+        return pick( requirements.get_components(), []( const item_comp & alternative ) {
             return alternative.type;
         } );
     }
@@ -3100,7 +3100,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                     const int expected_turns = crafter->expected_time_to_craft(
                                                    rec, reader_detail_quantity ) / to_moves<int>( 1_turns );
                     name.value += ". " + string_format( _( "Estimated time: %s" ),
-                                                         approx_craft_time( expected_turns ) );
+                                                        approx_craft_time( expected_turns ) );
                 }
                 name.actions = { "focus", "read_detail" };
                 detail.push_back( std::move( name ) );
@@ -3111,8 +3111,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
 
 
                 const std::string expected_detail_key = rec.ident().str() + ":" +
-                        std::to_string( reader_detail_quantity ) + ":" +
-                        std::to_string( detail::get_current_language_version() );
+                                                        std::to_string( reader_detail_quantity ) + ":" +
+                                                        std::to_string( detail::get_current_language_version() );
                 if( reader_detail_key == expected_detail_key && reader_detail_crafter == crafter ) {
                     intro.label = full_recipe_detail_text( rec, reader_detail_quantity );
                 }
@@ -3200,7 +3200,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 const auto requirement = rec.get_character_requirements().find( stat );
                 if( requirement != rec.get_character_requirements().end() ) {
                     stats += character_requirement_text( stat, requirement->second,
-                                                        crafter->get_primary_stat_value( stat ) ) + "\n";
+                                                         crafter->get_primary_stat_value( stat ) ) + "\n";
                 }
             }
             a11y::append_document( documents, "craft:stats", _( "Character requirements:" ), stats );
@@ -3243,18 +3243,19 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                      per_batch * manual_batch );
                 }
                 if( rec.has_byproduct_group() ) {
-                    byproduct_text += _( "Also produces items from a byproduct group; the exact items are generated when the craft finishes." );
+                    byproduct_text +=
+                        _( "Also produces items from a byproduct group; the exact items are generated when the craft finishes." );
                 }
                 a11y::append_document( documents, "craft:byproducts", _( "Byproducts" ), byproduct_text );
             }
             if( rec.has_steps() ) {
                 const crafting_cost_context cost{ crafter->book_bonuses_nearby(),
-                                                   compute_tool_speeds( rec, *crafter ) };
+                                                  compute_tool_speeds( rec, *crafter ) };
                 for( std::size_t i = 0; i < rec.steps().size(); ++i ) {
                     const recipe_step &step = rec.steps()[i];
                     const std::string prefix = "craft:step:" + std::to_string( i );
                     const time_duration time = time_duration::from_moves( static_cast<int64_t>(
-                                          rec.step_budget_moves( *crafter, i, manual_batch, cost ) ) );
+                                                   rec.step_budget_moves( *crafter, i, manual_batch, cost ) ) );
                     a11y::append_document( documents, prefix, step.name.translated(),
                                            step.name.translated() + "\n" + to_string( time ) + "\n" +
                                            display::activity_level_str( step.exertion ) );
@@ -3264,7 +3265,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             }
             const character_resource_costs &resources = rec.get_character_resources();
             std::string resource_text;
-            const auto add_resource = [&]( int amount, int have, const std::string &name ) {
+            const auto add_resource = [&]( int amount, int have, const std::string & name ) {
                 if( amount != 0 ) {
                     resource_text += string_format( _( "%1$s: need %2$d; available %3$d." ),
                                                     name, amount * manual_batch, have ) + "\n";
@@ -3330,7 +3331,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
 
                 int quantity = 0;
                 const std::from_chars_result parsed = std::from_chars( intent.value.data(),
-                        intent.value.data() + intent.value.size(), quantity );
+                                                      intent.value.data() + intent.value.size(), quantity );
                 if( parsed.ec != std::errc() || parsed.ptr != intent.value.data() + intent.value.size() ||
                     quantity < 1 || quantity > 50 ) {
                     a11y::android::status( "invalid_value", &intent );
@@ -3347,7 +3348,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 const std::string suffix = intent.node.substr(
                                                std::string( "craft:detail:qty:" ).size() );
                 const std::from_chars_result parsed = std::from_chars( suffix.data(),
-                        suffix.data() + suffix.size(), quantity );
+                                                      suffix.data() + suffix.size(), quantity );
                 if( parsed.ec == std::errc() && parsed.ptr == suffix.data() + suffix.size() &&
                     quantity >= 1 && quantity <= 10 ) {
                     reader_detail_quantity = quantity;
@@ -3388,9 +3389,9 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 std::size_t group = 0;
                 std::size_t alt = 0;
                 const std::from_chars_result parsed_group = std::from_chars(
-                        rest.data() + first + 1, rest.data() + second, group );
+                            rest.data() + first + 1, rest.data() + second, group );
                 const std::from_chars_result parsed_alt = std::from_chars(
-                        rest.data() + second + 1, rest.data() + rest.size(), alt );
+                            rest.data() + second + 1, rest.data() + rest.size(), alt );
                 if( parsed_group.ec != std::errc() || parsed_alt.ec != std::errc() ) {
                     return "TIMEOUT";
                 }
@@ -3473,8 +3474,9 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
     }
     if( intent.node == "craft:batch" && intent.action == "set_text" ) {
         int quantity = 0;
-        const std::from_chars_result parsed = std::from_chars( intent.value.data(), intent.value.data() + intent.value.size(),
-                                            quantity );
+        const std::from_chars_result parsed = std::from_chars( intent.value.data(),
+                                              intent.value.data() + intent.value.size(),
+                                              quantity );
         if( parsed.ec != std::errc() || parsed.ptr != intent.value.data() + intent.value.size() ||
             quantity < 1 || quantity > 50 || line < 0 ||
             static_cast<std::size_t>( line ) >= current.size() || current[line]->is_nested() ) {
@@ -4049,7 +4051,7 @@ std::pair<Character *, const recipe *> select_crafter_and_crafting_recipe( int &
     ctxt.set_timeout( 10 );
     impl.set_input_context( &ctxt );
     a11y::screen_scope reader( &ctxt, "crafting",
-    [&]( const a11y::semantic_intent &intent ) {
+    [&]( const a11y::semantic_intent & intent ) {
         return impl.reader_intent( intent, ctxt );
     } );
 
@@ -4113,10 +4115,10 @@ int choose_crafter( const std::vector<Character *> &crafting_group, int crafter_
             entry.emplace_back(
 
                 rec->is_nested()
-                    ? colorize( "-", c_yellow )
-                    : reasons.empty()
-                        ? colorize( _( "yes" ), c_green )
-                        : colorize( _( "no" ), c_red ) );
+                ? colorize( "-", c_yellow )
+                : reasons.empty()
+                ? colorize( _( "yes" ), c_green )
+                : colorize( _( "no" ), c_red ) );
 
             entry.emplace_back( colorize( string_join( reasons, ", " ), c_red ) );
         }

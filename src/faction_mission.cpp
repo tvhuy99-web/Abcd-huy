@@ -92,12 +92,18 @@ std::string enum_to_string<risk_diff_level>( risk_diff_level data )
 {
     switch( data ) {
 
-        case risk_diff_level::NONE: return "NONE";
-        case risk_diff_level::VERY_LOW: return "VERY_LOW";
-        case risk_diff_level::LOW: return "LOW";
-        case risk_diff_level::MEDIUM: return "MEDIUM";
-        case risk_diff_level::HIGH: return "HIGH";
-        case risk_diff_level::VERY_HIGH: return "VERY_HIGH";
+        case risk_diff_level::NONE:
+            return "NONE";
+        case risk_diff_level::VERY_LOW:
+            return "VERY_LOW";
+        case risk_diff_level::LOW:
+            return "LOW";
+        case risk_diff_level::MEDIUM:
+            return "MEDIUM";
+        case risk_diff_level::HIGH:
+            return "HIGH";
+        case risk_diff_level::VERY_HIGH:
+            return "VERY_HIGH";
 
         case risk_diff_level::NUM_RISK_DIFF_LEVELS:
             break;

@@ -118,11 +118,16 @@ std::string enum_to_string<mutagen_technique>( mutagen_technique data )
 {
     switch( data ) {
 
-        case mutagen_technique::consumed_mutagen: return "consumed_mutagen";
-        case mutagen_technique::injected_mutagen: return "injected_mutagen";
-        case mutagen_technique::consumed_purifier: return "consumed_purifier";
-        case mutagen_technique::injected_purifier: return "injected_purifier";
-        case mutagen_technique::injected_smart_purifier: return "injected_smart_purifier";
+        case mutagen_technique::consumed_mutagen:
+            return "consumed_mutagen";
+        case mutagen_technique::injected_mutagen:
+            return "injected_mutagen";
+        case mutagen_technique::consumed_purifier:
+            return "consumed_purifier";
+        case mutagen_technique::injected_purifier:
+            return "injected_purifier";
+        case mutagen_technique::injected_smart_purifier:
+            return "injected_smart_purifier";
 
         case mutagen_technique::num_mutagen_techniques:
             break;

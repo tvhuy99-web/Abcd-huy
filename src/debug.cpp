@@ -230,54 +230,102 @@ std::string filter_name( debug_filter value )
 
     switch( value ) {
 
-        case DF_ACT_BUTCHER: return "DF_ACT_BUTCHER";
-        case DF_ACT_EBOOK: return "DF_ACT_EBOOK";
-        case DF_ACT_HARVEST: return "DF_ACT_HARVEST";
-        case DF_ACT_LOCKPICK: return "DF_ACT_LOCKPICK";
-        case DF_ACT_READ: return "DF_ACT_READ";
-        case DF_ACT_SAFECRACKING: return "DF_ACT_SAFECRACKING";
-        case DF_ACT_SHEARING: return "DF_ACT_SHEARING";
-        case DF_ACT_WORKOUT: return "DF_ACT_WORKOUT";
-        case DF_ACTIVITY: return "DF_ACTIVITY";
-        case DF_ANATOMY_BP: return "DF_ANATOMY_BP";
-        case DF_AVATAR: return "DF_AVATAR";
-        case DF_BALLISTIC: return "DF_BALLISTIC";
-        case DF_CAMPS: return "DF_CAMPS";
-        case DF_CHARACTER: return "DF_CHARACTER";
-        case DF_CHAR_CALORIES: return "DF_CHAR_CALORIES";
-        case DF_CHAR_HEALTH: return "DF_CHAR_HEALTH";
-        case DF_CRAFTING: return "DF_CRAFTING";
-        case DF_CREATURE: return "DF_CREATURE";
-        case DF_EFFECT: return "DF_EFFECT";
-        case DF_EXPLOSION: return "DF_EXPLOSION";
-        case DF_FOOD: return "DF_FOOD";
-        case DF_GAME: return "DF_GAME";
-        case DF_HIGHWAY: return "DF_HIGHWAY";
-        case DF_IEXAMINE: return "DF_IEXAMINE";
-        case DF_IUSE: return "DF_IUSE";
-        case DF_MAP: return "DF_MAP";
-        case DF_MATTACK: return "DF_MATTACK";
-        case DF_MELEE: return "DF_MELEE";
-        case DF_MONMOVE: return "DF_MONMOVE";
-        case DF_MONSTER: return "DF_MONSTER";
-        case DF_MUTATION: return "DF_MUTATION";
-        case DF_NPC: return "DF_NPC";
-        case DF_NPC_COMBATAI: return "DF_NPC_COMBATAI";
-        case DF_NPC_ITEMAI: return "DF_NPC_ITEMAI";
-        case DF_NPC_MOVEAI: return "DF_NPC_MOVEAI";
-        case DF_NPC_NEEDS: return "DF_NPC_NEEDS";
-        case DF_OVERMAP: return "DF_OVERMAP";
-        case DF_RADIO: return "DF_RADIO";
-        case DF_RANGED: return "DF_RANGED";
-        case DF_REQUIREMENTS_MAP: return "DF_REQUIREMENTS_MAP";
-        case DF_SOUND: return "DF_SOUND";
-        case DF_TALKER: return "DF_TALKER";
-        case DF_VEHICLE: return "DF_VEHICLE";
-        case DF_VEHICLE_DRAG: return "DF_VEHICLE_DRAG";
-        case DF_VEHICLE_MOVE: return "DF_VEHICLE_MOVE";
-        case DF_WEAKPOINTS: return "DF_WEAKPOINTS";
-        case DF_WOUNDS: return "DF_WOUNDS";
-        case DF_MONITOR: return "DF_MONITOR";
+        case DF_ACT_BUTCHER:
+            return "DF_ACT_BUTCHER";
+        case DF_ACT_EBOOK:
+            return "DF_ACT_EBOOK";
+        case DF_ACT_HARVEST:
+            return "DF_ACT_HARVEST";
+        case DF_ACT_LOCKPICK:
+            return "DF_ACT_LOCKPICK";
+        case DF_ACT_READ:
+            return "DF_ACT_READ";
+        case DF_ACT_SAFECRACKING:
+            return "DF_ACT_SAFECRACKING";
+        case DF_ACT_SHEARING:
+            return "DF_ACT_SHEARING";
+        case DF_ACT_WORKOUT:
+            return "DF_ACT_WORKOUT";
+        case DF_ACTIVITY:
+            return "DF_ACTIVITY";
+        case DF_ANATOMY_BP:
+            return "DF_ANATOMY_BP";
+        case DF_AVATAR:
+            return "DF_AVATAR";
+        case DF_BALLISTIC:
+            return "DF_BALLISTIC";
+        case DF_CAMPS:
+            return "DF_CAMPS";
+        case DF_CHARACTER:
+            return "DF_CHARACTER";
+        case DF_CHAR_CALORIES:
+            return "DF_CHAR_CALORIES";
+        case DF_CHAR_HEALTH:
+            return "DF_CHAR_HEALTH";
+        case DF_CRAFTING:
+            return "DF_CRAFTING";
+        case DF_CREATURE:
+            return "DF_CREATURE";
+        case DF_EFFECT:
+            return "DF_EFFECT";
+        case DF_EXPLOSION:
+            return "DF_EXPLOSION";
+        case DF_FOOD:
+            return "DF_FOOD";
+        case DF_GAME:
+            return "DF_GAME";
+        case DF_HIGHWAY:
+            return "DF_HIGHWAY";
+        case DF_IEXAMINE:
+            return "DF_IEXAMINE";
+        case DF_IUSE:
+            return "DF_IUSE";
+        case DF_MAP:
+            return "DF_MAP";
+        case DF_MATTACK:
+            return "DF_MATTACK";
+        case DF_MELEE:
+            return "DF_MELEE";
+        case DF_MONMOVE:
+            return "DF_MONMOVE";
+        case DF_MONSTER:
+            return "DF_MONSTER";
+        case DF_MUTATION:
+            return "DF_MUTATION";
+        case DF_NPC:
+            return "DF_NPC";
+        case DF_NPC_COMBATAI:
+            return "DF_NPC_COMBATAI";
+        case DF_NPC_ITEMAI:
+            return "DF_NPC_ITEMAI";
+        case DF_NPC_MOVEAI:
+            return "DF_NPC_MOVEAI";
+        case DF_NPC_NEEDS:
+            return "DF_NPC_NEEDS";
+        case DF_OVERMAP:
+            return "DF_OVERMAP";
+        case DF_RADIO:
+            return "DF_RADIO";
+        case DF_RANGED:
+            return "DF_RANGED";
+        case DF_REQUIREMENTS_MAP:
+            return "DF_REQUIREMENTS_MAP";
+        case DF_SOUND:
+            return "DF_SOUND";
+        case DF_TALKER:
+            return "DF_TALKER";
+        case DF_VEHICLE:
+            return "DF_VEHICLE";
+        case DF_VEHICLE_DRAG:
+            return "DF_VEHICLE_DRAG";
+        case DF_VEHICLE_MOVE:
+            return "DF_VEHICLE_MOVE";
+        case DF_WEAKPOINTS:
+            return "DF_WEAKPOINTS";
+        case DF_WOUNDS:
+            return "DF_WOUNDS";
+        case DF_MONITOR:
+            return "DF_MONITOR";
 
         case DF_LAST:
         default:

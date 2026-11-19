@@ -73,9 +73,18 @@ std::optional<pending_sound_settings> pending_sound;
 #endif
 }
 
-bool enabled() { return reader_enabled.load( std::memory_order_acquire ); }
-bool suspended() { return reader_suspended.load( std::memory_order_acquire ); }
-std::uint64_t lifecycle_epoch() { return epoch.load( std::memory_order_acquire ); }
+bool enabled()
+{
+    return reader_enabled.load( std::memory_order_acquire );
+}
+bool suspended()
+{
+    return reader_suspended.load( std::memory_order_acquire );
+}
+std::uint64_t lifecycle_epoch()
+{
+    return epoch.load( std::memory_order_acquire );
+}
 bool suppress_world_visuals()
 {
     return enabled() && !suspended() && no_world_graphics.load( std::memory_order_relaxed );
@@ -237,8 +246,8 @@ bool enqueue( semantic_intent intent )
     if( intent.action == "activate" && is_world_step_node( intent.node ) &&
         matches_last_world( intent.token ) ) {
         if( !world_step_ready ||
-            std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
-            return pending.action == "activate" && is_world_step_node( pending.node );
+        std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent & pending ) {
+        return pending.action == "activate" && is_world_step_node( pending.node );
         } ) ) {
             if( performance_profile_active.load( std::memory_order_relaxed ) ) {
                 profile_busy_epoch.fetch_add( 1, std::memory_order_relaxed );
@@ -287,7 +296,7 @@ void set_world_step_ready( const std::optional<context_token> token, const bool 
 
 
     const bool pending_step = std::any_of( inbox.begin(), inbox.end(),
-    []( const semantic_intent &pending ) {
+    []( const semantic_intent & pending ) {
         return pending.action == "activate" && is_world_step_node( pending.node );
     } );
     world_step_ready = ready && token.has_value() && enabled() && !suspended() &&
@@ -301,7 +310,7 @@ bool world_step_can_accept()
 
     const std::scoped_lock<std::mutex> lock( inbox_mutex );
     return world_step_ready && has_world_token && enabled() && !suspended() &&
-           std::none_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
+    std::none_of( inbox.begin(), inbox.end(), []( const semantic_intent & pending ) {
         return pending.action == "activate" && is_world_step_node( pending.node );
     } );
 }
@@ -354,7 +363,7 @@ void request_travel_map_return()
 {
     const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     const std::chrono::milliseconds::rep ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now.time_since_epoch() ).count();
+                now.time_since_epoch() ).count();
     travel_map_return_deadline_ms.store( static_cast<std::uint64_t>( ms + 2000 ),
                                          std::memory_order_release );
 }
@@ -416,7 +425,7 @@ void publish( const std::string_view json )
                 }
             }
             jstring text = env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
-                                          static_cast<jsize>( utf16.size() ) );
+                                           static_cast<jsize>( utf16.size() ) );
             if( text != nullptr ) {
                 env->CallVoidMethod( activity, method, text );
             }
@@ -440,7 +449,9 @@ void announce( const std::string_view text, const int priority )
         return;
     }
     const std::string spoken = remove_color_tags( text );
-    if( spoken.empty() ) { return; }
+    if( spoken.empty() ) {
+        return;
+    }
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr ) {
         return;
@@ -456,7 +467,7 @@ void announce( const std::string_view text, const int priority )
         jclass cls = env->GetObjectClass( activity );
         if( cls != nullptr ) {
             jmethodID method = env->GetMethodID( cls, "onAccessibilityAnnouncement",
-                                                "(Ljava/lang/String;I)V" );
+                                                 "(Ljava/lang/String;I)V" );
             if( method != nullptr ) {
 
 
@@ -472,7 +483,7 @@ void announce( const std::string_view text, const int priority )
                     }
                 }
                 jstring value = env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
-                                               static_cast<jsize>( utf16.size() ) );
+                                                static_cast<jsize>( utf16.size() ) );
                 if( value != nullptr ) {
                     env->CallVoidMethod( activity, method, value, static_cast<jint>( priority ) );
                 }
@@ -526,7 +537,7 @@ void present_debug_prompt( const std::string_view report )
                 }
             }
             jstring text = env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
-                                          static_cast<jsize>( utf16.size() ) );
+                                           static_cast<jsize>( utf16.size() ) );
             if( text != nullptr ) {
                 env->CallVoidMethod( activity, method, text );
             }
@@ -625,11 +636,11 @@ void diagnostic_event( const std::string_view category, const std::string_view d
         unsigned int suppressed = 0;
     };
     static std::array<performance_sample, 4> samples{{
-        { "WORLD_CACHE_PHASE", {}, 0 },
-        { "WORLD_AI_COUNTS", {}, 0 },
-        { "WORLD_SIM_TIMING", {}, 0 },
-        { "WORLD_RENDER_BREAKDOWN", {}, 0 }
-    }};
+            { "WORLD_CACHE_PHASE", {}, 0 },
+            { "WORLD_AI_COUNTS", {}, 0 },
+            { "WORLD_SIM_TIMING", {}, 0 },
+            { "WORLD_RENDER_BREAKDOWN", {}, 0 }
+        }};
     std::string emitted_detail( detail );
     for( performance_sample &sample : samples ) {
         if( category != sample.name ) {
@@ -652,7 +663,9 @@ void diagnostic_event( const std::string_view category, const std::string_view d
 
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 8 ) < 0 ) {
-        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
@@ -669,7 +682,9 @@ void diagnostic_event( const std::string_view category, const std::string_view d
             }
         }
     }
-    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
     env->PopLocalFrame( nullptr );
 }
 
@@ -677,7 +692,9 @@ void open_debug_log()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
-        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
@@ -685,9 +702,13 @@ void open_debug_log()
         jclass cls = env->GetObjectClass( activity );
         jmethodID method = cls == nullptr ? nullptr :
                            env->GetMethodID( cls, "onAccessibilityOpenDebugLog", "()V" );
-        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+        if( method != nullptr ) {
+            env->CallVoidMethod( activity, method );
+        }
     }
-    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
     env->PopLocalFrame( nullptr );
 }
 
@@ -696,7 +717,9 @@ void open_accessibility_settings()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
-        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
@@ -704,9 +727,13 @@ void open_accessibility_settings()
         jclass cls = env->GetObjectClass( activity );
         jmethodID method = cls == nullptr ? nullptr :
                            env->GetMethodID( cls, "onAccessibilityOpenAccessibilitySettings", "()V" );
-        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+        if( method != nullptr ) {
+            env->CallVoidMethod( activity, method );
+        }
     }
-    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
     env->PopLocalFrame( nullptr );
 }
 
@@ -714,7 +741,9 @@ void open_backup_restore()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
-        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
@@ -722,9 +751,13 @@ void open_backup_restore()
         jclass cls = env->GetObjectClass( activity );
         jmethodID method = cls == nullptr ? nullptr :
                            env->GetMethodID( cls, "onAccessibilityOpenBackupRestore", "()V" );
-        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+        if( method != nullptr ) {
+            env->CallVoidMethod( activity, method );
+        }
     }
-    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
     env->PopLocalFrame( nullptr );
 }
 
@@ -732,7 +765,9 @@ void normal_exit()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
-        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
@@ -740,9 +775,13 @@ void normal_exit()
         jclass cls = env->GetObjectClass( activity );
         jmethodID method = cls == nullptr ? nullptr :
                            env->GetMethodID( cls, "onAccessibilityNormalExit", "()V" );
-        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+        if( method != nullptr ) {
+            env->CallVoidMethod( activity, method );
+        }
     }
-    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
     env->PopLocalFrame( nullptr );
 }
 
@@ -822,7 +861,7 @@ void cue( const std::string &name )
         jclass cls = env->GetObjectClass( activity );
         if( cls != nullptr ) {
             jmethodID method = env->GetMethodID( cls, "onAccessibilityCue",
-                                                "(Ljava/lang/String;)V" );
+                                                 "(Ljava/lang/String;)V" );
             if( method != nullptr ) {
 
 
@@ -857,7 +896,7 @@ void directional_sonar_targets( const std::array<int, 8> &creatures,
         jclass cls = env->GetObjectClass( activity );
         if( cls != nullptr ) {
             jmethodID method = env->GetMethodID( cls, "onAccessibilityDirectionalSonar",
-                                                "([I[I)V" );
+                                                 "([I[I)V" );
             if( method != nullptr ) {
                 jint creature_values[8];
                 jint item_values[8];
@@ -1008,7 +1047,8 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeReaderIntent(
     }
     a11y::semantic_intent intent;
     intent.token = { static_cast<std::uint64_t>( session ), static_cast<std::uint64_t>( frame ),
-                     static_cast<std::uint64_t>( generation ) };
+                     static_cast<std::uint64_t>( generation )
+                   };
     intent.revision = static_cast<std::uint64_t>( revision );
     intent.request = static_cast<std::uint64_t>( request );
     intent.node = from_java( env, node );

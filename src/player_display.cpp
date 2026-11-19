@@ -1586,15 +1586,15 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     }
 
     const std::string needs = string_format( _( "Hunger: %s" ),
-                                        display::hunger_text_color( you ).first ) + ". " +
-                        string_format( _( "Thirst: %s" ),
-                                       display::thirst_text_color( you ).first ) + ". " +
-                        string_format( _( "Sleepiness: %s" ),
-                                       display::sleepiness_text_color( you ).first ) + ". " +
-                        string_format( _( "Pain: %s" ),
-                                       display::pain_text_color( you ).first ) + ". " +
-                        string_format( _( "Weariness: %s" ),
-                                       display::weariness_text_color( you ).first );
+                              display::hunger_text_color( you ).first ) + ". " +
+                              string_format( _( "Thirst: %s" ),
+                                      display::thirst_text_color( you ).first ) + ". " +
+                              string_format( _( "Sleepiness: %s" ),
+                                      display::sleepiness_text_color( you ).first ) + ". " +
+                              string_format( _( "Pain: %s" ),
+                                      display::pain_text_color( you ).first ) + ". " +
+                              string_format( _( "Weariness: %s" ),
+                                      display::weariness_text_color( you ).first );
     std::string quick;
     int warnings = 0;
     for( const bodypart_id &part : you.get_all_body_parts( get_body_part_flags::sorted ) ) {
@@ -1610,8 +1610,8 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         }
         if( !condition.empty() ) {
             quick += "\n" + string_format( _( "%1$s: %2$s. %3$s" ),
-                       body_part_name( part ), condition,
-                       a11y::limb_health_description( you, part ) );
+                                           body_part_name( part ), condition,
+                                           a11y::limb_health_description( you, part ) );
             ++warnings;
         }
     }
@@ -1653,8 +1653,9 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     a11y::semantic_table warmth_table;
     warmth_table.id = "pd:warmth";
     warmth_table.columns = { { "part", _( "Body part" ), "" },
-                             { "encumbrance", _( "Encumbrance" ), "" },
-                             { "temperature", _( "Temperature" ), "" } };
+        { "encumbrance", _( "Encumbrance" ), "" },
+        { "temperature", _( "Temperature" ), "" }
+    };
     snapshot.tables.push_back( warmth_table );
     const auto bps = list_and_combine_bps( you, nullptr );
     for( std::size_t i = 0; i < bps.size(); ++i ) {
@@ -1665,8 +1666,8 @@ a11y::semantic_snapshot player_display_reader_snapshot(
 
 
         const std::string encumb = string_format( "%1$d + %2$d",
-                                 you.get_part_encumbrance( bp ) - you.get_part_layer_penalty( bp ),
-                                 you.get_part_layer_penalty( bp ) );
+                                   you.get_part_encumbrance( bp ) - you.get_part_layer_penalty( bp ),
+                                   you.get_part_layer_penalty( bp ) );
 
 
 
@@ -1683,8 +1684,9 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.table_id = "pd:warmth";
         node.row_index = static_cast<int>( i );
         node.cells = { { "part", node.label, "", "" },
-                       { "encumbrance", encumb, "", "" },
-                       { "temperature", temp, "", "" } };
+            { "encumbrance", encumb, "", "" },
+            { "temperature", temp, "", "" }
+        };
         node.detail = string_format( _( "Encumbrance %1$s. Temperature: %2$s" ), encumb, temp );
         node.position = i + 1;
         node.total = bps.size();
@@ -1737,11 +1739,12 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     a11y::semantic_table skills_table;
     skills_table.id = "pd:skills";
     skills_table.columns = { { "skill", _( "Skill" ), "" },
-                             { "category", _( "Category" ), "" },
-                             { "level", _( "Level" ), "" },
-                             { "progress", _( "Progress" ), "%" },
-                             { "dodge", _( "Dodge" ), "" },
-                             { "status", _( "Status" ), "" } };
+        { "category", _( "Category" ), "" },
+        { "level", _( "Level" ), "" },
+        { "progress", _( "Progress" ), "%" },
+        { "dodge", _( "Dodge" ), "" },
+        { "status", _( "Status" ), "" }
+    };
     snapshot.tables.push_back( skills_table );
     int skill_total = 0;
     for( const HeaderSkill &entry : skillslist ) {
@@ -1836,10 +1839,11 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.position = skill_row + 1;
         node.total = skill_total;
         node.cells = { { "skill", node.label, "", "" },
-                       { "category", skill_category, "", "" },
-                       { "level", std::to_string( level_num ), "", std::to_string( level_num ) },
-                       { "progress", std::to_string( progress ), "%", std::to_string( progress ) },
-                       { "status", status, "", "" } };
+            { "category", skill_category, "", "" },
+            { "level", std::to_string( level_num ), "", std::to_string( level_num ) },
+            { "progress", std::to_string( progress ), "%", std::to_string( progress ) },
+            { "status", status, "", "" }
+        };
         if( aSkill->ident() == skill_dodge ) {
             const std::string dodge = string_format( "%.1f", you.get_dodge() );
             node.cells.push_back( { "dodge", dodge, "", dodge } );
@@ -1884,8 +1888,9 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     a11y::semantic_table profs_table;
     profs_table.id = "pd:proficiencies";
     profs_table.columns = { { "proficiency", _( "Proficiency" ), "" },
-                            { "status", _( "Status" ), "" },
-                            { "progress", _( "Progress" ), "%" } };
+        { "status", _( "Status" ), "" },
+        { "progress", _( "Progress" ), "%" }
+    };
     snapshot.tables.push_back( profs_table );
     const std::vector<display_proficiency> profs = you.display_proficiencies();
     for( std::size_t i = 0; i < profs.size(); ++i ) {
@@ -1915,7 +1920,8 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.position = static_cast<int>( i ) + 1;
         node.total = static_cast<int>( profs.size() );
         node.cells = { { "proficiency", node.label, "", "" },
-                       { "status", status, "", "" } };
+            { "status", status, "", "" }
+        };
         if( !cur.known ) {
             const std::string prog = string_format( "%.2f", cur.practice * 100.0f );
             node.cells.push_back( { "progress", prog, "%", prog } );
@@ -2412,9 +2418,10 @@ void Character::disp_info( bool customize_character )
 
     a11y::screen_scope reader( &ctxt, "player_display",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "activate" ) {
+        if( intent.action == "activate" )
+        {
             if( const std::optional<player_display_tab> tab =
-                        player_display_tab_for_node( intent.node ) ) {
+                player_display_tab_for_node( intent.node ) ) {
                 curtab = *tab;
                 line = curtab == player_display_tab::skills ? 1 : 0;
                 info_line = 0;

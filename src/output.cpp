@@ -494,7 +494,7 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
 
 
     a11y::screen_scope reader( &ctxt, "SCROLLABLE_TEXT",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
 
@@ -893,17 +893,17 @@ bool query_yn( const std::string &text )
                             : input_context::allow_all_keys;
 
     const std::string action = query_popup()
-           .preferred_keyboard_mode( keyboard_mode::keycode )
-           .context( "YESNO" )
-           .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled() ?
-                     pgettext( "query_yn", "%s (Case Sensitive)" ) :
-                     pgettext( "query_yn", "%s" ), text )
-           .option( "YES", allow_key )
-           .option( "NO", allow_key )
-           .cursor( 1 )
-           .default_color( c_light_red )
-           .query()
-           .action;
+                               .preferred_keyboard_mode( keyboard_mode::keycode )
+                               .context( "YESNO" )
+                               .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled() ?
+                                         pgettext( "query_yn", "%s (Case Sensitive)" ) :
+                                         pgettext( "query_yn", "%s" ), text )
+                               .option( "YES", allow_key )
+                               .option( "NO", allow_key )
+                               .cursor( 1 )
+                               .default_color( c_light_red )
+                               .query()
+                               .action;
     if( action == "NO" && in_reader_activity && get_avatar().activity ) {
         get_avatar().activity.dismiss_prompt( text );
     }

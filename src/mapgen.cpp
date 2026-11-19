@@ -661,10 +661,10 @@ class mapgen_factory
                 }
                 if( now - last_progress >= std::chrono::seconds( 15 ) ) {
                     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen" <<
-                                              " step=oter_setup_progress done=" << completed <<
-                                              " total=" << total << " elapsed_ms=" <<
-                                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  now - started ).count();
+                                               " step=oter_setup_progress done=" << completed <<
+                                               " total=" << total << " elapsed_ms=" <<
+                                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                   now - started ).count();
                     last_progress = now;
                 }
 #endif
@@ -674,12 +674,12 @@ class mapgen_factory
             mapgens_.erase( "null" );
 #if defined(__ANDROID__)
             DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=oter_setup" <<
-                                      " groups=" << completed << " elapsed_ms=" <<
-                                      std::chrono::duration_cast<std::chrono::milliseconds>(
-                                          clock::now() - started ).count() <<
-                                      " slowest_group=" << slowest_key << " slowest_ms=" <<
-                                      std::chrono::duration_cast<std::chrono::milliseconds>(
-                                          slowest ).count();
+                                       " groups=" << completed << " elapsed_ms=" <<
+                                       std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           clock::now() - started ).count() <<
+                                       " slowest_group=" << slowest_key << " slowest_ms=" <<
+                                       std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           slowest ).count();
 #endif
         }
         void finalize_parameters() {
@@ -706,12 +706,12 @@ class mapgen_factory
             }
 #if defined(__ANDROID__)
             DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=oter_parameters" <<
-                                      " groups=" << completed << " elapsed_ms=" <<
-                                      std::chrono::duration_cast<std::chrono::milliseconds>(
-                                          clock::now() - started ).count() <<
-                                      " slowest_group=" << slowest_key << " slowest_ms=" <<
-                                      std::chrono::duration_cast<std::chrono::milliseconds>(
-                                          slowest ).count();
+                                       " groups=" << completed << " elapsed_ms=" <<
+                                       std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           clock::now() - started ).count() <<
+                                       " slowest_group=" << slowest_key << " slowest_ms=" <<
+                                       std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           slowest ).count();
 #endif
         }
         void check_consistency() const {
@@ -839,7 +839,7 @@ void calculate_mapgen_weights()
 #endif
 
 
-    const auto profile_groups = [&]( const char *step, auto &groups, auto &&run ) {
+    const auto profile_groups = [&]( const char *step, auto & groups, auto &&run ) {
 #if defined(__ANDROID__)
         const auto phase_started = clock::now();
         std::size_t groups_processed = 0;
@@ -871,13 +871,13 @@ void calculate_mapgen_weights()
         }
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=" << step <<
-                                  " groups=" << groups_processed <<
-                                  " functions=" << functions_processed << " elapsed_ms=" <<
-                                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      clock::now() - phase_started ).count() <<
-                                  " slowest_group=" << slowest_group << " slowest_ms=" <<
-                                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      slowest ).count();
+                                   " groups=" << groups_processed <<
+                                   " functions=" << functions_processed << " elapsed_ms=" <<
+                                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       clock::now() - phase_started ).count() <<
+                                   " slowest_group=" << slowest_group << " slowest_ms=" <<
+                                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       slowest ).count();
 #endif
     };
 
@@ -890,10 +890,10 @@ void calculate_mapgen_weights()
 #else
     oter_mapgen.setup();
 #endif
-    profile_groups( "nested_setup", nested_mapgens, []( const auto &ptr ) {
+    profile_groups( "nested_setup", nested_mapgens, []( const auto & ptr ) {
         ptr.first->setup();
     } );
-    profile_groups( "update_setup", update_mapgens, []( const auto &ptr ) {
+    profile_groups( "update_setup", update_mapgens, []( const auto & ptr ) {
         ptr->setup();
     } );
 
@@ -907,16 +907,16 @@ void calculate_mapgen_weights()
 #else
     oter_mapgen.finalize_parameters();
 #endif
-    profile_groups( "nested_parameters", nested_mapgens, []( const auto &ptr ) {
+    profile_groups( "nested_parameters", nested_mapgens, []( const auto & ptr ) {
         ptr.first->finalize_parameters();
     } );
-    profile_groups( "update_parameters", update_mapgens, []( const auto &ptr ) {
+    profile_groups( "update_parameters", update_mapgens, []( const auto & ptr ) {
         ptr->finalize_parameters();
     } );
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=total elapsed_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  clock::now() - started ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   clock::now() - started ).count();
 #endif
 }
 
@@ -1517,7 +1517,7 @@ class mapgen_value
         struct value_source {
             virtual ~value_source() = default;
             virtual Id get( const mapgendata & ) const = 0;
-            virtual void check( const std::string & , const mapgen_parameters &
+            virtual void check( const std::string &, const mapgen_parameters &
                               ) const {};
             virtual void check_consistent_with(
                 const value_source &, const std::string &context ) const = 0;
@@ -1872,27 +1872,34 @@ std::string enum_to_string<jmapgen_flags>( jmapgen_flags v )
 {
     switch( v ) {
 
-        case jmapgen_flags::allow_terrain_under_other_data: return "ALLOW_TERRAIN_UNDER_OTHER_DATA";
+        case jmapgen_flags::allow_terrain_under_other_data:
+            return "ALLOW_TERRAIN_UNDER_OTHER_DATA";
         case jmapgen_flags::dismantle_all_before_placing_terrain:
             return "DISMANTLE_ALL_BEFORE_PLACING_TERRAIN";
         case jmapgen_flags::erase_all_before_placing_terrain:
             return "ERASE_ALL_BEFORE_PLACING_TERRAIN";
-        case jmapgen_flags::allow_terrain_under_furniture: return "ALLOW_TERRAIN_UNDER_FURNITURE";
+        case jmapgen_flags::allow_terrain_under_furniture:
+            return "ALLOW_TERRAIN_UNDER_FURNITURE";
         case jmapgen_flags::dismantle_furniture_before_placing_terrain:
             return "DISMANTLE_FURNITURE_BEFORE_PLACING_TERRAIN";
         case jmapgen_flags::erase_furniture_before_placing_terrain:
             return "ERASE_FURNITURE_BEFORE_PLACING_TERRAIN";
-        case jmapgen_flags::allow_terrain_under_trap: return "ALLOW_TERRAIN_UNDER_TRAP";
+        case jmapgen_flags::allow_terrain_under_trap:
+            return "ALLOW_TERRAIN_UNDER_TRAP";
         case jmapgen_flags::dismantle_trap_before_placing_terrain:
             return "DISMANTLE_TRAP_BEFORE_PLACING_TERRAIN";
         case jmapgen_flags::erase_trap_before_placing_terrain:
             return "ERASE_TRAP_BEFORE_PLACING_TERRAIN";
-        case jmapgen_flags::allow_terrain_under_items: return "ALLOW_TERRAIN_UNDER_ITEMS";
+        case jmapgen_flags::allow_terrain_under_items:
+            return "ALLOW_TERRAIN_UNDER_ITEMS";
         case jmapgen_flags::erase_items_before_placing_terrain:
             return "ERASE_ITEMS_BEFORE_PLACING_TERRAIN";
-        case jmapgen_flags::no_underlying_rotate: return "NO_UNDERLYING_ROTATE";
-        case jmapgen_flags::avoid_creatures: return "AVOID_CREATURES";
-        case jmapgen_flags::skip_on_open_air: return "SKIP_ON_OPEN_AIR";
+        case jmapgen_flags::no_underlying_rotate:
+            return "NO_UNDERLYING_ROTATE";
+        case jmapgen_flags::avoid_creatures:
+            return "AVOID_CREATURES";
+        case jmapgen_flags::skip_on_open_air:
+            return "SKIP_ON_OPEN_AIR";
 
         case jmapgen_flags::last:
             break;
@@ -1906,10 +1913,14 @@ std::string enum_to_string<mapgen_parameter_scope>( mapgen_parameter_scope v )
 {
     switch( v ) {
 
-        case mapgen_parameter_scope::overmap_special: return "overmap_special";
-        case mapgen_parameter_scope::omt_stack: return "omt_stack";
-        case mapgen_parameter_scope::omt: return "omt";
-        case mapgen_parameter_scope::nest: return "nest";
+        case mapgen_parameter_scope::overmap_special:
+            return "overmap_special";
+        case mapgen_parameter_scope::omt_stack:
+            return "omt_stack";
+        case mapgen_parameter_scope::omt:
+            return "omt";
+        case mapgen_parameter_scope::nest:
+            return "nest";
 
         case mapgen_parameter_scope::last:
             break;
@@ -2194,7 +2205,7 @@ class jmapgen_field : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             ftype.check( oter_name, parameters );
         }
@@ -2254,7 +2265,7 @@ class jmapgen_npc : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             npc_class.check( oter_name, parameters );
         }
@@ -2273,7 +2284,7 @@ class jmapgen_faction : public jmapgen_piece
             return mapgen_phase::faction_ownership;
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y,
-                    const jmapgen_int & ,
+                    const jmapgen_int &,
                     const std::string & ) const override {
             faction_id chosen_id = id.get( dat );
             if( chosen_id.is_null() ) {
@@ -2285,7 +2296,7 @@ class jmapgen_faction : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             id.check( oter_name, parameters );
         }
@@ -2426,7 +2437,7 @@ class jmapgen_vending_machine : public jmapgen_piece_with_has_vehicle_collision
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             group_id.check( oter_name, parameters );
         }
@@ -2474,7 +2485,7 @@ class jmapgen_gaspump : public jmapgen_piece_with_has_vehicle_collision
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             fuel.check( oter_name, parameters );
             static const std::unordered_set<itype_id> valid_fuels = {
@@ -2555,7 +2566,7 @@ class jmapgen_liquid_item : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             liquid.check( oter_name, parameters );
         }
@@ -2618,7 +2629,7 @@ class jmapgen_item_group : public jmapgen_piece
             }
         }
         void check( const std::string &context, const mapgen_parameters &,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int & ) const override {
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int & ) const override {
             if( !group_id.is_valid() ) {
                 debugmsg( "Invalid item_group_id \"%s\" in %s", group_id.str(), context );
             }
@@ -2717,7 +2728,7 @@ class jmapgen_monster_group : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             id.check( oter_name, parameters );
         }
@@ -2789,7 +2800,7 @@ class jmapgen_monster : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             for( const std::pair<mapgen_value<mtype_id>, int> &id : ids ) {
                 id.first.check( oter_name, parameters );
@@ -3049,7 +3060,7 @@ class jmapgen_spawn_item : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             type.check( oter_name, parameters );
         }
@@ -3078,7 +3089,7 @@ class jmapgen_trap : public jmapgen_piece_with_has_vehicle_collision
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             id.check( oter_name, parameters );
         }
@@ -3113,7 +3124,7 @@ class jmapgen_furniture : public jmapgen_piece_with_has_vehicle_collision
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             id.check( oter_name, parameters );
         }
@@ -3286,7 +3297,7 @@ class jmapgen_terrain : public jmapgen_piece_with_has_vehicle_collision
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             id.check( oter_name, parameters );
         }
@@ -3316,7 +3327,7 @@ class jmapgen_ter_furn_transform: public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             id.check( oter_name, parameters );
         }
@@ -3358,7 +3369,7 @@ class jmapgen_make_rubble : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             rubble_type.check( oter_name, parameters );
             floor_type.check( oter_name, parameters );
@@ -3605,7 +3616,7 @@ class jmapgen_zone : public jmapgen_piece
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters,
-                    const jmapgen_int & , const jmapgen_int & , const jmapgen_int &
+                    const jmapgen_int &, const jmapgen_int &, const jmapgen_int &
                   ) const override {
             zone_type.check( oter_name, parameters );
             faction.check( oter_name, parameters );
@@ -3674,7 +3685,7 @@ class jmapgen_remove_npcs : public jmapgen_piece
             optional( jsi, false, "class", npc_class );
             optional( jsi, false, "unique_id", unique_id );
         }
-        void apply( const mapgendata &dat, const jmapgen_int & , const jmapgen_int & ,
+        void apply( const mapgendata &dat, const jmapgen_int &, const jmapgen_int &,
                     const jmapgen_int &z,
                     const std::string & ) const override {
             tripoint_abs_omt omt_pos = project_to<coords::omt>( dat.m.get_abs_sub() );
@@ -3701,7 +3712,7 @@ class jmapgen_remove_npcs : public jmapgen_piece
 class jmapgen_remove_all : public jmapgen_piece
 {
     public:
-        jmapgen_remove_all( const JsonObject & , std::string_view ) {
+        jmapgen_remove_all( const JsonObject &, std::string_view ) {
         }
         mapgen_phase phase() const override {
             return mapgen_phase::removal;

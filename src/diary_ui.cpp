@@ -211,9 +211,9 @@ void diary::show_diary_ui( diary *c_diary )
 
     const auto make_reader_snapshot = [&]() {
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
-                                                string_format( _( "%s's Diary" ), c_diary->owner ) );
-        const auto append_tab = [&]( const char *id, const std::string &label,
-                                     const window_mode mode ) {
+                                           string_format( _( "%s's Diary" ), c_diary->owner ) );
+        const auto append_tab = [&]( const char *id, const std::string & label,
+        const window_mode mode ) {
             a11y::semantic_node node;
             node.id = id;
             node.role = "tab";
@@ -263,7 +263,8 @@ void diary::show_diary_ui( diary *c_diary )
             change.position = static_cast<int>( i + 1 );
             change.total = change_count;
             snapshot.nodes.push_back( std::move( change ) );
-            if( currwin == window_mode::CHANGE_WIN && selected[window_mode::CHANGE_WIN] == static_cast<int>( i ) ) {
+            if( currwin == window_mode::CHANGE_WIN &&
+                selected[window_mode::CHANGE_WIN] == static_cast<int>( i ) ) {
                 snapshot.focus = "diary:change:" + std::to_string( i );
             }
         }
@@ -298,8 +299,9 @@ void diary::show_diary_ui( diary *c_diary )
     };
 
     a11y::screen_scope reader( &ctxt, "diary",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.action == "activate" ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" )
+        {
             if( intent.node == "diary:tab:pages" ) {
                 currwin = window_mode::PAGE_WIN;
                 return "TIMEOUT";
@@ -317,7 +319,8 @@ void diary::show_diary_ui( diary *c_diary )
                 return "TIMEOUT";
             }
         }
-        if( intent.action == "set_text" && intent.node == "diary:page_text" ) {
+        if( intent.action == "set_text" && intent.node == "diary:page_text" )
+        {
             diary_page *page = c_diary->get_page_ptr();
             if( page == nullptr || page->is_summary() ) {
                 a11y::android::status( "unsupported", &intent );
@@ -330,13 +333,15 @@ void diary::show_diary_ui( diary *c_diary )
             return "TIMEOUT";
         }
         if( intent.action == "focus" && ( intent.node == "diary:entry" ||
-                                            intent.node == "diary:page_text" ||
-                                            intent.node == "diary:change_detail" ) ) {
+                                          intent.node == "diary:page_text" ||
+                                          intent.node == "diary:change_detail" ) )
+        {
             currwin = window_mode::TEXT_WIN;
             return "TIMEOUT";
         }
 
-        for( std::size_t i = 0; i < c_diary->pages.size(); ++i ) {
+        for( std::size_t i = 0; i < c_diary->pages.size(); ++i )
+        {
             if( intent.node != "diary:page:" + std::to_string( i ) ||
                 ( intent.action != "focus" && intent.action != "activate" ) ) {
                 continue;
@@ -348,7 +353,8 @@ void diary::show_diary_ui( diary *c_diary )
             return "TIMEOUT";
         }
         const std::vector<std::string> &changes = c_diary->get_change_list();
-        for( std::size_t i = 0; i < changes.size(); ++i ) {
+        for( std::size_t i = 0; i < changes.size(); ++i )
+        {
             if( intent.node != "diary:change:" + std::to_string( i ) ||
                 ( intent.action != "focus" && intent.action != "activate" ) ) {
                 continue;

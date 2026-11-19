@@ -34,7 +34,9 @@ namespace
 std::vector<std::string> published_descriptions( const a11y_fixture::knowledge_pair_fixture &fx )
 {
     std::vector<std::string> out;
-    for( const tripoint_bub_ms &pos : { fx.monster_pos, fx.hidden_trap_pos, fx.mine_pos, fx.crate_pos } ) {
+    for( const tripoint_bub_ms &pos : {
+             fx.monster_pos, fx.hidden_trap_pos, fx.mine_pos, fx.crate_pos
+         } ) {
         out.push_back( a11y::describe_tile( a11y::observe_tile( pos ) ) );
     }
     return out;

@@ -59,13 +59,13 @@ using segment_bitset = tname::segment_bitset;
 namespace
 {
 
-std::string noop( item const & , unsigned int ,
+std::string noop( item const &, unsigned int,
                   segment_bitset const & )
 {
     return {};
 }
 
-std::string faults( item const &it, unsigned int ,
+std::string faults( item const &it, unsigned int,
                     segment_bitset const & )
 {
     std::string damtext;
@@ -81,7 +81,7 @@ std::string faults( item const &it, unsigned int ,
     return damtext;
 }
 
-std::string faults_suffix( item const &it, unsigned int ,
+std::string faults_suffix( item const &it, unsigned int,
                            segment_bitset const & )
 {
     std::string text;
@@ -102,19 +102,19 @@ std::string faults_suffix( item const &it, unsigned int ,
     }
 }
 
-std::string dirt_symbol( item const &it, unsigned int ,
+std::string dirt_symbol( item const &it, unsigned int,
                          segment_bitset const & )
 {
     return it.dirt_symbol();
 }
 
-std::string overheat_symbol( item const &it, unsigned int ,
+std::string overheat_symbol( item const &it, unsigned int,
                              segment_bitset const & )
 {
     return it.overheat_symbol();
 }
 
-std::string pre_asterisk( item const &it, unsigned int ,
+std::string pre_asterisk( item const &it, unsigned int,
                           segment_bitset const & )
 {
     if( it.is_favorite && get_option<std::string>( "ASTERISK_POSITION" ) == "prefix" ) {
@@ -123,7 +123,7 @@ std::string pre_asterisk( item const &it, unsigned int ,
     return {};
 }
 
-std::string durability( item const &it, unsigned int ,
+std::string durability( item const &it, unsigned int,
                         segment_bitset const & )
 {
     const std::string item_health_option = get_option<std::string>( "ITEM_HEALTH" );
@@ -136,7 +136,7 @@ std::string durability( item const &it, unsigned int ,
     return {};
 }
 
-std::string wheel_diameter( item const &it, unsigned int ,
+std::string wheel_diameter( item const &it, unsigned int,
                             segment_bitset const & )
 {
     if( it.is_wheel() && it.type->wheel->diameter > 0 ) {
@@ -145,7 +145,7 @@ std::string wheel_diameter( item const &it, unsigned int ,
     return {};
 }
 
-std::string burn( item const &it, unsigned int ,
+std::string burn( item const &it, unsigned int,
                   segment_bitset const & )
 {
     if( !it.made_of_from_type( phase_id::LIQUID ) ) {
@@ -159,7 +159,7 @@ std::string burn( item const &it, unsigned int ,
     return {};
 }
 
-std::string custom_item_prefix( item const &it, unsigned int ,
+std::string custom_item_prefix( item const &it, unsigned int,
                                 segment_bitset const & )
 {
     std::string prefix;
@@ -169,7 +169,7 @@ std::string custom_item_prefix( item const &it, unsigned int ,
     return prefix;
 }
 
-std::string custom_item_suffix( item const &it, unsigned int ,
+std::string custom_item_suffix( item const &it, unsigned int,
                                 segment_bitset const & )
 {
     std::string suffix;
@@ -189,7 +189,7 @@ std::string label( item const &it, unsigned int quantity, segment_bitset const &
     return {};
 }
 
-std::string mods( item const &it, unsigned int ,
+std::string mods( item const &it, unsigned int,
                   segment_bitset const & )
 {
     int amt = 0;
@@ -213,7 +213,7 @@ std::string mods( item const &it, unsigned int ,
     return {};
 }
 
-std::string craft( item const &it, unsigned int ,
+std::string craft( item const &it, unsigned int,
                    segment_bitset const & )
 {
     if( it.is_craft() ) {
@@ -261,7 +261,7 @@ std::string craft( item const &it, unsigned int ,
     return {};
 }
 
-std::string wbl_mark( item const &it, unsigned int ,
+std::string wbl_mark( item const &it, unsigned int,
                       segment_bitset const & )
 {
     std::vector<const item_pocket *> pkts = it.get_container_pockets();
@@ -281,7 +281,7 @@ std::string wbl_mark( item const &it, unsigned int ,
         wl || bl ? colorize( "⁺", player_wbl ? c_light_gray : c_dark_gray ) : std::string();
 }
 
-std::string contents( item const &it, unsigned int ,
+std::string contents( item const &it, unsigned int,
                       segment_bitset const &segments )
 {
     item_contents const &contents = it.get_contents();
@@ -341,7 +341,7 @@ std::string contents( item const &it, unsigned int ,
     return {};
 }
 
-std::string food_traits( item const &it, unsigned int ,
+std::string food_traits( item const &it, unsigned int,
                          segment_bitset const & )
 {
     if( it.is_food() ) {
@@ -356,7 +356,7 @@ std::string food_traits( item const &it, unsigned int ,
     return {};
 }
 
-std::string location_hint( item const &it, unsigned int ,
+std::string location_hint( item const &it, unsigned int,
                            segment_bitset const & )
 {
     if( it.has_flag( json_flag_HINT_THE_LOCATION ) && it.has_var( "spawn_location" ) ) {
@@ -377,7 +377,7 @@ std::string location_hint( item const &it, unsigned int ,
     return {};
 }
 
-std::string location_closest_city( item const &it, unsigned int ,
+std::string location_closest_city( item const &it, unsigned int,
                                    segment_bitset const & )
 {
     if( it.has_flag( json_flag_LOCATION_PRECISE_CLOSEST_CITY ) ) {
@@ -395,7 +395,7 @@ std::string location_closest_city( item const &it, unsigned int ,
     return {};
 }
 
-std::string ethereal( item const &it, unsigned int ,
+std::string ethereal( item const &it, unsigned int,
                       segment_bitset const & )
 {
     if( it.ethereal ) {
@@ -406,7 +406,7 @@ std::string ethereal( item const &it, unsigned int ,
     return {};
 }
 
-std::string food_status( item const &it, unsigned int ,
+std::string food_status( item const &it, unsigned int,
                          segment_bitset const & )
 {
     std::string tagtext;
@@ -426,7 +426,7 @@ std::string food_status( item const &it, unsigned int ,
     return tagtext;
 }
 
-std::string food_irradiated( item const &it, unsigned int ,
+std::string food_irradiated( item const &it, unsigned int,
                              segment_bitset const & )
 {
     if( it.goes_bad() ) {
@@ -437,7 +437,7 @@ std::string food_irradiated( item const &it, unsigned int ,
     return {};
 }
 
-std::string temperature( item const &it, unsigned int ,
+std::string temperature( item const &it, unsigned int,
                          segment_bitset const & )
 {
     std::string ret;
@@ -457,7 +457,7 @@ std::string temperature( item const &it, unsigned int ,
     return ret;
 }
 
-std::string clothing_size( item const &it, unsigned int ,
+std::string clothing_size( item const &it, unsigned int,
                            segment_bitset const & )
 {
     const item::sizing sizing_level = it.get_sizing( get_avatar() );
@@ -477,7 +477,7 @@ std::string clothing_size( item const &it, unsigned int ,
     return {};
 }
 
-std::string filthy( item const &it, unsigned int ,
+std::string filthy( item const &it, unsigned int,
                     segment_bitset const & )
 {
     if( it.is_filthy() ) {
@@ -486,7 +486,7 @@ std::string filthy( item const &it, unsigned int ,
     return {};
 }
 
-std::string tags( item const &it, unsigned int ,
+std::string tags( item const &it, unsigned int,
                   segment_bitset const & )
 {
     std::string ret;
@@ -512,7 +512,7 @@ std::string tags( item const &it, unsigned int ,
     return ret;
 }
 
-std::string vars( item const &it, unsigned int ,
+std::string vars( item const &it, unsigned int,
                   segment_bitset const & )
 {
     std::string ret;
@@ -555,7 +555,7 @@ std::string vars( item const &it, unsigned int ,
 }
 
 
-std::string traits( item const &it, unsigned int ,
+std::string traits( item const &it, unsigned int,
                     segment_bitset const & )
 {
     std::string ret;
@@ -571,7 +571,7 @@ std::string traits( item const &it, unsigned int ,
 
 }
 
-std::string segment_broken( item const &it, unsigned int ,
+std::string segment_broken( item const &it, unsigned int,
                             segment_bitset const & )
 {
     if( it.is_broken() ) {
@@ -580,7 +580,7 @@ std::string segment_broken( item const &it, unsigned int ,
     return {};
 }
 
-std::string cbm_status( item const &it, unsigned int ,
+std::string cbm_status( item const &it, unsigned int,
                         segment_bitset const & )
 {
     if( it.is_bionic() && !it.has_flag( flag_NO_PACKED ) ) {
@@ -592,7 +592,7 @@ std::string cbm_status( item const &it, unsigned int ,
     return {};
 }
 
-std::string ups( item const &it, unsigned int ,
+std::string ups( item const &it, unsigned int,
                  segment_bitset const & )
 {
     if( it.is_tool() && it.has_flag( flag_USE_UPS ) ) {
@@ -601,7 +601,7 @@ std::string ups( item const &it, unsigned int ,
     return {};
 }
 
-std::string wetness( item const &it, unsigned int ,
+std::string wetness( item const &it, unsigned int,
                      segment_bitset const & )
 {
     if( ( it.wetness > 0 ) || it.has_flag( flag_WET ) ) {
@@ -610,7 +610,7 @@ std::string wetness( item const &it, unsigned int ,
     return {};
 }
 
-std::string active( item const &it, unsigned int ,
+std::string active( item const &it, unsigned int,
                     segment_bitset const & )
 {
     if( it.active && ( !it.has_temperature() || it.type->countdown_interval > 0_seconds ) &&
@@ -622,7 +622,7 @@ std::string active( item const &it, unsigned int ,
     }
     return {};
 }
-std::string activity_occupany( item const &it, unsigned int ,
+std::string activity_occupany( item const &it, unsigned int,
                                segment_bitset const & )
 {
     if( it.has_var( "activity_var" ) ) {
@@ -638,7 +638,7 @@ std::string activity_occupany( item const &it, unsigned int ,
 }
 
 
-std::string sealed( item const &it, unsigned int ,
+std::string sealed( item const &it, unsigned int,
                     segment_bitset const & )
 {
     if( it.all_pockets_sealed() ) {
@@ -649,7 +649,7 @@ std::string sealed( item const &it, unsigned int ,
     return {};
 }
 
-std::string post_asterisk( item const &it, unsigned int ,
+std::string post_asterisk( item const &it, unsigned int,
                            segment_bitset const & )
 {
     if( it.is_favorite && get_option<std::string>( "ASTERISK_POSITION" ) == "suffix" ) {
@@ -658,7 +658,7 @@ std::string post_asterisk( item const &it, unsigned int ,
     return {};
 }
 
-std::string weapon_mods( item const &it, unsigned int ,
+std::string weapon_mods( item const &it, unsigned int,
                          segment_bitset const & )
 {
     std::string modtext;
@@ -674,7 +674,7 @@ std::string weapon_mods( item const &it, unsigned int ,
     return modtext;
 }
 
-std::string relic_charges( item const &it, unsigned int ,
+std::string relic_charges( item const &it, unsigned int,
                            segment_bitset const & )
 {
     if( it.is_relic() && it.relic_data->max_charges() > 0 && it.relic_data->charges_per_use() > 0 ) {
@@ -692,7 +692,7 @@ std::string category( item const &it, unsigned int quantity,
     return colorize( it.get_category_of_contents().name_noun( quantity ), color );
 }
 
-std::string ememory( item const &it, unsigned int ,
+std::string ememory( item const &it, unsigned int,
                      segment_bitset const & )
 {
     if( it.is_estorage() && !it.is_broken() ) {
@@ -794,56 +794,106 @@ std::string enum_to_string<tname::segments>( tname::segments seg )
 {
     switch( seg ) {
 
-        case tname::segments::FAULTS: return "FAULTS";
-        case tname::segments::FAULTS_SUFFIX: return "FAULTS_SUFFIX";
-        case tname::segments::DIRT: return "DIRT";
-        case tname::segments::OVERHEAT: return "OVERHEAT";
-        case tname::segments::FAVORITE_PRE: return "FAVORITE_PRE";
-        case tname::segments::DURABILITY: return "DURABILITY";
-        case tname::segments::WHEEL_DIAMETER: return "WHEEL_DIAMETER";
-        case tname::segments::BURN: return "BURN";
-        case tname::segments::WEAPON_MODS: return "WEAPON_MODS";
-        case tname::segments::CUSTOM_ITEM_PREFIX: return "CUSTOM_ITEM_PREFIX";
-        case tname::segments::TYPE: return "TYPE";
-        case tname::segments::CATEGORY: return "CATEGORY";
-        case tname::segments::CUSTOM_ITEM_SUFFIX: return "CUSTOM_ITEM_SUFFIX";
-        case tname::segments::MODS: return "MODS";
-        case tname::segments::CRAFT: return "CRAFT";
-        case tname::segments::WHITEBLACKLIST: return "WHITEBLACKLIST";
-        case tname::segments::CHARGES: return "CHARGES";
-        case tname::segments::FOOD_TRAITS: return "FOOD_TRAITS";
-        case tname::segments::FOOD_STATUS: return "FOOD_STATUS";
-        case tname::segments::FOOD_IRRADIATED: return "FOOD_IRRADIATED";
-        case tname::segments::TEMPERATURE: return "TEMPERATURE";
-        case tname::segments::LOCATION_HINT: return "LOCATION_HINT";
-        case tname::segments::LOCATION_PRECISE_CLOSEST_CITY: return "LOCATION_PRECISE_CLOSEST_CITY";
-        case tname::segments::CLOTHING_SIZE: return "CLOTHING_SIZE";
-        case tname::segments::ETHEREAL: return "ETHEREAL";
-        case tname::segments::FILTHY: return "FILTHY";
-        case tname::segments::BROKEN: return "BROKEN";
-        case tname::segments::CBM_STATUS: return "CBM_STATUS";
-        case tname::segments::UPS: return "UPS";
-        case tname::segments::TAGS: return "TAGS";
-        case tname::segments::VARS: return "VARS";
-        case tname::segments::WETNESS: return "WETNESS";
-        case tname::segments::ACTIVE: return "ACTIVE";
-        case tname::segments::ACTIVITY_OCCUPANCY: return "ACTIVITY_OCCUPANCY";
-        case tname::segments::SEALED: return "SEALED";
-        case tname::segments::FAVORITE_POST: return "FAVORITE_POST";
-        case tname::segments::RELIC: return "RELIC";
-        case tname::segments::LINK: return "LINK";
-        case tname::segments::TECHNIQUES: return "TECHNIQUES";
-        case tname::segments::CONTENTS: return "CONTENTS";
-        case tname::segments::last_segment: return "last_segment";
-        case tname::segments::VARIANT: return "VARIANT";
-        case tname::segments::COMPONENTS: return "COMPONENTS";
-        case tname::segments::CORPSE: return "CORPSE";
-        case tname::segments::CONTENTS_FULL: return "CONTENTS_FULL";
-        case tname::segments::CONTENTS_ABREV: return "CONTENTS_ABBREV";
-        case tname::segments::CONTENTS_COUNT: return "CONTENTS_COUNT";
-        case tname::segments::FOOD_PERISHABLE: return "FOOD_PERISHABLE";
-        case tname::segments::EMEMORY: return "EMEMORY";
-        case tname::segments::last: return "last";
+        case tname::segments::FAULTS:
+            return "FAULTS";
+        case tname::segments::FAULTS_SUFFIX:
+            return "FAULTS_SUFFIX";
+        case tname::segments::DIRT:
+            return "DIRT";
+        case tname::segments::OVERHEAT:
+            return "OVERHEAT";
+        case tname::segments::FAVORITE_PRE:
+            return "FAVORITE_PRE";
+        case tname::segments::DURABILITY:
+            return "DURABILITY";
+        case tname::segments::WHEEL_DIAMETER:
+            return "WHEEL_DIAMETER";
+        case tname::segments::BURN:
+            return "BURN";
+        case tname::segments::WEAPON_MODS:
+            return "WEAPON_MODS";
+        case tname::segments::CUSTOM_ITEM_PREFIX:
+            return "CUSTOM_ITEM_PREFIX";
+        case tname::segments::TYPE:
+            return "TYPE";
+        case tname::segments::CATEGORY:
+            return "CATEGORY";
+        case tname::segments::CUSTOM_ITEM_SUFFIX:
+            return "CUSTOM_ITEM_SUFFIX";
+        case tname::segments::MODS:
+            return "MODS";
+        case tname::segments::CRAFT:
+            return "CRAFT";
+        case tname::segments::WHITEBLACKLIST:
+            return "WHITEBLACKLIST";
+        case tname::segments::CHARGES:
+            return "CHARGES";
+        case tname::segments::FOOD_TRAITS:
+            return "FOOD_TRAITS";
+        case tname::segments::FOOD_STATUS:
+            return "FOOD_STATUS";
+        case tname::segments::FOOD_IRRADIATED:
+            return "FOOD_IRRADIATED";
+        case tname::segments::TEMPERATURE:
+            return "TEMPERATURE";
+        case tname::segments::LOCATION_HINT:
+            return "LOCATION_HINT";
+        case tname::segments::LOCATION_PRECISE_CLOSEST_CITY:
+            return "LOCATION_PRECISE_CLOSEST_CITY";
+        case tname::segments::CLOTHING_SIZE:
+            return "CLOTHING_SIZE";
+        case tname::segments::ETHEREAL:
+            return "ETHEREAL";
+        case tname::segments::FILTHY:
+            return "FILTHY";
+        case tname::segments::BROKEN:
+            return "BROKEN";
+        case tname::segments::CBM_STATUS:
+            return "CBM_STATUS";
+        case tname::segments::UPS:
+            return "UPS";
+        case tname::segments::TAGS:
+            return "TAGS";
+        case tname::segments::VARS:
+            return "VARS";
+        case tname::segments::WETNESS:
+            return "WETNESS";
+        case tname::segments::ACTIVE:
+            return "ACTIVE";
+        case tname::segments::ACTIVITY_OCCUPANCY:
+            return "ACTIVITY_OCCUPANCY";
+        case tname::segments::SEALED:
+            return "SEALED";
+        case tname::segments::FAVORITE_POST:
+            return "FAVORITE_POST";
+        case tname::segments::RELIC:
+            return "RELIC";
+        case tname::segments::LINK:
+            return "LINK";
+        case tname::segments::TECHNIQUES:
+            return "TECHNIQUES";
+        case tname::segments::CONTENTS:
+            return "CONTENTS";
+        case tname::segments::last_segment:
+            return "last_segment";
+        case tname::segments::VARIANT:
+            return "VARIANT";
+        case tname::segments::COMPONENTS:
+            return "COMPONENTS";
+        case tname::segments::CORPSE:
+            return "CORPSE";
+        case tname::segments::CONTENTS_FULL:
+            return "CONTENTS_FULL";
+        case tname::segments::CONTENTS_ABREV:
+            return "CONTENTS_ABBREV";
+        case tname::segments::CONTENTS_COUNT:
+            return "CONTENTS_COUNT";
+        case tname::segments::FOOD_PERISHABLE:
+            return "FOOD_PERISHABLE";
+        case tname::segments::EMEMORY:
+            return "EMEMORY";
+        case tname::segments::last:
+            return "last";
         default:
 
             break;

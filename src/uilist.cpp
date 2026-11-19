@@ -890,29 +890,34 @@ std::unique_ptr<a11y::screen_scope> uilist::create_reader_scope( input_context &
 {
     return std::make_unique<a11y::screen_scope>( &ctxt, input_category,
     [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
             return allow_cancel ? std::optional<std::string>( "UILIST.QUIT" ) : std::nullopt;
         }
 
 
 
 
-        if( intent.node == "filter" ) {
+        if( intent.node == "filter" )
+        {
             if( intent.action == "activate" && filtering ) {
                 return std::optional<std::string>( "UILIST.FILTER" );
             }
             return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
         }
-        if( intent.node == "filter:clear" && intent.action == "activate" && filtering ) {
+        if( intent.node == "filter:clear" && intent.action == "activate" && filtering )
+        {
             filter.clear();
             filterlist();
             return std::optional<std::string>( "TIMEOUT" );
         }
-        if( intent.node == "empty" ) {
+        if( intent.node == "empty" )
+        {
             return intent.action == "focus" || intent.action == "activate"
                    ? std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
         }
-        if( intent.node.compare( 0, 9, "category:" ) == 0 && intent.action == "activate" ) {
+        if( intent.node.compare( 0, 9, "category:" ) == 0 && intent.action == "activate" )
+        {
             const std::string key = intent.node.substr( 9 );
             for( std::size_t i = 0; i < categories.size(); ++i ) {
                 if( categories[i].first == key ) {
@@ -924,10 +929,12 @@ std::unique_ptr<a11y::screen_scope> uilist::create_reader_scope( input_context &
             }
             return std::nullopt;
         }
-        if( intent.node.compare( 0, 7, "action:" ) == 0 && intent.action == "activate" ) {
+        if( intent.node.compare( 0, 7, "action:" ) == 0 && intent.action == "activate" )
+        {
             return intent.node.substr( 7 );
         }
-        for( std::size_t i = 0; i < fentries.size(); ++i ) {
+        for( std::size_t i = 0; i < fentries.size(); ++i )
+        {
             const int index = fentries[i];
             if( index < 0 || index >= static_cast<int>( entries.size() ) ||
                 intent.node != "entry:" + std::to_string( index ) ) {
@@ -974,11 +981,11 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
                                                static_cast<int>( entries.size() ) );
             if( !categories.empty() && current_category < categories.size() ) {
                 snapshot.summary += " " + string_format( _( "Category: %1$s." ),
-                                        remove_color_tags( categories[current_category].second ) );
+                                    remove_color_tags( categories[current_category].second ) );
             }
             if( filtering && !filter.empty() ) {
                 snapshot.summary += " " + string_format( _( "Filter: %1$s." ),
-                                        remove_color_tags( filter ) );
+                                    remove_color_tags( filter ) );
             }
         }
         snapshot.focus = fentries.empty() ? "empty" : "entry:" + std::to_string( selected );
@@ -1057,8 +1064,8 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             node.id = "empty";
             node.role = "status";
             node.label = filter.empty() && categories.empty()
-                        ? _( "This menu has no entries." )
-                        : _( "No entries match the current category or filter." );
+                         ? _( "This menu has no entries." )
+                         : _( "No entries match the current category or filter." );
             node.actions = { "focus", "activate" };
             snapshot.nodes.push_back( std::move( node ) );
         }
@@ -1118,7 +1125,8 @@ shared_ptr_fast<uilist_impl> uilist::query( bool loop, int timeout, bool allow_u
 bool uilist::query_setup()
 {
 #if defined(__ANDROID__)
-    if( !a11y::enabled() && get_option<bool>( "ANDROID_NATIVE_UI" ) && !entries.empty() && !desired_bounds ) {
+    if( !a11y::enabled() && get_option<bool>( "ANDROID_NATIVE_UI" ) && !entries.empty() &&
+        !desired_bounds ) {
         if( !started ) {
             calc_data();
             started = true;

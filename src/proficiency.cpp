@@ -56,12 +56,18 @@ std::string enum_to_string<proficiency_bonus_type>( const proficiency_bonus_type
 {
     switch( data ) {
 
-        case proficiency_bonus_type::strength: return "strength";
-        case proficiency_bonus_type::dexterity: return "dexterity";
-        case proficiency_bonus_type::intelligence: return "intelligence";
-        case proficiency_bonus_type::perception: return "perception";
-        case proficiency_bonus_type::stamina: return "stamina";
-        case proficiency_bonus_type::last: break;
+        case proficiency_bonus_type::strength:
+            return "strength";
+        case proficiency_bonus_type::dexterity:
+            return "dexterity";
+        case proficiency_bonus_type::intelligence:
+            return "intelligence";
+        case proficiency_bonus_type::perception:
+            return "perception";
+        case proficiency_bonus_type::stamina:
+            return "stamina";
+        case proficiency_bonus_type::last:
+            break;
 
     }
 

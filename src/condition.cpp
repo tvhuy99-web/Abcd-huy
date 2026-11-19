@@ -222,7 +222,7 @@ duration_or_var get_duration_or_var( const JsonObject &jo, std::string_view memb
     return get_value_or_var_pair<time_duration, eoc_math>( jo, member, required, default_val );
 }
 
-str_or_var get_str_or_var( const JsonValue &jv, std::string_view , bool ,
+str_or_var get_str_or_var( const JsonValue &jv, std::string_view, bool,
                            std::string_view )
 {
 
@@ -232,8 +232,8 @@ str_or_var get_str_or_var( const JsonValue &jv, std::string_view , bool ,
 
 }
 
-translation_or_var get_translation_or_var( const JsonValue &jv, std::string_view ,
-        bool , const translation & )
+translation_or_var get_translation_or_var( const JsonValue &jv, std::string_view,
+        bool, const translation & )
 {
     translation_or_var ret;
     ret.deserialize( jv );

@@ -57,18 +57,29 @@ namespace io
 template<>
 std::string enum_to_string<pocket_type>( pocket_type data )
 {
-    switch ( data ) {
-    case pocket_type::CONTAINER: return "CONTAINER";
-    case pocket_type::MAGAZINE: return "MAGAZINE";
-    case pocket_type::MAGAZINE_WELL: return "MAGAZINE_WELL";
-    case pocket_type::MOD: return "MOD";
-    case pocket_type::CORPSE: return "CORPSE";
-    case pocket_type::SOFTWARE: return "SOFTWARE";
-    case pocket_type::EBOOK: return "EBOOK";
-    case pocket_type::CABLE: return "CABLE";
-    case pocket_type::MIGRATION: return "MIGRATION";
-    case pocket_type::E_FILE_STORAGE: return "E_FILE_STORAGE";
-    case pocket_type::LAST: break;
+    switch( data ) {
+        case pocket_type::CONTAINER:
+            return "CONTAINER";
+        case pocket_type::MAGAZINE:
+            return "MAGAZINE";
+        case pocket_type::MAGAZINE_WELL:
+            return "MAGAZINE_WELL";
+        case pocket_type::MOD:
+            return "MOD";
+        case pocket_type::CORPSE:
+            return "CORPSE";
+        case pocket_type::SOFTWARE:
+            return "SOFTWARE";
+        case pocket_type::EBOOK:
+            return "EBOOK";
+        case pocket_type::CABLE:
+            return "CABLE";
+        case pocket_type::MIGRATION:
+            return "MIGRATION";
+        case pocket_type::E_FILE_STORAGE:
+            return "E_FILE_STORAGE";
+        case pocket_type::LAST:
+            break;
     }
     cata_fatal( "Invalid valid_target" );
 }

@@ -1463,7 +1463,7 @@ TEST_CASE( "craft_unattended_noncharged_tool_offset_crafter_uses_map_source",
 
             THEN( "the verifier fails and clears tools_to_continue" ) {
                 CHECK_FALSE( u.verify_step_tools( on_map, 1, craft_pos, PICKUP_RANGE,
- true ) );
+                                                  true ) );
                 CHECK_FALSE( on_map.has_tools_to_continue() );
             }
         }

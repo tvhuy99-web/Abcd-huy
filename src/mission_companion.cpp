@@ -189,44 +189,82 @@ std::string enum_to_string<mission_kind>( mission_kind data )
 {
     switch( data ) {
 
-        case mission_kind::No_Mission: return "No_Mission";
-        case mission_kind::Scavenging_Patrol_Job: return "Scavenging_Patrol_Job";
-        case mission_kind::Scavenging_Raid_Job: return "Scavenging_Raid_Job";
-        case mission_kind::Hospital_Raid_Job: return "Hospital_Raid_Job";
-        case mission_kind::Menial_Job: return "Menial_Job";
-        case mission_kind::Carpentry_Job: return "Carpentry_Job";
-        case mission_kind::Forage_Job: return "Forage_Job";
-        case mission_kind::Caravan_Commune_Center_Job: return "Caravan_Commune_Center_Job";
-        case mission_kind::Camp_Distribute_Food: return "Camp_Distribute_Food";
-		case mission_kind::Camp_Determine_Leadership: return "Camp_Determine_Leadership";
-		case mission_kind::Camp_Have_Meal: return "Camp_Have_Meal";
-        case mission_kind::Camp_Hide_Mission: return "Camp_Hide_Mission";
-        case mission_kind::Camp_Reveal_Mission: return "Camp_Reveal_Mission";
-        case mission_kind::Camp_Assign_Jobs: return "Camp_Assign_Jobs";
-        case mission_kind::Camp_Assign_Workers: return "Camp_Assign_Workers";
-        case mission_kind::Camp_Abandon: return "Camp_Abandon";
-        case mission_kind::Camp_Upgrade: return "Camp_Upgrade";
-        case mission_kind::Camp_Emergency_Recall: return "Camp_Emergency_Recall";
-        case mission_kind::Camp_Crafting: return "Camp_Crafting";
-        case mission_kind::Camp_Gather_Materials: return "Camp_Gather_Materials";
-        case mission_kind::Camp_Collect_Firewood: return "Camp_Collect_Firewood";
-        case mission_kind::Camp_Menial: return "Camp_Menial";
-        case mission_kind::Camp_Survey_Field: return "Camp_Survey_Field";
-        case mission_kind::Camp_Survey_Expansion: return "Camp_Survey_Expansion";
-        case mission_kind::Camp_Cut_Logs: return "Camp_Cut_Logs";
-        case mission_kind::Camp_Clearcut: return "Camp_Clearcut";
-        case mission_kind::Camp_Setup_Hide_Site: return "Camp_Setup_Hide_Site";
-        case mission_kind::Camp_Relay_Hide_Site: return "Camp_Relay_Hide_Site";
-        case mission_kind::Camp_Foraging: return "Camp_Foraging";
-        case mission_kind::Camp_Trapping: return "Camp_Trapping";
-        case mission_kind::Camp_Hunting: return "Camp_Hunting";
-        case mission_kind::Camp_OM_Fortifications: return "Camp_OM_Fortifications";
-        case mission_kind::Camp_Recruiting: return "Camp_Recruiting";
-        case mission_kind::Camp_Scouting: return "Camp_Scouting";
-        case mission_kind::Camp_Combat_Patrol: return "Camp_Combat_Patrol";
-        case mission_kind::Camp_Plow: return "Camp_Plow";
-        case mission_kind::Camp_Plant: return "Camp_Plant";
-        case mission_kind::Camp_Harvest: return "Camp_Harvest";
+        case mission_kind::No_Mission:
+            return "No_Mission";
+        case mission_kind::Scavenging_Patrol_Job:
+            return "Scavenging_Patrol_Job";
+        case mission_kind::Scavenging_Raid_Job:
+            return "Scavenging_Raid_Job";
+        case mission_kind::Hospital_Raid_Job:
+            return "Hospital_Raid_Job";
+        case mission_kind::Menial_Job:
+            return "Menial_Job";
+        case mission_kind::Carpentry_Job:
+            return "Carpentry_Job";
+        case mission_kind::Forage_Job:
+            return "Forage_Job";
+        case mission_kind::Caravan_Commune_Center_Job:
+            return "Caravan_Commune_Center_Job";
+        case mission_kind::Camp_Distribute_Food:
+            return "Camp_Distribute_Food";
+        case mission_kind::Camp_Determine_Leadership:
+            return "Camp_Determine_Leadership";
+        case mission_kind::Camp_Have_Meal:
+            return "Camp_Have_Meal";
+        case mission_kind::Camp_Hide_Mission:
+            return "Camp_Hide_Mission";
+        case mission_kind::Camp_Reveal_Mission:
+            return "Camp_Reveal_Mission";
+        case mission_kind::Camp_Assign_Jobs:
+            return "Camp_Assign_Jobs";
+        case mission_kind::Camp_Assign_Workers:
+            return "Camp_Assign_Workers";
+        case mission_kind::Camp_Abandon:
+            return "Camp_Abandon";
+        case mission_kind::Camp_Upgrade:
+            return "Camp_Upgrade";
+        case mission_kind::Camp_Emergency_Recall:
+            return "Camp_Emergency_Recall";
+        case mission_kind::Camp_Crafting:
+            return "Camp_Crafting";
+        case mission_kind::Camp_Gather_Materials:
+            return "Camp_Gather_Materials";
+        case mission_kind::Camp_Collect_Firewood:
+            return "Camp_Collect_Firewood";
+        case mission_kind::Camp_Menial:
+            return "Camp_Menial";
+        case mission_kind::Camp_Survey_Field:
+            return "Camp_Survey_Field";
+        case mission_kind::Camp_Survey_Expansion:
+            return "Camp_Survey_Expansion";
+        case mission_kind::Camp_Cut_Logs:
+            return "Camp_Cut_Logs";
+        case mission_kind::Camp_Clearcut:
+            return "Camp_Clearcut";
+        case mission_kind::Camp_Setup_Hide_Site:
+            return "Camp_Setup_Hide_Site";
+        case mission_kind::Camp_Relay_Hide_Site:
+            return "Camp_Relay_Hide_Site";
+        case mission_kind::Camp_Foraging:
+            return "Camp_Foraging";
+        case mission_kind::Camp_Trapping:
+            return "Camp_Trapping";
+        case mission_kind::Camp_Hunting:
+            return "Camp_Hunting";
+        case mission_kind::Camp_OM_Fortifications:
+            return "Camp_OM_Fortifications";
+        case mission_kind::Camp_Recruiting:
+            return "Camp_Recruiting";
+        case mission_kind::Camp_Scouting:
+            return "Camp_Scouting";
+        case mission_kind::Camp_Combat_Patrol:
+            return "Camp_Combat_Patrol";
+        case mission_kind::Camp_Plow:
+            return "Camp_Plow";
+        case mission_kind::Camp_Plant:
+            return "Camp_Plant";
+        case mission_kind::Camp_Harvest:
+            return "Camp_Harvest";
 
         case mission_kind::last_mission_kind:
             break;
@@ -854,7 +892,7 @@ bool talk_function::display_and_choose_opts(
 
 
         std::string summary = remove_color_tags( name_mission_tabs( omt_pos, role_id, title,
-                               tab_mode ) );
+                              tab_mode ) );
         if( role_id == role_id_faction_camp ) {
             const std::optional<basecamp *> camp = overmap_buffer.find_camp( omt_pos.xy() );
             if( camp ) {
@@ -877,7 +915,7 @@ bool talk_function::display_and_choose_opts(
                     continue;
                 }
                 const auto direction = std::find_if( base_camps::all_directions.begin(),
-                base_camps::all_directions.end(), [&]( const auto &entry ) {
+                base_camps::all_directions.end(), [&]( const auto & entry ) {
                     return entry.second.tab_order == tab_index;
                 } );
                 if( direction == base_camps::all_directions.end() ) {
@@ -935,7 +973,7 @@ bool talk_function::display_and_choose_opts(
         }
         if( sel < cur_key_list.size() && !cur_key_list[sel].possible ) {
             snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
-            []( const a11y::semantic_node &node ) {
+            []( const a11y::semantic_node & node ) {
                 return node.id == "CONFIRM";
             } ), snapshot.nodes.end() );
         }
@@ -1096,8 +1134,9 @@ bool talk_function::display_and_choose_opts(
     } );
 
     a11y::screen_scope reader( &ctxt, "companion_missions",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.action == "activate" && role_id == role_id_faction_camp ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" && role_id == role_id_faction_camp )
+        {
             for( int tab_index = base_camps::TAB_MAIN;
                  tab_index <= base_camps::TAB_NW; ++tab_index ) {
                 if( intent.node != "companion:tab:" + std::to_string( tab_index ) ) {
@@ -1129,7 +1168,8 @@ bool talk_function::display_and_choose_opts(
                 return "TIMEOUT";
             }
         }
-        if( intent.action == "focus" || intent.action == "activate" ) {
+        if( intent.action == "focus" || intent.action == "activate" )
+        {
             for( size_t i = 0; i < cur_key_list.size(); ++i ) {
                 if( intent.node == "companion:entry:" + std::to_string( i ) ) {
 

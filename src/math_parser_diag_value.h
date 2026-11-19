@@ -27,7 +27,8 @@ struct is_one_of;
 
 template <class T, class... Ts>
 // NOLINTNEXTLINE(cata-avoid-alternative-tokens) broken check
-struct is_one_of<T, std::variant<Ts...>> : std::bool_constant<( std::is_same_v<T, Ts> || ... )> {};
+struct is_one_of<T, std::variant<Ts...>> : std::bool_constant < ( std::is_same_v<T, Ts> ||
+... ) > {};
 template <class T, class V>
 using is_variant_type = is_one_of<T, V>;
 
@@ -42,21 +43,23 @@ struct diag_value {
     diag_value() = default;
 
 
-    template <typename D,
-              std::enable_if_t<!is_variant_type<D, impl_t>{} && std::is_arithmetic_v<D>, int> = 0>
-    explicit diag_value( D d ) : data( std::in_place_type<double>, std::forward<D>( d ) ) {}
+    template < typename D,
+    std::enable_if_t < !is_variant_type<D, impl_t> {} &&std::is_arithmetic_v<D>, int > = 0 >
+            explicit diag_value( D d ) : data( std::in_place_type<double>, std::forward<D>( d ) ) {}
 
-    template <typename S,
-              std::enable_if_t<
-                  !is_variant_type<S, impl_t>{} && std::is_convertible_v<S, std::string>, int> = 0>
+    template < typename S,
+               std::enable_if_t <
+                   !is_variant_type<S, impl_t> {} &&std::is_convertible_v<S, std::string>, int > = 0 >
     explicit diag_value( S s ) : data( std::in_place_type<std::string>, std::forward<S>( s ) ) {}
 
-    template <class U, std::enable_if_t<is_variant_type<U, impl_t>{}, int> = 0>
+    template < class U, std::enable_if_t < is_variant_type<U, impl_t>
+                                           {
+                                           }, int > = 0 >
     explicit diag_value( U u ) : data( std::in_place_type<U>, std::forward<U>( u ) ) {}
 
 
     template <class T, class... Args>
-    explicit diag_value( std::in_place_type_t<T> , Args &&...args )
+    explicit diag_value( std::in_place_type_t<T>, Args &&...args )
         : data( std::in_place_type<T>, std::forward<Args>( args )... ) {}
 
     explicit diag_value( cata_variant const &cv );

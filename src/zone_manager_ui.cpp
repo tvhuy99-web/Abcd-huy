@@ -230,7 +230,7 @@ a11y::semantic_node zone_reader_row( const zone_data &zone, const std::string &r
     detail += " " + string_format( _( "Size: %1$d by %2$d tiles, %3$d levels." ),
                                    extent.x + 1, extent.y + 1, extent.z + 1 );
     detail += " " + std::string( zone.get_is_displayed() ? _( "Shown on the map." )
-                                  : _( "Not shown on the map." ) );
+                                 : _( "Not shown on the map." ) );
     if( zone.has_options() ) {
         for( const auto &desc : zone.get_options().get_descriptions() ) {
             detail += " " + desc.first + ": " + desc.second + ".";
@@ -248,14 +248,14 @@ a11y::semantic_node zone_reader_row( const zone_data &zone, const std::string &r
     node.table_id = "zones:list";
     node.row_index = index;
     node.cells = { { "name", zone.get_name(), "", "" },
-                   { "type", type_name, "", "" },
-                   { "status", status, "", "" },
-                   { "personal", zone.get_is_personal() ? _( "Yes" ) : _( "No" ), "", "" },
-                   { "vehicle", zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ), "", "" },
-                   { "direction", direction, "", "" },
-                   { "distance", std::to_string( distance ), "", std::to_string( distance ) },
-                   { "displayed", zone.get_is_displayed() ? _( "Yes" ) : _( "No" ), "", "" }
-                 };
+        { "type", type_name, "", "" },
+        { "status", status, "", "" },
+        { "personal", zone.get_is_personal() ? _( "Yes" ) : _( "No" ), "", "" },
+        { "vehicle", zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ), "", "" },
+        { "direction", direction, "", "" },
+        { "distance", std::to_string( distance ), "", std::to_string( distance ) },
+        { "displayed", zone.get_is_displayed() ? _( "Yes" ) : _( "No" ), "", "" }
+    };
     return node;
 }
 }
@@ -402,14 +402,15 @@ void zone_manager_ui::display_zone_manager()
     };
     std::vector<zone_reader_binding> zone_reader_bindings;
     std::optional<zone_reader_binding> zone_reader_armed_remove;
-    const auto zone_reader_make_binding = []( const std::string &id, const zone_data &zone ) {
+    const auto zone_reader_make_binding = []( const std::string & id, const zone_data & zone ) {
         return zone_reader_binding { id, zone.get_name(), zone.get_type().str(),
                                      zone.get_start_point(), zone.get_end_point()
                                    };
     };
     const auto zone_reader_find = [&zones]( const zone_reader_binding & binding )
     -> std::optional<int> {
-        for( int i = 0; i < static_cast<int>( zones.size() ); ++i ) {
+        for( int i = 0; i < static_cast<int>( zones.size() ); ++i )
+        {
             const zone_data &zone = zones[i].get();
             if( zone.get_name() == binding.name && zone.get_type().str() == binding.type &&
                 zone.get_start_point() == binding.start && zone.get_end_point() == binding.end ) {
@@ -420,7 +421,8 @@ void zone_manager_ui::display_zone_manager()
     };
     a11y::screen_scope reader( &ctxt, "zone-manager",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.node == "zone:remove:confirm" ) {
+        if( intent.node == "zone:remove:confirm" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -441,7 +443,8 @@ void zone_manager_ui::display_zone_manager()
             }
             return std::nullopt;
         }
-        if( intent.node == "REMOVE_ZONE" && intent.action == "activate" ) {
+        if( intent.node == "REMOVE_ZONE" && intent.action == "activate" )
+        {
             if( zone_cnt == 0 || active_index < 0 || active_index >= zone_cnt ) {
                 return std::nullopt;
             }
@@ -453,12 +456,14 @@ void zone_manager_ui::display_zone_manager()
                                            zones[active_index].get() );
             return std::string( "TIMEOUT" );
         }
-        if( intent.action == "activate" ) {
+        if( intent.action == "activate" )
+        {
 
 
             zone_reader_armed_remove.reset();
         }
-        for( const zone_reader_binding &binding : zone_reader_bindings ) {
+        for( const zone_reader_binding &binding : zone_reader_bindings )
+        {
             if( intent.node != binding.id ) {
                 continue;
             }
@@ -529,14 +534,14 @@ void zone_manager_ui::display_zone_manager()
         a11y::semantic_table zones_table;
         zones_table.id = "zones:list";
         zones_table.columns = { { "name", _( "Name" ), "" },
-                                { "type", _( "Type" ), "" },
-                                { "status", _( "Status" ), "" },
-                                { "personal", _( "Personal" ), "" },
-                                { "vehicle", _( "Vehicle" ), "" },
-                                { "direction", _( "Direction" ), "" },
-                                { "distance", _( "Distance" ), _( "tiles" ) },
-                                { "displayed", _( "Displayed" ), "" }
-                              };
+            { "type", _( "Type" ), "" },
+            { "status", _( "Status" ), "" },
+            { "personal", _( "Personal" ), "" },
+            { "vehicle", _( "Vehicle" ), "" },
+            { "direction", _( "Direction" ), "" },
+            { "distance", _( "Distance" ), _( "tiles" ) },
+            { "displayed", _( "Displayed" ), "" }
+        };
         snapshot.tables.push_back( zones_table );
 
         zone_reader_bindings.clear();

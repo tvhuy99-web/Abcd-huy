@@ -391,7 +391,7 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
     snapshot.nodes.clear();
     std::vector<display_prof_deps *> &cur_set = get_current_set();
     const int sel = cur_set.empty() ? 0 : std::clamp( sel_prof, 0,
-                        static_cast<int>( cur_set.size() ) - 1 );
+                    static_cast<int>( cur_set.size() ) - 1 );
 
 
 
@@ -443,10 +443,11 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
     a11y::semantic_table profs_table;
     profs_table.id = "proficiency:list";
     profs_table.columns = { { "name", _( "Proficiency" ), "" },
-                            { "status", _( "Status" ), "" },
-                            { "progress", _( "Progress" ), "%" },
-                            { "time", _( "Time to learn" ), "" },
-                            { "category", _( "Category" ), "" } };
+        { "status", _( "Status" ), "" },
+        { "progress", _( "Progress" ), "%" },
+        { "time", _( "Time to learn" ), "" },
+        { "category", _( "Category" ), "" }
+    };
     snapshot.tables.push_back( profs_table );
     if( cur_set.empty() ) {
         a11y::semantic_node node;
@@ -481,10 +482,11 @@ a11y::semantic_snapshot prof_window::reader_snapshot()
             node.position = static_cast<int>( i ) + 1;
             node.total = static_cast<int>( cur_set.size() );
             node.cells = { { "name", node.label, "", "" },
-                           { "status", status, "", "" },
-                           { "progress", prog, "%", prog },
-                           { "time", ttl, "", "" },
-                           { "category", category, "", "" } };
+                { "status", status, "", "" },
+                { "progress", prog, "%", prog },
+                { "time", ttl, "", "" },
+                { "category", category, "", "" }
+            };
             if( node.selected ) {
                 snapshot.focus = node.id;
             }
@@ -616,7 +618,7 @@ void prof_window::run( std::optional<proficiency_id> default_selection )
 
 
     a11y::screen_scope reader( &ctxt, "proficiencies",
-    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return reader_intent( intent );
     } );
 

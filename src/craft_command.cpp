@@ -73,11 +73,16 @@ std::string enum_to_string<usage_from>( usage_from data )
 {
     switch( data ) {
 
-        case usage_from::map: return "map";
-        case usage_from::player: return "player";
-        case usage_from::both: return "both";
-        case usage_from::none: return "none";
-        case usage_from::cancel: return "cancel";
+        case usage_from::map:
+            return "map";
+        case usage_from::player:
+            return "player";
+        case usage_from::both:
+            return "both";
+        case usage_from::none:
+            return "none";
+        case usage_from::cancel:
+            return "cancel";
 
         case usage_from::num_usages_from:
             break;

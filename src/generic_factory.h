@@ -205,19 +205,19 @@ class generic_factory
 
         template<typename U>
         using T_has_handle_inheritance_t = decltype(
-            std::declval<U>().handle_inheritance(
-                std::declval<const T &>(),
-                std::declval<const std::unordered_map<std::string, T>&>() ) );
+                                               std::declval<U>().handle_inheritance(
+                                                       std::declval<const T &>(),
+                                                       std::declval<const std::unordered_map<std::string, T>&>() ) );
 
-        template<typename U, typename=void>
+        template<typename U, typename = void>
         struct T_has_handle_inheritance : std::false_type {};
         template<typename U>
         struct T_has_handle_inheritance<U, std::void_t<T_has_handle_inheritance_t<U>>> : std::true_type {};
-        template<typename U=T, std::enable_if_t<T_has_handle_inheritance<U>::value>* = nullptr>
+        template<typename U = T, std::enable_if_t<T_has_handle_inheritance<U>::value>* = nullptr>
         void handle_inheritance_on_T( T &def, const T &copy_from ) {
             def.handle_inheritance( copy_from, abstracts );
         }
-        template<typename U=T, std::enable_if_t<!T_has_handle_inheritance<U>::value>* = nullptr>
+        template < typename U = T, std::enable_if_t < !T_has_handle_inheritance<U>::value > * = nullptr >
         void handle_inheritance_on_T( T &def, const T &copy_from ) {
             def = copy_from;
         }

@@ -207,8 +207,8 @@ class jmapgen_piece
             return mapgen_phase::default_;
         }
 
-        virtual void check( const std::string & , const mapgen_parameters &,
-                            const jmapgen_int & , const jmapgen_int & , const jmapgen_int & ) const { }
+        virtual void check( const std::string &, const mapgen_parameters &,
+                            const jmapgen_int &, const jmapgen_int &, const jmapgen_int & ) const { }
 
         virtual void merge_parameters_into( mapgen_parameters &,
                                             const std::string & ) const {}

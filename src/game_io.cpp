@@ -507,8 +507,8 @@ bool game::load( const save_t &name )
         e.second();
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=" << e.first <<
-                                  " ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() - stage_started_at ).count();
+                                   " ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - stage_started_at ).count();
 #endif
         if( abort ) {
             loading_ui::done();
@@ -519,8 +519,8 @@ bool game::load( const save_t &name )
     loading_ui::done();
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=save_total ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - load_started_at ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - load_started_at ).count();
 #endif
     return true;
 }
@@ -563,15 +563,15 @@ void game::load_world_modfiles()
                                         "mod_interactions", "custom" );
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=custom_world_mods ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - custom_started ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - custom_started ).count();
     const auto finalize_started = std::chrono::steady_clock::now();
 #endif
     DynamicDataLoader::get_instance().finalize_loaded_data();
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=finalize_and_verify ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - finalize_started ).count();
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - finalize_started ).count();
 #endif
 }
 
@@ -594,9 +594,9 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
         load_mod_data_from_dir( mod->path, mod.str() );
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=content id=" << mod.str() <<
-                                  " version=" << mod->version << " ms=" <<
-                                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() - pack_started ).count();
+                                   " version=" << mod->version << " ms=" <<
+                                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - pack_started ).count();
 #endif
     }
     cata_timer::print_stats();
@@ -612,9 +612,9 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
         load_mod_interaction_data_from_dir( mod->path / "mod_interactions", mod.str() );
 #if defined(__ANDROID__)
         DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=interaction id=" << mod.str() <<
-                                  " version=" << mod->version << " ms=" <<
-                                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() - interaction_started ).count();
+                                   " version=" << mod->version << " ms=" <<
+                                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - interaction_started ).count();
 #endif
     }
 }

@@ -901,7 +901,7 @@ void avatar_action::autoattack( avatar &you, map &m )
 
         add_msg( m_info, _( "Autoattack: %1$s, %2$s, distance %3$d." ),
                  best.disp_name(), direction_name( direction_from( you.pos_bub(),
-                                  best.pos_bub() ) ),
+                         best.pos_bub() ) ),
                  rl_dist( you.pos_bub(), best.pos_bub() ) );
     }
     if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
@@ -1043,7 +1043,7 @@ void avatar_action::mend( avatar &you, item_location loc )
 
 
 
-            loc = g->inv_map_splice( [&you]( const item_location &candidate ) {
+            loc = g->inv_map_splice( [&you]( const item_location & candidate ) {
                 if( !you.has_item( *candidate ) ) {
                     return false;
                 }

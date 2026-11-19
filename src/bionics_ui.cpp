@@ -715,15 +715,16 @@ void avatar::power_bionics()
 
 
     a11y::screen_scope reader( &ctxt, "bionics",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.node == "bionics:tab:active" || intent.node == "bionics:tab:passive" ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "bionics:tab:active" || intent.node == "bionics:tab:passive" )
+        {
             if( intent.action == "focus" ) {
 
                 return std::string( "TIMEOUT" );
             }
             if( intent.action == "activate" ) {
                 const bionic_tab_mode target = intent.node == "bionics:tab:active"
-                                                ? TAB_ACTIVE : TAB_PASSIVE;
+                                               ? TAB_ACTIVE : TAB_PASSIVE;
                 if( tab_mode == target ) {
                     return std::string( "TIMEOUT" );
                 }
@@ -734,14 +735,16 @@ void avatar::power_bionics()
             }
             return std::nullopt;
         }
-        if( intent.node == "bionics:empty" ) {
+        if( intent.node == "bionics:empty" )
+        {
             if( intent.action == "focus" || intent.action == "activate" ) {
                 return std::string( "TIMEOUT" );
             }
             return std::nullopt;
         }
         if( ( intent.action == "focus" || intent.action == "activate" ) &&
-            intent.node.rfind( "bionics:entry:", 0 ) == 0 ) {
+            intent.node.rfind( "bionics:entry:", 0 ) == 0 )
+        {
             sorted_bionics *live_list = tab_mode == TAB_ACTIVE ? &active : &passive;
             for( size_t i = 0; i < live_list->size(); ++i ) {
                 if( intent.node != "bionics:entry:" + std::to_string( i ) ) {
@@ -752,7 +755,7 @@ void avatar::power_bionics()
 
 
                 const int live_max_scroll = std::max( 0,
-                                            static_cast<int>( live_list->size() ) - LIST_HEIGHT );
+                                                      static_cast<int>( live_list->size() ) - LIST_HEIGHT );
                 if( cursor < scroll_position ) {
                     scroll_position = cursor;
                 } else if( LIST_HEIGHT > 0 && cursor - scroll_position >= LIST_HEIGHT ) {
@@ -803,9 +806,9 @@ void avatar::power_bionics()
         }
         snapshot.summary += "\n" + string_format( _( "Mode: %s." ), mode_text );
 
-        const auto append_tab = [&]( const char *id, const std::string &label,
+        const auto append_tab = [&]( const char *id, const std::string & label,
                                      const bionic_tab_mode tab, const size_t count,
-                                     const int position ) {
+        const int position ) {
             a11y::semantic_node node;
             node.id = id;
             node.role = "tab";
@@ -1055,7 +1058,7 @@ void avatar::power_bionics()
             }
             const int newch = choose_key_from_user(
                                   string_format( _( "%s; enter new letter.  Space to clear.  Esc to cancel." ),
-                                          tmp->id->name ), bionic_chars.get_allowed_chars(), ' ' );
+                                                 tmp->id->name ), bionic_chars.get_allowed_chars(), ' ' );
             if( newch == ch || newch == KEY_ESCAPE ) {
                 continue;
             }

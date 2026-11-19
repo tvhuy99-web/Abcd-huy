@@ -365,7 +365,7 @@ float monster::luminance() const
     return calculate_by_enchantment( type->luminance, enchant_vals::mod::LUMINATION, true );
 }
 
-void monster::on_effect_int_change( const efftype_id & , int ,
+void monster::on_effect_int_change( const efftype_id &, int,
                                     const bodypart_id & )
 {
     map &here = get_map();
@@ -1354,7 +1354,7 @@ nc_color monster::color_with_effects() const
     return ret;
 }
 
-bool monster::avoid_trap( const tripoint_bub_ms & , const trap &tr ) const
+bool monster::avoid_trap( const tripoint_bub_ms &, const trap &tr ) const
 {
 
 
@@ -2531,7 +2531,7 @@ void monster::set_hp( const int hp )
     this->hp = hp;
 }
 
-void monster::apply_damage( Creature *source, bodypart_id , int dam,
+void monster::apply_damage( Creature *source, bodypart_id, int dam,
                             const bool )
 {
     if( is_dead_state() || has_flag( json_flag_CANNOT_TAKE_DAMAGE ) ) {
@@ -3910,7 +3910,7 @@ void monster::add_msg_if_npc( const std::string &msg ) const
     add_msg_if_player_sees( *this, replace_with_npc_name( msg ) );
 }
 
-void monster::add_msg_player_or_npc( const std::string & ,
+void monster::add_msg_player_or_npc( const std::string &,
                                      const std::string &npc_msg ) const
 {
     add_msg_if_player_sees( *this, replace_with_npc_name( npc_msg ) );
@@ -3922,7 +3922,7 @@ void monster::add_msg_if_npc( const game_message_params &params, const std::stri
 }
 
 void monster::add_msg_player_or_npc( const game_message_params &params,
-                                     const std::string & , const std::string &npc_msg ) const
+                                     const std::string &, const std::string &npc_msg ) const
 {
     add_msg_if_player_sees( *this, params, replace_with_npc_name( npc_msg ) );
 }

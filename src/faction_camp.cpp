@@ -1896,7 +1896,7 @@ bool basecamp::handle_mission( const ui_mission_id &miss_id )
 
 
 npc_ptr basecamp::start_mission( const mission_id &miss_id, time_duration total_time,
-                                 bool must_feed, const std::string &desc, bool ,
+                                 bool must_feed, const std::string &desc, bool,
                                  const std::vector<item *> &equipment,
                                  const skill_id &skill_tested, int skill_level,
                                  float exertion_level, const time_duration &travel_time )
@@ -1908,7 +1908,7 @@ npc_ptr basecamp::start_mission( const mission_id &miss_id, time_duration total_
 }
 
 npc_ptr basecamp::start_mission( const mission_id &miss_id, time_duration total_time,
-                                 bool must_feed, const std::string &desc, bool ,
+                                 bool must_feed, const std::string &desc, bool,
                                  const std::vector<item *> &equipment, const std::map<skill_id, int> &required_skills,
                                  float exertion_level, const time_duration &travel_time, const npc_ptr &preselected_choice )
 {
@@ -2232,8 +2232,9 @@ void basecamp::worker_assignment_ui()
 
 
     a11y::screen_scope reader( &ctxt, "faction-camp-workers",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        for( size_t i = 0; i < followers.size(); i++ ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( size_t i = 0; i < followers.size(); i++ )
+        {
             npc *guy = followers[i];
             if( guy == nullptr ||
                 intent.node != "camp-worker:" + std::to_string( guy->getID().get_value() ) ) {
@@ -2250,7 +2251,8 @@ void basecamp::worker_assignment_ui()
             return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" ) :
                    std::optional<std::string>( "TIMEOUT" );
         }
-        if( intent.node == "camp-workers:empty" ) {
+        if( intent.node == "camp-workers:empty" )
+        {
             return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" ) :
                    std::nullopt;
         }
@@ -2268,7 +2270,8 @@ void basecamp::worker_assignment_ui()
 
         for( a11y::semantic_node &command : commands ) {
             if( command.id == "CONFIRM" ) {
-                command.detail = _( "Assign this follower to this camp.  This opens the job priority screen for that follower." );
+                command.detail =
+                    _( "Assign this follower to this camp.  This opens the job priority screen for that follower." );
             } else if( command.id == "INSPECT_NPC" ) {
                 command.detail = _( "Inspect this follower." );
             }
@@ -2415,8 +2418,9 @@ void basecamp::job_assignment_ui()
 
 
     a11y::screen_scope reader( &ctxt, "faction-camp-jobs",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        for( size_t i = 0; i < stationed_npcs.size(); i++ ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( size_t i = 0; i < stationed_npcs.size(); i++ )
+        {
             npc *guy = stationed_npcs[i];
             if( guy == nullptr ||
                 intent.node != "camp-job-worker:" + std::to_string( guy->getID().get_value() ) ) {
@@ -2433,7 +2437,8 @@ void basecamp::job_assignment_ui()
             return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" ) :
                    std::optional<std::string>( "TIMEOUT" );
         }
-        if( intent.node == "camp-jobs:empty" ) {
+        if( intent.node == "camp-jobs:empty" )
+        {
             return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" ) :
                    std::nullopt;
         }

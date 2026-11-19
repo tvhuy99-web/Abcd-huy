@@ -110,7 +110,7 @@ bool handle_liquid( item_location &liquid, const item *source = nullptr, int rad
 
 bool perform_liquid_transfer( item &liquid, const tripoint_bub_ms *source_pos,
                               const vehicle *source_veh, int part_num,
-                              const monster * , liquid_dest_opt &target, bool silent );
+                              const monster *, liquid_dest_opt &target, bool silent );
 bool perform_liquid_transfer( item_location &liquid, liquid_dest_opt &target );
 
 

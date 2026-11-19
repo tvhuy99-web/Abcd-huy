@@ -4524,7 +4524,7 @@ bool item::process_corpse( map &here, Character *carrier, const tripoint_bub_ms 
     return false;
 }
 
-bool item::process_fake_mill( map &here, Character * , const tripoint_bub_ms &pos )
+bool item::process_fake_mill( map &here, Character *, const tripoint_bub_ms &pos )
 {
     const furn_id &f = here.furn( pos );
     if( f != furn_f_wind_mill_active &&
@@ -4540,7 +4540,7 @@ bool item::process_fake_mill( map &here, Character * , const tripoint_bub_ms &po
     return false;
 }
 
-bool item::process_fake_smoke( map &here, Character * , const tripoint_bub_ms &pos )
+bool item::process_fake_smoke( map &here, Character *, const tripoint_bub_ms &pos )
 {
     const furn_id &f = here.furn( pos );
     if( f != furn_f_smoking_rack_active &&

@@ -1383,7 +1383,7 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
     precompute_data( here );
     const tripoint_abs_ms pos = driven_veh.pos_abs();
     const node_address start = data.nav_to_map.inverse().transform(
-            pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+                                   pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     if( !data.nav_bounds.contains( start.get_point() ) ||
         !data.valid_position( start ) ) {
         return " reverse_start_options=0 reverse_live_clear=0"
@@ -1401,7 +1401,7 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
     for( const auto &candidate : candidates ) {
         const node_address &addr = candidate.first;
         const tripoint_abs_ms target_abs( data.nav_to_map.transform(
-                addr.get_point(), data.current_omt.z() ) );
+                                              addr.get_point(), data.current_omt.z() ) );
         const tripoint_bub_ms target = here.get_bub( data.adjust_z( target_abs ) );
         const orientation target_heading = data.nav_to_map.transform( addr.facing_dir );
 
@@ -1409,7 +1409,8 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
         const std::array<std::pair<tripoint_bub_ms, orientation>, 4> placements = {{
                 { origin, initial_heading }, { origin, target_heading },
                 { target, initial_heading }, { target, target_heading }
-            }};
+            }
+        };
         bool clear = true;
         std::string blocked_tile = "none";
         std::string blocked_terrain = "none";
@@ -1434,12 +1435,12 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
             ++live_blocked;
         }
         a11y::android::diagnostic_event( "AUTODRIVE_REVERSE_PROBE",
-                "result=" + std::string( clear ? "live_clear" : "live_blocked" ) +
-                " target=" + target_abs.to_string() +
-                " heading_steps=" + std::to_string( orientation_diff(
-                    target_heading, initial_heading ) ) +
-                " blocked_tile=" + blocked_tile +
-                " terrain_name=" + blocked_terrain );
+                                         "result=" + std::string( clear ? "live_clear" : "live_blocked" ) +
+                                         " target=" + target_abs.to_string() +
+                                         " heading_steps=" + std::to_string( orientation_diff(
+                                                 target_heading, initial_heading ) ) +
+                                         " blocked_tile=" + blocked_tile +
+                                         " terrain_name=" + blocked_terrain );
     }
     return " reverse_start_options=" + std::to_string( candidates.size() ) +
            " reverse_live_clear=" + std::to_string( live_clear ) +
@@ -1461,7 +1462,7 @@ std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reve
     }
     const tripoint_abs_ms current = driven_veh.pos_abs();
     const node_address start = data.nav_to_map.inverse().transform(
-            current.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+                                   current.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     if( !data.nav_bounds.contains( start.get_point() ) ||
         !data.valid_position( start ) ) {
         return std::nullopt;
@@ -1477,13 +1478,15 @@ std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reve
             continue;
         }
         const tripoint_abs_ms target_abs( data.nav_to_map.transform(
-                candidate.first.get_point(), data.current_omt.z() ) );
+                                              candidate.first.get_point(), data.current_omt.z() ) );
         if( target_abs.xy() == current.xy() ) {
             continue;
         }
         const tripoint_bub_ms target = here.get_bub( data.adjust_z( target_abs ) );
         bool safe = true;
-        for( const tripoint_bub_ms &center : { origin, target } ) {
+        for( const tripoint_bub_ms &center : {
+                 origin, target
+             } ) {
             for( const point_rel_ms &offset : data.profile( world_heading ).occupied_zone ) {
                 const tripoint_bub_ms tile = center + offset;
                 if( !here.inbounds( tile ) || !check_drivable( here, tile ) ) {
@@ -1509,7 +1512,7 @@ std::size_t vehicle::autodrive_controller::forward_start_options( map &here )
     precompute_data( here );
     const tripoint_abs_ms pos = driven_veh.pos_abs();
     const node_address start = data.nav_to_map.inverse().transform(
-            pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+                                   pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     if( !data.nav_bounds.contains( start.get_point() ) ||
         !data.valid_position( start ) ) {
         return 0;
@@ -1547,7 +1550,7 @@ std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &he
         }
         const orientation candidate = current + steps;
         const node_address start = data.nav_to_map.inverse().transform(
-                current_pos.raw().xy(), candidate );
+                                       current_pos.raw().xy(), candidate );
         if( !data.nav_bounds.contains( start.get_point() ) ||
             !data.valid_position( start ) ) {
             ++invalid_headings;
@@ -1555,18 +1558,18 @@ std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &he
         }
         if( compute_path( MIN_SPEED_TPS, candidate, 2000 ) ) {
             a11y::android::diagnostic_event( "AUTODRIVE_PIVOT",
-                    "result=selected steps=" + std::to_string( steps ) +
-                    " first_step=" + std::to_string( first_step ) +
-                    " blocked_first=" + std::to_string( blocked_first_turns ) +
-                    " invalid_headings=" + std::to_string( invalid_headings ) );
+                                             "result=selected steps=" + std::to_string( steps ) +
+                                             " first_step=" + std::to_string( first_step ) +
+                                             " blocked_first=" + std::to_string( blocked_first_turns ) +
+                                             " invalid_headings=" + std::to_string( invalid_headings ) );
             return steps;
         }
         ++no_path_headings;
     }
     a11y::android::diagnostic_event( "AUTODRIVE_PIVOT",
-            "result=none blocked_first=" + std::to_string( blocked_first_turns ) +
-            " invalid_headings=" + std::to_string( invalid_headings ) +
-            " no_path=" + std::to_string( no_path_headings ) );
+                                     "result=none blocked_first=" + std::to_string( blocked_first_turns ) +
+                                     " invalid_headings=" + std::to_string( invalid_headings ) +
+                                     " no_path=" + std::to_string( no_path_headings ) );
     return std::nullopt;
 }
 
@@ -1727,7 +1730,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     if( !player_in_control( here, driver ) || skidding ) {
         if( reader_autodrive ) {
             a11y::android::diagnostic_event( "AUTODRIVE_ABORT",
-                    skidding ? "reason=skidding" : "reason=driver_controls_lost" );
+                                             skidding ? "reason=skidding" : "reason=driver_controls_lost" );
         }
         driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
         if( reader_autodrive ) {
@@ -1753,22 +1756,22 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                                      nav.valid_position( start );
             const tripoint_rel_omt segment = nav.next_omt - nav.current_omt;
             a11y::android::diagnostic_event( "AUTODRIVE_ROUTE",
-                    std::string( "paused reason=" ) + reason +
-                    " remaining_omts=" + std::to_string( driver.omt_path.size() ) +
-                    " velocity=" + std::to_string( velocity ) +
-                    " safe_speed_tps=" + std::to_string(
-                        active_autodrive_controller->get_data().max_cautious_speed_tps ) +
-                    " goal_states=" + std::to_string( nav.goal_zone.size() ) +
-                    " land_ok=" + ( nav.land_ok ? "true" : "false" ) +
-                    " start_valid=" + ( valid_start ? "true" : "false" ) +
-                    " segment_dx=" + std::to_string( segment.raw().x ) +
-                    " segment_dy=" + std::to_string( segment.raw().y ) +
-                    " facing_degrees=" + std::to_string( units::to_degrees( face.dir() ) ) +
-                    " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
-                    " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
-                    " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
-                    active_autodrive_controller->reverse_clearance_details( here ) +
-                    active_autodrive_controller->search_details() );
+                                             std::string( "paused reason=" ) + reason +
+                                             " remaining_omts=" + std::to_string( driver.omt_path.size() ) +
+                                             " velocity=" + std::to_string( velocity ) +
+                                             " safe_speed_tps=" + std::to_string(
+                                                 active_autodrive_controller->get_data().max_cautious_speed_tps ) +
+                                             " goal_states=" + std::to_string( nav.goal_zone.size() ) +
+                                             " land_ok=" + ( nav.land_ok ? "true" : "false" ) +
+                                             " start_valid=" + ( valid_start ? "true" : "false" ) +
+                                             " segment_dx=" + std::to_string( segment.raw().x ) +
+                                             " segment_dy=" + std::to_string( segment.raw().y ) +
+                                             " facing_degrees=" + std::to_string( units::to_degrees( face.dir() ) ) +
+                                             " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
+                                             " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
+                                             " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
+                                             active_autodrive_controller->reverse_clearance_details( here ) +
+                                             active_autodrive_controller->search_details() );
 
 
 
@@ -1790,7 +1793,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     const tripoint_abs_ms veh_pos = pos_abs();
     const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
     if( reader_autodrive && ( !a11y_recovery_segment_omt ||
-                             *a11y_recovery_segment_omt != veh_omt ) ) {
+                              *a11y_recovery_segment_omt != veh_omt ) ) {
         a11y_recovery_segment_omt = veh_omt;
         a11y_pivot_tried = false;
         a11y_pivot_steps_remaining = 0;
@@ -1842,8 +1845,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y_route_alternatives_tried = false;
             active_autodrive_controller.reset();
             a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=moved_one_tile from=" + a11y_reverse_recovery_start.to_string() +
-                    " to=" + veh_pos.to_string() );
+                                             "result=moved_one_tile from=" + a11y_reverse_recovery_start.to_string() +
+                                             " to=" + veh_pos.to_string() );
             driver.set_moves( 0 );
             return autodrive_result::ok;
         }
@@ -1854,8 +1857,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( !target || ( rear && rear->distance <= 3 ) ||
             a11y_reverse_recovery_ticks++ >= 6 || velocity > 0 || skidding ) {
             a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=aborted_no_clear_step ticks=" +
-                    std::to_string( a11y_reverse_recovery_ticks ) );
+                                             "result=aborted_no_clear_step ticks=" +
+                                             std::to_string( a11y_reverse_recovery_ticks ) );
             return safety_stop( "reverse_recovery_blocked" );
         }
 
@@ -1884,7 +1887,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( a11y_pivot_steps_remaining == 0 && !a11y_pivot_tried ) {
             a11y_pivot_tried = true;
             const std::optional<int> pivot = active_autodrive_controller->find_accessible_pivot(
-                    here, [&]( const int first_step ) {
+            here, [&]( const int first_step ) {
                 return a11y_rotate_in_place( here, first_step, true );
             } );
             if( pivot ) {
@@ -1918,9 +1921,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y::vehicle_obstacle_ahead( *this, here, true );
         if( !target || ( rear && rear->distance <= 3 ) ) {
             a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=not_safe target=" +
-                    std::string( target ? target->to_string() : "none" ) +
-                    " rear_hazard=" + ( rear ? rear->label : "none" ) );
+                                             "result=not_safe target=" +
+                                             std::string( target ? target->to_string() : "none" ) +
+                                             " rear_hazard=" + ( rear ? rear->label : "none" ) );
             return false;
         }
         a11y_reverse_recovery_start = veh_pos;
@@ -1928,9 +1931,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         a11y_reverse_recovery_ticks = 0;
         ++a11y_reverse_recovery_attempts;
         a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                "result=started attempt=" +
-                std::to_string( a11y_reverse_recovery_attempts ) +
-                " target=" + target->to_string() );
+                                         "result=started attempt=" +
+                                         std::to_string( a11y_reverse_recovery_attempts ) +
+                                         " target=" + target->to_string() );
         turn_dir = face.dir();
         cruise_velocity = -VMIPH_PER_TPS;
         driver.set_moves( 0 );
@@ -1939,30 +1942,33 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
 
 
     const auto retry_nearby_route = [&]() -> std::optional<navigation_step> {
-        if( !( reader_autodrive && !a11y_route_alternatives_tried && !omt_path.empty() ) ) {
+        if( !( reader_autodrive && !a11y_route_alternatives_tried && !omt_path.empty() ) )
+        {
             return std::nullopt;
         }
 
 
 
 
-        if( velocity == 0 && !is_rotorcraft( here ) ) {
+        if( velocity == 0 && !is_rotorcraft( here ) )
+        {
             const std::size_t forward_options =
-                active_autodrive_controller->forward_start_options( here );
+            active_autodrive_controller->forward_start_options( here );
             const bool pivot_left = a11y_rotate_in_place( here, -3, true );
             const bool pivot_right = a11y_rotate_in_place( here, 3, true );
             if( forward_options == 0 && !pivot_left && !pivot_right ) {
                 a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
-                        "skipped=no_executable_first_step forward_options=0"
-                        " pivot_left=false pivot_right=false" );
+                                                 "skipped=no_executable_first_step forward_options=0"
+                                                 " pivot_left=false pivot_right=false" );
                 return std::nullopt;
             }
         }
         a11y_route_alternatives_tried = true;
         const std::vector<tripoint_abs_omt> original_route = omt_path;
         const auto alternatives = ui::omap::accessible_vehicle_alternative_routes(
-                original_route.front(), original_route.back() );
-        for( const std::vector<tripoint_abs_omt> &route : alternatives ) {
+                                      original_route.front(), original_route.back() );
+        for( const std::vector<tripoint_abs_omt> &route : alternatives )
+        {
             omt_path = route;
             auto candidate_controller = std::make_shared<autodrive_controller>( *this, driver );
             candidate_controller->check_safe_speed( here );
@@ -1992,15 +1998,15 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             active_autodrive_controller = std::move( candidate_controller );
             a11y_pivot_steps_remaining = 0;
             a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
-                    "accepted alternate_route_omts=" + std::to_string( route.size() ) +
-                    " candidates=" + std::to_string( alternatives.size() ) );
+                                             "accepted alternate_route_omts=" + std::to_string( route.size() ) +
+                                             " candidates=" + std::to_string( alternatives.size() ) );
 
 
             return candidate_step;
         }
         omt_path = original_route;
         a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
-                "result=no_viable_first_step alternatives=" + std::to_string( alternatives.size() ) );
+                                         "result=no_viable_first_step alternatives=" + std::to_string( alternatives.size() ) );
         return std::nullopt;
     };
     if( !next_step ) {

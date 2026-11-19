@@ -1104,7 +1104,7 @@ class vehicle
         bool handle_potential_theft( Character const &you, bool check_only = false, bool prompt = true );
 
         std::set<point_abs_ms> immediate_path( map *here, const units::angle &rotate = 0_degrees,
-                                                int requested_distance = 0, bool reverse = false );
+                                               int requested_distance = 0, bool reverse = false );
         std::set<point_abs_ms> collision_check_points; // NOLINT(cata-serialize)
 
 
@@ -2711,7 +2711,7 @@ class DefaultRemovePartHandler : public RemovePartHandler
             get_map().set_floor_cache_dirty( z );
         }
         void removed( map *here, vehicle &veh, int part ) override;
-        void spawn_animal_from_part( item &base, map * , const tripoint_bub_ms &loc ) override {
+        void spawn_animal_from_part( item &base, map *, const tripoint_bub_ms &loc ) override {
             base.release_monster( loc, 1 );
         }
         map &get_map_ref() override {
@@ -2729,7 +2729,7 @@ class MapgenRemovePartHandler : public RemovePartHandler
 
         ~MapgenRemovePartHandler() override = default;
 
-        void unboard( map * , const tripoint_bub_ms & ) override {
+        void unboard( map *, const tripoint_bub_ms & ) override {
             debugmsg( "Tried to unboard during mapgen!" );
 
 
@@ -2746,7 +2746,7 @@ class MapgenRemovePartHandler : public RemovePartHandler
 
             here->dirty_vehicle_list.insert( &veh );
         }
-        void spawn_animal_from_part( item & , map * ,
+        void spawn_animal_from_part( item &, map *,
                                      const tripoint_bub_ms & ) override {
             debugmsg( "Tried to spawn animal from vehicle part during mapgen!" );
 

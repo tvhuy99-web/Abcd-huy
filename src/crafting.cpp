@@ -2763,7 +2763,7 @@ static void craft_actualize_ready( item &craft, time_point now, const item_locat
     if( consumer != nullptr ) {
         const step_source_context src = resolve_step_source( craft, loc );
         if( !consumer->verify_step_tools( craft, step_idx, src.origin, src.radius,
- src.present_char == nullptr ) ) {
+                                          src.present_char == nullptr ) ) {
             craft_enter_env_pause( craft, now, loc );
             return;
         }
@@ -5128,7 +5128,7 @@ bool Character::craft_consume_passive_step_tools( item &craft, time_point now,
     }
     const step_source_context src = resolve_step_source( craft, loc );
     return consume_step_tool_targets( craft, targets, src.origin, src.radius,
- src.present_char == nullptr );
+                                      src.present_char == nullptr );
 }
 
 void Character::consume_tools( const comp_selection<tool_comp> &tool, int batch )
@@ -5207,7 +5207,8 @@ ret_val<void> Character::can_disassemble( const item &obj,
 
 
     if( lighting_craft_speed_multiplier( r ) <= 0.0f ) {
-        return ret_val<void>::make_failure( _( "Too dark to disassemble this item. Move to a brighter area or turn on a light." ) );
+        return ret_val<void>::make_failure(
+                   _( "Too dark to disassemble this item. Move to a brighter area or turn on a light." ) );
     }
 
 

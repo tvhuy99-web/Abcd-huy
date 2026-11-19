@@ -57,10 +57,14 @@ std::string enum_to_string<mongroup::horde_behaviour>( mongroup::horde_behaviour
 {
     switch( data ) {
 
-        case mongroup::horde_behaviour::none: return "none";
-        case mongroup::horde_behaviour::city: return "city";
-        case mongroup::horde_behaviour::roam: return "roam";
-        case mongroup::horde_behaviour::nemesis: return "nemesis";
+        case mongroup::horde_behaviour::none:
+            return "none";
+        case mongroup::horde_behaviour::city:
+            return "city";
+        case mongroup::horde_behaviour::roam:
+            return "roam";
+        case mongroup::horde_behaviour::nemesis:
+            return "nemesis";
 
         case mongroup::horde_behaviour::last:
             break;

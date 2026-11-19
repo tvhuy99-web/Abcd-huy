@@ -350,7 +350,7 @@ static void draw_messages( const draw_args &args )
     werase( w );
     int line = getmaxy( w ) - 1;
     int maxlength = getmaxx( w );
-    Messages::display_messages( w, 1, 0 , maxlength - 1, line );
+    Messages::display_messages( w, 1, 0, maxlength - 1, line );
     wnoutrefresh( w );
 }
 
@@ -765,14 +765,16 @@ void panel_manager::show_adm()
     };
     std::unordered_map<std::string, reader_target> reader_targets;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "PANEL_MGMT",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "PANEL_MGMT",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
-        if( selected.kind == reader_target_kind::layout ) {
+        if( selected.kind == reader_target_kind::layout )
+        {
             if( intent.action != "focus" && intent.action != "activate" ) {
                 return std::nullopt;
             }
@@ -786,20 +788,24 @@ void panel_manager::show_adm()
             return std::string( "MOVE_PANEL" );
         }
         const auto row_it = row_indices.find( selected.row );
-        if( row_it == row_indices.end() ) {
+        if( row_it == row_indices.end() )
+        {
             return std::nullopt;
         }
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             current_col = 0;
             current_row = selected.row;
             return std::string( "A11Y_INTERNAL_PANEL_FOCUS" );
         }
-        if( intent.action == "activate" ) {
+        if( intent.action == "activate" )
+        {
             current_col = 0;
             current_row = selected.row;
             return std::string( "TOGGLE_PANEL" );
         }
-        if( intent.action == "move_up" || intent.action == "move_down" ) {
+        if( intent.action == "move_up" || intent.action == "move_down" )
+        {
             if( swapping ||
                 ( intent.action == "move_up" && selected.row == 0 ) ||
                 ( intent.action == "move_down" &&
@@ -840,7 +846,8 @@ void panel_manager::show_adm()
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Sidebar options" );
-        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order.  Activate a layout name to switch the sidebar layout.  Changes are saved when you exit, as on the original screen." );
+        snapshot.summary =
+            _( "Activate a panel to toggle it on or off, or move it up or down to change the display order.  Activate a layout name to switch the sidebar layout.  Changes are saved when you exit, as on the original screen." );
         const auto &panel_list = get_current_layout().panels();
         for( const auto &entry : row_indices ) {
             const size_t row = entry.first;
@@ -902,7 +909,7 @@ void panel_manager::show_adm()
         if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(),
         [&]( const a11y::semantic_node & node ) {
         return node.id == snapshot.focus;
-        } ) ) {
+    } ) ) {
             snapshot.focus = snapshot.nodes.empty() ? std::string() :
                              snapshot.nodes.front().id;
         }

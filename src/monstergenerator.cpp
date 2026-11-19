@@ -69,18 +69,30 @@ std::string enum_to_string<mon_trigger>( mon_trigger data )
 {
     switch( data ) {
 
-        case mon_trigger::STALK: return "STALK";
-        case mon_trigger::HOSTILE_WEAK: return "PLAYER_WEAK";
-        case mon_trigger::HOSTILE_CLOSE: return "PLAYER_CLOSE";
-        case mon_trigger::HOSTILE_SEEN: return "HOSTILE_SEEN";
-        case mon_trigger::HURT: return "HURT";
-        case mon_trigger::FIRE: return "FIRE";
-        case mon_trigger::FRIEND_DIED: return "FRIEND_DIED";
-        case mon_trigger::FRIEND_ATTACKED: return "FRIEND_ATTACKED";
-        case mon_trigger::SOUND: return "SOUND";
-        case mon_trigger::PLAYER_NEAR_BABY: return "PLAYER_NEAR_BABY";
-        case mon_trigger::MATING_SEASON: return "MATING_SEASON";
-        case mon_trigger::BRIGHT_LIGHT: return "BRIGHT_LIGHT";
+        case mon_trigger::STALK:
+            return "STALK";
+        case mon_trigger::HOSTILE_WEAK:
+            return "PLAYER_WEAK";
+        case mon_trigger::HOSTILE_CLOSE:
+            return "PLAYER_CLOSE";
+        case mon_trigger::HOSTILE_SEEN:
+            return "HOSTILE_SEEN";
+        case mon_trigger::HURT:
+            return "HURT";
+        case mon_trigger::FIRE:
+            return "FIRE";
+        case mon_trigger::FRIEND_DIED:
+            return "FRIEND_DIED";
+        case mon_trigger::FRIEND_ATTACKED:
+            return "FRIEND_ATTACKED";
+        case mon_trigger::SOUND:
+            return "SOUND";
+        case mon_trigger::PLAYER_NEAR_BABY:
+            return "PLAYER_NEAR_BABY";
+        case mon_trigger::MATING_SEASON:
+            return "MATING_SEASON";
+        case mon_trigger::BRIGHT_LIGHT:
+            return "BRIGHT_LIGHT";
 
         case mon_trigger::LAST:
             break;

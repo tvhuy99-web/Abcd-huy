@@ -472,7 +472,7 @@ bool Character::can_add( const item &it, const item *avoid,
     }
 }
 
-item_location Character::i_add( item it, bool , const item *avoid,
+item_location Character::i_add( item it, bool, const item *avoid,
                                 const item *original_inventory_item, const bool allow_drop,
                                 const bool allow_wield, bool ignore_pkt_settings )
 {
@@ -497,7 +497,7 @@ item_location Character::i_add( item it, bool , const item *avoid,
 }
 
 item_location Character::i_add( item it, int &copies_remaining,
-                                bool , const item *avoid,
+                                bool, const item *avoid,
                                 const item *original_inventory_item, const bool allow_drop,
                                 const bool allow_wield, bool ignore_pkt_settings )
 {
@@ -1534,7 +1534,7 @@ int Character::item_handling_cost( const item &it, bool penalties, int base_cost
     return std::max( mv, 0 );
 }
 
-int Character::item_store_cost( const item &it, const item & , bool penalties,
+int Character::item_store_cost( const item &it, const item &, bool penalties,
                                 int base_cost ) const
 {
 
@@ -2512,7 +2512,7 @@ const item &Character::best_item_with_quality( const quality_id &qid ) const
     return null_item_reference();
 }
 
-bool Character::add_or_drop_with_msg( item &it, const bool , const item *avoid,
+bool Character::add_or_drop_with_msg( item &it, const bool, const item *avoid,
                                       const item *original_inventory_item )
 {
     if( it.made_of( phase_id::LIQUID ) ) {

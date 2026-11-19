@@ -1816,15 +1816,17 @@ bool computer_session::query_any_impl( const std::string_view summary )
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "CONFIRM" );
     a11y::screen_scope reader( &ctxt, "computer-continue",
-    [&ctxt]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.node == "computer:continue" ) {
+    [&ctxt]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "computer:continue" )
+        {
             if( intent.action == "activate" ) {
                 return std::string( "ANY_INPUT" );
             }
             return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" )
                    : std::nullopt;
         }
-        if( intent.node == "computer:text" && intent.action == "focus" ) {
+        if( intent.node == "computer:text" && intent.action == "focus" )
+        {
             return std::string( "TIMEOUT" );
         }
         return a11y::registered_intent( ctxt, intent );
@@ -1892,13 +1894,13 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
 
 
     a11y::screen_scope reader( &ctxt, "computer-query",
-    [&ctxt]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&ctxt]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
     {
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
-                                           comp.name.empty() ? _( "Computer" )
-                                           : remove_color_tags( comp.name ) );
+                comp.name.empty() ? _( "Computer" )
+                : remove_color_tags( comp.name ) );
         snapshot.summary = remove_color_tags( formatted_text );
         if( !lines.empty() ) {
             a11y::append_document( snapshot, "computer:text", _( "Computer output" ),

@@ -895,15 +895,16 @@ class map_notes_callback : public uilist_callback
                                            _( "Danger area radius: %d map tiles." ), danger_radius ) :
                                        std::string( _( "No danger radius is set for this note." ) );
             const std::string location = string_format(
-                                            _( "Map note: %1$s. Overmap coordinates: X %2$d, Y %3$d, level %4$d. "
-                                               "Relative location: %5$s. %6$s" ),
-                                            note_text, point.x(), point.y(), _z,
-                                            overmap_relative_location( position, get_avatar().pos_abs_omt() ),
-                                            danger );
+                                             _( "Map note: %1$s. Overmap coordinates: X %2$d, Y %3$d, level %4$d. "
+                                                "Relative location: %5$s. %6$s" ),
+                                             note_text, point.x(), point.y(), _z,
+                                             overmap_relative_location( position, get_avatar().pos_abs_omt() ),
+                                             danger );
             node.detail = location + " " + note_symbol_description( note );
 
             if( action == "CONFIRM" ) {
-                node.detail += " " + std::string( _( "Selecting this note returns to the map at its location; it does not start travel." ) );
+                node.detail += " " + std::string(
+                                   _( "Selecting this note returns to the map at its location; it does not start travel." ) );
             } else if( action == "DELETE_NOTE" ) {
                 node.detail += " " + std::string( _( "Deletes this note after confirmation." ) );
             } else if( action == "EDIT_NOTE" ) {
@@ -1662,7 +1663,7 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs,
     ctxt.register_action( "ANY_INPUT" );
 
     a11y::screen_scope reader( &ctxt, "overmap_search",
-    [&ctxt]( const a11y::semantic_intent &intent ) {
+    [&ctxt]( const a11y::semantic_intent & intent ) {
         if( intent.node == "overmap:search_result" && intent.action == "activate" ) {
             return std::optional<std::string>( "CONFIRM" );
         }
@@ -1750,13 +1751,15 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs,
             snapshot.nodes[node_index].position = node_index + 1;
             snapshot.nodes[node_index].total = snapshot.nodes.size();
             if( snapshot.nodes[node_index].id == "CONFIRM" ) {
-                snapshot.nodes[node_index].detail = _( "Choose the displayed search result and return to the map at that location.  This does not start travel." );
+                snapshot.nodes[node_index].detail =
+                    _( "Choose the displayed search result and return to the map at that location.  This does not start travel." );
             } else if( snapshot.nodes[node_index].id == "NEXT_TAB" ) {
                 snapshot.nodes[node_index].detail = _( "Move to the next matching map tile." );
             } else if( snapshot.nodes[node_index].id == "PREV_TAB" ) {
                 snapshot.nodes[node_index].detail = _( "Move to the previous matching map tile." );
             } else if( snapshot.nodes[node_index].id == "QUIT" ) {
-                snapshot.nodes[node_index].detail = _( "Close the search results and return to the previous map cursor." );
+                snapshot.nodes[node_index].detail =
+                    _( "Close the search results and return to the previous map cursor." );
             }
         }
         reader.update( std::move( snapshot ) );
@@ -2289,7 +2292,7 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                                       cursor.x(), cursor.y(), cursor.z(),
                                       overmap_relative_location( cursor, origin ) );
     snapshot.summary += ". " + std::string( _( "Selecting a map tile only moves the cursor; "
-                                  "travel is a separate command." ) );
+                                            "travel is a separate command." ) );
 
 
 
@@ -2356,8 +2359,8 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                                            static_cast<int>( route.size() ),
                                            overmap_relative_location( destination, origin ) );
         route_node.detail += " " + std::string( _( "Choosing another destination replaces this "
-                                              "route; choosing your own tile clears it. Focusing this "
-                                              "route only moves the map cursor to the destination." ) );
+                                                "route; choosing your own tile clears it. Focusing this "
+                                                "route only moves the map cursor to the destination." ) );
         route_node.actions = { "focus", "activate" };
         focus_targets.emplace( route_node.id, destination );
     }
@@ -2368,27 +2371,33 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     const int cursor_danger_radius = overmap_buffer.note_danger_radius( cursor );
     for( a11y::semantic_node &command : commands ) {
         if( command.id == "CONFIRM" ) {
-            command.detail = _( "Select the current map coordinates and close the map.  This action does not start travel." );
+            command.detail =
+                _( "Select the current map coordinates and close the map.  This action does not start travel." );
         } else if( command.id == "CHOOSE_DESTINATION" ) {
-            command.detail = _( "Set the current map tile as the route destination.  Choosing the existing route again may open the travel confirmation." );
+            command.detail =
+                _( "Set the current map tile as the route destination.  Choosing the existing route again may open the travel confirmation." );
         } else if( command.id == "CHOOSE_DESTINATION_DIRECT" ) {
-            command.detail = _( "Set a direct route to the current map tile.  Choosing the existing route again may open the travel confirmation." );
+            command.detail =
+                _( "Set a direct route to the current map tile.  Choosing the existing route again may open the travel confirmation." );
         } else if( command.id == "GO_TO_DESTINATION" || command.id == "CENTER_ON_DESTINATION" ) {
             if( !has_route ) {
                 command.enabled = false;
                 command.disabled_reason = _( "No route is set." );
                 command.detail = command.disabled_reason;
             } else {
-                command.detail = string_format( _( "Planned destination: %1$s. Coordinates: X %2$d, Y %3$d, level %4$d. "
-                                                   "Route length: %5$d map tiles.  Relative location: %6$s." ),
-                                                overmap_tile_description( route.front() ), route.front().x(),
-                                                route.front().y(), route.front().z(),
-                                                static_cast<int>( route.size() ),
-                                                overmap_relative_location( route.front(), origin ) );
+                command.detail = string_format(
+                                     _( "Planned destination: %1$s. Coordinates: X %2$d, Y %3$d, level %4$d. "
+                                        "Route length: %5$d map tiles.  Relative location: %6$s." ),
+                                     overmap_tile_description( route.front() ), route.front().x(),
+                                     route.front().y(), route.front().z(),
+                                     static_cast<int>( route.size() ),
+                                     overmap_relative_location( route.front(), origin ) );
                 if( command.id == "GO_TO_DESTINATION" ) {
-                    command.detail += " " + std::string( _( "Starts travel to this destination after the game's confirmation prompt." ) );
+                    command.detail += " " + std::string(
+                                          _( "Starts travel to this destination after the game's confirmation prompt." ) );
                 } else {
-                    command.detail += " " + std::string( _( "Moves the map cursor to the destination and does not start travel." ) );
+                    command.detail += " " + std::string(
+                                          _( "Moves the map cursor to the destination and does not start travel." ) );
                 }
             }
         } else if( command.id == "CENTER" ) {
@@ -2416,11 +2425,13 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                 command.detail = _( "Create a danger note at the cursor, then choose its danger radius." );
             }
         } else if( command.id == "LIST_NOTES" ) {
-            command.detail = string_format( _( "Open the map notes list for level %d. Selecting a note moves the map cursor there; it does not start travel." ),
-                                            cursor.z() );
+            command.detail = string_format(
+                                 _( "Open the map notes list for level %d. Selecting a note moves the map cursor there; it does not start travel." ),
+                                 cursor.z() );
         } else if( command.id == "CREATE_POINT_OF_INTEREST" ) {
-            command.detail = string_format( _( "Create a point of interest for the mission screen at X %1$d, Y %2$d, level %3$d." ),
-                                            cursor.x(), cursor.y(), cursor.z() );
+            command.detail = string_format(
+                                 _( "Create a point of interest for the mission screen at X %1$d, Y %2$d, level %3$d." ),
+                                 cursor.x(), cursor.y(), cursor.z() );
         } else if( command.id == "LEVEL_UP" ) {
             command.detail = _( "Move the map cursor one overmap level higher without moving the player." );
             if( cursor.z() >= OVERMAP_HEIGHT ) {
@@ -2436,7 +2447,8 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         } else if( command.id == "TOGGLE_FAST_TRAVEL" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_only_auto_travel;
-            command.detail = _( "When enabled, keep the overmap open and follow the player during automatic travel." );
+            command.detail =
+                _( "When enabled, keep the overmap open and follow the player during automatic travel." );
         } else if( command.id == "TOGGLE_FAST_SCROLL" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_fast_scroll;
@@ -2444,44 +2456,53 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         } else if( command.id == "TOGGLE_MAP_NOTES" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_map_notes;
-            command.detail = _( "Show or hide map notes visually.  The reader still describes a note at the cursor." );
+            command.detail =
+                _( "Show or hide map notes visually.  The reader still describes a note at the cursor." );
         } else if( command.id == "TOGGLE_BLINKING" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_blinking;
-            command.detail = _( "Blink the visual map between the explored view and the overlay view.  This changes only the visual display; reader descriptions do not change." );
+            command.detail =
+                _( "Blink the visual map between the explored view and the overlay view.  This changes only the visual display; reader descriptions do not change." );
         } else if( command.id == "TOGGLE_OVERLAYS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_overlays;
-            command.detail = _( "Show or hide visual overlay information, such as explored shading.  This changes only the visual display." );
+            command.detail =
+                _( "Show or hide visual overlay information, such as explored shading.  This changes only the visual display." );
         } else if( command.id == "TOGGLE_HORDES" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_hordes;
-            command.detail = _( "Show or hide monster horde markers on the visual map.  Hordes are only ever shown where the character's senses allow." );
+            command.detail =
+                _( "Show or hide monster horde markers on the visual map.  Hordes are only ever shown where the character's senses allow." );
         } else if( command.id == "TOGGLE_CITY_LABELS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_city_labels;
-            command.detail = _( "Show or hide city name labels on the visual map.  Labels are only drawn for places the character has seen the outlines of." );
+            command.detail =
+                _( "Show or hide city name labels on the visual map.  Labels are only drawn for places the character has seen the outlines of." );
         } else if( command.id == "TOGGLE_MAP_REVEALS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_revealed_omts;
-            command.detail = _( "Show or hide the marker for map tiles revealed by maps the character has read." );
+            command.detail =
+                _( "Show or hide the marker for map tiles revealed by maps the character has read." );
         } else if( command.id == "TOGGLE_FOREST_TRAILS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_forest_trails;
-            command.detail = _( "Show or hide forest trails on the visual map; when hidden, trail tiles are drawn as forest." );
+            command.detail =
+                _( "Show or hide forest trails on the visual map; when hidden, trail tiles are drawn as forest." );
         } else if( command.id == "TOGGLE_OVERMAP_WEATHER" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_visible_weather;
             command.detail = _( "Show or hide the weather overlay on the visual map." );
             if( !get_map().is_outside( get_avatar().pos_bub() ) ) {
                 command.enabled = false;
-                command.disabled_reason = _( "The weather overlay can only be changed while the player is outside." );
+                command.disabled_reason =
+                    _( "The weather overlay can only be changed while the player is outside." );
                 command.detail = command.disabled_reason;
             }
         } else if( command.id == "TOGGLE_EXPLORED" ) {
             command.role = "checkbox";
             command.checked = overmap_buffer.is_explored( cursor );
-            command.detail = _( "Mark the cursor tile as explored, or remove that mark.  This changes the map's remembered state for this tile; it does not move the player." );
+            command.detail =
+                _( "Mark the cursor tile as explored, or remove that mark.  This changes the map's remembered state for this tile; it does not move the player." );
         } else if( command.id == "TOGGLE_LAND_USE_CODES" ) {
             if( !debug_mode ) {
                 command.enabled = false;
@@ -2493,15 +2514,20 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                 command.detail = _( "Show or hide land use codes on the visual map (debug display)." );
             }
         } else if( command.id == "look" ) {
-            command.detail = _( "Open the look-around view at the cursor tile on the local map.  This closes the overmap and does not move the player." );
+            command.detail =
+                _( "Open the look-around view at the cursor tile on the local map.  This closes the overmap and does not move the player." );
         } else if( command.id == "zoom_in" ) {
-            command.detail = _( "Zoom the visual map in. This changes only the visual scale; reader descriptions do not change." );
+            command.detail =
+                _( "Zoom the visual map in. This changes only the visual scale; reader descriptions do not change." );
         } else if( command.id == "zoom_out" ) {
-            command.detail = _( "Zoom the visual map out.  This changes only the visual scale; reader descriptions do not change." );
+            command.detail =
+                _( "Zoom the visual map out.  This changes only the visual scale; reader descriptions do not change." );
         } else if( command.id == "SEARCH" ) {
-            command.detail = _( "Search for map tiles and notes by name around the cursor.  Only tiles the character has seen and notes the character made can be found; choosing a result only moves the map cursor." );
+            command.detail =
+                _( "Search for map tiles and notes by name around the cursor.  Only tiles the character has seen and notes the character made can be found; choosing a result only moves the map cursor." );
         } else if( command.id == "MISSIONS" ) {
-            command.detail = _( "Open the missions screen with the active, completed and failed mission lists and points of interest." );
+            command.detail =
+                _( "Open the missions screen with the active, completed and failed mission lists and points of interest." );
         }
     }
     for( int dy = -1; dy <= 1; ++dy ) {
@@ -2607,7 +2633,7 @@ static tripoint_abs_omt display()
     }
     std::map<std::string, tripoint_abs_omt> reader_focus_targets;
     a11y::screen_scope reader( &ictxt, "overmap",
-    [&ictxt, &curs, &reader_focus_targets]( const a11y::semantic_intent &intent ) {
+    [&ictxt, &curs, &reader_focus_targets]( const a11y::semantic_intent & intent ) {
         if( intent.action == "focus" || intent.action == "activate" ) {
             const auto target = reader_focus_targets.find( intent.node );
             if( target != reader_focus_targets.end() ) {
@@ -3312,7 +3338,7 @@ std::vector<tripoint_abs_omt> accessible_vehicle_route( const tripoint_abs_omt &
 
 
 std::vector<std::vector<tripoint_abs_omt>> ui::omap::accessible_vehicle_alternative_routes(
-    const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step )
+        const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step )
 {
     std::vector<std::vector<tripoint_abs_omt>> results;
 #if defined(__ANDROID__)
@@ -3321,7 +3347,9 @@ std::vector<std::vector<tripoint_abs_omt>> ui::omap::accessible_vehicle_alternat
 
 
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds( 500 );
-    const auto time_left = [&]() { return std::chrono::steady_clock::now() < deadline; };
+    const auto time_left = [&]() {
+        return std::chrono::steady_clock::now() < deadline;
+    };
     int checks = 0;
     const tripoint_abs_omt here = get_avatar().pos_abs_omt();
     for( int radius = 1; radius <= 2 && checks < max_path_checks && time_left() &&
@@ -3569,10 +3597,12 @@ void ui::omap::display_accessible_places()
         std::vector<std::pair<int, int>> queue { key };
         for( std::size_t q = 0; q < queue.size(); ++q ) {
             const auto [x, y] = queue[q];
-            for( const auto [nx, ny] : { std::make_pair( x - 1, y ),
-                                        std::make_pair( x + 1, y ),
-                                        std::make_pair( x, y - 1 ),
-                                        std::make_pair( x, y + 1 ) } ) {
+            for( const auto [nx, ny] : {
+                     std::make_pair( x - 1, y ),
+                     std::make_pair( x + 1, y ),
+                     std::make_pair( x, y - 1 ),
+                     std::make_pair( x, y + 1 )
+                 } ) {
                 const auto next = std::make_pair( nx, ny );
                 const auto next_it = nature_at.find( next );
                 if( next_it == nature_at.end() ||
@@ -3607,7 +3637,7 @@ void ui::omap::display_accessible_places()
         places.push_back( { city_ref.city->name, pos, distance, offset.x(), offset.y(), "" } );
     }
     std::stable_sort( places.begin(), places.end(),
-    []( const place &lhs, const place &rhs ) {
+    []( const place & lhs, const place & rhs ) {
         return lhs.distance < rhs.distance;
     } );
     const auto direction_words = []( const int dx, const int dy ) {
@@ -3631,7 +3661,8 @@ void ui::omap::display_accessible_places()
     ctxt.register_action( "QUIT" );
     a11y::screen_scope reader( &ctxt, "places",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
 
 
             if( selected ) {
@@ -3640,25 +3671,31 @@ void ui::omap::display_accessible_places()
             }
             return std::string( "QUIT" );
         }
-        if( intent.action == "focus" ) {
+        if( intent.action == "focus" )
+        {
             return std::string( "TIMEOUT" );
         }
-        if( intent.action != "activate" ) {
+        if( intent.action != "activate" )
+        {
             return std::nullopt;
         }
-        if( intent.node == "places:page:next" && !places.empty() ) {
+        if( intent.node == "places:page:next" && !places.empty() )
+        {
             page = std::min( page + 1, ( places.size() - 1 ) / page_size );
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "places:page:previous" ) {
+        if( intent.node == "places:page:previous" )
+        {
             page = page > 0 ? page - 1 : 0;
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "places:back" ) {
+        if( intent.node == "places:back" )
+        {
             selected.reset();
             return std::string( "TIMEOUT" );
         }
-        if( intent.node.rfind( "places:target:", 0 ) == 0 && !selected ) {
+        if( intent.node.rfind( "places:target:", 0 ) == 0 && !selected )
+        {
             const std::size_t start = page * page_size;
             const std::size_t end = std::min( start + page_size, places.size() );
             for( std::size_t i = start; i < end; ++i ) {
@@ -3668,16 +3705,19 @@ void ui::omap::display_accessible_places()
                 }
             }
         }
-        if( !selected || *selected >= places.size() ) {
+        if( !selected || *selected >= places.size() )
+        {
             return std::nullopt;
         }
         const bool driving = intent.node == "places:mode:drive";
         if( intent.node != "places:mode:walk" &&
-            intent.node != "places:mode:run" && !driving ) {
+            intent.node != "places:mode:run" && !driving )
+        {
             return std::nullopt;
         }
         if( driving && !( you.in_vehicle && you.controlling_vehicle ) &&
-            !accessible_driver_seat_nearby( you, get_map() ) ) {
+            !accessible_driver_seat_nearby( you, get_map() ) )
+        {
             add_msg( m_info, _( "No accessible driver's seat nearby." ) );
             return std::string( "TIMEOUT" );
         }
@@ -3686,14 +3726,16 @@ void ui::omap::display_accessible_places()
                                              direction_words( places[*selected].dx, places[*selected].dy );
 
 
-        if( overmap_buffer.seen( destination ) <= om_vision_level::outlines ) {
+        if( overmap_buffer.seen( destination ) <= om_vision_level::outlines )
+        {
             add_msg( m_info, _( "This destination is no longer known." ) );
             return std::string( "TIMEOUT" );
         }
 
 
         const oter_id terrain = overmap_buffer.ter_existing( destination );
-        if( !driving && terrain.is_valid() && terrain->is_water() ) {
+        if( !driving && terrain.is_valid() && terrain->is_water() )
+        {
             std::optional<tripoint_abs_omt> shore;
             int shortest = scan_tiles + tiles_per_omt * 2;
             for( int dy = -1; dy <= 1; ++dy ) {
@@ -3722,11 +3764,13 @@ void ui::omap::display_accessible_places()
             }
             destination = *shore;
         }
-        if( !driving && destination == you.pos_abs_omt() ) {
+        if( !driving && destination == you.pos_abs_omt() )
+        {
             add_msg( m_info, _( "You are already in the selected map area." ) );
             return std::string( "TIMEOUT" );
         }
-        if( driving ) {
+        if( driving )
+        {
             map &here = get_map();
             const optional_vpart_position seated = here.veh_at( you.pos_bub( here ) );
             const bool ready = you.in_vehicle && you.controlling_vehicle && seated
@@ -3761,7 +3805,8 @@ void ui::omap::display_accessible_places()
             }
             you.omt_path = std::move( route );
             you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );
-        } else {
+        } else
+        {
             std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, false );
             if( route.empty() ) {
                 add_msg( m_info, _( "No travel route to the selected place." ) );
@@ -3770,7 +3815,7 @@ void ui::omap::display_accessible_places()
             you.omt_path = std::move( route );
             you.reset_move_mode();
             you.set_desired_movement_mode( move_mode_id(
-                                            intent.node == "places:mode:run" ? "run" : "walk" ) );
+                                               intent.node == "places:mode:run" ? "run" : "walk" ) );
             you.assign_activity( ACT_TRAVELLING );
         }
         return std::string( "QUIT" );

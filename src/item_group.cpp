@@ -87,9 +87,12 @@ std::string enum_to_string<Item_spawn_data::overflow_behaviour>(
 {
     switch( data ) {
 
-        case Item_spawn_data::overflow_behaviour::none: return "none";
-        case Item_spawn_data::overflow_behaviour::spill: return "spill";
-        case Item_spawn_data::overflow_behaviour::discard: return "discard";
+        case Item_spawn_data::overflow_behaviour::none:
+            return "none";
+        case Item_spawn_data::overflow_behaviour::spill:
+            return "spill";
+        case Item_spawn_data::overflow_behaviour::discard:
+            return "discard";
 
         case Item_spawn_data::overflow_behaviour::last:
             break;

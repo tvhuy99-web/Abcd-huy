@@ -67,10 +67,16 @@ class input_context
         std::string a11y_action_result;
 
     public:
-        const std::vector<std::string> &registered_action_ids() const { return registered_actions; }
-        const std::string &category_id() const { return category; }
+        const std::vector<std::string> &registered_action_ids() const {
+            return registered_actions;
+        }
+        const std::string &category_id() const {
+            return category;
+        }
 
-        bool was_accessibility_action() const { return !a11y_action_result.empty(); }
+        bool was_accessibility_action() const {
+            return !a11y_action_result.empty();
+        }
 #if defined(__ANDROID__) || defined(TILES)
 
         static input_context_stack_impl input_context_stack;

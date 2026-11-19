@@ -375,56 +375,106 @@ std::string enum_to_string<oter_flags>( oter_flags data )
 {
     switch( data ) {
 
-        case oter_flags::known_down: return "KNOWN_DOWN";
-        case oter_flags::known_up: return "KNOWN_UP";
-        case oter_flags::river_tile: return "RIVER";
-        case oter_flags::bridge: return "BRIDGE";
-        case oter_flags::has_sidewalk: return "SIDEWALK";
-        case oter_flags::road: return "ROAD";
-        case oter_flags::highway: return "HIGHWAY";
-        case oter_flags::highway_reserved: return "HIGHWAY_RESERVED";
-        case oter_flags::highway_special: return "HIGHWAY_SPECIAL";
-        case oter_flags::no_rotate: return "NO_ROTATE";
-        case oter_flags::should_not_spawn: return "SHOULD_NOT_SPAWN";
-        case oter_flags::ignore_rotation_for_adjacency: return "IGNORE_ROTATION_FOR_ADJACENCY";
-        case oter_flags::line_drawing: return "LINEAR";
-        case oter_flags::subway_connection: return "SUBWAY";
-        case oter_flags::requires_predecessor: return "REQUIRES_PREDECESSOR";
-        case oter_flags::water: return "WATER";
-        case oter_flags::lake: return "LAKE";
-        case oter_flags::lake_shore: return "LAKE_SHORE";
-        case oter_flags::ocean: return "OCEAN";
-        case oter_flags::ocean_shore: return "OCEAN_SHORE";
-        case oter_flags::ravine: return "RAVINE";
-        case oter_flags::ravine_edge: return "RAVINE_EDGE";
-        case oter_flags::pp_generate_riot_damage: return "PP_GENERATE_RIOT_DAMAGE";
-        case oter_flags::pp_generate_ruined: return "PP_GENERATE_RUINED";
-        case oter_flags::generic_loot: return "GENERIC_LOOT";
-        case oter_flags::risk_extreme: return "RISK_EXTREME";
-        case oter_flags::risk_high: return "RISK_HIGH";
-        case oter_flags::risk_low: return "RISK_LOW";
-        case oter_flags::source_ammo: return "SOURCE_AMMO";
-        case oter_flags::source_animals: return "SOURCE_ANIMALS";
-        case oter_flags::source_books: return "SOURCE_BOOKS";
-        case oter_flags::source_chemistry: return "SOURCE_CHEMISTRY";
-        case oter_flags::source_clothing: return "SOURCE_CLOTHING";
-        case oter_flags::source_construction: return "SOURCE_CONSTRUCTION";
-        case oter_flags::source_cooking: return "SOURCE_COOKING";
-        case oter_flags::source_drink: return "SOURCE_DRINK";
-        case oter_flags::source_electronics: return "SOURCE_ELECTRONICS";
-        case oter_flags::source_fabrication: return "SOURCE_FABRICATION";
-        case oter_flags::source_farming: return "SOURCE_FARMING";
-        case oter_flags::source_food: return "SOURCE_FOOD";
-        case oter_flags::source_forage: return "SOURCE_FORAGE";
-        case oter_flags::source_fuel: return "SOURCE_FUEL";
-        case oter_flags::source_gun: return "SOURCE_GUN";
-        case oter_flags::source_luxury: return "SOURCE_LUXURY";
-        case oter_flags::source_medicine: return "SOURCE_MEDICINE";
-        case oter_flags::source_people: return "SOURCE_PEOPLE";
-        case oter_flags::source_safety: return "SOURCE_SAFETY";
-        case oter_flags::source_tailoring: return "SOURCE_TAILORING";
-        case oter_flags::source_vehicles: return "SOURCE_VEHICLES";
-        case oter_flags::source_weapon: return "SOURCE_WEAPON";
+        case oter_flags::known_down:
+            return "KNOWN_DOWN";
+        case oter_flags::known_up:
+            return "KNOWN_UP";
+        case oter_flags::river_tile:
+            return "RIVER";
+        case oter_flags::bridge:
+            return "BRIDGE";
+        case oter_flags::has_sidewalk:
+            return "SIDEWALK";
+        case oter_flags::road:
+            return "ROAD";
+        case oter_flags::highway:
+            return "HIGHWAY";
+        case oter_flags::highway_reserved:
+            return "HIGHWAY_RESERVED";
+        case oter_flags::highway_special:
+            return "HIGHWAY_SPECIAL";
+        case oter_flags::no_rotate:
+            return "NO_ROTATE";
+        case oter_flags::should_not_spawn:
+            return "SHOULD_NOT_SPAWN";
+        case oter_flags::ignore_rotation_for_adjacency:
+            return "IGNORE_ROTATION_FOR_ADJACENCY";
+        case oter_flags::line_drawing:
+            return "LINEAR";
+        case oter_flags::subway_connection:
+            return "SUBWAY";
+        case oter_flags::requires_predecessor:
+            return "REQUIRES_PREDECESSOR";
+        case oter_flags::water:
+            return "WATER";
+        case oter_flags::lake:
+            return "LAKE";
+        case oter_flags::lake_shore:
+            return "LAKE_SHORE";
+        case oter_flags::ocean:
+            return "OCEAN";
+        case oter_flags::ocean_shore:
+            return "OCEAN_SHORE";
+        case oter_flags::ravine:
+            return "RAVINE";
+        case oter_flags::ravine_edge:
+            return "RAVINE_EDGE";
+        case oter_flags::pp_generate_riot_damage:
+            return "PP_GENERATE_RIOT_DAMAGE";
+        case oter_flags::pp_generate_ruined:
+            return "PP_GENERATE_RUINED";
+        case oter_flags::generic_loot:
+            return "GENERIC_LOOT";
+        case oter_flags::risk_extreme:
+            return "RISK_EXTREME";
+        case oter_flags::risk_high:
+            return "RISK_HIGH";
+        case oter_flags::risk_low:
+            return "RISK_LOW";
+        case oter_flags::source_ammo:
+            return "SOURCE_AMMO";
+        case oter_flags::source_animals:
+            return "SOURCE_ANIMALS";
+        case oter_flags::source_books:
+            return "SOURCE_BOOKS";
+        case oter_flags::source_chemistry:
+            return "SOURCE_CHEMISTRY";
+        case oter_flags::source_clothing:
+            return "SOURCE_CLOTHING";
+        case oter_flags::source_construction:
+            return "SOURCE_CONSTRUCTION";
+        case oter_flags::source_cooking:
+            return "SOURCE_COOKING";
+        case oter_flags::source_drink:
+            return "SOURCE_DRINK";
+        case oter_flags::source_electronics:
+            return "SOURCE_ELECTRONICS";
+        case oter_flags::source_fabrication:
+            return "SOURCE_FABRICATION";
+        case oter_flags::source_farming:
+            return "SOURCE_FARMING";
+        case oter_flags::source_food:
+            return "SOURCE_FOOD";
+        case oter_flags::source_forage:
+            return "SOURCE_FORAGE";
+        case oter_flags::source_fuel:
+            return "SOURCE_FUEL";
+        case oter_flags::source_gun:
+            return "SOURCE_GUN";
+        case oter_flags::source_luxury:
+            return "SOURCE_LUXURY";
+        case oter_flags::source_medicine:
+            return "SOURCE_MEDICINE";
+        case oter_flags::source_people:
+            return "SOURCE_PEOPLE";
+        case oter_flags::source_safety:
+            return "SOURCE_SAFETY";
+        case oter_flags::source_tailoring:
+            return "SOURCE_TAILORING";
+        case oter_flags::source_vehicles:
+            return "SOURCE_VEHICLES";
+        case oter_flags::source_weapon:
+            return "SOURCE_WEAPON";
 
         case oter_flags::num_oter_flags:
             break;
@@ -444,14 +494,22 @@ double oter_type_t::see_cost_value( oter_type_t::see_costs cost )
     switch( cost ) {
 
         case oter_type_t::see_costs::all_clear:
-        case oter_type_t::see_costs::none: return 0;
-        case oter_type_t::see_costs::low: return 1;
-        case oter_type_t::see_costs::medium: return 2;
-        case oter_type_t::see_costs::spaced_high: return 4;
-        case oter_type_t::see_costs::high: return 5;
-        case oter_type_t::see_costs::full_high: return 10;
-        case oter_type_t::see_costs::opaque: return 999;
-        default: break;
+        case oter_type_t::see_costs::none:
+            return 0;
+        case oter_type_t::see_costs::low:
+            return 1;
+        case oter_type_t::see_costs::medium:
+            return 2;
+        case oter_type_t::see_costs::spaced_high:
+            return 4;
+        case oter_type_t::see_costs::high:
+            return 5;
+        case oter_type_t::see_costs::full_high:
+            return 10;
+        case oter_type_t::see_costs::opaque:
+            return 999;
+        default:
+            break;
 
     }
     return 0;
@@ -464,23 +522,40 @@ std::string enum_to_string<oter_travel_cost_type>( oter_travel_cost_type data )
 {
     switch( data ) {
 
-        case oter_travel_cost_type::other: return "other";
-        case oter_travel_cost_type::highway: return "highway";
-        case oter_travel_cost_type::road: return "road";
-        case oter_travel_cost_type::field: return "field";
-        case oter_travel_cost_type::crop_field: return "crop_field";
-        case oter_travel_cost_type::dirt_road: return "dirt_road";
-        case oter_travel_cost_type::trail: return "trail";
-        case oter_travel_cost_type::forest: return "forest";
-        case oter_travel_cost_type::shore: return "shore";
-        case oter_travel_cost_type::swamp: return "swamp";
-        case oter_travel_cost_type::water: return "water";
-        case oter_travel_cost_type::air: return "air";
-        case oter_travel_cost_type::structure: return "structure";
-        case oter_travel_cost_type::roof: return "roof";
-        case oter_travel_cost_type::basement: return "basement";
-        case oter_travel_cost_type::tunnel: return "tunnel";
-        case oter_travel_cost_type::impassable: return "impassable";
+        case oter_travel_cost_type::other:
+            return "other";
+        case oter_travel_cost_type::highway:
+            return "highway";
+        case oter_travel_cost_type::road:
+            return "road";
+        case oter_travel_cost_type::field:
+            return "field";
+        case oter_travel_cost_type::crop_field:
+            return "crop_field";
+        case oter_travel_cost_type::dirt_road:
+            return "dirt_road";
+        case oter_travel_cost_type::trail:
+            return "trail";
+        case oter_travel_cost_type::forest:
+            return "forest";
+        case oter_travel_cost_type::shore:
+            return "shore";
+        case oter_travel_cost_type::swamp:
+            return "swamp";
+        case oter_travel_cost_type::water:
+            return "water";
+        case oter_travel_cost_type::air:
+            return "air";
+        case oter_travel_cost_type::structure:
+            return "structure";
+        case oter_travel_cost_type::roof:
+            return "roof";
+        case oter_travel_cost_type::basement:
+            return "basement";
+        case oter_travel_cost_type::tunnel:
+            return "tunnel";
+        case oter_travel_cost_type::impassable:
+            return "impassable";
 
         case oter_travel_cost_type::last:
             break;
@@ -941,11 +1016,16 @@ std::string enum_to_string<ot_match_type>( ot_match_type data )
 {
     switch( data ) {
 
-        case ot_match_type::exact: return "EXACT";
-        case ot_match_type::type: return "TYPE";
-        case ot_match_type::subtype: return "SUBTYPE";
-        case ot_match_type::prefix: return "PREFIX";
-        case ot_match_type::contains: return "CONTAINS";
+        case ot_match_type::exact:
+            return "EXACT";
+        case ot_match_type::type:
+            return "TYPE";
+        case ot_match_type::subtype:
+            return "SUBTYPE";
+        case ot_match_type::prefix:
+            return "PREFIX";
+        case ot_match_type::contains:
+            return "CONTAINS";
 
         case ot_match_type::num_ot_match_type:
             break;
@@ -958,11 +1038,16 @@ std::string enum_to_string<om_vision_level>( om_vision_level data )
 {
     switch( data ) {
 
-        case om_vision_level::unseen: return "unseen";
-        case om_vision_level::vague: return "vague";
-        case om_vision_level::outlines: return "outlines";
-        case om_vision_level::details: return "details";
-        case om_vision_level::full: return "full";
+        case om_vision_level::unseen:
+            return "unseen";
+        case om_vision_level::vague:
+            return "vague";
+        case om_vision_level::outlines:
+            return "outlines";
+        case om_vision_level::details:
+            return "details";
+        case om_vision_level::full:
+            return "full";
 
         default:
             break;
@@ -976,14 +1061,22 @@ std::string enum_to_string<oter_type_t::see_costs>( oter_type_t::see_costs data 
 {
     switch( data ) {
 
-        case oter_type_t::see_costs::all_clear: return "all_clear";
-        case oter_type_t::see_costs::none: return "none";
-        case oter_type_t::see_costs::low: return "low";
-        case oter_type_t::see_costs::medium: return "medium";
-        case oter_type_t::see_costs::spaced_high: return "spaced_high";
-        case oter_type_t::see_costs::high: return "high";
-        case oter_type_t::see_costs::full_high: return "full_high";
-        case oter_type_t::see_costs::opaque: return "opaque";
+        case oter_type_t::see_costs::all_clear:
+            return "all_clear";
+        case oter_type_t::see_costs::none:
+            return "none";
+        case oter_type_t::see_costs::low:
+            return "low";
+        case oter_type_t::see_costs::medium:
+            return "medium";
+        case oter_type_t::see_costs::spaced_high:
+            return "spaced_high";
+        case oter_type_t::see_costs::high:
+            return "high";
+        case oter_type_t::see_costs::full_high:
+            return "full_high";
+        case oter_type_t::see_costs::opaque:
+            return "opaque";
 
         default:
             break;

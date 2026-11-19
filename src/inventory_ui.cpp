@@ -3567,9 +3567,9 @@ class inventory_selector::reader_session
                         const std::string &activation ) :
             owner( owner ), context( context ), activation( activation ),
             previous( owner.active_reader ),
-            screen( &context, "inventory", [this]( const a11y::semantic_intent &intent ) {
-                return handle( intent );
-            } ) {
+            screen( &context, "inventory", [this]( const a11y::semantic_intent & intent ) {
+            return handle( intent );
+        } ) {
             owner.active_reader = this;
             context.register_action( "A11Y_PICK_POCKET_ITEM",
                                      to_translation( "Open contained item actions" ) );
@@ -3658,25 +3658,26 @@ class inventory_selector::reader_session
                     a11y::semantic_table trade_table;
                     trade_table.id = "trade:items";
                     trade_table.columns = { { "item", _( "Item" ), "" },
-                                            { "unit_price", _( "Unit price" ), "" } };
+                        { "unit_price", _( "Unit price" ), "" }
+                    };
                     snapshot.tables.push_back( std::move( trade_table ) );
                 }
             }
             snapshot.summary = remove_color_tags( owner.get_accessibility_summary() );
             if( pickup_mode ) {
                 snapshot.summary += "\n" + std::string(
-                    _( "Choose items and quantities, then confirm to pick them up. "
-                       "Browsing never picks items up." ) );
+                                        _( "Choose items and quantities, then confirm to pick them up. "
+                                           "Browsing never picks items up." ) );
             } else if( compare_mode ) {
                 snapshot.summary += "\n" + std::string(
-                    _( "Select two items to compare.  Each selected item is announced "
-                       "before the comparison opens." ) );
+                                        _( "Select two items to compare.  Each selected item is announced "
+                                           "before the comparison opens." ) );
             } else if( drop_mode ) {
                 snapshot.summary += "\n" + std::string( insert_mode ?
-                    _( "Choose items and quantities to put in the selected container.  "
-                       "The game checks capacity before inserting." ) :
-                    _( "Choose items and quantities to drop.  The chosen destination "
-                       "is announced before the drop activity begins." ) );
+                                                        _( "Choose items and quantities to put in the selected container.  "
+                                                                "The game checks capacity before inserting." ) :
+                                                        _( "Choose items and quantities to drop.  The chosen destination "
+                                                                "is announced before the drop activity begins." ) );
             }
             for( const std::string &line : owner.get_stats() ) {
                 snapshot.summary += "\n" + remove_color_tags( line );
@@ -3718,7 +3719,7 @@ class inventory_selector::reader_session
                         continue;
                     }
                     auto binding = std::find_if( bindings.begin(), bindings.end(),
-                    [&]( const row_binding &b ) {
+                    [&]( const row_binding & b ) {
                         return b.column == column && b.location == location;
                     } );
                     if( binding == bindings.end() ) {
@@ -3743,7 +3744,7 @@ class inventory_selector::reader_session
 
 
                         if( mark != std::string::npos && ( mark == 0 ||
-                            ( mark < 9 && node.label[mark - 1] == ' ' ) ) ) {
+                                                           ( mark < 9 && node.label[mark - 1] == ' ' ) ) ) {
                             node.label.erase( mark, durability_bar.size() );
                             durability_marker_removed = true;
                         }
@@ -3766,7 +3767,7 @@ class inventory_selector::reader_session
                         }
                     }
                     while( !node.label.empty() && ( node.label.front() == ' ' ||
-                           node.label.front() == '\t' ) ) {
+                                                    node.label.front() == '\t' ) ) {
                         node.label.erase( 0, 1 );
                     }
                     const std::string nbsp = "\xC2\xA0";
@@ -3779,8 +3780,8 @@ class inventory_selector::reader_session
 
                     if( activation == "TOGGLE_ENTRY" ) {
                         node.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
-                                                   std::to_string( entry->chosen_count ),
-                                                   std::to_string( entry->get_available_count() ) );
+                                                    std::to_string( entry->chosen_count ),
+                                                    std::to_string( entry->get_available_count() ) );
                     }
                     node.detail = location.describe( &owner.u );
                     if( durability_marker_removed ) {
@@ -3832,7 +3833,7 @@ class inventory_selector::reader_session
                     }
                     if( pickup_mode ) {
                         node.label += string_format( _( ", located: %s" ),
-                                                    remove_color_tags( location.describe( &owner.u ) ) );
+                                                     remove_color_tags( location.describe( &owner.u ) ) );
                         node.detail += "\n" + string_format(
                                            _( "Weight: %1$s grams.  Volume: %2$s milliliters." ),
                                            std::to_string( units::to_gram( location->weight() ) ),
@@ -3890,8 +3891,11 @@ class inventory_selector::reader_session
                         node.table_id = "trade:items";
                         node.row_index = trade_row_index++;
                         node.cells = { { "item", node.label, "", "" },
-                                       { "unit_price", format_money( unit_price ), "",
-                                         std::to_string( unit_price ) } };
+                            {
+                                "unit_price", format_money( unit_price ), "",
+                                std::to_string( unit_price )
+                            }
+                        };
                     }
                     node.enabled = entry->is_selectable();
                     node.disabled_reason = remove_color_tags( entry->denial.value_or( "" ) );
@@ -3931,9 +3935,9 @@ class inventory_selector::reader_session
                     total_selected += row.entry->chosen_count;
                 }
                 snapshot.summary += "\n" + string_format(
-                    pickup_mode ? _( "Total items marked for pickup: %d." ) :
-                    insert_mode ? _( "Items marked for insertion: %d." ) :
-                    _( "Items marked for dropping: %d." ), total_selected );
+                                        pickup_mode ? _( "Total items marked for pickup: %d." ) :
+                                        insert_mode ? _( "Items marked for insertion: %d." ) :
+                                        _( "Items marked for dropping: %d." ), total_selected );
             }
 
 
@@ -4158,7 +4162,7 @@ class inventory_selector::reader_session
                                                std::to_string( pocket_items.size() );
                                 contained.role = "checkbox";
                                 contained.label = remove_color_tags( child->display_name(
-                                                                        entry->get_stack_size() ) );
+                                        entry->get_stack_size() ) );
                                 contained.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
                                                                  std::to_string( entry->chosen_count ),
                                                                  std::to_string( entry->get_available_count() ) );
@@ -4214,8 +4218,8 @@ class inventory_selector::reader_session
                         speech_segments.set( tname::segments::WHITEBLACKLIST, false );
                         std::function<void( const item *, const item_location &,
                                             const std::string &, unsigned int )> expose =
-                        [&]( const item *child, const item_location &parent_location,
-                             const std::string &ancestors, unsigned int level ) {
+                                                [&]( const item * child, const item_location & parent_location,
+                        const std::string & ancestors, unsigned int level ) {
                             if( child == nullptr || !visited_contents.insert( child ).second ) {
                                 return;
                             }
@@ -4230,15 +4234,15 @@ class inventory_selector::reader_session
                                            std::to_string( contents_rows.size() );
                             item_node.role = actionable ? "button" : "status";
                             item_node.actions = actionable ?
-                                                std::vector<std::string>{ "focus", "activate", "read_detail" } :
-                                                std::vector<std::string>{ "focus", "read_detail" };
+                                                std::vector<std::string> { "focus", "activate", "read_detail" } :
+                                                std::vector<std::string> { "focus", "read_detail" };
                             if( contained ) {
                                 contained_item_bindings.emplace_back( item_node.id, contained );
                             }
                             item_node.parent_id = pocket_node.id;
                             item_node.depth = pocket_node.depth + 1;
                             item_node.label = remove_color_tags( child->tname(
-                                                1, speech_segments, true ) );
+                                    1, speech_segments, true ) );
                             if( !ancestors.empty() ) {
                                 item_node.label = ancestors + " > " + item_node.label;
                             }
@@ -4370,7 +4374,7 @@ class inventory_selector::reader_session
 
         bool select_count( inventory_multiselector &multi, inventory_column *column,
                            const item_location &location, const std::size_t count ) {
-            const auto is_ancestor = []( const item_location &ancestor, item_location child ) {
+            const auto is_ancestor = []( const item_location & ancestor, item_location child ) {
                 for( child = child.parent_item(); child; child = child.parent_item() ) {
                     if( child == ancestor ) {
                         return true;
@@ -4381,7 +4385,9 @@ class inventory_selector::reader_session
             if( count > 0 && dynamic_cast<const pickup_selector *>( &owner ) != nullptr ) {
                 const inventory_column::get_entries_t source_rows = column->get_entries( return_item, true );
                 const auto target = std::find_if( source_rows.begin(), source_rows.end(),
-                [&]( const inventory_entry *row ) { return row->any_item() == location; } );
+                [&]( const inventory_entry * row ) {
+                    return row->any_item() == location;
+                } );
                 if( target == source_rows.end() ) {
                     return false;
                 }
@@ -4411,7 +4417,9 @@ class inventory_selector::reader_session
                 for( const auto &conflict : conflicts ) {
                     const inventory_column::get_entries_t current = conflict.first->get_entries( return_item, true );
                     const auto found = std::find_if( current.begin(), current.end(),
-                    [&]( const inventory_entry *row ) { return row->any_item() == conflict.second; } );
+                    [&]( const inventory_entry * row ) {
+                        return row->any_item() == conflict.second;
+                    } );
                     if( found != current.end() && ( *found )->chosen_count > 0 ) {
                         multi.toggle_entry( **found, 0 );
                     }
@@ -4419,7 +4427,9 @@ class inventory_selector::reader_session
             }
             const inventory_column::get_entries_t rows = column->get_entries( return_item, true );
             const auto target = std::find_if( rows.begin(), rows.end(),
-            [&]( const inventory_entry *row ) { return row->any_item() == location; } );
+            [&]( const inventory_entry * row ) {
+                return row->any_item() == location;
+            } );
             if( target == rows.end() ) {
                 return false;
             }
@@ -4445,7 +4455,9 @@ class inventory_selector::reader_session
                     return reject_pocket_change();
                 }
                 const auto pb = std::find_if( pocket_selections.begin(), pocket_selections.end(),
-                [&]( const pocket_selection_binding &b ) { return b.id == intent.node; } );
+                [&]( const pocket_selection_binding & b ) {
+                    return b.id == intent.node;
+                } );
                 inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
                 if( pb == pocket_selections.end() || multi == nullptr || !pb->container ) {
                     return reject_pocket_change();
@@ -4473,13 +4485,17 @@ class inventory_selector::reader_session
                     }
                     const std::string key = instruction.substr( 0, equals );
                     const auto choice = std::find_if( pb->items.begin(), pb->items.end(),
-                    [&]( const pocket_item_binding &b ) { return b.id == key; } );
+                    [&]( const pocket_item_binding & b ) {
+                        return b.id == key;
+                    } );
                     if( choice == pb->items.end() || !unique_choices.insert( key ).second ) {
                         return reject_pocket_change();
                     }
                     const inventory_column::get_entries_t rows = choice->column->get_entries( return_item, true );
                     const auto found = std::find_if( rows.begin(), rows.end(),
-                    [&]( const inventory_entry *entry ) { return entry->any_item() == choice->location; } );
+                    [&]( const inventory_entry * entry ) {
+                        return entry->any_item() == choice->location;
+                    } );
                     if( found == rows.end() ) {
                         return reject_pocket_change();
                     }
@@ -4520,7 +4536,7 @@ class inventory_selector::reader_session
 
 
                     const auto contained = std::find_if( contained_item_bindings.begin(),
-                                                        contained_item_bindings.end(),
+                                                         contained_item_bindings.end(),
                     [&]( const std::pair<std::string, item_location> &binding ) {
                         return binding.first == intent.node;
                     } );
@@ -4531,7 +4547,7 @@ class inventory_selector::reader_session
                     }
                     for( const pocket_selection_binding &pocket : pocket_selections ) {
                         const auto choice = std::find_if( pocket.items.begin(), pocket.items.end(),
-                        [&]( const pocket_item_binding &entry ) {
+                        [&]( const pocket_item_binding & entry ) {
                             return entry.id == intent.node;
                         } );
                         if( choice == pocket.items.end() || !pocket.container ) {
@@ -4539,7 +4555,7 @@ class inventory_selector::reader_session
                         }
                         const inventory_column::get_entries_t rows = choice->column->get_entries( return_item, true );
                         const auto live = std::find_if( rows.begin(), rows.end(),
-                        [&]( const inventory_entry *entry ) {
+                        [&]( const inventory_entry * entry ) {
                             return entry->any_item() == choice->location;
                         } );
                         const std::vector<const item_pocket *> pockets =
@@ -4569,7 +4585,7 @@ class inventory_selector::reader_session
                 if( intent.action == "activate" &&
                     dynamic_cast<const inventory_pick_selector *>( &owner ) != nullptr ) {
                     const auto item = std::find_if( contained_item_bindings.begin(),
-                                                   contained_item_bindings.end(),
+                                                    contained_item_bindings.end(),
                     [&]( const std::pair<std::string, item_location> &binding ) {
                         return binding.first == intent.node;
                     } );
@@ -4583,7 +4599,9 @@ class inventory_selector::reader_session
                 return std::nullopt;
             }
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
-            [&]( const row_binding &b ) { return b.id == intent.node; } );
+            [&]( const row_binding & b ) {
+                return b.id == intent.node;
+            } );
             if( binding == bindings.end() ) {
                 return a11y::registered_intent( context, intent );
             }
@@ -4591,7 +4609,9 @@ class inventory_selector::reader_session
 
             const inventory_column::get_entries_t entries = binding->column->get_entries( return_item );
             const auto found = std::find_if( entries.begin(), entries.end(),
-            [&]( const inventory_entry *entry ) { return entry->any_item() == binding->location; } );
+            [&]( const inventory_entry * entry ) {
+                return entry->any_item() == binding->location;
+            } );
             if( found == entries.end() ) {
                 return std::nullopt;
             }

@@ -577,7 +577,7 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
         const temp_crafting_inventory &inventory,
         const std::function<bool( const item & )> &filter, int batch )
 {
-    const auto add_node = [&]( const std::string &id, const std::string &label ) {
+    const auto add_node = [&]( const std::string & id, const std::string & label ) {
         a11y::semantic_node node;
         node.id = id;
         node.role = "button";
@@ -631,7 +631,7 @@ static bool reader_requirement_detail( const requirement_data &requirements,
                                        const std::string &kind, std::size_t group_want,
                                        std::size_t alt_want, std::string &label, itype_id &type )
 {
-    const auto pick = [&]( const auto &groups, const auto &type_of ) {
+    const auto pick = [&]( const auto & groups, const auto & type_of ) {
         std::size_t group_index = 0;
         for( const auto &group : groups ) {
             if( group_index == group_want ) {
@@ -656,12 +656,12 @@ static bool reader_requirement_detail( const requirement_data &requirements,
         } );
     }
     if( kind == "tool" ) {
-        return pick( requirements.get_tools(), []( const tool_comp &alternative ) {
+        return pick( requirements.get_tools(), []( const tool_comp & alternative ) {
             return alternative.type;
         } );
     }
     if( kind == "component" ) {
-        return pick( requirements.get_components(), []( const item_comp &alternative ) {
+        return pick( requirements.get_components(), []( const item_comp & alternative ) {
             return alternative.type;
         } );
     }
@@ -1136,8 +1136,9 @@ construction_id construction_menu( const bool blueprint )
     std::vector<a11y::semantic_node> reader_documents;
 
     a11y::screen_scope reader( &ctxt, "construction",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( reader_detail_open ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( reader_detail_open )
+        {
 
 
 
@@ -1203,9 +1204,9 @@ construction_id construction_menu( const bool blueprint )
                     std::size_t group = 0;
                     std::size_t alt = 0;
                     const std::from_chars_result parsed_group = std::from_chars(
-                            rest.data() + first + 1, rest.data() + second, group );
+                                rest.data() + first + 1, rest.data() + second, group );
                     const std::from_chars_result parsed_alt = std::from_chars(
-                            rest.data() + second + 1, rest.data() + rest.size(), alt );
+                                rest.data() + second + 1, rest.data() + rest.size(), alt );
                     if( parsed_group.ec != std::errc() || parsed_alt.ec != std::errc() ) {
                         return "TIMEOUT";
                     }
@@ -1256,7 +1257,8 @@ construction_id construction_menu( const bool blueprint )
             }
         }
         if( intent.action == "activate" && !constructs.empty() &&
-            ( intent.node == "construction:page:next" || intent.node == "construction:page:previous" ) ) {
+            ( intent.node == "construction:page:next" || intent.node == "construction:page:previous" ) )
+        {
 
 
 
@@ -1276,7 +1278,8 @@ construction_id construction_menu( const bool blueprint )
             update_info = true;
             return "TIMEOUT";
         }
-        for( std::size_t i = 0; i < constructs.size(); ++i ) {
+        for( std::size_t i = 0; i < constructs.size(); ++i )
+        {
             if( intent.node == "construction:group:" + constructs[i].str() &&
                 ( intent.action == "focus" || intent.action == "activate" ) ) {
                 if( select != static_cast<int>( i ) ) {
@@ -1396,7 +1399,7 @@ construction_id construction_menu( const bool blueprint )
             const std::vector<a11y::semantic_node> command_nodes = snapshot.nodes;
             snapshot.summary = construct_cat[tabindex].name();
             snapshot.summary += ". " + std::string( filter_mode == 0 ? _( "All" ) :
-                                  filter_mode == 1 ? _( "Ready (missing location)" ) : _( "Buildable here" ) );
+                                                    filter_mode == 1 ? _( "Ready (missing location)" ) : _( "Buildable here" ) );
             if( !filter.empty() ) {
                 snapshot.summary += ". " + string_format( _( "Filter: %s" ), filter );
             }
@@ -1483,14 +1486,15 @@ construction_id construction_menu( const bool blueprint )
 
                 std::string placement;
                 if( blueprint ) {
-                    placement = _( "Blueprint mode: choosing a construction records it for the zone; nothing is placed." );
+                    placement =
+                        _( "Blueprint mode: choosing a construction records it for the zone; nothing is placed." );
                 } else if( con_preview.empty() ) {
                     placement = _( "No adjacent location is currently valid for the selected construction." );
                 } else {
                     for( const auto &entry : con_preview ) {
                         placement += string_format( _( "%1$s: valid for %2$s.\n" ),
                                                     direction_name( direction_from( player_character.pos_bub(),
-                                                                    entry.first ) ),
+                                                            entry.first ) ),
                                                     entry.second->group->name() );
                     }
                 }
@@ -1976,8 +1980,8 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
         }
     } else {
         pnt_ = choose_adjacent(
-                    loc, _( "Construct where?" ),
- false, get_option<int>( "BLINK_SPEED" ),
+                   loc, _( "Construct where?" ),
+                   false, get_option<int>( "BLINK_SPEED" ),
         [&]( const input_context & ctxt, const std::string & action ) {
             if( action == "TIMEOUT" ) {
                 blink = !blink;
@@ -1997,11 +2001,11 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
             }
             g->invalidate_main_ui_adaptor();
             return std::pair<bool, std::optional<tripoint_bub_ms>>( false, std::nullopt );
-        }, [&]( const tripoint_bub_ms &target ) {
+        }, [&]( const tripoint_bub_ms & target ) {
             return valid.count( target ) ? _( "This location is valid for the selected construction." ) :
                    _( "This location is not valid for the selected construction." );
         } );
-        }
+    }
     if( !pnt_ ) {
         return;
     }
@@ -2355,7 +2359,7 @@ bool construct::check_matching_down_above( const tripoint_bub_ms &p )
            ter_here.substr( 0, separation + 1 ) + "down" == ter_above;
 }
 
-void construct::done_trunk_plank( const tripoint_bub_ms & , Character & )
+void construct::done_trunk_plank( const tripoint_bub_ms &, Character & )
 {
     int num_logs = rng( 2, 3 );
     Character &player_character = get_player_character();

@@ -266,7 +266,7 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                         AND_THEN( "no more items can be transfered" ) {
                             CHECK_FALSE( u.can_stash( knife_combat, 1 ) );
                             CHECK_FALSE( u.try_add( knife_combat, nullptr,
- nullptr, false ) );
+                                                    nullptr, false ) );
                         }
                     }
                 }

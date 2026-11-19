@@ -8733,14 +8733,14 @@ std::vector<tripoint_bub_ms> map::reachable_flood_steps( const tripoint_bub_ms &
 
         const std::array<int, 8> ox = {
             -1, 0, 1,
-            -1,    1,
-            -1, 0, 1
-        };
+                -1,    1,
+                -1, 0, 1
+            };
         const std::array<int, 8> oy = {
             -1, -1, -1,
-            0,      0,
-            1,  1,  1
-        };
+                0,      0,
+                1,  1,  1
+            };
 
 
         point e( elem.ndx % grid_dim, elem.ndx / grid_dim );
@@ -9260,7 +9260,7 @@ void map::shift( const point_rel_sm &sp )
     }
 #if defined(__ANDROID__)
     const auto unloaded_at = shift_profile ? std::chrono::steady_clock::now() :
-                              std::chrono::steady_clock::time_point{};
+                             std::chrono::steady_clock::time_point{};
 #endif
     set_abs_sub( abs + sp );
 
@@ -9378,14 +9378,14 @@ void map::shift( const point_rel_sm &sp )
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
         a11y::android::diagnostic_event( "WORLD_SUBMAP_SHIFT_PHASE",
-                "unload_ms=" + std::to_string( ms( shift_begin, unloaded_at ) ) +
-                " grid_cache_ms=" + std::to_string( ms( unloaded_at, caches_shifted_at ) ) +
-                " copy_and_load_ms=" + std::to_string( ms( caches_shifted_at, loaded_at ) ) +
-                " new_submaps_ms=" + std::to_string( load_new_grids_ms ) +
-                " loaded_columns=" + std::to_string( newly_loaded_columns ) +
-                " vehicles_ms=" + std::to_string( ms( loaded_at, vehicles_at ) ) +
-                " actualize_ms=" + std::to_string( ms( vehicles_at, actualized_at ) ) +
-                " reconcile_ms=" + std::to_string( ms( actualized_at, done ) ) );
+                                         "unload_ms=" + std::to_string( ms( shift_begin, unloaded_at ) ) +
+                                         " grid_cache_ms=" + std::to_string( ms( unloaded_at, caches_shifted_at ) ) +
+                                         " copy_and_load_ms=" + std::to_string( ms( caches_shifted_at, loaded_at ) ) +
+                                         " new_submaps_ms=" + std::to_string( load_new_grids_ms ) +
+                                         " loaded_columns=" + std::to_string( newly_loaded_columns ) +
+                                         " vehicles_ms=" + std::to_string( ms( loaded_at, vehicles_at ) ) +
+                                         " actualize_ms=" + std::to_string( ms( vehicles_at, actualized_at ) ) +
+                                         " reconcile_ms=" + std::to_string( ms( actualized_at, done ) ) );
     }
 #endif
 }
@@ -9536,8 +9536,8 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
             const auto generation_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                            std::chrono::steady_clock::now() - generation_started ).count();
             a11y::android::diagnostic_event( "WORLD_MAPGEN_PHASE",
-                    "generate_ms=" + std::to_string( generation_ms ) +
-                    " omt=" + grid_abs_omt.to_string() );
+                                             "generate_ms=" + std::to_string( generation_ms ) +
+                                             " omt=" + grid_abs_omt.to_string() );
         }
 #endif
 
@@ -11302,14 +11302,14 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
         a11y::android::diagnostic_event( "WORLD_CACHE_PHASE",
-                "skip_lightmap=" + std::string( skip_lightmap ? "true" : "false" ) +
-                " scene_ms=" + std::to_string( ms( cache_start, scene_done ) ) +
-                " transparency_ms=" + std::to_string( ms( scene_done, transparency_done ) ) +
-                " avatar_fov_ms=" + std::to_string( ms( transparency_done, avatar_done ) ) +
-                " camera_ms=" + std::to_string( ms( avatar_done, camera_done ) ) +
-                " light_sources_ms=" + std::to_string( ms( camera_done, sources_done ) ) +
-                " lightmap_ms=" + std::to_string( ms( sources_done, finished ) ) +
-                " total_ms=" + std::to_string( ms( cache_start, finished ) ) );
+                                         "skip_lightmap=" + std::string( skip_lightmap ? "true" : "false" ) +
+                                         " scene_ms=" + std::to_string( ms( cache_start, scene_done ) ) +
+                                         " transparency_ms=" + std::to_string( ms( scene_done, transparency_done ) ) +
+                                         " avatar_fov_ms=" + std::to_string( ms( transparency_done, avatar_done ) ) +
+                                         " camera_ms=" + std::to_string( ms( avatar_done, camera_done ) ) +
+                                         " light_sources_ms=" + std::to_string( ms( camera_done, sources_done ) ) +
+                                         " lightmap_ms=" + std::to_string( ms( sources_done, finished ) ) +
+                                         " total_ms=" + std::to_string( ms( cache_start, finished ) ) );
     }
 #endif
 }

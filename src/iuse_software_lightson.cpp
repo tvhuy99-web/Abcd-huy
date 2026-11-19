@@ -163,9 +163,10 @@ int lightson_game::start_game()
 
     a11y::screen_scope reader( &ctxt, "lightson",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.node.rfind( "lights:cell:", 0 ) == 0 ) {
+        if( intent.node.rfind( "lights:cell:", 0 ) == 0 )
+        {
             const std::string suffix =
-                intent.node.substr( std::string( "lights:cell:" ).size() );
+            intent.node.substr( std::string( "lights:cell:" ).size() );
             const std::size_t separator = suffix.find( ':' );
             if( separator == std::string::npos ) {
                 return std::nullopt;

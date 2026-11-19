@@ -4589,7 +4589,7 @@ bool cata_tiles::draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &he
     return false;
 }
 
-bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, const lit_level ,
+bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, const lit_level,
         int &height_3d, const std::array<bool, 5> &invisible, const bool memorize_only )
 {
     if( memorize_only ) {

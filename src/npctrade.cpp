@@ -97,7 +97,7 @@ std::list<item> npc_trading::transfer_items( trade_selector::select_t &stuff, Ch
             gift.charges = ip.second;
             item newit = item( gift );
             ret_val<item_location> ret = receiver.i_add_or_fill( newit, true, nullptr, &gift,
- true, true, false );
+                                         true, true, false );
         } else {
             for( int i = 0; i < ip.second; i++ ) {
                 receiver.i_add( gift );

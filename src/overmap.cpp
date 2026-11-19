@@ -108,8 +108,10 @@ std::string enum_to_string<overmap_special_subtype>( overmap_special_subtype dat
 {
     switch( data ) {
 
-        case overmap_special_subtype::fixed: return "fixed";
-        case overmap_special_subtype::mutable_: return "mutable";
+        case overmap_special_subtype::fixed:
+            return "fixed";
+        case overmap_special_subtype::mutable_:
+            return "mutable";
 
         case overmap_special_subtype::last:
             break;
@@ -122,10 +124,14 @@ std::string enum_to_string<om_direction::type>( om_direction::type d )
 {
     switch( d ) {
 
-        case om_direction::type::north: return "north";
-        case om_direction::type::east: return "east";
-        case om_direction::type::south: return "south";
-        case om_direction::type::west: return "west";
+        case om_direction::type::north:
+            return "north";
+        case om_direction::type::east:
+            return "east";
+        case om_direction::type::south:
+            return "south";
+        case om_direction::type::west:
+            return "west";
 
         case om_direction::type::invalid:
         case om_direction::type::last:
@@ -139,12 +145,18 @@ std::string enum_to_string<cube_direction>( cube_direction data )
 {
     switch( data ) {
 
-        case cube_direction::north: return "north";
-        case cube_direction::east: return "east";
-        case cube_direction::south: return "south";
-        case cube_direction::west: return "west";
-        case cube_direction::above: return "above";
-        case cube_direction::below: return "below";
+        case cube_direction::north:
+            return "north";
+        case cube_direction::east:
+            return "east";
+        case cube_direction::south:
+            return "south";
+        case cube_direction::west:
+            return "west";
+        case cube_direction::above:
+            return "above";
+        case cube_direction::below:
+            return "below";
 
         case cube_direction::last:
             break;

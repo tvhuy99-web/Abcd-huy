@@ -1788,7 +1788,7 @@ TEST_CASE( "format_consumption_requirements_scaling",
     SECTION( "multimag tool produces per-pocket totals scaled by uses" ) {
         item tool = make_multimag_consume_tool();
         const std::string s = tool.format_consumption_requirements(
- "", gun_mode_DEFAULT, 3 );
+                                  "", gun_mode_DEFAULT, 3 );
 
         CHECK( s.find( '6' ) != std::string::npos );
         CHECK( s.find( '3' ) != std::string::npos );
@@ -1923,7 +1923,7 @@ TEST_CASE( "gunmod_added_modes_inherit_DEFAULT_firing_requirements",
     SECTION( "format_consumption_requirements falls back to DEFAULT for unlisted mode" ) {
         item gun = make_multimag_consume_gun();
         const std::string s = gun.format_consumption_requirements(
- "", gun_mode_AUTO, 1 );
+                                  "", gun_mode_AUTO, 1 );
         CHECK_FALSE( s.empty() );
 
         CHECK( s.find( '1' ) != std::string::npos );
@@ -1946,12 +1946,12 @@ TEST_CASE( "format_consumption_requirements_legacy_item",
     item gun = make_loaded_glock();
     REQUIRE_FALSE( gun.uses_firing_requirements() );
     const std::string s_one = gun.format_consumption_requirements(
- "", gun_mode_DEFAULT, 1 );
+                                  "", gun_mode_DEFAULT, 1 );
 
     CHECK( s_one.find( '1' ) != std::string::npos );
 
     const std::string s_three = gun.format_consumption_requirements(
- "", gun_mode_DEFAULT, 3 );
+                                    "", gun_mode_DEFAULT, 3 );
     CHECK( s_three.find( '3' ) != std::string::npos );
 }
 

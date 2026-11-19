@@ -206,7 +206,7 @@ void catacurses::doupdate()
     refresh_display();
 }
 
-void catacurses::wredrawln( const window & , int , int )
+void catacurses::wredrawln( const window &, int, int )
 {
 
 

@@ -168,7 +168,9 @@ bool medical_ui::execute()
     ctxt.set_timeout( 16 );
 
     a11y::screen_scope reader( &ctxt, "medical",
-    [this]( const a11y::semantic_intent &intent ) { return reader_intent( intent ); } );
+    [this]( const a11y::semantic_intent & intent ) {
+        return reader_intent( intent );
+    } );
 
     while( true ) {
         ui_manager::redraw_invalidated();
@@ -194,7 +196,7 @@ bool medical_ui::execute()
             if( you->pick_wound_fix( bp ) ) {
                 if( a11y::enabled() ) {
                     add_msg( m_info, _( "Treatment selected for %s. "
-                                         "Follow the game's treatment progress and result messages." ),
+                                        "Follow the game's treatment progress and result messages." ),
                              body_part_name( bp ) );
                 }
                 return true;
@@ -402,7 +404,8 @@ std::string a11y::limb_health_description( const Character &who, const bodypart_
         const effect &mending = who.get_effect( effect_mending, part );
         const int percent = mending.is_null() || mending.get_max_duration() <= 0_turns ? 0 :
                             100 * mending.get_duration() / mending.get_max_duration();
-        return string_format( _( "Splinted.  Mending indicator %d of 5." ), std::clamp( percent / 20, 0, 5 ) );
+        return string_format( _( "Splinted.  Mending indicator %d of 5." ), std::clamp( percent / 20, 0,
+                              5 ) );
     }
     if( who.is_limb_broken( part ) ) {
         return _( "Broken." );
@@ -789,7 +792,7 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
     snapshot.summary = selected_tab == medical_tab_mode::TAB_LIMBS ? _( "Limbs" ) : _( "Summary" );
 
 
-    const auto urgency = [this]( const bodypart_id &part ) {
+    const auto urgency = [this]( const bodypart_id & part ) {
         if( you->has_effect( effect_infected, part ) ) {
             return 5;
         }
@@ -806,7 +809,7 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
     };
     std::vector<bodypart_id> urgent_first = you->get_all_body_parts( get_body_part_flags::sorted );
     std::stable_sort( urgent_first.begin(), urgent_first.end(),
-    [&]( const bodypart_id &a, const bodypart_id &b ) {
+    [&]( const bodypart_id & a, const bodypart_id & b ) {
         return urgency( a ) > urgency( b );
     } );
     int attention_count = 0;
@@ -824,8 +827,10 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
         snapshot.summary += "\n" + std::string(
                                 _( "Select a limb to see treatments; inspecting alone does not treat it." ) );
     }
-    for( const auto &tab : { std::make_pair( "medical:tab:limbs", _( "Limbs" ) ),
-                            std::make_pair( "medical:tab:summary", _( "Summary" ) ) } ) {
+    for( const auto &tab : {
+             std::make_pair( "medical:tab:limbs", _( "Limbs" ) ),
+             std::make_pair( "medical:tab:summary", _( "Summary" ) )
+         } ) {
         a11y::semantic_node node;
         node.id = tab.first;
         node.role = "tab";
@@ -842,8 +847,9 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
     a11y::semantic_table limbs_table;
     limbs_table.id = "medical:limbs";
     limbs_table.columns = { { "part", _( "Body part" ), "" },
-                            { "condition", _( "Condition" ), "" },
-                            { "flags", _( "Status" ), "" } };
+        { "condition", _( "Condition" ), "" },
+        { "flags", _( "Status" ), "" }
+    };
     snapshot.tables.push_back( limbs_table );
     const auto &parts = urgent_first;
     for( std::size_t i = 0; i < parts.size(); ++i ) {
@@ -858,7 +864,7 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
         const std::string condition = a11y::limb_health_description( *you, part );
         node.value = condition;
         std::string flags;
-        const auto append_flag = [&flags]( const std::string &flag ) {
+        const auto append_flag = [&flags]( const std::string & flag ) {
             if( !flags.empty() ) {
                 flags += ", ";
             }
@@ -883,10 +889,11 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
         node.table_id = "medical:limbs";
         node.row_index = static_cast<int>( i );
         node.cells = { { "part", node.label, "", "" },
-                       { "condition", condition, "", "" },
-                       { "flags", flags, "", "" } };
+            { "condition", condition, "", "" },
+            { "flags", flags, "", "" }
+        };
         node.detail = remove_color_tags( get_limb_effects( part ) + "\n" +
-                                        get_limb_wounds( part ) + "\n" + get_limb_scores_and_modifiers( part ) );
+                                         get_limb_wounds( part ) + "\n" + get_limb_scores_and_modifiers( part ) );
         node.selected = bp == part;
         node.position = i + 1;
         node.total = parts.size();
@@ -899,8 +906,8 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
     const diag_value *weighing = you->maybe_get_value( "last_weighting_time" );
     if( weighing ) {
         const std::string weight = string_format( "%.0f %s", convert_weight(
-                                      units::from_kilogram( you->get_value( "last_weighting_weight_kg" ).dbl() ) ),
-                                      weight_units() );
+                                       units::from_kilogram( you->get_value( "last_weighting_weight_kg" ).dbl() ) ),
+                                   weight_units() );
         summary += "\n" + std::string( _( "Weight" ) ) + ": " + weight + ". " +
                    string_format( _( "last weighed %s ago." ),
                                   to_string_approx( calendar::turn - time_point( weighing->dbl() ) ) );
@@ -949,7 +956,7 @@ struct healing_option {
 
 bool Character::pick_wound_fix( const bodypart_id &bp_id )
 {
-    const auto report_treatment_issue = [this]( const std::string &message ) {
+    const auto report_treatment_issue = [this]( const std::string & message ) {
         if( is_avatar() && a11y::enabled() ) {
             add_msg_if_player( m_info, "%s", message );
         } else {
@@ -1026,18 +1033,22 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         if( bp->get_wounds().empty() ) {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
 
-                report_treatment_issue( string_format( _( "The %s doesn't have any damage to repair." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s doesn't have any damage to repair." ),
+                                                       body_part_name( bp_id ) ) );
                 return false;
             } else {
-                report_treatment_issue( string_format( _( "The %s doesn't have any wounds to treat." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s doesn't have any wounds to treat." ),
+                                                       body_part_name( bp_id ) ) );
                 return false;
             }
         } else {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
-                report_treatment_issue( string_format( _( "The %s damage cannot be repaired." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s damage cannot be repaired." ),
+                                                       body_part_name( bp_id ) ) );
                 return false;
             } else {
-                report_treatment_issue( string_format( _( "The %s wounds cannot be treated." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s wounds cannot be treated." ),
+                                                       body_part_name( bp_id ) ) );
                 return false;
             }
         }
@@ -1112,14 +1123,14 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
             for( const wound_proficiency &prof : fix.proficiencies ) {
                 if( !has_proficiency( prof.prof ) ) {
                     descr += "\n" + string_format( prof.is_mandatory ?
-                                                    _( "Missing required proficiency: %s" ) :
-                                                    _( "Missing optional proficiency: %s" ), prof.prof->name() );
+                                                   _( "Missing required proficiency: %s" ) :
+                                                   _( "Missing optional proficiency: %s" ), prof.prof->name() );
                 }
             }
         }
         menu.addentry_desc( -1, true, -1, fix.get_name(), colorize( descr, col ) );
         menu.entries.back().a11y_value = opt.doable ? _( "Treatment requirements are met." ) :
-                                          _( "Treatment requirements are not met." );
+                                         _( "Treatment requirements are not met." );
 
     }
 

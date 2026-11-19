@@ -37,19 +37,24 @@ class restore_on_out_of_scope
         on_out_of_scope impl;
     public:
 
-        explicit restore_on_out_of_scope(T& t_in) : t(t_in), orig_t(t_in),
-            impl([this]() { t = std::move(orig_t); }) {
+        explicit restore_on_out_of_scope( T &t_in ) : t( t_in ), orig_t( t_in ),
+            impl( [this]() {
+            t = std::move( orig_t );
+        } ) {
         }
 
 
-        explicit restore_on_out_of_scope(T&& t_in) : t(t_in), orig_t(std::move(t_in)),
-            impl([this]() { t = std::move(orig_t); }) {
+        explicit restore_on_out_of_scope( T &&t_in ) : t( t_in ), orig_t( std::move( t_in ) ),
+            impl( [this]() {
+            t = std::move( orig_t );
+        } ) {
         }
 
 
 
-        template<typename U, typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, std::decay_t<U>>>>
-        restore_on_out_of_scope(U&&) = delete;
+        template < typename U, typename = std::enable_if_t <
+                       !std::is_same_v<std::decay_t<T>, std::decay_t<U> >>>
+                       restore_on_out_of_scope( U && ) = delete;
 
 
         void cancel() {

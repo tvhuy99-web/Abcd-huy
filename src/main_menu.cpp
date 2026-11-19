@@ -101,8 +101,8 @@ bool confirm_realtime_progression_for_accessibility()
     const std::string action = query_popup()
                                .context( "YESNOQUIT" )
                                .message( "%s", _( "Real-time turns are enabled.  Monsters may act periodically while you listen, "
-                                            "read menus, or prepare an action.  Yes keeps them enabled, No turns them "
-                                            "off and saves the setting, and Quit returns to the main menu." ) )
+                                         "read menus, or prepare an action.  Yes keeps them enabled, No turns them "
+                                         "off and saves the setting, and Quit returns to the main menu." ) )
                                .option( "YES" ).option( "NO" ).option( "QUIT" )
                                .cursor( 2 )
                                .query().action;
@@ -128,7 +128,7 @@ bool confirm_world_removal_for_reader( const std::string &worldname, size_t save
                                        bool delete_world )
 {
     const std::string saves = string_format( n_gettext( "%lu save", "%lu saves", save_count ),
-                                save_count );
+                              save_count );
     if( delete_world ) {
         return query_yn( string_format(
                              _( "Delete the world \"%1$s\" permanently?  This deletes the world folder and all %2$s inside it. This cannot be undone." ),
@@ -824,14 +824,16 @@ bool main_menu::opening_screen()
     bool reader_submenu_open = false;
     a11y::screen_scope reader( &ctxt, "MAIN_MENU",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.action == "cancel" ) {
+        if( intent.action == "cancel" )
+        {
             if( reader_submenu_open ) {
                 reader_submenu_open = false;
                 return "TIMEOUT";
             }
             return "QUIT";
         }
-        for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
+        for( std::size_t i = 0; i < vMenuItems.size(); ++i )
+        {
             if( intent.node == "tab:" + std::to_string( i ) ) {
                 if( sel1 != static_cast<int>( i ) ) {
                     reader_submenu_open = false;
@@ -868,16 +870,30 @@ bool main_menu::opening_screen()
                 return "TIMEOUT";
             }
         }
-        if( !reader_submenu_open ) {
+        if( !reader_submenu_open )
+        {
             return std::nullopt;
         }
         const std::string prefix = "item:" + std::to_string( sel1 ) + ':';
         int count = 0;
-        if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) { count = vNewGameSubItems.size(); }
-        if( sel1 == getopt( main_menu_opts::SETTINGS ) ) { count = vSettingsSubItems.size(); }
-        if( sel1 == getopt( main_menu_opts::LOADCHAR ) ) { count = world_generator->get_all_worlds().size(); }
-        if( sel1 == getopt( main_menu_opts::WORLD ) ) { count = world_generator->get_all_worlds().size() + 1; }
-        for( int i = 0; i < count; ++i ) {
+        if( sel1 == getopt( main_menu_opts::NEWCHAR ) )
+        {
+            count = vNewGameSubItems.size();
+        }
+        if( sel1 == getopt( main_menu_opts::SETTINGS ) )
+        {
+            count = vSettingsSubItems.size();
+        }
+        if( sel1 == getopt( main_menu_opts::LOADCHAR ) )
+        {
+            count = world_generator->get_all_worlds().size();
+        }
+        if( sel1 == getopt( main_menu_opts::WORLD ) )
+        {
+            count = world_generator->get_all_worlds().size() + 1;
+        }
+        for( int i = 0; i < count; ++i )
+        {
             if( intent.node == prefix + std::to_string( i ) ) {
                 sel2 = i;
                 sel_line = 0;
@@ -915,8 +931,12 @@ bool main_menu::opening_screen()
                 }
             }
             std::vector<std::string> items;
-            if( reader_submenu_open && sel1 == getopt( main_menu_opts::NEWCHAR ) ) { items = vNewGameSubItems; }
-            if( reader_submenu_open && sel1 == getopt( main_menu_opts::SETTINGS ) ) { items = vSettingsSubItems; }
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::NEWCHAR ) ) {
+                items = vNewGameSubItems;
+            }
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::SETTINGS ) ) {
+                items = vSettingsSubItems;
+            }
             if( reader_submenu_open && sel1 == getopt( main_menu_opts::WORLD ) ) {
                 items.emplace_back( _( "Create New World" ) );
             }
@@ -938,7 +958,7 @@ bool main_menu::opening_screen()
                     node.detail = remove_color_tags( vNewGameHints[i] );
                     if( i == 3 || i == 4 ) {
                         node.detail += " " + std::string( _(
-                                               "Creates a NEW character.  To continue a saved character, choose Load Game." ) );
+                                                              "Creates a NEW character.  To continue a saved character, choose Load Game." ) );
                     }
                 }
                 if( sel1 == getopt( main_menu_opts::WORLD ) && i == 0 ) {
@@ -971,7 +991,8 @@ bool main_menu::opening_screen()
                 body.id = "document:" + std::to_string( sel1 );
                 body.role = "document";
                 body.label = _( "Read this text" );
-                body.detail = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd : mmenu_credits );
+                body.detail = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
+                                                 mmenu_credits );
                 snapshot.nodes.push_back( std::move( body ) );
             }
             reader.update( std::move( snapshot ), true );
@@ -1426,7 +1447,7 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         cache_mod_ids.push_back( mod.str() );
     }
     blueprint_cache::begin( ( world->folder_path() /
-                             ( savegame.base_path() + ".loadcache" ) ).get_unrelative_path(),
+                              ( savegame.base_path() + ".loadcache" ) ).get_unrelative_path(),
                             getVersionString(), cache_mod_ids,
                             ( world->folder_path() / PATH_INFO::worldoptions() ).get_unrelative_path() );
 #endif
@@ -1712,14 +1733,16 @@ void main_menu::world_tab( const std::string &worldname )
 
     auto clear_world = [this, &worldname]( bool do_delete ) -> bool {
         // NOLINTNEXTLINE(cata-use-localized-sorting)
-        if( last_world_pos > 0 && worldname <= world_generator->all_worldnames()[last_world_pos] ) {
+        if( last_world_pos > 0 && worldname <= world_generator->all_worldnames()[last_world_pos] )
+        {
             last_world_pos--;
         }
         const WORLD *world = world_generator->get_world( worldname );
         const std::filesystem::path folder = world != nullptr
-                                             ? world->folder_path().get_unrelative_path()
-                                             : std::filesystem::path();
-        if( folder.empty() ) {
+        ? world->folder_path().get_unrelative_path()
+        : std::filesystem::path();
+        if( folder.empty() )
+        {
             return false;
         }
         world_generator->delete_world( worldname, do_delete );
@@ -1727,7 +1750,8 @@ void main_menu::world_tab( const std::string &worldname )
         MAPBUFFER.clear();
         overmap_buffer.clear();
         std::error_code ec;
-        if( do_delete ) {
+        if( do_delete )
+        {
             const bool gone = !std::filesystem::exists( folder, ec );
             if( ec || !gone ) {
                 return false;
@@ -1738,11 +1762,13 @@ void main_menu::world_tab( const std::string &worldname )
 
 
 
-        if( !std::filesystem::exists( folder, ec ) ) {
+        if( !std::filesystem::exists( folder, ec ) )
+        {
             return false;
         }
         for( std::filesystem::recursive_directory_iterator it( folder, ec ), end;
-             !ec && it != end; it.increment( ec ) ) {
+             !ec && it != end; it.increment( ec ) )
+        {
             if( !it->is_regular_file( ec ) ) {
                 continue;
             }
@@ -1826,7 +1852,7 @@ void main_menu::world_tab( const std::string &worldname )
                 const bool reset = clear_world( false );
                 if( a11y::enabled() ) {
                     popup( reset ? _( "World \"%s\" reset.  All of its saves were removed." )
-                         : _( "World \"%s\" could not be reset." ), worldname );
+                           : _( "World \"%s\" could not be reset." ), worldname );
                 }
             }
             break;

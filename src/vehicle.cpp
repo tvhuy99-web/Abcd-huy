@@ -1295,7 +1295,7 @@ bool vehicle::is_structural_part_removed() const
 ret_val<void> vehicle::can_mount( const point_rel_ms &dp, const vpart_info &vpi ) const
 {
     const std::vector<int> parts_in_square = parts_at_relative( dp,
- false, false );
+            false, false );
 
     if( parts_in_square.empty() ) {
 
@@ -2245,7 +2245,7 @@ bool vehicle::remove_part( vehicle_part &vp, RemovePartHandler &handler )
 
     if( vpi.has_flag( "BIKE_RACK_VEH" ) && vp.has_flag( vp_flag::carrying_flag ) ) {
         for( const unrackable_vehicle &unrackable : find_vehicles_to_unrack( index_of_part( &vp ),
- false ) ) {
+                false ) ) {
 
             if( !remove_carried_vehicle( handler.get_map_ref(), unrackable.parts, unrackable.racks ) ) {
                 debugmsg( "%s broke, but could not un-rack %s from %s.", vpi.id.str(),
@@ -4555,7 +4555,7 @@ void vehicle::check_flats_do_rim_damage_or_sounds( map &here )
                         add_msg( m_warning, _( "The %s is damaged by driving with a flat!" ),
                                  vp.name() );
                         a11y::android::diagnostic_event( "AUTODRIVE_HAZARD",
-                                "type=flat_tire_rim_damage" );
+                                                         "type=flat_tire_rim_damage" );
                     }
                 }
 
@@ -6825,33 +6825,33 @@ void vehicle::gain_moves( map &here )
             } else {
 
 
-            if( a11y_obstacle_override &&
-                ( !hazard || hazard->label != a11y_override_obstacle_name ||
-                  hazard->distance > braking_range ) ) {
-                a11y_obstacle_override = false;
-                a11y_override_obstacle_name.clear();
-            }
-            if( !a11y_obstacle_override && hazard && hazard->distance <= braking_range ) {
-                a11y_obstacle_resume_speed = cruise_velocity != 0 ?
-                                             cruise_velocity : a11y_obstacle_resume_speed;
-                a11y_obstacle_stop = true;
-                a11y_stopped_obstacle_name = hazard->label;
-                a11y_stopped_heading = turn_dir;
-                cruise_velocity = 0;
-                if( velocity != 0 ) {
-                    handbrake( here );
+                if( a11y_obstacle_override &&
+                    ( !hazard || hazard->label != a11y_override_obstacle_name ||
+                      hazard->distance > braking_range ) ) {
+                    a11y_obstacle_override = false;
+                    a11y_override_obstacle_name.clear();
                 }
-                a11y_continuous_drive = velocity != 0;
-                if( !a11y_brake_alerted ) {
-                    add_msg( m_warning,
-                             reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
-                             _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
-                             hazard->label, hazard->distance );
+                if( !a11y_obstacle_override && hazard && hazard->distance <= braking_range ) {
+                    a11y_obstacle_resume_speed = cruise_velocity != 0 ?
+                                                 cruise_velocity : a11y_obstacle_resume_speed;
+                    a11y_obstacle_stop = true;
+                    a11y_stopped_obstacle_name = hazard->label;
+                    a11y_stopped_heading = turn_dir;
+                    cruise_velocity = 0;
+                    if( velocity != 0 ) {
+                        handbrake( here );
+                    }
+                    a11y_continuous_drive = velocity != 0;
+                    if( !a11y_brake_alerted ) {
+                        add_msg( m_warning,
+                                 reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
+                                 _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
+                                 hazard->label, hazard->distance );
+                    }
+                    a11y_brake_alerted = true;
+                } else if( !a11y_obstacle_override ) {
+                    a11y_brake_alerted = false;
                 }
-                a11y_brake_alerted = true;
-            } else if( !a11y_obstacle_override ) {
-                a11y_brake_alerted = false;
-            }
             }
         } else {
             a11y_brake_alerted = false;
@@ -8331,7 +8331,7 @@ int vehicle::damage_direct( map &here, vehicle_part &vp, int dmg,
     if( is_autodriving && interrupt_autodrive ) {
         if( a11y::android::enabled() && get_driver( here ) == &get_player_character() ) {
             a11y::android::diagnostic_event( "AUTODRIVE_STOP",
-                    "reason=vehicle_part_damage velocity=" + std::to_string( velocity ) );
+                                             "reason=vehicle_part_damage velocity=" + std::to_string( velocity ) );
         }
         stop_autodriving();
     }

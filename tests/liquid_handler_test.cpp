@@ -18,7 +18,8 @@
 static const itype_id itype_backpack( "backpack" );
 
 static const itype_id itype_test_liquid_1ml( "test_liquid_1ml" );
-static const itype_id itype_test_watertight_open_sealed_container_250ml( "test_watertight_open_sealed_container_250ml" );
+static const itype_id
+itype_test_watertight_open_sealed_container_250ml( "test_watertight_open_sealed_container_250ml" );
 
 
 

@@ -170,7 +170,8 @@ void smart_controller_ui::control()
     std::optional<int> draft_hi;
     a11y::screen_scope reader( &ctxt, "smart-engine-controller",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-        if( intent.node == "smart:enabled" ) {
+        if( intent.node == "smart:enabled" )
+        {
             if( intent.action == "focus" ) {
                 selection = smart_controller_ui_selection::enabled;
                 return std::string( "TIMEOUT" );
@@ -197,7 +198,8 @@ void smart_controller_ui::control()
             }
             return std::nullopt;
         }
-        if( intent.node == "smart:battery_lo" || intent.node == "smart:battery_hi" ) {
+        if( intent.node == "smart:battery_lo" || intent.node == "smart:battery_hi" )
+        {
             const bool is_lo = intent.node == "smart:battery_lo";
             std::optional<int> &draft = is_lo ? draft_lo : draft_hi;
             if( intent.action == "focus" ) {
@@ -230,7 +232,8 @@ void smart_controller_ui::control()
             }
             return std::nullopt;
         }
-        if( intent.node == "smart:manual" ) {
+        if( intent.node == "smart:manual" )
+        {
             if( intent.action == "focus" ) {
                 selection = smart_controller_ui_selection::manual;
                 return std::string( "TIMEOUT" );
@@ -276,7 +279,7 @@ void smart_controller_ui::control()
         snapshot.nodes.push_back( enabled_node );
 
         const auto threshold_node = [&]( const char *id, const std::string & label,
-        const std::string & detail, int applied, int minimum, int maximum,
+                                         const std::string & detail, int applied, int minimum, int maximum,
         const std::optional<int> &draft, const char *depends ) {
             a11y::semantic_node node;
             node.id = id;

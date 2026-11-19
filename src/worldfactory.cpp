@@ -499,7 +499,7 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
     }
 
 
-    const auto announce_auto_pick = []( const std::string &name ) {
+    const auto announce_auto_pick = []( const std::string & name ) {
         if( a11y::enabled() ) {
             a11y::android::announce( string_format( _( "Selected world: %s." ), name ), 1 );
         }
@@ -676,9 +676,11 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
     std::optional<std::string> accessible_world_selection;
 
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "world-selection", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "world-selection", [&]( const a11y::semantic_intent & intent ) ->
+    std::optional<std::string> {
         const std::string world_prefix = "world:item:";
-        if( intent.action == "activate" && intent.node.rfind( world_prefix, 0 ) == 0 ) {
+        if( intent.action == "activate" && intent.node.rfind( world_prefix, 0 ) == 0 )
+        {
             const std::string selected_world = intent.node.substr( world_prefix.size() );
             accessible_world_selection = selected_world;
             return "A11Y_INTERNAL_SELECT_WORLD";
@@ -686,7 +688,9 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
         return a11y::registered_intent( ctxt, intent );
     } );
     const auto update_reader = [&]() {
-        if( !a11y::enabled() ) { return; }
+        if( !a11y::enabled() ) {
+            return;
+        }
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "World selection" );
         snapshot.summary = _( "Activate a world to select it. Confirm enters the selected world." );
@@ -701,7 +705,9 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
                 const size_t saves = get_world( world_name )->world_saves.size();
                 node.value = string_format( n_gettext( "%lu save", "%lu saves", saves ), saves );
                 node.selected = page == selpage && static_cast<int>( row ) == sel;
-                if( node.selected ) { selected_id = node.id; }
+                if( node.selected ) {
+                    selected_id = node.id;
+                }
                 snapshot.nodes.push_back( std::move( node ) );
             }
         }
@@ -1049,12 +1055,15 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
 
     std::unordered_map<std::string, size_t> reader_targets;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "active-world-mods", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "active-world-mods", [&]( const a11y::semantic_intent & intent ) ->
+    std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
-        if( intent.action != "focus" && intent.action != "activate" ) {
+        if( intent.action != "focus" && intent.action != "activate" )
+        {
             return std::nullopt;
         }
         cursor = static_cast<int>( target->second );
@@ -1070,7 +1079,8 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Active world mods" );
-        snapshot.summary = _( "Read the mods enabled for this world and their load order. This list does not change the world." );
+        snapshot.summary =
+            _( "Read the mods enabled for this world and their load order. This list does not change the world." );
         if( world_mods.empty() ) {
             a11y::semantic_node empty;
             empty.id = "active-mods:empty";
@@ -1496,12 +1506,14 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
     std::string reader_focus;
     recalc_start = true;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "mod-selection", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    &ctxt, "mod-selection", [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         const auto target = reader_targets.find( intent.node );
-        if( target == reader_targets.end() ) {
+        if( target == reader_targets.end() )
+        {
             return a11y::registered_intent( ctxt, intent );
         }
-        if( target->second.category ) {
+        if( target->second.category )
+        {
             if( intent.action == "activate" ) {
                 iCurrentTab = target->second.index;
                 active_header = 0;
@@ -1513,7 +1525,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             }
             return std::nullopt;
         }
-        if( intent.action != "focus" && intent.action != "activate" ) {
+        if( intent.action != "focus" && intent.action != "activate" )
+        {
             return std::nullopt;
         }
         active_header = target->second.active_list ? 1 : 0;
@@ -1525,11 +1538,14 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
                std::optional<std::string>( "A11Y_INTERNAL_MOD_FOCUS" );
     } );
     const auto update_reader = [&]() {
-        if( !a11y::enabled() ) { return; }
+        if( !a11y::enabled() ) {
+            return;
+        }
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "World mod selection" );
-        snapshot.summary = _( "Browse mod categories. Activate an available mod to add it, or an active mod to remove it. Move commands change load order." );
+        snapshot.summary =
+            _( "Browse mod categories. Activate an available mod to add it, or an active mod to remove it. Move commands change load order." );
 
         const std::vector<std::pair<std::string, translation>> &mod_tabs = get_mod_list_tabs();
         for( size_t i = 0; i < mod_tabs.size(); ++i ) {
@@ -1569,7 +1585,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
 
         const std::string available_parent = "mod:category:" +
                                              std::to_string( iCurrentTab );
-        const auto mod_detail = [&]( const mod_id &id ) {
+        const auto mod_detail = [&]( const mod_id & id ) {
             if( !id.is_valid() ) {
                 return string_format( _( "This mod is missing: %s." ), id.str() );
             }
@@ -1589,7 +1605,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
                 conflict_names.reserve( id->conflicts.size() );
                 for( const mod_id &conflict : id->conflicts ) {
                     conflict_names.emplace_back( conflict.is_valid() ? conflict->name() :
-                                                  conflict.str() );
+                                                 conflict.str() );
                 }
                 detail += " " + string_format( _( "Declared conflicts: %s." ),
                                                enumerate_as_string( conflict_names ) );
@@ -1605,7 +1621,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
 
 
 
-        const auto mod_has_detail = []( const mod_id &id ) {
+        const auto mod_has_detail = []( const mod_id & id ) {
             if( !id.is_valid() ) {
                 return true;
             }
@@ -1639,7 +1655,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             node.depth = 1;
             node.role = "button";
             node.label = id.is_valid() ? id->name() : _( "Missing mod" );
-            node.value = std::find( active_mod_order.begin(), active_mod_order.end(), id ) != active_mod_order.end() ?
+            node.value = std::find( active_mod_order.begin(), active_mod_order.end(),
+                                    id ) != active_mod_order.end() ?
                          _( "Already in load order" ) : _( "Available to add" );
             if( mod_has_detail( id ) ) {
                 node.value += " " + std::string( _( "Has details." ) );
@@ -1729,7 +1746,9 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         }
         snapshot.focus.clear();
         if( !reader_focus.empty() && std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
-        [&]( const a11y::semantic_node &node ) { return node.id == reader_focus; } ) ) {
+        [&]( const a11y::semantic_node & node ) {
+        return node.id == reader_focus;
+    } ) ) {
             snapshot.focus = reader_focus;
         }
         if( snapshot.focus.empty() ) {
@@ -2030,11 +2049,13 @@ int worldfactory::show_worldgen_basic( WORLD *world )
     std::unordered_map<std::string, std::string> accessible_actions;
     std::string accessible_focus;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
-            &ctxt, "world-generation", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                &ctxt, "world-generation", [&]( const a11y::semantic_intent & intent ) ->
+    std::optional<std::string> {
         const auto selection = accessible_selection.find( intent.node );
         if( intent.action == "set_value" && selection != accessible_selection.end() &&
             intent.node.compare( 0, std::string( "worldgen:slider:" ).size(),
-                                 "worldgen:slider:" ) == 0 ) {
+                                 "worldgen:slider:" ) == 0 )
+        {
             const int slider_index = selection->second - 1;
             if( slider_index < 0 || static_cast<size_t>( slider_index ) >= wg_slevels.size() ) {
                 return std::nullopt;
@@ -2055,7 +2076,8 @@ int worldfactory::show_worldgen_basic( WORLD *world )
             }
             return requested > current ? "RIGHT" : "LEFT";
         }
-        if( intent.action == "focus" || intent.action == "activate" ) {
+        if( intent.action == "focus" || intent.action == "activate" )
+        {
             if( selection != accessible_selection.end() ) {
                 sel_opt = selection->second;
                 accessible_focus = intent.node;
@@ -2071,13 +2093,16 @@ int worldfactory::show_worldgen_basic( WORLD *world )
         return a11y::registered_intent( ctxt, intent );
     } );
     const auto update_reader = [&]() {
-        if( !a11y::enabled() ) { return; }
+        if( !a11y::enabled() ) {
+            return;
+        }
         accessible_selection.clear();
         accessible_actions.clear();
 
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Create world" );
-        snapshot.summary = _( "Set a world name and options. Adjust each option, choose mods, then finish to create the world." );
+        snapshot.summary =
+            _( "Set a world name and options. Adjust each option, choose mods, then finish to create the world." );
 
         a11y::semantic_node name;
         name.id = "worldgen:name";
@@ -2121,8 +2146,8 @@ int worldfactory::show_worldgen_basic( WORLD *world )
         const int finish_index = static_cast<int>( wg_sliders.size() + 1 );
         const int reset_index = finish_index + 1;
         const int randomize_index = finish_index + 2;
-        const auto add_worldgen_action = [&]( const std::string &id, const std::string &label,
-        const std::string &detail, int selected_index, const std::string &action ) {
+        const auto add_worldgen_action = [&]( const std::string & id, const std::string & label,
+        const std::string & detail, int selected_index, const std::string & action ) {
             a11y::semantic_node node;
             node.id = id;
             node.label = label;
@@ -2166,7 +2191,9 @@ int worldfactory::show_worldgen_basic( WORLD *world )
         }
         snapshot.focus = snapshot.nodes.empty() ? std::string() : "worldgen:name";
         if( !accessible_focus.empty() && std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
-        [&]( const a11y::semantic_node &node ) { return node.id == accessible_focus; } ) ) {
+        [&]( const a11y::semantic_node & node ) {
+        return node.id == accessible_focus;
+    } ) ) {
             snapshot.focus = accessible_focus;
         }
         for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {

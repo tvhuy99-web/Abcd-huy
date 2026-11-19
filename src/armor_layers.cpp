@@ -624,9 +624,9 @@ struct armor_layers_reader {
             ctxt( ctxt_arg ), guy( guy_arg ), worn( worn_arg ),
             armor_cat( armor_cat_arg ), tabindex( tabindex_arg ),
             leftListIndex( leftListIndex_arg ), selected( selected_arg ),
-            screen( &ctxt_arg, "armor-layers", [this]( const a11y::semantic_intent &intent ) {
-                return handle( intent );
-            } ) {
+            screen( &ctxt_arg, "armor-layers", [this]( const a11y::semantic_intent & intent ) {
+            return handle( intent );
+        } ) {
         }
 
         void update() {
@@ -762,7 +762,7 @@ struct armor_layers_reader {
         std::string item_detail( const item &worn_item, const bodypart_id &tab_bp,
                                  int display_index ) const {
             std::string detail;
-            const auto append_line = [&detail]( const std::string &line ) {
+            const auto append_line = [&detail]( const std::string & line ) {
                 if( line.empty() ) {
                     return;
                 }
@@ -849,7 +849,7 @@ struct armor_layers_reader {
 
 
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
-            [&intent]( const item_binding &b ) {
+            [&intent]( const item_binding & b ) {
                 return b.id == intent.node;
             } );
             if( binding != bindings.end() &&
@@ -873,7 +873,7 @@ struct armor_layers_reader {
                 if( intent.action == "read_detail" ) {
                     a11y::announce_full_item_info( **found,
                                                    item_detail( **found, current_tab(),
-                                                   static_cast<int>( std::distance( shown.begin(), found ) ) ) );
+                                                           static_cast<int>( std::distance( shown.begin(), found ) ) ) );
                     return "TIMEOUT";
                 }
                 leftListIndex = static_cast<int>( std::distance( shown.begin(), found ) );

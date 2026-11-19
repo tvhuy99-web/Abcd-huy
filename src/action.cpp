@@ -546,7 +546,7 @@ std::optional<std::string> press_x_if_bound( action_id act )
     input_context ctxt = get_default_mode_input_context();
     std::string description = action_ident( act );
     if( ctxt.keys_bound_to( description, -1,
- false ).empty() ) {
+                            false ).empty() ) {
         return std::nullopt;
     }
     return press_x( act );
@@ -663,7 +663,7 @@ bool can_butcher_at( map &here, const tripoint_bub_ms &p )
     for( item *tool : player_character.items_with( has_salvage_use ) ) {
         item *usable = tool->get_usable_item( salvage_string );
         const salvage_actor *actor = dynamic_cast<const salvage_actor *>(
-                                          usable->get_use( salvage_string )->get_actor_ptr() );
+                                         usable->get_use( salvage_string )->get_actor_ptr() );
         if( actor == nullptr ) {
             continue;
         }
@@ -851,8 +851,8 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         if( observed.door != a11y::door_state::none ) {
             name = !observed.furniture.empty() ? observed.furniture : observed.terrain;
             const std::string state = observed.door == a11y::door_state::locked ? _( "Locked" ) :
-                                observed.door == a11y::door_state::closed ? _( "Closed" ) :
-                                _( "Open" );
+                                      observed.door == a11y::door_state::closed ? _( "Closed" ) :
+                                      _( "Open" );
             name += " (" + state + ")";
         }
         menu.addentry_desc( index, true, -1,
@@ -1317,7 +1317,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
 
     temp_hide_advanced_inv();
     a11y::screen_scope reader( &ctxt, "adjacent-direction",
-    [&]( const a11y::semantic_intent &intent ) {
+    [&]( const a11y::semantic_intent & intent ) {
         return a11y::registered_intent( ctxt, intent );
     } );
     std::string action;

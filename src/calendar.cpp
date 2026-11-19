@@ -64,15 +64,24 @@ template<>
 std::string enum_to_string<moon_phase>( moon_phase phase_num )
 {
     switch( phase_num ) {
-        case moon_phase::MOON_NEW: return "MOON_NEW";
-        case moon_phase::MOON_WAXING_CRESCENT: return "MOON_WAXING_CRESCENT";
-        case moon_phase::MOON_HALF_MOON_WAXING: return "MOON_HALF_MOON_WAXING";
-        case moon_phase::MOON_WAXING_GIBBOUS: return "MOON_WAXING_GIBBOUS";
-        case moon_phase::MOON_FULL: return "MOON_FULL";
-        case moon_phase::MOON_WANING_CRESCENT: return "MOON_WANING_CRESCENT";
-        case moon_phase::MOON_HALF_MOON_WANING: return "MOON_HALF_MOON_WANING";
-        case moon_phase::MOON_WANING_GIBBOUS: return "MOON_WANING_GIBBOUS";
-        case moon_phase::MOON_PHASE_MAX: break;
+        case moon_phase::MOON_NEW:
+            return "MOON_NEW";
+        case moon_phase::MOON_WAXING_CRESCENT:
+            return "MOON_WAXING_CRESCENT";
+        case moon_phase::MOON_HALF_MOON_WAXING:
+            return "MOON_HALF_MOON_WAXING";
+        case moon_phase::MOON_WAXING_GIBBOUS:
+            return "MOON_WAXING_GIBBOUS";
+        case moon_phase::MOON_FULL:
+            return "MOON_FULL";
+        case moon_phase::MOON_WANING_CRESCENT:
+            return "MOON_WANING_CRESCENT";
+        case moon_phase::MOON_HALF_MOON_WANING:
+            return "MOON_HALF_MOON_WANING";
+        case moon_phase::MOON_WANING_GIBBOUS:
+            return "MOON_WANING_GIBBOUS";
+        case moon_phase::MOON_PHASE_MAX:
+            break;
     }
     cata_fatal( "Invalid moon_phase %d", phase_num );
 }
@@ -80,13 +89,16 @@ template<>
 std::string enum_to_string<time_accuracy>( time_accuracy acc )
 {
     switch( acc ) {
-        case time_accuracy::PARTIAL: return "PARTIAL";
-        case time_accuracy::FULL: return "FULL";
+        case time_accuracy::PARTIAL:
+            return "PARTIAL";
+        case time_accuracy::FULL:
+            return "FULL";
         case time_accuracy::NUM_TIME_ACCURACY:
-        case time_accuracy::NONE: break;
+        case time_accuracy::NONE:
+            break;
         default:
             DebugLog( DebugLevel::D_WARNING, DebugClass::D_GAME )
-                << "Invalid time_accuracy " << static_cast<int>( acc );
+                    << "Invalid time_accuracy " << static_cast<int>( acc );
     }
     return "NONE";
 }

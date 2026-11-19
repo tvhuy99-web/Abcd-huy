@@ -136,7 +136,8 @@ int snake_game::start_game()
     a11y::screen_scope reader( &ctxt, "snake",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.node == "snake:dir:up" || intent.node == "snake:dir:down" ||
-            intent.node == "snake:dir:left" || intent.node == "snake:dir:right" ) {
+            intent.node == "snake:dir:left" || intent.node == "snake:dir:right" )
+        {
             if( intent.action == "focus" ) {
 
 
@@ -159,7 +160,8 @@ int snake_game::start_game()
             }
             return std::nullopt;
         }
-        if( intent.node == "snake:fruit" || intent.node == "snake:body" ) {
+        if( intent.node == "snake:fruit" || intent.node == "snake:body" )
+        {
 
             return std::nullopt;
         }
@@ -291,18 +293,23 @@ int snake_game::start_game()
             const auto body_next_to_head = [&]( int dy, int dx ) -> bool {
                 int ny = head_y + dy;
                 int nx = head_x + dx;
-                if( ny == 0 ) {
+                if( ny == 0 )
+                {
                     ny += FULL_SCREEN_HEIGHT - 2;
-                } else if( ny == FULL_SCREEN_HEIGHT - 1 ) {
+                } else if( ny == FULL_SCREEN_HEIGHT - 1 )
+                {
                     ny -= FULL_SCREEN_HEIGHT - 2;
                 }
-                if( nx == 0 ) {
+                if( nx == 0 )
+                {
                     nx += FULL_SCREEN_WIDTH - 2;
-                } else if( nx == FULL_SCREEN_WIDTH - 1 ) {
+                } else if( nx == FULL_SCREEN_WIDTH - 1 )
+                {
                     nx -= FULL_SCREEN_WIDTH - 2;
                 }
                 const auto row_it = mSnakeBody.find( ny );
-                if( row_it == mSnakeBody.end() ) {
+                if( row_it == mSnakeBody.end() )
+                {
                     return false;
                 }
                 const auto cell_it = row_it->second.find( nx );

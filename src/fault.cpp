@@ -122,9 +122,9 @@ void faults::finalize()
     fault_fixes_factory.finalize();
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=faults fault_factory_ms=" <<
-                              fault_ms << " fixes_factory_ms=" <<
-                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - started ).count() - fault_ms;
+                               fault_ms << " fixes_factory_ms=" <<
+                               std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - started ).count() - fault_ms;
 #endif
 
     for( const fault &f : fault_factory.get_all() ) {

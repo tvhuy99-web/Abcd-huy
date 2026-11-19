@@ -499,7 +499,7 @@ Character::Character() :
     dex_max = 8;
     int_max = 8;
     per_max = 8;
-    set_dodges_left(1);
+    set_dodges_left( 1 );
     blocks_left = 1;
     str_bonus = 0;
     dex_bonus = 0;
@@ -572,7 +572,7 @@ Character::Character() :
     set_value( "THIEF_MODE", "THIEF_ASK" );
     for( const auto &v : vitamin::all() ) {
         vitamin_levels[ v.first ] = 0;
-        daily_vitamins[v.first] = { 0,0 };
+        daily_vitamins[v.first] = { 0, 0 };
     }
 
     if( !!g && json_flag::is_ready() ) {
@@ -580,7 +580,7 @@ Character::Character() :
         trait_flag_cache.clear();
         bio_flag_cache.clear();
         calc_encumbrance();
-        worn.recalc_ablative_blocking(this);
+        worn.recalc_ablative_blocking( this );
     }
 }
 
@@ -3426,10 +3426,14 @@ std::string enum_to_string<character_stat>( character_stat data )
 {
     switch( data ) {
 
-    case character_stat::STRENGTH:     return "STR";
-    case character_stat::DEXTERITY:    return "DEX";
-    case character_stat::INTELLIGENCE: return "INT";
-    case character_stat::PERCEPTION:   return "PER";
+        case character_stat::STRENGTH:
+            return "STR";
+        case character_stat::DEXTERITY:
+            return "DEX";
+        case character_stat::INTELLIGENCE:
+            return "INT";
+        case character_stat::PERCEPTION:
+            return "PER";
 
 
         case character_stat::DUMMY_STAT:
@@ -3441,10 +3445,14 @@ std::string enum_to_full_string( character_stat data )
 {
     switch( data ) {
 
-    case character_stat::STRENGTH:     return "strength";
-    case character_stat::DEXTERITY:    return "dexterity";
-    case character_stat::INTELLIGENCE: return "intelligence";
-    case character_stat::PERCEPTION:   return "perception";
+        case character_stat::STRENGTH:
+            return "strength";
+        case character_stat::DEXTERITY:
+            return "dexterity";
+        case character_stat::INTELLIGENCE:
+            return "intelligence";
+        case character_stat::PERCEPTION:
+            return "perception";
 
 
         case character_stat::DUMMY_STAT:
@@ -4783,10 +4791,14 @@ std::string get_stat_name( character_stat Stat )
 {
     switch( Stat ) {
 
-    case character_stat::STRENGTH:     return pgettext( "strength stat", "STR" );
-    case character_stat::DEXTERITY:    return pgettext( "dexterity stat", "DEX" );
-    case character_stat::INTELLIGENCE: return pgettext( "intelligence stat", "INT" );
-    case character_stat::PERCEPTION:   return pgettext( "perception stat", "PER" );
+        case character_stat::STRENGTH:
+            return pgettext( "strength stat", "STR" );
+        case character_stat::DEXTERITY:
+            return pgettext( "dexterity stat", "DEX" );
+        case character_stat::INTELLIGENCE:
+            return pgettext( "intelligence stat", "INT" );
+        case character_stat::PERCEPTION:
+            return pgettext( "perception stat", "PER" );
 
         default:
             break;
@@ -5106,7 +5118,7 @@ void Character::did_hit( Creature &target )
 }
 
 void Character::on_hit( map *here, Creature *source, bodypart_id bp_hit,
-                        float , dealt_projectile_attack const *const proj )
+                        float, dealt_projectile_attack const *const proj )
 {
     check_dead_state( here );
     if( source == nullptr || proj != nullptr ) {

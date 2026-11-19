@@ -320,13 +320,13 @@ bool darken_predicate( int r, int g, int b )
     return std::abs( r - g ) < 8 && std::abs( g - b ) < 8 && r < 80;
 }
 
-bool warm_predicate( int r, int , int b )
+bool warm_predicate( int r, int, int b )
 {
 
     return r > b + 5;
 }
 
-bool cool_predicate( int r, int , int b )
+bool cool_predicate( int r, int, int b )
 {
 
     return b > r + 5;

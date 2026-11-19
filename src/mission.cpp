@@ -997,10 +997,14 @@ std::string enum_to_string<mission::mission_status>( mission::mission_status dat
 {
     switch( data ) {
 
-        case mission::mission_status::yet_to_start: return "yet_to_start";
-        case mission::mission_status::in_progress: return "in_progress";
-        case mission::mission_status::success: return "success";
-        case mission::mission_status::failure: return "failure";
+        case mission::mission_status::yet_to_start:
+            return "yet_to_start";
+        case mission::mission_status::in_progress:
+            return "in_progress";
+        case mission::mission_status::success:
+            return "success";
+        case mission::mission_status::failure:
+            return "failure";
 
         case mission::mission_status::num_mission_status:
             break;

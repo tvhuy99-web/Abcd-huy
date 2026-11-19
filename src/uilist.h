@@ -234,7 +234,7 @@ class uilist_callback
         virtual void select( uilist * ) {}
 
         virtual void confirm( uilist * ) {}
-        virtual bool key( const input_context &, const input_event & , int ,
+        virtual bool key( const input_context &, const input_event &, int,
                           uilist * ) {
             return false;
         }

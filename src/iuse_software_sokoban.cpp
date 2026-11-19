@@ -261,8 +261,9 @@ int sokoban_game::start_game()
 
 
     a11y::screen_scope reader( &ctxt, "sokoban",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
-        if( intent.node.rfind( "soko:", 0 ) == 0 ) {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node.rfind( "soko:", 0 ) == 0 )
+        {
             return std::string( "TIMEOUT" );
         }
         return a11y::registered_intent( ctxt, intent );
@@ -315,32 +316,40 @@ int sokoban_game::start_game()
         const auto &board = mLevel;
         const auto tile_at = [&board]( int y, int x ) -> std::string {
             const auto row_it = board.find( y );
-            if( row_it == board.end() ) {
+            if( row_it == board.end() )
+            {
                 return "#";
             }
             const auto cell_it = row_it->second.find( x );
-            if( cell_it == row_it->second.end() ) {
+            if( cell_it == row_it->second.end() )
+            {
                 return "#";
             }
             return cell_it->second;
         };
-        const auto describe_tile = []( const std::string &tile ) -> std::string {
-            if( tile == "#" ) {
+        const auto describe_tile = []( const std::string & tile ) -> std::string {
+            if( tile == "#" )
+            {
                 return _( "wall" );
             }
-            if( tile == "$" ) {
+            if( tile == "$" )
+            {
                 return _( "package" );
             }
-            if( tile == "*" ) {
+            if( tile == "*" )
+            {
                 return _( "package on goal" );
             }
-            if( tile == "." ) {
+            if( tile == "." )
+            {
                 return _( "goal" );
             }
-            if( tile == "@" ) {
+            if( tile == "@" )
+            {
                 return _( "you" );
             }
-            if( tile == "+" ) {
+            if( tile == "+" )
+            {
                 return _( "you, on a goal" );
             }
             return _( "floor" );

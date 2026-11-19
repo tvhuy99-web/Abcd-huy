@@ -493,26 +493,27 @@ const std::string &input_context::handle_input( const int timeout )
 
 
 
-    a11y::activate_pending_scopes( this );
-    if( a11y::enabled() && !reader_scope && !a11y::bound_to( this ) ) {
-        reader_scope = std::make_unique<a11y::screen_scope>( this, category,
-        [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        a11y::activate_pending_scopes( this );
+        if( a11y::enabled() && !reader_scope && !a11y::bound_to( this ) ) {
+            reader_scope = std::make_unique<a11y::screen_scope>( this, category,
+            [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
 
 
 
-            return a11y::registered_intent( *this, intent );
-        } );
+                return a11y::registered_intent( *this, intent );
+            } );
 
 
 
 
 
-        a11y::semantic_snapshot snapshot = a11y::command_snapshot( *this,
-                                           _( "Commands for the current screen" ) );
-        snapshot.summary = _( "These are registered commands. Screen contents may require a dedicated reader. "
-                              "The game does not publish a cost for individual commands; some commands open a follow-up step, such as choosing a direction, target or item, on the next screen." );
-        reader_scope->update( std::move( snapshot ) );
-    }
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( *this,
+                                               _( "Commands for the current screen" ) );
+            snapshot.summary =
+                _( "These are registered commands. Screen contents may require a dedicated reader. "
+                   "The game does not publish a cost for individual commands; some commands open a follow-up step, such as choosing a direction, target or item, on the next screen." );
+            reader_scope->update( std::move( snapshot ) );
+        }
     };
     install_reader_scope();
     if( timeout >= 0 ) {
@@ -521,7 +522,9 @@ const std::string &input_context::handle_input( const int timeout )
     next_action.type = input_event_t::error;
     const std::string *result = &CATA_ERROR;
     while( true ) {
-        if( !a11y::enabled() ) { reader_scope.reset(); }
+        if( !a11y::enabled() ) {
+            reader_scope.reset();
+        }
         install_reader_scope();
         if( a11y::enabled() ) {
 
@@ -555,8 +558,8 @@ const std::string &input_context::handle_input( const int timeout )
         }
         if( next_action.type == input_event_t::timeout ) {
             if( a11y::enabled() && ( requested_timeout < 0 ||
-                                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                                        std::chrono::steady_clock::now() - input_started ).count() < requested_timeout ) ) {
+                                     std::chrono::duration_cast<std::chrono::milliseconds>(
+                                         std::chrono::steady_clock::now() - input_started ).count() < requested_timeout ) ) {
                 continue;
             }
             result = &TIMEOUT;
@@ -1268,13 +1271,17 @@ action_id input_context::display_menu( bool permit_execute_action )
     std::optional<std::string> reader_filter_draft;
     int reader_last_row = -1;
     std::set<std::string> reader_essential;
-    for( const char *essential_id : { "QUIT", "SELECT", "TEXT.CONFIRM",
-                                      "UILIST.UP", "UILIST.DOWN" } ) {
+    for( const char *essential_id : {
+             "QUIT", "SELECT", "TEXT.CONFIRM",
+             "UILIST.UP", "UILIST.DOWN"
+         } ) {
         if( ctxt.is_registered_action( essential_id ) ) {
             reader_essential.insert( essential_id );
         }
     }
-    for( const char *essential_id : { "CONFIRM", "QUIT" } ) {
+    for( const char *essential_id : {
+             "CONFIRM", "QUIT"
+         } ) {
         if( is_registered_action( essential_id ) ) {
             reader_essential.insert( essential_id );
         }
@@ -1286,16 +1293,19 @@ action_id input_context::display_menu( bool permit_execute_action )
     bool reader_do_reset_all = false;
     const auto reader_warning_text = [&]() -> std::string {
         const std::string name = remove_color_tags( get_action_name( reader_warning_action ) );
-        if( reader_warning_status == kb_menu_status::remove ) {
-            return string_format( _( "Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to remove its keybinding anyway." ),
-                                  name );
+        if( reader_warning_status == kb_menu_status::remove )
+        {
+            return string_format(
+                _( "Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to remove its keybinding anyway." ),
+                name );
         }
         return string_format( _( "Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to reset its keybinding anyway." ),
                               name );
     };
-    const auto reader_handle_intent = [&]( const a11y::semantic_intent &intent )
+    const auto reader_handle_intent = [&]( const a11y::semantic_intent & intent )
     -> std::optional<std::string> {
-        if( intent.node == "keybindings:filter" ) {
+        if( intent.node == "keybindings:filter" )
+        {
             if( intent.action == "focus" ) {
                 return TIMEOUT;
             }
@@ -1327,14 +1337,16 @@ action_id input_context::display_menu( bool permit_execute_action )
             return std::nullopt;
         }
         if( intent.node == "keybindings:mode" || intent.node == "keybindings:warning" ||
-            intent.node == "keybindings:no_results" ) {
+            intent.node == "keybindings:no_results" )
+        {
 
             if( intent.action == "focus" || intent.action == "activate" ) {
                 return TIMEOUT;
             }
             return std::nullopt;
         }
-        if( intent.node == "keybindings:reset_all" ) {
+        if( intent.node == "keybindings:reset_all" )
+        {
             if( intent.action == "focus" ) {
                 return TIMEOUT;
             }
@@ -1356,7 +1368,8 @@ action_id input_context::display_menu( bool permit_execute_action )
             return std::nullopt;
         }
         static const std::string row_prefix = "keybindings:row:";
-        if( intent.node.rfind( row_prefix, 0 ) == 0 ) {
+        if( intent.node.rfind( row_prefix, 0 ) == 0 )
+        {
             if( intent.action != "focus" && intent.action != "activate" ) {
                 return std::nullopt;
             }
@@ -1418,7 +1431,8 @@ action_id input_context::display_menu( bool permit_execute_action )
 
 
 
-        if( reader_warning_active && kb_menu.status != reader_warning_status ) {
+        if( reader_warning_active && kb_menu.status != reader_warning_status )
+        {
             reader_warning_active = false;
         }
         a11y::semantic_snapshot snapshot;
@@ -1431,15 +1445,17 @@ action_id input_context::display_menu( bool permit_execute_action )
         mode_node.id = "keybindings:mode";
         mode_node.role = "status";
         const std::string context_line = category == "DEFAULTMODE"
-                                         ? _( "Currently showing keys for the main game." )
-                                         : string_format( _( "Currently showing keys ONLY for the last opened window: %s!" ),
-                                                 category );
+        ? _( "Currently showing keys for the main game." )
+        : string_format( _( "Currently showing keys ONLY for the last opened window: %s!" ),
+                         category );
         std::string mode_name;
         std::string mode_hint;
-        switch( kb_menu.status ) {
+        switch( kb_menu.status )
+        {
             case kb_menu_status::show:
                 mode_name = _( "Showing" );
-                mode_hint = _( "Choose a menu command first (Remove, Reset, Add local keybinding, Add global keybinding, or Execute), then activate an action row." );
+                mode_hint =
+                _( "Choose a menu command first (Remove, Reset, Add local keybinding, Add global keybinding, or Execute), then activate an action row." );
                 break;
             case kb_menu_status::remove:
                 mode_name = _( "Remove keybinding" );
@@ -1463,7 +1479,8 @@ action_id input_context::display_menu( bool permit_execute_action )
                 break;
             case kb_menu_status::filter:
                 mode_name = _( "Filtering" );
-                mode_hint = _( "The screen's filter box is being edited. Confirm or quit filtering to return to the action list." );
+                mode_hint =
+                _( "The screen's filter box is being edited. Confirm or quit filtering to return to the action list." );
                 break;
         }
         mode_node.label = string_format( _( "Mode: %s" ), mode_name );
@@ -1477,23 +1494,26 @@ action_id input_context::display_menu( bool permit_execute_action )
         filter_node.role = "text";
         filter_node.label = _( "Filter actions by name" );
         filter_node.detail = _( "Reader filter: it only changes which action rows are listed here." );
-        if( !kb_menu.get_filter().empty() ) {
+        if( !kb_menu.get_filter().empty() )
+        {
             filter_node.detail += " " + string_format(
-                                  _( "The game screen's own filter is also active: %s." ),
-                                  kb_menu.get_filter() );
+                                      _( "The game screen's own filter is also active: %s." ),
+                                      kb_menu.get_filter() );
         }
         filter_node.detail += " " + std::string( _( "Activate this field to clear both filters." ) );
         filter_node.field_type = "text";
         filter_node.applied_value = reader_filter;
         filter_node.value = reader_filter.empty() ? _( "All actions" ) : reader_filter;
         filter_node.actions = { "focus", "set_value", "apply", "cancel_draft", "activate" };
-        if( reader_filter_draft ) {
+        if( reader_filter_draft )
+        {
             filter_node.has_draft = true;
             filter_node.draft_value = *reader_filter_draft;
         }
         snapshot.nodes.push_back( filter_node );
 
-        if( reader_warning_active ) {
+        if( reader_warning_active )
+        {
             a11y::semantic_node warning_node;
             warning_node.id = "keybindings:warning";
             warning_node.role = "status";
@@ -1508,7 +1528,8 @@ action_id input_context::display_menu( bool permit_execute_action )
         reset_all_node.role = "command";
         reset_all_node.label = _( "Reset all keybindings for this context to the defaults" );
         reset_all_node.detail = _( "Reader-composed operation: the engine only resets one action at a time, so this runs the engine's own per-action reset for every action listed here. Conflict prompts, if any, are the engine's per-action ones." );
-        if( reader_reset_all_armed ) {
+        if( reader_reset_all_armed )
+        {
             reset_all_node.value = _( "Armed" );
             reset_all_node.detail += " " + std::string( _( "Activate again to reset all keybindings now." ) );
         }
@@ -1527,7 +1548,8 @@ action_id input_context::display_menu( bool permit_execute_action )
         int shown = 0;
         std::string first_row_id;
         std::string last_row_id;
-        for( size_t i = 0; i < kb_menu.filtered_registered_actions.size(); ++i ) {
+        for( size_t i = 0; i < kb_menu.filtered_registered_actions.size(); ++i )
+        {
             const std::string &action_id = kb_menu.filtered_registered_actions[i];
             const std::string name = remove_color_tags( get_action_name( action_id ) );
             if( !reader_filter.empty() && !lcmatch( name, reader_filter ) ) {
@@ -1556,7 +1578,8 @@ action_id input_context::display_menu( bool permit_execute_action )
                 node.detail += _( ". User customized." );
             }
             if( reader_essential.count( action_id ) > 0 ) {
-                node.detail += _( " Essential menu key (reader policy): removing or resetting it needs a second activation to confirm." );
+                node.detail +=
+                    _( " Essential menu key (reader policy): removing or resetting it needs a second activation to confirm." );
             }
             if( reader_warning_active && reader_warning_action == action_id &&
                 reader_warning_status == kb_menu.status ) {
@@ -1580,7 +1603,8 @@ action_id input_context::display_menu( bool permit_execute_action )
             snapshot.nodes.push_back( std::move( node ) );
             ++shown;
         }
-        if( shown == 0 ) {
+        if( shown == 0 )
+        {
             a11y::semantic_node node;
             node.id = "keybindings:no_results";
             node.role = "status";
@@ -1593,30 +1617,38 @@ action_id input_context::display_menu( bool permit_execute_action )
 
         snapshot.summary = string_format( _( "%1$d of %2$d actions shown." ), shown,
                                           static_cast<int>( org_registered_actions.size() ) );
-        if( !reader_filter.empty() ) {
+        if( !reader_filter.empty() )
+        {
             snapshot.summary += " " + string_format( _( "Reader filter: %s" ), reader_filter );
         }
-        if( reader_warning_active ) {
+        if( reader_warning_active )
+        {
             snapshot.summary += " " + reader_warning_text();
         }
 
         snapshot.nodes.insert( snapshot.nodes.end(),
                                std::make_move_iterator( command_nodes.begin() ),
                                std::make_move_iterator( command_nodes.end() ) );
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i )
+        {
             snapshot.nodes[i].position = static_cast<int>( i ) + 1;
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }
 
-        if( reader_warning_active ) {
+        if( reader_warning_active )
+        {
             snapshot.focus = "keybindings:warning";
-        } else if( !last_row_id.empty() ) {
+        } else if( !last_row_id.empty() )
+        {
             snapshot.focus = last_row_id;
-        } else if( !first_row_id.empty() ) {
+        } else if( !first_row_id.empty() )
+        {
             snapshot.focus = first_row_id;
-        } else if( shown == 0 ) {
+        } else if( shown == 0 )
+        {
             snapshot.focus = "keybindings:no_results";
-        } else {
+        } else
+        {
             snapshot.focus = "keybindings:filter";
         }
         return snapshot;

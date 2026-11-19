@@ -18,12 +18,12 @@ struct small_struct {
 struct perfect_forwarding_test {
     const bool success;
 
-    perfect_forwarding_test( int && , int &perfect2 ) : success( true ) {
+    perfect_forwarding_test( int &&, int &perfect2 ) : success( true ) {
         perfect2 = 1;
     }
 
     template <typename T, typename U>
-    perfect_forwarding_test( T && , U && ) : success( false )
+    perfect_forwarding_test( T &&, U && ) : success( false )
     {}
 };
 

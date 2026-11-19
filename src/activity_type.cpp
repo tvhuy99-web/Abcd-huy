@@ -45,9 +45,12 @@ std::string enum_to_string<based_on_type>( based_on_type data )
 {
     switch( data ) {
 
-        case based_on_type::TIME: return "time";
-        case based_on_type::SPEED: return "speed";
-        case based_on_type::NEITHER: return "neither";
+        case based_on_type::TIME:
+            return "time";
+        case based_on_type::SPEED:
+            return "speed";
+        case based_on_type::NEITHER:
+            return "neither";
 
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
@@ -59,25 +62,44 @@ std::string enum_to_string<distraction_type>( distraction_type data )
 {
     switch( data ) {
 
-        case distraction_type::noise: return "noise";
-        case distraction_type::pain: return "pain";
-        case distraction_type::attacked: return "attacked";
-        case distraction_type::hostile_spotted_far: return "hostile_spotted_far";
-        case distraction_type::hostile_spotted_near: return "hostile_spotted_near";
-        case distraction_type::talked_to: return "talked_to";
-        case distraction_type::asthma: return "asthma";
-        case distraction_type::motion_alarm: return "motion_alarm";
-        case distraction_type::weather_change: return "weather_change";
-        case distraction_type::portal_storm_popup: return "portal_storm_popup";
-        case distraction_type::eoc: return "eoc";
-        case distraction_type::dangerous_field: return "dangerous_field";
-        case distraction_type::hunger: return "hunger";
-        case distraction_type::thirst: return "thirst";
-        case distraction_type::temperature: return "temperature";
-        case distraction_type::mutation: return "mutation";
-        case distraction_type::oxygen: return "oxygen";
-        case distraction_type::withdrawal: return "withdrawal";
-        case distraction_type::craft_step_complete: return "craft_step_complete";
+        case distraction_type::noise:
+            return "noise";
+        case distraction_type::pain:
+            return "pain";
+        case distraction_type::attacked:
+            return "attacked";
+        case distraction_type::hostile_spotted_far:
+            return "hostile_spotted_far";
+        case distraction_type::hostile_spotted_near:
+            return "hostile_spotted_near";
+        case distraction_type::talked_to:
+            return "talked_to";
+        case distraction_type::asthma:
+            return "asthma";
+        case distraction_type::motion_alarm:
+            return "motion_alarm";
+        case distraction_type::weather_change:
+            return "weather_change";
+        case distraction_type::portal_storm_popup:
+            return "portal_storm_popup";
+        case distraction_type::eoc:
+            return "eoc";
+        case distraction_type::dangerous_field:
+            return "dangerous_field";
+        case distraction_type::hunger:
+            return "hunger";
+        case distraction_type::thirst:
+            return "thirst";
+        case distraction_type::temperature:
+            return "temperature";
+        case distraction_type::mutation:
+            return "mutation";
+        case distraction_type::oxygen:
+            return "oxygen";
+        case distraction_type::withdrawal:
+            return "withdrawal";
+        case distraction_type::craft_step_complete:
+            return "craft_step_complete";
 
         default:
             cata_fatal( "Invalid distraction_type in enum_to_string" );

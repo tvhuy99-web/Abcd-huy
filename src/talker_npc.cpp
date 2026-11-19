@@ -461,13 +461,11 @@ std::string talker_npc::give_item_to( const bool to_use )
             } else if( given.is_container() ) {
                 given.on_contents_changed();
             }
-        }
-        else if( new_weapon_value > cur_weapon_value ) {
+        } else if( new_weapon_value > cur_weapon_value ) {
             me_npc->wield( given );
             reason = me_npc->chat_snippets().snip_give_wield.translated();
             taken = true;
-        }
-        else if( !given.is_gun() && given.is_armor() ) {
+        } else if( !given.is_gun() && given.is_armor() ) {
 
             ret_val<void> can_wear = me_npc->can_wear( given, true );
             if( !can_wear.success() ) {

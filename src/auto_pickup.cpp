@@ -385,18 +385,19 @@ void user_interface::show()
         std::string rule;
     };
     std::map<std::string, reader_binding> reader_bindings;
-    const auto binding_live = [&]( const reader_binding &binding ) -> bool {
-        if( binding.tab >= tabs.size() ) {
+    const auto binding_live = [&]( const reader_binding & binding ) -> bool {
+        if( binding.tab >= tabs.size() )
+        {
             return false;
         }
         const rule_list &rules = tabs[binding.tab].new_rules;
         return binding.line >= 0 && binding.line < static_cast<int>( rules.size() ) &&
-               rules[binding.line].sRule == binding.rule;
+        rules[binding.line].sRule == binding.rule;
     };
-    const auto binding_is_current = [&]( const reader_binding &binding ) -> bool {
+    const auto binding_is_current = [&]( const reader_binding & binding ) -> bool {
         return binding.tab == iTab && binding.line == iLine && binding_live( binding );
     };
-    const auto same_binding = []( const reader_binding &lhs, const reader_binding &rhs ) -> bool {
+    const auto same_binding = []( const reader_binding & lhs, const reader_binding & rhs ) -> bool {
         return lhs.tab == rhs.tab && lhs.line == rhs.line && lhs.rule == rhs.rule;
     };
     std::optional<std::string> draft_rule;
@@ -413,13 +414,15 @@ void user_interface::show()
     bool remove_armed = false;
     reader_binding remove_binding;
     a11y::screen_scope reader( &ctxt, "auto-pickup-manager",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "activate" && intent.node != "autopickup:remove:confirm" &&
-            intent.node != "REMOVE_RULE" ) {
+            intent.node != "REMOVE_RULE" )
+        {
 
             remove_armed = false;
         }
-        if( intent.node == "autopickup:remove:confirm" ) {
+        if( intent.node == "autopickup:remove:confirm" )
+        {
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -433,7 +436,8 @@ void user_interface::show()
             }
             return std::nullopt;
         }
-        if( intent.node == "REMOVE_RULE" && intent.action == "activate" ) {
+        if( intent.node == "REMOVE_RULE" && intent.action == "activate" )
+        {
             const rule_list &rules = tabs[iTab].new_rules;
             if( rules.empty() || iLine < 0 || iLine >= static_cast<int>( rules.size() ) ) {
                 return a11y::registered_intent( ctxt, intent );
@@ -442,7 +446,8 @@ void user_interface::show()
             remove_binding = reader_binding { iTab, iLine, rules[iLine].sRule };
             return std::string( "TIMEOUT" );
         }
-        if( intent.node.rfind( "autopickup:tab:", 0 ) == 0 ) {
+        if( intent.node.rfind( "autopickup:tab:", 0 ) == 0 )
+        {
             const std::string suffix = intent.node.substr( std::string( "autopickup:tab:" ).size() );
             if( suffix.empty() || suffix.find_first_not_of( "0123456789" ) != std::string::npos ) {
                 return std::nullopt;
@@ -462,7 +467,8 @@ void user_interface::show()
             return std::nullopt;
         }
         const auto bound = reader_bindings.find( intent.node );
-        if( bound != reader_bindings.end() ) {
+        if( bound != reader_bindings.end() )
+        {
             const reader_binding binding = bound->second;
             if( !binding_live( binding ) ) {
                 return std::nullopt;
@@ -590,8 +596,9 @@ void user_interface::show()
         a11y::semantic_table rules_table;
         rules_table.id = "autopickup:rules";
         rules_table.columns = { { "rule", _( "Rules" ), "" },
-                                { "inex", _( "Inc/Exc" ), "" },
-                                { "active", _( "Active" ), "" } };
+            { "inex", _( "Inc/Exc" ), "" },
+            { "active", _( "Active" ), "" }
+        };
         snapshot.tables.push_back( rules_table );
         const rule_list &current_rules = tabs[iTab].new_rules;
         const bool have_selection = !current_rules.empty() && iLine >= 0 &&
@@ -607,8 +614,9 @@ void user_interface::show()
             node.table_id = "autopickup:rules";
             node.row_index = i;
             node.cells = { { "rule", node.label, "", "" },
-                           { "inex", current_rule.bExclude ? _( "Exclude" ) : _( "Include" ), "", "" },
-                           { "active", current_rule.bActive ? _( "Active" ) : _( "Inactive" ), "", "" } };
+                { "inex", current_rule.bExclude ? _( "Exclude" ) : _( "Include" ), "", "" },
+                { "active", current_rule.bActive ? _( "Active" ) : _( "Inactive" ), "", "" }
+            };
             node.selected = iLine == i;
             reader_bindings.emplace( node.id, reader_binding { iTab, i, current_rule.sRule } );
             snapshot.nodes.push_back( std::move( node ) );
@@ -625,7 +633,8 @@ void user_interface::show()
                 node.id = "autopickup:field:rule";
                 node.role = "text";
                 node.label = _( "Rule" );
-                node.detail = _( "* is used as a wildcard and matching is case insensitive; for example 'wooden ar*' matches items beginning with 'wood ar' and '*rrow' matches items ending with 'rrow'. Prefix a rule with 'm:' to match items made of a material (for example 'm:kevlar' matches items made of Kevlar), or with 'M:' to match items made purely of the listed materials (for example 'M:copper', or 'M:steel,iron' where multiple materials are allowed as an OR search)." );
+                node.detail =
+                    _( "* is used as a wildcard and matching is case insensitive; for example 'wooden ar*' matches items beginning with 'wood ar' and '*rrow' matches items ending with 'rrow'. Prefix a rule with 'm:' to match items made of a material (for example 'm:kevlar' matches items made of Kevlar), or with 'M:' to match items made purely of the listed materials (for example 'M:copper', or 'M:steel,iron' where multiple materials are allowed as an OR search)." );
                 node.field_type = "text";
                 node.applied_value = selected_rule.sRule;
                 node.value = selected_rule.sRule.empty() ? _( "<empty rule>" ) : selected_rule.sRule;
@@ -678,7 +687,8 @@ void user_interface::show()
                 node.role = "button";
                 node.label = string_format( _( "Confirm removal of rule %s" ),
                                             selected_rule.sRule.empty() ? _( "<empty rule>" ) : selected_rule.sRule );
-                node.detail = _( "The rule is removed from this tab's list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it." );
+                node.detail =
+                    _( "The rule is removed from this tab's list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it." );
                 node.actions = { "focus", "activate" };
                 snapshot.nodes.push_back( std::move( node ) );
             }
@@ -994,7 +1004,7 @@ void rule::test_pattern() const
 
 
     a11y::screen_scope reader( &ctxt, "auto-pickup-test",
-    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
     } );
     const auto build_snapshot = [&]() {

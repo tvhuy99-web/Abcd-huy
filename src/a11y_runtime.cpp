@@ -60,8 +60,14 @@ void publish_current()
 }
 }
 
-bool enabled() { return android::enabled(); }
-bool suspended() { return !enabled() || android::suspended(); }
+bool enabled()
+{
+    return android::enabled();
+}
+bool suspended()
+{
+    return !enabled() || android::suspended();
+}
 
 void replace_game_session()
 {
@@ -164,7 +170,9 @@ void screen_scope::rebind( const void *input_owner, intent_handler handler )
         return;
     }
     const auto found = std::find_if( screens.begin(), screens.end(),
-    [this]( const std::unique_ptr<screen_data> &s ) { return s->frame == frame; } );
+    [this]( const std::unique_ptr<screen_data> &s ) {
+        return s->frame == frame;
+    } );
     if( found != screens.end() ) {
         ( *found )->input_owner = input_owner;
         ( *found )->handler = std::move( handler );
@@ -179,7 +187,9 @@ screen_scope::~screen_scope()
         return;
     }
     const auto found = std::find_if( screens.begin(), screens.end(),
-    [this]( const std::unique_ptr<screen_data> &s ) { return s->frame == frame; } );
+    [this]( const std::unique_ptr<screen_data> &s ) {
+        return s->frame == frame;
+    } );
     if( found != screens.end() ) {
         contexts.leave( frame );
         screens.erase( found, screens.end() );
@@ -238,7 +248,9 @@ void screen_scope::update( semantic_snapshot snapshot, const bool force_revision
 void screen_scope::apply_snapshot( semantic_snapshot snapshot, const bool force_revision )
 {
     const auto found = std::find_if( screens.begin(), screens.end(),
-    [this]( const std::unique_ptr<screen_data> &s ) { return s->frame == frame; } );
+    [this]( const std::unique_ptr<screen_data> &s ) {
+        return s->frame == frame;
+    } );
     if( found == screens.end() ) {
         return;
     }
@@ -315,16 +327,18 @@ std::optional<std::string> poll_input( const void *input_owner )
 
 
         const bool activity_autodrive =
-                ( screen.category == "activity" || screen.category == "DEFAULTMODE" ) &&
-                std::any_of( screen.snapshot.nodes.begin(), screen.snapshot.nodes.end(),
-        []( const semantic_node &n ) { return n.id == "activity:autodrive"; } );
+            ( screen.category == "activity" || screen.category == "DEFAULTMODE" ) &&
+            std::any_of( screen.snapshot.nodes.begin(), screen.snapshot.nodes.end(),
+        []( const semantic_node & n ) {
+            return n.id == "activity:autodrive";
+        } );
         const std::string &query = intent->node;
         const bool live_vehicle_query = activity_autodrive &&
-                intent->revision > 0 && intent->revision <= screen.revision &&
-                intent->action == "activate" && intent->value.empty() &&
-                ( query.rfind( "reader:scan:vehicle:", 0 ) == 0 ||
-                  query == "reader:coordinates" ||
-                  query == "reader:vehicle:horn" || query == "control_vehicle" );
+                                        intent->revision > 0 && intent->revision <= screen.revision &&
+                                        intent->action == "activate" && intent->value.empty() &&
+                                        ( query.rfind( "reader:scan:vehicle:", 0 ) == 0 ||
+                                          query == "reader:coordinates" ||
+                                          query == "reader:vehicle:horn" || query == "control_vehicle" );
 
 
 
@@ -351,8 +365,8 @@ std::optional<std::string> poll_input( const void *input_owner )
                 now_ms >= static_cast<std::int64_t>( intent->received_at_ms ) ?
                 static_cast<std::uint64_t>( now_ms ) - intent->received_at_ms : 0;
             android::diagnostic_event( "WORLD_INPUT_TIMING",
-                    "jni_to_poll_ms=" + std::to_string( wait_ms ) +
-                    " revision_lag=" + std::to_string( screen.revision - intent->revision ) );
+                                       "jni_to_poll_ms=" + std::to_string( wait_ms ) +
+                                       " revision_lag=" + std::to_string( screen.revision - intent->revision ) );
         }
 #endif
 
@@ -373,8 +387,10 @@ std::optional<std::string> poll_input( const void *input_owner )
 
             if( !intent->node.empty() &&
                 std::find_if( screen.snapshot.nodes.begin(), screen.snapshot.nodes.end(),
-            [&intent]( const semantic_node & n ) { return n.id == intent->node; } ) ==
-            screen.snapshot.nodes.end() ) {
+            [&intent]( const semantic_node & n ) {
+            return n.id == intent->node;
+        } ) ==
+        screen.snapshot.nodes.end() ) {
                 android::status( "stale", &*intent );
                 continue;
             }
@@ -384,7 +400,9 @@ std::optional<std::string> poll_input( const void *input_owner )
 
 
             const auto node = std::find_if( screen.snapshot.nodes.begin(), screen.snapshot.nodes.end(),
-            [&intent]( const semantic_node & n ) { return n.id == intent->node; } );
+            [&intent]( const semantic_node & n ) {
+                return n.id == intent->node;
+            } );
             if( node == screen.snapshot.nodes.end() ||
                 std::find( node->actions.begin(), node->actions.end(), intent->action ) == node->actions.end() ) {
 

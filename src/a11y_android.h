@@ -11,7 +11,10 @@
 
 #include "a11y_semantics.h"
 
-namespace a11y { struct context_token; }
+namespace a11y
+{
+struct context_token;
+}
 
 namespace a11y::android
 {

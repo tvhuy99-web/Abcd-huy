@@ -202,17 +202,28 @@ std::string enum_to_string<npc_mission>( npc_mission data )
 {
     switch( data ) {
 
-        case npc_mission::NPC_MISSION_NULL: return "NULL";
-        case npc_mission::NPC_MISSION_LEGACY_1: return "LEGACY_1";
-        case npc_mission::NPC_MISSION_SHELTER: return "SHELTER";
-        case npc_mission::NPC_MISSION_SHOPKEEP: return "SHOPKEEP";
-        case npc_mission::NPC_MISSION_GUARD_ALLY: return "GUARD_ALLY";
-        case npc_mission::NPC_MISSION_GUARD: return "GUARD";
-        case npc_mission::NPC_MISSION_GUARD_PATROL: return "GUARD_PATROL";
-        case npc_mission::NPC_MISSION_ACTIVITY: return "ACTIVITY";
-        case npc_mission::NPC_MISSION_TRAVELLING: return "TRAVELLING";
-        case npc_mission::NPC_MISSION_CAMP_RESIDENT: return "CAMP_RESIDENT";
-        case npc_mission::NPC_MISSION_LAST: break;
+        case npc_mission::NPC_MISSION_NULL:
+            return "NULL";
+        case npc_mission::NPC_MISSION_LEGACY_1:
+            return "LEGACY_1";
+        case npc_mission::NPC_MISSION_SHELTER:
+            return "SHELTER";
+        case npc_mission::NPC_MISSION_SHOPKEEP:
+            return "SHOPKEEP";
+        case npc_mission::NPC_MISSION_GUARD_ALLY:
+            return "GUARD_ALLY";
+        case npc_mission::NPC_MISSION_GUARD:
+            return "GUARD";
+        case npc_mission::NPC_MISSION_GUARD_PATROL:
+            return "GUARD_PATROL";
+        case npc_mission::NPC_MISSION_ACTIVITY:
+            return "ACTIVITY";
+        case npc_mission::NPC_MISSION_TRAVELLING:
+            return "TRAVELLING";
+        case npc_mission::NPC_MISSION_CAMP_RESIDENT:
+            return "CAMP_RESIDENT";
+        case npc_mission::NPC_MISSION_LAST:
+            break;
 
     }
     cata_fatal( "Invalid npc_mission" );
@@ -3489,7 +3500,7 @@ void npc::add_msg_if_npc( const std::string &msg ) const
     add_msg( replace_with_npc_name( msg ) );
 }
 
-void npc::add_msg_player_or_npc( const std::string & ,
+void npc::add_msg_player_or_npc( const std::string &,
                                  const std::string &npc_msg ) const
 {
     add_msg_if_player_sees( *this, replace_with_npc_name( npc_msg ) );
@@ -3501,7 +3512,7 @@ void npc::add_msg_if_npc( const game_message_params &params, const std::string &
 }
 
 void npc::add_msg_player_or_npc( const game_message_params &params,
-                                 const std::string & ,
+                                 const std::string &,
                                  const std::string &npc_msg ) const
 {
     const map &here = get_map();
@@ -3511,14 +3522,14 @@ void npc::add_msg_player_or_npc( const game_message_params &params,
     }
 }
 
-void npc::add_msg_player_or_say( const std::string & ,
+void npc::add_msg_player_or_say( const std::string &,
                                  const std::string &npc_speech ) const
 {
     say( npc_speech );
 }
 
-void npc::add_msg_player_or_say( const game_message_params & ,
-                                 const std::string & , const std::string &npc_speech ) const
+void npc::add_msg_player_or_say( const game_message_params &,
+                                 const std::string &, const std::string &npc_speech ) const
 {
     say( npc_speech );
 }

@@ -220,21 +220,35 @@ namespace io
 template<>
 std::string enum_to_string<sounds::sound_t>( sounds::sound_t data )
 {
-    switch ( data ) {
-    case sounds::sound_t::background: return "background";
-    case sounds::sound_t::weather: return "weather";
-    case sounds::sound_t::sensory: return "sensory";
-    case sounds::sound_t::music: return "music";
-    case sounds::sound_t::movement: return "movement";
-    case sounds::sound_t::speech: return "speech";
-    case sounds::sound_t::electronic_speech: return "electronic_speech";
-    case sounds::sound_t::activity: return "activity";
-    case sounds::sound_t::destructive_activity: return "destructive_activity";
-    case sounds::sound_t::alarm: return "alarm";
-    case sounds::sound_t::combat: return "combat";
-    case sounds::sound_t::alert: return "alert";
-    case sounds::sound_t::order: return "order";
-    case sounds::sound_t::LAST: break;
+    switch( data ) {
+        case sounds::sound_t::background:
+            return "background";
+        case sounds::sound_t::weather:
+            return "weather";
+        case sounds::sound_t::sensory:
+            return "sensory";
+        case sounds::sound_t::music:
+            return "music";
+        case sounds::sound_t::movement:
+            return "movement";
+        case sounds::sound_t::speech:
+            return "speech";
+        case sounds::sound_t::electronic_speech:
+            return "electronic_speech";
+        case sounds::sound_t::activity:
+            return "activity";
+        case sounds::sound_t::destructive_activity:
+            return "destructive_activity";
+        case sounds::sound_t::alarm:
+            return "alarm";
+        case sounds::sound_t::combat:
+            return "combat";
+        case sounds::sound_t::alert:
+            return "alert";
+        case sounds::sound_t::order:
+            return "order";
+        case sounds::sound_t::LAST:
+            break;
     }
     cata_fatal( "Invalid valid_target" );
 }
@@ -876,7 +890,7 @@ void sfx::stop_sound_effect_fade( channel channel, int duration )
     sound_backend::stop_reserved( channel, duration );
 }
 
-void sfx::stop_sound_effect_timed( channel , int )
+void sfx::stop_sound_effect_timed( channel, int )
 {
 
 

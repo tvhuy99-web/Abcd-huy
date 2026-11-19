@@ -368,10 +368,18 @@ class study_zone_window : public cataimgui::window
             if( intent.node == "study:npc_prev" || intent.node == "study:npc_next" ||
                 intent.node == "study:skill_prev" || intent.node == "study:skill_next" ) {
                 if( intent.action == "activate" ) {
-                    if( intent.node == "study:npc_prev" && reader_npc_page > 0 ) { --reader_npc_page; }
-                    if( intent.node == "study:npc_next" ) { ++reader_npc_page; }
-                    if( intent.node == "study:skill_prev" && reader_skill_page > 0 ) { --reader_skill_page; }
-                    if( intent.node == "study:skill_next" ) { ++reader_skill_page; }
+                    if( intent.node == "study:npc_prev" && reader_npc_page > 0 ) {
+                        --reader_npc_page;
+                    }
+                    if( intent.node == "study:npc_next" ) {
+                        ++reader_npc_page;
+                    }
+                    if( intent.node == "study:skill_prev" && reader_skill_page > 0 ) {
+                        --reader_skill_page;
+                    }
+                    if( intent.node == "study:skill_next" ) {
+                        ++reader_skill_page;
+                    }
                 }
                 return std::string( "TIMEOUT" );
             }
@@ -447,9 +455,9 @@ class study_zone_window : public cataimgui::window
             constexpr std::size_t npc_page_size = 8;
             constexpr std::size_t skill_page_size = 32;
             reader_npc_page = std::min( reader_npc_page,
-                                       npc_names.empty() ? std::size_t( 0 ) : ( npc_names.size() - 1 ) / npc_page_size );
+                                        npc_names.empty() ? std::size_t( 0 ) : ( npc_names.size() - 1 ) / npc_page_size );
             reader_skill_page = std::min( reader_skill_page,
-                                         all_skills.empty() ? std::size_t( 0 ) : ( all_skills.size() - 1 ) / skill_page_size );
+                                          all_skills.empty() ? std::size_t( 0 ) : ( all_skills.size() - 1 ) / skill_page_size );
             const std::size_t npc_begin = reader_npc_page * npc_page_size;
             const std::size_t npc_end = std::min( npc_names.size(), npc_begin + npc_page_size );
             const std::size_t skill_begin = reader_skill_page * skill_page_size;
@@ -540,9 +548,11 @@ class study_zone_window : public cataimgui::window
                         child.value = allowed ? _( "Allowed" ) : _( "Not allowed" );
                         child.checked = allowed;
                         child.choices = { { "true", _( "Enabled" ) },
-                                          { "false", _( "Disabled" ) } };
+                            { "false", _( "Disabled" ) }
+                        };
                         child.actions = { "focus", "activate", "select_choice", "apply",
-                                          "cancel_draft" };
+                                          "cancel_draft"
+                                        };
                         const auto draft = reader_drafts.find(
                                                std::make_pair( npc_name, skill.str() ) );
                         if( draft != reader_drafts.end() ) {
@@ -568,13 +578,15 @@ class study_zone_window : public cataimgui::window
             done.label = _( "Done" );
             done.detail = _( "Finish editing the study zone skill preferences." );
             snapshot.nodes.push_back( std::move( done ) );
-            const auto page_button = [&]( const std::string &id, const std::string &label,
-                                          const bool available ) {
+            const auto page_button = [&]( const std::string & id, const std::string & label,
+            const bool available ) {
                 a11y::semantic_node node;
                 node.id = id;
                 node.label = label;
                 node.enabled = available;
-                if( !available ) { node.disabled_reason = _( "No more entries in this direction." ); }
+                if( !available ) {
+                    node.disabled_reason = _( "No more entries in this direction." );
+                }
                 snapshot.nodes.push_back( std::move( node ) );
             };
             if( npc_names.size() > npc_page_size ) {

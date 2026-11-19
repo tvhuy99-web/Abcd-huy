@@ -95,14 +95,22 @@ std::string enum_to_string<sub_generator_type>( sub_generator_type data )
 {
     switch( data ) {
 
-        case sub_generator_type::bash_damage: return "bash_damage";
-        case sub_generator_type::move_items: return "move_items";
-        case sub_generator_type::add_fire: return "add_fire";
-        case sub_generator_type::pre_burn: return "pre_burn";
-        case sub_generator_type::place_blood: return "place_blood";
-        case sub_generator_type::aftershock_ruin: return "aftershock_ruin";
-        case sub_generator_type::modify_items: return "modify_items";
-        case sub_generator_type::ter_furn_transform: return "ter_furn_transform";
+        case sub_generator_type::bash_damage:
+            return "bash_damage";
+        case sub_generator_type::move_items:
+            return "move_items";
+        case sub_generator_type::add_fire:
+            return "add_fire";
+        case sub_generator_type::pre_burn:
+            return "pre_burn";
+        case sub_generator_type::place_blood:
+            return "place_blood";
+        case sub_generator_type::aftershock_ruin:
+            return "aftershock_ruin";
+        case sub_generator_type::modify_items:
+            return "modify_items";
+        case sub_generator_type::ter_furn_transform:
+            return "ter_furn_transform";
 
         case sub_generator_type::last:
             break;
@@ -115,8 +123,10 @@ std::string enum_to_string<pp_sub_generator_scope>( pp_sub_generator_scope data 
 {
     switch( data ) {
 
-        case pp_sub_generator_scope::omt: return "omt";
-        case pp_sub_generator_scope::overmap_special: return "overmap_special";
+        case pp_sub_generator_scope::omt:
+            return "omt";
+        case pp_sub_generator_scope::overmap_special:
+            return "overmap_special";
 
         case pp_sub_generator_scope::last:
             break;

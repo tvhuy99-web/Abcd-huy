@@ -650,7 +650,7 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     who.assign_activity( aim_actor );
 }
 
-void aim_activity_actor::canceled( player_activity & , Character & )
+void aim_activity_actor::canceled( player_activity &, Character & )
 {
     unload_RAS_weapon();
     restore_view();
@@ -813,9 +813,9 @@ static int reader_distance_to_place( const tripoint_abs_ms &pos,
     constexpr int tiles_per_omt = 24;
     const tripoint_abs_ms top_left = project_to<coords::ms>( destination );
     const int dx = std::max( 0, std::max( top_left.x() - pos.x(),
-                             pos.x() - ( top_left.x() + tiles_per_omt - 1 ) ) );
+                                          pos.x() - ( top_left.x() + tiles_per_omt - 1 ) ) );
     const int dy = std::max( 0, std::max( top_left.y() - pos.y(),
-                             pos.y() - ( top_left.y() + tiles_per_omt - 1 ) ) );
+                                          pos.y() - ( top_left.y() + tiles_per_omt - 1 ) ) );
     return std::max( dx, dy );
 }
 
@@ -834,7 +834,7 @@ void autodrive_activity_actor::reader_report( Character &who, const char *event,
                                " z=" + std::to_string( pos.z() ) +
                                " position_source=" + ( player_vehicle ? "vehicle" : "avatar" ) +
                                " velocity=" + ( player_vehicle ? std::to_string( player_vehicle->velocity ) :
-                                                "unknown" ) +
+                                       "unknown" ) +
                                " distance_tiles=" + std::to_string( remaining ) +
                                " reachable_goal=" + ( reader_nearby_goal ? "true" : "false" );
     a11y::android::diagnostic_event( "AUTODRIVE_STATE", detail );
@@ -3354,9 +3354,9 @@ void pickup_activity_actor::do_turn( player_activity &, Character &who )
                     ++info.a11y_failure_count;
                     if( info.a11y_failures.size() < 24 ) {
                         info.a11y_failures.push_back( leftover ?
-                            string_format( _( "%s: Pickup stopped before this item." ),
-                                           leftover->display_name() ) :
-                            _( "A selected item is no longer available." ) );
+                                                      string_format( _( "%s: Pickup stopped before this item." ),
+                                                              leftover->display_name() ) :
+                                                      _( "A selected item is no longer available." ) );
                     }
                 }
             }
@@ -3364,8 +3364,8 @@ void pickup_activity_actor::do_turn( player_activity &, Character &who )
             const int collected = info.a11y_success_count;
             if( failed > 0 || collected > 0 || !stash_successful ) {
                 std::string result = string_format(
-                    _( "Pickup finished. Collected %1$d item groups; failed %2$d item groups." ),
-                    collected, failed );
+                                         _( "Pickup finished. Collected %1$d item groups; failed %2$d item groups." ),
+                                         collected, failed );
                 if( !info.a11y_successes.empty() ) {
                     result += " " + std::string( _( "Collected:" ) );
                     for( const std::string &name : info.a11y_successes ) {
@@ -3465,7 +3465,7 @@ void boltcutting_activity_actor::start( player_activity &act, Character & )
     act.moves_left = act.moves_total;
 }
 
-void boltcutting_activity_actor::do_turn( player_activity & , Character &who )
+void boltcutting_activity_actor::do_turn( player_activity &, Character &who )
 {
     map &here = get_map();
 
@@ -4072,8 +4072,10 @@ std::string enum_to_string<efile_combo>( efile_combo data )
 {
     switch( data ) {
 
-        case efile_combo::COMBO_MOVE_ONTO_BROWSE: return "COMBO_MOVE_ONTO_BROWSE";
-        case efile_combo::COMBO_NONE: return "COMBO_NONE";
+        case efile_combo::COMBO_MOVE_ONTO_BROWSE:
+            return "COMBO_MOVE_ONTO_BROWSE";
+        case efile_combo::COMBO_NONE:
+            return "COMBO_NONE";
 
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
@@ -4084,9 +4086,12 @@ std::string enum_to_string<open_tile_result>( open_tile_result data )
 {
     switch( data ) {
 
-        case open_tile_result::OPEN_DOOR: return "OPEN_DOOR";
-        case open_tile_result::OPEN_VEHICLE_SINGLE: return "OPEN_VEHICLE_SINGLE";
-        case open_tile_result::OPEN_VEHICLE_ALL: return "OPEN_VEHICLE_ALL";
+        case open_tile_result::OPEN_DOOR:
+            return "OPEN_DOOR";
+        case open_tile_result::OPEN_VEHICLE_SINGLE:
+            return "OPEN_VEHICLE_SINGLE";
+        case open_tile_result::OPEN_VEHICLE_ALL:
+            return "OPEN_VEHICLE_ALL";
 
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
@@ -4097,8 +4102,10 @@ std::string enum_to_string<close_tile_result>( close_tile_result data )
 {
     switch( data ) {
 
-        case close_tile_result::CLOSE_DOOR: return "CLOSE_DOOR";
-        case close_tile_result::CLOSE_VEHICLE: return "CLOSE_VEHICLE";
+        case close_tile_result::CLOSE_DOOR:
+            return "CLOSE_DOOR";
+        case close_tile_result::CLOSE_VEHICLE:
+            return "CLOSE_VEHICLE";
 
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
@@ -4259,7 +4266,7 @@ void efile_activity_actor::start_processing_next_edevice()
                    current_edevice->display_name() ) );
 }
 
-void efile_activity_actor::start_processing_next_efile( player_activity & , Character &who )
+void efile_activity_actor::start_processing_next_efile( player_activity &, Character &who )
 {
     if( !processed_efiles_remain() ) {
 
@@ -4293,7 +4300,7 @@ void efile_activity_actor::completed_processing_current_edevice()
     }
 }
 
-void efile_activity_actor::completed_processing_current_efile( player_activity & ,
+void efile_activity_actor::completed_processing_current_efile( player_activity &,
         Character &who )
 {
     item_location &current_edevice = get_currently_processed_edevice();
@@ -7205,7 +7212,7 @@ void craft_activity_actor::finish( player_activity &act, Character & )
     act.set_to_null();
 }
 
-void craft_activity_actor::canceled( player_activity & , Character & )
+void craft_activity_actor::canceled( player_activity &, Character & )
 {
     item *craft = craft_item.get_item();
 
@@ -7481,7 +7488,7 @@ void workout_activity_actor::finish( player_activity &act, Character &who )
     }
 }
 
-void workout_activity_actor::canceled( player_activity & , Character &who )
+void workout_activity_actor::canceled( player_activity &, Character &who )
 {
     stop_time = calendar::turn;
 
@@ -8471,7 +8478,7 @@ static ret_val<void> try_insert( item_location &holster, drop_location &holstere
     }
     int charges_to_insert = std::min( holstered_item.second, max_parent_charges.value() );
     *charges_added = holster->fill_with( it, charges_to_insert, true,
- true, true, true, allow_fill_charge_item_nested,
+                                         true, true, true, allow_fill_charge_item_nested,
                                          carrier );
     if( *charges_added <= 0 ) {
         return ret_val<void>::make_failure( _( "item can't be stored there" ) );
@@ -8570,7 +8577,7 @@ void insert_item_activity_actor::finish( player_activity &act, Character &who )
     act.moves_total = total_moves;
 }
 
-void insert_item_activity_actor::canceled( player_activity & , Character &who )
+void insert_item_activity_actor::canceled( player_activity &, Character &who )
 {
     handler.handle_by( who );
 }
@@ -9435,7 +9442,7 @@ void oxytorch_activity_actor::start( player_activity &act, Character &who )
     }
 }
 
-void oxytorch_activity_actor::do_turn( player_activity & , Character &who )
+void oxytorch_activity_actor::do_turn( player_activity &, Character &who )
 {
     map &here = get_map();
 
@@ -10086,7 +10093,7 @@ void prying_activity_actor::start( player_activity &act, Character &who )
     act.moves_left = act.moves_total;
 }
 
-void prying_activity_actor::do_turn( player_activity & , Character &who )
+void prying_activity_actor::do_turn( player_activity &, Character &who )
 {
     map &here = get_map();
 
