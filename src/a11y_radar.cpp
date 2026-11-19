@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -114,26 +115,27 @@ void collect_place( std::map<std::string, radar_contact> &out,
         return;
     }
     const std::optional<overmap_special_id> special = owner.om->overmap_special_at( owner.local );
-    if( !special ) {
-        // Roads, forests and unbounded terrain are not given a guessed
-        // "single place" identity. They remain accessible through the
-        // explicit Detailed Place Survey.
-        return;
-    }
     const oter_id terrain = owner.om->ter( owner.local );
-    if( !terrain.is_valid() ) {
+    if( !terrain.is_valid() || ( !special && !terrain->is_road() &&
+                                 !terrain->is_highway() ) ) {
+        // Ordinary forest, grass and other unbounded terrain must not be
+        // mislabeled as one fully identified place.
         return;
     }
-    // A placement covering multiple OMTs must produce ONE contact.
-    // For a special without an identifiable placement, use the specific
-    // OMT instead of incorrectly merging adjacent identical houses.
-    std::string id = special->str() + ":";
+    // A placed building, or a road section with a verified local origin,
+    // must produce one stable contact across its many 24x24 OMT squares.
+    std::string id = special ? special->str() + ":" : "road:";
     const std::optional<local_place_coordinates> local = local_coordinates_at( world );
     if( local ) {
         id += std::to_string( world.x() - local->x + 1 ) + ":" +
               std::to_string( world.y() - local->y + 1 );
-    } else {
+    } else if( special ) {
+        // A partially known building is identified conservatively by its
+        // current OMT rather than merging all same-type buildings.
         id += std::to_string( omt.x() ) + ":" + std::to_string( omt.y() );
+    } else {
+        // Road boundaries cannot be established from unloaded map data.
+        return;
     }
     add( out, radar_places, id, terrain->get_name( om_vision_level::full ), offset );
 }
@@ -242,7 +244,6 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
 
     map &here = get_map();
     const avatar &player = get_avatar();
-    const tripoint_abs_ms player_abs = player.pos_abs();
     std::map<std::string, radar_contact> contacts;
     std::set<tripoint_abs_omt> examined_places;
     for( int dy = -range; dy <= range; ++dy ) {
@@ -268,8 +269,11 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
             }
             if( mask & radar_doors ) {
                 if( here.has_flag( ter_furn_flag::TFLAG_DOOR, p ) ) {
+                    const std::string door_name = here.has_flag_ter(
+                                                      ter_furn_flag::TFLAG_DOOR, p ) ?
+                                                  here.tername( p ) : here.furnname( p );
                     add( contacts, radar_doors, "door:" + position_id,
-                         here.tername( p ), delta );
+                         door_name, delta );
                 }
                 if( here.has_flag( ter_furn_flag::TFLAG_GOES_UP, p ) ) {
                     add( contacts, radar_doors, "up:" + position_id, _( "Stairs up" ), delta );

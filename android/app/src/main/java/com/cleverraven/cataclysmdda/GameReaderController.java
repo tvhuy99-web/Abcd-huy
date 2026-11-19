@@ -4842,8 +4842,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private List<GameActionHub.Entry> hubEntries() {
-        List<GameActionHub.Entry> result =
-                GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
         if (hubSection == GameActionHub.RADAR_SETTINGS) {
             List<GameActionHub.Entry> settings = new ArrayList<>();
             settings.add(new GameActionHub.Entry(radarStateLabel(
@@ -4856,6 +4854,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return settings;
         }
+        // RADAR_SETTINGS is a Java-owned submenu, not a native GameActionHub
+        // group index. Never index the native action table for section 18.
+        List<GameActionHub.Entry> result =
+                GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
         for (int i = 0; i < result.size(); ++i) {
             GameActionHub.Entry entry = result.get(i);
             if ("reader:radar:toggle".equals(entry.node)) {
