@@ -1,7 +1,6 @@
 name: Accessibility core and Android speech API
 
 on:
-  # Coding phase: tests/builds run only after the full implementation is ready.
   workflow_dispatch:
 
 permissions:
