@@ -213,7 +213,7 @@ static std::string get_skill_entry_text( const skill_id selected_skill, const av
     return green_if_positive( skill_entry_text );
 }
 
-static uilist_entry get_uilist_entry( const std::string &name )
+[[maybe_unused]] static uilist_entry get_uilist_entry( const std::string &name )
 {
     const bool screen_reader_mode = get_option<bool>( "SCREEN_READER_MODE" );
     uilist_entry cc_entry( screen_reader_mode ? std::string() : name );
