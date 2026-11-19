@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: one-time-python-blank-lines-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   normalize:
@@ -19,12 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: true
       - name: Normalize excessive blank lines only
         run: |
           python3 -m pip install autopep8==2.3.2
-          git diff --name-only -z origin/master...HEAD -- '*.py' |
+          git fetch --depth=1 origin master
+          git diff --name-only -z FETCH_HEAD HEAD -- '*.py' |
             xargs -0 -r python3 -m autopep8 --select E302,E303 -i
           python3 -m compileall -q tools utilities build-scripts
           git diff --check
