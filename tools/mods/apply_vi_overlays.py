@@ -78,7 +78,6 @@ def target_for_pointer(obj, pointer):
     return parent, key
 
 
-
 def allowed_arcana_pointer(name, pointer):
     """Prevent accidentally translating IDs, map layouts or mod logic."""
     raw_parts = pointer.lstrip("/").split("/")
