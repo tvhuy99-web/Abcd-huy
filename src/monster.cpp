@@ -404,6 +404,16 @@ bool monster::can_upgrade() const
     return upgrades && get_option<float>( "EVOLUTION_INVERSE_MULTIPLIER" ) > 0.0;
 }
 
+mfaction_id monster::get_monster_faction() const
+{
+    return faction.id();
+}
+
+faction_id monster::get_parent_faction() const
+{
+    return get_monster_faction()->associated_faction;
+}
+
 void monster::gravity_check()
 {
     monster::gravity_check( &get_map() );
