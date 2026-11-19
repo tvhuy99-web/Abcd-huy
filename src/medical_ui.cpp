@@ -1069,18 +1069,16 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
 
         if( !fix.skills.empty() ) {
             descr += string_format( _( "Skills: %s\n" ), enumerate_as_string(
-            fix.skills.begin(), fix.skills.end(), [&]( const std::pair<skill_id, int> &sk ) {
-                if( get_greater_skill_or_knowledge_level( sk.first ) >= sk.second ) {
-                    return string_format( pgettext( "skill requirement",
-                                                    //~ %1$s: skill name, %2$s: current skill level, %3$s: required skill level
-                                                    "<color_cyan>%1$s</color> <color_green>(%2$d/%3$d)</color>" ),
-                                          sk.first->name(), static_cast<int>( get_greater_skill_or_knowledge_level( sk.first ) ), sk.second );
-                } else {
-                    return string_format( pgettext( "skill requirement",
-                                                    //~ %1$s: skill name, %2$s: current skill level, %3$s: required skill level
-                                                    "<color_cyan>%1$s</color> <color_red>(%2$d/%3$d)</color>" ),
-                                          sk.first->name(), static_cast<int>( get_greater_skill_or_knowledge_level( sk.first ) ), sk.second );
-                }
+            fix.skills.begin(), fix.skills.end(), [&]( const wound_skill &sk ) {
+                const int current = static_cast<int>( get_greater_skill_or_knowledge_level( sk.skill ) );
+                const nc_color requirement_color = current >= sk.level ? c_green :
+                                                   sk.is_mandatory ? c_red : c_light_gray;
+                return string_format( pgettext( "skill requirement",
+                                                //~ %1$s: skill name, %2$s: current skill level, %3$s: required skill level
+                                                "%1$s %2$s" ),
+                                      colorize( sk.skill->name(), c_cyan ),
+                                      colorize( string_format( "(%1$d/%2$d)", current, sk.level ),
+                                                requirement_color ) );
             } ) );
         }
 
