@@ -9,9 +9,9 @@ from tools.mods import apply_vi_overlays as overlays
 
 
 class VietnameseModOverlaysTest(unittest.TestCase):
-    def test_all_three_localized_mods_are_pinned(self):
+    def test_all_four_localized_mods_are_pinned(self):
         self.assertEqual(set(overlays.OVERLAYS),
-                         {"mst_extra", "blazemod", "cataplusplus"})
+                         {"mst_extra", "blazemod", "cataplusplus", "arcana"})
         for kind in overlays.OVERLAYS:
             self.assertEqual(len(overlays.OVERLAYS[kind]["revision"]), 40)
             self.assertTrue(overlays.load_overlay(kind))

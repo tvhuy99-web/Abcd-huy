@@ -34,7 +34,7 @@ class ExplorePlaces500Tests(unittest.TestCase):
         self.assertIn('ui::omap::display_accessible_places();', self.dispatch)
         self.assertIn('void display_accessible_places();', self.header)
         self.assertIn(
-            '{ "listitems", "reader:places", "map", "sky",'
+            '{ "reader:scene:survey", "listitems", "reader:places", "map", "sky",'
             ' "center", "zones" }',
             self.hub,
         )

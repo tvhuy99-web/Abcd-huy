@@ -254,14 +254,14 @@ jobs:
                                        'assets/data/mods/CataclysmPlusPlus/modinfo.json',
                                        'assets/data/mods/Arcana_StrangeAeons/modinfo.json',
                                        'assets/data/mods/Blazemod/modinfo.json',
-                                       'assets/data/mods/MST_Extra/modinfo.json')
+                                       'assets/data/mods/MST_Extra/modinfo.json'):
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
                           if os.environ['BUILD_KIND'] == 'candidate':
                               samples = {
                                   'assets/data/mods/MST_Extra/items/tools.json': 'lò đất sét',
                                   'assets/data/mods/Blazemod/items/guns/blaze_weapons.json': 'súng xuyên giáp điện từ',
-                                   'assets/data/mods/CataclysmPlusPlus/c_achievements.json': 'Dấu Vết Hồ Sơ',
+                                  'assets/data/mods/CataclysmPlusPlus/c_achievements.json': 'Dấu Vết Hồ Sơ',
                               }
                               for asset, phrase in samples.items():
                                   if asset not in names or phrase not in archive.read(asset).decode('utf-8'):
