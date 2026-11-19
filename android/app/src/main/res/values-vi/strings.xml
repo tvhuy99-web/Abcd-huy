@@ -91,6 +91,10 @@
     <string name="a11yHubMoveWest">Đi Tây</string>
     <string name="a11yHubMoveNorthwest">Đi Tây Bắc</string>
     <string name="a11yHubInteraction">Tương tác với môi trường</string>
+    <!-- Short inventory selection outcomes, not additional controls. -->
+    <string name="a11yInventoryMarked">Đã chọn.</string>
+    <string name="a11yInventoryUnmarked">Đã bỏ chọn.</string>
+    <string name="a11yInventoryMarkedQuantity">Đã chọn %1$s trên %2$d.</string>
     <string name="a11yHubInventory">Túi đồ và vật phẩm</string>
     <string name="a11yHubHealth">Ăn uống, nghỉ ngơi và y tế</string>
     <string name="a11yHubEquipment">Trang bị và sửa chữa</string>
@@ -99,6 +103,18 @@
     <string name="a11yHubCharacter">Nhân vật và năng lực</string>
     <string name="a11yHubMissions">Nhiệm vụ và quan hệ</string>
     <string name="a11yHubVehicles">Phương tiện và hành trình</string>
+    <string name="a11yRadarTitle">Rađa tự động</string>
+    <string name="a11yRadarManage">Quản lý rađa</string>
+    <string name="a11yRadarOn">Bật</string>
+    <string name="a11yRadarOff">Tắt</string>
+    <string name="a11yRadarItems">Thông báo vật phẩm</string>
+    <string name="a11yRadarMonsters">Thông báo quái vật</string>
+    <string name="a11yRadarPlaces">Thông báo địa điểm</string>
+    <string name="a11yRadarNpcs">Thông báo NPC</string>
+    <string name="a11yRadarDoors">Thông báo cửa và cầu thang</string>
+    <string name="a11yRadarHazards">Thông báo nguy hiểm</string>
+    <string name="a11yRadarVehicles">Thông báo phương tiện</string>
+    <string name="a11yRadarLandmarks">Thông báo điểm mốc</string>
     <string name="a11yHubAutomation">Quản lý khu vực và tự động hóa</string>
     <string name="a11yHubReader">Thông tin, trình đọc và trợ giúp</string>
     <string name="a11yHubSystem">Hệ thống và bản lưu</string>

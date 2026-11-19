@@ -31,6 +31,8 @@ std::atomic<bool> reader_suspended{ true };
 // Game-thread check is one atomic read; JNI only changes the selected modes.
 std::atomic<bool> no_world_graphics{ false };
 std::atomic<bool> directional_sonar_opt_in{ false };
+std::atomic<unsigned int> spoken_radar_mask{ 0 };
+std::atomic<unsigned int> spoken_radar_revision{ 0 };
 std::atomic<bool> performance_profile_active{ false };
 std::atomic<unsigned int> profile_configuration_epoch{ 0 };
 std::atomic<unsigned int> profile_busy_epoch{ 0 };
@@ -100,6 +102,22 @@ bool suppress_world_visuals()
 {
     return enabled() && !suspended() && no_world_graphics.load( std::memory_order_relaxed );
 }
+void configure_automatic_radar( const unsigned int mask )
+{
+    const unsigned int value = mask & 0xffu;
+    if( spoken_radar_mask.exchange( value, std::memory_order_acq_rel ) != value ) {
+        spoken_radar_revision.fetch_add( 1, std::memory_order_release );
+    }
+}
+unsigned int automatic_radar_revision()
+{
+    return spoken_radar_revision.load( std::memory_order_acquire );
+}
+unsigned int automatic_radar_mask()
+{
+    return enabled() && !suspended() ? spoken_radar_mask.load( std::memory_order_acquire ) : 0;
+}
+
 void configure_directional_sonar( const bool active )
 {
     directional_sonar_opt_in.store( active, std::memory_order_release );
@@ -1121,6 +1139,13 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureDirectionalSonar(
     JNIEnv *, jclass, jboolean active )
 {
     a11y::android::configure_directional_sonar( active == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureAutomaticRadar(
+    JNIEnv *, jclass, jint mask )
+{
+    a11y::android::configure_automatic_radar( static_cast<unsigned int>( mask ) );
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

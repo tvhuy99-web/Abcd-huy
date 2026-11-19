@@ -90,6 +90,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final String COMBAT_ALERT_PREFIX = "A11Y_COMBAT_ALERT:";
     private static final String QUERY_PREFIX = "A11Y_QUERY:";
     private static final String SCENE_PREFIX = "A11Y_SCENE:";
+    private static final String RADAR_ALERT_PREFIX = "A11Y_RADAR_ALERT:";
+    private static final String RADAR_DANGER_PREFIX = "A11Y_RADAR_DANGER:";
     private static final String DRIVE_FEEDBACK_PREFIX = "A11Y_DRIVE_FEEDBACK:";
     private static final String AUTODRIVE_END_PREFIX = "A11Y_AUTODRIVE_END:";
     private static final String AREA_PREFIX = "A11Y_AREA:";
@@ -189,6 +191,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean choosingHubAction;
     private GameActionHub.Entry hubActionItem;
     private int hubActionChoice;
+    private static final int[] RADAR_BITS = {
+            ReaderPreferences.RADAR_CHANNEL_ITEMS,
+            ReaderPreferences.RADAR_CHANNEL_MONSTERS,
+            ReaderPreferences.RADAR_CHANNEL_PLACES,
+            ReaderPreferences.RADAR_CHANNEL_NPCS,
+            ReaderPreferences.RADAR_CHANNEL_DOORS,
+            ReaderPreferences.RADAR_CHANNEL_HAZARDS,
+            ReaderPreferences.RADAR_CHANNEL_VEHICLES,
+            ReaderPreferences.RADAR_CHANNEL_LANDMARKS
+    };
+    private static final int[] RADAR_LABELS = {
+            R.string.a11yRadarItems, R.string.a11yRadarMonsters,
+            R.string.a11yRadarPlaces, R.string.a11yRadarNpcs,
+            R.string.a11yRadarDoors, R.string.a11yRadarHazards,
+            R.string.a11yRadarVehicles, R.string.a11yRadarLandmarks
+    };
     // Only rendered when SDL is showing a native debug message.
     private String debugReport;
     private int debugFocus;
@@ -257,6 +275,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastSuspended = true;
     private boolean lastSpokenOnlyWorld;
     private boolean lastPerformanceProfile;
+    private int lastRadarMask = -1;
     private volatile long presentationEpoch;
     private long lastWorldBusyNotice;
     // Travel controls are a local two-button reader panel, with a third
@@ -522,6 +541,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void updateNativeState(boolean force) {
         boolean enabled = !closed && preferences.isEnabled();
+        int radarMask = enabled && foreground && windowFocused
+                ? preferences.activeRadarMask() : 0;
+        if (force || radarMask != lastRadarMask) {
+            try {
+                CataclysmDDA.nativeConfigureAutomaticRadar(radarMask);
+                lastRadarMask = radarMask;
+            } catch (UnsatisfiedLinkError unavailable) {
+                lastRadarMask = -1;
+            }
+        }
         sonar.setChannels(enabled && preferences.isCreatureSonarEnabled(),
                 enabled && preferences.isItemSonarEnabled());
         boolean suspended = !foreground || !windowFocused || (!usesTouchExploration() && !speech.isReady());
@@ -1198,6 +1227,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && !next.summary.equals(previousSnapshot.summary)
                         && previous.equals(focus)
                         && !documentReader.isOpen() && !commandPaletteOpen;
+                // A change to the marked quantity is one short outcome, not a
+                // fresh focus announcement with item name, role and position.
+                // Explicit swipes and pocket-axis navigation keep their full
+                // spoken row descriptions.
+                String shortInventoryMark = !changedContext && selectionChanged
+                        && "inventory".equals(next.category) && previous.equals(focus)
+                        && !commandPaletteOpen && !documentReader.isOpen()
+                        ? inventoryMarkFeedback(previousSnapshot, next, focus) : "";
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredCraftRecipeDetail
@@ -1275,7 +1312,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 nodeText(next.find(focus), false)));
                     }
                 } else if (selectionChanged) {
-                    readCurrent();
+                    if (!shortInventoryMark.isEmpty()) {
+                        feedback(shortInventoryMark);
+                    } else {
+                        readCurrent();
+                    }
                 } else if (summaryChanged) {
                     // The summary itself is the
                     // feedback for this update; reading the focused row
@@ -1319,6 +1360,25 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void announceGameMessage(String text, int priority, boolean immediate) {
+        if (text != null && (text.startsWith(RADAR_ALERT_PREFIX)
+                || text.startsWith(RADAR_DANGER_PREFIX))) {
+            final boolean urgent = text.startsWith(RADAR_DANGER_PREFIX);
+            final String spoken = ReaderSpokenText.clean(text.substring(urgent
+                    ? RADAR_DANGER_PREFIX.length() : RADAR_ALERT_PREFIX.length()));
+            // Ordinary entries never interrupt user-requested speech. A real
+            // hazard/monster event can use the existing urgent TTS priority.
+            handler.post(() -> {
+                if (closed || !foreground || !windowFocused || !preferences.isEnabled()
+                        || !preferences.isRadarEnabled() || comprehensiveMenu
+                        || snapshot == null || snapshot.find("world:here") == null
+                        || vehicleMode || autonomousDriveTrip || spoken.isEmpty()) { return; }
+                speech.say("radar-entry:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
+                        spoken, urgent ? ReaderSpeechQueue.URGENT
+                                       : ReaderSpeechQueue.LONG_TEXT,
+                        urgent ? 15000 : 3500);
+            });
+            return;
+        }
         // Framed long documents are assembled on the UI thread, before they
         // enter ReaderSpeechQueue (MAX_PENDING=8). Never silently discard
         // early chunks when a long book/item description is requested.
@@ -1586,6 +1646,49 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         return next.find(next.focus) != null ? next.focus
                 : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
+    }
+
+
+    /**
+     * The Android reader already navigates pocket contents directly. Only
+     * replace a repeated item-row narration when the SAME focused checkbox
+     * has a verified, newly applied selection count. New focus remains full.
+     */
+    private String inventoryMarkFeedback(ReaderSnapshot before, ReaderSnapshot after,
+                                         String focusedId) {
+        if (before == null || after == null || focusedId.isEmpty()
+                || !"inventory".equals(after.category)
+                || !before.contextKey().equals(after.contextKey())) {
+            return "";
+        }
+        ReaderSnapshot.Node oldRow = before.find(focusedId);
+        ReaderSnapshot.Node row = after.find(focusedId);
+        if (oldRow == null || row == null || !"checkbox".equals(row.role)
+                || !"checkbox".equals(oldRow.role)
+                || !oldRow.label.equals(row.label)) {
+            return "";
+        }
+        boolean markChanged = oldRow.checked != row.checked;
+        boolean quantityChanged = !oldRow.appliedValue.equals(row.appliedValue);
+        if (!markChanged && !quantityChanged) {
+            return "";
+        }
+        if ("int".equals(row.fieldType) && row.hasFieldRange
+                && row.appliedValue.matches("[0-9]+")) {
+            if (!row.checked || "0".equals(row.appliedValue)) {
+                return activity.getString(R.string.a11yInventoryUnmarked);
+            }
+            return activity.getString(R.string.a11yInventoryMarkedQuantity,
+                    row.appliedValue, Math.round(row.fieldMax));
+        }
+        // Single-item checkboxes do not have a numeric editor. Comparison
+        // rows use the same checkbox contract, and only a real checked-state
+        // transition is summarized.
+        if (markChanged) {
+            return activity.getString(row.checked
+                    ? R.string.a11yInventoryMarked : R.string.a11yInventoryUnmarked);
+        }
+        return "";
     }
 
     private String nodeText(ReaderSnapshot.Node node, boolean includeDetail) {
@@ -4542,6 +4645,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (walkingTravelPanelActive()) { activateTravel(); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
+        if ("reader:radar:toggle".equals(node.id)) { toggleRadar(); return; }
         if (!node.enabled) { feedback(nodeText(node, true)); return; }
         // Command group headers (R04.3) are browsing landmarks only:
         // activating one reads it, it never sends an intent.
@@ -4829,8 +4933,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private List<GameActionHub.Entry> hubEntries() {
+        if (hubSection == GameActionHub.RADAR_SETTINGS) {
+            List<GameActionHub.Entry> settings = new ArrayList<>();
+            settings.add(new GameActionHub.Entry(radarStateLabel(
+                    R.string.a11yRadarTitle, preferences.isRadarEnabled()),
+                    "radar:master", GameActionHub.RADAR_OPTION, 0));
+            for (int i = 0; i < RADAR_BITS.length; ++i) {
+                settings.add(new GameActionHub.Entry(radarStateLabel(
+                        RADAR_LABELS[i], preferences.radarChannelEnabled(RADAR_BITS[i])),
+                        "radar:channel:" + i, GameActionHub.RADAR_OPTION, 0));
+            }
+            return settings;
+        }
+        // RADAR_SETTINGS is a Java-owned submenu, not a native GameActionHub
+        // group index. Never index the native action table for section 18.
         List<GameActionHub.Entry> result =
                 GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
+        for (int i = 0; i < result.size(); ++i) {
+            GameActionHub.Entry entry = result.get(i);
+            if ("reader:radar:toggle".equals(entry.node)) {
+                result.set(i, new GameActionHub.Entry(radarStateLabel(
+                        R.string.a11yRadarTitle, preferences.isRadarEnabled()),
+                        entry.node, entry.kind, entry.group));
+            }
+        }
         // Hide combat-only mode switching outside the live combat controls.
         if (!combatMode) {
             result.removeIf(entry -> "reader:combat:aim-toggle".equals(entry.node));
@@ -4843,7 +4969,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return result;
     }
 
+    private String radarStateLabel(int labelId, boolean enabled) {
+        return activity.getString(labelId) + ": " + activity.getString(enabled
+                ? R.string.a11yRadarOn : R.string.a11yRadarOff);
+    }
+
+    private void toggleRadar() {
+        preferences.setRadarEnabled(!preferences.isRadarEnabled());
+        updateNativeState(false);
+        render();
+        feedback(radarStateLabel(R.string.a11yRadarTitle, preferences.isRadarEnabled()));
+    }
+
     private String hubActionLabel(int choice) {
+        if (choice == 2 && hubActionItem != null
+                && "reader:radar:toggle".equals(hubActionItem.node)) {
+            return activity.getString(R.string.a11yRadarManage);
+        }
         if (choice == 0) { return activity.getString(R.string.a11yHubGestureOption); }
         if (choice == 2) { return activity.getString(R.string.a11yGestureGuideTitle); }
         String target = hubActionItem == null ? null : hubActionItem.shortcutTarget();
@@ -4879,6 +5021,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 : binding ? activity.getString(R.string.a11yBindTitle, bindingItem.label)
                 : hubSection == GameActionHub.ROOT
                 ? activity.getString(R.string.a11yHubTitle)
+                : hubSection == GameActionHub.RADAR_SETTINGS
+                ? activity.getString(R.string.a11yRadarManage)
                 : hubSection == GameActionHub.DIRECTIONS
                 ? activity.getString(R.string.a11yHubChooseDirection)
                 : hubSection == GameActionHub.FAVORITES
@@ -5049,6 +5193,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (entries.isEmpty()) { return; }
         hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
         GameActionHub.Entry entry = entries.get(hubIndex);
+        if (entry.kind == GameActionHub.RADAR_OPTION) { return; }
         if (entry.shortcutTarget() == null) {
             feedback(activity.getString(R.string.a11yBindUnavailable));
             return;
@@ -5068,6 +5213,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         GameActionHub.Entry entry = hubActionItem;
         String target = entry.shortcutTarget();
         int choice = hubActionChoice;
+        if (choice == 2 && "reader:radar:toggle".equals(entry.node)) {
+            choosingHubAction = false;
+            hubActionItem = null;
+            hubSection = GameActionHub.RADAR_SETTINGS;
+            hubIndex = 0;
+            root.cancelGesture();
+            render();
+            readCurrent();
+            return;
+        }
         if (choice == 2) {
             // Preserve the original two item actions and the selected hub
             // row while viewing the final, read-only help entry.
@@ -5251,7 +5406,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             case GameActionHub.OPEN_DEBUG_LOG:
                 activity.onAccessibilityOpenDebugLog();
                 return;
+            case GameActionHub.RADAR_OPTION:
+                if ("radar:master".equals(item.node)) {
+                    preferences.setRadarEnabled(!preferences.isRadarEnabled());
+                } else if (item.node.startsWith("radar:channel:")) {
+                    try {
+                        int index = Integer.parseInt(item.node.substring("radar:channel:".length()));
+                        if (index < 0 || index >= RADAR_BITS.length) { return; }
+                        int bit = RADAR_BITS[index];
+                        preferences.setRadarChannelEnabled(bit,
+                                !preferences.radarChannelEnabled(bit));
+                    } catch (NumberFormatException invalid) { return; }
+                } else { return; }
+                updateNativeState(false);
+                root.cancelGesture();
+                render();
+                readCurrent();
+                return;
             case GameActionHub.EXECUTE:
+                if ("reader:radar:toggle".equals(item.node)) {
+                    comprehensiveMenu = false;
+                    root.cancelGesture();
+                    toggleRadar();
+                    return;
+                }
                 ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(item.node);
                 if (node == null || !node.enabled || (!node.actions.contains("activate")
                         && !"document".equals(node.role)
@@ -5645,6 +5823,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             } else if (choosingGesture) {
                 choosingGesture = false;
                 bindingItem = null;
+            } else if (hubSection == GameActionHub.RADAR_SETTINGS) {
+                hubSection = 13; // The existing Zones and automation group.
+                hubIndex = 0;
             } else if (hubSection == GameActionHub.DIRECTIONS) {
                 hubSection = 3;
                 hubIndex = 0;

@@ -91,6 +91,10 @@
     <string name="a11yHubMoveWest">Move west</string>
     <string name="a11yHubMoveNorthwest">Move northwest</string>
     <string name="a11yHubInteraction">Interact with surroundings</string>
+    <!-- Short inventory selection outcomes, not additional controls. -->
+    <string name="a11yInventoryMarked">Marked.</string>
+    <string name="a11yInventoryUnmarked">Unmarked.</string>
+    <string name="a11yInventoryMarkedQuantity">Marked %1$s of %2$d.</string>
     <string name="a11yHubInventory">Inventory and items</string>
     <string name="a11yHubHealth">Food, rest and medical</string>
     <string name="a11yHubEquipment">Equipment and repairs</string>
@@ -99,6 +103,18 @@
     <string name="a11yHubCharacter">Character and abilities</string>
     <string name="a11yHubMissions">Missions and relations</string>
     <string name="a11yHubVehicles">Vehicles and travel</string>
+    <string name="a11yRadarTitle">Automatic radar</string>
+    <string name="a11yRadarManage">Manage radar</string>
+    <string name="a11yRadarOn">On</string>
+    <string name="a11yRadarOff">Off</string>
+    <string name="a11yRadarItems">Announce items</string>
+    <string name="a11yRadarMonsters">Announce monsters</string>
+    <string name="a11yRadarPlaces">Announce places</string>
+    <string name="a11yRadarNpcs">Announce NPCs</string>
+    <string name="a11yRadarDoors">Announce doors and stairs</string>
+    <string name="a11yRadarHazards">Announce hazards</string>
+    <string name="a11yRadarVehicles">Announce vehicles</string>
+    <string name="a11yRadarLandmarks">Announce landmarks</string>
     <string name="a11yHubAutomation">Zones and automation</string>
     <string name="a11yHubReader">Reader and information</string>
     <string name="a11yHubSystem">System and saves</string>
