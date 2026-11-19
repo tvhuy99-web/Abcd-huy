@@ -59,6 +59,19 @@ struct radar_contact {
 };
 
 radar_detail::entry_tracker tracker;
+radar_detail::change_tracker door_states;
+radar_detail::change_tracker object_names;
+std::optional<radar_detail::spatial_frame> previous_space;
+std::optional<tripoint_abs_ms> previous_space_origin;
+
+void clear_change_memory()
+{
+    door_states.clear();
+    object_names.clear();
+    previous_space.reset();
+    previous_space_origin.reset();
+}
+
 std::uint64_t last_lifecycle = 0;
 unsigned int last_mask = 0;
 unsigned int last_radar_revision = 0;
@@ -140,6 +153,104 @@ void collect_place( std::map<std::string, radar_contact> &out,
     add( out, radar_places, id, terrain->get_name( om_vision_level::full ), offset );
 }
 
+
+// Gather only loaded tiles. A small flood fill measures *connected* space;
+// walls cannot inflate the area by revealing passable rooms behind them.
+radar_detail::spatial_frame collect_spatial( map &here, const tripoint_bub_ms &origin )
+{
+    radar_detail::spatial_frame frame;
+    const std::array<point, 8> directions{ {
+            point( 0, -1 ), point( 1, -1 ), point( 1, 0 ), point( 1, 1 ),
+            point( 0, 1 ), point( -1, 1 ), point( -1, 0 ), point( -1, -1 )
+        } };
+    for( std::size_t i = 0; i < directions.size(); ++i ) {
+        radar_detail::direction_probe &probe = frame.rays[i];
+        for( int distance = 1; distance <= range; ++distance ) {
+            const point step = directions[i] * distance;
+            const tripoint_bub_ms p = origin + tripoint_rel_ms( step.x, step.y, 0 );
+            if( !here.inbounds( p ) ) {
+                break;
+            }
+            probe.distance = distance;
+            if( here.impassable( p ) ) {
+                probe.complete = true;
+                probe.blocked = true;
+                probe.blocker = coordinate_id( here.get_abs( p ) );
+                break;
+            }
+            if( distance == range ) {
+                probe.complete = true;
+            }
+        }
+    }
+
+    constexpr int half = 4;
+    constexpr int width = half * 2 + 1;
+    std::array<bool, width * width> visited{};
+    std::array<point, width * width> pending{};
+    visited[half * width + half] = true;
+    std::size_t head = 0;
+    std::size_t tail = 0;
+    pending[tail++] = point( 0, 0 );
+    const std::array<point, 4> directions4{ {
+            point( 0, -1 ), point( 1, 0 ), point( 0, 1 ), point( -1, 0 )
+        } };
+    while( head < tail ) {
+        const point cursor = pending[head++];
+        for( const point &step : directions4 ) {
+            const point next = cursor + step;
+            if( std::abs( next.x ) > half || std::abs( next.y ) > half ) {
+                continue;
+            }
+            const int index = ( next.y + half ) * width + next.x + half;
+            if( visited[index] ) {
+                continue;
+            }
+            // Do not mark an inaccessible neighbor as visited: it might be
+            // approached along a different path later in the same scan.
+            const tripoint_bub_ms p = origin + tripoint_rel_ms( next.x, next.y, 0 );
+            if( !here.inbounds( p ) || here.impassable( p ) ) {
+                continue;
+            }
+            visited[index] = true;
+            pending[tail++] = next;
+        }
+    }
+    frame.reachable_tiles = static_cast<int>( tail );
+    return frame;
+}
+
+std::vector<std::string> describe_spatial_changes(
+    const std::vector<radar_detail::spatial_change> &events )
+{
+    std::vector<std::string> notices;
+    const std::array<point, 8> directions{ {
+            point( 0, -1 ), point( 1, -1 ), point( 1, 0 ), point( 1, 1 ),
+            point( 0, 1 ), point( -1, 1 ), point( -1, 0 ), point( -1, -1 )
+        } };
+    for( const radar_detail::spatial_change &event : events ) {
+        switch( event.kind ) {
+            case radar_detail::spatial_change_kind::passage_opens:
+                notices.push_back( string_format( _( "Passage opens to the %1$s, %2$d tiles." ),
+                                                  compass( directions[event.direction] ),
+                                                  event.distance ) );
+                break;
+            case radar_detail::spatial_change_kind::passage_narrows:
+                notices.push_back( string_format( _( "Passage narrows to the %1$s, blocked in %2$d tiles." ),
+                                                  compass( directions[event.direction] ),
+                                                  event.distance ) );
+                break;
+            case radar_detail::spatial_change_kind::area_opens:
+                notices.emplace_back( _( "The space around you opens up." ) );
+                break;
+            case radar_detail::spatial_change_kind::area_narrows:
+                notices.emplace_back( _( "The space around you narrows." ) );
+                break;
+        }
+    }
+    return notices;
+}
+
 int sort_rank( const unsigned int category )
 {
     if( category == radar_hazards ) { return 0; }
@@ -152,9 +263,10 @@ int sort_rank( const unsigned int category )
     return 7;
 }
 
-void speak_new( std::vector<radar_contact> &fresh )
+void speak_new( std::vector<radar_contact> &fresh,
+                const std::vector<std::string> &changes )
 {
-    if( fresh.empty() ) {
+    if( fresh.empty() && changes.empty() ) {
         return;
     }
     // Multiple instances of the same name entering on one game update
@@ -210,8 +322,23 @@ void speak_new( std::vector<radar_contact> &fresh )
         spoken += " " + string_format( _( "%d more new radar groups were combined." ),
                                        static_cast<int>( ordered.size() - max_groups ) );
     }
-    a11y::android::announce( std::string( urgent ? "A11Y_RADAR_DANGER:" :
-                                   "A11Y_RADAR_ALERT:" ) + spoken, urgent ? 3 : 1 );
+    // Added state changes share the original single TTS message and urgency.
+    // Do not introduce new radar channels, controls or settings.
+    constexpr std::size_t max_changes = 3;
+    for( std::size_t i = 0; i < changes.size() && i < max_changes; ++i ) {
+        if( !spoken.empty() ) {
+            spoken += " ";
+        }
+        spoken += changes[i];
+    }
+    if( changes.size() > max_changes ) {
+        spoken += " " + string_format( _( "%d more environment changes." ),
+                                      static_cast<int>( changes.size() - max_changes ) );
+    }
+    if( !spoken.empty() ) {
+        a11y::android::announce( std::string( urgent ? "A11Y_RADAR_DANGER:" :
+                                       "A11Y_RADAR_ALERT:" ) + spoken, urgent ? 3 : 1 );
+    }
 }
 
 } // namespace
@@ -225,26 +352,40 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     // snapshot in between. It must still re-arm every entry detector.
     if( revision != last_radar_revision ) {
         tracker.clear();
+        clear_change_memory();
         last_radar_revision = revision;
     }
     if( mask == 0 ) {
         tracker.clear();
+        clear_change_memory();
         last_mask = 0;
         last_lifecycle = lifecycle;
         return;
     }
     if( lifecycle != last_lifecycle ) {
         tracker.clear();
+        clear_change_memory();
         last_lifecycle = lifecycle;
         last_mask = 0;
     }
     if( mask != last_mask ) {
+        if( ( mask ^ last_mask ) & radar_doors ) {
+            door_states.clear();
+        }
+        if( ( mask ^ last_mask ) & ( radar_items | radar_landmarks ) ) {
+            object_names.clear();
+        }
+        if( ( mask ^ last_mask ) & radar_places ) {
+            previous_space.reset();
+            previous_space_origin.reset();
+        }
         last_mask = mask;
     }
 
     map &here = get_map();
     const avatar &player = get_avatar();
     std::map<std::string, radar_contact> contacts;
+    std::map<std::string, std::string> current_door_states;
     std::set<tripoint_abs_omt> examined_places;
     for( int dy = -range; dy <= range; ++dy ) {
         for( int dx = -range; dx <= range; ++dx ) {
@@ -274,6 +415,14 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                                   here.tername( p ) : here.furnname( p );
                     add( contacts, radar_doors, "door:" + position_id,
                          door_name, delta );
+                    const std::string terrain_id = here.ter( p ).id().str();
+                    const std::string furniture_id = here.furn( p ).id().str();
+                    const bool locked = terrain_id.find( "_locked" ) != std::string::npos ||
+                                        furniture_id.find( "_locked" ) != std::string::npos;
+                    const std::string state = !here.impassable( p ) ? "open" :
+                                              locked ? "locked" : "closed";
+                    current_door_states[std::to_string( radar_doors ) + ":door:" +
+                                        position_id] = state;
                 }
                 if( here.has_flag( ter_furn_flag::TFLAG_GOES_UP, p ) ) {
                     add( contacts, radar_doors, "up:" + position_id, _( "Stairs up" ), delta );
@@ -338,7 +487,67 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     for( const std::string &key : entering ) {
         fresh.push_back( contacts.at( key ) );
     }
-    speak_new( fresh );
+    std::vector<std::string> changes;
+
+    // The door channel now announces changes without falsely treating a door
+    // at the same absolute position as a newly discovered object.
+    const auto changed_doors = door_states.changed( current_door_states );
+    for( const auto &change : changed_doors ) {
+        const auto found = contacts.find( change.first );
+        if( found == contacts.end() ) {
+            continue;
+        }
+        const radar_contact &door = found->second;
+        const std::string state = change.second == "open" ? _( "open" ) :
+                                  change.second == "locked" ? _( "locked" ) : _( "closed" );
+        changes.push_back( string_format( _( "Door to the %1$s, %2$d tiles away, is now %3$s." ),
+                                          compass( door.offset ), door.distance, state ) );
+    }
+
+    // Keep the Places channel's existing discovery behavior; add only brief,
+    // movement-driven changes in connected geometry. Skip teleports and level
+    // changes so a new area is not mistaken for a newly opened passage.
+    if( mask & radar_places ) {
+        const tripoint_abs_ms current_origin = here.get_abs( origin );
+        const radar_detail::spatial_frame current_space = collect_spatial( here, origin );
+        if( previous_space && previous_space_origin ) {
+            const int dx = std::abs( current_origin.x() - previous_space_origin->x() );
+            const int dy = std::abs( current_origin.y() - previous_space_origin->y() );
+            const bool adjacent_move = current_origin.z() == previous_space_origin->z() &&
+                                       dx <= 1 && dy <= 1 && ( dx != 0 || dy != 0 );
+            if( adjacent_move && changed_doors.empty() ) {
+                const auto scene_changes = radar_detail::compare_spatial( *previous_space,
+                                           current_space );
+                const auto descriptions = describe_spatial_changes( scene_changes );
+                changes.insert( changes.end(), descriptions.begin(), descriptions.end() );
+            }
+        }
+        previous_space = current_space;
+        previous_space_origin = current_origin;
+    }
+
+    // Item and landmark state changes use their existing channels. Newly
+    // entering entities are already announced above; only stable IDs whose
+    // spoken names changed can produce an additional change notice.
+    std::map<std::string, std::string> current_object_names;
+    for( const auto &entry : contacts ) {
+        if( entry.second.channel == radar_items || entry.second.channel == radar_landmarks ) {
+            current_object_names.emplace( entry.first, entry.second.label );
+        }
+    }
+    const auto changed_objects = object_names.changed( current_object_names );
+    for( const auto &change : changed_objects ) {
+        const auto found = contacts.find( change.first );
+        if( found == contacts.end() ) {
+            continue;
+        }
+        const radar_contact &object = found->second;
+        changes.push_back( string_format( _( "Object changed: %1$s to the %2$s, %3$d tiles away." ),
+                                          object.label, compass( object.offset ),
+                                          object.distance ) );
+    }
+
+    speak_new( fresh, changes );
 }
 
 } // namespace a11y
