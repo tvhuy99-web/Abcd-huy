@@ -1815,6 +1815,66 @@ void outfit::get_overlay_ids( std::vector<std::pair<std::string, std::string>> &
     }
 }
 
+// The armor manager operates on the real worn-item list.  Keep iterators
+// stable when filtering and reordering, as the UI stores them between inputs.
+std::vector<std::list<item>::iterator> outfit::filter_by_bodypart( bodypart_id bp )
+{
+    std::vector<std::list<item>::iterator> result;
+    for( auto it = worn.begin(); it != worn.end(); ++it ) {
+        if( bp == bodypart_str_id::NULL_ID() || it->covers( bp ) ) {
+            result.push_back( it );
+        }
+    }
+    return result;
+}
+
+bool outfit::items_cover_opposite_bp( const Character &, const bodypart_id &cover ) const
+{
+    if( cover == bodypart_str_id::NULL_ID() || cover->opposite_part == cover->id ) {
+        return false;
+    }
+    const bodypart_id opposite = cover->opposite_part.id();
+    bool any_on_part = false;
+    for( const item &garment : worn ) {
+        if( garment.covers( cover ) ) {
+            any_on_part = true;
+            if( !garment.covers( opposite ) ) {
+                return false;
+            }
+        }
+    }
+    return any_on_part;
+}
+
+void outfit::splice( std::list<item>::iterator to, std::list<item>::iterator pos )
+{
+    worn.splice( to, worn, pos );
+}
+
+void outfit::sort()
+{
+    // Stable sorting retains all existing item_locations while placing
+    // integrated armor first and otherwise ordering by innermost layer.
+    worn.sort( []( const item &left, const item &right ) {
+        if( left.has_flag( flag_INTEGRATED ) != right.has_flag( flag_INTEGRATED ) ) {
+            return left.has_flag( flag_INTEGRATED );
+        }
+        return left.get_layer() < right.get_layer();
+    } );
+}
+
+void outfit::assign_invlets( Character &guy )
+{
+    // NPC equipment has no player letter shortcuts.
+    if( !guy.is_avatar() ) {
+        return;
+    }
+    for( item &garment : worn ) {
+        garment.invlet = '\0';
+        guy.as_avatar()->add_invlet_to_new_item( garment );
+    }
+}
+
 std::list<item>::iterator outfit::position_to_wear_new_item( const item &new_item )
 {
     // By default we put this item on after the last item on the same or any
