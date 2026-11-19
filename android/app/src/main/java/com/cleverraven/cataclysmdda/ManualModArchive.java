@@ -138,6 +138,29 @@ final class ManualModArchive {
                 }
                 found = mod.optString("id", "");
             }
+                // A modinfo path may only select a subdirectory of this
+                // imported mod. Never allow it to escape to another mod or
+                // the game's private files. This validation is in addition
+                // to ZIP-entry path traversal checks above.
+            for (int i = 0; i < objects.length(); i++) {
+                JSONObject mod = objects.optJSONObject(i);
+                if (mod == null || !"MOD_INFO".equals(mod.optString("type"))) {
+                    continue;
+                }
+                String relative = mod.optString("path", "");
+                if (!relative.isEmpty()) {
+                    if (relative.startsWith("/") || relative.startsWith("\\")
+                            || relative.contains(":") || relative.contains("\\")
+                            || relative.indexOf((char) 0) >= 0) {
+                        throw new IOException("Đường dẫn modinfo không an toàn");
+                    }
+                    for (String segment : relative.split("/")) {
+                        if (segment.isEmpty() || segment.equals(".") || segment.equals("..")) {
+                            throw new IOException("Đường dẫn modinfo không an toàn");
+                        }
+                    }
+                }
+            }
             validId(found);
             return found;
         } catch (JSONException invalid) {
@@ -236,7 +259,13 @@ final class ManualModArchive {
         if (totals[0] > MAX_FILES || totals[1] > MAX_EXPANDED || current.length() > MAX_FILE) {
             throw new IOException("Mod vượt giới hạn xuất ZIP");
         }
-        String relative = root.toURI().relativize(current.toURI()).getPath();
+        String basePath = root.getCanonicalPath() + File.separator;
+        String fullPath = current.getCanonicalPath();
+        if (!fullPath.startsWith(basePath)) {
+            throw new IOException("Đường dẫn mod không an toàn");
+        }
+        String relative = fullPath.substring(basePath.length())
+                .replace(File.separatorChar, '/');
         if (relative.isEmpty() || relative.contains("..") || relative.contains("\\")) {
             throw new IOException("Đường dẫn mod không an toàn");
         }
