@@ -45,6 +45,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     private boolean ignoreUntilPointersReleased;
     private boolean activateOnDoubleTap;
     private boolean swipeHandled;
+    private boolean longPressHandled;
     private boolean multiplePointerMoved;
     private long pointerDownTime;
     private long contentGeneration;
@@ -82,6 +83,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             public void onLongPress(MotionEvent event) {
                 if (!listener.isActive()) { return; }
                 swipeHandled = true;
+                longPressHandled = true;
                 activateOnDoubleTap = false;
                 previousTapFocus = -1;
                 listener.openContextActions();
@@ -324,6 +326,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             downFocus = focus;
             activateOnDoubleTap = false;
             swipeHandled = false;
+            longPressHandled = false;
         } else if (touchGeneration != contentGeneration) {
             MotionEvent cancel = MotionEvent.obtain(event);
             cancel.setAction(MotionEvent.ACTION_CANCEL);
@@ -393,7 +396,8 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
                 previousTapFocus = -1;
                 handleSwipe(dx, dy);
             }
-            previousTapFocus = !enoughDistance && shortEnough && !activated ? downFocus : -1;
+            previousTapFocus = !enoughDistance && shortEnough && !activated
+                    && !longPressHandled ? downFocus : -1;
             activateOnDoubleTap = false;
         }
         return true;
@@ -403,6 +407,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         multiplePointers = false;
         activateOnDoubleTap = false;
         swipeHandled = false;
+        longPressHandled = false;
         multiplePointerMoved = true;
         previousTapFocus = -1;
         ignoreUntilPointersReleased = false;
