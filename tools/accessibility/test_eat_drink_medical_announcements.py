@@ -160,5 +160,44 @@ class OutcomeMessagesReachSpeechAndHistory(unittest.TestCase):
                       " Messages::recent_messages( const size_t count )", messages)
 
 
+class UpstreamMealAndWoundCompatibility(unittest.TestCase):
+    """Keep the upstream API fixes and NPC meal behavior during merges."""
+
+    def test_medical_skill_lists_use_wound_skill_in_both_places(self):
+        source = (SRC / "medical_ui.cpp").read_text("utf-8")
+        self.assertIn("for( const wound_skill &req : fix_id->skills )",
+                      source)
+        self.assertIn("fix.skills.end(), [&]( const wound_skill &sk )",
+                      source)
+        self.assertIn("sk.is_mandatory ? c_red : c_light_gray",
+                      source)
+        self.assertNotIn("const std::pair<skill_id, int> &sk", source)
+        self.assertIn("a11y::append_requirements(", source)
+
+    def test_consumption_uses_actual_eater_not_avatar(self):
+        source = (SRC / "activity_actor.cpp").read_text("utf-8")
+        start = source.split("void consume_activity_actor::start(", 1)[1]
+        start = start.split("void consume_activity_actor::finish(", 1)[0]
+        finish = source.split("void consume_activity_actor::finish(", 1)[1]
+        finish = finish.split("void consume_activity_actor::canceled(", 1)[0]
+        self.assertIn("guy.will_eat( it, guy.is_avatar() )", start)
+        self.assertIn("who.consume( consume_loc, /*force=*/true )", finish)
+        self.assertIn("who.consume( consume_item, /*force=*/true )", finish)
+        self.assertIn("who.is_avatar() && reprompt_consume_menu", finish)
+
+    def test_camp_meal_is_serializable_and_charged_only_when_eaten(self):
+        actor = (SRC / "activity_actor.cpp").read_text("utf-8")
+        header = (SRC / "activity_actor_definitions.h").read_text("utf-8")
+        npc = (SRC / "npcmove.cpp").read_text("utf-8")
+        self.assertIn("class camp_meal_activity_actor", header)
+        self.assertIn("void camp_meal_activity_actor::finish(", actor)
+        self.assertIn("camp_food_supply( -portion )", actor)
+        self.assertIn("camp_meal::personal", actor)
+        self.assertIn('data.read( "meal_kcals", actor.meal_kcals )', actor)
+        self.assertIn(
+            "{ ACT_CAMP_MEAL, &camp_meal_activity_actor::deserialize }", actor)
+        self.assertIn("return id == ACT_CONSUME || id == ACT_CAMP_MEAL;", npc)
+
+
 if __name__ == "__main__":
     unittest.main()
