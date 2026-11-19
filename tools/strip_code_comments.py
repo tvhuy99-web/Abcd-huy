@@ -84,6 +84,8 @@ def strip_clike(source: str) -> tuple[str, int]:
                     or before.rstrip().endswith('\\')):
                 out.append(comment)
             else:
+                while out and out[-1] in (' ', '\t'):
+                    out.pop()
                 removed += 1
             i = end
             continue
@@ -98,8 +100,13 @@ def strip_clike(source: str) -> tuple[str, int]:
             if keep_comment(comment) or before.rstrip().endswith('\\'):
                 out.append(comment)
             else:
+                while out and out[-1] in (' ', '\t'):
+                    out.pop()
                 removed += 1
-                out.append(' ' + '\n' * comment.count('\n'))
+                if '\n' in comment:
+                    out.append('\n' * comment.count('\n'))
+                elif end < size and source[end] not in ('\n', '\r', ' ', '\t'):
+                    out.append(' ')
             last_nl = comment.rfind('\n')
             if last_nl >= 0:
                 line_start = end - (len(comment) - last_nl - 1)
