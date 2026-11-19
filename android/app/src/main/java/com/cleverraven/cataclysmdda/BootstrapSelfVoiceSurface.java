@@ -23,6 +23,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         boolean isActive();
         void speak(String id, String text);
         void stopSpeech();
+        default void openContextActions() { }
         /** A new focused control supersedes the previous spoken control. */
         default void interruptForFocus() { stopSpeech(); }
         /** Return from this outer Android screen without saving draft settings. */
@@ -75,6 +76,15 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             public boolean onDoubleTap(MotionEvent event) {
                 activateOnDoubleTap = previousTapFocus >= 0 && previousTapFocus == downFocus;
                 return true;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent event) {
+                if (!listener.isActive()) { return; }
+                swipeHandled = true;
+                activateOnDoubleTap = false;
+                previousTapFocus = -1;
+                listener.openContextActions();
             }
 
             @Override

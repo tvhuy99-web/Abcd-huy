@@ -272,6 +272,19 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
+    /** Android SAF handles mod ZIP files without touching live game objects. */
+    public void onAccessibilityManualModAction(String action, String modId) {
+        if (!"import".equals(action) && !"export".equals(action)
+                && !"delete".equals(action)) { return; }
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) { return; }
+            Intent intent = new Intent(this, ManualModsActivity.class);
+            intent.putExtra(ManualModsActivity.EXTRA_ACTION, action);
+            intent.putExtra(ManualModsActivity.EXTRA_MOD_ID, modId);
+            startActivity(intent);
+        });
+    }
+
     public void onAccessibilityOpenBackupRestore() {
         runOnUiThread(() -> {
             if (!isFinishing() && !isDestroyed()) {
@@ -294,6 +307,8 @@ public class CataclysmDDA extends SDLActivity {
 
     // Java never edits native options on this thread. C++ drains a queue.
     static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
+    static native String nativeUserModDir();
+    static native void nativeQueueManualModsChanged();
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native void nativeConfigureReaderPerformance(boolean spokenOnlyWorld,
