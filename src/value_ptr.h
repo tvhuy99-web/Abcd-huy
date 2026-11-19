@@ -114,16 +114,16 @@ struct heap {
 
 
         // NOLINTNEXTLINE(google-explicit-constructor)
-        operator T &()& {
+        operator T &() & {
             return *heaped_;
         }
         // NOLINTNEXTLINE(google-explicit-constructor)
-        operator T const &() const& {
+        operator T const &() const & {
             return *heaped_;
         }
 
         // NOLINTNEXTLINE(google-explicit-constructor)
-        operator T()&& {
+        operator T() && {
             return std::move( *heaped_ );
         }
 
@@ -132,14 +132,14 @@ struct heap {
 
 
 
-        T &operator*()& {
+        T &operator*() & {
             return *heaped_;
         }
-        T const &operator*() const& {
+        T const &operator*() const & {
             return *heaped_;
         }
 
-        T operator*()&& {
+        T operator*() && {
             return std::move( *heaped_ );
         }
 
