@@ -100,8 +100,11 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("pldrive( point_rel_ms( 0, -1 ) );", ENGINE)
         self.assertIn("pldrive( point_rel_ms( 0, 1 ) );", ENGINE)
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
-        self.assertRegex(CTRL, r'requestVehicleAction\("reader:vehicle:horn"\);\s*return true;\s*'
-                          r'default:\s*(?://[^\n]*\n\s*)*return true;')
+        pattern = (
+            r'requestVehicleAction\("reader:vehicle:horn"\);\s*return true;\s*'
+            r'default:\s*(?://[^\n]*\n\s*)*return true;'
+        )
+        self.assertRegex(CTRL, pattern)
 
     def test_vehicle_onboarding_uses_touch_instructions(self):
         source = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
