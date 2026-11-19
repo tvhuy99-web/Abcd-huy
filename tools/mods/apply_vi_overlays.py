@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply Vietnamese text-only overlays to the two pinned CDDA mods.
+"""Apply Vietnamese text-only overlays to three pinned CDDA mods.
 
 Only string values change. Game logic, identifiers, arrays and numeric
 fields always come from the original pinned upstream revision.
@@ -15,6 +15,12 @@ import re
 
 HERE = Path(__file__).resolve().parent
 OVERLAYS = {
+    "cataplusplus": {
+        "folder": "CataclysmPlusPlus", "id": "Cata++",
+        "revision": "46982a63da25b064c8d0fdee9b68c23dccc1f671",
+        "file": "translations/cataplusplus_vi_overlay.b64",
+        "sha256": "59da33109f3acab10694c960ee2772ee1c18ce3d71fa3100c1a0a97f81422603",
+    },
     "mst_extra": {
         "folder": "MST_Extra", "id": "MST_Extra",
         "revision": "5f9dbfef550d5c140865ce5f6a32c40eb34c07ca",
