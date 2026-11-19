@@ -746,7 +746,10 @@ void body_status_ui_impl::draw_controls()
 
         std::shared_ptr<uilist> current_uilist = ui_parent->get_current_tab_uilist();
         if( current_uilist ) {
-            uilist::draw_controls( *current_uilist );
+            // The fork keeps rendering inside uilist_impl to retain its
+            // accessibility-aware ImGui behavior.
+            uilist_impl list_renderer( *current_uilist );
+            list_renderer.draw_controls();
         }
 
         ImGui::EndChild();
