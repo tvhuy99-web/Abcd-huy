@@ -1,5 +1,7 @@
 #include <cstdint>
 #include <cstdio>
+#include <initializer_list>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -8,16 +10,24 @@
 #include "calendar.h"
 #include "cata_catch.h"
 #include "character.h"
+#include "character_attire.h"
+#include "enums.h"
 #include "item.h"
+#include "item_location.h"
 #include "player_helpers.h"
+#include "ret_val.h"
 #include "stomach.h"
 #include "string_formatter.h"
 #include "type_id.h"
 #include "units.h"
+#include "weather.h"
 
+static const efftype_id effect_hunger_engorged( "hunger_engorged" );
+static const efftype_id effect_hunger_full( "hunger_full" );
 static const efftype_id effect_tapeworm( "tapeworm" );
 
 static const itype_id itype_beansnrice( "beansnrice" );
+static const itype_id itype_debug_backpack( "debug_backpack" );
 static const itype_id itype_debug_nutrition( "debug_nutrition" );
 static const itype_id itype_debug_orange( "debug_orange" );
 static const itype_id itype_debug_vitamins( "debug_vitamins" );
@@ -109,9 +119,11 @@ static void print_stomach_contents( Character &p, const bool print )
 // accounting for appropriate vitamins
 static void eat_all_nutrients( Character &you )
 {
+    // some another test seems to spill temperature here, miraculously
+    get_weather().forced_temperature = 20_C;
     // Vitamin target: 100% DV -- or 96 vitamin "units" since all vitamins currently decay every 15m.
     // Energy target: 2100 kcal -- debug target will be completely sedentary.
-    item f( itype_debug_nutrition );
+    item &f = *get_avatar().as_character()->i_add( item( itype_debug_nutrition ) );
     you.consume( f );
 }
 
@@ -206,7 +218,7 @@ TEST_CASE( "vitamin_equilibrium", "[vitamins]" )
     REQUIRE( subject.vitamin_get( vitamin_vitC ) == -100 );
     REQUIRE( subject.vitamin_get( vitamin_calcium ) == -100 );
     REQUIRE( subject.vitamin_get( vitamin_iron ) == -100 );
-    item f( itype_debug_orange );
+    item &f = *subject.as_character()->i_add( item( itype_debug_orange ) );
 
     // check that 100% of daily vit C is by default 96 units
     CHECK( subject.compute_effective_nutrients( f ).get_vitamin( vitamin_vitC ) == 96 );
@@ -236,7 +248,7 @@ TEST_CASE( "vitamin_multivitamin", "[vitamins]" )
     REQUIRE( subject.vitamin_get( vitamin_vitC ) == -100 );
     REQUIRE( subject.vitamin_get( vitamin_calcium ) == -100 );
     REQUIRE( subject.vitamin_get( vitamin_iron ) == -100 );
-    item f( itype_debug_vitamins );
+    item &f = *subject.as_character()->i_add( item( itype_debug_vitamins ) );
 
     subject.consume( f );
 
@@ -272,8 +284,7 @@ TEST_CASE( "vitamin_daily", "[vitamins]" )
     REQUIRE( subject.get_daily_vitamin( vitamin_iron ) == 0 );
     REQUIRE( subject.get_health_tally() == 0 );
 
-    item f( itype_debug_vitamins );
-
+    item &f = *subject.as_character()->i_add( item( itype_debug_vitamins ) );
     subject.consume( f );
 
     int hours = 0;
@@ -406,6 +417,7 @@ TEST_CASE( "hunger" )
     // change this bool when editing the test
     const bool print_tests = false;
     avatar &dummy = get_avatar();
+    dummy.worn.wear_item( dummy, item( itype_debug_backpack ), false, false );
     reset_time();
     clear_stomach( dummy );
     dummy.initialize_stomach_contents();
@@ -424,9 +436,9 @@ TEST_CASE( "hunger" )
     }
     CHECK( hunger_time <= 270 );
     CHECK( hunger_time >= 240 );
-    item f( itype_meat_cooked );
+    item_location f = dummy.as_character()->i_add( item( itype_meat_cooked ) );
     dummy.consume( f );
-    f = item( itype_meat_cooked );
+    f = dummy.as_character()->i_add( item( itype_meat_cooked ) );
     dummy.consume( f );
     dummy.set_thirst( 0 );
     dummy.update_body();
@@ -439,9 +451,9 @@ TEST_CASE( "hunger" )
     }
     CHECK( hunger_time <= 240 );
     CHECK( hunger_time >= 210 );
-    f = item( itype_beansnrice );
+    f = dummy.as_character()->i_add( item( itype_beansnrice ) );
     dummy.consume( f );
-    f = item( itype_beansnrice );
+    f = dummy.as_character()->i_add( item( itype_beansnrice ) );
     dummy.consume( f );
     dummy.update_body();
     print_stomach_contents( dummy, print_tests );
@@ -456,7 +468,7 @@ TEST_CASE( "hunger" )
         printf( "eat 16 veggy\n" );
     }
     for( int i = 0; i < 16; i++ ) {
-        f = item( itype_veggy );
+        f = dummy.as_character()->i_add( item( itype_veggy ) );
         dummy.consume( f );
     }
     dummy.update_body();
@@ -475,7 +487,7 @@ TEST_CASE( "hunger" )
         dummy.mutate_towards( trait_HUNGER3 );
     }
     for( int i = 0; i < 16; i++ ) {
-        f = item( itype_veggy );
+        f = dummy.as_character()->i_add( item( itype_veggy ) );
         dummy.consume( f );
     }
     dummy.update_body();
@@ -487,4 +499,182 @@ TEST_CASE( "hunger" )
     }
     CHECK( hunger_time <= 240 );
     CHECK( hunger_time >= 180 );
+}
+
+namespace
+{
+struct fullness_line {
+    const char *name;
+    bool deficit;
+    bool is_engorged_line;
+    // first integer milliliter that triggers the line
+    int first_ml;
+};
+} // namespace
+
+static int first_at_least( int cap_ml, int num, int den )
+{
+    return ( cap_ml * num + den - 1 ) / den;
+}
+
+static int first_more_than( int cap_ml, int num, int den )
+{
+    return cap_ml * num / den + 1;
+}
+
+static std::vector<fullness_line> fullness_lines( int cap_ml )
+{
+    return {
+        { "engorged, fed", false, true, first_at_least( cap_ml, 5, 6 ) },
+        { "full, fed", false, false, first_more_than( cap_ml, 11, 20 ) },
+        { "engorged, short of calories", true, true, cap_ml },
+        { "full, short of calories", true, false, first_more_than( cap_ml, 3, 4 ) },
+    };
+}
+
+TEST_CASE( "stomach_fullness_lines", "[stomach]" )
+{
+    avatar &dummy = get_avatar();
+    clear_avatar();
+    clear_stomach( dummy );
+    const int cap_ml = units::to_milliliter( dummy.stomach.capacity( dummy ) );
+    CAPTURE( cap_ml );
+    // 5/6 line must fall between whole milliliters, full lines exactly on one
+    REQUIRE( cap_ml * 5 % 6 != 0 );
+    REQUIRE( cap_ml * 11 % 20 == 0 );
+    REQUIRE( cap_ml * 3 % 4 == 0 );
+
+    // second pass already holds part of the total, water included
+    const units::volume held_water = 100_ml;
+    const units::volume held_solids = 200_ml;
+    for( int pass = 0; pass < 2; ++pass ) {
+        const bool held = pass == 1;
+        for( const fullness_line &line : fullness_lines( cap_ml ) ) {
+            for( int offset = -1; offset <= 1; ++offset ) {
+                const int ml = line.first_ml + offset;
+                CAPTURE( held, line.name, ml, offset );
+                clear_stomach( dummy );
+                units::volume intake = units::from_milliliter( ml );
+                if( held ) {
+                    dummy.stomach.ingest( food_summary{ held_water, held_solids, nutrients{} } );
+                    intake -= held_water + held_solids;
+                }
+                const bool on_line = line.is_engorged_line ?
+                                     dummy.stomach.would_be_engorged_with( dummy, intake, line.deficit ) :
+                                     dummy.stomach.would_be_full_with( dummy, intake, line.deficit );
+                CHECK( on_line == ( offset >= 0 ) );
+            }
+        }
+    }
+    clear_stomach( dummy );
+}
+
+TEST_CASE( "room_before_engorged_is_the_last_intake_short_of_the_line", "[stomach]" )
+{
+    avatar &dummy = get_avatar();
+    clear_avatar();
+    for( const bool deficit : {
+             false, true
+         } ) {
+        for( const units::volume &held : {
+                 0_ml, 300_ml
+             } ) {
+            CAPTURE( deficit, units::to_milliliter( held ) );
+            clear_stomach( dummy );
+            dummy.stomach.ingest( food_summary{ 0_ml, held, nutrients{} } );
+            const units::volume room = dummy.stomach.room_before_engorged( dummy, deficit );
+            REQUIRE( room > 0_ml );
+            CHECK_FALSE( dummy.stomach.would_be_engorged_with( dummy, room, deficit ) );
+            CHECK( dummy.stomach.would_be_engorged_with( dummy, room + 1_ml, deficit ) );
+            dummy.stomach.ingest( food_summary{ 0_ml, room + 1_ml, nutrients{} } );
+            CHECK( dummy.stomach.room_before_engorged( dummy, deficit ) == 0_ml );
+        }
+    }
+    clear_stomach( dummy );
+}
+
+TEST_CASE( "stomach_fullness_effects_follow_the_lines", "[stomach]" )
+{
+    // some another test seems to spill temperature here, miraculously
+    get_weather().forced_temperature = 20_C;
+    avatar &dummy = get_avatar();
+    clear_avatar();
+    clear_stomach( dummy );
+    const int cap_ml = units::to_milliliter( dummy.stomach.capacity( dummy ) );
+    const bool deficit = GENERATE( false, true );
+    CAPTURE( cap_ml, deficit );
+    // half the healthy store counts as a calorie deficit
+    dummy.set_stored_kcal( deficit ? dummy.get_healthy_kcal() / 2 : dummy.get_healthy_kcal() );
+    REQUIRE( dummy.has_calorie_deficit() == deficit );
+
+    for( const fullness_line &line : fullness_lines( cap_ml ) ) {
+        if( line.deficit != deficit ) {
+            continue;
+        }
+        for( int offset = -1; offset <= 1; ++offset ) {
+            const int ml = line.first_ml + offset;
+            CAPTURE( line.name, ml, offset );
+            clear_stomach( dummy );
+            dummy.stomach.ingest( food_summary{ 0_ml, units::from_milliliter( ml ), nutrients{} } );
+            dummy.update_stomach( calendar::turn, calendar::turn );
+
+            // under an engorged line the stomach is already past the full line
+            const bool engorged = line.is_engorged_line && offset >= 0;
+            const bool full = line.is_engorged_line ? offset < 0 : offset >= 0;
+            CHECK( dummy.has_effect( effect_hunger_engorged ) == engorged );
+            CHECK( dummy.has_effect( effect_hunger_full ) == full );
+
+            item &meal = *dummy.as_character()->i_add( item( itype_meat_cooked ) );
+            const units::volume meal_volume = meal.volume( false, false, 1 ) *
+                                              dummy.compute_effective_food_volume_ratio( meal );
+            CAPTURE( units::to_milliliter( meal_volume ) );
+            const ret_val<edible_rating> rating = dummy.will_eat( meal, false );
+            CAPTURE( rating.str() );
+            const units::volume before = dummy.stomach.contains();
+            const trinary eaten = dummy.consume( meal );
+            if( engorged || full ) {
+                CHECK( rating.value() == TOO_FULL );
+                CHECK( eaten == trinary::NONE );
+                CHECK( dummy.stomach.contains() == before );
+            } else {
+                // the meal must stay below the engorged line
+                const int engorged_ml = deficit ? cap_ml : first_at_least( cap_ml, 5, 6 );
+                REQUIRE( ml + units::to_milliliter( meal_volume ) < engorged_ml );
+                CHECK( rating.success() );
+                CHECK( eaten == trinary::ALL );
+                CHECK( dummy.stomach.contains() > before );
+            }
+        }
+    }
+
+    // without a full or engorged effect, only the meal's own volume can refuse it
+    const int engorged_ml = deficit ? cap_ml : first_at_least( cap_ml, 5, 6 );
+    for( int offset = -1; offset <= 1; ++offset ) {
+        item &meal = *dummy.as_character()->i_add( item( itype_meat_cooked ) );
+        const int meal_ml = units::to_milliliter( meal.volume( false, false, 1 ) *
+                            dummy.compute_effective_food_volume_ratio( meal ) );
+        const int held_ml = engorged_ml - meal_ml + offset;
+        CAPTURE( meal_ml, held_ml, offset );
+        clear_stomach( dummy );
+        dummy.clear_effects();
+        dummy.stomach.ingest( food_summary{ 0_ml, units::from_milliliter( held_ml ), nutrients{} } );
+        REQUIRE( !dummy.has_effect( effect_hunger_engorged ) );
+        REQUIRE( !dummy.has_effect( effect_hunger_full ) );
+
+        const ret_val<edible_rating> rating = dummy.will_eat( meal, false );
+        CAPTURE( rating.str() );
+        const units::volume before = dummy.stomach.contains();
+        const trinary eaten = dummy.consume( meal );
+        if( offset >= 0 ) {
+            CHECK( rating.value() == TOO_FULL );
+            CHECK( eaten == trinary::NONE );
+            CHECK( dummy.stomach.contains() == before );
+        } else {
+            CHECK( rating.success() );
+            CHECK( eaten == trinary::ALL );
+            CHECK( dummy.stomach.contains() > before );
+        }
+    }
+    clear_stomach( dummy );
+    dummy.clear_effects();
 }

@@ -427,7 +427,8 @@ TEST_CASE( "shearing", "[activity][shearing][animals]" )
             const use_function *use = elec_shears.type->get_use( "transform" );
             REQUIRE( use != nullptr );
             const iuse_transform *actor = dynamic_cast<const iuse_transform *>( use->get_actor_ptr() );
-            actor->use( &dummy, elec_shears, &get_map(), dummy.pos_bub() );
+            item_location loc( *dummy.as_character(), &elec_shears );
+            actor->use( &dummy, loc, &get_map(), dummy.pos_bub() );
 
             dummy.i_add( elec_shears );
             REQUIRE( dummy.max_quality( qual_SHEAR ) == 3 );
@@ -475,7 +476,8 @@ TEST_CASE( "shearing", "[activity][shearing][animals]" )
             const use_function *use = elec_shears.type->get_use( "transform" );
             REQUIRE( use != nullptr );
             const iuse_transform *actor = dynamic_cast<const iuse_transform *>( use->get_actor_ptr() );
-            actor->use( &dummy, elec_shears, &get_map(), dummy.pos_bub() );
+            item_location loc( *dummy.as_character(), &elec_shears );
+            actor->use( &dummy, loc, &get_map(), dummy.pos_bub() );
 
             dummy.i_add( elec_shears );
             REQUIRE( dummy.max_quality( qual_SHEAR ) == 3 );
@@ -2147,4 +2149,18 @@ TEST_CASE( "activity_interruption_by_distractions", "[activity][interruption]" )
             CHECK( dists.find( distraction_type::dangerous_field ) != dists.end() );
         }
     }
+}
+
+TEST_CASE( "clear_avatar_ends_a_walk_an_earlier_test_left", "[activities]" )
+{
+    clear_avatar();
+    avatar &u = get_avatar();
+    u.set_destination( { u.pos_bub() + tripoint::east },
+                       player_activity( multi_farm_activity_actor() ) );
+    REQUIRE( u.has_destination() );
+    REQUIRE_FALSE( u.get_destination_activity().is_null() );
+    clear_avatar();
+    CHECK_FALSE( u.has_destination() );
+    CHECK( u.get_destination_activity().is_null() );
+    CHECK_FALSE( u.destination_point );
 }
