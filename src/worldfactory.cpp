@@ -1618,6 +1618,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         import_button.parent_id = "mod:manual";
         import_button.depth = 1;
         import_button.role = "button";
+        import_button.actions = { "focus", "activate" };
         import_button.label = "Nhập tệp mod thủ công";
         snapshot.nodes.push_back( std::move( import_button ) );
 
@@ -1640,6 +1641,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             item.parent_id = "mod:manual";
             item.depth = 1;
             item.role = "button";
+            item.actions = { "focus", "activate" };
             item.label = id->name();
             const bool active = std::find( active_mod_order.begin(), active_mod_order.end(), id ) !=
                                 active_mod_order.end();

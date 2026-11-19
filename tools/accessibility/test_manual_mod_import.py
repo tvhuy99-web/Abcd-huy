@@ -40,6 +40,15 @@ class ManualModImportContracts(unittest.TestCase):
         self.assertIn('mman_ui->try_rem( std::distance(', self.world)
         self.assertIn('PATH_INFO::user_moddir_path() / "manual"', self.world)
 
+    def test_manual_mod_rows_are_actually_activatable_by_double_tap(self):
+        # Android intentionally refuses to dispatch native activation unless
+        # this exact action appears in the published semantic node.
+        self.assertIn('import_button.actions = { "focus", "activate" };',
+                      self.world)
+        self.assertIn('item.actions = { "focus", "activate" };',
+                      self.world)
+        self.assertIn('if (!node.actions.contains("activate"))', self.reader)
+
     def test_reloading_only_on_game_thread(self):
         self.assertIn("take_manual_mods_changed()", self.world)
         self.assertIn("mman->reload_available_mods()", self.world)
