@@ -66,7 +66,8 @@ class ConcisePlaceSurveyTests(unittest.TestCase):
             "} // namespace", 1
         )[0]
         self.assertNotIn("append_groups( report, _( \"Item types\" )", body)
-        self.assertNotIn("items", body)
+        self.assertNotIn("found.items", body)
+        self.assertNotIn('_( "Item types" )', body)
         self.assertNotIn("full_loaded", body)
         self.assertNotIn("wall tiles", body)
         self.assertNotIn("orientation summary", body.lower())

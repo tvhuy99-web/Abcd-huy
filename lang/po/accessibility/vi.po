@@ -6380,8 +6380,6 @@ msgstr "Đây là khảo sát quanh vị trí hiện tại, chưa phải đườ
 msgid "%1$d doors and %2$d stair links were detected in the scanned tiles."
 msgstr "Trong phần đã quét, phát hiện %1$d cửa và %2$d lối nối tầng."
 
-msgid "Distances to features are map-position distances, not guaranteed walking routes. End of survey."
-msgstr "Khoảng cách đến các điểm mốc là khoảng cách theo vị trí trên bản đồ, không bảo đảm có đường đi trực tiếp. Kết thúc khảo sát."
 
 msgid "Detailed place survey"
 msgstr "Khảo sát địa điểm chi tiết"
