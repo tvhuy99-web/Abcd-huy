@@ -30,7 +30,7 @@
     "magazine": 100,
     "items": [
       { "item": "afs_military_vest" },
-      { "item": "legpouch_large", "contents-group": "army_mags_m4" },
+      { "item": "legpouch_large" },
       { "item": "afs_jumpsuit_military" },
       { "item": "boots_combat" },
       { "item": "under_armor" },
@@ -47,7 +47,7 @@
       { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
       { "item": "afs_marsec_4", "charges": 14, "ammo-item": "afs_10mm_caseless_JHP" },
       { "item": "afs_10mm_caseless_JHP", "count": [ 1, 2 ] },
-      { "item": "shot_00", "count": 2 }
+      { "item": "shot_00", "charges": 30 }
     ]
   },
   {

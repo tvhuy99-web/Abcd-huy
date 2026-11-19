@@ -599,7 +599,7 @@
     "symbol": "~",
     "quench": -5,
     "healthy": -1,
-    "description": "Water with soap added.  Not good for drinking.",
+    "description": "Water with soap added.  Not good for drinking, but perfect for cleaning wounds.",
     "price": "0 cent",
     "price_postapoc": "0 cent",
     "volume": "250 ml",
@@ -981,21 +981,6 @@
   {
     "type": "ITEM",
     "id": "chem_ammonium_nitrate",
-    "category": "chems",
-    "price": "1 cent",
-    "price_postapoc": "1 cent",
-    "name": { "str_sp": "ammonium nitrate powder" },
-    "symbol": "=",
-    "color": "white",
-    "description": "A handful of ammonium nitrate powder.  This white, crystalline powder is commonly used as a component of fertilizers and explosives.  Could also be dissolved in water to sharply lower its temperature, but is there any use for this quality in this new world?",
-    "material": [ "powder_nonflam" ],
-    "volume": "1 ml",
-    "weight": "1 g",
-    "container": "bag_canvas"
-  },
-  {
-    "type": "ITEM",
-    "id": "chem_ammonium_nitrate_pellets",
     "looks_like": "fertilizer_commercial",
     "category": "chems",
     "price": "1 cent",
@@ -1004,9 +989,19 @@
     "symbol": "=",
     "color": "white",
     "description": "A handful of ammonium nitrate pellets.  These pellets are commonly used as a component of fertilizers and explosives.  Could also be dissolved in water to sharply lower its temperature, but is there any use for this quality in this new world?",
-    "material": [ "powder_nonflam" ],
+    "variant_type": "generic",
+    "variants": [
+      {
+        "id": "powder",
+        "name": { "str": "ammonium nitrate powder" },
+        "description": "A handful of ammonium nitrate powder.  This white, crystalline powder is commonly used as a component of fertilizers and explosives.  Could also be dissolved in water to sharply lower its temperature, but is there any use for this quality in this new world?.",
+        "weight": 0
+      }
+    ],
+    "material": [ "dense_powder_nonflam" ],
     "volume": "1 ml",
-    "weight": "1 g",
+    "weight": "1725 mg",
+    "//": "tnt equivalent 0.38 g/tnt",
     "container": "bag_canvas"
   },
   {
@@ -1119,10 +1114,12 @@
     "material": [ "powder" ],
     "volume": "1 ml",
     "weight": "1 g",
+    "//": "tnt equivalent 0.74 g/tnt",
     "container": "bag_canvas"
   },
   {
     "type": "ITEM",
+    "subtypes": [ "AMMO" ],
     "id": "chem_black_powder",
     "category": "chems",
     "price": "20 USD",
@@ -1132,9 +1129,11 @@
     "color": "dark_gray",
     "description": "A handful of black gunpowder, a mix of saltpeter, charcoal, and sulfur.  Pretty useless for making modern cartridges, as the soot produced when it burns will quickly clog any firearm, but it could be used to make some vicious bombs.",
     "material": [ "powder" ],
-    "volume": "89 ml",
+    "volume": "83 ml",
     "weight": "151 mg",
-    "container": "bag_plastic_small"
+    "ammo_type": "chem_black_powder",
+    "container": "bag_plastic_small",
+    "count": 1000
   },
   {
     "type": "ITEM",
@@ -1147,7 +1146,7 @@
     "color": "white",
     "description": "A handful of Hexogen powder or RDX, commonly known as cyclonite: a military-grade, shelf-stable high explosive white, crystalline powder.  Can be cast into shaped charges, or mixed with scrap to pepper the blast area with high-velocity shrapnel.",
     "material": [ "dense_powder" ],
-    "//": "Density of RDX/Hexogen is 1.858 g/cm3",
+    "//": [ "Density of RDX/Hexogen is 1.858 g/cm3", "tnt equivalent 1.38 g/tnt" ],
     "volume": "1 ml",
     "weight": "1858 mg"
   },
@@ -1162,7 +1161,7 @@
     "color": "brown",
     "description": "Composition B is an explosive consisting of castable mixtures of Hexogen/RDX and TNT.  It is used as the main explosive filling in artillery projectiles, rockets, land mines, hand grenades, and various other munitions.",
     "material": [ "dense_powder" ],
-    "//": "Density of composition B is 1.65 g/cm3",
+    "//": [ "Density of composition B is 1.65 g/cm3", "tnt equivalent 1.32 g/tnt" ],
     "volume": "1 ml",
     "weight": "1650 mg"
   },
@@ -1177,7 +1176,7 @@
     "color": "white",
     "description": "Hexamine peroxide: this fine, yellowish powder is a powerful primary explosive, used to initiate detonation of more stable explosives, such as RDX.  Relatively stable, but best not store it for too long.  Widely used pre-Cataclysm in amateur-made blasting caps.",
     "material": [ "dense_powder" ],
-    "//": "Density of RDX is 1.57 g/cm3",
+    "//": [ "Density of RDX is 1.57 g/cm3", "tnt equivalent 0.8 g/tnt" ],
     "volume": "1 ml",
     "weight": "1570 mg",
     "container": "bag_plastic_small"
@@ -1193,7 +1192,7 @@
     "color": "white",
     "description": "Acetone peroxide, also called APEX or Mother of Satan: this fine, white crystalline powder is a powerful primary explosive, used to initiate detonation of more stable explosives, such as RDX.  Relatively stable, with a fruit-like smell when pure.",
     "material": [ "powder" ],
-    "//": "Detonation velocity about 2500–3000 m/s near 0.5 g/cm3",
+    "//": [ "Detonation velocity about 2500–3000 m/s near 0.5 g/cm3", "tnt equivalent 0.8 g/tnt" ],
     "volume": "1 ml",
     "weight": "500 mg",
     "container": "bag_plastic_small"
@@ -1749,7 +1748,7 @@
     "color": "green",
     "description": "A piece of unshielded radioactive material that used to be a part of some nuclear industry equipment.  You have yet to find some use for it, and you probably shouldn't stand near it.",
     "material": [ "steel", "plastic" ],
-    "flags": [ "LEAK_ALWAYS", "RADIOACTIVE" ],
+    "flags": [ "TRADER_AVOID", "LEAK_ALWAYS", "RADIOACTIVE" ],
     "volume": "90 ml",
     "weight": "80 g"
   },
@@ -1920,6 +1919,7 @@
     "material": [ "veggy" ],
     "color": "light_blue",
     "fun": -50,
+    "consumption_effect_on_conditions": [ "EOC_CONSUMED_ANTIFUNGAL_STRONG" ],
     "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
@@ -2246,5 +2246,14 @@
     "description": "A strong adhesive to use for structural repairs or other high stress applications.  You can't sniff it, but you can use it to close up wounds in a pinch.",
     "price_postapoc": "10 cents",
     "use_action": { "type": "heal", "bandages_power": 1, "bleed": 4, "move_cost": 1000 }
+  },
+  {
+    "id": "glue_strong_metal",
+    "copy-from": "glue_weak",
+    "type": "ITEM",
+    "subtypes": [ "AMMO" ],
+    "name": { "str_sp": "steel-reinforced epoxy" },
+    "description": "A strong adhesive reinforced with steel, primarily used for repairing and adhering metals.",
+    "price_postapoc": "10 cents"
   }
 ]

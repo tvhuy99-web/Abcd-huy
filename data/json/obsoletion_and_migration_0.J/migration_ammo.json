@@ -1,6 +1,16 @@
 [
   {
     "type": "MIGRATION",
+    "id": "methed_alcohol",
+    "replace": "denat_alcohol"
+  },
+  {
+    "type": "MIGRATION",
+    "id": "chem_ammonium_nitrate_pellets",
+    "replace": "chem_ammonium_nitrate"
+  },
+  {
+    "type": "MIGRATION",
     "id": "reloaded_338lapua_api",
     "replace": "338lapua_api"
   },
@@ -308,5 +318,11 @@
     "type": "MIGRATION",
     "id": "matchead_9mm",
     "replace": "9mm"
+  },
+  {
+    "type": "MIGRATION",
+    "id": "money",
+    "replace": "thread",
+    "charges": 0
   }
 ]

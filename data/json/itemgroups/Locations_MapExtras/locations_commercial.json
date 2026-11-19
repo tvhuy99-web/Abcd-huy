@@ -100,7 +100,7 @@
       { "group": "glue_weak_domestic", "prob": 25 },
       { "group": "glue_strong_domestic", "prob": 20 },
       { "item": "flashlight", "prob": 25, "charges": [ 0, 300 ] },
-      [ "thread", 20 ],
+      { "group": "thread_spool_boxed", "prob": 20 },
       { "group": "box_of_batteries_unopened", "prob": 25 },
       { "item": "candle", "prob": 25, "charges": [ 0, 100 ] },
       { "group": "small_candles_in_box", "prob": 10 },
@@ -624,7 +624,9 @@
       { "group": "tinware", "prob": 10 },
       { "group": "costume_all_clothing", "prob": 10 },
       [ "cheongsam", 5 ],
-      { "group": "ammo_varmint_airgun", "prob": 10 }
+      { "group": "airgun_pellet_target_packed", "prob": 7 },
+      { "group": "airgun_pellet_hunting_packed", "prob": 3 },
+      { "group": "bb_packed", "prob": 5 }
     ]
   },
   {
@@ -1604,6 +1606,7 @@
       { "item": "toaster", "prob": 65 },
       { "item": "mess_kit", "prob": 25 },
       { "item": "hotplate", "prob": 30 },
+      { "item": "slow_cooker", "prob": 30 },
       { "item": "power_station_portable", "prob": 40 },
       { "item": "hotplate_induction", "prob": 3 },
       { "item": "coffeemaker", "prob": 45 },
@@ -1926,7 +1929,7 @@
       [ "neoprene", 5 ],
       [ "felt_patch", 10 ],
       [ "fur", 10 ],
-      [ "thread", 15 ],
+      { "group": "thread_spool_boxed", "prob": 15 },
       [ "yarn", 15 ],
       [ "sinew", 15 ],
       { "group": "duct_tape_roll", "prob": 15 },

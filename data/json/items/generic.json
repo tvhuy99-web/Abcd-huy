@@ -743,7 +743,7 @@
     "name": { "str": "wire" },
     "description": "A length of thin, relatively stiff steel wire.  Like the sort you find in chain link fences.",
     "category": "spare_parts",
-    "price": "200 USD",
+    "price": "20 USD",
     "price_postapoc": "10 cent",
     "material": [ "steel" ],
     "weight": "151 g",
@@ -771,8 +771,8 @@
     "name": { "str": "steel wire" },
     "description": "A length of thin, relatively stiff wire made of mild steel.  Ubiquitously found in everyday applications such as chain link fences.",
     "category": "spare_parts",
-    "price": "200 USD",
-    "price_postapoc": "1 USD",
+    "price": "20 USD",
+    "price_postapoc": "10 cent",
     "material": [ "lc_steel" ],
     "weight": "151 g",
     "volume": "100 ml"
@@ -2946,22 +2946,6 @@
     "to_hit": { "grip": "bad", "length": "hand", "surface": "any", "balance": "neutral" }
   },
   {
-    "id": "cash_card",
-    "type": "ITEM",
-    "subtypes": [ "TOOL" ],
-    "category": "currency",
-    "copy-from": "card_plastic_abstract",
-    "symbol": "$",
-    "color": "yellow",
-    "name": { "str": "cash card" },
-    "ascii_picture": "cashcard",
-    "description": "A yellow plastic card used to electronically store money.  It holds up to 2 million dollars.",
-    "price": "10 USD",
-    "extend": { "flags": [ "NO_UNLOAD", "NO_RELOAD", "TRADER_AVOID" ] },
-    "pocket_data": [ { "pocket_type": "MAGAZINE", "rigid": true, "ammo_restriction": { "money": 200000000 } } ],
-    "tool_ammo": [ "money" ]
-  },
-  {
     "id": "credit_card",
     "type": "ITEM",
     "category": "currency",
@@ -3225,7 +3209,7 @@
     "weight": "1 g",
     "volume": "250 ml",
     "use_action": [ "CRAFT" ],
-    "flags": [ "NO_SALVAGE", "TRADER_AVOID", "CAN_HAVE_CHARGES" ]
+    "flags": [ "NO_SALVAGE", "TRADER_AVOID", "CAN_HAVE_CHARGES", "ALLOWS_REMOTE_USE" ]
   },
   {
     "type": "ITEM",
@@ -3239,7 +3223,7 @@
     "weight": "1 g",
     "volume": "250 ml",
     "use_action": [ "DISASSEMBLE" ],
-    "flags": [ "NO_SALVAGE", "TRADER_AVOID", "CAN_HAVE_CHARGES" ]
+    "flags": [ "NO_SALVAGE", "TRADER_AVOID", "CAN_HAVE_CHARGES", "ALLOWS_REMOTE_USE" ]
   },
   {
     "type": "ITEM",
@@ -3737,6 +3721,38 @@
     "to_hit": { "grip": "none", "length": "short", "surface": "line", "balance": "uneven" },
     "flags": [ "TRADER_AVOID", "NO_REPAIR" ],
     "melee_damage": { "bash": 4, "cut": 4 }
+  },
+  {
+    "id": "broken_wells_machine_leg",
+    "type": "ITEM",
+    "symbol": "s",
+    "name": { "str": "broken warlord leg" },
+    "description": "A great metallic snake that once functioned as a robotic leg.",
+    "volume": "930 L",
+    "weight": "282 kg",
+    "longest_side": "400 cm",
+    "price": "50 USD",
+    "price_postapoc": "50 USD",
+    "melee_damage": { "bash": 100 },
+    "material": [ "steel" ],
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
+  },
+  {
+    "id": "broken_wells_machine",
+    "type": "ITEM",
+    "symbol": "X",
+    "name": { "str": "destroyed warlord" },
+    "description": "The broken remains of a labyrinth warlord.  Its many weapons lie twisted and inoperable.",
+    "volume": "930 L",
+    "weight": "6582 kg",
+    "longest_side": "400 cm",
+    "price": "50 USD",
+    "price_postapoc": "50 USD",
+    "melee_damage": { "bash": 100 },
+    "material": [ "steel" ],
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
   },
   {
     "id": "parachute_mil",
