@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
+#include <stdlib.h>
 #include <map>
 #include <optional>
 #include <set>
@@ -14,21 +16,22 @@
 #include "a11y_android.h"
 #include "a11y_location.h"
 #include "avatar.h"
-#include "catacharset.h"
 #include "coordinates.h"
 #include "creature.h"
 #include "creature_tracker.h"
 #include "field.h"
-#include "game.h"
 #include "item.h"
 #include "map.h"
+#include "map_scale_constants.h"
 #include "mapdata.h"
 #include "omdata.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "output.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "trap.h"
+#include "type_id.h"
 #include "translations.h"
 #include "vehicle.h"
 #include "vpart_position.h"
@@ -60,14 +63,18 @@ extent overmap_envelope( const int west_omt, const int north_omt,
              ( east_omt + 1 ) * size - 1, ( south_omt + 1 ) * size - 1 };
 }
 
+extent loaded_envelope( const int west, const int north, const int width, const int height )
+{
+    return { west, north, west + width - 1, north + height - 1 };
+}
+
 } // namespace scene_detail
 
 namespace
 {
 
 constexpr int omt_size = coords::map_squares_per( coords::scale::overmap_terrain );
-constexpr int survey_radius = 70;
-// The reality bubble is normally smaller than this limit; the cap is a
+ // The reality bubble is normally smaller than this limit; the cap is a
 // defensive guard for large modded maps. This is called ONLY on activation.
 constexpr int maximum_survey_tiles = 20000;
 constexpr std::size_t maximum_site_omts = 192;
@@ -489,6 +496,74 @@ void append_groups( std::string &report, const std::string &title,
     }
 }
 
+void append_nearest( std::string &report, const std::string &heading,
+                     const std::vector<located_entry> &features,
+                     const tripoint_abs_ms &player,
+                     const std::optional<local_place_coordinates> &local,
+                     const bool exterior_only )
+{
+    const located_entry *nearest = nullptr;
+    int closest = 0;
+    for( const located_entry &feature : features ) {
+        if( exterior_only && !feature.outside_entrance ) {
+            continue;
+        }
+        const int distance = std::max( std::abs( feature.position.x() - player.x() ),
+                                       std::abs( feature.position.y() - player.y() ) );
+        if( !nearest || distance < closest ) {
+            nearest = &feature;
+            closest = distance;
+        }
+    }
+    if( nearest ) {
+        report += " " + string_format( _( "%1$s: %2$s, %3$s." ),
+                                       heading, nearest->label,
+                                       point_speech( nearest->position, player, local ) );
+    }
+}
+
+void append_adjacent_places( std::string &report, const site_region &site,
+                             const tripoint_abs_omt &player )
+{
+    if( !site.identified || !site.complete ) {
+        return;
+    }
+    const std::array<point, 4> cardinal{ {
+            point::north, point::east, point::south, point::west
+        } };
+    for( int side = 0; side < 4; ++side ) {
+        const point step = cardinal[side];
+        std::optional<tripoint_abs_omt> next_place;
+        int best_distance = 0;
+        for( const tripoint_abs_omt &cell : site.cells ) {
+            if( cell.z() != player.z() ) {
+                continue;
+            }
+            const tripoint_abs_omt candidate( cell.x() + step.x, cell.y() + step.y, cell.z() );
+            if( site.cells.count( candidate ) ) {
+                continue;
+            }
+            const int distance = std::abs( cell.x() - player.x() ) +
+                                 std::abs( cell.y() - player.y() );
+            if( !next_place || distance < best_distance ) {
+                next_place = candidate;
+                best_distance = distance;
+            }
+        }
+        if( !next_place ) {
+            continue;
+        }
+        // Never call overmap_buffer.ter(), which could generate a new
+        // overmap as a side effect of a spoken-only survey.
+        const oter_id &neighbor = overmap_buffer.ter_existing( *next_place );
+        if( neighbor.is_valid() ) {
+            report += " " + string_format( _( "Adjacent map area to the %1$s: %2$s." ),
+                                           sector_name( side ),
+                                           remove_color_tags( neighbor->get_name( om_vision_level::full ) ) );
+        }
+    }
+}
+
 std::string straight_route( map &here, const tripoint_bub_ms &origin,
                             const point &dir )
 {
@@ -532,11 +607,19 @@ std::string build_survey()
                              _( "unknown area" );
     std::string report = string_format( _( "Detailed place survey. %s." ), name );
     const bool bounded_site = site.identified && site.complete;
-    const scene_detail::extent bounds = site.identified ?
-                                       site.envelope :
-                                       scene_detail::extent{ player.x() - 45, player.y() - 45,
-                                               player.x() + 45, player.y() + 45 };
+    // Scan the whole loaded reality bubble. A radius centered on the avatar
+    // could leave out valid map squares near the bubble's opposite edge.
+    const int loaded_width = here.getmapsize() * SEEX;
+    const int loaded_height = here.getmapsize() * SEEY;
+    const tripoint_abs_ms loaded_northwest = here.get_abs(
+                tripoint_bub_ms( 0, 0, player.z() ) );
+    const scene_detail::extent loaded_bounds = scene_detail::loaded_envelope(
+                loaded_northwest.x(), loaded_northwest.y(), loaded_width, loaded_height );
+    const scene_detail::extent bounds = site.identified ? site.envelope : loaded_bounds;
     if( bounded_site ) {
+        if( site.road ) {
+            report += " " + std::string( _( "This is one recognized road section; nearby buildings are separate landmarks." ) );
+        }
         report += " " + string_format(
                       _( "The mapped place spans a bounding frame of %1$d east-west by %2$d north-south tiles. This is the map frame, not necessarily the outer wall dimensions." ),
                       bounds.width(), bounds.height() );
@@ -547,9 +630,12 @@ std::string build_survey()
     } else {
         report += " " + std::string( _( "The entire place boundary is not established. Describing the loaded area around you only; no complete building or forest dimensions are claimed." ) );
     }
-    if( local ) {
+    if( local && bounded_site ) {
         report += " " + string_format( _( "You are at local X%1$d, Y%2$d, %3$s of this place." ),
                                        local->x, local->y, position_in_site( player, bounds ) );
+    } else if( local ) {
+        report += " " + string_format( _( "You are at local X%1$d, Y%2$d. The full place boundaries have not been verified." ),
+                                       local->x, local->y );
     } else {
         report += " " + string_format( _( "You are at world X%1$d, Y%2$d, Z%3$d. Local coordinates are unavailable for this place." ),
                                        player.x(), player.y(), player.z() );
@@ -557,14 +643,13 @@ std::string build_survey()
     report += " " + std::string( _( "Extended survey reads the loaded map beyond line of sight, including behind walls." ) );
 
     scan_results found;
-    const int radius = bounded_site ? survey_radius : 45;
-    for( int dy = -radius; dy <= radius; ++dy ) {
-        for( int dx = -radius; dx <= radius; ++dx ) {
-            const tripoint_bub_ms p = center + tripoint_rel_ms( dx, dy, 0 );
+    for( int y = 0; y < loaded_height; ++y ) {
+        for( int x = 0; x < loaded_width; ++x ) {
+            const tripoint_bub_ms p( x, y, player.z() );
             if( !here.inbounds( p ) ) {
                 continue;
             }
-            const tripoint_abs_ms absolute( player.x() + dx, player.y() + dy, player.z() );
+            const tripoint_abs_ms absolute = here.get_abs( p );
             if( site.identified &&
                 !site.cells.count( project_to<coords::omt>( absolute ) ) ) {
                 continue;
@@ -637,6 +722,13 @@ std::string build_survey()
     report += " " + string_format( _( "%1$d doors and %2$d stair links were detected in the scanned tiles." ),
                                    static_cast<int>( found.doors.size() ),
                                    static_cast<int>( found.stairs.size() ) );
+    append_nearest( report, _( "Nearest exterior door in the surveyed map" ),
+                    found.doors, player, local, true );
+    append_nearest( report, _( "Nearest detected stairway" ),
+                    found.stairs, player, local, false );
+    append_nearest( report, _( "Nearest detected creature" ),
+                    found.creatures, player, local, false );
+    append_adjacent_places( report, site, omt );
     report += " " + std::string( _( "Distances to features are map-position distances, not guaranteed walking routes. End of survey." ) );
     return report;
 }

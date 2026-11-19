@@ -6388,3 +6388,27 @@ msgstr "Khảo sát địa điểm chi tiết"
 
 msgid "Survey the loaded place beyond line of sight and read one complete description."
 msgstr "Khảo sát địa điểm mở rộng vượt ngoài tầm nhìn và đọc liên tục toàn bộ mô tả."
+
+#, c-format
+msgid "%1$s: %2$s, %3$s."
+msgstr "%1$s: %2$s, %3$s."
+
+#, c-format
+msgid "Adjacent map area to the %1$s: %2$s."
+msgstr "Khu vực bản đồ tiếp giáp về phía %1$s: %2$s."
+
+msgid "This is one recognized road section; nearby buildings are separate landmarks."
+msgstr "Đây là một đoạn đường đã được xác định; các công trình lân cận được xem là những điểm mốc riêng."
+
+#, c-format
+msgid "You are at local X%1$d, Y%2$d. The full place boundaries have not been verified."
+msgstr "Bạn đang ở tọa độ khu vực X%1$d, Y%2$d. Chưa xác nhận được đầy đủ ranh giới của địa điểm."
+
+msgid "Nearest exterior door in the surveyed map"
+msgstr "Cửa ra ngoài gần nhất trong phần bản đồ đã khảo sát"
+
+msgid "Nearest detected stairway"
+msgstr "Cầu thang gần nhất được phát hiện"
+
+msgid "Nearest detected creature"
+msgstr "Sinh vật gần nhất được phát hiện"

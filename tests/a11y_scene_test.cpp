@@ -45,3 +45,21 @@ TEST_CASE( "a11y_place_survey_reports_world_compass_not_avatar_facing",
     };
     CHECK( directions.size() == 9 );
 }
+
+TEST_CASE( "a11y_place_survey_loaded_area_does_not_follow_an_arbitrary_avatar_radius",
+           "[a11y][scene]" )
+{
+    // The avatar may be very near one edge of the loaded map. The survey
+    // still has to include all other loaded cells, not only radius 45 or 70.
+    const auto bounds = a11y::scene_detail::loaded_envelope( 3000, 4000, 132, 132 );
+    CHECK( bounds.west == 3000 );
+    CHECK( bounds.north == 4000 );
+    CHECK( bounds.east == 3131 );
+    CHECK( bounds.south == 4131 );
+    CHECK( bounds.width() == 132 );
+    CHECK( bounds.height() == 132 );
+
+    const auto negative = a11y::scene_detail::loaded_envelope( -72, -108, 12, 24 );
+    CHECK( negative.west == -72 );
+    CHECK( negative.south == -85 );
+}

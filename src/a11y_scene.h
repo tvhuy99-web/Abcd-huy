@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "point.h"
+struct point;
 
 namespace a11y
 {
@@ -35,6 +35,8 @@ struct extent {
     }
 };
 extent overmap_envelope( int west_omt, int north_omt, int east_omt, int south_omt );
+// Absolute bounds of every loaded map-square, independent of avatar position.
+extent loaded_envelope( int west, int north, int width, int height );
 
 } // namespace scene_detail
 } // namespace a11y

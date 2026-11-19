@@ -6,6 +6,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "coordinates.h"
@@ -13,6 +14,7 @@
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "point.h"
+#include "type_id.h"
 
 namespace a11y
 {
