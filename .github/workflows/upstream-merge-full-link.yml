@@ -6,6 +6,8 @@ on:
       - test/upstream-full-merge-2026-11-19
     paths:
       - '.github/workflows/upstream-merge-full-link.yml'
+      - 'src/vehicle_autodrive.cpp'
+      - 'Makefile'
   workflow_dispatch:
 
 permissions:
