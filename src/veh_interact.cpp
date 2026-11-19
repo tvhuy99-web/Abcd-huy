@@ -945,6 +945,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                           std::to_string( part_index );
                 node.role = "listitem";
                 node.label = pt.name( false );
+                node.actions = { "focus", "activate" };
                 node.parent_id = tile.id;
                 node.depth = 1;
                 node.expanded = true;
@@ -1129,6 +1130,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             node.id = "vehicle:install:" + vp->id.str();
             node.role = "listitem";
             node.label = vp->name();
+            node.actions = { "focus", "activate" };
             node.selected = static_cast<int>( i ) == info.pos;
             if( node.selected ) {
                 snapshot.focus = node.id;
@@ -1168,6 +1170,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             node.id = "vehicle:repair:" + std::to_string( part_index );
             node.role = "listitem";
             node.label = pt.name( false );
+            node.actions = { "focus", "activate" };
             std::string detail = _( "Condition: " ) + reader_part_condition( pt ) + ".";
             if( pt.is_broken() ) {
                 detail += " " + std::string( _( "Broken; repairing replaces it." ) );
@@ -1208,6 +1211,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             node.id = "vehicle:remove:" + std::to_string( part_index );
             node.role = "listitem";
             node.label = pt.name( false );
+            node.actions = { "focus", "activate" };
             node.detail = _( "Condition: " ) + reader_part_condition( pt ) + ".";
             node.enabled = can_remove;
             if( !can_remove ) {
@@ -1892,12 +1896,15 @@ void veh_interact::do_install( map &here )
             switch( reason ) {
                 case task_reason::LOW_MORALE:
                     msg = _( "Your morale is too low to construct…" );
+                    reader_vehicle_rejection( *msg );
                     return;
                 case task_reason::LOW_LIGHT:
                     msg = _( "It's too dark to see what you are doing…" );
+                    reader_vehicle_rejection( *msg );
                     return;
                 case task_reason::MOVING_VEHICLE:
                     msg = _( "You can't install parts while driving." );
+                    reader_vehicle_rejection( *msg );
                     return;
                 default:
                     break;
@@ -2127,6 +2134,9 @@ void veh_interact::do_repair( map &here )
             if( ok ) {
                 reason = cant_do( here, VEHICLE_REPAIR );
                 if( !can_repair() ) {
+                    if( msg ) {
+                        reader_vehicle_rejection( *msg );
+                    }
                     return;
                 }
                 sel_vehicle_part = &pt;
@@ -2838,15 +2848,19 @@ void veh_interact::do_remove( map &here )
             switch( reason ) {
                 case task_reason::LOW_MORALE:
                     msg = _( "Your morale is too low to construct…" );
+                    reader_vehicle_rejection( *msg );
                     return;
                 case task_reason::LOW_LIGHT:
                     msg = _( "It's too dark to see what you are doing…" );
+                    reader_vehicle_rejection( *msg );
                     return;
                 case task_reason::NOT_FREE:
                     msg = _( "You cannot remove that part while something is attached to it." );
+                    reader_vehicle_rejection( *msg );
                     return;
                 case task_reason::MOVING_VEHICLE:
                     msg = _( "Better not remove something while driving." );
+                    reader_vehicle_rejection( *msg );
                     return;
                 default:
                     break;

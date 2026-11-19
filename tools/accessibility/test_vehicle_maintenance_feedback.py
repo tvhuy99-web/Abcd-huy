@@ -50,6 +50,13 @@ class VehicleMaintenanceFeedbackTests(unittest.TestCase):
         self.assertIn("selected_candidate != rendered_candidate", install)
         self.assertIn("parts_here[need_repair[pos]] != rendered_part_index", repair)
 
+    def test_native_vehicle_rows_offer_the_existing_activate_action(self):
+        adapter = SRC.split("veh_interact::reader_session::build(", 1)[1]
+        adapter = adapter.split("shared_ptr_fast<ui_adaptor> veh_interact::", 1)[0]
+        self.assertEqual(adapter.count('node.actions = { "focus", "activate" };'), 4)
+        self.assertIn('node.enabled = owner.repair_can_confirm;', adapter)
+        self.assertIn('node.enabled = can_remove;', adapter)
+
     def test_repair_ui_uses_actual_requirements_and_brief_reason(self):
         self.assertIn("bool repair_can_confirm = false;", HEADER)
         self.assertIn("std::string repair_block_reason;", HEADER)
@@ -78,6 +85,8 @@ class VehicleMaintenanceFeedbackTests(unittest.TestCase):
         refill = refill.split("void veh_interact::calc_overview(", 1)[0]
         self.assertGreaterEqual(mend.count("reader_vehicle_rejection( *msg );"), 4)
         self.assertGreaterEqual(refill.count("reader_vehicle_rejection( *msg );"), 2)
+        self.assertIn('Your morale is too low to construct', SRC)
+        self.assertIn('reader_vehicle_rejection( *msg );', SRC)
 
     def test_new_speech_has_vietnamese_gettext_entries(self):
         for key in ("Ready to repair.", "Ready to install.", "Ready to remove.",
