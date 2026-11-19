@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "active_item_cache.h"
 #include "a11y_android.h"
@@ -9111,9 +9112,15 @@ void map::reconcile_loaded_items( const reconcile_scope scope )
         }
     }
 
-    auto walk_character = [&reconcile_one]( Character & c ) {
-        // all_items_loc() is already recursive; reconcile per location directly.
-        for( item_location &loc : c.all_items_loc() ) {
+    auto walk_character = [&reconcile_one]( Character &c ) {
+        // Collect recursive inventory locations before reconciling them so that
+        // changes to reservation state cannot affect the item traversal.
+        std::vector<item_location> carried;
+        c.visit_items( [&carried]( const item_location &loc ) {
+            carried.push_back( loc );
+            return VisitResponse::NEXT;
+        } );
+        for( item_location &loc : carried ) {
             if( loc && loc.get_item() != nullptr ) {
                 reconcile_one( loc );
             }
