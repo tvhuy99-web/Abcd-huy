@@ -143,7 +143,7 @@ def apply(kind, data_mods, dry_run=False):
         raw = path.read_bytes()
         if original_blobs is not None:
             sha = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii")
-                               + b"\\x00" + raw).hexdigest()
+                               + b"\x00" + raw).hexdigest()
             if original_blobs.get(name) != sha:
                 raise ValueError("Arcana upstream JSON does not match pinned revision: " + name)
         obj = json.loads(raw.decode("utf-8-sig"))
