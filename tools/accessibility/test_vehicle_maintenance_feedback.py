@@ -30,11 +30,25 @@ class VehicleMaintenanceFeedbackTests(unittest.TestCase):
         handler = SRC.split("void veh_interact::do_remove(", 1)[1]
         handler = handler.split("void veh_interact::do_siphon(", 1)[0]
         self.assertIn("const bool confirm = action == \"REMOVE\" || action == \"CONFIRM\";", handler)
-        self.assertIn("if( confirm && !can_remove_part( here, part, player_character ) )", handler)
-        self.assertIn("sel_vehicle_part = &veh->part( part );", handler)
+        self.assertIn("const int chosen_part = parts_here[pos];", handler)
+        self.assertIn("if( confirm && !can_remove_part( here, chosen_part, player_character ) )", handler)
+        self.assertIn("sel_vehicle_part = &veh->part( chosen_part );", handler)
         self.assertIn("sel_vpart_info = &sel_vehicle_part->info();", handler)
         self.assertLess(handler.index("if( confirm && !can_remove_part("),
                         handler.index("sel_cmd = VEHICLE_REMOVE;"))
+
+    def test_immediate_activate_rechecks_new_repair_or_install_row(self):
+        install = SRC.split("void veh_interact::do_install(", 1)[1]
+        install = install.split("bool veh_interact::move_in_list(", 1)[0]
+        repair = SRC.split("void veh_interact::do_repair(", 1)[1]
+        repair = repair.split("void veh_interact::do_mend(", 1)[0]
+        for action in (install, repair):
+            self.assertIn("bool pending_confirm = false;", action)
+            self.assertIn('pending_confirm ? "CONFIRM" : main_context.handle_input()', action)
+            self.assertIn("pending_confirm = true;", action)
+            self.assertIn("continue;", action)
+        self.assertIn("selected_candidate != rendered_candidate", install)
+        self.assertIn("parts_here[need_repair[pos]] != rendered_part_index", repair)
 
     def test_repair_ui_uses_actual_requirements_and_brief_reason(self):
         self.assertIn("bool repair_can_confirm = false;", HEADER)

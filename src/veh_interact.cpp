@@ -1836,6 +1836,10 @@ void veh_interact::do_install( map &here )
 
     std::vector<const vpart_info *> &tab_vparts = install_info->tab_vparts;
 
+    // An Android activation may change the focused row and return CONFIRM
+    // in the same input dispatch. Rebuild requirements for that row first,
+    // then apply the very same confirmation without an extra gesture.
+    bool pending_confirm = false;
     while( true ) {
         tab = ( tab + tab_list.size() ) % tab_list.size(); // handle tabs rolling under/over
         tab_vparts.clear();
@@ -1845,6 +1849,7 @@ void veh_interact::do_install( map &here )
         sel_vpart_info = pos >= 0 && pos < static_cast<int>( tab_vparts.size() )
                          ? tab_vparts[pos] : nullptr;
 
+        const vpart_info *rendered_candidate = sel_vpart_info;
         const bool can_install = update_part_requirements( here );
         const std::string install_block_reason = !can_install && sel_vpart_info ?
                                                  reader_install_unavailable( *sel_vpart_info, msg,
@@ -1855,8 +1860,17 @@ void veh_interact::do_install( map &here )
             reader->update( here, reader_session::mode::install );
         }
 
-        const std::string action = main_context.handle_input();
+        const std::string action = pending_confirm ? "CONFIRM" : main_context.handle_input();
+        pending_confirm = false;
         msg.reset();
+        const vpart_info *selected_candidate = pos >= 0 &&
+                                               pos < static_cast<int>( tab_vparts.size() ) ?
+                                               tab_vparts[pos] : nullptr;
+        if( ( action == "INSTALL" || action == "CONFIRM" ) &&
+            selected_candidate != rendered_candidate ) {
+            pending_confirm = true;
+            continue;
+        }
         if( action == "FILTER" ) {
             string_input_popup_imgui popup( 34 );
             popup.set_text( _( "Search for part" ) );
@@ -2002,8 +2016,10 @@ void veh_interact::do_repair( map &here )
     restore_on_out_of_scope prev_hilight_part( highlight_part );
 
     avatar &player_character = get_avatar();
+    bool pending_confirm = false;
     while( true ) {
-        vehicle_part &pt = veh->part( parts_here[need_repair[pos]] );
+        const int rendered_part_index = parts_here[need_repair[pos]];
+        vehicle_part &pt = veh->part( rendered_part_index );
         const vpart_info &vp = pt.info();
 
         std::string nmsg;
@@ -2082,8 +2098,17 @@ void veh_interact::do_repair( map &here )
             reader->update( here, reader_session::mode::repair );
         }
 
-        const std::string action = main_context.handle_input();
+        const std::string action = pending_confirm ? "CONFIRM" : main_context.handle_input();
+        pending_confirm = false;
         msg.reset();
+        // The reader may have selected a new part during handle_input().
+        // Never confirm the old part with its old requirements. Run the loop
+        // once for the newly selected part, then confirm it immediately.
+        if( ( action == "REPAIR" || action == "CONFIRM" ) &&
+            parts_here[need_repair[pos]] != rendered_part_index ) {
+            pending_confirm = true;
+            continue;
+        }
         if( ( action == "REPAIR" || action == "CONFIRM" ) && !ok ) {
             reader_vehicle_rejection( repair_block_reason );
         } else if( ( action == "REPAIR" || action == "CONFIRM" ) && ok ) {
@@ -2785,7 +2810,7 @@ void veh_interact::do_remove( map &here )
     while( true ) {
         int part = parts_here[ pos ];
 
-        bool can_remove = can_remove_part( here, part, player_character );
+        can_remove_part( here, part, player_character );
 
         overview_enable = [this, part]( const map &,  const vehicle_part & pt ) {
             return &pt == &veh->part( part );
@@ -2803,12 +2828,13 @@ void veh_interact::do_remove( map &here )
         const std::string action = main_context.handle_input();
         msg.reset();
         const bool confirm = action == "REMOVE" || action == "CONFIRM";
-        // This revalidation both checks the live part and explicitly restores
-        // the chosen target after the reader's per-row availability scans.
-        // Never schedule an activity using the last inspected list row.
-        if( confirm && !can_remove_part( here, part, player_character ) ) {
+        // Activating an Android row can change pos inside handle_input().
+        // Resolve the final choice AFTER dispatch, rather than the part
+        // rendered before the tap. The check pins both selected pointers.
+        const int chosen_part = parts_here[pos];
+        if( confirm && !can_remove_part( here, chosen_part, player_character ) ) {
             reader_vehicle_rejection( msg ? *msg : _( "This part cannot be removed." ) );
-        } else if( confirm && can_remove ) {
+        } else if( confirm ) {
             switch( reason ) {
                 case task_reason::LOW_MORALE:
                     msg = _( "Your morale is too low to construct…" );
@@ -2828,7 +2854,7 @@ void veh_interact::do_remove( map &here )
 
             // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
             // It can only be the player doing this - an npc won't work well with query_yn
-            if( veh->would_removal_prevent_flyable( veh->part( part ), player_character ) ) {
+            if( veh->would_removal_prevent_flyable( veh->part( chosen_part ), player_character ) ) {
                 if( query_yn(
                         _( "Removing this part will mean that this vehicle is no longer flightworthy.  Continue?" ) ) ) {
                     veh->set_flyable( false );
@@ -2838,7 +2864,7 @@ void veh_interact::do_remove( map &here )
             }
             // The specific part was revalidated above. The selected part
             // and its vpart_info must stay paired until assign_activity().
-            sel_vehicle_part = &veh->part( part );
+            sel_vehicle_part = &veh->part( chosen_part );
             sel_vpart_info = &sel_vehicle_part->info();
             for( const Character *helper : player_character.get_crafting_helpers() ) {
                 add_msg( m_info, _( "%s helps with this task…" ), helper->get_name() );
