@@ -1659,8 +1659,11 @@ void vehicle::use_monster_capture( int part, map */*here*/, const tripoint_bub_m
         return;
     }
     item base = item( parts[part].get_base() );
+    vehicle_cursor vc( *this, part );
+    item_location loc( vc, &base );
+
     // TODO: Use map aware invoke when available
-    base.type->invoke( &get_avatar(), base, pos );
+    base.type->invoke( &get_avatar(), loc, pos );
     if( base.has_var( "contained_name" ) ) {
         parts[part].set_flag( vp_flag::animal_flag );
     } else {
