@@ -338,4 +338,5 @@
     <string name="a11ySoundpackCancelled">File selection cancelled. No changes were made.</string>
     <string name="a11ySoundpackPickerUnavailable">No Android file picker is available.</string>
     <string name="a11ySoundpackGestures">Swipe left or right to choose a control. Double tap to activate it. Hold to open the context menu and Gesture guide. Use two-finger Back to leave this screen. In the soundpack list, double tapping applies and returns automatically.</string>
+    <string name="a11ySoundpackNothingToExport">No soundpack is currently selected to export. Choose an installed pack first.</string>
 </resources>

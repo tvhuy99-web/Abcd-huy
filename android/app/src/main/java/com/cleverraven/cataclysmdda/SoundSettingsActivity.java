@@ -333,6 +333,24 @@ public final class SoundSettingsActivity extends Activity {
 
     private void chooseZip(boolean exporting) {
         if (busy || pendingSelection != null) { return; }
+        if (exporting) {
+            if (preferences.getBoolean("soundpack_none", false)
+                    || selectedSoundpack == null || selectedSoundpack.isEmpty()) {
+                showStatus(getString(R.string.a11ySoundpackNothingToExport));
+                return;
+            }
+            boolean installed = false;
+            for (SoundpackArchive.Pack pack : available()) {
+                if (pack.id.equals(selectedSoundpack)) {
+                    installed = true;
+                    break;
+                }
+            }
+            if (!installed) {
+                showStatus(getString(R.string.a11ySoundpackNothingToExport));
+                return;
+            }
+        }
         Intent picker = new Intent(exporting ? Intent.ACTION_CREATE_DOCUMENT
                 : Intent.ACTION_OPEN_DOCUMENT);
         picker.addCategory(Intent.CATEGORY_OPENABLE);

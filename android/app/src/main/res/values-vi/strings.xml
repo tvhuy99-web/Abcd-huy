@@ -338,4 +338,5 @@
     <string name="a11ySoundpackCancelled">Đã hủy chọn tệp. Không có thay đổi nào.</string>
     <string name="a11ySoundpackPickerUnavailable">Không tìm thấy trình chọn tệp Android.</string>
     <string name="a11ySoundpackGestures">Vuốt trái hoặc phải để chọn điều khiển. Chạm hai lần để kích hoạt. Nhấn giữ để mở menu ngữ cảnh có Hướng dẫn cử chỉ. Quay lại bằng hai ngón để thoát màn hình. Trong danh sách âm thanh, chạm hai lần sẽ áp dụng và tự quay lại cài đặt.</string>
+    <string name="a11ySoundpackNothingToExport">Hiện không có bộ âm thanh đang chọn để xuất. Hãy chọn một bộ đã cài trước.</string>
 </resources>
