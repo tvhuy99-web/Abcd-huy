@@ -301,4 +301,22 @@
     <string name="a11yGuideAutoReadHeading">Đọc hướng đầu xe; bộ tự lái tự chọn hướng đi</string>
     <string name="a11yGuideAutoPause">Tạm dừng hành trình và phanh xe</string>
     <string name="a11yGuideAutoMapCancel">Hủy hành trình tự lái và chuyển về Bản đồ</string>
+    <string name="a11yManualModTitle">Nhập mod thủ công</string>
+    <string name="a11yManualModChooseZip">Chọn tệp ZIP chứa mod</string>
+    <string name="a11yManualModChooseExport">Chọn nơi xuất mod</string>
+    <string name="a11yManualModImportHint">Chọn tệp ZIP chứa một modinfo.json để nhập mod. Mod sẽ không tự bật.</string>
+    <string name="a11yManualModExportHint">Chọn nơi lưu tệp ZIP của mod đã nhập.</string>
+    <string name="a11yManualModDeleteWarning">Xóa mod có thể khiến các thế giới đang sử dụng mod đó không tải được. Bạn phải xác nhận trước khi xóa.</string>
+    <string name="a11yManualModExport">Xuất mod</string>
+    <string name="a11yManualModDelete">Xóa mod</string>
+    <string name="a11yManualModCancel">Hủy</string>
+    <string name="a11yManualModConfirmDelete">Xóa mod %1$s đã nhập? Những thế giới sử dụng mod này có thể không tải được. Không thể hoàn tác.</string>
+    <string name="a11yManualModImported">Đã nhập %1$s. Trở lại trò chơi để bật mod cho thế giới này.</string>
+    <string name="a11yManualModExported">Đã xuất %1$s thành công.</string>
+    <string name="a11yManualModDeleted">Đã xóa %1$s. Trở lại trò chơi để cập nhật danh sách.</string>
+    <string name="a11yManualModFailed">Thao tác với mod thất bại: %1$s. Không ghi đè mod nào có sẵn.</string>
+    <string name="a11yManualModWorking">Đang xử lý tệp mod, không đóng màn hình.</string>
+    <string name="a11yManualModCancelled">Đã hủy chọn tệp. Không có thay đổi nào.</string>
+    <string name="a11yManualModPickerUnavailable">Không tìm thấy trình chọn tệp Android.</string>
+    <string name="a11yManualModGestureHelp">Vuốt trái hoặc phải để chuyển nút đang chọn. Chạm hai lần để kích hoạt. Nhấn giữ để mở menu ngữ cảnh. Mục Hướng dẫn cử chỉ luôn có sẵn. Thao tác Quay lại bằng hai ngón để trở về trò chơi.</string>
 </resources>
