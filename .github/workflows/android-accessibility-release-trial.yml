@@ -218,6 +218,13 @@ jobs:
                            'assets/data/mods/MST_Extra/modinfo.json')
                   if path not in contents:
                       raise SystemExit(f'Required game asset is missing: {path}')
+                  samples = {
+                      'assets/data/mods/MST_Extra/items/tools.json': 'lò đất sét',
+                      'assets/data/mods/Blazemod/items/guns/blaze_weapons.json': 'súng xuyên giáp điện từ',
+                  }
+                  for asset, phrase in samples.items():
+                      if asset not in contents or phrase not in archive.read(asset).decode('utf-8'):
+                          raise SystemExit(f'APK missing Vietnamese translation in {asset}')
 
           tools = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
           signature = subprocess.check_output([
