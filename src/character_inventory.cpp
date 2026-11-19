@@ -663,6 +663,11 @@ item_location Character::invlet_to_item( const int linvlet ) const
     return invlet_item;
 }
 
+bool Character::is_worn_or_wielded( const item_location &thing ) const
+{
+    return worn.is_worn( *thing ) || get_wielded_item() == thing;
+}
+
 void Character::drop( item_location loc, const tripoint_bub_ms &where )
 {
     drop( { std::make_pair( loc, loc->count() ) }, where );
@@ -858,7 +863,7 @@ bool Character::dispose_item( item_location &&obj, const std::string &prompt )
             item it = *obj;
             obj.remove_item();
             const std::optional<std::list<item>::iterator> worn_it = wear_item( it );
-            if( worn_it )
+            if( worn_it && *worn_it != worn.worn.end() )
             {
                 craft_relocated( item_location( *this, & **worn_it ) );
             }
@@ -1028,6 +1033,18 @@ std::vector<const item *> Character::get_pseudo_items() const
         pseudo_items_valid = true;
     }
     return pseudo_items;
+}
+
+std::vector<item_location> Character::get_pseudo_items_locs()
+{
+    std::vector<item_location> ret;
+    for( const item *it : get_pseudo_items() ) {
+        // i don't like const casting
+        item_location loc( *this, const_cast<item *>( it ) );
+        ret.emplace_back( loc );
+    }
+
+    return ret;
 }
 
 std::vector<item> Character::crafting_pseudo_items() const
@@ -1773,6 +1790,16 @@ std::string Character::weapname_ammo() const
     } else {
         return "";
     }
+}
+
+std::vector<item_location> Character::inv_dump_loc()
+{
+    std::vector<item_location> ret;
+    if( is_armed() && can_drop( weapon ).success() ) {
+        ret.push_back( get_wielded_item() );
+    }
+    worn.inv_dump_locs( *this, ret );
+    return ret;
 }
 
 std::vector<item *> Character::inv_dump()
