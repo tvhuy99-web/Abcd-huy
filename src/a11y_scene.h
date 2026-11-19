@@ -3,6 +3,7 @@
 #define CATA_SRC_A11Y_SCENE_H
 
 #include <string>
+#include <vector>
 
 #include "point.h"
 
@@ -35,6 +36,13 @@ struct extent {
     }
 };
 extent overmap_envelope( int west_omt, int north_omt, int east_omt, int south_omt );
+// Absolute bounds of every loaded map-square, independent of avatar position.
+extent loaded_envelope( int west, int north, int width, int height );
+
+// Combine only edge-connected tiles. The representative is the closest tile
+// to the player, with stable coordinate tie-breaking for consistent speech.
+std::vector<point> representative_tiles( const std::vector<point> &tiles,
+        const point &player );
 
 } // namespace scene_detail
 } // namespace a11y
