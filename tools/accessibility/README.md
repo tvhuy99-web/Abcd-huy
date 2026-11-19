@@ -18,7 +18,7 @@ commands, runtime screens or an accessibility coverage percentage.
 The Android accessibility workflow builds the candidate as an ARM64 debug APK.
 A manual run with `compare_baseline=true` independently builds the pinned
 baseline as well. The initial project run builds both. An APK is build evidence, not device
-or blind-user acceptance. Use the plan and status under `doc/accessibility/`.
+or blind-user acceptance.
 
 The core runner builds the production context primitive with the repository's
 Catch tests without linking gameplay. The speech runner checks the production
