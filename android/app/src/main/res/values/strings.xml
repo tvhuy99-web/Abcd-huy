@@ -319,4 +319,23 @@
     <string name="a11yManualModCancelled">File selection cancelled. No changes were made.</string>
     <string name="a11yManualModPickerUnavailable">No Android file picker is available.</string>
     <string name="a11yManualModGestureHelp">Swipe left or right to change the focused button. Double tap to activate. Hold for context actions. The Gesture guide entry is always available. Two-finger Back returns to the game.</string>
+    <string name="a11ySoundpackChoose">Choose a soundpack</string>
+    <string name="a11ySoundpackCurrent">Selected soundpack: %1$s</string>
+    <string name="a11ySoundpackImport">Import soundpack ZIP</string>
+    <string name="a11ySoundpackExport">Export selected soundpack</string>
+    <string name="a11ySoundpackReady">Choose a soundpack or import a ZIP. The chosen pack is exported automatically.</string>
+    <string name="a11ySoundpackNone">Do not use game audio</string>
+    <string name="a11ySoundpackUnknown">Not selected</string>
+    <string name="a11ySoundpackActive">selected</string>
+    <string name="a11ySoundpackDisabled">Game music and effects are off. Speech remains available.</string>
+    <string name="a11ySoundpackApplying">Applying %1$s…</string>
+    <string name="a11ySoundpackApplied">Applied soundpack %1$s. Back in sound settings.</string>
+    <string name="a11ySoundpackApplyFailed">Could not load the selected soundpack. The previous choice was restored.</string>
+    <string name="a11ySoundpackImported">Imported %1$s. Choose it from the soundpack list to apply.</string>
+    <string name="a11ySoundpackExported">Exported the selected soundpack %1$s.</string>
+    <string name="a11ySoundpackFailed">Soundpack operation failed: %1$s</string>
+    <string name="a11ySoundpackWorking">Processing a soundpack ZIP. The game audio and voice reader are not being modified.</string>
+    <string name="a11ySoundpackCancelled">File selection cancelled. No changes were made.</string>
+    <string name="a11ySoundpackPickerUnavailable">No Android file picker is available.</string>
+    <string name="a11ySoundpackGestures">Swipe left or right to choose a control. Double tap to activate it. Hold to open the context menu and Gesture guide. Use two-finger Back to leave this screen. In the soundpack list, double tapping applies and returns automatically.</string>
 </resources>

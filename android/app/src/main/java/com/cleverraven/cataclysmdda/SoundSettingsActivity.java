@@ -136,10 +136,6 @@ public final class SoundSettingsActivity extends Activity {
         status.setText(R.string.a11ySoundpackReady);
         homeControls.addView(status);
 
-        addButton(homeControls, R.string.a11yGestureGuideTitle,
-                view -> showGestureGuide());
-        addButton(homeControls, R.string.a11yReaderReturn, view -> finish());
-
         musicEnabled.setOnCheckedChangeListener((button, checked) -> persistAndApply());
         effectsEnabled.setOnCheckedChangeListener((button, checked) -> persistAndApply());
         SeekBar.OnSeekBarChangeListener changes = new SeekBar.OnSeekBarChangeListener() {

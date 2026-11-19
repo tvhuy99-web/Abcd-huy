@@ -244,7 +244,9 @@ final class SoundpackArchive {
 
     private static int[] verifyContents(File root, File here, int depth) throws IOException {
         if (depth > 32) { throw new IOException("Thư mục âm thanh quá sâu"); }
-        inside(root, here);
+        if (!root.getCanonicalPath().equals(here.getCanonicalPath())) {
+            inside(root, here);
+        }
         int audio = 0;
         int json = 0;
         File[] children = here.listFiles();

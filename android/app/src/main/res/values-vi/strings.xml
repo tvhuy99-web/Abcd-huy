@@ -319,4 +319,23 @@
     <string name="a11yManualModCancelled">Đã hủy chọn tệp. Không có thay đổi nào.</string>
     <string name="a11yManualModPickerUnavailable">Không tìm thấy trình chọn tệp Android.</string>
     <string name="a11yManualModGestureHelp">Vuốt trái hoặc phải để chuyển nút đang chọn. Chạm hai lần để kích hoạt. Nhấn giữ để mở menu ngữ cảnh. Mục Hướng dẫn cử chỉ luôn có sẵn. Thao tác Quay lại bằng hai ngón để trở về trò chơi.</string>
+    <string name="a11ySoundpackChoose">Chọn bộ âm thanh</string>
+    <string name="a11ySoundpackCurrent">Bộ âm thanh đang chọn: %1$s</string>
+    <string name="a11ySoundpackImport">Nhập bộ âm thanh từ ZIP</string>
+    <string name="a11ySoundpackExport">Xuất bộ âm thanh đang chọn</string>
+    <string name="a11ySoundpackReady">Chọn bộ âm thanh hoặc nhập ZIP. Nút Xuất sẽ tự động xuất gói đang chọn.</string>
+    <string name="a11ySoundpackNone">Không sử dụng bộ âm thanh</string>
+    <string name="a11ySoundpackUnknown">Chưa chọn</string>
+    <string name="a11ySoundpackActive">đang chọn</string>
+    <string name="a11ySoundpackDisabled">Đã tắt nhạc nền và hiệu ứng trò chơi. Giọng đọc vẫn hoạt động.</string>
+    <string name="a11ySoundpackApplying">Đang áp dụng bộ âm thanh %1$s…</string>
+    <string name="a11ySoundpackApplied">Đã áp dụng bộ âm thanh %1$s. Đã trở về cài đặt âm thanh.</string>
+    <string name="a11ySoundpackApplyFailed">Không thể nạp bộ âm thanh được chọn. Đã khôi phục bộ trước.</string>
+    <string name="a11ySoundpackImported">Đã nhập bộ âm thanh %1$s. Chọn trong danh sách để áp dụng.</string>
+    <string name="a11ySoundpackExported">Đã xuất bộ âm thanh đang chọn: %1$s.</string>
+    <string name="a11ySoundpackFailed">Thao tác với bộ âm thanh thất bại: %1$s</string>
+    <string name="a11ySoundpackWorking">Đang xử lý ZIP âm thanh. Không thay đổi âm thanh đang dùng và giọng đọc.</string>
+    <string name="a11ySoundpackCancelled">Đã hủy chọn tệp. Không có thay đổi nào.</string>
+    <string name="a11ySoundpackPickerUnavailable">Không tìm thấy trình chọn tệp Android.</string>
+    <string name="a11ySoundpackGestures">Vuốt trái hoặc phải để chọn điều khiển. Chạm hai lần để kích hoạt. Nhấn giữ để mở menu ngữ cảnh có Hướng dẫn cử chỉ. Quay lại bằng hai ngón để thoát màn hình. Trong danh sách âm thanh, chạm hai lần sẽ áp dụng và tự quay lại cài đặt.</string>
 </resources>
