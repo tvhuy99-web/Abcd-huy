@@ -358,6 +358,32 @@ const requirement_data &wound_fix::get_requirements() const
     return *requirements;
 }
 
+// Determine whether a character has the knowledge to perform this treatment.
+// Item/tool requirements are checked when the treatment is actually selected.
+std::pair<bool, float> wound_fix::doable_by( const Character &c ) const
+{
+    bool doable = true;
+    float time_multiplier = 1.0f;
+
+    for( const wound_skill &req : skills ) {
+        const bool met = c.get_greater_skill_or_knowledge_level( req.skill ) >= req.level;
+        if( req.is_mandatory && !met ) {
+            doable = false;
+        } else if( met ) {
+            time_multiplier *= req.time_save;
+        }
+    }
+    for( const wound_proficiency &req : proficiencies ) {
+        const bool met = c.has_proficiency( req.prof );
+        if( req.is_mandatory && !met ) {
+            doable = false;
+        } else if( met ) {
+            time_multiplier *= req.time_save;
+        }
+    }
+    return { doable, time_multiplier };
+}
+
 bool wound_type::allowed_on_bodypart( bodypart_str_id bp_id ) const
 {
 
