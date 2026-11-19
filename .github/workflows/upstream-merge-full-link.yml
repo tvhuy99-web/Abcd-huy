@@ -32,6 +32,7 @@ jobs:
           test -f /usr/include/ncursesw/curses.h
       - name: Compile and link complete non-tiled native game
         run: |
-          make -j3 all \
+          # Keep compiling independent units to surface all remaining merge errors in one run.
+          make -k -j3 all \
             CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
