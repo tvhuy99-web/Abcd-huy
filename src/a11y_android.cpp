@@ -13,6 +13,7 @@
 #if defined(__ANDROID__)
 #include <jni.h>
 #include "catacharset.h"
+#include "cata_path.h"
 #include "options.h"
 #include "path_info.h"
 #include "output.h"

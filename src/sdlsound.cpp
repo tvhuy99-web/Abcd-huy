@@ -482,8 +482,8 @@ void stop_music()
         return;
     }
 
-    sound_backend::free_music( current_music );
     sound_backend::stop_music( 0 );
+    sound_backend::free_music( current_music );
     current_music = nullptr;
 
     playlist_indexes.clear();
@@ -872,12 +872,15 @@ bool reload_soundset()
     for( const auto &entry : music::music_id_list ) {
         music::update_music_id_is_empty_flag( entry.first, false );
     }
+    // A soundpack may have effects but no music. Keep title as a safe mode.
+    music::update_music_id_is_empty_flag( music::music_id::title, true );
+    music::deactivate_music_id_all();
     load_soundset();
     if( !soundset_load_ok ) {
         return false;
     }
     if( sounds::sound_enabled ) {
-        play_music( music::get_music_id_string() );
+        play_music( "title" );
     }
     return true;
 }
