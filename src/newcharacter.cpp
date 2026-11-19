@@ -3668,7 +3668,7 @@ void character_creator_uistate::recalc_scenario_list( const avatar &u )
             }
             new_scenarios.push_back( &scen );
         }
-        scenario_sorter scen_sorter{ true, u.male, cities_enabled() };
+        scenario_sorter scen_sorter{ u.male, cities_enabled() };
         std::stable_sort( new_scenarios.begin(), new_scenarios.end(), scen_sorter );
         sorted_scenarios = new_scenarios;
         selected_scenario_index = find_index( sorted_scenarios, get_scenario() );
@@ -4319,7 +4319,7 @@ void character_creator_callback::confirm( uilist *menu )
             const scenario *selected_scenario = cc_uistate.get_selected_scenario();
             ret_val<void> can_pick = selected_scenario->can_pick();
 
-            scenario_sorter sorter{ true, u.male, cities_enabled() };
+            scenario_sorter sorter{ u.male, cities_enabled() };
 
             if( !can_pick.success() ) {
                 popup( can_pick.str() );
