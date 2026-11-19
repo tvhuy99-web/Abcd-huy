@@ -6184,7 +6184,7 @@ msgstr "Không tìm được đường đi an toàn. Xe đã tạm dừng."
 
 #, c-format
 msgid "Local coordinates X %1$d, Y %2$d. World map X %3$d, Y %4$d, Z %5$d."
-msgstr "Tọa độ khu vực X%1$d, Y%2$d. Bản đồ chung X%3$d, Y%4$d, Z%5$d."
+msgstr "Tọa độ khu vực X %1$d, Y %2$d. Bản đồ chung X %3$d, Y %4$d, Z %5$d."
 
 msgid "here"
 msgstr "ngay tại đây"
@@ -6510,3 +6510,78 @@ msgstr "Đã bắt đầu tháo %s."
 #, c-format
 msgid "Started refilling %s."
 msgstr "Đã bắt đầu nạp nhiên liệu cho %s."
+
+#, c-format
+msgid "Place survey: %s."
+msgstr "Khảo sát địa điểm: %s."
+
+#, c-format
+msgid "Area width %1$d east-west tiles, length %2$d north-south tiles."
+msgstr "Khu vực rộng %1$d ô theo chiều đông tây, dài %2$d ô theo chiều bắc nam."
+
+#, c-format
+msgid "Map levels: %d."
+msgstr "Có %d tầng bản đồ."
+
+#, c-format
+msgid "You are at local X %1$d, Y %2$d, %3$s of the place."
+msgstr "Bạn đang đứng tại tọa độ khu vực X %1$d, Y %2$d, %3$s của địa điểm."
+
+#, c-format
+msgid "You are at local X %1$d, Y %2$d."
+msgstr "Bạn đang đứng tại tọa độ khu vực X %1$d, Y %2$d."
+
+#, c-format
+msgid "You are at world X %1$d, Y %2$d, Z %3$d."
+msgstr "Bạn đang đứng tại tọa độ bản đồ chung X %1$d, Y %2$d, Z %3$d."
+
+#, c-format
+msgid "X %1$d, Y %2$d"
+msgstr "X %1$d, Y %2$d"
+
+#, c-format
+msgid "world X %1$d, Y %2$d"
+msgstr "bản đồ chung X %1$d, Y %2$d"
+
+msgid "Paths:"
+msgstr "Lối đi:"
+
+#, c-format
+msgid "Straight %1$s: %2$d tiles."
+msgstr "Phía %1$s đi thẳng được %2$d ô."
+
+#, c-format
+msgid "Straight %1$s: at least %2$d tiles."
+msgstr "Phía %1$s đi thẳng được ít nhất %2$d ô."
+
+msgid "Entrances"
+msgstr "Cửa ra vào"
+
+msgid "Dangers and traces"
+msgstr "Nguy hiểm và dấu vết"
+
+#, c-format
+msgid "%d more locations."
+msgstr "Còn %d vị trí khác."
+
+#, c-format
+msgid "%d more types."
+msgstr "Còn %d loại khác."
+
+msgid "Survey limit reached."
+msgstr "Đã đạt giới hạn khảo sát."
+
+msgid "Surroundings:"
+msgstr "Khu vực xung quanh:"
+
+#, c-format
+msgid "to the %s"
+msgstr "phía %s"
+
+#, c-format
+msgid "%1$s and %2$s"
+msgstr "%1$s và %2$s"
+
+#, c-format
+msgid "%1$s: %2$s."
+msgstr "%1$s: %2$s."

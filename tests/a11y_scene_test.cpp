@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "a11y_scene.h"
 #include "cata_catch.h"
@@ -62,4 +64,37 @@ TEST_CASE( "a11y_place_survey_loaded_area_does_not_follow_an_arbitrary_avatar_ra
     const auto negative = a11y::scene_detail::loaded_envelope( -72, -108, 12, 24 );
     CHECK( negative.west == -72 );
     CHECK( negative.south == -85 );
+}
+
+TEST_CASE( "a11y_place_survey_groups_connected_window_squares_once",
+           "[a11y][scene]" )
+{
+    // Three adjoining positions are one physical window; another window
+    // across a gap and diagonal touches remain independent.
+    const std::vector<point> squares{
+        point( 22, 6 ), point( 22, 8 ), point( 22, 7 ),
+        point( 3, 7 ), point( 5, 5 ), point( 6, 6 )
+    };
+    const std::vector<point> representatives =
+        a11y::scene_detail::representative_tiles( squares, point( 22, 7 ) );
+    CHECK( representatives.size() == 4 );
+    CHECK( std::find( representatives.begin(), representatives.end(),
+                      point( 22, 7 ) ) != representatives.end() );
+    CHECK( std::find( representatives.begin(), representatives.end(),
+                      point( 3, 7 ) ) != representatives.end() );
+    CHECK( std::find( representatives.begin(), representatives.end(),
+                      point( 5, 5 ) ) != representatives.end() );
+    CHECK( std::find( representatives.begin(), representatives.end(),
+                      point( 6, 6 ) ) != representatives.end() );
+}
+
+TEST_CASE( "a11y_place_survey_connected_group_representative_is_stable",
+           "[a11y][scene]" )
+{
+    // A repeated survey of the same place picks the same near tile even
+    // when the map's enumeration order changes.
+    const std::vector<point> forward{ point( 22, 8 ), point( 22, 7 ), point( 22, 6 ) };
+    const std::vector<point> reverse{ point( 22, 6 ), point( 22, 7 ), point( 22, 8 ) };
+    CHECK( a11y::scene_detail::representative_tiles( forward, point( 22, 7 ) ) ==
+           a11y::scene_detail::representative_tiles( reverse, point( 22, 7 ) ) );
 }
