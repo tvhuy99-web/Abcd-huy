@@ -333,7 +333,7 @@
     <string name="a11ySoundpackApplyFailed">Could not load the selected soundpack. The previous choice was restored.</string>
     <string name="a11ySoundpackImported">Imported %1$s. Choose it from the soundpack list to apply.</string>
     <string name="a11ySoundpackExported">Exported the selected soundpack %1$s.</string>
-    <string name="a11ySoundpackFailed">Soundpack operation failed: %1$s</string>
+    <string name="a11yManagedSoundpackFailed">Soundpack operation failed: %1$s</string>
     <string name="a11ySoundpackWorking">Processing a soundpack ZIP. The game audio and voice reader are not being modified.</string>
     <string name="a11ySoundpackCancelled">File selection cancelled. No changes were made.</string>
     <string name="a11ySoundpackPickerUnavailable">No Android file picker is available.</string>

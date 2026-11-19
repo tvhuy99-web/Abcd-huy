@@ -333,7 +333,7 @@
     <string name="a11ySoundpackApplyFailed">Không thể nạp bộ âm thanh được chọn. Đã khôi phục bộ trước.</string>
     <string name="a11ySoundpackImported">Đã nhập bộ âm thanh %1$s. Chọn trong danh sách để áp dụng.</string>
     <string name="a11ySoundpackExported">Đã xuất bộ âm thanh đang chọn: %1$s.</string>
-    <string name="a11ySoundpackFailed">Thao tác với bộ âm thanh thất bại: %1$s</string>
+    <string name="a11yManagedSoundpackFailed">Thao tác với bộ âm thanh thất bại: %1$s</string>
     <string name="a11ySoundpackWorking">Đang xử lý ZIP âm thanh. Không thay đổi âm thanh đang dùng và giọng đọc.</string>
     <string name="a11ySoundpackCancelled">Đã hủy chọn tệp. Không có thay đổi nào.</string>
     <string name="a11ySoundpackPickerUnavailable">Không tìm thấy trình chọn tệp Android.</string>

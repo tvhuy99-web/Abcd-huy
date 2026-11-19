@@ -227,7 +227,7 @@ public final class SoundSettingsActivity extends Activity {
         try {
             return SoundpackArchive.list(userSound, bundledSound);
         } catch (IOException failed) {
-            showStatus(getString(R.string.a11ySoundpackFailed, failed.getMessage()));
+            showStatus(getString(R.string.a11yManagedSoundpackFailed, failed.getMessage()));
             return new ArrayList<>();
         }
     }
@@ -310,7 +310,7 @@ public final class SoundSettingsActivity extends Activity {
                     updateSelectedButton();
                     showStatus(getString(R.string.a11ySoundpackApplied, selectedDisplay()));
                 } else {
-                    showStatus(getString(R.string.a11ySoundpackFailed,
+                    showStatus(getString(R.string.a11yManagedSoundpackFailed,
                             getString(R.string.a11ySoundpackApplyFailed)));
                 }
             } else {
@@ -366,7 +366,7 @@ public final class SoundSettingsActivity extends Activity {
                     }
                 }
             } catch (IOException | RuntimeException failed) {
-                announcement = getString(R.string.a11ySoundpackFailed,
+                announcement = getString(R.string.a11yManagedSoundpackFailed,
                         failed.getMessage() == null ? "" : failed.getMessage());
             }
             final String completed = announcement;
