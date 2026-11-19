@@ -199,5 +199,45 @@ class UpstreamMealAndWoundCompatibility(unittest.TestCase):
         self.assertIn("return id == ACT_CONSUME || id == ACT_CAMP_MEAL;", npc)
 
 
+class UpstreamNativeLinkageContracts(unittest.TestCase):
+    """Catch missing out-of-line definitions before the full native linker."""
+
+    def test_followers_can_query_avatar_relocation(self):
+        source = (SRC / "avatar.cpp").read_text("utf-8")
+        self.assertIn("void avatar::on_move( const tripoint_abs_ms &old_pos )", source)
+        self.assertIn("time_duration avatar::time_since_relocated() const", source)
+        self.assertIn("relocation_anchor = now_pos;", source)
+
+    def test_character_creator_virtual_input_handler_is_defined(self):
+        source = (SRC / "newcharacter.cpp").read_text("utf-8")
+        self.assertIn(
+            "void character_creator_ui::setup_input_context( input_context &cc_ictxt )",
+            source)
+        self.assertIn("setup_input_context( cc_ictxt, false );", source)
+
+    def test_npc_food_helpers_have_out_of_line_definitions(self):
+        source = (SRC / "consumption.cpp").read_text("utf-8")
+        self.assertIn("bool Character::can_stomach(", source)
+        self.assertIn("bool Character::wants_to_consume_now(", source)
+        self.assertIn("stomach.would_be_engorged_with(", source)
+        self.assertIn("will_eat( food ).success()", source)
+
+    def test_treatment_and_fault_helpers_are_linkable(self):
+        wounds = (SRC / "wound.cpp").read_text("utf-8")
+        faults = (SRC / "fault.cpp").read_text("utf-8")
+        self.assertIn("std::pair<bool, float> wound_fix::doable_by(", wounds)
+        self.assertIn("req.is_mandatory && !met", wounds)
+        self.assertIn("double fault::attack_cost_modifier() const", faults)
+        self.assertIn("return attack_cost_modifier_;", faults)
+
+    def test_activity_reason_and_bodygraph_helpers_exist(self):
+        actors = (SRC / "activity_actor.cpp").read_text("utf-8")
+        bodygraph = (SRC / "bodygraph.cpp").read_text("utf-8")
+        self.assertIn("enum_to_string<do_activity_reason>(", actors)
+        self.assertIn("do_activity_reason::REFUSES_THIS_WORK", actors)
+        self.assertIn("bool bodygraph_part::has_bodypart(", bodygraph)
+        self.assertIn("sub_bodyparts.begin(), sub_bodyparts.end()", bodygraph)
+
+
 if __name__ == "__main__":
     unittest.main()
