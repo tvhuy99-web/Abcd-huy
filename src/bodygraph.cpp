@@ -66,6 +66,16 @@ bool string_id<bodygraph>::is_valid() const
     return bodygraph_factory.is_valid( *this );
 }
 
+bool bodygraph_part::has_bodypart( const std::string &part ) const
+{
+    return std::any_of( bodyparts.begin(), bodyparts.end(), [&]( const bodypart_id &bp ) {
+        return bp->id.str() == part;
+    } ) || std::any_of( sub_bodyparts.begin(), sub_bodyparts.end(),
+    [&]( const sub_bodypart_id &bp ) {
+        return bp->id.str() == part;
+    } );
+}
+
 void bodygraph::load_bodygraphs( const JsonObject &jo, const std::string &src )
 {
     bodygraph_factory.load( jo, src );
