@@ -4103,6 +4103,25 @@ std::string enum_to_string<close_tile_result>( close_tile_result data )
             cata_fatal( "Invalid based_on_type in enum_to_string" );
     }
 }
+template<>
+std::string enum_to_string<repair_stage>(
+    repair_stage data )
+{
+    switch( data ) {
+            // *INDENT-OFF*
+        case repair_stage::INIT: return "INIT";
+        case repair_stage::ONCE: return "ONCE";
+        case repair_stage::FULL: return "FULL";
+        case repair_stage::EVENT: return "EVENT";
+        case repair_stage::REFIT_ONCE: return "REFIT_ONCE";
+        case repair_stage::REFIT_FULL: return "REFIT_FULL";
+        case repair_stage::CANCEL: return "CANCEL";
+        case repair_stage::LAST: return "LAST";
+            // *INDENT-ON*
+        default:
+            cata_fatal( "Invalid based_on_type in enum_to_string" );
+    }
+}
 } // namespace io
 
 bool efile_activity_actor::processed_edevices_remain() const
@@ -11453,6 +11472,69 @@ std::unique_ptr<activity_actor> mend_item_activity_actor::deserialize( JsonValue
     return actor.clone();
 }
 
+item *repair_item_activity_actor::get_repair_tool( player_activity &act )
+{
+    item *main_tool = nullptr;
+
+    if( vp_tool.has_value() ) {
+        main_tool = w_hack.init( vp_tool->first, vp_tool->second ) ?
+                    w_hack.get_item() : tool_to_repair_with.get_item();
+    } else {
+        main_tool = tool_to_repair_with.get_item();
+    }
+
+
+    if( main_tool == nullptr ) {
+        debugmsg( "Invalid tool for repair_item_activity_actor" );
+        act.set_to_null();
+        return nullptr;
+    }
+    item *used_tool = main_tool->get_usable_item( repair_iuse_actor_name );
+    if( used_tool == nullptr ) {
+        debugmsg( "Lost tool used for repair_item_activity_actor" );
+        act.set_to_null();
+        return nullptr;
+    }
+    return used_tool;
+}
+
+void repair_item_activity_actor::start( player_activity &act, Character & )
+{
+    // processing happens in finish()
+    act.moves_total = 0;
+    act.moves_left = act.moves_total;
+}
+
+void repair_item_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+
+    jsout.member( "repaired_item", repaired_item );
+    jsout.member( "stage", stage );
+    jsout.member( "tool_to_repair_with", tool_to_repair_with );
+    jsout.member( "no_menu", no_menu );
+    jsout.member( "repair_iuse_actor_name", repair_iuse_actor_name );
+    jsout.member( "vp_tool", vp_tool );
+
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> repair_item_activity_actor::deserialize( JsonValue &jsin )
+{
+    repair_item_activity_actor actor;
+
+    JsonObject data = jsin.get_object();
+
+    data.read( "repaired_item", actor.repaired_item );
+    data.read( "stage", actor.stage );
+    data.read( "tool_to_repair_with", actor.tool_to_repair_with );
+    data.read( "no_menu", actor.no_menu );
+    data.read( "repair_iuse_actor_name", actor.repair_iuse_actor_name );
+    data.read( "vp_tool", actor.vp_tool );
+
+    return actor.clone();
+}
+
 void fix_wound_activity_actor::start( player_activity &act, Character & )
 {
     act.moves_total = to_moves<int>( initial_moves );
@@ -14191,6 +14273,12 @@ std::unique_ptr<activity_actor> multi_butchery_activity_actor::deserialize( Json
     return actor.clone();
 }
 
+std::unique_ptr<activity_actor> multi_dissection_activity_actor::deserialize( JsonValue & )
+{
+    multi_dissection_activity_actor actor;
+    return actor.clone();
+}
+
 void find_mount_activity_actor::do_turn( player_activity &act, Character &who )
 {
     //npc only activity
@@ -15825,6 +15913,7 @@ deserialize_functions = {
     { ACT_MULTIPLE_CONSTRUCTION, &multi_build_construction_activity_actor::deserialize },
     { ACT_MULTIPLE_CRAFT, &multi_craft_activity_actor::deserialize },
     { ACT_MULTIPLE_DIS, &multi_disassemble_activity_actor::deserialize },
+    { ACT_MULTIPLE_DISSECT, &multi_dissection_activity_actor::deserialize },
     { ACT_MULTIPLE_FARM, &multi_farm_activity_actor::deserialize },
     { ACT_MULTIPLE_FISH, &multi_fish_activity_actor::deserialize },
     { ACT_MULTIPLE_MINE, &multi_mine_activity_actor::deserialize },
@@ -15846,6 +15935,7 @@ deserialize_functions = {
     { ACT_READ, &read_activity_actor::deserialize },
     { ACT_REEL_CABLE, &reel_cable_activity_actor::deserialize },
     { ACT_RELOAD, &reload_activity_actor::deserialize },
+    { ACT_REPAIR_ITEM, &repair_item_activity_actor::deserialize },
     { ACT_ROBOT_CONTROL, &robot_control_activity_actor::deserialize },
     { ACT_SHAVE, &shave_activity_actor::deserialize },
     { ACT_SHEARING, &shearing_activity_actor::deserialize },

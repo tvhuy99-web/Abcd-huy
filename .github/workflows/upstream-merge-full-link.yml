@@ -7,6 +7,10 @@ on:
     paths:
       - '.github/workflows/upstream-merge-full-link.yml'
       - 'src/vehicle_autodrive.cpp'
+      - 'src/activity_actor.cpp'
+      - 'src/activity_actor_definitions.h'
+      - 'src/activity_handlers.cpp'
+      - 'src/activity_item_handling.cpp'
       - 'Makefile'
   workflow_dispatch:
 
