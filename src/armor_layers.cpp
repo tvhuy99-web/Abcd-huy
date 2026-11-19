@@ -567,7 +567,9 @@ std::vector<layering_item_info> outfit::items_cover_bp( const Character &c, cons
         if( elem_it->covers( bp ) ) {
             s.push_back( { get_item_penalties( elem_it, c, bp ),
                            elem_it->get_encumber( c, bp ),
-                           elem_it->tname()
+                           elem_it->tname(),
+                           elem_it->get_volume_capacity(),
+                           elem_it->has_flag( json_flag_HIDDEN )
                          } );
         }
     }
