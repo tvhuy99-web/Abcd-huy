@@ -55,6 +55,23 @@ class InventoryActionOutcomeTests(unittest.TestCase):
         self.assertIn("Unavailable items included.", native)
         self.assertNotIn("Expanded, ", native)
 
+
+    def test_native_inventory_outcomes_are_translated_to_vietnamese(self):
+        translated = (ROOT / "lang/po/accessibility/vi.po").read_text(
+            encoding="utf-8")
+        for text in (
+            "Category selection mode.",
+            "Item selection mode.",
+            "Inventory view: container hierarchy.",
+            "Inventory view: categories.",
+            "Inventory filter cleared.",
+            "Inventory filter applied: %s.",
+            "Unavailable items skipped.",
+            "Unavailable items included.",
+        ):
+            self.assertIn('msgid "' + text + '"', translated)
+        self.assertIn('msgstr "Đã áp dụng bộ lọc kho đồ: %s."', translated)
+
     def test_inventory_speech_has_vietnamese_strings(self):
         en = ET.parse(ROOT / "android/app/src/main/res/values/strings.xml").getroot()
         vi = ET.parse(ROOT / "android/app/src/main/res/values-vi/strings.xml").getroot()

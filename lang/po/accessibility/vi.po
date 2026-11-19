@@ -6433,3 +6433,29 @@ msgstr "Cầu thang đi lên"
 
 msgid "Stairs down"
 msgstr "Cầu thang đi xuống"
+
+# R25: concise inventory action outcomes in the existing Android reader.
+msgid "Category selection mode."
+msgstr "Chế độ chọn theo danh mục."
+
+msgid "Item selection mode."
+msgstr "Chế độ chọn từng vật phẩm."
+
+msgid "Inventory view: container hierarchy."
+msgstr "Cách hiển thị kho đồ: theo vật chứa."
+
+msgid "Inventory view: categories."
+msgstr "Cách hiển thị kho đồ: theo danh mục."
+
+msgid "Inventory filter cleared."
+msgstr "Đã xóa bộ lọc kho đồ."
+
+#, c-format
+msgid "Inventory filter applied: %s."
+msgstr "Đã áp dụng bộ lọc kho đồ: %s."
+
+msgid "Unavailable items skipped."
+msgstr "Đã bỏ qua các vật phẩm không thể chọn."
+
+msgid "Unavailable items included."
+msgstr "Đã hiển thị cả các vật phẩm không thể chọn."
