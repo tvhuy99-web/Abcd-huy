@@ -1,0 +1,35 @@
+name: Full native linkage check (upstream integration)
+
+on:
+  push:
+    branches:
+      - test/upstream-full-merge-2026-11-19
+    paths:
+      - '.github/workflows/upstream-merge-full-link.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-native-link-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-link:
+    name: Build and link complete native game (no distribution)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Verify preinstalled compiler and headers
+        run: |
+          g++ --version
+          test -f /usr/include/ncursesw/curses.h
+      - name: Compile and link complete non-tiled native game
+        run: |
+          make -j3 all \
+            CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
+            TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
