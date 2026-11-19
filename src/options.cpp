@@ -1349,6 +1349,16 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
     return result;
 }
 
+std::vector<options_manager::id_and_option> options_manager::refresh_soundpacks()
+{
+    std::vector<id_and_option> found = build_soundpacks_list();
+    auto it = options.find( "SOUNDPACKS" );
+    if( it != options.end() ) {
+        it->second.vItems = found;
+    }
+    return found;
+}
+
 std::unordered_set<std::string> options_manager::get_langs_with_translation_files()
 {
 #if defined(LOCALIZE)

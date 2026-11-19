@@ -13,10 +13,13 @@
 #if defined(__ANDROID__)
 #include <jni.h>
 #include "catacharset.h"
+#include "cata_path.h"
 #include "options.h"
+#include "path_info.h"
 #include "output.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
+#include "sdlsound.h"
 #endif
 
 namespace a11y::android
@@ -52,6 +55,7 @@ bool has_world_token = false;
 bool world_step_ready = false;
 std::atomic<int> active_travel_state{ 0 };
 std::atomic<int> pending_travel_control{ 0 };
+std::atomic<bool> pending_manual_mods_changed{ false };
 std::atomic<std::uint64_t> travel_map_return_deadline_ms{ 0 };
 
 bool matches_last_world( const context_token &token )
@@ -72,8 +76,24 @@ struct pending_sound_settings {
 };
 std::mutex sound_settings_mutex;
 std::optional<pending_sound_settings> pending_sound;
+std::mutex soundpack_mutex;
+std::optional<std::string> pending_soundpack;
+std::string last_soundpack_result;
 #endif
 } // namespace
+
+void mark_manual_mods_changed()
+{
+    pending_manual_mods_changed.store( true, std::memory_order_release );
+#if defined(__ANDROID__)
+    PushWakeEvent();
+#endif
+}
+
+bool take_manual_mods_changed()
+{
+    return pending_manual_mods_changed.exchange( false, std::memory_order_acq_rel );
+}
 
 bool enabled() { return reader_enabled.load( std::memory_order_acquire ); }
 bool suspended() { return reader_suspended.load( std::memory_order_acquire ); }
@@ -631,6 +651,64 @@ void apply_pending_sound_settings()
     get_options().save();
 }
 
+void queue_soundpack_selection( std::string id )
+{
+    if( id.empty() || id.size() > 160 ) {
+        return;
+    }
+    {
+        const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+        pending_soundpack = std::move( id );
+        last_soundpack_result.clear();
+    }
+    PushWakeEvent();
+}
+
+std::string take_soundpack_selection_result()
+{
+    const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+    std::string result = std::move( last_soundpack_result );
+    last_soundpack_result.clear();
+    return result;
+}
+
+void apply_pending_soundpack_selection()
+{
+    std::optional<std::string> selection;
+    {
+        const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+        selection = std::move( pending_soundpack );
+        pending_soundpack.reset();
+    }
+    if( !selection ) {
+        return;
+    }
+    // Rescan after the atomic ZIP import before validating a new ID. In
+    // particular, string_select will reject IDs missing from its value list.
+    get_options().refresh_soundpacks();
+    const std::string previous = get_option<std::string>( "SOUNDPACKS" );
+    bool applied = SOUNDPACKS.find( *selection ) != SOUNDPACKS.end();
+    if( applied ) {
+        get_options().get_option( "SOUNDPACKS" ).setValue( *selection );
+        applied = get_option<std::string>( "SOUNDPACKS" ) == *selection;
+        if( applied ) {
+            applied = reload_soundset();
+        }
+    }
+    if( applied ) {
+        get_options().save();
+    } else {
+        get_options().get_option( "SOUNDPACKS" ).setValue( previous );
+        if( previous != *selection ) {
+            reload_soundset();
+        }
+    }
+    {
+        const std::scoped_lock<std::mutex> lock( soundpack_mutex );
+        last_soundpack_result = std::string( applied ? "OK:" : "ERR:" ) + *selection;
+    }
+}
+
 void diagnostic_event( const std::string_view category, const std::string_view detail )
 {
     // Manual OFF disables the entire diagnostic bridge, including failures.
@@ -734,6 +812,40 @@ void open_accessibility_settings()
     env->PopLocalFrame( nullptr );
 }
 
+void open_manual_mod_action( const std::string_view action, const std::string_view mod_id )
+{
+#if defined(__ANDROID__)
+    if( ( action != "import" && action != "export" && action != "delete" ) ||
+        mod_id.size() > 100 ) {
+        return;
+    }
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 6 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityManualModAction",
+                                             "(Ljava/lang/String;Ljava/lang/String;)V" );
+        if( method != nullptr ) {
+            jstring op = env->NewStringUTF( std::string( action ).c_str() );
+            jstring id = env->NewStringUTF( std::string( mod_id ).c_str() );
+            if( op != nullptr && id != nullptr ) {
+                env->CallVoidMethod( activity, method, op, id );
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+#else
+    ( void ) action;
+    ( void ) mod_id;
+#endif
+}
+
 void open_backup_restore()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
@@ -783,10 +895,12 @@ void open_sound_settings( const int music, const int effects, const bool enabled
     if( activity != nullptr ) {
         jclass cls = env->GetObjectClass( activity );
         jmethodID method = cls == nullptr ? nullptr :
-                           env->GetMethodID( cls, "onAccessibilityOpenSoundSettings", "(IIZ)V" );
+                           env->GetMethodID( cls, "onAccessibilityOpenSoundSettings",
+                                               "(IIZLjava/lang/String;)V" );
         if( method != nullptr ) {
+            jstring selected = env->NewStringUTF( get_option<std::string>( "SOUNDPACKS" ).c_str() );
             env->CallVoidMethod( activity, method, music, effects,
-                                 enabled ? JNI_TRUE : JNI_FALSE );
+                                 enabled ? JNI_TRUE : JNI_FALSE, selected );
         }
     }
     if( env->ExceptionCheck() ) {
@@ -958,11 +1072,52 @@ std::string from_java( JNIEnv *env, jstring value )
 }
 } // namespace
 
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeUserModDir( JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( PATH_INFO::user_moddir().c_str() );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueManualModsChanged(
+    JNIEnv *, jclass )
+{
+    a11y::android::mark_manual_mods_changed();
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueSoundSettings(
     JNIEnv *, jclass, jint music, jint effects, jboolean enabled )
 {
     a11y::android::queue_sound_settings( music, effects, enabled == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueSoundpackSelection(
+    JNIEnv *env, jclass, jstring id )
+{
+    a11y::android::queue_soundpack_selection( from_java( env, id ) );
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTakeSoundpackSelectionResult(
+    JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( a11y::android::take_soundpack_selection_result().c_str() );
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeUserSoundDir(
+    JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( PATH_INFO::user_sound().get_unrelative_path().u8string().c_str() );
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeDataSoundDir(
+    JNIEnv *env, jclass )
+{
+    return env->NewStringUTF( PATH_INFO::data_sound().get_unrelative_path().u8string().c_str() );
 }
 
 extern "C" JNIEXPORT void JNICALL

@@ -178,6 +178,12 @@ void mod_manager::clear()
     removed_mods.clear();
 }
 
+void mod_manager::reload_available_mods()
+{
+    refresh_mod_list();
+    set_usable_mods();
+}
+
 void mod_manager::refresh_mod_list()
 {
     clear();

@@ -90,6 +90,13 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - name: Install build dependencies with Ubuntu mirror fallback
         run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
+      - name: Include four licensed community content mods in candidate APK
+        if: matrix.name == 'candidate'
+        run: python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
+      - name: Apply Vietnamese translations for Cataclysm++, MST Extra and Blazemod
+        run: |
+          python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
+          python3 tools/mods/apply_vi_overlays.py --target data/mods
       - name: Compile Vulkan shader artifacts for Android assets
         run: |
           python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
@@ -243,9 +250,22 @@ jobs:
                           if not archive.read(required).startswith(b'\x7fELF\x02'):
                               raise SystemExit(f'{apk}: invalid ARM64 ELF {required}')
                       for required in ('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
-                                       'assets/data/shaders/grayscale.frag.spv'):
+                                       'assets/data/shaders/grayscale.frag.spv',
+                                       'assets/data/mods/CataclysmPlusPlus/modinfo.json',
+                                       'assets/data/mods/Arcana_StrangeAeons/modinfo.json',
+                                       'assets/data/mods/Blazemod/modinfo.json',
+                                       'assets/data/mods/MST_Extra/modinfo.json'):
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
+                          if os.environ['BUILD_KIND'] == 'candidate':
+                              samples = {
+                                  'assets/data/mods/MST_Extra/items/tools.json': 'lò đất sét',
+                                  'assets/data/mods/Blazemod/items/guns/blaze_weapons.json': 'súng xuyên giáp điện từ',
+                                  'assets/data/mods/CataclysmPlusPlus/c_achievements.json': 'Dấu Vết Hồ Sơ',
+                              }
+                              for asset, phrase in samples.items():
+                                  if asset not in names or phrase not in archive.read(asset).decode('utf-8'):
+                                      raise SystemExit(f'APK missing Vietnamese translation in {asset}')
                   signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
                   signature = subprocess.check_output([str(signer), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
                   pathlib.Path('build-evidence/signer.txt').write_text(signature)

@@ -308,6 +308,7 @@ static std::vector<std::size_t> playlist_indexes;
 bool sound_init_success = false;
 static std::map<std::string, music_playlist> playlists;
 static cata_path current_soundpack_path;
+static bool soundset_load_ok = true;
 
 static std::unordered_map<std::string, int> unique_paths;
 static sfx_resources_t sfx_resources;
@@ -481,8 +482,8 @@ void stop_music()
         return;
     }
 
-    sound_backend::free_music( current_music );
     sound_backend::stop_music( 0 );
+    sound_backend::free_music( current_music );
     current_music = nullptr;
 
     playlist_indexes.clear();
@@ -792,6 +793,7 @@ void sfx::play_ambient_variant_sound( std::string_view id, std::string_view vari
 
 void load_soundset()
 {
+    soundset_load_ok = true;
     const cata_path default_path = PATH_INFO::defaultsounddir();
     const std::string default_soundpack = "basic";
     std::string current_soundpack = get_option<std::string>( "SOUNDPACKS" );
@@ -819,6 +821,7 @@ void load_soundset()
     try {
         DynamicDataLoader::get_instance().load_data_from_path( soundpack_path, "core" );
     } catch( const std::exception &err ) {
+        soundset_load_ok = false;
         debugmsg( "failed to load sounds: %s", err.what() );
     }
 
@@ -846,6 +849,40 @@ void load_soundset()
         std::vector<sfx_args> t_swap;
         sfx_preload.swap( t_swap );
     }
+}
+
+bool reload_soundset()
+{
+    if( !sound_init_success ) {
+        // Options still persist when the device has no audio output.
+        return true;
+    }
+    // All of this runs on the SDL/game thread, never on the Java UI thread.
+    stop_music();
+    sound_backend::stop_all_sfx( 0 );
+    for( int i = 0; i < static_cast<int>( sfx::channel::MAX_CHANNEL ); ++i ) {
+        sound_backend::stop_reserved( static_cast<sfx::channel>( i ), 0 );
+    }
+    // Release cached samples before changing the root directory.
+    sfx_resources.resource.clear();
+    sfx_resources.sound_effects.clear();
+    playlists.clear();
+    unique_paths.clear();
+    sfx_preload.clear();
+    for( const auto &entry : music::music_id_list ) {
+        music::update_music_id_is_empty_flag( entry.first, false );
+    }
+    // A soundpack may have effects but no music. Keep title as a safe mode.
+    music::update_music_id_is_empty_flag( music::music_id::title, true );
+    music::deactivate_music_id_all();
+    load_soundset();
+    if( !soundset_load_ok ) {
+        return false;
+    }
+    if( sounds::sound_enabled ) {
+        play_music( "title" );
+    }
+    return true;
 }
 
 // capitalized to mirror cata_tiles::InitSDL()

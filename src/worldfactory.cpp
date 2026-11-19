@@ -5,6 +5,7 @@
 #include <charconv>
 #include <ctime>
 #include <exception>
+#include <filesystem>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -1209,6 +1210,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "A11Y_INTERNAL_MOD_FOCUS" );
+    ctxt.register_action( "A11Y_INTERNAL_MANUAL_MOD_IMPORT" );
+    ctxt.register_action( "A11Y_INTERNAL_MANUAL_MOD_TOGGLE" );
 
     point filter_pos;
     int filter_view_len = 0;
@@ -1286,28 +1289,29 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
     };
     std::vector<mod_tab> all_tabs;
 
-    for( const std::pair<std::string, translation> &tab : get_mod_list_tabs() ) {
-        all_tabs.emplace_back( tab.first, std::vector<mod_id> {}, std::vector<mod_id> {} );
-    }
-
-    const std::map<std::string, std::string> &cat_tab_map = get_mod_list_cat_tab();
-    for( const mod_id &mod : mman->get_usable_mods() ) {
-        int cat_idx = mod->category.first;
-        const std::string &cat_id = get_mod_list_categories()[cat_idx].first;
-
-        std::string dest_tab = "tab_default";
-        const auto iter = cat_tab_map.find( cat_id );
-        if( iter != cat_tab_map.end() ) {
-            dest_tab = iter->second;
+    const auto rebuild_mod_tabs = [&]() {
+        all_tabs.clear();
+        for( const std::pair<std::string, translation> &tab : get_mod_list_tabs() ) {
+            all_tabs.emplace_back( tab.first, std::vector<mod_id> {}, std::vector<mod_id> {} );
         }
-
-        for( mod_tab &tab : all_tabs ) {
-            if( tab.id == dest_tab ) {
-                tab.mods_unfiltered.push_back( mod );
-                break;
+        const std::map<std::string, std::string> &cat_tab_map = get_mod_list_cat_tab();
+        for( const mod_id &mod : mman->get_usable_mods() ) {
+            const int cat_idx = mod->category.first;
+            const std::string &cat_id = get_mod_list_categories()[cat_idx].first;
+            std::string dest_tab = "tab_default";
+            const auto iter = cat_tab_map.find( cat_id );
+            if( iter != cat_tab_map.end() ) {
+                dest_tab = iter->second;
+            }
+            for( mod_tab &tab : all_tabs ) {
+                if( tab.id == dest_tab ) {
+                    tab.mods_unfiltered.push_back( mod );
+                    break;
+                }
             }
         }
-    }
+    };
+    rebuild_mod_tabs();
 
     // Helper function for determining the currently selected mod
     const auto get_selected_mod = [&]() -> const MOD_INFORMATION* {
@@ -1493,10 +1497,41 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         size_t index = 0;
     };
     std::unordered_map<std::string, mod_reader_target> reader_targets;
+    std::vector<mod_id> manual_mods;
+    std::optional<mod_id> manual_toggle_id;
     std::string reader_focus;
     recalc_start = true;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
             &ctxt, "mod-selection", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.node == "mod:manual" ) {
+            if( intent.action == "activate" || intent.action == "focus" ) {
+                reader_focus = intent.node;
+                return "A11Y_INTERNAL_MOD_FOCUS";
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "mod:manual:import" ) {
+            if( intent.action != "activate" && intent.action != "focus" ) {
+                return std::nullopt;
+            }
+            reader_focus = intent.node;
+            return intent.action == "activate" ?
+                   std::optional<std::string>( "A11Y_INTERNAL_MANUAL_MOD_IMPORT" ) :
+                   std::optional<std::string>( "A11Y_INTERNAL_MOD_FOCUS" );
+        }
+        for( const mod_id &id : manual_mods ) {
+            if( intent.node != "mod:manual:item:" + id.str() ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            reader_focus = intent.node;
+            manual_toggle_id = id;
+            return intent.action == "activate" ?
+                   std::optional<std::string>( "A11Y_INTERNAL_MANUAL_MOD_TOGGLE" ) :
+                   std::optional<std::string>( "A11Y_INTERNAL_MOD_FOCUS" );
+        }
         const auto target = reader_targets.find( intent.node );
         if( target == reader_targets.end() ) {
             return a11y::registered_intent( ctxt, intent );
@@ -1566,6 +1601,66 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         tools_tab.expanded = true;
         tools_tab.has_children = true;
         snapshot.nodes.push_back( std::move( tools_tab ) );
+
+        // The sixth root section belongs to the Android reader. Native
+        // category tabs and load-order controls remain unchanged.
+        a11y::semantic_node manual_tab;
+        manual_tab.id = "mod:manual";
+        manual_tab.role = "tab";
+        manual_tab.label = "Nhập mod thủ công";
+        manual_tab.depth = 0;
+        manual_tab.expanded = true;
+        manual_tab.has_children = true;
+        snapshot.nodes.push_back( std::move( manual_tab ) );
+
+        a11y::semantic_node import_button;
+        import_button.id = "mod:manual:import";
+        import_button.parent_id = "mod:manual";
+        import_button.depth = 1;
+        import_button.role = "button";
+        import_button.actions = { "focus", "activate" };
+        import_button.label = "Nhập tệp mod thủ công";
+        snapshot.nodes.push_back( std::move( import_button ) );
+
+        manual_mods.clear();
+        const std::filesystem::path manual_path =
+            ( PATH_INFO::user_moddir_path() / "manual" ).get_unrelative_path().lexically_normal();
+        const std::string manual_prefix = manual_path.generic_string() + "/";
+        for( const mod_id &id : mman->get_usable_mods() ) {
+            if( !id.is_valid() ) {
+                continue;
+            }
+            const std::string source_path =
+                id->path.get_unrelative_path().lexically_normal().generic_string();
+            if( source_path.compare( 0, manual_prefix.size(), manual_prefix ) != 0 ) {
+                continue;
+            }
+            manual_mods.push_back( id );
+            a11y::semantic_node item;
+            item.id = "mod:manual:item:" + id.str();
+            item.parent_id = "mod:manual";
+            item.depth = 1;
+            item.role = "button";
+            item.actions = { "focus", "activate" };
+            item.label = id->name();
+            const bool active = std::find( active_mod_order.begin(), active_mod_order.end(), id ) !=
+                                active_mod_order.end();
+            item.value = active ? "Đã bật cho thế giới này" : "Đã tắt cho thế giới này";
+            item.enabled = active || mman_ui->mm_tree.is_available( id );
+            if( !item.enabled ) {
+                item.disabled_reason = _( "This mod has errors and cannot be enabled." );
+            }
+            snapshot.nodes.push_back( std::move( item ) );
+        }
+        if( manual_mods.empty() ) {
+            a11y::semantic_node empty;
+            empty.id = "mod:manual:empty";
+            empty.parent_id = "mod:manual";
+            empty.depth = 1;
+            empty.role = "document";
+            empty.label = "Chưa có mod nào được nhập thủ công";
+            snapshot.nodes.push_back( std::move( empty ) );
+        }
 
         const std::string available_parent = "mod:category:" +
                                              std::to_string( iCurrentTab );
@@ -1742,6 +1837,22 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
 
     int tab_output = 0;
     while( tab_output == 0 ) {
+        if( a11y::android::take_manual_mods_changed() ) {
+            // File writes finished on Android. Reload only on the game thread.
+            mman->reload_available_mods();
+            active_mod_order.erase( std::remove_if( active_mod_order.begin(),
+            active_mod_order.end(), []( const mod_id &id ) { return !id.is_valid(); } ),
+            active_mod_order.end() );
+            rebuild_mod_tabs();
+            current_filter = "init me!";
+            apply_filter( "" );
+            cursel = { 0, 0 };
+            startsel = { 0, 0 };
+            active_header = 0;
+            reader_focus = "mod:manual";
+            manual_toggle_id.reset();
+            recalc_start = true;
+        }
         update_reader();
         ui_manager::redraw();
 
@@ -1821,6 +1932,23 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         }
 
         if( action == "A11Y_INTERNAL_MOD_FOCUS" ) {
+            recalc_start = true;
+        } else if( action == "A11Y_INTERNAL_MANUAL_MOD_IMPORT" ) {
+#if defined(__ANDROID__)
+            a11y::android::open_manual_mod_action( "import", "" );
+#endif
+        } else if( action == "A11Y_INTERNAL_MANUAL_MOD_TOGGLE" ) {
+            if( manual_toggle_id && manual_toggle_id->is_valid() ) {
+                const auto found = std::find( active_mod_order.begin(), active_mod_order.end(),
+                                              *manual_toggle_id );
+                if( found == active_mod_order.end() ) {
+                    mman_ui->try_add( *manual_toggle_id, active_mod_order );
+                } else {
+                    mman_ui->try_rem( std::distance( active_mod_order.begin(), found ),
+                                      active_mod_order );
+                }
+            }
+            manual_toggle_id.reset();
             recalc_start = true;
         } else if( navigate_ui_list( action, cursel[active_header], scroll_rate, recmax, true ) ) {
             recalc_start = true;

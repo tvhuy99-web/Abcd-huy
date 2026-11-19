@@ -57,8 +57,8 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
     def test_concise_gestures_and_item_guidance_retains_controls(self):
         combat = self.strings["a11yCombatOn"]
         self.assertLess(len(combat), 135)
-        for word in ("một ngón", "hai ngón", "lên/xuống",
-                     "trái/phải", "nạp đạn", "vũ khí"):
+        for word in ("một ngón", "hai ngón", "ô trống", "gấp khúc",
+                     "trái-phải", "phải-trái", "nạp đạn", "vũ khí"):
             self.assertIn(word, combat.lower())
         self.assertNotIn("ba ngón", combat.lower())
         self.assertRegex(self.po, r'chỗ chứa và (?:"\n")?quyền sở hữu')
