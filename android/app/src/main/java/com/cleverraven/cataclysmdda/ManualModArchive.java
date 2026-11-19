@@ -69,7 +69,7 @@ final class ManualModArchive {
         }
         File mods = new File(userModsPath).getCanonicalFile();
         File root = new File(mods, "manual").getCanonicalFile();
-        if (!root.toPath().startsWith(mods.toPath()) || !root.isDirectory() && !root.mkdirs()) {
+        if (!root.getPath().startsWith(mods.getPath() + File.separator) || !root.isDirectory() && !root.mkdirs()) {
             throw new IOException("Không thể tạo thư mục nhập mod");
         }
         return root;
@@ -78,7 +78,7 @@ final class ManualModArchive {
     private static void within(File parent, File child) throws IOException {
         File base = parent.getCanonicalFile();
         File file = child.getCanonicalFile();
-        if (!file.toPath().startsWith(base.toPath()) || base.equals(file)) {
+        if (!file.getPath().startsWith(base.getPath() + File.separator)) {
             throw new IOException("Đường dẫn tệp không an toàn");
         }
     }
