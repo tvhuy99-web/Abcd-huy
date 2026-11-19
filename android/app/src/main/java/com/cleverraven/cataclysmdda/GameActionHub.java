@@ -96,7 +96,7 @@ final class GameActionHub {
                     "reader:pickup_here", "pickup", "pickup_all", "chat",
                     "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
                     "butcher", "loot", "control_vehicle", "smash" },
-            { "listitems", "reader:places", "map", "sky", "center", "zones" },
+            { "reader:scene:survey", "listitems", "reader:places", "map", "sky", "center", "zones" },
             { "LEVEL_UP", "LEVEL_DOWN", "open_movement", "cycle_move",
                     "cycle_move_reverse", "reset_move", "toggle_run", "toggle_crouch",
                     "toggle_prone", "wait", "pause", "auto_travel_mode" },

@@ -1158,6 +1158,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( button( "reader:scan:south", _( "Scan 30 tiles south" ), "" ) );
     result.nodes.push_back( button( "reader:scan:west", _( "Scan 30 tiles west" ), "" ) );
     result.nodes.push_back( button( "reader:scan:east", _( "Scan 30 tiles east" ), "" ) );
+    result.nodes.push_back( button( "reader:scene:survey", _( "Detailed place survey" ),
+                                    _( "Survey the loaded place beyond line of sight and read one complete description." ) ) );
     result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );
     result.nodes.push_back( button( "reader:pickup_here", _( "Pick up here" ), "" ) );
     result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );

@@ -6185,3 +6185,206 @@ msgstr "Không tìm được đường đi an toàn. Xe đã tạm dừng."
 #, c-format
 msgid "Local coordinates X %1$d, Y %2$d. World map X %3$d, Y %4$d, Z %5$d."
 msgstr "Tọa độ khu vực X%1$d, Y%2$d. Bản đồ chung X%3$d, Y%4$d, Z%5$d."
+
+msgid "here"
+msgstr "ngay tại đây"
+
+msgid "stairs up"
+msgstr "cầu thang đi lên"
+
+msgid "stairs down"
+msgstr "cầu thang đi xuống"
+
+#, c-format
+msgid "X%1$d, Y%2$d"
+msgstr "X%1$d, Y%2$d"
+
+#, c-format
+msgid "world X%1$d, Y%2$d"
+msgstr "bản đồ chung X%1$d, Y%2$d"
+
+#, c-format
+msgid "%s, at your position"
+msgstr "%s, ngay tại vị trí của bạn"
+
+#, c-format
+msgid "%1$s, %2$s, %3$d tiles by position"
+msgstr "%1$s, về hướng %2$s, cách %3$d ô trên bản đồ"
+
+msgid "near the northwest"
+msgstr "gần góc tây bắc"
+
+msgid "near the northeast"
+msgstr "gần góc đông bắc"
+
+msgid "near the southwest"
+msgstr "gần góc tây nam"
+
+msgid "near the southeast"
+msgstr "gần góc đông nam"
+
+msgid "toward the north"
+msgstr "ở phần phía bắc"
+
+msgid "toward the south"
+msgstr "ở phần phía nam"
+
+msgid "toward the west"
+msgstr "ở phần phía tây"
+
+msgid "toward the east"
+msgstr "ở phần phía đông"
+
+msgid "near the center"
+msgstr "gần trung tâm"
+
+#, c-format
+msgid "%s: none found."
+msgstr "%s: không phát hiện."
+
+#, c-format
+msgid "%1$s: %2$d found."
+msgstr "%1$s: phát hiện %2$d vị trí."
+
+msgid "connects inside and outside"
+msgstr "thông giữa bên trong và bên ngoài"
+
+msgid "currently obstructs movement"
+msgstr "hiện đang cản lối đi"
+
+#, c-format
+msgid "%d more positions were grouped to keep the reading manageable."
+msgstr "Còn %d vị trí khác đã được gộp để tránh lời đọc quá dài."
+
+#, c-format
+msgid "%1$s: %2$d types."
+msgstr "%1$s: có %2$d loại."
+
+#, c-format
+msgid "%1$s, %2$d positions or stacks, first at %3$s."
+msgstr "%1$s, %2$d vị trí hoặc chồng vật phẩm, vị trí đầu tiên tại %3$s."
+
+#, c-format
+msgid "%d additional types were counted but not listed individually."
+msgstr "Còn %d loại khác đã được đếm nhưng không liệt kê từng loại."
+
+#, c-format
+msgid "Straight %1$s: %2$d clear tiles before an obstruction."
+msgstr "Đi thẳng về phía %1$s được %2$d ô trống trước khi gặp vật cản."
+
+#, c-format
+msgid "Straight %1$s: at least %2$d clear tiles in the loaded map."
+msgstr "Đi thẳng về phía %1$s có ít nhất %2$d ô trống trong phần bản đồ đã tải."
+
+msgid "unknown area"
+msgstr "khu vực chưa xác định"
+
+#, c-format
+msgid "Detailed place survey. %s."
+msgstr "Khảo sát địa điểm chi tiết. %s."
+
+#, c-format
+msgid "The mapped place spans a bounding frame of %1$d east-west by %2$d north-south tiles. This is the map frame, not necessarily the outer wall dimensions."
+msgstr "Phạm vi địa điểm trên bản đồ có khung bao rộng %1$d ô theo hướng đông tây và dài %2$d ô theo hướng bắc nam. Đây là khung bản đồ, chưa chắc là kích thước tường ngoài."
+
+#, c-format
+msgid "%d connected map levels were identified; this survey covers your current level."
+msgstr "Xác định được %d tầng bản đồ thuộc địa điểm. Lần khảo sát này chỉ đọc tầng hiện tại."
+
+msgid "The entire place boundary is not established. Describing the loaded area around you only; no complete building or forest dimensions are claimed."
+msgstr "Chưa xác định đầy đủ ranh giới địa điểm. Chỉ mô tả phần bản đồ đã tải quanh bạn, không khẳng định kích thước toàn bộ công trình hoặc khu rừng."
+
+#, c-format
+msgid "You are at local X%1$d, Y%2$d, %3$s of this place."
+msgstr "Bạn đang ở tọa độ khu vực X%1$d, Y%2$d, %3$s của địa điểm."
+
+#, c-format
+msgid "You are at world X%1$d, Y%2$d, Z%3$d. Local coordinates are unavailable for this place."
+msgstr "Bạn đang ở tọa độ bản đồ chung X%1$d, Y%2$d, Z%3$d. Chưa xác định được tọa độ riêng cho địa điểm này."
+
+msgid "Extended survey reads the loaded map beyond line of sight, including behind walls."
+msgstr "Khảo sát mở rộng đọc dữ liệu bản đồ đã tải, kể cả những vị trí bị tường che khuất."
+
+#, c-format
+msgid "Map squares examined: %d."
+msgstr "Đã khảo sát %d ô bản đồ."
+
+msgid "Only part of the location is currently loaded or within the survey boundary. Counts below apply only to examined tiles."
+msgstr "Chỉ một phần địa điểm nằm trong vùng bản đồ đã tải hoặc phạm vi quét. Những số lượng sau đây chỉ tính trên các ô đã khảo sát."
+
+msgid "General structure."
+msgstr "Cấu trúc tổng thể."
+
+#, c-format
+msgid "%1$d wall tiles, %2$d passable tiles, %3$d roofed or inside tiles, and %4$d outside tiles."
+msgstr "Có %1$d ô tường, %2$d ô có thể đi qua, %3$d ô được phân loại trong nhà hoặc có mái và %4$d ô ngoài trời."
+
+#, c-format
+msgid "The observed covered space spans a frame of %1$d east-west by %2$d north-south tiles; this does not prove the full building perimeter."
+msgstr "Phần không gian có mái quan sát được nằm trong khung rộng %1$d ô theo hướng đông tây và dài %2$d ô theo hướng bắc nam. Chưa thể coi đây là toàn bộ chu vi tòa nhà."
+
+#, c-format
+msgid "%1$s portion: %2$d walls, %3$d doors, %4$d other obstacles, %5$d furniture locations, %6$d open traversable tiles."
+msgstr "Khu vực phía %1$s: %2$d ô tường, %3$d cửa, %4$d vật cản khác, %5$d vị trí đồ nội thất và %6$d ô trống có thể đi qua."
+
+msgid "Straight directions from your position. These are direct lines, not a path around walls."
+msgstr "Lối đi thẳng từ vị trí hiện tại. Đây chỉ là các hướng đi thẳng, không phải đường vòng tránh tường."
+
+msgid "Doors, windows, stairs and routes."
+msgstr "Cửa, cửa sổ, cầu thang và lối đi."
+
+msgid "Doors"
+msgstr "Các cửa"
+
+msgid "Windows"
+msgstr "Cửa sổ"
+
+msgid "Stairs and vertical links"
+msgstr "Cầu thang và lối nối tầng"
+
+msgid "Furniture, vehicles, and noteworthy items."
+msgstr "Đồ nội thất, phương tiện và vật phẩm đáng chú ý."
+
+msgid "Furniture"
+msgstr "Đồ nội thất"
+
+msgid "Vehicles"
+msgstr "Phương tiện"
+
+msgid "Item types"
+msgstr "Các loại vật phẩm"
+
+msgid "Creatures and dangers detected by extended survey."
+msgstr "Sinh vật và nguy hiểm được phát hiện qua khảo sát mở rộng."
+
+msgid "Creatures"
+msgstr "Sinh vật"
+
+msgid "Traps and fields"
+msgstr "Bẫy và vùng nguy hiểm"
+
+msgid "A safety scan limit was reached. The unlisted portion was not examined."
+msgstr "Đã chạm giới hạn an toàn của lần quét. Phần chưa liệt kê không được khảo sát."
+
+msgid "Orientation summary."
+msgstr "Tổng kết định hướng."
+
+#, c-format
+msgid "Your position is %s of the mapped place."
+msgstr "Vị trí của bạn ở %s của khu vực trên bản đồ."
+
+msgid "This is a local survey, not a verified whole-place outline."
+msgstr "Đây là khảo sát quanh vị trí hiện tại, chưa phải đường bao đã xác minh của toàn bộ địa điểm."
+
+#, c-format
+msgid "%1$d doors and %2$d stair links were detected in the scanned tiles."
+msgstr "Trong phần đã quét, phát hiện %1$d cửa và %2$d lối nối tầng."
+
+msgid "Distances to features are map-position distances, not guaranteed walking routes. End of survey."
+msgstr "Khoảng cách đến các điểm mốc là khoảng cách theo vị trí trên bản đồ, không bảo đảm có đường đi trực tiếp. Kết thúc khảo sát."
+
+msgid "Detailed place survey"
+msgstr "Khảo sát địa điểm chi tiết"
+
+msgid "Survey the loaded place beyond line of sight and read one complete description."
+msgstr "Khảo sát địa điểm mở rộng vượt ngoài tầm nhìn và đọc liên tục toàn bộ mô tả."
