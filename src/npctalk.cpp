@@ -7233,7 +7233,14 @@ talk_effect_fun_t::func f_run_inv_eocs( const JsonObject &jo,
             const auto f_mul = [d, guy, title]( const item_location_filter & filter ) {
                 return game_menus::inv::titled_multi_filter_menu( filter, *guy, title.evaluate( d ).translated() );
             };
-            run_item_eocs( d, is_npc, guy->all_items_loc(), option.evaluate( d ), true_eocs, false_eocs, data,
+            // Collect all carried items, including contents of pockets, using
+            // the current Character item visitor instead of the removed all_items_loc API.
+            std::vector<item_location> inventory_items;
+            guy->visit_items( [&inventory_items]( const item_location &loc ) {
+                inventory_items.push_back( loc );
+                return VisitResponse::NEXT;
+            } );
+            run_item_eocs( d, is_npc, inventory_items, option.evaluate( d ), true_eocs, false_eocs, data,
                            f, f_mul );
         }
     };
