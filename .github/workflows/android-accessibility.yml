@@ -246,11 +246,11 @@ jobs:
                           if not archive.read(required).startswith(b'\x7fELF\x02'):
                               raise SystemExit(f'{apk}: invalid ARM64 ELF {required}')
                       for required in ('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
-                                       'assets/data/shaders/grayscale.frag.spv',:
-                       'assets/data/mods/CataclysmPlusPlus/modinfo.json',
-                       'assets/data/mods/Arcana_StrangeAeons/modinfo.json',
-                       'assets/data/mods/Blazemod/modinfo.json',
-                       'assets/data/mods/MST_Extra/modinfo.json')
+                                       'assets/data/shaders/grayscale.frag.spv',
+                                       'assets/data/mods/CataclysmPlusPlus/modinfo.json',
+                                       'assets/data/mods/Arcana_StrangeAeons/modinfo.json',
+                                       'assets/data/mods/Blazemod/modinfo.json',
+                                       'assets/data/mods/MST_Extra/modinfo.json')
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
                   signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
