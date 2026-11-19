@@ -330,8 +330,8 @@ std::function<std::string()> world_calendar()
     };
 }
 
-// Re-resolves the avatar's vehicle on every call so the snap survives the
-// avatar driving away or stepping off.
+
+
 std::function<std::string()> vehicle_under_avatar()
 {
     return []() {
@@ -420,8 +420,8 @@ std::function<std::string()> proficiency_progress( proficiency_id pid )
     };
 }
 
-// Re-resolve each tick by id so the snapshot survives the creature being
-// despawned or the npc list reshuffling.
+
+
 static Character *resolve_char( character_id id )
 {
     avatar &a = get_avatar();
@@ -741,8 +741,8 @@ std::function<std::string()> math_expr( std::string expr )
     };
 }
 
-// Folds per-fire count + last-fire turn into the snap so on_change monitors
-// flip when the EOC fires.
+
+
 std::function<std::string()> eoc_state( effect_on_condition_id eid )
 {
     return [eid]() -> std::string {
@@ -841,4 +841,4 @@ std::function<std::string()> nearest_creature()
     };
 }
 
-} // namespace debug_menu::snap
+}

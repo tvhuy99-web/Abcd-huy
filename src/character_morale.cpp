@@ -71,7 +71,7 @@ void Character::hoarder_morale_penalty()
         top_pockets.insert( top_pockets.end(), worn_pockets.begin(), worn_pockets.end() );
     }
     for( const item_pocket *pocket : top_pockets ) {
-        // Ablative stuff isn't gear, it is armor
+
         if( pocket->is_ablative() ) {
             continue;
         }
@@ -83,7 +83,7 @@ void Character::hoarder_morale_penalty()
     } else if( pen <= 0 ) {
         pen = 0;
     } else if( pen <= 40 ) {
-        // first 4L counts 10 per, next 4L is only 5 per
+
         pen = pen / 2 ;
     } else {
         pen = pen - 20 ;
@@ -103,15 +103,15 @@ void Character::hoarder_morale_penalty()
 
 void Character::apply_persistent_morale()
 {
-    // Hoarders get a morale penalty if they're not carrying a full inventory.
+
     if( has_trait( trait_HOARDER ) ) {
         hoarder_morale_penalty();
     }
-    // Nomads get a morale penalty if they stay near the same overmap tiles too long.
+
     if( has_trait( trait_NOMAD ) || has_trait( trait_NOMAD2 ) || has_trait( trait_NOMAD3 ) ) {
         const tripoint_abs_omt ompos = pos_abs_omt();
         float total_time = 0.0f;
-        // Check how long we've stayed in any overmap tile within 5 of us.
+
         const int max_dist = 5;
         for( const tripoint_abs_omt &pos : points_in_radius( ompos, max_dist ) ) {
             const float dist = rl_dist( ompos, pos );
@@ -122,10 +122,10 @@ void Character::apply_persistent_morale()
             if( iter == overmap_time.end() ) {
                 continue;
             }
-            // Count time in own tile fully, tiles one away as 4/5, tiles two away as 3/5, etc.
+
             total_time += to_moves<float>( iter->second ) * ( max_dist - dist ) / max_dist;
         }
-        // Characters with higher tiers of Nomad suffer worse morale penalties, faster.
+
         int max_unhappiness;
         float min_time;
         float max_time;
@@ -137,12 +137,12 @@ void Character::apply_persistent_morale()
             max_unhappiness = 40;
             min_time = to_moves<float>( 4_hours );
             max_time = to_moves<float>( 8_hours );
-        } else { // traid_NOMAD3
+        } else {
             max_unhappiness = 60;
             min_time = to_moves<float>( 1_hours );
             max_time = to_moves<float>( 2_hours );
         }
-        // The penalty starts at 1 at min_time and scales up to max_unhappiness at max_time.
+
         const float t = ( total_time - min_time ) / ( max_time - min_time );
         const int pen = std::ceil( lerp_clamped( 0, max_unhappiness, t ) );
         if( pen > 0 ) {
@@ -151,7 +151,7 @@ void Character::apply_persistent_morale()
     }
 
     if( has_trait( trait_PROF_FOODP ) ) {
-        // Losing your face is distressing
+
         if( !( is_wearing( itype_foodperson_mask ) ||
                is_wearing( itype_foodperson_mask_on ) ) ) {
             add_morale( morale_perm_noface, -20, -20, 1_minutes, 1_minutes, true );
@@ -193,17 +193,17 @@ void Character::set_trauma( int amt )
 double Character::get_modifier_for_ALL_morale() const
 {
     if( has_flag( json_flag_NUMB ) ) {
-        return 0.0; // I just don't care about anything anymore... (medical mutant)
+        return 0.0;
     }
 
-    // Only player is bothered by guilt kills, because only player tracks them.
+
     if( !is_avatar() || has_flag( json_flag_PSYCHOPATH ) ||
         has_flag( json_flag_PRED3 ) || has_flag( json_flag_PRED4 ) ) {
-        // No guilt.
+
         return 1.0;
     }
 
-    // Sanity check, at 1000 kills we're down to all morale modifiers being ~5% of max.
+
     const int num_kills = std::clamp( g->get_kill_tracker().guilt_kill_count(), 0, 1000 );
     const int trauma_experiences = get_trauma();
     const int total_trauma = num_kills + trauma_experiences;
@@ -215,7 +215,7 @@ int Character::get_morale_level( bool raw ) const
     if( !raw ) {
         return std::round( get_modifier_for_ALL_morale() * morale->get_level() );
     }
-    // For the unusual case that needs it, direct access to raw level for comparison purposes
+
     return morale->get_level();
 }
 
@@ -286,7 +286,7 @@ void Character::check_and_recover_morale()
         add_msg_debug( debugmode::DF_CHARACTER, "Actual %s morale:\n%s\n", disp_name( true ),
                        morale->to_string_writable() );
 
-        morale->sync_permanent( test_morale ); // Recover only permanent morale
+        morale->sync_permanent( test_morale );
         add_msg_debug( debugmode::DF_CHARACTER, "%s morale was recovered.", disp_name( true ) );
     }
 }

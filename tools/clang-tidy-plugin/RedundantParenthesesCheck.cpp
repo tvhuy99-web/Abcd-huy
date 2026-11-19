@@ -123,7 +123,7 @@ static void CheckExpr( RedundantParenthesesCheck &Check, const MatchFinder::Matc
     const SourceManager *SM = Result.SourceManager;
     SourceLocation ExpansionBegin = SM->getFileLoc( OuterRange.getBegin() );
     if( ExpansionBegin != OuterRange.getBegin() ) {
-        // This means we're inside a macro expansion
+
         return;
     }
 
@@ -138,4 +138,4 @@ void RedundantParenthesesCheck::check( const MatchFinder::MatchResult &Result )
     CheckExpr( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

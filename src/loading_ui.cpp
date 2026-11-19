@@ -25,7 +25,7 @@
 #include "worldfactory.h"
 #else
 #include "cursesdef.h"
-#endif // TILES
+#endif
 
 namespace
 {
@@ -37,7 +37,7 @@ struct ui_state {
     ImVec2 splash_size;
     SDL_Texture_Ptr splash;
     cata_path chosen_load_img;
-    // size of the source image, kept to refit it when the screen or fonts change
+
     int img_w = 0;
     int img_h = 0;
 #else
@@ -47,11 +47,11 @@ struct ui_state {
 #endif
     float hint_height;
     float loading_msg_height;
-    // height of all the text that will be shown below the splash screen, tip + loading msg
+
     float text_height;
-    // if screen resolution is large enough, we will increase the size of snippet text by 1.5x
+
     bool large_hint_size;
-    // actual tip we generated from the tip list
+
     std::string tip;
     std::string context;
     std::string step;
@@ -61,7 +61,7 @@ struct ui_state {
     std::chrono::steady_clock::time_point last_display_refresh_at{};
 #endif
 };
-} // namespace
+}
 
 static ui_state *gLUI = nullptr;
 
@@ -77,7 +77,7 @@ static void redraw()
 
         const float width = ImGui::GetContentRegionAvail().x;
 
-        // image
+
         const float center_x = ImGui::GetMainViewport()->Size.x / 2;
         const float image_start_pos_x = center_x - ( gLUI->splash_size.x / 2 );
         ImGui::SetCursorPosX( image_start_pos_x );
@@ -85,13 +85,13 @@ static void redraw()
             ImGui::Image( reinterpret_cast<ImTextureID>( gLUI->splash.get() ), gLUI->splash_size );
         }
 
-        // hint
+
         ImGui::SetCursorPosY( ImGui::GetWindowHeight() - gLUI->text_height );
         if( gLUI->large_hint_size ) {
             cataimgui::PushGuiFont1_5x();
         }
         const float tip_width = cataimgui::get_string_width( gLUI->tip );
-        // center align
+
         ImGui::SetCursorPosX( std::max( ( width / 2.f ) - ( tip_width / 2.f ),
                                         ImGui::GetStyle().WindowPadding.x ) );
         const std::string hint = string_format( "%s", colorize( gLUI->tip, c_cyan ) );
@@ -101,10 +101,10 @@ static void redraw()
             cataimgui::PopGuiFont1_5x();
         }
 
-        // loading msg
+
         ImGui::SetCursorPosY( ImGui::GetWindowHeight() - gLUI->loading_msg_height );
-        // somewhat arbitrary centering of loading msg
-        // hardcoded so it will not jump around depending on the step
+
+
         const float loading_msg_pos_x = center_x - cataimgui::get_string_width( "Loading files: " );
         ImGui::SetCursorPosX( loading_msg_pos_x );
         const std::string loading_msg = string_format( "%s %s", gLUI->context, gLUI->step );
@@ -133,36 +133,36 @@ static void redraw()
 #ifdef TILES
 static void layout()
 {
-    // padding will eat some of it, but we cannot access padding without imgui window
-    // so eyeball a bit off the main viewport to compensate
+
+
     const ImVec2 screen_size = ImGui::GetMainViewport()->Size * 0.98f;
 
-    // if our screen space is at least twice as large as minimal, we will use 1.5x font size
+
     gLUI->large_hint_size = cataimgui::min_screen_res_y * 2.f < screen_size.y;
 
-    // calculate hint_height maybe with increased font
-    // ideally it would use proper ImGui::PopFont(), but it requires imgui window, which we do not have here
-    // so we just eyeball it to be 1.6x bigger than normal-sized string
+
+
+
     if( gLUI->large_hint_size ) {
         gLUI->hint_height = cataimgui::get_string_height( gLUI->tip, screen_size.x ) * 1.6f;
     } else {
         gLUI->hint_height = cataimgui::get_string_height( gLUI->tip, screen_size.x );
     }
 
-    // no matter the size, loading message always fit in 1 line,
-    // so just use dummy line to calculate its height
+
+
     gLUI->loading_msg_height = cataimgui::get_string_height( " ", 0 );
 
     gLUI->text_height = gLUI->hint_height + gLUI->loading_msg_height;
 
-    // calculate max size of image, decreasing it by the size of text below
+
     const ImVec2 max_img_size = { screen_size.x, screen_size.y - gLUI->text_height };
     if( gLUI->img_w <= 0 || gLUI->img_h <= 0 || max_img_size.x <= 0.0f || max_img_size.y <= 0.0f ) {
-        // no room left above the text, or no image
+
         gLUI->splash_size = ImVec2();
     } else {
-        // preserve aspect ratio by finding the longest **relative** side and scaling both sides by its ratio to max_img_size
-        // scales both "up" and "down"
+
+
         float width_ratio = static_cast<float>( gLUI->img_w ) / max_img_size.x;
         float height_ratio = static_cast<float>( gLUI->img_h ) / max_img_size.y;
         float longest_side_ratio = width_ratio > height_ratio ? width_ratio : height_ratio;
@@ -199,23 +199,23 @@ static void update_state( const std::string &context, const std::string &step )
         gLUI->tip = SNIPPET.random_from_category( "tip" ).value_or(
                         translation() ).translated();
 
-        // get image
+
         std::vector<cata_path> imgs;
         std::vector<mod_id> &active_mod_list = world_generator->active_world->active_mod_order;
         bool only_mod_loading_screens = false;
         for( mod_id &some_mod : active_mod_list ) {
-            // We haven't migrated mods yet
-            // TODO: Move mod migration before this function?
+
+
             if( !some_mod.is_valid() ) {
                 continue;
             }
             const MOD_INFORMATION &mod = *some_mod;
-            if( mod.disable_other_loading_screens ) {  // Clear any already loaded screens, use only from the mod that has asked for this behaviour in the modinfo.
+            if( mod.disable_other_loading_screens ) {
                 only_mod_loading_screens = true;
                 imgs.clear();
             }
             for( const std::string &img_name : mod.loading_images ) {
-                // There may be more than one file matching the name, so we need to get all of them
+
                 for( cata_path &img_path : get_files_from_path( img_name, mod.path, true ) ) {
                     imgs.emplace_back( img_path );
                 }
@@ -224,10 +224,10 @@ static void update_state( const std::string &context, const std::string &step )
                 break;
             }
         }
-        // We haven't selected a loading image yet, let's do so.
+
         if( gLUI->chosen_load_img == cata_path() ) {
             if( imgs.empty() ||
-                !only_mod_loading_screens ) { // No modded screens available or not disabled in the mods, so let's add vanilla ones.
+                !only_mod_loading_screens ) {
                 const std::string img_name_pattern = "loading_img";
                 const cata_path load_screens_directory = PATH_INFO::gfxdir() / "loading_screens";
                 for( cata_path &img_path : get_files_from_path( img_name_pattern, load_screens_directory, true ) ) {
@@ -240,9 +240,9 @@ static void update_state( const std::string &context, const std::string &step )
         gLUI->img_w = surf->w;
         gLUI->img_h = surf->h;
         if( !renderer_should_abort_frame() ) {
-            // Skip the upload when recovery is queued: it would invalidate the
-            // texture. The splash stays absent for this load rather than uploading
-            // against a renderer about to be rebuilt.
+
+
+
             gLUI->splash = CreateTextureFromSurface( get_sdl_renderer(), surf );
         }
         layout();
@@ -272,10 +272,10 @@ void loading_ui::show( const std::string &context, const std::string &step )
     }
     update_state( context, step );
 #if defined(__ANDROID__)
-    // This ImGui loading screen has no input_context or semantic snapshot.
-    // Its spoken progress must therefore bypass snapshot-dependent game events.
-    // Rate limiting prevents rapid recipe/mod updates from flooding the TTS
-    // queue, while recurring updates distinguish loading from a silent hang.
+
+
+
+
     if( a11y::android::enabled() && !a11y::android::suspended() && gLUI ) {
         std::string state = remove_color_tags( context );
         const std::string stage = remove_color_tags( step );
@@ -294,8 +294,8 @@ void loading_ui::show( const std::string &context, const std::string &step )
               ( changed && elapsed >= std::chrono::seconds( 8 ) ) ||
               elapsed >= std::chrono::seconds( 30 ) ) ) {
             std::string message = state;
-            // The turquoise gameplay hint is visible on the loading screen.
-            // Speak it once at first presentation, not on each progress update.
+
+
             if( first && !gLUI->tip.empty() ) {
                 message += ". ";
                 message += remove_color_tags( gLUI->tip );
@@ -308,9 +308,9 @@ void loading_ui::show( const std::string &context, const std::string &step )
 #endif
     drain_renderer_recovery();
 #if defined(__ANDROID__)
-    // Finalization may advance dozens of tiny steps in one frame. Do not
-    // re-upload the same loading display for every step on mobile GPUs;
-    // still process input/cancellation and announce changed progress.
+
+
+
     const auto render_at = std::chrono::steady_clock::now();
     if( gLUI && gLUI->last_display_refresh_at.time_since_epoch().count() != 0 &&
         render_at - gLUI->last_display_refresh_at < std::chrono::milliseconds( 120 ) ) {
@@ -330,7 +330,7 @@ void loading_ui::done()
 {
     if( gLUI != nullptr ) {
 #ifdef TILES
-        // Need to manually clear the screen due to using direct ImGui calls
+
         clear_sdl_window();
 #endif
         delete gLUI->ui;

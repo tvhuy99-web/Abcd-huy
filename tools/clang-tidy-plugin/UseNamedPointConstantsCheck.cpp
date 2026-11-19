@@ -158,7 +158,7 @@ static void CheckConstructor( UseNamedPointConstantsCheck &Check,
         return;
     }
 
-    // Avoid replacing the definitions of the constants themselves
+
     if( VarDeclParent && VarDeclParent->getQualifiedNameAsString() == Replacement ) {
         return;
     }
@@ -171,7 +171,7 @@ static void CheckConstructor( UseNamedPointConstantsCheck &Check,
 
     if( TempParent ) {
         SourceRangeToReplace = ConstructorCall->getSourceRange();
-        // Work around buggy source range for default parameters
+
         const StringRef ReplacedText = getText( Result, ConstructorCall );
         if( ReplacedText.size() >= 2 && ReplacedText.substr( 0, 2 ) == "= " ) {
             Replacement = "= " + Replacement;
@@ -194,4 +194,4 @@ void UseNamedPointConstantsCheck::check( const MatchFinder::MatchResult &Result 
     CheckConstructor( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

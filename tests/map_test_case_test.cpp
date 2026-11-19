@@ -3,7 +3,7 @@
 
 #include "map_test_case.h"
 
-// test some of the map_test_case helpers
+
 TEST_CASE( "map_test_case_common", "[map_test_case]" )
 {
     using namespace map_test_case_common;
@@ -60,8 +60,8 @@ TEST_CASE( "map_test_case_common", "[map_test_case]" )
     }
 }
 
-// checks the consistency of all transformations
-// and valid coordinate calculation
+
+
 TEST_CASE( "map_test_case_transform_consistency", "[map_test_case]" )
 {
     using namespace map_test_case_common;
@@ -83,7 +83,7 @@ TEST_CASE( "map_test_case_transform_consistency", "[map_test_case]" )
     SECTION( tst.generate_transform_combinations() ) {
     }
 
-    // assumes tst.anchor_map_pos == tripoint::zero
+
     CHECK( tst.get_origin() == tripoint_bub_ms( tripoint::north_west ) );
     tst.validate_anchor_point( tripoint_bub_ms::zero );
 
@@ -108,7 +108,7 @@ TEST_CASE( "map_test_case_transform_consistency", "[map_test_case]" )
     } );
 }
 
-// checks transformations for non-square field
+
 TEST_CASE( "map_test_case_transform_non_square", "[map_test_case]" )
 {
     using namespace map_test_case_common;

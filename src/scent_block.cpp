@@ -46,7 +46,7 @@ void scent_block::commit_modifications()
     }
 }
 
-// We should be working entirely within the range, so don't range check here
+
 void scent_block::apply_gas( const tripoint_bub_ms &p, const int nintensity )
 {
     const point_rel_ms ndx = index( p );
@@ -62,17 +62,17 @@ void scent_block::apply_slime( const tripoint_bub_ms &p, int intensity )
     datum &dat = assignment[ndx.x()][ndx.y()];
     switch( dat.mode ) {
         case data_mode::NONE: {
-            // we don't know what the current intensity is, so we must do a max operation
+
             dat.mode = data_mode::MAX;
             dat.intensity = intensity;
             break;
         }
         case data_mode::MAX:
-        // Already max for some reason, shouldn't occur.
-        // If it does we want to grow if possible
+
+
         case data_mode::SET: {
-            // new intensity is going to be dat.intensity, so we just need to make it larger
-            // but cannot change
+
+
             dat.intensity = std::max( dat.intensity, intensity );
             break;
         }

@@ -17,21 +17,21 @@ int activity_tracker::weariness() const
     return ( tracker - intake * 0.5 ) / 1000;
 }
 
-// Called every 5 minutes, when activity level is logged
+
 void activity_tracker::try_reduce_weariness( int bmr, float sleepiness_mod,
         float sleepiness_regen_mod )
 {
     const float recovery_mult = get_option<float>( "WEARY_RECOVERY_MULT" );
-    // As sleepiness_mod approaches zero, low_activity_ticks and reduction approach infinity which in turn make tracker approach - infinity before being capped at 0.
-    // Cap at effective 99% sleepiness mod reduction since mod interactions can reduce sleepiness gain to 0
+
+
     if( sleepiness_mod <= 0.0f ) {
         sleepiness_mod = 0.01f;
     }
     if( average_activity() < LIGHT_EXERCISE ) {
-        // cata_assert( sleepiness_mod > 0.0f );
+
         low_activity_ticks += std::min( 1.0f,
                                         ( ( LIGHT_EXERCISE - average_activity() ) / ( LIGHT_EXERCISE - NO_EXERCISE ) ) ) / sleepiness_mod;
-        // Recover (by default) twice as fast while sleeping
+
         if( average_activity() < NO_EXERCISE ) {
             low_activity_ticks += ( ( NO_EXERCISE - average_activity() ) / ( NO_EXERCISE - SLEEP_EXERCISE ) ) *
                                   sleepiness_regen_mod;
@@ -42,7 +42,7 @@ void activity_tracker::try_reduce_weariness( int bmr, float sleepiness_mod,
 
     if( low_activity_ticks >= 1.0f ) {
         int reduction = tracker;
-        // 1/120 of whichever's bigger
+
         if( bmr_cal > reduction ) {
             reduction = std::floor( bmr_cal * recovery_mult * low_activity_ticks / 6.0f );
         } else {
@@ -53,10 +53,10 @@ void activity_tracker::try_reduce_weariness( int bmr, float sleepiness_mod,
         tracker -= std::max( reduction, 1 );
     }
 
-    // If happens to be no reduction, character is not (as) hypoglycemic
+
     intake = static_cast<int>( intake * std::pow( 1 - recovery_mult, ( 1.0f / 12.0f ) ) );
 
-    // Normalize values, make sure we stay above 0
+
     intake = std::max( intake, 0 );
     tracker = std::max( tracker, 0 );
     low_activity_ticks = std::max( low_activity_ticks, 0.0f );
@@ -94,7 +94,7 @@ void activity_tracker::calorie_adjust( int ncal )
     if( ncal > 0 ) {
         intake += ncal;
     } else {
-        // ncal is negative, we need positive
+
         tracker -= ncal;
     }
 }
@@ -126,10 +126,10 @@ float activity_tracker::instantaneous_activity_level() const
     return previous_turn_activity;
 }
 
-// The idea here is the character is going about their business logging activities,
-// and log_activity() handles sorting them out, it records the largest magnitude for a given turn,
-// and then rolls the previous turn's value into the accumulator once a new activity is logged.
-// After a reset, we have to pretend the previous values weren't logged.
+
+
+
+
 void activity_tracker::log_activity( float new_level )
 {
     current_activity = std::max( current_activity, new_level );
@@ -147,9 +147,9 @@ void activity_tracker::new_turn( bool sleeping )
         accumulated_activity = 0.0f;
         num_events = 1;
     } else {
-        // This is for the last turn that had activity logged.
+
         accumulated_activity += current_activity;
-        // Then handle the interventing turns that had no activity logged.
+
         int num_turns = to_turns<int>( calendar::turn - current_turn );
         if( num_turns > 1 ) {
             accumulated_activity += ( num_turns - 1 ) * std::min( NO_EXERCISE, current_activity );

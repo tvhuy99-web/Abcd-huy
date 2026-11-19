@@ -33,12 +33,12 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    # Saw this trick here:
-    # http://stackoverflow.com/questions/13442574/how-do-i-determine-if-
-    #     sys-stdin-is-redirected-from-a-file-vs-piped-from-another
+
+
+
     mode = os.fstat(0).st_mode
     if not stat.S_ISFIFO(mode) and not stat.S_ISREG(mode):
-        # input is terminal, not what we want
+
         print("Redirect data to stdin, please (e.g. with a pipe)."
               " Run with -h for usage.")
         sys.exit(1)
@@ -49,15 +49,15 @@ if __name__ == "__main__":
         print("Could not read json data from stdin")
         sys.exit(1)
 
-    # We'll either get a dict or a list...
+
     if type(json_data) is dict:
-        # ... and just make it a list.
+
         json_data = [json_data]
 
-    # All keys on JSON data should be strings.
+
     keys = set()
     for item in json_data:
-        # We assume only dictionaries here
+
         keys.update(list(item.keys()))
 
     keys = sorted(list(keys))

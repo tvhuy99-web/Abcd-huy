@@ -1,7 +1,7 @@
 #include <locale>
 
 #if defined(__APPLE__)
-// needed by localized_comparator
+
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -21,19 +21,19 @@ static std::wstring utf8_to_wide_string( const std::string &str )
     }
     return result;
 }
-#endif // defined(_WIN32)
+#endif
 
 bool localized_comparator::operator()( const std::string &l, const std::string &r ) const
 {
-    // We need different implementations on each platform.  MacOS seems to not
-    // support localized comparison of strings via the standard library at all,
-    // so resort to MacOS-specific solution.  Windows cannot be expected to be
-    // using a UTF-8 locale (whereas our strings are always UTF-8) and so we
-    // must convert to wstring for comparison there.  Linux seems to work as
-    // expected on regular strings; no workarounds needed.
-    // See https://github.com/CleverRaven/Cataclysm-DDA/pull/40041 for further
-    // discussion.
-#if defined(__APPLE__) // macOS and iOS
+
+
+
+
+
+
+
+
+#if defined(__APPLE__)
     CFStringRef lr = CFStringCreateWithCStringNoCopy( kCFAllocatorDefault, l.c_str(),
                      kCFStringEncodingUTF8, kCFAllocatorNull );
     CFStringRef rr = CFStringCreateWithCStringNoCopy( kCFAllocatorDefault, r.c_str(),

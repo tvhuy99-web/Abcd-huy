@@ -7,7 +7,7 @@
 class Creature;
 class map;
 
-// This is strictly an interface that provides access to a game entity's Field of View.
+
 class viewer
 {
     public:
@@ -19,4 +19,4 @@ class viewer
 
 viewer &get_player_view();
 
-#endif // CATA_SRC_VIEWER_H
+#endif

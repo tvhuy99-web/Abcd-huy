@@ -37,25 +37,25 @@ def finish_using_body():
 class EatDrinkOutcomeMessages(unittest.TestCase):
     def test_eating_states_full_or_still_hungry(self):
         body = eat_body()
-        # The act alone never states the outcome.
+
         self.assertIn('_( "You eat your %s." )', body)
-        # Outcome follows the act message, in the same function.
+
         act = body.index('_( "You eat your %s." )')
         full = body.index('_( "You feel full." )')
         hungry = body.index('_( "You are still hungry." )')
         self.assertGreater(full, act)
         self.assertGreater(hungry, act)
-        # Player-only, like the other sensation lines in eat().
+
         self.assertIn("you.add_msg_if_player( m_good, _( \"You feel full.\" ) )", body)
         self.assertIn("you.add_msg_if_player( m_info, _( \"You are still hungry.\" ) )", body)
-        # The hunger effect is only recomputed later by update_needs and
-        # get_hunger() does not move when eating, so the outcome must be
-        # read from the stomach that already holds this meal.
+
+
+
         self.assertIn("you.stomach.would_be_full_with( you, 0_ml", body)
         self.assertIn("you.stomach.would_be_engorged_with( you, 0_ml", body)
-        # "Still hungry" mirrors update_needs' just-ate row: with a
-        # calorie deficit and under half a stomach, the game still calls
-        # the eater hungry.
+
+
+
         self.assertIn("you.has_calorie_deficit()", body)
         self.assertIn("you.stomach.contains() <= you.stomach.capacity( you ) / 2", body)
 
@@ -71,15 +71,15 @@ class EatDrinkOutcomeMessages(unittest.TestCase):
             "you.add_msg_if_player( m_good, _( \"You are no longer thirsty.\" ) )", body)
         self.assertIn(
             "you.add_msg_if_player( m_info, _( \"You are still thirsty.\" ) )", body)
-        # Instant thirst already counts the water just swallowed, and
-        # its bands are the sidebar's: above 40 is "Thirsty", below 0
-        # is "Slaked" or better.
+
+
+
         self.assertIn("you.get_instant_thirst() < 0", body)
         self.assertIn("you.get_instant_thirst() > 40", body)
 
     def test_outcome_lines_only_cover_food_and_drink(self):
-        # Medication is neither chew nor drinkable: it keeps its own
-        # iuse / consume_drug messages and must not gain a food line.
+
+
         body = eat_body()
         block = body[body.index("// The reader speaks every game message"):
                      body.index("if( item::find_type( food.get_comestible()->tool )")]
@@ -104,25 +104,25 @@ class MedicalOutcomeMessages(unittest.TestCase):
 
     def test_plain_bandage_and_disinfectant_are_named(self):
         body = finish_using_body()
-        # A bandage or disinfectant on a clean wound used to apply its
-        # effect silently, leaving only "You finish using the %s."
+
+
         self.assertIn('_( "You bandage the wound." )', body)
         self.assertIn('_( "The wound is bandaged." )', body)
-        # The disinfectant wording reuses the existing infection-cleared
-        # strings, so no new msgid is needed for that half.
+
+
         finish = body.index('_( "You finish using the %s." )')
         bandage = body.index('_( "You bandage the wound." )')
         self.assertLess(bandage, finish)
-        # The fallback only fires when no bleed/bite/infection outcome
-        # was reported for this limb, so a treated wound is not
-        # announced twice.
+
+
+
         self.assertIn("bool treatment_reported = false;", body)
         self.assertIn("treatment_reported = true;", body)
         self.assertIn("if( !treatment_reported ) {", body)
 
     def test_oral_medicine_already_announces_act_and_outcome(self):
-        # No change was needed here: antibiotics name the act and the
-        # treatable outcomes, so pin them instead of adding duplicates.
+
+
         iuse = (SRC / "iuse.cpp").read_text("utf-8")
         self.assertIn('_( "You take some antibiotics." )', iuse)
         self.assertIn('_( "The muscle spasms start to go away." )', iuse)
@@ -136,7 +136,7 @@ class OutcomeMessagesReachSpeechAndHistory(unittest.TestCase):
         messages = (SRC / "messages.cpp").read_text("utf-8")
         runtime = (SRC / "a11y_runtime.cpp").read_text("utf-8")
         activity = (JAVA / "CataclysmDDA.java").read_text("utf-8")
-        # Every game message (except debug) is forwarded to the reader.
+
         self.assertIn("void announce_message(", messages)
         self.assertIn("message->type == m_debug", messages)
         self.assertIn("a11y::announce_game_message(", messages)
@@ -144,8 +144,8 @@ class OutcomeMessagesReachSpeechAndHistory(unittest.TestCase):
         self.assertIn("public void onAccessibilityAnnouncement(String text, int priority)",
                       activity)
         self.assertIn("reader.announceGameMessage(text, priority);", activity)
-        # The new outcome lines are plain add_msg calls, not the
-        # reader-only announce path that bypasses the message log.
+
+
         world = (SRC / "a11y_world.cpp").read_text("utf-8")
         for line in ("You feel full.", "You are still hungry.",
                      "You are no longer thirsty.", "You are still thirsty.",

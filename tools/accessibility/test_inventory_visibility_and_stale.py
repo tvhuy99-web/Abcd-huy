@@ -52,8 +52,8 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
         self.assertIn('if (pocketStage == 3 && pocketAllowsSelection())', CTRL)
 
     def test_noninteractive_nodes_do_not_generate_stale_tap_receipts(self):
-        # Previously skill categories were 'focus' only but Java still sent
-        # 'activate'; C++ correctly refused it and spoke 'Choose again'.
+
+
         self.assertIn('header.id = "pd:skill:category:"', PLAYER)
         self.assertIn('header.actions = { "focus" };', PLAYER)
         tap = CTRL.split("public void activate()", 1)[1].split(
@@ -97,7 +97,7 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
         self.assertIn('_( "Item condition intact." )', INV)
         self.assertIn('_( "Pickup allow or deny rule marker." )', INV)
         self.assertIn('node.detail +=', INV)
-        # Native item status and inventory save are not modified for speech.
+
         clean = INV.split("const std::string durability_bar =", 1)[1].split(
             "// A plain inventory selection opens", 1
         )[0]

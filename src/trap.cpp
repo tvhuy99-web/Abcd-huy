@@ -39,50 +39,50 @@ namespace
 
 generic_factory<trap> trap_factory( "trap" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 inline bool int_id<trap>::is_valid() const
 {
     return trap_factory.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const trap &int_id<trap>::obj() const
 {
     return trap_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<trap> &int_id<trap>::id() const
 {
     return trap_factory.convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<trap> string_id<trap>::id() const
 {
     return trap_factory.convert( *this, tr_null );
 }
 
-/** @relates string_id */
+
 template<>
 int_id<trap>::int_id( const string_id<trap> &id ) : _id( id.id() )
 {
 }
 
-/** @relates string_id */
+
 template<>
 const trap &string_id<trap>::obj() const
 {
     return trap_factory.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 bool string_id<trap>::is_valid() const
 {
@@ -129,7 +129,7 @@ void trap::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "trigger_message_u", trigger_message_u );
     optional( jo, was_loaded, "trigger_message_npc", trigger_message_npc );
 
-    // Require either none, or both
+
     if( !!memorial_male != !!memorial_female ) {
         jo.throw_error_at(
             id.str(),
@@ -139,7 +139,7 @@ void trap::load( const JsonObject &jo, std::string_view )
 
     optional( jo, was_loaded, "flags", _flags );
     optional( jo, was_loaded, "trap_radius", trap_radius, 0 );
-    // TODO: Is there a generic_factory version of this?
+
     if( jo.has_string( "action" ) ) {
         act = trap_function_from_string( jo.get_string( "action" ) );
     } else if( !was_loaded ) {
@@ -154,14 +154,14 @@ void trap::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "floor_bedding_warmth", legacy_floor_bedding_warmth, 0 );
     floor_bedding_warmth = units::from_legacy_bodypart_temp_delta( legacy_floor_bedding_warmth );
     if( jo.has_member( "spell_data" ) ) {
-        //This is kinda ugly but idk how to do it better bc std::function doesn't support normal equality
+
         if( act.target_type() != trap_function_from_string( "spell" ).target_type() ) {
             jo.throw_error_at( "spell_data",
                                R"(Can't use "spell_data" without specifying "action": "spell")" );
         }
         optional( jo, was_loaded, "spell_data", spell_data );
     }
-    // FIXME: load eoc with generic factory
+
     if( jo.has_member( "eocs" ) ) {
         if( act.target_type() != trap_function_from_string( "eocs" ).target_type() ) {
             jo.throw_error_at( "eocs", R"(Can't use "eocs" without specifying "action": "eocs")" );
@@ -229,19 +229,19 @@ void trap::reset()
 
 bool trap::is_trivial_to_spot() const
 {
-    // @TODO technically the trap may not be detected even with visibility == 0, see trap::detect_trap
+
     return visibility <= 0 && !is_always_invisible();
 }
 
-// SONAR refers to ground-penetrating sonar and detects traps buried in the ground
+
 bool trap::detected_by_ground_sonar() const
 {
     return has_flag( json_flag_SONAR_DETECTABLE );
 }
 
-// Echolocation refers to both bat-style echolocation and underwater SONAR, and
-// detects traps which are solid and unburied objects, aboveground or underwater.
-// Isn't fine enough to detect very small traps ie caltrops
+
+
+
 bool trap::detected_by_echolocation() const
 {
     return has_flag( json_flag_ECHOLOCATION_DETECTABLE );
@@ -249,44 +249,44 @@ bool trap::detected_by_echolocation() const
 
 bool trap::detect_trap( const tripoint_bub_ms &pos, const Character &p ) const
 {
-    // * Buried landmines, the silent killer, have a visibility of 10.
-    // Assuming no knowledge of traps or proficiencies, and average per/int (8 each),
-    // most characters will get a mean_roll of 6.5 against a trap that is one tile away.
-    // With a std deviation of 3, that leaves a ~12% chance of spotting a landmine when you are next to it (per turn).
-    // This gets worse if you are sleep deprived, or can't see as well.
-    // Obviously it rapidly gets better as your skills improve, with most of the improvement coming from proficiencies.
 
-    // Devices skill is helpful for spotting traps
+
+
+
+
+
+
+
     const float traps_skill_level = p.get_skill_level( skill_traps );
 
-    // Perception is the main stat for spotting traps, int helps a bit.
-    // In this case, stats are more important than skills.
+
+
     const float weighted_stat_average = ( 4.0f * p.get_per() + p.get_int() ) / 5.0f;
 
-    // Eye encumbrance will penalize spotting
+
     const float encumbrance_penalty = p.encumb( bodypart_id( "eyes" ) ) / 10.0f;
 
-    // The further away the trap is, the harder it is to spot.
-    // Subtract 1 so that we don't get an unfair penalty when not quite on top of the trap.
+
+
     const int distance_penalty = rl_dist( p.pos_bub(), pos ) - 1;
 
     int proficiency_effect = -1;
-    // Without at least a basic traps proficiency, your skill level is effectively three levels lower.
+
     if( p.has_proficiency( proficiency_prof_traps ) ) {
         proficiency_effect += 1;
-        // If you have the basic traps prof, negate the above penalty
+
     }
     if( p.has_proficiency( proficiency_prof_spotting ) ) {
         proficiency_effect += 3;
-        // If you have the spotting proficiency, add a whopping 9 effective skill levels.
+
     }
     if( p.has_proficiency( proficiency_prof_trapsetting ) ) {
         proficiency_effect += 1;
-        // Knowing how to set effective traps gives you a considerable bonus to spotting them as well.
+
     }
 
-    // For every 1000 points of sleep deprivation, reduce your roll by 1.
-    // As of this writing, sleep deprivation passively increases at the rate of 1 point per minute.
+
+
     const float sleepiness_penalty = p.get_sleep_deprivation() / 1000.0f;
 
     const float mean_roll = weighted_stat_average + ( traps_skill_level / 3.0f ) +
@@ -301,11 +301,11 @@ bool trap::detect_trap( const tripoint_bub_ms &pos, const Character &p ) const
     return roll > visibility;
 }
 
-// Whether or not, in the current state, the player can see the trap.
+
 bool trap::can_see( const tripoint_bub_ms &pos, const Character &p ) const
 {
     if( is_null() ) {
-        // There is no trap at all, so logically one can not see it.
+
         return false;
     }
     if( is_always_invisible() ) {
@@ -372,8 +372,8 @@ bool trap::has_sound_trigger() const
 bool trap::triggered_by_sound( int vol, int dist ) const
 {
     const int volume = vol - dist;
-    // now determine sound threshold probabilities
-    // linear model: 0% below sound_min, 25% at sound_min, 100% at sound_max
+
+
     const int sound_min = sound_threshold.first;
     const int sound_max = sound_threshold.second;
     const int sound_range = sound_max - sound_min;
@@ -384,7 +384,7 @@ bool trap::triggered_by_sound( int vol, int dist ) const
     if( sound_range > 0 ) {
         sound_chance = 25 + ( 75 * ( volume - sound_min ) / sound_range );
     }
-    //debugmsg("Sound chance: %d%%", sound_chance);
+
     return !is_null() && ( rng( 0, 100 ) <= sound_chance );
 }
 
@@ -398,8 +398,8 @@ void trap::on_disarmed( map &m, const tripoint_bub_ms &p ) const
     }
 }
 
-//////////////////////////
-// convenient int-lookup names for hard-coded functions
+
+
 trap_id tr_null;
 
 void trap::check_consistency()
@@ -436,7 +436,7 @@ bool trap::can_not_be_disarmed() const
 
 void trap::finalize()
 {
-    // We need to set int ids manually now
+
     loadid = id.id();
     if( is_funnel() ) {
         funnel_traps.push_back( this );

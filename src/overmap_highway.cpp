@@ -32,7 +32,7 @@
 #include "simple_pathfinding.h"
 #include "type_id.h"
 
-//in a box made by p1, p2, return { corner point in direction, direction from corner to p2 }
+
 static std::pair<tripoint_om_omt, om_direction::type> closest_corner_in_direction(
     const tripoint_om_omt &p1,
     const tripoint_om_omt &p2, const om_direction::type &direction )
@@ -56,8 +56,8 @@ static std::pair<tripoint_om_omt, om_direction::type> closest_corner_in_directio
     return std::make_pair( result, om_direction::all[new_direction] );
 }
 
-//TODO: generalize
-//if point is on edge of overmap, wrap to other end
+
+
 static tripoint_om_omt wrap_point( const tripoint_om_omt &p )
 {
     point wrap( p.x(), p.y() );
@@ -70,10 +70,10 @@ static tripoint_om_omt wrap_point( const tripoint_om_omt &p )
     return tripoint_om_omt( wrap.x, wrap.y, p.z() );
 }
 
-/**
-* checks whether point p is outside square corners of the overmap
-* uses two rectangles to make a plus shape
-*/
+
+
+
+
 static bool point_outside_overmap_corner( const tripoint_om_omt &p, int corner_length )
 {
     const half_open_rectangle<point_om_omt> valid_bounds(
@@ -85,7 +85,7 @@ static bool point_outside_overmap_corner( const tripoint_om_omt &p, int corner_l
     return valid_bounds.contains( p.xy() ) || valid_bounds_2.contains( p.xy() );
 }
 
-//checks whether the special, if placed and rotated in dir, would replace a single water tile
+
 static bool special_on_water( const overmap *om, const overmap_special_id &special,
                               const tripoint_om_omt &placement, om_direction::type dir )
 {
@@ -105,7 +105,7 @@ static overmap_special_id segment_special( const region_settings_highway &highwa
            highway_settings.segment_flat;
 }
 
-//highways align to N/E, so their segments must offset due to rotation
+
 static void highway_segment_offset( tripoint_om_omt &segment_point,
                                     om_direction::type segment_dir )
 {
@@ -118,7 +118,7 @@ static void highway_segment_offset( tripoint_om_omt &segment_point,
     segment_point += segment_offsets[static_cast<int>( segment_dir )];
 }
 
-//highways align to N/E, so their specials must offset due to rotation
+
 static void highway_special_offset( tripoint_om_omt &special_point,
                                     om_direction::type special_dir )
 {
@@ -130,7 +130,7 @@ static void highway_special_offset( tripoint_om_omt &special_point,
     special_point += bend_offset[static_cast<int>( special_dir )];
 }
 
-//truncates highway segment by bend length, accounting for offset
+
 static point_rel_omt truncate_segment( om_direction::type dir, int last_bend_length )
 {
     tripoint_om_omt bend_offset_base( 0, 0, 0 );
@@ -175,25 +175,25 @@ tripoint_om_omt overmap::find_highway_intersection_point( const overmap_special_
             }
         }
     }
-    //if failure, return invalid point
+
     return not_on_water;
 }
 
-/**
-* draws highway from p1 to p2
-* dir1/dir2 are the directions from which p1/p2 are being drawn
-* e.g. from west edge of OM to south edge would be 3/2
-* connecting p1 to p2 may have no more than 2 bends
-*/
+
+
+
+
+
+
 Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
         const tripoint_om_omt &p2,
         int dir1, int dir2, int base_z )
 {
 
     const region_settings_highway &highway_settings = settings->get_settings_highway();
-    // base-level segment OMT to use until finalize_highways()
+
     const oter_type_str_id &reserved_terrain_id = highway_settings.reserved_terrain_id;
-    // upper-level segment OMT to use until finalize_highways()
+
     const oter_type_str_id &reserved_terrain_water_id = highway_settings.reserved_terrain_water_id;
     const int HIGHWAY_MAX_DEVIANCE = highway_settings.HIGHWAY_MAX_DEVIANCE;
     const overmap_special_id &fallback_onramp = highway_settings.fallback_onramp;
@@ -202,7 +202,7 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
     om_direction::type direction1 = om_direction::all[dir1];
     om_direction::type direction2 = om_direction::all[dir2];
     cata_assert( direction1 != direction2 );
-    //reverse directions for drawing
+
     direction1 = om_direction::opposite( direction1 );
     direction2 = om_direction::opposite( direction2 );
     bool parallel = om_direction::are_parallel( direction1, direction2 );
@@ -222,7 +222,7 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
         }
     }
 
-    //bools are separate from points for falling back to onramps even for valid points
+
     auto handle_invalid_points = [this, &fallback_onramp, &p1, &p2, &direction1, &direction2](
     const bool p1_invalid, const bool p2_invalid ) {
         if( p1_invalid || p2_invalid ) {
@@ -244,7 +244,7 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
         return false;
     };
 
-    //if either point is invalid, fallback to onramp for valid points only
+
     if( handle_invalid_points( p1_invalid, p2_invalid ) ) {
         return highway_path;
     }
@@ -255,19 +255,19 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
     std::vector<std::pair<tripoint_om_omt, om_direction::type>> bend_points;
     bool bend_draw_mode = !( p1.x() == p2.x() || p1.y() == p2.y() );
 
-    //determine bends; z-values are not accounted for here
+
     if( bend_draw_mode ) {
-        //we need to draw two bends
+
         if( parallel ) {
             bool two_bends = false;
             const tripoint_rel_omt diff = tripoint_rel_omt( p1 - p2 ).abs();
-            if( north_south ) { // N/S
+            if( north_south ) {
                 two_bends |= diff.x() >= HIGHWAY_MAX_DEVIANCE;
-            } else { // E/W
+            } else {
                 two_bends |= diff.y() >= HIGHWAY_MAX_DEVIANCE;
             }
             if( two_bends ) {
-                //invalid two-bend configuration
+
                 if( diff.x() < HIGHWAY_MAX_DEVIANCE || diff.y() < HIGHWAY_MAX_DEVIANCE ) {
                     handle_invalid_points( true, true );
                     return highway_path;
@@ -279,18 +279,18 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
             } else {
                 bend_draw_mode = false;
             }
-        } else { //we need to draw exactly one bend (p1->p2)
+        } else {
             bend_points.emplace_back( closest_corner_in_direction( p1, p2, direction1 ) );
         }
     }
 
-    //the z-value of any tripoints is an indicator for whether the returned highway path is above water
-    //but all reserved highway OMTs are placed at z=0
-    //the current direction the highway path is traveling (also as vector)
+
+
+
     if( bend_draw_mode ) {
         place_highway_lines_with_bends( highway_path, bend_points, p1, p2, direction1, base_z );
     } else {
-        //quick path for no bends
+
         Highway_path straight_line = place_highway_line( p1, p2, direction1, base_z );
         for( const intrahighway_node &p : straight_line ) {
             highway_path.emplace_back( p );
@@ -299,7 +299,7 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
 
     highway_handle_special_z( highway_path, base_z );
 
-    //place reserved terrain and specials on path
+
     for( const intrahighway_node &node : highway_path ) {
         pf::directed_node<tripoint_om_omt> node_z0( tripoint_om_omt(
                     node.path_node.pos.xy(), base_z ), node.path_node.dir );
@@ -317,7 +317,7 @@ Highway_path overmap::place_highway_reserved_path( const tripoint_om_omt &p1,
                                           om_direction::rotate( loc.p, reserved_direction );
                 ter_set( tripoint_om_omt( rotated.xy(), base_z ),
                          z0_terrain_to_place.obj().get_rotated( reserved_direction ) );
-                //prevent road bridges intersecting
+
                 if( rotated.z() == base_z + 1 ) {
                     ter_set( rotated, z0_terrain_to_place.obj().get_rotated( reserved_direction ) );
                 }
@@ -345,9 +345,9 @@ Highway_path overmap::place_highway_line(
                    loc.to_string_writable(), sp1.to_string_writable(), sp2.to_string_writable() );
     const tripoint_rel_omt diff = sp2 - sp1;
     const tripoint_rel_omt abs_diff = diff.abs();
-    int minimum_slants = std::min( abs_diff.x(), abs_diff.y() ); //assumes length > slants
+    int minimum_slants = std::min( abs_diff.x(), abs_diff.y() );
 
-    //TODO: minor deviations in highway paths?
+
     bool slants_optional = minimum_slants == 0;
     Highway_path highway_line;
 
@@ -355,9 +355,9 @@ Highway_path overmap::place_highway_line(
     const tripoint_rel_omt slant_scaled_direction_vector( draw_direction_vector * longest_slant_length,
             0 );
     bool clockwise = one_in( 2 );
-    //TODO: generalize
+
     if( !slants_optional ) {
-        //get mandatory slant direction
+
         point_rel_omt rotate_slant( draw_direction_vector.x() == 0 ? 1 : 0,
                                     draw_direction_vector.y() == 0 ? 1 : 0 );
         slant_clockwise_vector = tripoint_rel_omt(
@@ -368,10 +368,10 @@ Highway_path overmap::place_highway_line(
                                 om_direction::turn_right( draw_direction ) )] ) == slant_clockwise_vector.xy();
     }
 
-    // always base z for testing terrain
+
     tripoint_om_omt current_point = tripoint_om_omt( sp1.xy(), base_z );
     int new_z = base_z;
-    //the first placed node may not be a slant
+
     bool no_first_slant = true;
     const overmap_special_id &selected_slant =
         clockwise ? highway_settings.clockwise_slant :
@@ -381,23 +381,23 @@ Highway_path overmap::place_highway_line(
     overmap_special_id selected_special;
     tripoint_om_omt place_special_at;
 
-    // this loop check works on the assumption that slants:
-    // 1) are placed first in the path
-    // 2) do not make up the entire path
+
+
+
     while( current_point.xy() != sp2.xy() + draw_direction_vector ) {
         if( !inbounds( current_point ) ) {
             debugmsg( "highway slant pathing out of bounds; falling back to onramp" );
             highway_line.clear();
             return highway_line;
         }
-        //leave space for ramps
+
         bool next_slant_on_water = special_on_water( this, selected_slant,
                                    current_point + slant_scaled_direction_vector + slant_clockwise_vector, draw_direction );
         bool z_change =
             special_on_water( this, selected_slant, current_point, draw_direction ) != next_slant_on_water;
         place_special_at = tripoint_om_omt( current_point.xy(), base_z );
 
-        //TODO: odds are low, but this could fail if z_change is true for too many potential slant points
+
         bool is_slant = !no_first_slant && ( minimum_slants > 0 && !z_change );
         if( is_slant ) {
             new_z = next_slant_on_water ? base_z + 1 : base_z;
@@ -408,7 +408,7 @@ Highway_path overmap::place_highway_line(
                                                                        om_direction::turn_right( draw_direction ) :
                                                                        om_direction::turn_left( draw_direction ) )] ), 0 );
             }
-            //because highways are locked to N/E, account for S/W offset
+
             if( draw_direction == om_direction::type::south ||
                 draw_direction == om_direction::type::west ) {
                 place_special_at += tripoint_rel_omt( point_rel_omt( four_adjacent_offsets[
@@ -453,9 +453,9 @@ void overmap::place_highway_lines_with_bends( Highway_path &highway_path,
         debugmsg( "no highway bends found when expected!" );
     }
 
-    //determine all bends before placement
+
     std::vector<overmap_special_id> precalc_bends;
-    //pairs of start/end points to build segments with
+
     std::vector<std::pair<tripoint_om_omt, tripoint_om_omt>> path_points;
 
     tripoint_om_omt previous_point = start_point;
@@ -464,18 +464,18 @@ void overmap::place_highway_lines_with_bends( Highway_path &highway_path,
         path_points.emplace_back( previous_point, p.first );
         previous_point = p.first;
     }
-    //last segment on path
+
     path_points.emplace_back( previous_point, end_point );
 
-    //draw raw paths
+
 
     const int path_point_count = path_points.size();
-    //bend size is guaranteed to be path count - 1
+
     const int bend_points_size = bend_points.size();
     overmap_special_id selected_bend;
     int last_bend_length = 0;;
     for( int i = 0; i < path_point_count; i++ ) {
-        //truncate path length by bend length
+
         bool draw_bend = i < bend_points_size;
         if( draw_bend ) {
             selected_bend = precalc_bends[i];
@@ -485,13 +485,13 @@ void overmap::place_highway_lines_with_bends( Highway_path &highway_path,
         int bend_z = base_z;
 
         if( i > 0 ) {
-            //start of segment
+
             path_points[i].first = tripoint_om_omt( path_points[i].first.xy() +
                                                     truncate_segment( om_direction::opposite( bend_points[i - 1].second ), last_bend_length ),
                                                     path_points[i].first.z() );
         }
         if( draw_bend ) {
-            //end of segment
+
             path_points[i].second = tripoint_om_omt( path_points[i].second.xy() +
                                     truncate_segment( current_direction, last_bend_length ),
                                     path_points[i].second.z() );
@@ -509,7 +509,7 @@ void overmap::place_highway_lines_with_bends( Highway_path &highway_path,
 
         if( draw_bend ) {
             std::pair<tripoint_om_omt, om_direction::type> bend_point = bend_points[i];
-            //find bend special rotation
+
             bool clockwise = om_direction::turn_right( current_direction ) == bend_point.second;
             om_direction::type bend_direction = clockwise ? current_direction : om_direction::turn_right(
                                                     current_direction );
@@ -534,23 +534,23 @@ std::pair<bool, std::bitset<HIGHWAY_MAX_CONNECTIONS>> overmap::highway_handle_oc
 
     if( settings->overmap_ocean ) {
         const region_settings_ocean &settings_ocean = settings->get_settings_ocean();
-        // Not ideal as oceans can start later than these settings but it's at least reliably stopping before them
+
         const int ocean_start_north = settings_ocean.ocean_start_north.value_or( INT_MAX );
         const int ocean_start_east = settings_ocean.ocean_start_east.value_or( INT_MAX );
         const int ocean_start_west = settings_ocean.ocean_start_west.value_or( INT_MAX );
         const int ocean_start_south = settings_ocean.ocean_start_south.value_or( INT_MAX );
-        // Don't place highways over the ocean
+
         if( this_om.y() <= -ocean_start_north || this_om.x() >= ocean_start_east ||
             this_om.y() >= ocean_start_south || this_om.x() <= -ocean_start_west ) {
             return { true, ocean_adjacent };
         }
-        // Check if we need to place partial highway with different intersections
+
         ocean_adjacent[0] = this_om.y() - 1 == -ocean_start_north;
         ocean_adjacent[1] = this_om.x() + 1 == ocean_start_east;
         ocean_adjacent[2] = this_om.y() + 1 == ocean_start_south;
         ocean_adjacent[3] = this_om.x() - 1 == -ocean_start_west;
         if( ocean_adjacent.count() == HIGHWAY_MAX_CONNECTIONS ) {
-            // This should never happen but would break everything
+
             debugmsg( "Not placing highways because expecting ocean on all sides?!" );
             return { true, ocean_adjacent };
         }
@@ -558,7 +558,7 @@ std::pair<bool, std::bitset<HIGHWAY_MAX_CONNECTIONS>> overmap::highway_handle_oc
     return { false, ocean_adjacent };
 }
 
-//handle ramp placement given z-levels of path nodes
+
 void overmap::highway_handle_ramps( Highway_path &path, int base_z )
 {
     const region_settings_highway &highway_settings = settings->get_settings_highway();
@@ -612,7 +612,7 @@ void overmap::highway_handle_ramps( Highway_path &path, int base_z )
         previous_z = current_z;
     }
 
-    //place ramp specials
+
     for( int i = 0; i < range; i++ ) {
         if( path[i].is_ramp ) {
             om_direction::type ramp_dir = path[i].path_node.dir;
@@ -658,7 +658,7 @@ bool overmap::highway_select_end_points( const std::vector<const overmap *> &nei
 
     const region_settings_highway &highway_settings = settings->get_settings_highway();
     const int HIGHWAY_MAX_DEVIANCE = highway_settings.HIGHWAY_MAX_DEVIANCE;
-    //used until intersections can be safely placed at corners of the overmap with two-bend pathing
+
     const int SAFE_DEVIANCE = HIGHWAY_MAX_DEVIANCE * 2;
 
     bool any_ocean_adjacent = ocean_neighbors.any();
@@ -670,7 +670,7 @@ bool overmap::highway_select_end_points( const std::vector<const overmap *> &nei
                    neighbor_connections[2] ? "SOUTH" : "",
                    neighbor_connections[3] ? "WEST" : "" );
 
-    //if there are adjacent oceans, cut highway connections
+
     if( any_ocean_adjacent ) {
         for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
             if( ocean_neighbors[i] ) {
@@ -683,12 +683,12 @@ bool overmap::highway_select_end_points( const std::vector<const overmap *> &nei
     for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
         if( neighbor_connections[i] ) {
             if( neighbor_overmaps[i] != nullptr ) {
-                //neighboring overmap highway edge connects to this overmap
+
                 const tripoint_om_omt opposite_edge = neighbor_overmaps[i]->highway_connections[( i + 2 ) %
                                                       HIGHWAY_MAX_CONNECTIONS];
                 if( opposite_edge == tripoint_om_omt::zero ||
                     opposite_edge == tripoint_om_omt::invalid ) {
-                    // Neighbor has no highway data -- drop this connection.
+
                     neighbor_connections[i] = false;
                 } else {
                     end_points[i] = wrap_point( opposite_edge );
@@ -699,7 +699,7 @@ bool overmap::highway_select_end_points( const std::vector<const overmap *> &nei
         }
     }
 
-    //if going N/S or E/W, new highways tend to go straight through an overmap
+
     for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
         if( new_end_point[i] ) {
             tripoint_om_omt to_wrap = end_points[( i + 2 ) % HIGHWAY_MAX_CONNECTIONS];
@@ -708,7 +708,7 @@ bool overmap::highway_select_end_points( const std::vector<const overmap *> &nei
             if( to_wrap.is_invalid() ) {
                 end_points[i] = fallback_random_point;
             } else {
-                //additional check for an almost-straight point instead of a completely random point
+
                 if( !x_in_y( highway_settings.straightness_chance, 1.0 ) ) {
                     tripoint_om_omt wrapped_point = wrap_point( to_wrap );
                     std::vector<tripoint_om_omt> border_points = get_border( point_rel_om( four_adjacent_offsets[i] ),
@@ -754,15 +754,15 @@ std::vector<Highway_path> overmap::place_highways(
     }
 
     highway_grid.set_options();
-    // guaranteed intersection close to (but not at) avatar start location
+
     if( highway_grid.get_grid_origin().is_invalid() ) {
-        //this only happens exactly once, upon generation of the first overmap
-        //TODO: there should be an intersection around the avatar's start location, not 0,0
+
+
         highway_grid.set_grid_origin( point_abs_om::zero );
         highway_grid.generate_feature_point( highway_grid.get_grid_origin() );
     }
 
-    //resolve connection points, and generate new connection points
+
     std::array<tripoint_om_omt, HIGHWAY_MAX_CONNECTIONS> end_points;
     std::fill( end_points.begin(), end_points.end(), tripoint_om_omt::invalid );
     std::optional<std::bitset<HIGHWAY_MAX_CONNECTIONS>> is_highway_neighbors = is_highway_overmap();
@@ -784,10 +784,10 @@ std::vector<Highway_path> overmap::place_highways(
     overmap_special_id special;
     overmap_special_id fallback_special;
 
-    //determine existing intersections/curves
+
     switch( neighbor_connection_count ) {
         case 2: {
-            //draw end-to-end
+
             if( neighbor_connections[0] && neighbor_connections[2] ) {
                 paths.emplace_back( place_highway_reserved_path( end_points[0], end_points[2], 0, 2, base_z ) );
             } else if( neighbor_connections[1] && neighbor_connections[3] ) {
@@ -812,10 +812,10 @@ std::vector<Highway_path> overmap::place_highways(
                 }
             }
 
-            //draw 3-way intersection (favors towards closer pair of points if possible)
-            //this will be very rare, usually only for ocean-adjacent OMs
+
+
             tripoint_om_omt three_point( OMAPX / 2, OMAPY / 2, 0 );
-            //draw end-to-end from end points to 3-way intersection
+
             for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
                 if( i != static_cast<int>( empty_direction ) ) {
                     paths.emplace_back( place_highway_reserved_path( end_points[i], three_point, i, ( i + 2 ) % 4,
@@ -829,18 +829,18 @@ std::vector<Highway_path> overmap::place_highways(
             break;
         }
         case 4: {
-            // first, check pairs of corners -- we can't draw a pair of bends to a center intersection if there's no room!
+
             const int center_variance = 10;
             tripoint_om_omt four_point( OMAPX / 2 + rng( -center_variance, center_variance ),
                                         OMAPY / 2 + rng( -center_variance, center_variance ), 0 );
             const double corner_threshold = OMAPX / 3.0;
-            std::bitset<HIGHWAY_MAX_CONNECTIONS> corners_close; //starting at NE
+            std::bitset<HIGHWAY_MAX_CONNECTIONS> corners_close;
             for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
                 corners_close[i] = rl_dist( end_points[i],
                                             end_points[( i + 1 ) % HIGHWAY_MAX_CONNECTIONS] ) < corner_threshold * std::sqrt( 2.0 );
             }
             if( corners_close.count() == 1 ) {
-                //for one pair of close corners, set the intersection to their shared point
+
                 for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
                     if( corners_close[i] ) {
                         four_point = closest_corner_in_direction( end_points[i],
@@ -849,7 +849,7 @@ std::vector<Highway_path> overmap::place_highways(
                     }
                 }
             } else if( corners_close.count() == 2 ) {
-                //if there are two pairs of close corners, draw two 3-way intersections at corners and connect them
+
                 const int THREE_WAY_COUNT = 2;
                 std::array<tripoint_om_omt, THREE_WAY_COUNT> three_way_intersections;
                 std::array<om_direction::type, THREE_WAY_COUNT> three_way_direction;
@@ -893,7 +893,7 @@ std::vector<Highway_path> overmap::place_highways(
             four_point = find_highway_intersection_point( special, four_point, intersection_dir,
                          HIGHWAY_MAX_DEVIANCE );
 
-            //draw end-to-end from end points to 4-way intersection
+
             for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
                 paths.emplace_back( place_highway_reserved_path( end_points[i], four_point, i, ( i + 2 ) % 4,
                                     base_z ) );
@@ -901,9 +901,9 @@ std::vector<Highway_path> overmap::place_highways(
             place_highway_supported_special( special, four_point, om_direction::type::north );
             break;
         }
-        default: // 1
-            //this shouldn't happen often, but if it does, end the highway at overmap edges
-            //by drawing start point -> invalid point
+        default:
+
+
             tripoint_om_omt dummy_point = tripoint_om_omt::invalid;
             for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
                 if( !end_points[i].is_invalid() ) {
@@ -920,7 +920,7 @@ std::vector<Highway_path> overmap::place_highways(
 std::pair<std::vector<tripoint_om_omt>, om_direction::type>
 overmap::get_highway_segment_points( const pf::directed_node<tripoint_om_omt> &node ) const
 {
-    //highway segments can only draw N/E
+
     om_direction::type draw_dir = om_direction::type( static_cast<int>( node.dir ) % 2 );
     const tripoint_rel_omt draw_point_dir( point_rel_omt( four_adjacent_offsets[static_cast<int>
                                            ( om_direction::turn_right( draw_dir ) )] ), 0 );
@@ -932,14 +932,14 @@ overmap::get_highway_segment_points( const pf::directed_node<tripoint_om_omt> &n
 void overmap::finalize_highways( std::vector<Highway_path> &paths )
 {
     const region_settings_highway &highway_settings = settings->get_settings_highway();
-    // Segment of flat highway with a road bridge
+
     const overmap_special_id &segment_road_bridge = highway_settings.segment_road_bridge;
 
-    // Replace roads that travelled over reserved highway segments
+
     auto handle_road_bridges = [this, &segment_road_bridge]( Highway_path & path ) {
         const int range = path.size();
         for( int i = 0; i < range; i++ ) {
-            //only one of two points should ever need to be checked for roads specifically
+
             if( is_road( ter( path[i].path_node.pos ) ) ) {
                 path[i].placed_special = segment_road_bridge;
             }
@@ -979,11 +979,11 @@ std::optional<std::bitset<HIGHWAY_MAX_CONNECTIONS>> overmap::is_highway_overmap(
     point_abs_om pos = this->pos();
     std::optional<std::bitset<HIGHWAY_MAX_CONNECTIONS>> result;
 
-    // first, get the offset for every interhighway_node bounding this overmap
-    // generate points if needed
+
+
     const std::vector<point_abs_om> bounds = highway_grid.find_feature_point_bounds( pos );
 
-    // if we're on one of those intersection OMs, return immediately with all cardinal connection points
+
     for( int i = 0; i < HIGHWAY_MAX_CONNECTIONS; i++ ) {
         point_abs_om intersection_grid = bounds[i];
         if( highway_grid.get_feature_point( intersection_grid ).get_offset_pos() == pos ) {
@@ -991,21 +991,21 @@ std::optional<std::bitset<HIGHWAY_MAX_CONNECTIONS>> overmap::is_highway_overmap(
         }
     }
 
-    //otherwise, check EVERY path connected to bounds, generating if necessary
+
     std::unordered_set<std::pair<point_abs_om, point_abs_om>, cata::tuple_hash> path_cache;
 
     auto check_on_path = [&pos, &path_cache]( const point_abs_om & center,
     const point_abs_om & adjacent ) {
         std::optional<std::vector<point_abs_om>> resulting_path;
 
-        //orthogonal line must always take a set of two points in the same order for highway overmap paths
+
         std::vector<point_abs_om> ordered_points = { center, adjacent };
         std::sort( ordered_points.begin(), ordered_points.end(), []( const point_abs_om & p1,
         const point_abs_om & p2 ) {
             return p1.y() == p2.y() ? p1.x() < p2.x() : p1.y() < p2.y();
         } );
 
-        //repeat paths are possible; ignore them
+
         std::pair< point_abs_om, point_abs_om> front_back = { ordered_points.front(), ordered_points.back() };
         if( path_cache.find( front_back ) != path_cache.end() ) {
             return resulting_path;
@@ -1071,10 +1071,10 @@ void highway_intersection_grid::generate_offset( overmap_feature_grid_node &node
             return true;
         }
         auto val_emplaced = om_has_lake_cache.emplace( pt, false );
-        // A little trickery, instead of doing find/emplace/set, we just use a single
-        // emplace which returns the existing entry if it was already set. the .second
-        // member is true if emplacement happened, which means it was *not* set, so
-        // we have to actually test it for lakeness.
+
+
+
+
         if( val_emplaced.second ) {
             const region_settings_lake &lake_settings = settings.get_settings_lake();
             val_emplaced.first->second =
@@ -1089,7 +1089,7 @@ void highway_intersection_grid::generate_offset( overmap_feature_grid_node &node
     std::vector<point_abs_om> intersection_candidates;
 
     for( const tripoint_abs_om &p : radius ) {
-        if( p != as_tripoint && no_lakes( p.xy() ) ) { //intersection cannot generate at origin
+        if( p != as_tripoint && no_lakes( p.xy() ) ) {
             intersection_candidates.emplace_back( p.xy() );
         }
     }
@@ -1141,7 +1141,7 @@ void overmap::place_highway_supported_special( const overmap_special_id &special
 void overmap::place_highway_interchanges( std::vector<Highway_path> &highway_path )
 {
     const region_settings_highway &highway_settings = settings->get_settings_highway();
-    // slightly higher than it should realistically be for convenience's sake
+
     const int HIGHWAY_INTERCHANGE_SPACING = OMAPX / 4;
     const int HIGHWAY_INTERCHANGE_VARIANCE = HIGHWAY_INTERCHANGE_SPACING / 10;
     for( Highway_path &path : highway_path ) {

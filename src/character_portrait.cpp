@@ -8,12 +8,12 @@
 struct character_portrait;
 
 
-/** @relates string_id */
+
 template<>
 bool string_id<character_portrait>::is_valid() const
 {
 #if defined(TILES)
-    // This is a stupid expensive validation compared to our normal string_id, be careful where you use it
+
     return portrait_tilecontext->get_texture_draw_data(
                str(),
                TILE_CATEGORY::PORTRAIT,

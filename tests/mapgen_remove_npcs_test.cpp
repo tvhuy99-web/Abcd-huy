@@ -61,12 +61,12 @@ void remove_npc_and_check( map &m, tripoint_bub_ms const &loc, update_mapgen_id 
 
     for( auto const &t : get_avatar().get_mon_visible().unique_types ) {
         for( npc *n : t ) {
-            REQUIRE( !n->is_dead() ); // REQUIRE( dont-segfault-bro )
+            REQUIRE( !n->is_dead() );
         }
     }
 }
 
-} // namespace
+}
 
 TEST_CASE( "mapgen_remove_npcs" )
 {

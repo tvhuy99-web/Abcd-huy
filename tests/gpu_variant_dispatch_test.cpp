@@ -54,4 +54,4 @@ TEST_CASE( "memory_preset_from_option_value_mapping", "[tiles][gpu]" )
         CHECK_FALSE( memory_preset_from_option_value( "garbage" ).has_value() );
     }
 }
-#endif // TILES
+#endif

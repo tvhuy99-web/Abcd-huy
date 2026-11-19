@@ -68,9 +68,9 @@ class TupleJSONDecoder(json.JSONDecoder):
 
     def __init__(self, **kwargs):
         json.JSONDecoder.__init__(self, **kwargs)
-        # Use the custom JSONArray
+
         self.parse_array = self.JSONArray
-        # Use the python implemenation of the scanner
+
         self.scan_once = json.scanner.py_make_scanner(self)
 
     def JSONArray(self, s_and_end, scan_once, **kwargs):
@@ -82,7 +82,7 @@ def generate_image(
     rows: list,
     terrain_dict: dict,
     fill_ter: str,
-    # rotation: int = 0,
+
 ) -> Image:
     """
     Generate sprite from rows
@@ -92,7 +92,7 @@ def generate_image(
     for index_x, row in enumerate(rows):
         for index_y, char in enumerate(row):
             terrain_id = get_first_valid(terrain_dict.get(char), fill_ter)
-            # TODO: skip on t_secretdoor_metal_c ?
+
 
             color = SCHEME['override_terrain_color'].get(terrain_id)
             if not color:
@@ -110,8 +110,8 @@ def generate_image(
                 print(color)
                 raise
 
-    # if rotation:
-    #    image = image.rotate(-90 * rotation, expand=True)
+
+
 
     return image
 
@@ -150,7 +150,7 @@ def read_scheme(
         for terrain_id in terrain_ids:
             SCHEME['override_terrain_color'][terrain_id] = color
 
-    # TODO: support fallback_predecessor_mapgen
+
     SCHEME['override_terrain_color'][None] = 0, 0, 0, 0
 
 
@@ -232,7 +232,7 @@ def add_palette(
         terrains.items() if
         not isinstance(value, dict) and
         not isinstance(value, OrderedDict)
-        # TODO: support whatever this is
+
     }
 
 
@@ -272,7 +272,7 @@ def write_image_with_rotations(
     image: Image,
     name: str,
     output_dir: Path,
-    # raw_rotation: Union[None, int, list] = None,
+
 ) -> None:
     """
     Write image to disk along with the rotations
@@ -314,8 +314,8 @@ def output_sprite(
     output_dir: Optional[Path] = None,
     duplicates_dir: Optional[Path] = None,
     rotation: int = 0,
-    # rotation: Union[None, int, list] = None,
-    # single_terrain: bool = False
+
+
 ) -> None:
     """
     Handle single sprite
@@ -328,13 +328,13 @@ def output_sprite(
             )
 
     if rotation:
-        image = image.rotate(-90 * rotation)  # , expand=True
+        image = image.rotate(-90 * rotation)
 
     if name not in CREATED_IDS:
-        # new ID
+
 
         image_colors = image.getcolors()
-        if len(image_colors) < 2:  # and not single_terrain
+        if len(image_colors) < 2:
             SINGLE_COLOR_SPRITES[image_colors[0][1]].add(name)
             return
 
@@ -345,20 +345,20 @@ def output_sprite(
         if generate_json:
             write_json(output_dir=output_dir, name=name)
 
-        write_image_with_rotations(image, name, output_dir)  # , rotation)
+        write_image_with_rotations(image, name, output_dir)
         CREATED_IDS.add(name)
         return
 
     if not duplicates_dir:
-        # skipping as duplicate
+
         SKIPPED['duplicate'].add(name)
         return
 
     duplicates_subdir = duplicates_dir / name
 
     if name not in VARIANTS:
-        # newly discovered ID with variants, move the previously generated one
-        # into a duplicates subdirectory
+
+
         duplicates_subdir.mkdir(parents=True, exist_ok=True)
         (output_dir / f'{name}.png').rename(
             duplicates_subdir / f'{name}.png'
@@ -374,14 +374,14 @@ def output_sprite(
         VARIANTS[name] = 2
 
     else:
-        # ID is known to have variants, just increment the counter
+
         VARIANTS[name] += 1
 
     write_image_with_rotations(
         image,
         f'{name}_{VARIANTS[name]}',
         duplicates_subdir,
-        # rotation,
+
     )
 
 
@@ -422,7 +422,7 @@ def get_initial_rotation(rotation: Union[None, int, list]) -> int:
     if rotation in ([0, 3], [0, 1]):
         return 0
 
-    # if min(rotation) < 0 or max(rotation) > 3:
+
     print(f'WARNING: unexpected rotation value {rotation}')
 
     return 0
@@ -458,13 +458,13 @@ def main():
     """
     main
     """
-    # get arguments
+
     arg_parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     arg_parser.add_argument(
-        'color_scheme', type=Path,  # TODO: default
+        'color_scheme', type=Path,
         help='path to a JSON color SCHEME',
     )
     arg_parser.add_argument(
@@ -504,7 +504,7 @@ def main():
     generate_json = args_dict.get('json')
     context_coloring = args_dict.get('context_coloring')
 
-    # read needed values from the data/json/ subdirectories
+
     read_scheme(color_scheme_path)
 
     read_terrain_color_names()
@@ -525,18 +525,18 @@ def main():
         pattern=args_dict.get('mapgen_files_pattern'),
     )
 
-    # get palettes
+
     for entry in mapgen_data:
         if entry.get('type') == 'palette':
             add_palette(entry)
 
-    # main loop over mapgens
+
     for entry in mapgen_data:
-        # check type
+
         if entry.get('type') != 'mapgen':
             continue
 
-        # check method, only json supported currently
+
         if entry.get('method') != 'json':
             continue
 
@@ -544,12 +544,12 @@ def main():
         if not om_id or om_id == 'FEMA_entrance':
             continue
 
-        # verify that "object" value is defined
+
         mapgen = entry.get('object')
         if not mapgen:
             continue
 
-        # combine "palettes" value with "terrain" to get all terrain values
+
         terrain_dict = {}
         palettes = mapgen.get('palettes')
         if palettes:
@@ -563,19 +563,19 @@ def main():
                     terrain_dict.update(palette)
                 else:
                     print(f'WARNING: unknown palette {palette_id}')
-                # TODO: support nested palettes, two cases found
+
 
         terrain_defs = mapgen.get('terrain')
         if terrain_defs:
             terrain_dict.update(terrain_defs)
 
-        # single_terrain = False
-        # if not terrain_dict:
-        #    single_terrain = True
+
+
+
 
         raw_rotation = mapgen.get('rotation')
 
-        # verify "rows" is not empty
+
         rows = mapgen.get('rows')
         fill_ter = mapgen.get('fill_ter')
 
@@ -589,12 +589,12 @@ def main():
                     SKIPPED['no_rows'].append(om_id)
                 continue
 
-        # create the sprite
+
         image = generate_image(
             rows=rows, terrain_dict=terrain_dict, fill_ter=fill_ter,
         )
 
-        # write sprite[s] to the output directory
+
         if isinstance(om_id, list) and isinstance(om_id[0], list):
             generator = split_image(image=image, om_ids=om_id)
             for submap_id, submap_image in generator:
@@ -605,7 +605,7 @@ def main():
                     output_dir=output_dir,
                     duplicates_dir=duplicates_dir,
                     rotation=get_initial_rotation(raw_rotation),
-                    # single_terrain=single_terrain,
+
                 )
 
         else:
@@ -617,7 +617,7 @@ def main():
                 output_dir=output_dir,
                 duplicates_dir=duplicates_dir,
                 rotation=get_initial_rotation(raw_rotation),
-                # single_terrain=single_terrain,
+
             )
 
     if output_dir:

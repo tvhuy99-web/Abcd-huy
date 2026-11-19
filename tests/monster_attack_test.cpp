@@ -50,7 +50,7 @@ static void reset_caches( int a_zlev, int t_zlev )
     Character &you = get_player_character();
     map &here = get_map();
     g->reset_light_level();
-    // Why twice? See vision_test.cpp
+
     here.invalidate_visibility_cache();
     here.update_visibility_cache( a_zlev );
     here.invalidate_map_cache( a_zlev );
@@ -80,7 +80,7 @@ static void test_monster_attack( const tripoint &target_offset, bool expect_atta
     CAPTURE( day_hour );
     REQUIRE( is_day( calendar::turn ) );
     clear_creatures();
-    // Monster adjacent to target.
+
     const std::string monster_type = "mon_zombie";
     const tripoint_bub_ms target_location = attacker_location + target_offset;
     int distance = rl_dist( attacker_location, target_location );
@@ -93,7 +93,7 @@ static void test_monster_attack( const tripoint &target_offset, bool expect_atta
     monster &test_monster = spawn_test_monster( monster_type, attacker_location );
     test_monster.set_dest( you.pos_abs() );
     reset_caches( a_zlev, t_zlev );
-    // Trigger basic attack.
+
     CAPTURE( attacker_location );
     CAPTURE( target_location );
     CHECK( test_monster.sees( here, target_location ) == expect_vision );
@@ -102,7 +102,7 @@ static void test_monster_attack( const tripoint &target_offset, bool expect_atta
     } else {
         CHECK( special_attack( &test_monster ) == expect_attack );
     }
-    // Then test the reverse.
+
     clear_creatures();
     clear_avatar();
     you.setpos( here, attacker_location );
@@ -110,7 +110,7 @@ static void test_monster_attack( const tripoint &target_offset, bool expect_atta
     reset_caches( a_zlev, t_zlev );
     CHECK( you.sees( here, target_monster ) == expect_vision );
     if( special_attack == nullptr ) {
-        // FIXME: This should be a reach attack!
+
         CHECK( you.melee_attack( target_monster, false ) == expect_attack );
     }
 }
@@ -159,12 +159,12 @@ TEST_CASE( "monster_attack", "[vision][reachability]" )
     calendar::turn = daylight_time( calendar::turn ) + 2_hours;
     scoped_weather_override weather_clear( WEATHER_CLEAR );
     SECTION( "attacking on open ground" ) {
-        // Adjacent can attack of course.
+
         for( const tripoint &offset : eight_horizontal_neighbors ) {
             test_monster_attack( offset, true, true );
         }
         clear_map_without_vision();
-        // Too far away cannot.
+
         test_monster_attack( { 2, 2, 0 }, false, true );
         test_monster_attack( { 2, 1, 0 }, false, true );
         test_monster_attack( { 2, 0, 0 }, false, true );
@@ -207,7 +207,7 @@ TEST_CASE( "monster_throwing_sanity_test", "[throwing] [balance]" )
     calendar::turn = sunrise( calendar::turn );
     scoped_weather_override weather_clear( WEATHER_CLEAR );
     const tripoint_bub_ms target_location = { 65, 65, 0 };
-    // You got a player
+
     Character &you = get_player_character();
     clear_avatar();
     you.set_dodges_left( 1 ) ;
@@ -220,7 +220,7 @@ TEST_CASE( "monster_throwing_sanity_test", "[throwing] [balance]" )
     const std::string monster_type = "mon_feral_human_pipe";
     for( int distance = 2; distance <= 5; ++distance ) {
         float expected_damage = expected_average_damage_at_range[ distance ];
-        // and you got a monster
+
         const tripoint_bub_ms attacker_location = target_location + tripoint::east * distance;
         monster &test_monster = spawn_test_monster( monster_type, attacker_location );
         test_monster.set_dest( you.pos_abs() );
@@ -236,15 +236,15 @@ TEST_CASE( "monster_throwing_sanity_test", "[throwing] [balance]" )
         epsilon_threshold threshold{ expected_damage, 2.5 };
         do {
             you.set_all_parts_hp_to_max();
-            you.set_stamina( you.get_stamina_max() ); // Resets stamina so dummy can keep dodging
-            // Remove stagger/winded effects
+            you.set_stamina( you.get_stamina_max() );
+
             you.clear_effects();
             you.set_dodges_left( 1 );
             int prev_hp = you.get_hp();
-            // monster shoots the player
+
             REQUIRE( attack->call( test_monster ) == true );
-            // how much damage did it do?
-            // Player-centric test in throwing_test.cpp ranges from 2 - 8 damage at point-blank range.
+
+
             int current_hp = you.get_hp();
             hits.add( current_hp < prev_hp );
             damage_dealt.add( prev_hp - current_hp );
@@ -275,31 +275,31 @@ TEST_CASE( "Mattack_dialog_condition_test", "[mattack]" )
     test_monster.set_dest( you.pos_abs() );
     const mtype_special_attack &attack = test_monster.type->special_attacks.at( "test_conditions_1" );
 
-    // Fail at first
+
     CHECK( !attack->call( test_monster ) );
-    // Check the easier arm of the OR
+
     test_monster.add_effect( effect_took_flumed, 1_days );
     REQUIRE( test_monster.has_effect( effect_took_flumed ) );
     CHECK( attack->call( test_monster ) );
 
-    // Reset the test, attack fails again
+
     test_monster.remove_effect( effect_took_flumed );
     REQUIRE( !attack->call( test_monster ) );
 
-    // Check the nested AND arm
+
     REQUIRE( is_creature_outside( test_monster ) );
     you.set_mutation( trait_TOUGH_FEET );
     REQUIRE( you.has_flag( json_flag_TOUGH_FEET ) );
     CHECK( !attack->call( test_monster ) );
     test_monster.add_effect( effect_bleed, 1_days );
     REQUIRE( test_monster.has_effect( effect_bleed ) );
-    // We now have all conditions specified in the attack
+
     CHECK( attack->call( test_monster ) );
 
-    // Add disqualifying condition to target
+
     you.add_effect( effect_took_flumed, 1_days );
     REQUIRE( you.has_effect( effect_took_flumed ) );
-    // Attack fails
+
     CHECK( !attack->call( test_monster ) );
 }
 
@@ -321,17 +321,17 @@ TEST_CASE( "Targeted_grab_removal_test", "[mattack][grab]" )
     const mattack_actor &attack = test_monster.type->special_attacks.at( "grab" ).operator
                                   * ();
 
-    // Grabbed
+
     REQUIRE( attack.call( test_monster ) );
 
-    //Grab, the monsters have the filter effects
+
     REQUIRE( you.has_effect( effect_grabbed, body_part_head ) );
     REQUIRE( test_monster.is_grabbing( body_part_head ) );
 
-    // Kill the grabber
+
     test_monster.die( &here, nullptr );
 
-    // Now we have none
+
     REQUIRE( !you.has_effect( effect_grabbed, body_part_head ) );
 }
 
@@ -339,7 +339,7 @@ TEST_CASE( "Ranged_pull_tests", "[mattack][grab]" )
 {
     map &here = get_map();
 
-    // Set up further from the target
+
     const tripoint_bub_ms target_location = attacker_location + tripoint{ 4, 0, 0 };
     clear_map_without_vision();
     restore_on_out_of_scope restore_calendar_turn( calendar::turn );
@@ -358,14 +358,14 @@ TEST_CASE( "Ranged_pull_tests", "[mattack][grab]" )
         REQUIRE( test_monster.sees( here,  you ) );
         const mattack_actor &attack = test_monster.type->special_attacks.at( "ranged_pull" ).operator * ();
         REQUIRE( units::to_gram<int>( test_monster.get_weight() ) == 100000 );
-        // Fail to pull our too-chonky survivor
-        // Pull fails loudly so we can't count on it returning false
+
+
         REQUIRE( attack.call( test_monster ) );
         REQUIRE( you.pos_bub() == target_location );
-        // Reduce weight
+
         you.set_stored_kcal( 5000 );
         REQUIRE( units::to_gram<int>( you.get_weight() ) < 50000 );
-        // Attack succeeds
+
         REQUIRE( attack.call( test_monster ) );
         REQUIRE( you.pos_bub() == attacker_location + tripoint::east );
     }
@@ -376,7 +376,7 @@ TEST_CASE( "Ranged_pull_tests", "[mattack][grab]" )
         REQUIRE( test_monster.sees( here,  you ) );
         const mattack_actor &attack = test_monster.type->special_attacks.at( "ranged_pull" ).operator * ();
         REQUIRE( units::to_gram<int>( test_monster.get_weight() ) == 100000 );
-        // Pull on the first try
+
         REQUIRE( attack.call( test_monster ) );
         REQUIRE( you.pos_bub() == attacker_location + tripoint::east );
     }
@@ -386,7 +386,7 @@ TEST_CASE( "Ranged_pull_tests", "[mattack][grab]" )
         test_monster.set_dest( you.pos_abs() );
         REQUIRE( test_monster.sees( here, you ) );
         const mattack_actor &attack = test_monster.type->special_attacks.at( "ranged_pull" ).operator * ();
-        // Can't pull, fail silently
+
         REQUIRE( !attack.call( test_monster ) );
         REQUIRE( you.pos_bub() == target_location );
     }
@@ -402,7 +402,7 @@ TEST_CASE( "Ranged_pull_tests", "[mattack][grab]" )
         REQUIRE( test_monster.sees( here, you ) );
         REQUIRE( grab.call( test_grabber ) );
         int counter = 0;
-        // Pull until the grabber lets go, it should eventually do so
+
         while( you.pos_bub() == target_location && counter < 101 ) {
             REQUIRE( pull.call( test_monster ) );
             counter++;
@@ -428,19 +428,19 @@ TEST_CASE( "Grab_drag_tests", "[mattack][grab][drag]" )
     const mattack_actor &attack_2 = test_monster.type->special_attacks.at( "drag_followup" ).operator
                                     * ();
     REQUIRE( test_monster.sees( here, you ) );
-    // We're not too chonk
+
     REQUIRE( test_monster.get_weight() * 1.5f > you.get_weight() );
-    // We fail to get dragged by the followup
+
     REQUIRE( !attack_2.call( test_monster ) );
-    //But we do get dragged by the normal drag
+
     REQUIRE( attack_1.call( test_monster ) );
     CHECK( you.pos_bub() == target_location - tripoint{ 3, 0, 0 } );
     test_monster.set_dest( you.pos_abs() );
-    // And then we get followup-dragged (also testing movecost mod)
+
     REQUIRE( !attack_1.call( test_monster ) );
     REQUIRE( attack_2.call( test_monster ) );
     CHECK( you.pos_bub() == target_location - tripoint{ 6, 0, 0 } );
-    // We're now out of moves, so we can't attack
+
     CHECK( test_monster.get_moves() < 0 );
 }
 
@@ -493,7 +493,7 @@ TEST_CASE( "Unified_grab_break_test", "[mattack][grab]" )
     SECTION( "Fresh character against 1 strong grab" ) {
         monster_type = "mon_debug_grabber_strong";
         expected_grab_strength = 100;
-        message = "7% chance to break a strong grab as a starting character" ;//628
+        message = "7% chance to break a strong grab as a starting character" ;
         expected_success = 700;
     }
     SECTION( "Fresh character against 3 strong grabs" ) {
@@ -549,7 +549,7 @@ TEST_CASE( "Unified_grab_break_test", "[mattack][grab]" )
         message = "4% chance to break three max-strength grabs as a lategame character with grab breaks";
     }
 
-    // Common test
+
     int success = 0;
 
     REQUIRE( you.get_str() == 8 );
@@ -568,13 +568,13 @@ TEST_CASE( "Unified_grab_break_test", "[mattack][grab]" )
         test_monster_1.set_dest( you.pos_abs() );
         const mattack_actor &attack_1 = test_monster_1.type->special_attacks.at( "grab" ).operator * ();
         REQUIRE( attack_1.call( test_monster_1 ) );
-        // Safety check to ensure grab strength is read and applied correctly
+
         for( const effect &grab : you.get_effects_with_flag( json_flag_GRAB ) ) {
             CHECK( grab.get_intensity() == expected_grab_strength );
         }
         for( int i = 0; i < 10000; i++ ) {
             if( you.try_remove_grab() ) {
-                // Record success and reapply grab
+
                 success++;
                 you.clear_effects();
                 you.set_stamina( you.get_stamina_max() );
@@ -599,10 +599,10 @@ TEST_CASE( "Unified_grab_break_test", "[mattack][grab]" )
         for( int i = 0; i < 10000; i++ ) {
             REQUIRE( you.get_effects_with_flag( json_flag_GRAB ).size() == 3 );
             if( you.try_remove_grab() ) {
-                // Record success if all grabs are broken
+
                 success++;
             }
-            // Reapply grabs
+
             you.clear_effects();
             test_monster_1.clear_effects();
             test_monster_2.clear_effects();
@@ -616,6 +616,6 @@ TEST_CASE( "Unified_grab_break_test", "[mattack][grab]" )
 
     Messages::clear_messages();
     INFO( message );
-    // 2,5% margin
+
     CHECK( success == Approx( expected_success ).margin( 250 ) );
 }

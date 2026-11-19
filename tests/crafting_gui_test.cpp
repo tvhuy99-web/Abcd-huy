@@ -70,9 +70,9 @@ static const skill_id skill_fabrication( "fabrication" );
 static const skill_id skill_melee( "melee" );
 static const skill_id skill_survival( "survival" );
 
-// Helper: clear everything and return the avatar with a debug backpack
-// so that i_add() has pockets to place items into (clear_avatar strips
-// all worn items, leaving no storage capacity).
+
+
+
 static Character &setup_character()
 {
     clear_avatar();
@@ -90,7 +90,7 @@ TEST_CASE( "recipe_availability_has_components_and_skills", "[crafting][gui]" )
     guy.set_skill_level( skill_cooking, 3 );
     guy.i_add( item( itype_fat ) );
     guy.i_add( item( itype_fat ) );
-    guy.i_add( item( itype_knife_hunting ) ); // CUT 2 quality
+    guy.i_add( item( itype_knife_hunting ) );
     guy.invalidate_crafting_inventory();
 
     const recipe &rec = recipe_test_tallow.obj();
@@ -105,7 +105,7 @@ TEST_CASE( "recipe_availability_missing_component", "[crafting][gui]" )
 {
     Character &guy = setup_character();
     guy.set_skill_level( skill_cooking, 3 );
-    guy.i_add( item( itype_knife_hunting ) ); // has tool but no fat
+    guy.i_add( item( itype_knife_hunting ) );
     guy.invalidate_crafting_inventory();
 
     const recipe &rec = recipe_test_tallow.obj();
@@ -127,10 +127,10 @@ TEST_CASE( "recipe_availability_insufficient_skill", "[crafting][gui]" )
     const recipe &rec = recipe_test_tallow.obj();
     availability avail( guy, &rec );
 
-    // can_craft gates on components, not skill level (test_tallow is not practice)
+
     CHECK( avail.can_craft_recipe );
     CHECK_FALSE( avail.has_all_skills );
-    // cooking 0 vs difficulty 3: knowledge_level < difficulty*0.8, so no primary skill
+
     CHECK_FALSE( avail.crafter_has_primary_skill );
     CHECK( avail.color() == c_light_red );
 }
@@ -140,7 +140,7 @@ TEST_CASE( "recipe_availability_would_use_rotten", "[crafting][gui]" )
     Character &guy = setup_character();
     guy.set_skill_level( skill_cooking, 3 );
     item rotten_fat1( itype_fat );
-    rotten_fat1.set_rot( 1000_hours ); // force rotten
+    rotten_fat1.set_rot( 1000_hours );
     guy.i_add( rotten_fat1 );
     item rotten_fat2( itype_fat );
     rotten_fat2.set_rot( 1000_hours );
@@ -152,7 +152,7 @@ TEST_CASE( "recipe_availability_would_use_rotten", "[crafting][gui]" )
     availability avail( guy, &rec );
 
     CHECK( avail.would_use_rotten );
-    // has_all_skills is true, so rotten color is c_brown
+
     CHECK( avail.color() == c_brown );
 }
 
@@ -177,15 +177,15 @@ TEST_CASE( "recipe_availability_would_use_favorite", "[crafting][gui]" )
 TEST_CASE( "recipe_availability_useless_practice", "[crafting][gui]" )
 {
     Character &guy = setup_character();
-    // prac_knapping: survival practice, skill_limit 2, requires fabrication 1
-    // also uses prof_knapping
-    guy.set_skill_level( skill_survival, 3 ); // above skill_limit
+
+
+    guy.set_skill_level( skill_survival, 3 );
     guy.set_skill_level( skill_fabrication, 1 );
     guy.add_proficiency( proficiency_prof_knapping );
-    // Tools: HAMMER 1 + HAMMER_SOFT 1
-    guy.i_add( item( itype_hammer ) );     // HAMMER quality
-    guy.i_add( item( itype_billet_wood ) ); // HAMMER_SOFT quality
-    // Components: rock
+
+    guy.i_add( item( itype_hammer ) );
+    guy.i_add( item( itype_billet_wood ) );
+
     guy.i_add( item( itype_rock ) );
     guy.i_add( item( itype_rock ) );
     guy.invalidate_crafting_inventory();
@@ -201,14 +201,14 @@ TEST_CASE( "recipe_availability_nested_craftable", "[crafting][gui]" )
     Character &guy = setup_character();
     guy.set_skill_level( skill_fabrication, 2 );
     guy.set_skill_level( skill_melee, 1 );
-    guy.i_add( item( itype_2x4 ) ); // child recipe cudgel_test_no_tools needs 2x4
+    guy.i_add( item( itype_2x4 ) );
     guy.invalidate_crafting_inventory();
 
     const recipe &rec = recipe_test_nested_weapons.obj();
     availability avail( guy, &rec );
 
     CHECK( avail.is_nested_category );
-    CHECK( avail.can_craft_recipe ); // at least one child is craftable
+    CHECK( avail.can_craft_recipe );
     CHECK( avail.color() == c_light_blue );
 }
 
@@ -217,7 +217,7 @@ TEST_CASE( "recipe_availability_nested_none_craftable", "[crafting][gui]" )
     Character &guy = setup_character();
     guy.set_skill_level( skill_fabrication, 2 );
     guy.set_skill_level( skill_melee, 1 );
-    // No 2x4 -> child recipe is not craftable
+
     guy.invalidate_crafting_inventory();
 
     const recipe &rec = recipe_test_nested_weapons.obj();
@@ -281,7 +281,7 @@ TEST_CASE( "nested_availability_follows_the_camp_inventory", "[crafting][gui]" )
     }
 }
 
-// recipe::npc_can_craft accepts every recipe, so no case covers an NPC crafter
+
 TEST_CASE( "nested_availability_expectations", "[crafting][gui]" )
 {
     Character &guy = setup_character();
@@ -339,7 +339,7 @@ TEST_CASE( "recipe_availability_proficiency_cache", "[crafting][gui]" )
     Character &guy = setup_character();
     guy.set_skill_level( skill_fabrication, 0 );
     guy.i_add( item( itype_2x4 ) );
-    // Do NOT grant prof_carving -- malus should be > 1.0
+
     guy.invalidate_crafting_inventory();
 
     const recipe &rec = recipe_cudgel_simple.obj();
@@ -348,7 +348,7 @@ TEST_CASE( "recipe_availability_proficiency_cache", "[crafting][gui]" )
     float malus1 = avail.get_proficiency_time_maluses();
     float malus2 = avail.get_proficiency_time_maluses();
     CHECK( malus1 >= 1.0f );
-    CHECK( malus1 == malus2 ); // lazy cache returns same value
+    CHECK( malus1 == malus2 );
 }
 
 
@@ -359,7 +359,7 @@ TEST_CASE( "can_start_craft_ok", "[crafting][gui]" )
     guy.set_skill_level( skill_melee, 1 );
     guy.i_add( item( itype_2x4 ) );
     guy.invalidate_crafting_inventory();
-    // Midday for good lighting
+
     scoped_weather_override weather_clear( WEATHER_CLEAR );
     calendar::turn = calendar::turn_zero + 9_hours + 30_minutes;
     g->reset_light_level();
@@ -376,7 +376,7 @@ TEST_CASE( "can_start_craft_cannot_craft_no_components", "[crafting][gui]" )
     Character &guy = setup_character();
     guy.set_skill_level( skill_fabrication, 2 );
     guy.set_skill_level( skill_melee, 1 );
-    // No 2x4 in inventory
+
     guy.invalidate_crafting_inventory();
     scoped_weather_override weather_clear( WEATHER_CLEAR );
     calendar::turn = calendar::turn_zero + 9_hours + 30_minutes;
@@ -405,8 +405,8 @@ TEST_CASE( "can_start_craft_cannot_craft_no_primary_skill", "[crafting][gui]" )
     const recipe &rec = recipe_cudgel_test_no_tools.obj();
     availability avail( guy, &rec );
 
-    // Has components so can_craft is true, but primary skill is too low
-    // knowledge_level(0) < difficulty(2) * 0.8 = 1.6
+
+
     CHECK( avail.can_craft_recipe );
     CHECK_FALSE( avail.crafter_has_primary_skill );
     CHECK( can_start_craft( rec, avail, guy ) == craft_confirm_result::cannot_craft );
@@ -419,7 +419,7 @@ TEST_CASE( "can_start_craft_too_dark", "[crafting][gui]" )
     guy.set_skill_level( skill_melee, 1 );
     guy.i_add( item( itype_2x4 ) );
     guy.invalidate_crafting_inventory();
-    // Midnight, no light
+
     scoped_weather_override weather_clear( WEATHER_CLEAR );
     calendar::turn = calendar::turn_zero;
     g->reset_light_level();
@@ -440,7 +440,7 @@ TEST_CASE( "can_start_craft_ok_at_midday", "[crafting][gui]" )
     guy.set_skill_level( skill_melee, 1 );
     guy.i_add( item( itype_2x4 ) );
     guy.invalidate_crafting_inventory();
-    // Midday, good light
+
     scoped_weather_override weather_clear( WEATHER_CLEAR );
     calendar::turn = calendar::turn_zero + 9_hours + 30_minutes;
     g->reset_light_level();
@@ -465,7 +465,7 @@ TEST_CASE( "recipe_sort_craftable_before_uncraftable", "[crafting][gui]" )
     availability avail_yes( guy, &rec );
     CHECK( avail_yes.can_craft_recipe );
 
-    // Remove the component so a second availability is not craftable
+
     guy.remove_items_with( []( const item & it ) {
         return it.typeId() == itype_2x4;
     } );
@@ -493,7 +493,7 @@ TEST_CASE( "recipe_sort_by_difficulty", "[crafting][gui]" )
     availability avail_hard( guy, &rec_hard );
     availability avail_easy( guy, &rec_easy );
 
-    // Higher difficulty sorts first (existing behavior: b->difficulty < a->difficulty)
+
     CHECK( recipe_sort_compare( &rec_hard, &rec_easy, avail_hard, avail_easy, guy, {},
                                 true, true, false ) );
 }
@@ -513,7 +513,7 @@ TEST_CASE( "recipe_sort_by_name", "[crafting][gui]" )
     availability avail_cudgel( guy, &rec_cudgel );
     availability avail_meat( guy, &rec_meat );
 
-    // "cooked meat" < "cudgel" alphabetically
+
     CHECK( recipe_sort_compare( &rec_meat, &rec_cudgel, avail_meat, avail_cudgel, guy, {},
                                 true, true, false ) );
     CHECK_FALSE( recipe_sort_compare( &rec_cudgel, &rec_meat, avail_cudgel, avail_meat, guy, {},
@@ -533,7 +533,7 @@ TEST_CASE( "recipe_sort_by_craft_time_tiebreaker", "[crafting][gui]" )
     availability avail_fast( guy, &rec_fast );
     availability avail_slow( guy, &rec_slow );
 
-    // Same name, same difficulty -> longer craft time sorts first
+
     CHECK( recipe_sort_compare( &rec_slow, &rec_fast, avail_slow, avail_fast, guy, {},
                                 true, true, false ) );
 }
@@ -549,10 +549,10 @@ TEST_CASE( "recipe_sort_unread_first", "[crafting][gui]" )
     const recipe &rec = recipe_cudgel_test_no_tools.obj();
     availability avail( guy, &rec );
 
-    // a_read=false (unread), b_read=true (read), unread_first=true -> a sorts before b
+
     CHECK( recipe_sort_compare( &rec, &rec, avail, avail, guy, {},
                                 false, true, true ) );
-    // a_read=true (read), b_read=false (unread) -> b should sort first, so a < b is false
+
     CHECK_FALSE( recipe_sort_compare( &rec, &rec, avail, avail, guy, {},
                                       true, false, true ) );
 }
@@ -574,12 +574,12 @@ TEST_CASE( "recipe_sort_unread_disabled", "[crafting][gui]" )
     guy.invalidate_crafting_inventory();
     availability avail_no( guy, &rec );
 
-    // unread_first=false: read state ignored, craftability dominates
+
     CHECK( recipe_sort_compare( &rec, &rec, avail_yes, avail_no, guy, {},
                                 true, false, false ) );
 }
 
-// Helper: join vector of strings for substring searching
+
 static std::string join_lines( const std::vector<std::string> &lines )
 {
     std::string result;
@@ -589,7 +589,7 @@ static std::string join_lines( const std::vector<std::string> &lines )
     return result;
 }
 
-// Wide fold width to avoid wrapping artifacts in tests
+
 static const int test_fold_width = 500;
 
 TEST_CASE( "recipe_info_basic_content", "[crafting][gui]" )
@@ -787,7 +787,7 @@ TEST_CASE( "recipe_info_nested_skips_time", "[crafting][gui]" )
 TEST_CASE( "practice_recipe_description_above_limit", "[crafting][gui]" )
 {
     Character &guy = setup_character();
-    guy.set_skill_level( skill_survival, 3 ); // above skill_limit 2
+    guy.set_skill_level( skill_survival, 3 );
 
     const recipe &rec = recipe_prac_knapping.obj();
     REQUIRE( rec.practice_data );
@@ -801,7 +801,7 @@ TEST_CASE( "practice_recipe_description_above_limit", "[crafting][gui]" )
 TEST_CASE( "practice_recipe_description_below_limit", "[crafting][gui]" )
 {
     Character &guy = setup_character();
-    guy.set_skill_level( skill_survival, 1 ); // below skill_limit 2
+    guy.set_skill_level( skill_survival, 1 );
 
     const recipe &rec = recipe_prac_knapping.obj();
     REQUIRE( rec.practice_data );
@@ -826,7 +826,7 @@ TEST_CASE( "recipe_info_known_by_helper", "[crafting][gui]" )
     const recipe &rec = recipe_test_tallow.obj();
     REQUIRE_FALSE( guy.knows_recipe( &rec ) );
 
-    // Create an NPC helper who knows the recipe
+
     standard_npc helper( "TestHelper" );
     helper.learn_recipe( &rec );
     REQUIRE( helper.knows_recipe( &rec ) );
@@ -873,12 +873,12 @@ TEST_CASE( "practice_recipe_description_non_practice_recipe", "[crafting][gui]" 
     const recipe &rec = recipe_test_tallow.obj();
     REQUIRE_FALSE( rec.practice_data );
 
-    // Should not crash -- returns just the base description
+
     std::string output = practice_recipe_description( rec, guy );
     CHECK_FALSE( output.empty() );
 }
 
-// --- Filter engine tests ---
+
 
 static const std::function<void( size_t, size_t )> no_progress;
 
@@ -924,7 +924,7 @@ TEST_CASE( "filter_by_component", "[crafting][gui][filter]" )
     const recipe *tallow = &recipe_test_tallow.obj();
     recipe_subset subset = make_subset( { cudgel, tallow } );
 
-    // cudgel uses 2x4, tallow uses fat
+
     recipe_subset result = filter_recipes( subset, "c:fat", guy, no_progress );
 
     CHECK( result.contains( tallow ) );
@@ -938,7 +938,7 @@ TEST_CASE( "filter_by_primary_skill", "[crafting][gui][filter]" )
     const recipe *tallow = &recipe_test_tallow.obj();
     recipe_subset subset = make_subset( { cudgel, tallow } );
 
-    // cudgel uses fabrication, tallow uses cooking
+
     recipe_subset result = filter_recipes( subset, "p:fabrication", guy, no_progress );
 
     CHECK( result.contains( cudgel ) );
@@ -952,7 +952,7 @@ TEST_CASE( "filter_by_skill", "[crafting][gui][filter]" )
     const recipe *tallow = &recipe_test_tallow.obj();
     recipe_subset subset = make_subset( { cudgel, tallow } );
 
-    // cooking skill's display name is "food handling"
+
     recipe_subset result = filter_recipes( subset, "s:food handling", guy, no_progress );
 
     CHECK( result.contains( tallow ) );
@@ -966,7 +966,7 @@ TEST_CASE( "filter_by_difficulty_range", "[crafting][gui][filter]" )
     const recipe *tallow = &recipe_test_tallow.obj();
     recipe_subset subset = make_subset( { cudgel, tallow } );
 
-    // cudgel diff 2, tallow diff 3
+
     recipe_subset result = filter_recipes( subset, "l:3~5", guy, no_progress );
 
     CHECK( result.contains( tallow ) );
@@ -981,8 +981,8 @@ TEST_CASE( "filter_comma_chaining", "[crafting][gui][filter]" )
     const recipe *meat = &recipe_meat_cooked_test_no_tools.obj();
     recipe_subset subset = make_subset( { cudgel, tallow, meat } );
 
-    // p:food handling narrows to tallow + meat (both use cooking aka "food handling"),
-    // then -tallow excludes tallow
+
+
     recipe_subset result = filter_recipes( subset, "p:food handling, -tallow", guy, no_progress );
 
     CHECK( result.contains( meat ) );
@@ -994,9 +994,9 @@ TEST_CASE( "filter_memorized_yes", "[crafting][gui][filter]" )
 {
     Character &guy = setup_character();
     const recipe *meat = &recipe_meat_cooked_test_no_tools.obj();
-    // test_tallow is autolearn:false, book_learn only
+
     const recipe *tallow = &recipe_test_tallow.obj();
-    // Explicitly learn one recipe instead of relying on autolearn cache
+
     guy.learn_recipe( meat );
 
     REQUIRE( guy.knows_recipe( meat ) );
@@ -1035,9 +1035,9 @@ TEST_CASE( "filter_by_book", "[crafting][gui][filter]" )
     guy.i_add( cookbook );
     guy.invalidate_crafting_inventory();
 
-    // test_tallow has book_learn: family_cookbook:1
+
     const recipe *tallow = &recipe_test_tallow.obj();
-    // cudgel has no book_learn
+
     const recipe *cudgel = &recipe_cudgel_test_no_tools.obj();
     recipe_subset subset = make_subset( { tallow, cudgel } );
 
@@ -1049,20 +1049,20 @@ TEST_CASE( "filter_by_book", "[crafting][gui][filter]" )
 
 TEST_CASE( "filter_r_prefix_replaces_not_intersects", "[crafting][gui][filter]" )
 {
-    // Characterization test: the r: branch rebuilds from available_recipes
-    // (the unfiltered superset), not from filtered_recipes.
-    // This means prior filters in a comma chain are lost.
+
+
+
     Character &guy = setup_character();
     const recipe *cudgel = &recipe_cudgel_test_no_tools.obj();
     const recipe *tallow = &recipe_test_tallow.obj();
     const recipe *meat = &recipe_meat_cooked_test_no_tools.obj();
     recipe_subset subset = make_subset( { cudgel, tallow, meat } );
 
-    // p:food handling narrows to tallow + meat, then r:cudgel replaces with
-    // recipes producing items matching "cudgel" from available_recipes
+
+
     recipe_subset result = filter_recipes( subset, "p:food handling, r:cudgel", guy, no_progress );
 
-    // r: searched available_recipes, ignoring the p:cooking narrowing
+
     CHECK( result.contains( cudgel ) );
     CHECK_FALSE( result.contains( tallow ) );
     CHECK_FALSE( result.contains( meat ) );
@@ -1070,9 +1070,9 @@ TEST_CASE( "filter_r_prefix_replaces_not_intersects", "[crafting][gui][filter]" 
 
 TEST_CASE( "filter_difficulty_malformed_matches_all", "[crafting][gui][filter]" )
 {
-    // Characterization test: malformed difficulty input matches everything.
-    // Non-digit, non-tilde chars trigger early return true in the
-    // recipe_subset::search difficulty parser.
+
+
+
     Character &guy = setup_character();
     const recipe *cudgel = &recipe_cudgel_test_no_tools.obj();
     const recipe *tallow = &recipe_test_tallow.obj();
@@ -1084,7 +1084,7 @@ TEST_CASE( "filter_difficulty_malformed_matches_all", "[crafting][gui][filter]" 
     CHECK( result.contains( tallow ) );
 }
 
-// --- Recipe result info tests ---
+
 
 static bool info_has_text( const std::vector<iteminfo> &info, const std::string &text )
 {
@@ -1156,20 +1156,20 @@ TEST_CASE( "result_info_batch_scaling", "[crafting][gui][result_info]" )
     Character &guy = setup_character();
     const recipe &rec = recipe_cudgel_test_no_tools.obj();
 
-    // batch_size=5, makes_amount=1 -> total_quantity=5 -> " (5)" appended
+
     std::vector<iteminfo> info_batch5 = recipe_result_info( rec, guy, 5, 80 );
     CHECK( info_has_text( info_batch5, "(5)" ) );
 
-    // batch_size=1, makes_amount=1 -> total_quantity=1 -> no count appended
+
     std::vector<iteminfo> info_batch1 = recipe_result_info( rec, guy, 1, 80 );
     CHECK_FALSE( info_has_text( info_batch1, "(1)" ) );
 }
 
 TEST_CASE( "result_info_varsize_poor_fit_warning", "[crafting][gui][result_info]" )
 {
-    // test_longshirt has VARSIZE. get_recipe_result_item adds FIT for a
-    // human-sized character. result_item_header then finds the VARSIZE
-    // component and emits the "poorly-fitted" warning.
+
+
+
     Character &guy = setup_character();
     const recipe &rec = recipe_test_longshirt_test_poor_fit.obj();
 
@@ -1178,7 +1178,7 @@ TEST_CASE( "result_info_varsize_poor_fit_warning", "[crafting][gui][result_info]
     CHECK( info_has_text( info, "poorly" ) );
 }
 
-// --- Recipe list pipeline tests ---
+
 
 static void clear_recipe_ui_state()
 {
@@ -1238,8 +1238,8 @@ TEST_CASE( "build_recipe_list_sort_craftable_first", "[crafting][gui][recipe_lis
     guy.i_add( item( itype_2x4 ) );
     guy.invalidate_crafting_inventory();
 
-    // cudgel_test_no_tools: needs 2x4, no tools -- craftable with inventory above
-    // test_tallow: needs fat + CUT 2 quality -- not craftable (no fat or knife)
+
+
     const recipe *cudgel = &recipe_cudgel_test_no_tools.obj();
     const recipe *tallow = &recipe_test_tallow.obj();
     std::vector<const recipe *> picking = { tallow, cudgel };
@@ -1250,7 +1250,7 @@ TEST_CASE( "build_recipe_list_sort_craftable_first", "[crafting][gui][recipe_lis
                               guy, false, nullptr, false, false, cache, available );
 
     REQUIRE( result.available.size() == 2 );
-    // Craftable recipes come first in sorted order
+
     bool seen_uncraftable = false;
     for( const availability &entry : result.available ) {
         if( !entry.can_craft_recipe ) {
@@ -1271,7 +1271,7 @@ TEST_CASE( "build_recipe_list_expands_nested", "[crafting][gui][recipe_list]" )
     const recipe *nested = &recipe_test_nested_weapons.obj();
     const recipe *cudgel = &recipe_cudgel_test_no_tools.obj();
     std::vector<const recipe *> picking = { nested };
-    // available_recipes must contain the child recipe for expansion to include it
+
     recipe_subset available = make_subset( { nested, cudgel } );
 
     uistate.expanded_recipes.insert( recipe_test_nested_weapons );
@@ -1280,7 +1280,7 @@ TEST_CASE( "build_recipe_list_expands_nested", "[crafting][gui][recipe_list]" )
     recipe_list_data result = build_recipe_list( picking, false, false,
                               guy, false, nullptr, false, false, cache, available );
 
-    // Expansion should have inserted the child after the nested category
+
     REQUIRE( result.entries.size() == 2 );
     CHECK( result.entries[0]->ident() == recipe_test_nested_weapons );
     CHECK( result.entries[1]->ident() == recipe_cudgel_test_no_tools );

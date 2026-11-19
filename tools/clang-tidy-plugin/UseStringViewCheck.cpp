@@ -61,8 +61,8 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ).bind( "function" ),
         this
     );
-    // This looks for passing a string as a parameter to a function taking a
-    // const string&
+
+
     Finder->addMatcher(
         callExpr(
             forEachArgumentWithParamType(
@@ -73,8 +73,8 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ),
         this
     );
-    // This looks for passing a string to a function of dependent type, so we
-    // can't know if it's safe to transform
+
+
     Finder->addMatcher(
         callExpr(
             hasAnyArgument( refToStringRefParam() ),
@@ -82,7 +82,7 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ).bind( "badExpr" ),
         this
     );
-    // This looks for passing a string to a constructor taking a const string&
+
     Finder->addMatcher(
         cxxConstructExpr(
             forEachArgumentWithParamType(
@@ -93,12 +93,12 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ),
         this
     );
-    // This looks for passing a string to a dependent constructor
+
     Finder->addMatcher(
         cxxUnresolvedConstructExpr( hasAnyArgument( refToStringRefParam() ) ).bind( "badExpr" ),
         this
     );
-    // This looks for calling a member function on a string
+
     Finder->addMatcher(
         cxxMemberCallExpr(
             on( refToStringRefParam() ),
@@ -106,7 +106,7 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ).bind( "membercall" ),
         this
     );
-    // This looks for binding a string to a const& member variable
+
     Finder->addMatcher(
         cxxCtorInitializer(
             withInitializer( refToStringRefParam() ),
@@ -114,15 +114,15 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ),
         this
     );
-    // This looks fo a different structure that happens in constructor
-    // templates sometimes
-    // `-CXXConstructorDecl A10<T> 'void (const std::string &, const T &)'
-    //   |-CXXCtorInitializer 'A10b'
-    //   | `-ParenListExpr 'NULL TYPE'
-    //   |   `-DeclRefExpr 'const std::string' lvalue ParmVar 's' 'const std::string &'
-    // Strangely the CXXCtorInitializer level doesn't seem to appear in the
-    // parent structure for matchers, so we can't actually match the field
-    // being initialized.
+
+
+
+
+
+
+
+
+
     Finder->addMatcher(
         declRefExpr(
             refToStringRefParam(),
@@ -130,12 +130,12 @@ void UseStringViewCheck::registerMatchers( MatchFinder *Finder )
         ).bind( "badExpr" ),
         this
     );
-    // This looks for returning the parameter
+
     Finder->addMatcher(
         returnStmt( hasReturnValue( refToStringRefParam().bind( "badExpr" ) ) ),
         this
     );
-    // This looks for taking the address of the parameter
+
     Finder->addMatcher(
         unaryOperator(
             hasOperatorName( "&" ),
@@ -152,15 +152,15 @@ void UseStringViewCheck::check( const MatchFinder::MatchResult &Result )
     const Expr *BadExpr = Result.Nodes.getNodeAs<Expr>( "badExpr" );
     const FieldDecl *Field = Result.Nodes.getNodeAs<FieldDecl>( "field" );
     if( Callee || Field || BadExpr ) {
-        // This means we should abort our attempt to rewrite the containing
-        // function
+
+
         if( Result.Nodes.getNodeAs<CXXMemberCallExpr>( "membercall" ) ) {
             if( const CXXMethodDecl *MethodCallee = dyn_cast<CXXMethodDecl>( Callee ) ) {
                 if( !MethodCallee->getDeclName().isIdentifier() ||
                     MethodCallee->getName() != "c_str" ) {
-                    // ...with the exception of calls to member functions other
-                    // than c_str, since those should continue to work on
-                    // string_view.
+
+
+
                     return;
                 }
             }
@@ -202,15 +202,15 @@ void UseStringViewCheck::check( const MatchFinder::MatchResult &Result )
 
     const bool IsDefinition = Func->getDefinition() == Func;
     if( IsDefinition ) {
-        // Save the replacement info for later use if we encounter the
-        // definition later
+
+
         found_defns_.emplace(
             Func->getFirstDecl(),
             FoundStringViewDefn{ Param, Func, DeclarationReplacementText } );
         return;
     } else {
-        // Save the replacement info for later use if we encounter the
-        // definition later
+
+
         found_decls_.emplace(
             Func->getFirstDecl(),
             FoundStringViewDecl{ Param->getSourceRange(), DeclarationReplacementText } );
@@ -223,8 +223,8 @@ void UseStringViewCheck::onEndOfTranslationUnit()
     for( const std::pair<const FunctionDecl *const, FoundStringViewDefn> &p : found_defns_ ) {
         const ParmVarDecl *Param = p.second.param;
         const FunctionDecl *Func = p.second.func;
-        // Go back and collect all the previously saved FixIts for declarations of
-        // this function
+
+
         std::vector<FixItHint> fixits;
 
         auto prior_matches = found_decls_.equal_range( Func->getFirstDecl() );
@@ -241,4 +241,4 @@ void UseStringViewCheck::onEndOfTranslationUnit()
     }
 }
 
-} // namespace clang::tidy::cata
+}

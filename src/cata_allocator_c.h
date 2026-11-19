@@ -22,4 +22,4 @@ extern alloc_funcs cata_get_alloc_funcs( void );
 }
 #endif
 
-#endif // CATA_SRC_CATA_ALLOCATOR_C_H
+#endif

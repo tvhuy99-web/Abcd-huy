@@ -80,4 +80,4 @@ struct cata_timer {
         static std::vector<timers_map::iterator> &timer_stack();
 };
 
-#endif // CATA_SRC_PERF_H
+#endif

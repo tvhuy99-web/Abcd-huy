@@ -18,10 +18,10 @@ enum class step_choice : int {
     set_timer,
 };
 
-// Per-step choice from the planning modal.
+
 struct attention_plan {
     step_choice choice = step_choice::do_wait;
     std::optional<time_duration> alarm_offset;
 };
 
-#endif // CATA_SRC_CRAFTING_ENUMS_H
+#endif

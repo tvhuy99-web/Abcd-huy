@@ -38,8 +38,8 @@ MIX_Track *g_music_track = nullptr;
 bool_predicate g_slow_time_predicate = nullptr;
 music_finished_cb g_music_finished_cb = nullptr;
 
-// SFX_TAG is applied to every SFX track so MIX_StopTag(mixer, SFX_TAG, ...)
-// affects all SFX without touching music.
+
+
 constexpr const char *SFX_TAG = "sfx";
 
 constexpr float SLOW_TIME_FACTOR = 0.25f;
@@ -50,15 +50,15 @@ std::array<float, static_cast<size_t>( sfx::channel::MAX_CHANNEL )> g_reserved_b
 std::array<float, static_cast<size_t>( sfx::channel::MAX_CHANNEL )> g_reserved_base_gain{};
 std::array<float, static_cast<size_t>( sfx::channel::MAX_CHANNEL )> g_reserved_distance_scale{};
 
-// One-shot tracks are created per play. The stopped callback fires
-// on the mixer's audio thread while the mixer is still iterating
-// internal track state, so destroying the track from inside that
-// callback is undefined behavior. Instead the callback marks the
-// entry as stopped; poll() reaps (MIX_DestroyTrack + vector erase)
-// on the main thread.
-//
-// base_pitch is the caller's per-play pitch so poll() can recompose
-// pitch with the current slow-time factor without losing it.
+
+
+
+
+
+
+
+
+
 struct oneshot_entry {
     MIX_Track *track;
     float base_pitch;
@@ -67,8 +67,8 @@ struct oneshot_entry {
 std::mutex g_oneshots_mutex;
 std::vector<oneshot_entry> g_oneshots;
 
-// Music generation token: bump on every play_music / stop_music so
-// superseded stopped callbacks no-op.
+
+
 std::atomic<uint32_t> g_music_generation{0};
 std::vector<std::unique_ptr<uint32_t>> g_music_generation_tokens;
 
@@ -101,10 +101,10 @@ MIX_Track *reserved_track( sfx::channel slot )
 void oneshot_stopped_cb( void *userdata, MIX_Track *track )
 {
     ( void )userdata;
-    // Do NOT destroy the track here. SDL3_mixer invokes this callback
-    // while still holding internal references; MIX_DestroyTrack from
-    // inside the callback is UB. Mark the entry stopped and let poll()
-    // reap on the main thread.
+
+
+
+
     std::scoped_lock lock( g_oneshots_mutex );
     for( oneshot_entry &e : g_oneshots ) {
         if( e.track == track ) {
@@ -114,7 +114,7 @@ void oneshot_stopped_cb( void *userdata, MIX_Track *track )
     }
 }
 
-void music_stopped_cb( void *userdata, MIX_Track * /*track*/ )
+void music_stopped_cb( void *userdata, MIX_Track * )
 {
     const uint32_t *const captured = static_cast<const uint32_t *>( userdata );
     if( captured == nullptr || *captured != g_music_generation.load() ) {
@@ -136,8 +136,8 @@ float volume_to_gain( int vol )
     return static_cast<float>( vol ) / 128.0f;
 }
 
-// Distance semantics inherited from Mix_SetPosition: 0 = closest (max
-// volume), 255 = farthest (muted). Linear attenuation.
+
+
 float distance_to_scale( int distance )
 {
     if( distance <= 0 ) {
@@ -151,14 +151,14 @@ float distance_to_scale( int distance )
 
 void apply_pan( MIX_Track *track, int angle_deg )
 {
-    // Equal-power pan law.
+
     const float pan_x = std::sin( static_cast<float>( angle_deg ) * 3.14159265f / 180.0f );
     MIX_StereoGains gains;
     gains.left  = std::sqrt( 0.5f * ( 1.0f - pan_x ) );
     gains.right = std::sqrt( 0.5f * ( 1.0f + pan_x ) );
     MIX_SetTrackStereo( track, &gains );
 }
-} // namespace
+}
 
 bool init( int frequency, int out_channels, int chunk_size,
            const init_options &opts )
@@ -208,8 +208,8 @@ void shutdown()
     }
     g_reserved_tracks.fill( nullptr );
 
-    // Snapshot under the lock, destroy outside it: calling MIX_* while
-    // holding g_oneshots_mutex deadlocks against the mixer thread.
+
+
     std::vector<MIX_Track *> to_destroy;
     {
         std::scoped_lock lock( g_oneshots_mutex );
@@ -294,12 +294,12 @@ void configure_and_play( MIX_Track *track, const play_opts &opts )
     if( opts.positional ) {
         apply_pan( track, opts.angle_deg );
     }
-    // Compose the caller's pitch with the current slow-time factor so
-    // sounds spawned while bullet-time is active start slowed, rather
-    // than waiting for the next poll. Caller's pitch follows the
-    // do_pitch_shift convention (smaller = higher perceived pitch,
-    // produces a shorter chunk), which is the inverse of a native
-    // frequency ratio; invert here.
+
+
+
+
+
+
     const float slow = slow_time_predicate_active() ? SLOW_TIME_FACTOR : 1.0f;
     MIX_SetTrackFrequencyRatio( track, ( 1.0f / opts.pitch ) * slow );
 
@@ -313,7 +313,7 @@ void configure_and_play( MIX_Track *track, const play_opts &opts )
     MIX_PlayTrack( track, props );
     SDL_DestroyProperties( props );
 }
-} // namespace
+}
 
 void play_reserved( sfx_audio *a, sfx::channel slot, const play_opts &opts )
 {
@@ -380,11 +380,11 @@ void stop_reserved( sfx::channel slot, int fade_out_ms )
     if( fade_out_ms <= 0 ) {
         MIX_StopTrack( track, 0 );
     } else {
-        // MIX_StopTrack is not fade-idempotent: each call re-arms the
-        // fade countdown. Callers (e.g. sfx::do_ambient) invoke this
-        // on every tick while the sound is still audible, so the guard
-        // below lets an in-progress fade finish on its original
-        // schedule.
+
+
+
+
+
         if( MIX_GetTrackFadeFrames( track ) != 0 ) {
             return;
         }
@@ -466,8 +466,8 @@ float reserved_track_frequency_ratio( sfx::channel slot )
 }
 float last_oneshot_frequency_ratio()
 {
-    // Read the track under the lock, query the mixer outside it: calling
-    // MIX_* while holding g_oneshots_mutex deadlocks against the mixer thread.
+
+
     MIX_Track *track = nullptr;
     {
         std::scoped_lock lock( g_oneshots_mutex );
@@ -483,7 +483,7 @@ sfx_audio *make_synthetic_sfx_audio()
     if( g_mixer == nullptr ) {
         return nullptr;
     }
-    // One frame of silent stereo float32 PCM.
+
     static const float silent_frame[2] = { 0.0f, 0.0f };
     SDL_AudioSpec spec{};
     spec.freq = 44100;
@@ -498,7 +498,7 @@ sfx_audio *make_synthetic_sfx_audio()
     a->audio = audio;
     return a;
 }
-} // namespace testing
+}
 
 void stop_all_sfx( int fade_out_ms )
 {
@@ -513,10 +513,10 @@ void fade_group( sfx::group g, int ms )
     if( g_mixer == nullptr ) {
         return;
     }
-    // Reserved tracks are reused across plays, so per-slot
-    // MIX_StopTrack is the authoritative way to stop them even though
-    // they also carry the group tag. The tag-based MIX_StopTag path is
-    // unreliable on reused tracks in this backend.
+
+
+
+
     for( size_t i = 0; i < g_reserved_tracks.size(); ++i ) {
         if( g_reserved_groups[i] != g ) {
             continue;
@@ -528,8 +528,8 @@ void fade_group( sfx::group g, int ms )
         if( ms <= 0 ) {
             MIX_StopTrack( t, 0 );
         } else {
-            // Skip if already fading; re-issuing MIX_StopTrack resets
-            // the fade countdown and would stall the fade.
+
+
             if( MIX_GetTrackFadeFrames( t ) != 0 ) {
                 continue;
             }
@@ -547,9 +547,9 @@ void poll()
             MIX_SetTrackFrequencyRatio( t, ( 1.0f / g_reserved_base_pitch[i] ) * slow );
         }
     }
-    // oneshot_stopped_cb locks g_oneshots_mutex from the mixer thread while
-    // the mixer holds its own lock, so calling MIX_* under our lock is a
-    // lock-order inversion that deadlocks. Snapshot here, touch mixer below.
+
+
+
     std::vector<MIX_Track *> to_destroy;
     std::vector<std::pair<MIX_Track *, float>> to_retune;
     {
@@ -629,6 +629,6 @@ bool is_music_playing()
     return g_music_track != nullptr && MIX_TrackPlaying( g_music_track );
 }
 
-} // namespace sound_backend
+}
 
-#endif // SDL_SOUND
+#endif

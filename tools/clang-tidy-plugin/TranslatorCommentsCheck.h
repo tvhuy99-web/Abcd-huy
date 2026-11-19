@@ -40,8 +40,8 @@ class TranslatorCommentsCheck : public ClangTidyCheck
         class TranslationMacroCallback;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_TRANSLATORCOMMENTSCHECK_H
+#endif

@@ -13,45 +13,45 @@ class JsonOut;
 class mission;
 
 struct dialogue_chatbin {
-    /**
-     * Add a new mission to the available missions (@ref missions). For compatibility it silently
-     * ignores null pointers passed to it.
-     */
+
+
+
+
     void add_new_mission( mission *miss );
-    /**
-     * Check that assigned missions are still assigned if not move them back to the
-     * unassigned vector. This is called directly before talking.
-     */
+
+
+
+
     void check_missions();
-    /**
-     * Missions that the talker can give out. All missions in this vector should be unassigned,
-     * when given out, they should be moved to @ref missions_assigned.
-     */
+
+
+
+
     std::vector<mission *> missions;
-    /**
-     * Mission that have been assigned by this dialogue to a player character.
-     */
+
+
+
     std::vector<mission *> missions_assigned;
-    /**
-     * The mission (if any) that we talk about right now. Can be null. Should be one of the
-     * missions in @ref missions or @ref missions_assigned.
-     */
+
+
+
+
     mission *mission_selected = nullptr;
-    /**
-     * The skill this dialogue offers to train.
-     */
+
+
+
     skill_id skill;
-    /**
-     * The martial art style this dialogue offers to train.
-     */
+
+
+
     matype_id style;
-    /**
-     * The spell this dialogue offers to train
-     */
+
+
+
     spell_id dialogue_spell;
-    /**
-     * The proficiency this dialogue offers to train
-     */
+
+
+
     proficiency_id proficiency;
     void store_chosen_training( const skill_id &c_skill, const matype_id &c_style,
                                 const spell_id &c_spell, const proficiency_id &c_proficiency );
@@ -81,7 +81,7 @@ struct dialogue_chatbin {
 };
 
 struct dialogue_chatbin_snippets {
-    // talk from npcmove.cpp(can use snippets in json)
+
     translation snip_camp_food_thanks = no_translation( "<camp_food_thanks>" );
     translation snip_camp_larder_empty = no_translation( "<camp_larder_empty>" );
     translation snip_camp_water_thanks = no_translation( "<camp_water_thanks>" );
@@ -132,11 +132,11 @@ struct dialogue_chatbin_snippets {
     translation snip_bleeding_badly = to_translation( "My %s is bleeding badly!" );
     translation snip_radiation_sickness = to_translation( "I'm suffering from radiation sickness…" );
 
-    // talk from npctalk.cpp(can use snippets in json)
+
     translation snip_acknowledged = no_translation( "<acknowledged>" );
     translation snip_bye = no_translation( "<end_talking_bye>" );
 
-    // talk from talker_npc.cpp(can use snippets in json)
+
     translation snip_consume_cant_accept =
         to_translation( "I don't fuckin' trust you enough to eat THIS…" );
     translation snip_consume_cant_consume =
@@ -161,8 +161,8 @@ struct dialogue_chatbin_snippets {
         to_translation( "…or to store anything else for that matter." );
     translation snip_give_carry_too_heavy = to_translation( "It is too heavy for me to carry." );
 
-    // talk from npc.cpp(can use snippets in json)
+
     translation snip_wear = to_translation( "Thanks, I'll wear that now." );
 };
 
-#endif // CATA_SRC_DIALOGUE_CHATBIN_H
+#endif

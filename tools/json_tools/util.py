@@ -55,15 +55,15 @@ def import_data(json_dir=JSON_DIR, json_fmatch=JSON_FNMATCH):
 def match_primitive_values(item_value, where_value):
     """Perform any odd logic on item matching.
     """
-    # Matching interpolation for keyboard constrained input.
+
     if type(item_value) is str:
-        # Direct match
+
         return bool(re.match(where_value, item_value))
     elif type(item_value) is int or type(item_value) is float:
-        # match after string conversion
+
         return bool(re.match(where_value, str(item_value)))
     elif type(item_value) is bool:
-        # help conversion to JSON booleans from the commandline
+
         return bool(re.match(where_value, str(item_value).lower()))
     else:
         return False
@@ -83,23 +83,23 @@ def matches_where(item, where_key, where_value):
         return True
     if where_key not in item:
         return False
-    # So we have some value.
+
     item_value = item[where_key]
-    # Matching interpolation for keyboard constrained input.
+
     if type(item_value) is list:
-        # 1 level deep.
+
         for next_level in item_value:
             if match_primitive_values(next_level, where_value):
                 return True
-        # else...
+
         return False
     elif type(item_value) is dict:
-        # Match against the keys of the dictionary... I question my logic.
-        # 1 level deep.
+
+
         for next_level in item_value:
             if match_primitive_values(next_level, where_value):
                 return True
-        # else...
+
         return False
     else:
         return match_primitive_values(item_value, where_value)
@@ -120,7 +120,7 @@ def matches_all_wheres(item, where_fn_list):
     for where_fn in where_fn_list:
         if not where_fn(item):
             return False
-    # Must be a match.
+
     return True
 
 
@@ -171,20 +171,20 @@ def key_counter(data, where_fn_list):
     stats = Counter()
     matching_data = [i for i in data if matches_all_wheres(i, where_fn_list)]
     for item in matching_data:
-        # Check each key for nested data
+
         for key in item.keys():
-            # Skip comments
+
             if key.startswith('//'):
                 continue
 
             val = item[key]
-            # If value is an object, tally key.subkey for all object subkeys
+
             if type(val) is OrderedDict:
                 for subkey in val.keys():
                     if not subkey.startswith('//'):
                         stats[key + '.' + subkey] += 1
 
-            # If value is a list of objects, tally key.subkey for each
+
             elif type(val) is list:
                 if all(type(e) is OrderedDict for e in val):
                     for obj in val:
@@ -192,7 +192,7 @@ def key_counter(data, where_fn_list):
                             if not subkey.startswith('//'):
                                 stats[key + '.' + subkey] += 1
 
-            # For anything else, it only counts as one
+
             else:
                 stats[key] += 1
 
@@ -204,16 +204,16 @@ def item_value_counter(_value):
     recursing into nested dicts and lists.
     """
     stats = Counter()
-    # String or unicode
+
     if isinstance(_value, str):
         stats[_value] += 1
-    # Cast numbers to strings
+
     elif type(_value) is int or type(_value) is float:
         stats[str(_value)] += 1
-    # Pull all values from objects
+
     elif type(_value) is OrderedDict:
         stats += list_value_counter(list(_value.values()))
-    # Pull values from list of objects or strings
+
     elif type(_value) is list:
         stats += list_value_counter(_value)
     else:
@@ -242,13 +242,13 @@ def value_counter(data, search_key, where_fn_list):
     stats = Counter()
     matching_data = [i for i in data if matches_all_wheres(i, where_fn_list)]
 
-    # Search key may use one level of dotted notation to descend into an
-    # dict or list-of-dict in the matching data
 
-    # Exactly one dot is allowed to look in parent_key.child_key
+
+
+
     if search_key.count('.') == 1:
         parent_key, child_key = search_key.split('.')
-    # With no dots, just use the plain key
+
     elif search_key.count('.') == 0:
         parent_key = search_key
         child_key = None
@@ -262,26 +262,26 @@ def value_counter(data, search_key, where_fn_list):
 
         parent_val = item[parent_key]
 
-        # List of values within this item to tally stats on
+
         stat_vals = []
 
-        # If this value is a list of objects, pull parent_key.child_key
-        # values from all of them to include in stats
+
+
         if type(parent_val) is list and all(type(e) is OrderedDict
                                             for e in parent_val):
             for od in parent_val:
                 if child_key in od:
                     stat_vals.append(od[child_key])
 
-        # If this value is a single object, get value at parent_key.child_key
+
         elif type(parent_val) is OrderedDict and child_key in parent_val:
             stat_vals.append(parent_val[child_key])
 
-        # Other kinds of data cannot be indexed by parent_key.child_key
+
         else:
             stat_vals.append(parent_val)
 
-        # Tally all stats, recursing into nested values
+
         for val in stat_vals:
             stats += item_value_counter(val)
 
@@ -306,8 +306,8 @@ def ui_counts_to_columns(counts):
     """Take a Counter instance and display in single fixed width key:value
     column.
     """
-    # Values in left column, counts in right, left
-    # column as wide as longest string length.
+
+
     key_vals = counts.most_common()
     key_field_len = len(max(list(counts.keys()), key=len)) + 1
     output_template = "%%-%ds: %%s" % key_field_len
@@ -330,9 +330,9 @@ class CDDAJSONWriter(object):
 
     def __init__(self, d, indent_multiplier=0):
         self.d = d
-        # Should you wish to change the initial indent for whatever reason.
+
         self.indent_multiplier = indent_multiplier
-        # buf is initialized on a call to dumps
+
 
     def indented_write(self, s):
         self.buf.write(self.indent * self.indent_multiplier + s)
@@ -355,7 +355,7 @@ class CDDAJSONWriter(object):
             while inner:
                 self.indent_multiplier += 1
                 item = inner.pop(0)
-                # Print each of these on one line
+
                 self.indented_write(json.dumps(item))
                 if inner:
                     self.buf.write(",\n")
@@ -379,13 +379,13 @@ class CDDAJSONWriter(object):
         self.indent_multiplier += 1
         while items:
             k, v = items.pop(0)
-            # Special cases first.
+
             if (k == "tools" or k == "components") and type(v) is list:
                 self.list_of_lists(k, v)
             else:
                 self.write_primitive_key_val(k, v)
 
-            # Trailing comma or not
+
             if items:
                 self.buf.write(",\n")
         self.buf.write("\n")

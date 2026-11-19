@@ -50,8 +50,8 @@ TEST_CASE( "No_string_buffer_overlap_in_TranslationDocument", "[translations]" )
         CAPTURE( path );
         REQUIRE( file_exist( path ) );
         TranslationDocument document( path );
-        // The following code walks through every string contained in the MO document
-        // So AddressSanitizer can also detect memory access violation if there is any
+
+
         const std::size_t n = document.Count();
         const char *last_ending = nullptr;
         for( std::size_t i = 0; i < n; i++ ) {
@@ -88,7 +88,7 @@ TEST_CASE( "TranslationManager_translate_benchmark", "[.][benchmark][translation
 {
     TranslationManager manager;
 
-    // English fixture
+
     REQUIRE( file_exist( std::filesystem::u8path( "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" ) ) );
     manager.LoadDocuments( std::vector<std::string> {"./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo"} );
     REQUIRE( strcmp( manager.Translate( "battery" ), "battery" ) != 0 );
@@ -96,7 +96,7 @@ TEST_CASE( "TranslationManager_translate_benchmark", "[.][benchmark][translation
         return manager.Translate( "battery" );
     };
 
-    // Reload the English fixture
+
     REQUIRE( file_exist( std::filesystem::u8path( "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" ) ) );
     manager.LoadDocuments( std::vector<std::string> {"./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo"} );
     REQUIRE( strcmp( manager.Translate( "battery" ), "battery" ) != 0 );
@@ -104,7 +104,7 @@ TEST_CASE( "TranslationManager_translate_benchmark", "[.][benchmark][translation
         return manager.Translate( "battery" );
     };
 
-    // English
+
     manager.LoadDocuments( std::vector<std::string>() );
     REQUIRE( strcmp( manager.Translate( "battery" ), "battery" ) == 0 );
     BENCHMARK( "English" ) {

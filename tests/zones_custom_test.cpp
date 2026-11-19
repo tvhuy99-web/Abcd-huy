@@ -69,7 +69,7 @@ TEST_CASE( "zones_custom", "[zones]" )
         REQUIRE( zmgr.get_near_zone_type_for_item( pants_fur, where ) ==
                  zone_type_LOOT_ITEM_GROUP );
         REQUIRE( zmgr.get_near_zone_type_for_item( batt, where ) == zone_type_LOOT_ITEM_GROUP );
-        // this should match both types but custom zone comes first
+
         REQUIRE( zmgr.get_near_zone_type_for_item( bag_plastic, where ) == zone_type_LOOT_CUSTOM );
 
         pset const hammerpoints =
@@ -114,6 +114,6 @@ TEST_CASE( "zones_custom", "[zones]" )
         REQUIRE( nbp2.count( tripoint_abs_ms( zone_bowsaw_end ) ) == 0 );
         REQUIRE( nbp2.count( tripoint_abs_ms( zone_testgroup_end ) ) == 0 );
         REQUIRE( nbp2.count( tripoint_abs_ms( zone_groupbatt_end ) ) == 0 );
-        REQUIRE( nbp2.count( tripoint_abs_ms( m_zone_loc ) ) == 1 ); // container matches this zone
+        REQUIRE( nbp2.count( tripoint_abs_ms( m_zone_loc ) ) == 1 );
     }
 }

@@ -54,20 +54,20 @@ static const trait_id trait_MYOPIC( "MYOPIC" );
 static const time_point midnight = calendar::turn_zero + 0_hours;
 static const time_point day_time = calendar::turn_zero + 9_hours + 30_minutes;
 
-// avatar at `center` with nothing that changes its vision, map cleared
+
 static void reset_avatar_and_map( const tripoint_bub_ms &center )
 {
     clear_avatar();
     Character &you = get_player_character();
     you.clear_mutations();
     g->place_player( center );
-    // outside the middle submaps the map shifts and avatar lands elsewhere
+
     REQUIRE( get_avatar().pos_bub() == center );
     clear_map_without_vision( -2, OVERMAP_HEIGHT );
     g->reset_light_level();
 }
 
-// dark roofed room of floor walled at `radius`, avatar at its center
+
 static void build_dark_room( const tripoint_bub_ms &center, const int radius )
 {
     reset_avatar_and_map( center );
@@ -84,7 +84,7 @@ static void build_dark_room( const tripoint_bub_ms &center, const int radius )
     get_player_character().recalc_sight_limits();
 }
 
-// caches as a turn leaves them, run twice so vision threshold follows new light
+
 static void settle_caches( const int z )
 {
     map &here = get_map();
@@ -275,7 +275,7 @@ TEST_CASE( "standing_threshold_is_an_eighth_of_a_tile_in_tileset_pixels",
                  ortho ) );
     CHECK( smooth_lighting::sprite_stands( footprint( { 32, 37 }, point::zero, { 32, 37 }, -5 ),
                                            ortho ) );
-    // iso ground line is the diamond's top corner, 32 - 16
+
     CHECK_FALSE( smooth_lighting::sprite_stands( footprint( { 32, 32 }, { 0, 12 }, { 32, 32 }, 0 ),
                  iso ) );
     CHECK( smooth_lighting::sprite_stands( footprint( { 32, 32 }, { 0, 11 }, { 32, 32 }, 0 ),
@@ -295,8 +295,8 @@ TEST_CASE( "lighting_mode_defaults_to_smooth", "[smooth_lighting]" )
 
 TEST_CASE( "lightmap_extent_covers_the_view_range_on_screen", "[smooth_lighting]" )
 {
-    // avatar at bubble ( 65, 65 ): view range 5 to 125, screen wider than the
-    // bubble, as at far zoom
+
+
     const point view_min( 5, 5 );
     const point view_max( 125, 125 );
     const smooth_lighting::lightmap_extent extent{
@@ -442,7 +442,7 @@ TEST_CASE( "avatar_move_on_foot_bumps_the_seen_generation", "[smooth_lighting][v
     build_dark_room( center, 6 );
     settle_caches( 0 );
     map &here = get_map();
-    // on foot: build_seen_cache returns before its vehicle mirror pass
+
     REQUIRE_FALSE( here.veh_at( center ) );
     const uint64_t seen_before = here.seen_generation();
     g->place_player( center + tripoint::east );
@@ -538,7 +538,7 @@ TEST_CASE( "colored_light_fades_to_white_as_it_dims", "[smooth_lighting][light_c
 TEST_CASE( "colored_light_fades_out_at_its_reach_under_other_light",
            "[smooth_lighting][light_color]" )
 {
-    // magenta at its last tile, where white light still lights the floor
+
     light_color_rgb magenta;
     magenta.r = LIGHT_AMBIENT_LOW;
     magenta.g = 0.0f;
@@ -557,7 +557,7 @@ TEST_CASE( "colored_light_fades_out_at_its_reach_under_other_light",
     }
 }
 
-// lit floor round ( 60, 60 ) at noon, avatar on it
+
 static void build_lit_ground()
 {
     reset_avatar_and_map( tripoint_bub_ms( 60, 60, 0 ) );
@@ -588,7 +588,7 @@ static std::vector<smooth_lighting::lightmap_texel> encode_lit_ground( const boo
 static uint32_t reach_at( const point &p )
 {
     const std::vector<smooth_lighting::lightmap_texel> layer = encode_lit_ground( true );
-    // only a seen cell has a mask
+
     CAPTURE( get_map().access_cache( 0 ).visibility_cache[p.x][p.y] );
     REQUIRE( ( layer[smooth_lighting::light_index( p )].a & smooth_lighting::texel_detail ) != 0 );
     return smooth_lighting::texel_reach( layer[smooth_lighting::reach_index( p )] );
@@ -668,13 +668,13 @@ struct test_lightmap {
     std::vector<smooth_lighting::lightmap_texel> texels;
     smooth_lighting::lightmap_view view;
 };
-} // namespace
+}
 
 static constexpr int test_columns = 8;
 static constexpr int test_rows = 8;
 
-// middle of three z levels from text rows: 'o' lit floor, 'T' floor at
-// t_light with red hue, '#' seen wall, 'X' both, ' ' floor out of sight
+
+
 static test_lightmap build_test_lightmap( const std::vector<std::string> &rows,
         const float floor_light, const float t_light )
 {
@@ -705,7 +705,7 @@ static test_lightmap build_test_lightmap( const std::vector<std::string> &rows,
     return m;
 }
 
-// a ground pixel at map position ( x, y ) of the middle level, own cell `cell`
+
 static smooth_lighting::lit_coords ground_at( const point &cell, const float x, const float y )
 {
     return { x, test_rows + y, static_cast<float>( cell.x ), static_cast<float>( test_rows + cell.y ) };
@@ -713,8 +713,8 @@ static smooth_lighting::lit_coords ground_at( const point &cell, const float x, 
 
 TEST_CASE( "filtered_light_is_continuous_across_floor_cells_near_a_wall", "[smooth_lighting]" )
 {
-    // A at ( 1, 3 ) and B at ( 2, 3 ); A cannot reach T by a path of single
-    // steps toward it, B can
+
+
     const test_lightmap m = build_test_lightmap( {
         "oooooooo",
         "oToooooo",
@@ -750,8 +750,8 @@ TEST_CASE( "filtered_light_never_reads_outside_its_level", "[smooth_lighting]" )
 {
     test_lightmap m = build_test_lightmap( std::vector<std::string>( test_rows, "oooooooo" ), 0.2f,
                                            1.0f );
-    // full red light on the levels above and below, mask texels beside; a
-    // fetch outside this level would read either as light
+
+
     const smooth_lighting::lightmap_texel bright = smooth_lighting::encode_light_texel( { 1.0f, true }, {
         1.0f, 0.2f, 0.2f
     }, false );
@@ -806,7 +806,7 @@ TEST_CASE( "seen_pixels_always_carry_admitted_light", "[smooth_lighting]" )
 
 TEST_CASE( "floor_pixels_ignore_the_wall_beside_them", "[smooth_lighting]" )
 {
-    // seen wall in bright red light beside dim white floor
+
     const test_lightmap lit_wall = build_test_lightmap( {
         "ooXooooo",
     }, 0.3f, 1.0f );
@@ -824,7 +824,7 @@ TEST_CASE( "floor_pixels_ignore_the_wall_beside_them", "[smooth_lighting]" )
 
 TEST_CASE( "filtered_light_does_not_cross_a_blocked_diagonal", "[smooth_lighting]" )
 {
-    // A at ( 0, 0 ) and T at ( 1, 1 ) touch only at a corner walled on both sides
+
     const test_lightmap m = build_test_lightmap( {
         "o#",
         "#T",
@@ -849,14 +849,14 @@ TEST_CASE( "filtered_light_does_not_cross_a_blocked_diagonal", "[smooth_lighting
 
 TEST_CASE( "colored_light_fades_in_without_a_jump_as_its_weight_grows", "[smooth_lighting]" )
 {
-    // a dim red source among seen cells whose light is zero
+
     const test_lightmap m = build_test_lightmap( {
         "oooooooo",
         "oToooooo",
         "oooooooo",
     }, 0.0f, 0.05f );
     const smooth_lighting::sample_params filtered{ false, false };
-    // light and hue must change continuously
+
     std::array<float, 4> last = {};
     bool first = true;
     for( int i = 0; i < 900; ++i ) {
@@ -881,11 +881,11 @@ struct filter_fixture {
     std::string name;
     test_lightmap map;
 };
-} // namespace
+}
 
-// light maps with every kind of filter edge: seam beside a wall, walled
-// diagonal, sight edge with walls, steep sight ratio, colored fade from
-// darkness, lit wall beside dim floor
+
+
+
 static std::vector<filter_fixture> filter_fixtures()
 {
     std::vector<filter_fixture> out;
@@ -931,7 +931,7 @@ static std::vector<filter_fixture> filter_fixtures()
     return out;
 }
 
-// layout of the middle level's whole test area
+
 static smooth_lighting::prefilter_layout test_layout( const int grid )
 {
     smooth_lighting::prefilter_layout layout;
@@ -942,8 +942,8 @@ static smooth_lighting::prefilter_layout test_layout( const int grid )
     return layout;
 }
 
-// layout the game would derive for the middle level of `m`: its seen cells
-// grown by one
+
+
 static smooth_lighting::prefilter_layout seen_layout( const test_lightmap &m, const int grid )
 {
     const half_open_rectangle<point> whole( point::zero, point( test_columns, test_rows ) );
@@ -960,7 +960,7 @@ TEST_CASE( "point_filter_is_the_finished_raw_filter", "[smooth_lighting]" )
     for( const filter_fixture &f : filter_fixtures() ) {
         for( int cy = 0; cy < 4; ++cy ) {
             for( int cx = 0; cx < test_columns; ++cx ) {
-                // steps exact in binary, so the reference's local position is d
+
                 for( const float d : {
                          0.0f, 0.25f, 0.5f, 0.75f, 1.0f
                      } ) {
@@ -1027,7 +1027,7 @@ struct look_case {
     smooth_lighting::look_params look;
     bool night = false;
 };
-} // namespace
+}
 
 static std::vector<look_case> look_cases()
 {
@@ -1050,10 +1050,10 @@ static std::vector<look_case> look_cases()
     };
 }
 
-// largest per channel difference, in 0..255 steps, between the prefilter and
-// point filter over every fixture, look, sprite color and own or standing
-// pixel; `quantize_weights` rounds the bilinear weights to 1/16 as the coarsest
-// hardware filter may
+
+
+
+
 static float max_prefilter_error( const int grid, const bool quantize_weights )
 {
     static const std::array<std::array<float, 3>, 4> colors = { {
@@ -1073,8 +1073,8 @@ static float max_prefilter_error( const int grid, const bool quantize_weights )
             for( const bool standing : {
                      false, true
                  } ) {
-                // every row, so cells outside the seen box take the dark
-                // constant
+
+
                 for( int cy = 0; cy < test_rows; ++cy ) {
                     for( int cx = 0; cx < test_columns; ++cx ) {
                         for( int j = 0; j <= 15; ++j ) {
@@ -1118,15 +1118,15 @@ TEST_CASE( "prefiltered_light_stays_within_its_error_budget", "[smooth_lighting]
     CAPTURE( grid, error );
     CHECK( error <= smooth_lighting::prefilter_error_budget );
     if( grid > 2 ) {
-        // coarsest grid that fits the budget
+
         const float coarser = max_prefilter_error( grid - 2, false );
         CAPTURE( coarser );
         CHECK( coarser > smooth_lighting::prefilter_error_budget );
     }
 }
 
-// not run by default: prints the error of every candidate grid, exact and
-// with the coarsest hardware filter weights
+
+
 TEST_CASE( "prefilter_error_per_grid", "[.][smooth_lighting_report]" )
 {
     for( const int grid : {
@@ -1601,7 +1601,7 @@ TEST_CASE( "levels_with_nothing_seen_fill_as_zero", "[smooth_lighting][vision]" 
     settings.tint = true;
     settings.masks = true;
     std::vector<smooth_lighting::lightmap_texel> layer;
-    // level below the room's floor is out of sight
+
     CHECK_FALSE( smooth_lighting::encode_lightmap_layer( here, -1, settings, layer ) );
     CHECK( std::all_of( layer.begin(), layer.end(), []( const smooth_lighting::lightmap_texel & t ) {
         return t == smooth_lighting::lightmap_texel();
@@ -1620,10 +1620,10 @@ TEST_CASE( "reach_masks_are_built_only_round_seen_cells", "[smooth_lighting][vis
     settings.masks = true;
     std::vector<smooth_lighting::lightmap_texel> layer;
     REQUIRE( smooth_lighting::encode_lightmap_layer( here, 0, settings, layer ) );
-    // nothing's seen far outside the walled room
+
     CHECK( layer[smooth_lighting::reach_index( point( 45,
                                                45 ) )] == smooth_lighting::lightmap_texel() );
-    // avatar's own cell is seen
+
     CHECK_FALSE( layer[smooth_lighting::reach_index( center.xy().raw() )] ==
                  smooth_lighting::lightmap_texel() );
 }
@@ -1631,7 +1631,7 @@ TEST_CASE( "reach_masks_are_built_only_round_seen_cells", "[smooth_lighting][vis
 TEST_CASE( "dim_seen_light_looks_like_the_classic_shadow_variant", "[smooth_lighting]" )
 {
     const std::array<float, 3> rgb = { 0.8f, 0.4f, 0.2f };
-    // color_pixel_grayscale
+
     const float shadow = ( rgb[0] + rgb[1] + rgb[2] ) / 3.0f * 5.0f / 8.0f;
     smooth_lighting::lit_sample s;
     s.visible = 1.0f;
@@ -1675,7 +1675,7 @@ TEST_CASE( "terrain_that_rises_takes_light_along_its_base", "[smooth_lighting]" 
         CAPTURE( t );
         CHECK( smooth_lighting::terrain_light_anchor( t.obj() ) == smooth_lighting::light_anchor::base );
     }
-    // data calls an open door flat, and so does the rule
+
     for( const ter_str_id &t : {
              ter_t_floor, ter_t_dirt, ter_t_grass, ter_t_door_o
          } ) {
@@ -1712,7 +1712,7 @@ TEST_CASE( "a_tilesets_own_anchor_beats_the_default", "[smooth_lighting]" )
 TEST_CASE( "colored_light_mixes_its_hue_in_at_the_pixels_brightness",
            "[smooth_lighting][light_color]" )
 {
-    // brown wood, with almost no blue of its own, under full magenta light
+
     const std::array<float, 3> brown = { 0.5f, 0.3f, 0.1f };
     smooth_lighting::lit_sample s;
     s.light = 1.0f;
@@ -1778,7 +1778,7 @@ TEST_CASE( "colored_light_mixing_stays_on_screen", "[smooth_lighting][light_colo
 
 TEST_CASE( "a_fully_colored_light_tints_at_full_strength", "[smooth_lighting][light_color]" )
 {
-    // pure magenta light as all the light there is, at full strength
+
     light_color_rgb magenta;
     magenta.r = LIGHT_AMBIENT_LIT;
     magenta.g = 0.0f;
@@ -1789,7 +1789,7 @@ TEST_CASE( "a_fully_colored_light_tints_at_full_strength", "[smooth_lighting][li
     CHECK( hue[2] == Approx( 1.0f ) );
 }
 
-// 32x32 ortho tile at screen ( 100, 200 ), its sprite filling it
+
 static smooth_lighting::lit_quad_params tile_quad( const tripoint_bub_ms &pos )
 {
     smooth_lighting::lit_quad_params q;
@@ -1859,7 +1859,7 @@ TEST_CASE( "lit_sprite_texture_follows_turns_and_flips", "[smooth_lighting]" )
             CHECK( v[3].y == Approx( 200.0f ) );
             CHECK( v[3].u == Approx( 0.25f ) );
             CHECK( v[3].v == Approx( 0.75f ) );
-            // and takes the light of where it lands
+
             CHECK( v[3].light.x == Approx( 10.0f ) );
             CHECK( v[3].light.y == Approx( row_of( pos ) ) );
         }
@@ -1879,7 +1879,7 @@ TEST_CASE( "lit_sprite_texture_follows_turns_and_flips", "[smooth_lighting]" )
 TEST_CASE( "lit_sprite_corners_map_the_iso_diamond", "[smooth_lighting]" )
 {
     const tripoint_bub_ms pos( 10, 20, 0 );
-    // 32 wide, 32 tall iso tile: its diamond's left corner sits 24 down
+
     smooth_lighting::lit_quad_params q = tile_quad( pos );
     q.iso = true;
     q.screen = { 100.0f, 216.0f, 116.0f, 224.0f };

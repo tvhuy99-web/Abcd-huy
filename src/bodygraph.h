@@ -19,19 +19,19 @@ class Character;
 class JsonObject;
 
 struct bodygraph_part {
-    // Which main bodyparts are represented in this graph section
+
     std::vector<bodypart_id> bodyparts;
-    // Which sub bodyparts are represented in this graph section
+
     std::vector<sub_bodypart_id> sub_bodyparts;
-    // If selected, which graph gets shown next?
+
     bodygraph_id nested_graph;
-    // What color to use when this graph section is selected
+
     nc_color sel_color;
-    // What symbol to use for fragments that belong to this section
+
     std::string sym;
 };
 
-// info that needs to be passed around
+
 struct bodygraph_info {
     std::vector<std::string> worn_names;
     resistances worst_case;
@@ -72,23 +72,23 @@ struct bodygraph {
     void check() const;
 };
 
-// Draws the bodygraph UI for the given character and bodygraph (defaults to Full Body graph)
+
 void display_bodygraph( const Character &u, const bodygraph_id &id = bodygraph_id::NULL_ID() );
 
 using bodygraph_callback =
     std::function<std::string( const bodygraph_part *, std::string )>;
 
-/**
- * @brief Returns a prepared bodygraph ready to be rendered line-by-line.
- *
- * The callback function is for processing a bodygraph symbol. The args are as follows:
- *
- * @param bodygraph_part points to the graph part represented in the symbol (or nullptr if none)
- * @param string the default symbol to use if no other processing is done
- * @returns the final colorized symbol
- */
+
+
+
+
+
+
+
+
+
 std::vector<std::string> get_bodygraph_lines( const Character &u,
         const bodygraph_callback &fragment_cb, const bodygraph_id &id = bodygraph_id::NULL_ID(),
         int width = 0, int height = 0, std::string_view label = "" );
 
-#endif // CATA_SRC_BODYGRAPH_H
+#endif

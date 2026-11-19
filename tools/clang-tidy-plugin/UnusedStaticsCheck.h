@@ -30,8 +30,8 @@ class UnusedStaticsCheck : public ClangTidyCheck
         std::vector<const VarDecl *> decls_;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_UNUSEDSTATICSCHECK_H
+#endif

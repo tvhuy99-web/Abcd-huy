@@ -52,17 +52,17 @@ void mdefense::zapback( monster &m, Creature *const source,
     if( source == nullptr ) {
         return;
     }
-    // If we have a projectile, we're a ranged attack, no zapback.
+
     if( proj != nullptr ) {
         return;
     }
 
     if( const Character *const foe = dynamic_cast<Character *>( source ) ) {
-        // Players/NPCs can avoid the shock if they wear non-conductive gear on their hands
+
         if( !foe->worn.hands_conductive() ) {
             return;
         }
-        // Players/NPCs can avoid the shock by using non-conductive weapons
+
         if( foe->get_wielded_item() && !foe->get_wielded_item()->conductive() ) {
             if( foe->reach_attacking ) {
                 return;
@@ -101,13 +101,13 @@ void mdefense::acidsplash( monster &m, Creature *const source,
         return;
     }
     size_t num_drops = rng( 4, 6 );
-    // Would be useful to have the attack data here, for cutting vs. bashing etc.
+
     if( proj ) {
-        // Projectile didn't penetrate the target, no acid will splash out of it.
+
         if( proj->dealt_dam.total_damage() <= 0 ) {
             return;
         }
-        // Less likely for a projectile to deliver enough force
+
         if( !one_in( 3 ) ) {
             return;
         }
@@ -128,7 +128,7 @@ void mdefense::acidsplash( monster &m, Creature *const source,
         }
     }
 
-    // Don't splatter directly on the `m`, that doesn't work well
+
     std::vector<tripoint_bub_ms> pts = closest_points_first( source->pos_bub( here ), 1 );
     pts.erase( std::remove( pts.begin(), pts.end(), m.pos_bub() ), pts.end() );
 
@@ -153,42 +153,42 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
 {
     const map &here = get_map();
 
-    // No return fire for untargeted projectiles, i.e. from explosions.
+
     if( source == nullptr ) {
         return;
     }
-    // No return fire for melee attacks.
+
     if( proj == nullptr ) {
         return;
     }
-    // No return fire from dead monsters.
+
     if( m.is_dead_state() ) {
         return;
     }
 
     const Character *const foe = dynamic_cast<Character *>( source );
-    // No return fire for quiet or completely silent projectiles (bows, throwing etc).
+
     if( foe == nullptr || !foe->get_wielded_item() ||
         foe->get_wielded_item()->gun_noise().volume < rl_dist( m.pos_bub(), source->pos_bub() ) ) {
         return;
     }
 
     const tripoint_bub_ms fire_point = source->pos_bub();
-    // If target actually was not damaged by projectile - then do not bother
-    // Also it covers potential exploit - peek throwing potentially can be used to exhaust turret ammo
+
+
     if( proj != nullptr && proj->dealt_dam.total_damage() == 0 ) {
         return;
     }
 
-    // No return fire if attacker is seen
+
     if( m.sees( here, *source ) ) {
         return;
     }
 
     const int distance_to_source = rl_dist( m.pos_bub(), source->pos_bub() );
 
-    // TODO: implement different rule, dependent on sound and probably some other things
-    // Add some inaccuracy since it is blind fire (at a tile, not the player directly)
+
+
     const int dispersion = 150;
 
     for( const std::pair<const std::string, mtype_special_attack> &attack : m.type->special_attacks ) {
@@ -201,7 +201,7 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
             }
 
             if( gunactor->shoot( m, fire_point, gun_mode_DEFAULT, dispersion ) ) {
-                // We only return fire once with one gun.
+
                 return;
             }
         }

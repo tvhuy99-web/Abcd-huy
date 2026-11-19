@@ -254,7 +254,7 @@ struct sub_effect_parser {
     std::function<talk_effect_fun_t( const JsonObject &, std::string_view, std::string_view src, bool )>
     f;
 };
-} // namespace
+}
 
 namespace
 {
@@ -482,7 +482,7 @@ struct item_search_data {
         return true;
     }
 };
-} // namespace
+}
 
 #define dbg(x) DebugLog((x),D_GAME) << __FILE__ << ":" << __LINE__ << ": "
 
@@ -561,10 +561,10 @@ load_eoc_vector_id_and_var(
     }
     return eocs_entries;
 }
-} // namespace
+}
 
 
-/** Time (in turns) and cost (in cent) for training: */
+
 time_duration calc_skill_training_time_char( const Character &teacher, const Character &student,
         const skill_id &skill )
 {
@@ -597,9 +597,9 @@ int calc_proficiency_training_cost( const Character &teacher, const Character &s
     return to_seconds<int>( calc_proficiency_training_time( teacher, student, proficiency ) );
 }
 
-// TODO: all styles cost the same and take the same time to train,
-// maybe add values to the ma_style class to makes this variable
-// TODO: maybe move this function into the ma_style class? Or into the NPC class?
+
+
+
 time_duration calc_ma_style_training_time( const Character &, const Character &,
         const matype_id & )
 {
@@ -615,12 +615,12 @@ int calc_ma_style_training_cost( const Character &teacher, const Character &stud
     return 800;
 }
 
-// quicker to learn with instruction as opposed to books.
-// if this is a known spell, then there is a set time to gain some exp.
-// if player doesn't know this spell, then the NPC will teach all of it
-// which takes max 6 hours, min 3 hours.
-// TODO: a system for NPCs to train new stuff in bits and pieces
-// and remember the progress.
+
+
+
+
+
+
 time_duration calc_spell_training_time( const Character &, const Character &student,
                                         const spell_id &id )
 {
@@ -662,12 +662,12 @@ int Character::calc_spell_training_cost( const bool knows, int difficulty, int l
     return calc_spell_training_cost_gen( knows, difficulty, level );
 }
 
-// Rescale values from "mission scale" to "opinion scale"
+
 int npc_trading::cash_to_favor( const npc &, int cash )
 {
-    // TODO: It should affect different NPCs to a different degree
-    // Square root of mission value in dollars
-    // ~31 for zed mom, 50 for horde master, ~63 for plutonium cells
+
+
+
     double scaled_mission_val = std::sqrt( cash / 100.0 );
     return roll_remainder( scaled_mission_val );
 }
@@ -718,11 +718,11 @@ enum npc_chat_menu {
     NPC_CHAT_ACTIVITIES_VEHICLE_REPAIR,
     NPC_CHAT_ACTIVITIES_UNASSIGN
 };
-} // namespace
+}
 
-// given a vector of NPCs, presents a menu to allow a player to pick one.
-// everyone == true adds another entry at the end to allow selecting all listed NPCs
-// this implies a return value of npc_list.size() means "everyone"
+
+
+
 static int npc_select_menu( const std::vector<npc *> &npc_list, const std::string &prompt,
                             const bool everyone = true )
 {
@@ -1077,7 +1077,7 @@ void game::chat( const std::optional<tripoint_bub_ms> &p )
     int volume = player_character.get_shout_volume();
 
     const std::vector<Creature *> available = get_creatures_if( [&]( const Creature & guy ) {
-        // TODO: Get rid of the z-level check when z-level vision gets "better"
+
         return ( guy.is_npc() || ( guy.is_monster() &&
                                    guy.as_monster()->has_flag( mon_flag_CONVERSATION ) &&
                                    !guy.as_monster()->type->chat_topics.empty() ) ) && player_character.posz() == guy.posz() &&
@@ -1163,10 +1163,10 @@ void game::chat( const std::optional<tripoint_bub_ms> &p )
                         string_format( _( "Talk to %s" ), title ) :
                         _( "Talk to…" ) );
     } else {
-        // No one in range to talk to: say so in the menu itself instead of
-        // silently omitting the entry, which left the reader (and new
-        // players) to infer it from the entry's absence. Disabled, like
-        // the seminar entry below when it cannot be used.
+
+
+
+
         nmenu.addentry( NPC_CHAT_TALK, false, 't',
                         _( "Talk to… (No one nearby to talk to)" ) );
     }
@@ -1581,9 +1581,9 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
     if( sees( here, spos ) || is_hallucination() ) {
         return;
     }
-    // ignore low priority sounds if the NPC "knows" it came from a friend.
-    // TODO: NPC will need to respond to talking noise eventually
-    // but only for bantering purposes, not for investigating.
+
+
+
     if( spriority < sounds::sound_t::alarm ) {
         if( player_ally ) {
             add_msg_debug( debugmode::DF_NPC, "Allied NPC ignored same faction %s", get_name() );
@@ -1594,21 +1594,21 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
             return;
         }
     }
-    // discount if sound source is player, or seen by player,
-    // and listener is friendly and sound source is combat or alert only.
+
+
     if( spriority < sounds::sound_t::alarm && player_character.sees( here, spos ) ) {
         if( is_player_ally() ) {
             add_msg_debug( debugmode::DF_NPC, "NPC %s ignored low priority noise that player can see",
                            get_name() );
             return;
-            // discount if sound source is player, or seen by player,
-            // listener is neutral and sound type is worth investigating.
+
+
         } else if( spriority < sounds::sound_t::destructive_activity &&
                    get_attitude_group( get_attitude() ) != attitude_group::hostile ) {
             return;
         }
     }
-    // patrolling guards will investigate more readily than stationary NPCS
+
     int investigate_dist = 10;
     if( mission == NPC_MISSION_GUARD_ALLY || mission == NPC_MISSION_GUARD_PATROL ) {
         investigate_dist = 50;
@@ -1659,18 +1659,18 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
 
 std::string dialog_helper::bye_message( const npc *npc_actor )
 {
-    // some dialogues do not have beta actor
+
     if( !npc_actor ) {
         return "";
     }
     const std::optional<std::string> bye_snippet = npc_actor->myclass->bye_message_override;
-    // if no bye_snippet, use default bye snippet
+
     if( !bye_snippet.has_value() ) {
         return npc_actor->chat_snippets().snip_bye.translated();
     }
-    // if null, we want npc to mute bye message
-    // snippet categories do not have their own type,
-    // therefore do not have type::NULL_ID(), so check it against plain string
+
+
+
     if( bye_snippet.value() == "null" ) {
         return "";
     }
@@ -1712,7 +1712,7 @@ void avatar::talk_to( std::unique_ptr<talker> talk_with, bool radio_contact,
     d_img.draw_dialogue_imgui( is_computer, is_not_conversation, remote_name );
     if( activity.id() == ACT_AIM && !has_weapon() ) {
         cancel_activity();
-        // don't query certain activities that are started from dialogue
+
     } else if( activity.id() == ACT_TRAIN || activity.id() == ACT_WAIT_NPC ||
                activity.id() == ACT_SOCIALIZE || activity.index == d.actor( true )->getID().get_value() ) {
         return;
@@ -1743,7 +1743,7 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic )
         cur_item = the_topic.item_type;
     }
 
-    // For compatibility
+
     const std::string &topic = the_topic.id;
     const auto iter = json_talk_topics.find( topic );
     if( iter != json_talk_topics.end() ) {
@@ -1798,7 +1798,7 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic )
                                                 *actor( true )->get_npc() ) ) );
     }
 
-    // Those topics are handled by the mission system, see there.
+
     static const std::unordered_set<std::string> mission_topics = { {
             "TALK_MISSION_DESCRIBE", "TALK_MISSION_DESCRIBE_URGENT",
             "TALK_MISSION_OFFER", "TALK_MISSION_ACCEPTED",
@@ -1812,7 +1812,7 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic )
             return "mission_selected == nullptr; BUG!  (npctalk.cpp:dynamic_line)";
         }
         const mission_type &type = miss->get_type();
-        // TODO: make it a member of the mission class, maybe at mission instance specific data
+
         const std::string &ret = miss->dialogue_for_topic( topic );
         if( ret.empty() ) {
             debugmsg( "Bug in npctalk.cpp:dynamic_line.  Wrong mission_id(%s) or topic(%s)",
@@ -2132,8 +2132,8 @@ void dialogue::gen_responses( const talk_topic &the_topic )
             player_character.backlog.front().index == actor( true )->getID().get_value() ) {
             player_activity &backlog = player_character.backlog.front();
             const skill_id skillt( backlog.name );
-            // TODO: This is potentially dangerous. A skill and a martial art
-            // could have the same ident!
+
+
             if( !skillt.is_valid() ) {
                 const matype_id styleid = matype_id( backlog.name );
                 if( !styleid.is_valid() ) {
@@ -2296,7 +2296,7 @@ int talk_trial::calc_chance( const_dialogue const &d ) const
     for( const auto &this_mod : modifiers ) {
         const int trial_mod_int = parse_mod( d, this_mod.first, this_mod.second );
         chance += trial_mod_int;
-        // Extra spaces at start for legibility.
+
         add_msg_debug( debugmode::DF_NPC, "    %s modified trial chance by %d, now %d",
                        this_mod.first, trial_mod_int, chance );
     }
@@ -2362,12 +2362,12 @@ void parse_tags( std::string &phrase, const_talker const &u, const_talker const 
     do {
         fa = phrase.find( '<' );
         fb = phrase.find( '>' );
-        // Skip the <color_XXX> and </color> tag
+
         while( fa != std::string::npos && ( phrase.compare( fa + 1, 6, "color_" ) == 0 ||
                                             phrase.compare( fa + 1, 7, "/color>" ) == 0 ) ) {
             if( phrase.compare( fa + 1, 6, "color_" ) == 0 ) {
                 fa = phrase.find( '<', fa + 7 );
-            } else { // phrase.compare(fa + 1, 7, "/color>") == 0
+            } else {
                 fa = phrase.find( '<', fa + 8 );
             }
             fb = phrase.find( '>', fa );
@@ -2393,7 +2393,7 @@ void parse_tags( std::string &phrase, const_talker const &u, const_talker const 
 
         const item_location u_weapon = u_chr ? u_chr->get_wielded_item() : item_location();
         const item_location me_weapon = me_chr ? me_chr->get_wielded_item() : item_location();
-        // Special, dynamic tags go here
+
         if( tag == "<yrwp>" ) {
             phrase.replace( fa, l, remove_color_tags( u_weapon->tname() ) );
         } else if( tag == "<mywp>" ) {
@@ -2466,97 +2466,97 @@ void parse_tags( std::string &phrase, const_talker const &u, const_talker const 
                                                       to_string_time_of_day( trader->restock_time() ) ) );
             }
         } else if( tag.find( "<u_val:" ) == 0 ) {
-            //adding a user variable to the string
+
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, u.get_value( var ).to_string() );
         } else if( tag.find( "<npc_val:" ) == 0 ) {
-            //adding a npc variable to the string
+
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, me.get_value( var ).to_string() );
         } else if( tag.find( "<global_val:" ) == 0 ) {
-            //adding a global variable to the string
+
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             global_variables &globvars = get_globals();
             phrase.replace( fa, l, globvars.get_global_value( var ).to_string() );
         } else if( tag.find( "<context_val:" ) == 0 ) {
-            //adding a context variable to the string requires dialogue to exist
+
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, d.get_value( var ).to_string() );
         } else if( tag.find( "<item_name:" ) == 0 ) {
-            //embedding an items name in the string
+
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
-            // attempt to cast as an item
+
             phrase.replace( fa, l, itype_id( var )->nname( 1 ) );
         } else if( tag.find( "<item_description:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, itype_id( var )->description.translated() );
         } else if( tag.find( "<trait_name:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, trait_id( var )->name() );
         } else if( tag.find( "<trait_description:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
-            // this probably will benefit from grabbing alpha/beta talker instead of avatar
+
             phrase.replace( fa, l, me_chr->mutation_desc( trait_id( var ) ) );
         } else if( tag.find( "<spell_name:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, spell_id( var )->name.translated() );
         } else if( tag.find( "<spell_description:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, spell_id( var )->description.translated() );
         } else if( tag.find( "<u_spell_level:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
-            // resolve nest
+
             parse_tags( var, u, me, d, item_type );
             phrase.replace( fa, l, std::to_string( u.get_spell_level( spell_id( var ) ) ) );
         } else if( tag.find( "<keybind:" ) == 0 ) {
             std::string var = tag.substr( tag.find( ':' ) + 1 );
-            // remove the trailing >
+
             var.pop_back();
             std::string keybind = var;
 
-            //deal with category specific binds like <keybind:TARGET:PREV_TARGET>
+
             size_t pos_category_split = var.find( ':' );
 
             std::string category = "DEFAULTMODE";
@@ -2569,9 +2569,9 @@ void parse_tags( std::string &phrase, const_talker const &u, const_talker const 
             std::string keybind_desc;
             std::vector<input_event> keys = ctxt.keys_bound_to( keybind, -1, false, false );
             if( keys.empty() ) {
-                // Check if the tag is references a non-existant bind and debugmsg if it does
+
                 inp_mngr.check_keybind( category, keybind, tag );
-                // Display description for unbound keys, don't use tag or <> or it tries to read it as another tag
+
                 //~ Describing an unbound keybind, %1$s - whether the key is globally or locally unbound, %2$s - the display name of the keybind like you'd find in the bind menu, %3$s - the untranslated category id it belongs to for context
                 keybind_desc = colorize( string_format( _( "%1$s (\"%2$s\" in keybind category %3$s)" ),
                                                         ctxt.get_desc( keybind ), ctxt.get_action_name( keybind ), category ), c_red );
@@ -2712,14 +2712,14 @@ talker *dialogue::actor( const bool is_beta ) const
     }
     if( is_beta && !has_beta ) {
         debugmsg( "Tried to use an invalid beta talker.  %s", get_callstack() );
-        // Try to avoid a crash by using the alpha if it exists
+
         if( has_alpha ) {
             return alpha.get();
         }
     }
     if( !is_beta && !has_alpha ) {
         debugmsg( "Tried to use an invalid alpha talker.  %s", get_callstack() );
-        // Try to avoid a crash by using the beta if it exists
+
         if( has_beta ) {
             return beta.get();
         }
@@ -2789,7 +2789,7 @@ talk_data talk_response::create_option_line( dialogue &d, const input_event &hot
     std::string ftext;
     text = ( truefalse_condition( d ) ? truetext : falsetext ).translated();
     if( trial.type == TALK_TRIAL_NONE || trial.type == TALK_TRIAL_CONDITION ) {
-        // regular dialogue
+
         ftext = text;
     } else if( trial.type == TALK_TRIAL_SKILL_CHECK ) {
         const Skill &req_skill = skill_id( trial.skill_required ).obj();
@@ -2800,7 +2800,7 @@ talk_data talk_response::create_option_line( dialogue &d, const input_event &hot
                                trial.difficulty,
                                text );
     } else {
-        // dialogue w/ a % chance to work
+
         //~ %1$s is translated trial type, %2$d is a number, and %3$s is the translated response text
         ftext = string_format( pgettext( "talk option", "[%1$s %2$d%%] %3$s" ),
                                trial.name(), trial.calc_chance( d ), text );
@@ -2869,20 +2869,20 @@ dialogue_consequence talk_effect_t::get_consequence( dialogue const &d ) const
 talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &topic,
                                 input_context &ctxt )
 {
-    // Construct full line
+
     std::string challenge = dynamic_line( topic );
     gen_responses( topic );
-    // Preserve whether this is quoted NPC speech or an unquoted action.
-    // Dialogue history uses the same distinction for its speaker prefix.
+
+
     const bool npc_speech = !challenge.empty() && challenge.front() != '*' &&
                             challenge.front() != '&';
 
-    // Put quotes around challenge (unless it's an action)
+
     if( challenge[0] != '*' && challenge[0] != '&' ) {
         challenge = string_format( _( "\"%s\"" ), challenge );
     }
 
-    // Parse any tags in challenge
+
     if( actor( true )->get_npc() ) {
         parse_tags( challenge, *actor( false )->get_character(), *actor( true )->get_npc(), *this,
                     topic.item_type );
@@ -2893,11 +2893,11 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
     challenge = uppercase_first_letter( challenge );
 
     if( challenge[0] == '&' ) {
-        // No name prepended!
+
         challenge = challenge.substr( 1 );
         d_img.add_to_history( challenge );
     } else if( challenge[0] == '*' ) {
-        // Prepend name
+
         challenge = string_format( pgettext( "npc does something", "%s %s" ),
                                    speaker_name( d_img ),
                                    challenge.substr( 1 ) );
@@ -2906,8 +2906,8 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
         npc *npc_actor = actor( true )->get_npc();
         d_img.add_to_history( challenge, speaker_name( d_img ),
                               npc_actor ? npc_actor->basic_symbol_color() : c_red );
-        // Empty line for padding. This is right after either a NPC greeting the player, or them responding to a player's message.
-        // So padding here keeps messages grouped into reasonable blocks.
+
+
         d_img.add_to_history( "" );
     }
     if( debug_mode ) {
@@ -2918,8 +2918,8 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
     }
     apply_speaker_effects( topic );
 
-    // A screen reader must hear the NPC's actual answer, not just the first
-    // response button. The history document remains available on demand.
+
+
     const std::string spoken_reply = npc_speech && !speaker_name( d_img ).empty() ?
                                      string_format( _( "%1$s: %2$s" ), speaker_name( d_img ), challenge ) :
                                      challenge;
@@ -2954,10 +2954,10 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
     };
     generate_response_lines();
 
-    // HACK: We might have hidden the UI on the last frame. Let's go ahead and unhide it now.
+
     d_img.hide_ui = false;
 
-    // Re-init everytime we get here (new topic, new selections, don't try to preserve old selection)
+
     d_img.sel_response = 0;
     const auto response_enabled = [this]( const size_t index ) {
         return debug_mode || index >= response_condition_exists.size() ||
@@ -2994,47 +2994,47 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             return;
         }
         a11y::semantic_snapshot snapshot;
-        // The sidebar draws speaker_name() in large type for sighted
-        // players (dialogue_imgui.cpp draw_dialogue_sidebar); publish the
-        // same name in the title so the reader hears who is speaking.
-        // speaker_name() already covers every case the UI shows: the
-        // remote name for radio/intercom/computer conversations, the
-        // beta talker's display name otherwise, and "" (plain title)
-        // when this is not a conversation.
+
+
+
+
+
+
+
         const std::string speaker = speaker_name( d_img );
         snapshot.title = speaker.empty() ? _( "Dialogue" )
                          : string_format( _( "Dialogue: %s" ), speaker );
         snapshot.summary = remove_color_tags( challenge );
         snapshot.focus = "dialogue:response:" + std::to_string( d_img.sel_response );
 
-        // Read the history fresh on every publish instead of capturing it
-        // once before the input loop: the text is the document node's
-        // whole content, and a stale capture could outlive later
-        // add_to_history() calls within this topic's lifetime.
+
+
+
+
         const std::string history_text = d_img.get_accessibility_history();
         if( !history_text.empty() ) {
-            // Document pattern (a11y::append_document, as in
-            // mission_companion.cpp "companion:details"): the full
-            // verbatim history travels in detail with no length cap in
-            // validate_snapshot, and the Java presenter reads document
-            // nodes paragraph by paragraph (R04.4) instead of as one
-            // utterance. Keep the node's original intent surface: focus
-            // only -- opening/reading the document is a presenter action,
-            // never a gameplay activation.
+
+
+
+
+
+
+
+
             a11y::append_document( snapshot, "dialogue:history",
                                    _( "Conversation history" ), history_text );
             snapshot.nodes.back().actions = { "focus" };
         }
 
-        // The sidebar the sighted UI draws next to the dialogue
-        // (dialogue_imgui.cpp draw_dialogue_sidebar) shows what this person
-        // looks like and what they think of the player: wielded weapon,
-        // worn gear, visible mutations, stat estimate, personality traits
-        // and opinion. Publish exactly those same four texts as a second
-        // document node so the reader can hear them on demand, in the
-        // same order the sidebar draws them. Nothing here is computed
-        // for the reader: every line comes from the same talker calls
-        // the sidebar uses, including the blind-player wording.
+
+
+
+
+
+
+
+
+
         {
             std::string about_text;
             const auto append_about_part = [&about_text]( const std::string &part ) {
@@ -3072,23 +3072,23 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             node.label = remove_color_tags( response.text );
             node.enabled = response_enabled( index );
             if( !node.enabled ) {
-                // The original UI never spells out the failed condition
-                // itself: create_option_line() only appends the authored
-                // show_reason (already part of the label above when the
-                // response is shown anyway) or, for a failed option with
-                // an explanation, replaces the line with that explanation
-                // (also the label). Keep the generic reason rather than
-                // inventing a specific one the engine does not publish.
+
+
+
+
+
+
+
                 node.disabled_reason = _( "This response is unavailable because its condition is not met." );
             }
-            // Trial type and chance are already in the label, from the
-            // same create_option_line() text the sighted UI draws
-            // ("[PERSUADE 42%] ...", "[Skill 2/5] ..."). What the label
-            // cannot carry is the consequence colouring: hostile is drawn
-            // red and helpless light red, and choosing either makes this
-            // same function ask query_yn() before applying the response.
-            // Give the reader the same warning in words, from the same
-            // get_consequences() data, before the choice is made.
+
+
+
+
+
+
+
+
             if( index < responses.size() ) {
                 const std::set<dialogue_consequence> consequences =
                     responses[index].get_consequences( *this );
@@ -3107,14 +3107,14 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
         }
-        // Position/total count only the nodes the reader can swipe through
-        // (history and about documents, response buttons). The command
-        // nodes command_snapshot() appends are hidden hold-menu entries
-        // the Java presenter filters out of the swipe list, so counting
-        // them inflated the spoken position (e.g. "4 of 17" for three
-        // responses). Command nodes keep position/total 0, which the
-        // presenter treats as "no C++ position supplied" and numbers
-        // from its own visible list instead.
+
+
+
+
+
+
+
+
         int visible_total = 0;
         for( const a11y::semantic_node &node : snapshot.nodes ) {
             if( node.role != "command" ) {
@@ -3141,16 +3141,16 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                 d_img.set_responses_debug( build_debug_info( d_img, topic, d_img.sel_response ) );
                 d_img.debug_topic_name = topic.id;
             }
-            // For reasons unclear to me, we must manually invalidate and redraw the windows here, or else they will stack up.
+
             ui_manager::invalidate_all_ui_adaptors();
-            // Announce the NPC's spoken line BEFORE publishing the new
-            // snapshot: both go through the same UI queue in order, so
-            // publishing first made the reader speak the title and the
-            // first response before the line that prompted them. The
-            // snapshot still follows immediately, so the response list
-            // is announced right after the question, as the sighted UI
-            // shows it. (Java side still owns the rest of the ordering:
-            // snapshot summary and focus handling.)
+
+
+
+
+
+
+
+
             if( !reply_announced && a11y::enabled() ) {
                 a11y::android::announce( remove_color_tags( spoken_reply ), 1 );
                 reply_announced = true;
@@ -3159,12 +3159,12 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             ui_manager::redraw();
             action = ctxt.handle_input();
 
-            // Mouse click is an input type that would result in a continue, so we need to set our action before that.
+
             if( action == "CONFIRM" || d_img.user_clicked_response_button ) {
-                action = "CONFIRM"; // If we actually did click, harmless otherwise.
+                action = "CONFIRM";
                 d_img.user_clicked_response_button = false;
                 response_ind = d_img.sel_response;
-                //response condition must be reverified since non-selectable responses can be displayed
+
                 if( response_condition_exists[response_ind] && ( !response_condition_eval[response_ind] &&
                         !debug_mode ) ) {
                     action = "NONE";
@@ -3177,7 +3177,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                 continue;
             }
             if( action == "HELP_KEYBINDINGS" ) {
-                // Reallocate hotkeys as keybindings may have changed
+
                 generate_response_lines();
             } else if( action == "DOWN" ) {
                 d_img.sel_response++;
@@ -3207,7 +3207,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                     generate_response_lines();
                 }
             } else if( action == "ANY_INPUT" ) {
-                // Check real hotkeys; equivalent functionally to CONFIRM
+
                 const auto hotkey_it = std::find( response_hotkeys.begin(),
                                                   response_hotkeys.end(), evt );
                 response_ind = std::distance( response_hotkeys.begin(), hotkey_it );
@@ -3219,7 +3219,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                 response_ind = get_best_quit_response();
             }
 
-            // Clamp sel_response (There is probably a better existing way to do this, but it's simple so I'm just reimplementing)
+
             if( d_img.sel_response >= static_cast<int>( response_hotkeys.size() ) ) {
                 d_img.sel_response = static_cast<int>( response_hotkeys.size() - 1 );
             } else if( d_img.sel_response < 0 ) {
@@ -3239,7 +3239,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
 
     d_img.add_to_history( response_lines[response_ind].text, _( "You" ), c_light_blue );
 
-    // We just advanced the conversation, let's make sure we can see what they said.
+
     d_img.scroll_to = cataimgui::scroll::end;
 
     talk_response chosen = responses[response_ind];
@@ -3247,16 +3247,16 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
         actor( true )->select_mission( chosen.mission_selected );
     }
 
-    // We can't set both skill and style or training will bug out
-    // TODO: Allow setting both skill and style
+
+
     actor( true )->store_chosen_training( chosen.skill, chosen.style, chosen.dialogue_spell,
                                           chosen.proficiency );
     const bool success = chosen.trial.roll( *this );
     talk_effect_t const &effects = success ? chosen.success : chosen.failure;
 
-    // HACK: We don't know what effects just happened! We might be trading! Let's go ahead and hide the UI, just in case.
-    // If we *aren't* trading, the next frame this function will just un-hide itself.
-    // But if we're in the trade menu, un-hiding only gets called when we're back to talking! Easy.
+
+
+
     d_img.hide_ui = true;
     ui_manager::invalidate_all_ui_adaptors();
     ui_manager::redraw();
@@ -3266,48 +3266,48 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
     return ret_topic;
 }
 
-/**
- * Finds the best response to use when the player is trying to quit.
- *
- * Returns the index into the response list.
- */
+
+
+
+
+
 int dialogue::get_best_quit_response()
 {
     if( responses.size() == 1 ) {
-        // Only one response. Use it. Consequences will be prompted for by the caller.
+
         return 0;
     }
 
-    // Find relevant responses
+
     for( size_t i = 0; i < responses.size(); ++i ) {
         const talk_response &response = responses[i];
         if( response.trial.calc_chance( *this ) < 100 ) {
-            // Don't pick anything with a chance to fail.
+
             continue;
         }
 
         if( !response.success.effects.empty() ) {
-            // Don't pick anything with side effects
+
             continue;
         }
 
-        // Unfortunately, while we'd like to be able to go "back" from nested dialogue trees, the
-        // topic stack doesn't always shrink. Returning to the previous topic is sometimes done
-        // with TALK_NONE, or sometimes by referencing the topic id directly. No solution really
-        // gives us something that feels right in all cases, so we only support completely leaving
-        // the conversation via the quit key.
+
+
+
+
+
 
         if( response.success.next_topic.id == "TALK_DONE" ) {
             return i;
         }
     }
 
-    return responses.size(); // Didn't find a good option
+    return responses.size();
 }
 
 void get_raw_debug_fields( const JsonObject &jo, std::map<std::string, std::string> &debug_info )
 {
-    //check for object, add raw JSON text to map if exists
+
     auto add_to_debug = [&]( const JsonObject & jo, const char *key ) {
         std::string key_str( key );
         if( jo.has_string( key_str ) ) {
@@ -3442,7 +3442,7 @@ talk_trial::talk_trial( const JsonObject &jo )
     if( type == TALK_TRIAL_SKILL_CHECK ) {
         skill_required = jo.get_string( "skill_required" );
     }
-    //condition remains empty instead of adding a default
+
     if( jo.has_member( "condition" ) ) {
         read_condition( jo, "condition", condition, false );
     }
@@ -3493,7 +3493,7 @@ talk_effect_fun_t::likely_rewards_t &talk_effect_fun_t::get_likely_rewards()
 
 static Character *get_character_from_id( const std::string &id_str, game *g )
 {
-    // Return the character with character_id, return nullptr if counldn't find the character with character_id
+
     Character *temp_guy = nullptr;
 
     character_id char_id;
@@ -3503,19 +3503,19 @@ static Character *get_character_from_id( const std::string &id_str, game *g )
         return nullptr;
     }
 
-    // Check Avatar
+
     if( char_id == get_avatar().getID() ) {
         return &get_avatar();
     }
 
-    // Check visible NPC
+
     for( npc *guy : g->get_npcs_if( [char_id]( const npc & guy ) {
     return guy.getID() == char_id;
     } ) ) {
         temp_guy = guy;
     }
 
-    // Check NPC in the OverMapBuffer
+
     if( temp_guy == nullptr ) {
         temp_guy = g->find_npc( char_id );
     }
@@ -3531,7 +3531,7 @@ static void run_item_eocs( const dialogue &d, bool is_npc, const std::vector<ite
     guy = guy ? guy : &get_player_character();
     std::vector<item_location> true_items;
     for( const item_location &loc : items ) {
-        // Check if item matches any search_data.
+
         bool true_tgt = data.empty();
         for( item_search_data datum : data ) {
             if( datum.check( guy, loc, d ) ) {
@@ -3546,7 +3546,7 @@ static void run_item_eocs( const dialogue &d, bool is_npc, const std::vector<ite
     const auto run_eoc = [&d, is_npc]( item_location & loc,
     const std::vector<effect_on_condition_id> &eocs ) {
         for( const effect_on_condition_id &eoc : eocs ) {
-            // Check if item is outdated.
+
             if( loc.get_item() ) {
                 dialogue newDialog( d.actor( is_npc )->clone(), get_talker_for( loc ),
                                     d.get_conditionals(), d.get_context() );
@@ -3936,7 +3936,7 @@ talk_effect_fun_t::func f_pick_bodypart( const JsonObject &jo, std::string_view 
         for( const bodypart_id &bp_id : d.actor( is_npc )->get_all_body_parts(
                  get_body_part_flags::only_main | get_body_part_flags::sorted ) ) {
 
-            // doesn't have bp type we want
+
             for( const str_or_var &bp_type_var : whitelist_type ) {
                 const bp_type type = io::string_to_enum<bp_type>( bp_type_var.evaluate( d ) );
                 if( !bp_id->has_type( type ) ) {
@@ -3944,13 +3944,13 @@ talk_effect_fun_t::func f_pick_bodypart( const JsonObject &jo, std::string_view 
                 }
             }
 
-            // has no flag we want
+
             if( whitelist_flag.has_value() &&
                 !bp_id->has_flag( json_character_flag( whitelist_flag.value().evaluate( d ) ) ) ) {
                 continue;
             }
 
-            // has type we do not want
+
             for( const str_or_var &bp_type_var : blacklist_type ) {
                 const bp_type type = io::string_to_enum<bp_type>( bp_type_var.evaluate( d ) );
                 if( bp_id->has_type( type ) ) {
@@ -3958,7 +3958,7 @@ talk_effect_fun_t::func f_pick_bodypart( const JsonObject &jo, std::string_view 
                 }
             }
 
-            // has flag we do not want
+
             if( blacklist_flag.has_value() &&
                 bp_id->has_flag( json_character_flag( blacklist_flag.value().evaluate( d ) ) ) ) {
                 continue;
@@ -3968,12 +3968,12 @@ talk_effect_fun_t::func f_pick_bodypart( const JsonObject &jo, std::string_view 
                 Character *you = d.actor( is_npc )->get_character();
 
                 if( wounded.value() && !you->get_part( bp_id )->has_wounds() ) {
-                    // ask for wounded bp, but bp is not wounded
+
                     continue;
                 }
 
                 if( !wounded.value() && you->get_part( bp_id )->has_wounds() ) {
-                    // ask for healthy bp, but bp is wounded
+
                     continue;
                 }
 
@@ -3986,7 +3986,7 @@ talk_effect_fun_t::func f_pick_bodypart( const JsonObject &jo, std::string_view 
             return;
         }
 
-        // pick_random, or list contain only 1 bodypart, or talker is not avatar
+
         if( pick_random || final_bp.size() == 1 || !d.actor( is_npc )->get_character()->is_avatar() ) {
             const bodypart_id picked_bp = random_entry( final_bp );
             write_var_value( var.type, var.name, &d, picked_bp.id().str() );
@@ -4105,7 +4105,7 @@ void map_add_item( item &it, tripoint_abs_ms target_pos )
     } else {
         tinymap target_bay;
         target_bay.load( project_to<coords::omt>( target_pos ), false );
-        // Redundant as long as map operations aren't using get_map() in a transitive call chain. Added for future proofing.
+
         swap_map swap( *target_bay.cast_to_map() );
         target_bay.add_item_or_charges( target_bay.get_omt( target_pos ), it );
     }
@@ -4356,7 +4356,7 @@ talk_effect_fun_t::func f_consume_item( const JsonObject &jo, std::string_view m
     optional( jo, false, "count", count, !jo.has_int( "charges" ) );
     const bool do_popup = jo.get_bool( "popup", false );
     return [do_popup, is_npc, item_name, count, charges]( dialogue & d ) {
-        // this is stupid, but I couldn't get the assignment to work
+
         int current_count = count.evaluate( d );
         int current_charges = charges.evaluate( d );
         itype_id current_item_name = itype_id( item_name.evaluate( d ) );
@@ -4401,9 +4401,9 @@ talk_effect_fun_t::func f_consume_item( const JsonObject &jo, std::string_view m
 talk_effect_fun_t::func f_consume_item_sum( const JsonObject &jo, std::string_view member,
         std::string_view, bool is_npc )
 {
-    // Only after i implemented it, i realised it is a bad way to make it
-    // What it should be is an expansion of f_run_inv_eocs
-    // that allow to pick multiple ids and limit it to some amount of it
+
+
+
 
     std::vector<std::pair<str_or_var, dbl_or_var>> item_and_amount;
 
@@ -4451,7 +4451,7 @@ talk_effect_fun_t::func f_consume_item_sum( const JsonObject &jo, std::string_vi
                         amount_desired--;
                     }
                 } else {
-                    iter++; // Not an item we're looking for. NEXT!
+                    iter++;
                 }
             }
         }
@@ -4807,7 +4807,7 @@ talk_effect_fun_t::func f_location_variable( const JsonObject &jo, std::string_v
             }
         }
 
-        // move the found value by the adjusts
+
         target_pos = target_pos + tripoint( dov_x_adjust.evaluate( d ), dov_y_adjust.evaluate( d ), 0 );
 
         if( z_override ) {
@@ -4898,11 +4898,11 @@ talk_effect_fun_t::func f_transform_radius( const JsonObject &jo, std::string_vi
         if( future > 0_seconds ) {
             get_timed_events().add( timed_event_type::TRANSFORM_RADIUS,
                                     calendar::turn + future + 1_seconds,
-                                    //Timed events happen before the player turn and eocs are during so we add a second here to sync them up using the same variable
+
                                     -1, target_pos, radius, transform.evaluate( d ), key.evaluate( d ) );
         } else {
             map &bubble_map = reality_bubble();
-            // Use the main map when possible to reduce performance overhead.
+
             if( bubble_map.inbounds( target_pos - point{ radius, radius} ) &&
                 bubble_map.inbounds( target_pos + point{ radius, radius} ) ) {
                 bubble_map.transform_radius( ter_furn_transform_id( transform.evaluate( d ) ), radius, target_pos );
@@ -5092,7 +5092,7 @@ talk_effect_fun_t::func f_query_omt( const JsonObject &jo, std::string_view memb
             }
             if( pick != tripoint_abs_omt::invalid ) {
                 tripoint_abs_ms abs_pos_ms = project_to<coords::ms>( pick );
-                // aim at the center of OMT
+
                 abs_pos_ms.x() += rng_float( 12 - spread.evaluate( d ), 12 + spread.evaluate( d ) );
                 abs_pos_ms.y() += rng_float( 12 - spread.evaluate( d ), 12 + spread.evaluate( d ) );
                 write_var_value( var.type, var.name, &d, abs_pos_ms );
@@ -5160,7 +5160,7 @@ talk_effect_fun_t::func f_choose_adjacent_highlight( const JsonObject &jo, std::
 talk_effect_fun_t::func f_mirror_coordinates( const JsonObject &jo, std::string_view member,
         std::string_view )
 {
-    // remove it once we get proper coordinate operations in math
+
     var_info center_var;
     optional( jo, false, "center_var", center_var );
     var_info relative_var;
@@ -5208,7 +5208,7 @@ talk_effect_fun_t::func f_place_override( const JsonObject &jo, std::string_view
     return [new_place, dov_length, key]( dialogue & d ) {
         get_timed_events().add( timed_event_type::OVERRIDE_PLACE,
                                 calendar::turn + dov_length.evaluate( d ) + 1_seconds,
-                                //Timed events happen before the player turn and eocs are during so we add a second here to sync them up using the same variable
+
                                 -1, tripoint_abs_ms::zero, -1, new_place.evaluate( d ).translated(), key.evaluate( d ) );
     };
 }
@@ -5264,7 +5264,7 @@ talk_effect_fun_t::func f_mapgen_update( const JsonObject &jo, std::string_view 
         time_duration future = dov_time_in_future.evaluate( d );
         if( future > 0_seconds ) {
             time_point tif = calendar::turn + future + 1_seconds;
-            //Timed events happen before the player turn and eocs are during so we add a second here to sync them up using the same variable
+
             for( const str_or_var &mapgen_update_id : update_ids ) {
                 get_timed_events().add( timed_event_type::UPDATE_MAPGEN, tif, -1, project_to<coords::ms>( omt_pos ),
                                         0, mapgen_update_id.evaluate( d ), key.evaluate( d ) );
@@ -5304,15 +5304,15 @@ talk_effect_fun_t::func f_revert_location( const JsonObject &jo, std::string_vie
         const tripoint_abs_ms abs_ms = read_var_value( target_var, d ).tripoint();
         tripoint_abs_omt omt_pos = project_to<coords::omt>( abs_ms );
         time_point tif = calendar::turn + dov_time_in_future.evaluate( d ) + 1_seconds;
-        // Timed events happen before the player turn and eocs are during so we add a second here to sync them up using the same variable
-        // maptile is 4 submaps so queue up 4 submap reverts
+
+
         const tripoint_abs_sm revert_sm_base = project_to<coords::sm>( omt_pos );
 
         if( !MAPBUFFER.submap_exists( revert_sm_base ) ) {
             tinymap tm;
-            // This creates the submaps if they didn't already exist.
-            // Note that all four submaps are loaded/created by this
-            // call, so the submap lookup can fail at most once.
+
+
+
             tm.load( omt_pos, true );
         }
         for( int x = 0; x < 2; x++ ) {
@@ -5345,15 +5345,15 @@ talk_effect_fun_t::func f_copy_location( const JsonObject &jo, std::string_view 
         tripoint_abs_omt omt_pos_new = project_to<coords::omt>( abs_ms_new );
 
         time_point tif = calendar::turn + dov_time_in_future.evaluate( d ) + 1_seconds;
-        // Timed events happen before the player turn and eocs are during so we add a second here to sync them up using the same variable
-        // maptile is 4 submaps so queue up 4 submap reverts
+
+
         const tripoint_abs_sm revert_sm_base = project_to<coords::sm>( omt_pos );
         const tripoint_abs_sm new_sm_base = project_to<coords::sm>( omt_pos_new );
         if( !MAPBUFFER.submap_exists( new_sm_base ) ) {
             tinymap tm;
-            // This creates the submaps if they didn't already exist.
-            // Note that all four submaps are loaded/created by this
-            // call, so the submap lookup can fail at most once.
+
+
+
             tm.load( omt_pos_new, true );
         }
         for( int x = 0; x < 2; x++ ) {
@@ -5367,7 +5367,7 @@ talk_effect_fun_t::func f_copy_location( const JsonObject &jo, std::string_view 
                                         sm->get_revert_submap(), key.evaluate( d ) );
             }
         }
-        // We need to copy the translocator to target omt pos if it exists
+
         avatar &player_character = get_avatar();
         player_character.translocators.copy_translocator( omt_pos, omt_pos_new );
         reality_bubble().invalidate_map_cache( omt_pos_new.z() );
@@ -5437,7 +5437,7 @@ talk_effect_fun_t::func f_bulk_trade_accept( const JsonObject &jo, std::string_v
         itype_id traded_itype_id = d.cur_item;
         int number_to_transfer = dov_quantity.evaluate( d );
 
-        // Use a set! No duplicates! Duplicate pointers will be bad(crash) when we try to remove the item later.
+
         std::set<item_location> items_to_transfer;
 
         seller->get_character()->visit_items( [&]( item_location visited ) {
@@ -5460,7 +5460,7 @@ talk_effect_fun_t::func f_bulk_trade_accept( const JsonObject &jo, std::string_v
                 warning += "\n" + checked_item->tname();
                 num_warnings++;
                 if( !is_trade && num_warnings >= number_to_transfer ) {
-                    break; // bulk donate has a variable number to transfer but bulk trade always takes everything
+                    break;
                 }
             }
             if( !query_yn( warning ) ) {
@@ -5475,18 +5475,18 @@ talk_effect_fun_t::func f_bulk_trade_accept( const JsonObject &jo, std::string_v
             if( d.actor( true )->get_faction() && d.actor( true )->get_faction()->currency.is_empty() ) {
                 debugmsg( "%s has no faction currency to pay with in bulk_trade_accept!",
                           d.actor( true )->disp_name() );
-                return; // Fatal, no reasonable way to recover.
+                return;
             }
 
-            // This can be very confusing, so for the benefit of future contributors I have elected to make the variable names
-            // terribly verbose.
+
+
             const itype_id &currency_type = d.actor( true )->get_faction()->currency;
             item one_currency_unit( currency_type );
             const int int_value_of_one_currency_unit = d.actor( true )->value( one_currency_unit );
             if( int_value_of_one_currency_unit <= 0 ) {
                 debugmsg( "%s pays in bulk_trade_accept with faction currency worth %d!",
                           d.actor( true )->disp_name(), int_value_of_one_currency_unit );
-                return; // Fatal, no reasonable way to recover.
+                return;
             }
 
             int num_transferred_currency_units = price / int_value_of_one_currency_unit;
@@ -5508,17 +5508,17 @@ talk_effect_fun_t::func f_bulk_trade_accept( const JsonObject &jo, std::string_v
 
             }
 
-            // Currency is actually transferred
+
             for( int i = 0; i < num_transferred_currency_units; i++ ) {
                 seller->i_add( one_currency_unit );
                 price -= int_value_of_one_currency_unit;
             }
 
-            // Tally up debts
+
             d.actor( true )->add_debt( -npc_debt );
             d.actor( true )->add_debt( price );
 
-            // Now let's actually transfer the items!
+
             for( const item_location &transferred : items_to_transfer ) {
                 item transfer_copy( *transferred );
                 transfer_copy.set_owner( *buyer->get_character() );
@@ -5532,7 +5532,7 @@ talk_effect_fun_t::func f_bulk_trade_accept( const JsonObject &jo, std::string_v
             }
 
 
-        } else { // u_bulk_donate
+        } else {
 
             int number_transferred = 0;
             for( const item_location &transferred : items_to_transfer ) {
@@ -5540,16 +5540,16 @@ talk_effect_fun_t::func f_bulk_trade_accept( const JsonObject &jo, std::string_v
                 transfer_copy.set_owner( *buyer->get_character() );
                 buyer->i_add_or_drop( transfer_copy );
 
-                // Count now, while the item still exists
+
                 if( transferred->typeId() != traded_itype_id ) {
-                    // Container traded over
+
                     if( item( traded_itype_id ).count_by_charges() ) {
                         number_transferred += transferred.charges_of( traded_itype_id );
                     } else {
                         number_transferred += transferred.amount_of( traded_itype_id );
                     }
                 } else {
-                    // Loose items traded over
+
                     if( transferred->count_by_charges() ) {
                         number_transferred += transferred->charges;
                     } else {
@@ -5829,12 +5829,12 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
             } else if( interrupt_type.evaluate( d ) == "default" ) {
                 debugmsg( "Interrupt query called in json without proper interrupt type." );
             }
-            // Would probably need an else-if for every possible distraction type, like this:
-            //else if (interrupt_type == "hostile_spotted_near"){
-            //    g->cancel_activity_or_ignore_query(distraction_type::hostile_spotted_near, "sample message");
-            //}
-            // I leave this to contributors who might actually wish to implement such interrupts,
-            // so as to not overcomplicate the code.
+
+
+
+
+
+
         } else {
             target->add_msg_if_player( type, translated_message );
         }
@@ -5891,7 +5891,7 @@ talk_effect_fun_t::func f_open_dialogue( const JsonObject &jo, std::string_view 
         if( has_member ) {
             actual_topic = topic.evaluate( d );
         }
-        if( !d.actor( false )->get_character()->is_avatar() ) { //only open a dialog if the avatar is alpha
+        if( !d.actor( false )->get_character()->is_avatar() ) {
             run_eoc_vector( false_eocs, d );
             return;
         } else if( !actual_topic.empty() ) {
@@ -5910,7 +5910,7 @@ talk_effect_fun_t::func f_take_control( const JsonObject &jo, std::string_view,
     std::vector<effect_on_condition_id> true_eocs = load_eoc_vector( jo, "true_eocs", src );
     std::vector<effect_on_condition_id> false_eocs = load_eoc_vector( jo, "false_eocs", src );
     return [true_eocs, false_eocs]( dialogue const & d ) {
-        if( !d.actor( false )->get_character()->is_avatar() ) { //only take control if the avatar is alpha
+        if( !d.actor( false )->get_character()->is_avatar() ) {
             run_eoc_vector( false_eocs, d );
             return;
         } else if( d.actor( true )->get_npc() != nullptr ) {
@@ -5922,7 +5922,7 @@ talk_effect_fun_t::func f_take_control( const JsonObject &jo, std::string_view,
 
 talk_effect_fun_t::func f_take_control_menu()
 {
-    return []( dialogue const &/* d */ ) {
+    return []( dialogue const & ) {
         get_avatar().control_npc_menu();
     };
 }
@@ -5953,7 +5953,7 @@ talk_effect_fun_t::func f_sound_effect( const JsonObject &jo, std::string_view m
     return [variant, id, outdoor_event, volume]( dialogue & d ) {
         map &here = get_map();
         int local_volume = volume.evaluate( d );
-        Character *target = &get_player_character(); //Only the player can hear sound effects.
+        Character *target = &get_player_character();
         if( target && !target->has_effect( effect_sleep ) && !target->is_deaf() ) {
             if( !outdoor_event || here.get_abs_sub().z() >= 0 ) {
                 if( local_volume == -1 ) {
@@ -5979,7 +5979,7 @@ talk_effect_fun_t::func f_give_achievment( const JsonObject &jo, std::string_vie
     str_or_var achieve = get_str_or_var( jo.get_member( member ), member, true );
     return [achieve]( dialogue const & d ) {
         const achievement_id achievement_to_give( achieve.evaluate( d ) );
-        // make sure the achievement is being tracked and that it is currently pending
+
         std::vector<const achievement *> all_achievements = get_achievements().valid_achievements();
         if( std::find_if( all_achievements.begin(),
         all_achievements.end(), [&achievement_to_give]( const achievement * ach ) {
@@ -6086,7 +6086,7 @@ talk_effect_fun_t::func f_attack( const JsonObject &jo, std::string_view member,
 
     return [is_npc, allow_special, force_technique, allow_unarmed,
             forced_movecost]( dialogue & d ) {
-        // if beta is attacking then target is the alpha
+
         talker *target = d.actor( !is_npc );
         talker *attacker = d.actor( is_npc );
         Creature *c = target->get_creature();
@@ -6103,7 +6103,7 @@ talk_effect_fun_t::func f_ranged_attack( bool is_npc )
 {
 
     return [is_npc]( dialogue & d ) {
-        // if beta is attacking then target is the alpha
+
         talker *target = d.actor( !is_npc );
         Character *attacker = d.actor( is_npc )->get_character();
         Creature *c = target->get_creature();
@@ -6183,7 +6183,7 @@ talk_effect_fun_t::func f_prevent_death( bool is_npc )
 
 talk_effect_fun_t::func f_lightning()
 {
-    return []( dialogue const &/* d */ ) {
+    return []( dialogue const & ) {
         if( get_player_character().posz() >= 0 ) {
             get_weather().lightning_active = true;
         }
@@ -6192,13 +6192,13 @@ talk_effect_fun_t::func f_lightning()
 
 talk_effect_fun_t::func f_next_weather()
 {
-    return []( dialogue const &/* d */ ) {
+    return []( dialogue const & ) {
         get_weather().set_nextweather( calendar::turn );
     };
 }
 
 talk_effect_fun_t::func f_copy_var( const JsonObject &jo, std::string_view member,
-                                    std::string_view /* src */ )
+                                    std::string_view )
 {
     var_info from = read_var_info( jo.get_member( member ) );
     var_info to = read_var_info( jo.get_member( "target_var" ) );
@@ -6295,7 +6295,7 @@ talk_effect_fun_t::func f_set_item_category_spawn_rates( const JsonObject &jo,
             float spawn_rate = joi.get_float( "spawn_rate" );
             rates.insert( std::make_pair( cat, spawn_rate ) );
         }
-        return [rates]( dialogue const &/* d */ ) {
+        return [rates]( dialogue const & ) {
             for( const std::pair<item_category_id, float> &rate : rates ) {
                 rate.first.obj().set_spawn_rate( rate.second );
             }
@@ -6304,7 +6304,7 @@ talk_effect_fun_t::func f_set_item_category_spawn_rates( const JsonObject &jo,
         JsonObject joi = jo.get_member( member );
         item_category_id cat( joi.get_string( "id" ) );
         float spawn_rate = joi.get_float( "spawn_rate" );
-        return [cat, spawn_rate]( dialogue const &/* d */ ) {
+        return [cat, spawn_rate]( dialogue const & ) {
             cat.obj().set_spawn_rate( spawn_rate );
         };
     }
@@ -6321,8 +6321,8 @@ talk_effect_fun_t::func f_assign_mission( const JsonObject &jo, std::string_view
         const mission_type_id &mission_type = mission_type_id( mission_name.evaluate( d ) );
         mission *new_mission = mission::reserve_new( mission_type, character_id() );
         new_mission->assign( player_character );
-        // mission::assign assigns the type's deadline (which is often 0!), so if we want our specific
-        // deadline to be kept, it must always be done after assignment
+
+
         const double deadline_dbl = deadline.evaluate( d );
         if( deadline_dbl ) {
             new_mission->set_deadline( calendar::turn_zero + time_duration::from_turns( deadline_dbl ) );
@@ -6394,7 +6394,7 @@ talk_effect_fun_t::func f_offer_mission( const JsonObject &jo, std::string_view 
     }
 
     return [mission_names]( dialogue const & d ) {
-        // assume that the alpha is the npc if there isn't a beta
+
         npc *p = d.actor( d.has_beta )->get_npc();
 
         if( p ) {
@@ -6638,8 +6638,8 @@ void process_eoc( const effect_on_condition_id &eoc, dialogue &d,
             effect_on_conditions::queue_effect_on_condition( time_in_future, eoc, get_player_character(),
                     d.get_context() );
         }
-        // If the target is a monster or item and the eoc is non global it won't be queued and will silently "fail"
-        // this is so monster attacks against other monsters won't give error messages.
+
+
     } else {
         debugmsg( "Cannot queue a non activation effect_on_condition.  %s", d.get_callstack() );
     }
@@ -6666,8 +6666,8 @@ void run_eocs( const std::vector<eoc_entry> &eocs, dialogue &d, dialogue newDial
 {
     int i = 0;
 
-    // if it's a loop, we will use iterations_amount as limit to amount of loops allowed
-    // and bump it to 100 as default value
+
+
     int iterations_amount = iterations ? iterations->evaluate( d ) : cond ? 100 : 1;
     while( i < iterations_amount && ( !cond || ( *cond )( d ) ) ) {
         for( const eoc_entry &entry : eocs ) {
@@ -6875,7 +6875,7 @@ talk_effect_fun_t::func f_run_eoc_selector( const JsonObject &jo, std::string_vi
     translation title = to_translation( "Select an option." );
     jo.read( "title", title );
 
-    // Selector dialog can't be initialized in tests, so either cancel or activate first eoc
+
     if( test_mode ) {
         return [eocs, context, allow_cancel]( dialogue & d ) {
             if( allow_cancel ) {
@@ -6913,17 +6913,17 @@ talk_effect_fun_t::func f_run_eoc_selector( const JsonObject &jo, std::string_vi
 
             effect_on_condition_id eoc_id =
                 eocs[i].var ? effect_on_condition_id( eocs[i].var->evaluate( d ) ) : eocs[i].id;
-            // check and set condition
+
             bool display = false;
             if( eoc_id->has_condition ) {
-                // if it has a condition check that it is true
+
                 display = eoc_id->test_condition( d );
             } else {
                 display = true;
             }
 
             if( hide_failing && !display ) {
-                // skip hidden entries
+
                 continue;
             }
 
@@ -6952,7 +6952,7 @@ talk_effect_fun_t::func f_run_eoc_selector( const JsonObject &jo, std::string_vi
         }
 
         if( eoc_list.entries.empty() ) {
-            // if we have no entries should exit with error
+
             debugmsg( "No options for EOC_LIST" );
             return;
         }
@@ -6962,7 +6962,7 @@ talk_effect_fun_t::func f_run_eoc_selector( const JsonObject &jo, std::string_vi
             return;
         }
 
-        // add context variables
+
         dialogue newDialog( d );
         int contextIndex = 0;
         if( context.size() > 1 ) {
@@ -7021,7 +7021,7 @@ talk_effect_fun_t::func f_run_npc_eocs( const JsonObject &jo,
             for( const str_or_var &id : unique_ids ) {
                 ids.emplace_back( id.evaluate( d ) );
             }
-            // optimization: avoid repeat evaluations in loops
+
             int z_min = z_span.min.evaluate( d );
             int z_max = z_span.max.evaluate( d );
             const std::vector<npc *> available = g->get_npcs_if( [npc_must_see, npc_range, z_span, z_min,
@@ -7098,7 +7098,7 @@ talk_effect_fun_t::func f_run_monster_eocs( const JsonObject &jo,
             ids.emplace_back( id.evaluate( d ) );
         }
         tripoint_bub_ms actor_pos = d.actor( is_npc )->pos_bub( here );
-        // optimization: avoid repeat evaluations in loops
+
         int z_min = z_span.min.evaluate( d );
         int z_max = z_span.max.evaluate( d );
         const std::vector<Creature *> available = g->get_creatures_if( [ids, monster_must_see,
@@ -7379,7 +7379,7 @@ talk_effect_fun_t::func f_set_talker( const JsonObject &jo, std::string_view mem
     std::string var_name = var.name;
     return [is_npc, var, type, var_name]( dialogue & d ) {
         int id = d.actor( is_npc )->getID().get_value();
-        // stringify for `run_eocs` - see get_talker() above
+
         write_var_value( type, var_name, &d, std::to_string( id ) );
     };
 }
@@ -7786,7 +7786,7 @@ talk_effect_fun_t::func f_custom_light_level( const JsonObject &jo,
     return [dov_length, dov, key]( dialogue & d ) {
         get_timed_events().add( timed_event_type::CUSTOM_LIGHT_LEVEL,
                                 calendar::turn + dov_length.evaluate( d ) +
-                                1_seconds/*We add a second here because this will get ticked on the turn its applied before it has an effect*/,
+                                1_seconds ,
                                 -1, dov.evaluate( d ), key.evaluate( d ) );
     };
 }
@@ -7821,7 +7821,7 @@ talk_effect_fun_t::func f_knockback( const JsonObject &jo, std::string_view memb
             direction_pos = d.actor( is_npc )->pos_bub( here );
         }
 
-        // if we pass target_pos == direction_pos to knockback()->continue_line() the game gonna crash
+
         if( direction_pos == target_pos ) {
             point d2( rng( -1, 1 ), rng( -1, 1 ) );
 
@@ -7986,7 +7986,7 @@ talk_effect_fun_t::func f_spawn_monster( const JsonObject &jo, std::string_view 
         } else if( monster_id.evaluate( d ).empty() ) {
             int target_range = dov_target_range.evaluate( d );
             if( single_target ) {
-                // Find a hostile creature in range to be used to create a hallucination or a copy of
+
                 Creature *copy = g->get_creature_if( [target_range]( const Creature & critter ) -> bool {
                     bool not_self = get_player_character().pos_bub() != critter.pos_bub();
                     bool in_range = std::round( rl_dist_exact( get_player_character().pos_bub(), critter.pos_bub() ) ) <= target_range;
@@ -7999,7 +7999,7 @@ talk_effect_fun_t::func f_spawn_monster( const JsonObject &jo, std::string_view 
                 }
                 target_monster = *copy->as_monster();
             } else {
-                // Find all hostile creatures in range to be used to create hallucinations or copies of
+
                 std::vector<Creature *> monsters_in_range = g->get_creatures_if( [target_range](
                 const Creature & critter ) -> bool {
                     bool not_self = get_player_character().pos_bub() != critter.pos_bub();
@@ -8103,7 +8103,7 @@ talk_effect_fun_t::func f_spawn_monster( const JsonObject &jo, std::string_view 
                     lifespan = dov_lifespan.evaluate( d );
                     if( lifespan.value() > 0_seconds ) {
                         spawned->set_summon_time( lifespan.value() );
-                        // Temporary monsters shouldn't drop items unless told to
+
                         spawned->no_extra_death_drops = !temporary_drop_items;
                         spawned->no_corpse_quiet = !temporary_drop_items;
                     }
@@ -8171,7 +8171,7 @@ talk_effect_fun_t::func f_spawn_npc( const JsonObject &jo, std::string_view memb
         string_id<npc_template> cur_npc_class( sov_npc_class.evaluate( d ) );
         std::string cur_unique_id = unique_id.evaluate( d );
         std::vector<trait_id> cur_traits;
-        cur_traits.reserve( traits.size() ); // Reserve space for all elements in traits
+        cur_traits.reserve( traits.size() );
         for( const str_or_var &cur_trait : traits ) {
             cur_traits.emplace_back( cur_trait.evaluate( d ) );
         }
@@ -8539,7 +8539,7 @@ talk_effect_fun_t::func f_travel_to_dimension( const JsonObject &jo, std::string
     translation_or_var success_message;
     optional( jo, false, "success_message", success_message );
 
-    // accepts values "all"/"follower"/"enemy"
+
     str_or_var npc_travel_filter;
     optional( jo, false, "npc_travel_filter", npc_travel_filter, "all" );
 
@@ -8612,7 +8612,7 @@ talk_effect_fun_t::func f_travel_to_dimension( const JsonObject &jo, std::string
                     }
                     veh = &vp_here->vehicle();
                 }
-                // returns False if fail
+
                 if( g->travel_to_dimension( prefix, travellers, items, center, veh ) ) {
                     teleporter->add_msg_if_player( success_message.evaluate( d ) );
                 } else {
@@ -8669,8 +8669,8 @@ talk_effect_fun_t::func f_trigger_event( const JsonObject &jo, std::string_view 
     };
 }
 
-} // namespace
-} // namespace talk_effect_fun
+}
+}
 
 void talk_effect_t::set_effect_consequence( const talk_effect_fun_t &fun,
         dialogue_consequence con )
@@ -8711,7 +8711,7 @@ void talk_effect_t::set_effect( talkfunction_ptr ptr )
 talk_topic talk_effect_t::apply( dialogue &d ) const
 {
     if( d.has_beta ) {
-        // Need to get a reference to the mission before effects are applied, because effects can remove the mission
+
         const mission *miss = d.actor( true )->selected_mission();
         for( const talk_effect_fun_t &effect : effects ) {
             effect( d );
@@ -8745,7 +8745,7 @@ void talk_effect_t::update_missions( dialogue &d )
     auto &ma = d.missions_assigned;
     ma.clear();
     if( d.has_beta ) {
-        // Update the missions we can talk about (must only be current, non-complete ones)
+
         for( mission *&mission : d.actor( true )->assigned_missions() ) {
             if( mission->get_assigned_player_id() == d.actor( false )->getID() ) {
                 ma.push_back( mission );
@@ -8909,8 +8909,8 @@ parsers = {
     { "transform_item", jarg::member, &talk_effect_fun::f_transform_item },
     { "signal_hordes", jarg::member, &talk_effect_fun::f_signal_hordes },
     { "set_browsed", jarg::member, &talk_effect_fun::f_set_browsed },
-    // since parser checks all effects in order, having "message" field in any another effect (like in f_roll_remainder)
-    // would cause parser to think it's a "message" effect
+
+
     { "message", "message", jarg::member, &talk_effect_fun::f_message },
 };
 
@@ -9150,12 +9150,12 @@ void talk_effect_t::load_effect( const JsonObject &jo, const std::string &member
 {
     if( jo.has_member( "opinion" ) ) {
         JsonValue jv = jo.get_member( "opinion" );
-        // Same format as when saving a game (-:
+
         opinion.deserialize( jv );
     }
     if( jo.has_member( "mission_opinion" ) ) {
         JsonValue jv = jo.get_member( "mission_opinion" );
-        // Same format as when saving a game (-:
+
         mission_opinion.deserialize( jv );
     }
     if( !jo.has_member( member_name ) ) {
@@ -9189,10 +9189,10 @@ talk_response::talk_response()
         return true;
     };
     mission_selected = nullptr;
-    // Why aren't these null ids? Well, it turns out most responses give
-    // empty ids, so things like the training code check for these empty ids
-    // and when it's given a null id, it breaks
-    // FIXME: Use null ids
+
+
+
+
     skill = skill_id();
     style = matype_id();
     proficiency = proficiency_id();
@@ -9220,7 +9220,7 @@ talk_response::talk_response( const JsonObject &jo, std::string_view src )
         JsonObject success_obj = jo.get_object( "success" );
         success = talk_effect_t( success_obj, "effect", src );
     } else if( jo.has_string( "topic" ) ) {
-        // This is for simple topic switching without a possible failure
+
         success.next_topic = talk_topic( jo.get_string( "topic" ) );
         success.load_effect( jo, "effect", src );
     } else if( jo.has_object( "topic" ) ) {
@@ -9245,9 +9245,9 @@ talk_response::talk_response( const JsonObject &jo, std::string_view src )
         }
         read_condition( jo, "show_condition", show_condition, false );
     }
-    // TODO: mission_selected
-    // TODO: skill
-    // TODO: style
+
+
+
 }
 
 json_talk_repeat_response::json_talk_repeat_response( const JsonObject &jo,
@@ -9309,7 +9309,7 @@ bool json_talk_response::test_condition( dialogue &d ) const
     if( condition ) {
         return condition( d );
     }
-    //if condition doesn't exist, it evaluates to true if tested
+
     return true;
 }
 
@@ -9329,13 +9329,13 @@ bool json_talk_response::gen_responses( dialogue &d, bool switch_done )
             d.add_gen_response( actual_response, false, !!condition, condition_result );
             return is_switch && !is_default;
         } else if( !failure_explanation.empty() || !failure_topic.empty() ) {
-            // build additional talk responses for failed options with an explanation if details are given
+
             talk_response tr = talk_response();
             tr.truetext = no_translation(
                               string_format( pgettext( "failure_explanation: actual_response", "*%s: %s" ),
                                              failure_explanation.translated(), actual_response.truetext.translated() ) );
             if( !failure_topic.empty() ) {
-                // Default is TALK_NONE otherwise go to the failure topic provided
+
                 tr.success.next_topic = talk_topic( failure_topic );
             }
             d.add_gen_response( tr, false, !!condition, condition_result );
@@ -9344,7 +9344,7 @@ bool json_talk_response::gen_responses( dialogue &d, bool switch_done )
     return false;
 }
 
-// repeat responses always go in front
+
 bool json_talk_response::gen_repeat_response( dialogue &d, const itype_id &item_id,
         bool switch_done ) const
 {
@@ -9489,7 +9489,7 @@ dynamic_line_t::dynamic_line_t( const JsonObject &jo )
         const dynamic_line_t no = from_member( jo, "no" );
         for( const std::string &sub_member : dialogue_data::simple_string_conds() ) {
             if( jo.has_bool( sub_member ) ) {
-                // This also marks the member as visited.
+
                 if( !jo.get_bool( sub_member ) ) {
                     jo.throw_error_at( sub_member, "value must be true" );
                 }
@@ -9557,9 +9557,9 @@ json_dynamic_line_effect::json_dynamic_line_effect( const JsonObject &jo,
     read_condition( jo, "condition", tmp_condition, true );
     talk_effect_t tmp_effect = talk_effect_t( jo, "effect", src );
     get_raw_debug_fields( jo, debug_info );
-    // if the topic has a sentinel, it means implicitly add a check for the sentinel value
-    // and do not run the effects if it is set.  if it is not set, run the effects and
-    // set the sentinel
+
+
+
     if( jo.has_string( "sentinel" ) ) {
         const std::string sentinel = jo.get_string( "sentinel" );
         const std::string varname = "sentinel_" + id + "_" + sentinel;
@@ -9610,7 +9610,7 @@ void json_talk_topic::load( const JsonObject &jo, std::string_view src )
     if( jo.has_member( "portrait_override" ) ) {
         portrait_override = character_portrait_id( jo.get_member( "portrait_override" ) );
     } else {
-        // FIXME: Use real null IDs not std::optional juggling :(
+
         portrait_override = std::nullopt;
     }
     bool insert_above_bottom = false;
@@ -9651,7 +9651,7 @@ void json_talk_topic::load( const JsonObject &jo, std::string_view src )
 
 bool json_talk_topic::gen_responses( dialogue &d )
 {
-    d.responses.reserve( responses.size() ); // A wild guess, can actually be more or less
+    d.responses.reserve( responses.size() );
 
     bool switch_done = false;
     for( json_talk_response &r : responses ) {
@@ -9728,8 +9728,8 @@ std::optional<character_portrait_id> json_talk_topic::get_portrait_override() co
 
 void json_talk_topic::check_consistency() const
 {
-    // TODO: check that all referenced topic actually exist. This is currently not possible
-    // as they only exist as built in strings, not in the json_talk_topics map.
+
+
 }
 
 void unload_talk_topics()
@@ -9749,7 +9749,7 @@ void load_talk_topic( const JsonObject &jo, std::string_view src )
     }
 }
 
-std::string npc::pick_talk_topic( const Character &/*u*/ )
+std::string npc::pick_talk_topic( const Character & )
 {
     if( personality.aggression > 0 ) {
         if( op_of_u.fear * 2 < personality.bravery && personality.altruism < 0 ) {

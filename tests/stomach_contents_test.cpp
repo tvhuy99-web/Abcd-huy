@@ -44,8 +44,8 @@ static void pass_time( Character &p, time_duration amt )
 {
     constexpr time_duration time_chunk = 1_minutes;
 
-    // make sure we start spinning aligned to minutes, so that calendar::once_every
-    // in Character::update_body works correctly, 997 is a randomly picked prime
+
+
     REQUIRE( to_seconds<int64_t>( calendar::turn - calendar::turn_zero + 997 * time_chunk ) % 60 == 0 );
 
     while( amt > 0_seconds ) {
@@ -76,8 +76,8 @@ static void reset_daily_vitamins( Character &p )
     p.reset_daily_vitamin( vitamin_calcium );
 }
 
-// time (in minutes) it takes for the player to feel hungry
-// passes time on the calendar
+
+
 static time_duration time_until_hungry( Character &p )
 {
     unsigned int thirty_minutes = 0;
@@ -86,7 +86,7 @@ static time_duration time_until_hungry( Character &p )
         p.set_sleepiness( 0 );
         pass_time( p, 30_minutes );
         thirty_minutes++;
-    } while( p.get_hunger() < 40 ); // hungry
+    } while( p.get_hunger() < 40 );
     return thirty_minutes * 30_minutes;
 }
 
@@ -105,18 +105,18 @@ static void print_stomach_contents( Character &p, const bool print )
     printf( "metabolic rate: %.2f\n", p.metabolic_rate() );
 }
 
-// this represents an amount of food you can eat to keep you fed for an entire day
-// accounting for appropriate vitamins
+
+
 static void eat_all_nutrients( Character &you )
 {
-    // Vitamin target: 100% DV -- or 96 vitamin "units" since all vitamins currently decay every 15m.
-    // Energy target: 2100 kcal -- debug target will be completely sedentary.
+
+
     item f( itype_debug_nutrition );
     you.consume( f );
 }
 
-// how long does it take to starve to death
-// player does not thirst or tire or require vitamins
+
+
 TEST_CASE( "starve_test", "[starve][slow]" )
 {
     Character &dummy = get_player_character();
@@ -139,8 +139,8 @@ TEST_CASE( "starve_test", "[starve][slow]" )
     CAPTURE( dummy.activity_history.average_activity() );
     CAPTURE( dummy.get_bmr() );
 
-    // A specific BMR isn't the real target of this test, the number of days
-    // is, but it helps to debug the test faster if this value is wrong.
+
+
     REQUIRE( dummy.get_bmr() == 1738 );
 
     constexpr int expected_day = 75;
@@ -159,7 +159,7 @@ TEST_CASE( "starve_test", "[starve][slow]" )
     CHECK( day == expected_day );
 }
 
-// do vitamins get processed correctly every day
+
 TEST_CASE( "vitamin_process", "[vitamins]" )
 {
     Character &subject = get_avatar();
@@ -176,7 +176,7 @@ TEST_CASE( "vitamin_process", "[vitamins]" )
 
     pass_time( subject, 1_days );
 
-    // check
+
     CHECK( subject.vitamin_get( vitamin_iron ) <= -95 );
     CHECK( subject.vitamin_get( vitamin_calcium ) <= -95 );
     CHECK( subject.vitamin_get( vitamin_vitC ) <= -95 );
@@ -184,17 +184,17 @@ TEST_CASE( "vitamin_process", "[vitamins]" )
     CHECK( subject.vitamin_get( vitamin_calcium ) >= -97 );
     CHECK( subject.vitamin_get( vitamin_vitC ) >= -97 );
 
-    // slow vitamin drains every 90 minutes or 16 units in a day
+
     CHECK( subject.vitamin_get( vitamin_test_vit_slow ) <= -15 );
     CHECK( subject.vitamin_get( vitamin_test_vit_slow ) >= -17 );
 
-    // fast vitamin drains every 5 minutes or 288 units in a day
+
     CHECK( subject.vitamin_get( vitamin_test_vit_fast ) <= -287 );
     CHECK( subject.vitamin_get( vitamin_test_vit_fast ) >= -289 );
 
 }
 
-// do vitamins you eat get processed correctly
+
 TEST_CASE( "vitamin_equilibrium", "[vitamins]" )
 {
     Character &subject = get_avatar();
@@ -208,13 +208,13 @@ TEST_CASE( "vitamin_equilibrium", "[vitamins]" )
     REQUIRE( subject.vitamin_get( vitamin_iron ) == -100 );
     item f( itype_debug_orange );
 
-    // check that 100% of daily vit C is by default 96 units
+
     CHECK( subject.compute_effective_nutrients( f ).get_vitamin( vitamin_vitC ) == 96 );
     subject.consume( f );
 
     pass_time( subject, 1_days );
 
-    // check if something with 100% RDA will keep you at equilibrium
+
     CHECK( subject.vitamin_get( vitamin_iron ) <= -99 );
     CHECK( subject.vitamin_get( vitamin_calcium ) <= -99 );
     CHECK( subject.vitamin_get( vitamin_vitC ) <= -99 );
@@ -224,7 +224,7 @@ TEST_CASE( "vitamin_equilibrium", "[vitamins]" )
 
 }
 
-// do vitamins you eat get processed correctly
+
 TEST_CASE( "vitamin_multivitamin", "[vitamins]" )
 {
     Character &subject = get_avatar();
@@ -242,7 +242,7 @@ TEST_CASE( "vitamin_multivitamin", "[vitamins]" )
 
     pass_time( subject, 1_days );
 
-    // check if something with 100% RDA will keep you at equilibrium
+
     CHECK( subject.vitamin_get( vitamin_iron ) <= -99 );
     CHECK( subject.vitamin_get( vitamin_calcium ) <= -99 );
     CHECK( subject.vitamin_get( vitamin_vitC ) <= -99 );
@@ -252,14 +252,14 @@ TEST_CASE( "vitamin_multivitamin", "[vitamins]" )
 
 }
 
-// do vitamins you eat get processed correctly
+
 TEST_CASE( "vitamin_daily", "[vitamins]" )
 {
     Character &subject = get_avatar();
     clear_avatar();
     reset_time();
     clear_stomach( subject );
-    //  there isn't yet a set_health_tally function, so reset it to 0 like this
+
     subject.mod_health_tally( -subject.get_health_tally() );
 
     set_all_vitamins( -100, subject );
@@ -280,7 +280,7 @@ TEST_CASE( "vitamin_daily", "[vitamins]" )
     while( hours < 72 ) {
         pass_time( subject, 1_hours );
         hours++;
-        // check vitamins to see if health has updated
+
         if( subject.get_daily_vitamin( vitamin_vitC ) == 0 &&
             subject.get_daily_vitamin( vitamin_calcium ) == 0 &&
             subject.get_daily_vitamin( vitamin_iron ) == 0 ) {
@@ -288,17 +288,17 @@ TEST_CASE( "vitamin_daily", "[vitamins]" )
         }
     }
 
-    // check if after a day health is up and vitamins are reset
+
     CHECK( subject.get_daily_vitamin( vitamin_vitC ) == 0 );
     CHECK( subject.get_daily_vitamin( vitamin_calcium ) == 0 );
     CHECK( subject.get_daily_vitamin( vitamin_iron ) == 0 );
-    // get that vitamin health bonus is up by 6 with maybe a recent reduction on the same timecheck
+
     CHECK( subject.get_health_tally() >= 5 );
 
 }
 
-// how long does it take to starve to death with extreme metabolism
-// player does not thirst or tire or require vitamins
+
+
 TEST_CASE( "starve_test_hunger3", "[starve][slow]" )
 {
     Character &dummy = get_player_character();
@@ -331,19 +331,19 @@ TEST_CASE( "starve_test_hunger3", "[starve][slow]" )
         day++;
     } while( dummy.get_stored_kcal() > 0 );
 
-    //you are burning through 5000 kcal a day out of a healthy base reserve of ~120000 kcal (15kg which is ~20% of your expected total weight of ~72kg)
-    //as your metabolism slows as you starve this puts your expected lifespan at about 25 days, which is likely too high for a super hungry mutant.
-    //however, you also start breaking down muscle below 3.5 fat BMIs (~50,000 kcal), which is hard to recover from, and 15kg is a fairly solid buffer.
-    //the system should probably account for the fact that fat ketones cannot power your whole body (brain can't think without food, stored kcal or not)
+
+
+
+
     CAPTURE( results );
     CHECK( day <= 27 );
     CHECK( day >= 23 );
 }
 
-// does eating enough food per day keep you alive
+
 TEST_CASE( "all_nutrition_starve_test", "[starve][slow]" )
 {
-    // change this bool when editing the test
+
     const bool print_tests = false;
     avatar &dummy = get_avatar();
     reset_time();
@@ -373,10 +373,10 @@ TEST_CASE( "all_nutrition_starve_test", "[starve][slow]" )
         printf( "\n" );
     }
     CHECK( dummy.get_stored_kcal() >= dummy.get_healthy_kcal() );
-    // We need to account for a day's worth of error since we're passing a day at a time and we are
-    // close to 0 which is the max value for some vitamins
 
-    // This test could be a lot better bounds are really wide on it
+
+
+
     CHECK( dummy.vitamin_get( vitamin_vitC ) >= -100 );
     CHECK( dummy.vitamin_get( vitamin_iron ) >= -100 );
     CHECK( dummy.vitamin_get( vitamin_calcium ) >= -100 );
@@ -400,10 +400,10 @@ TEST_CASE( "tape_worm_halves_nutrients" )
     CHECK( tapeworm_kcal == regular_kcal / 2 );
 }
 
-// reasonable length of time to pass before hunger sets in
+
 TEST_CASE( "hunger" )
 {
-    // change this bool when editing the test
+
     const bool print_tests = false;
     avatar &dummy = get_avatar();
     reset_time();

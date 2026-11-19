@@ -145,7 +145,7 @@ class item_category;
 using item_category_id = string_id<item_category>;
 
 class Item_spawn_data;
-// note: "dynamic" string id, see string_id_params in string_id.h
+
 using item_group_id = string_id<Item_spawn_data>;
 
 struct itype;
@@ -186,9 +186,9 @@ using mod_id = string_id<MOD_INFORMATION>;
 
 struct mon_flag;
 using mon_flag_id = int_id<mon_flag>;
-// As of 1-1-24 there are 118 flags in the vanilla game.
-// Additional space is added for expansion, up to the next word size.
-// Note: it is safe to use flags larger than this, it will just be slower.
+
+
+
 using mon_flag_id_set = int_id_set<mon_flag, 64 * 3>;
 using mon_flag_str_id = string_id<mon_flag>;
 
@@ -363,8 +363,8 @@ class Trait_group;
 namespace trait_group
 {
 using Trait_group_tag = string_id<Trait_group>;
-// note: "dynamic" string id, see string_id_params in string_id.h
-} // namespace trait_group
+
+}
 
 struct trap;
 using trap_id = int_id<trap>;
@@ -433,4 +433,4 @@ using wound_fix_id = string_id<wound_fix>;
 struct connect_group;
 using connect_group_id = string_id<connect_group>;
 
-#endif // CATA_SRC_TYPE_ID_H
+#endif

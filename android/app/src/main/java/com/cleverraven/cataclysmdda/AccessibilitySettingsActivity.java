@@ -12,7 +12,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import java.util.Locale;
 
-/** Reader graphics, directional sonar and swipe settings; TTS is separate. */
+
 public final class AccessibilitySettingsActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -35,14 +35,14 @@ public final class AccessibilitySettingsActivity extends Activity {
                 CataclysmDDA.nativeConfigureReaderPerformance(
                         spokenOnly, SessionDebugLog.enabled(this));
             } catch (UnsatisfiedLinkError unavailable) {
-                // The active reader reapplies preferences when gameplay resumes.
+
             }
         });
         controls.addView(showGraphics);
 
-        // Separate existing sonar samples into two independent switches.
-        // The native sensing channel runs whenever at least one is enabled;
-        // the game reader filters the sounds per category.
+
+
+
         CheckBox creatureSonar = new CheckBox(this);
         creatureSonar.setText(R.string.a11yDirectionalSonarCreatures);
         creatureSonar.setChecked(prefs.isCreatureSonarEnabled());
@@ -51,7 +51,7 @@ public final class AccessibilitySettingsActivity extends Activity {
             try {
                 CataclysmDDA.nativeConfigureDirectionalSonar(prefs.isDirectionalSonarEnabled());
             } catch (UnsatisfiedLinkError unavailable) {
-                // Reapplied by the game reader when gameplay resumes.
+
             }
         });
         controls.addView(creatureSonar);
@@ -64,7 +64,7 @@ public final class AccessibilitySettingsActivity extends Activity {
             try {
                 CataclysmDDA.nativeConfigureDirectionalSonar(prefs.isDirectionalSonarEnabled());
             } catch (UnsatisfiedLinkError unavailable) {
-                // Reapplied by the game reader when gameplay resumes.
+
             }
         });
         controls.addView(itemSonar);
@@ -83,9 +83,9 @@ public final class AccessibilitySettingsActivity extends Activity {
         controls.addView(hapticCues);
 
         TextView distanceValue = new TextView(this);
-        // Visible label only: the SeekBar below announces the same value
-        // through its contentDescription, so this must not be a second
-        // spoken item in the navigation order.
+
+
+
         distanceValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         controls.addView(distanceValue);
         SeekBar distance = new SeekBar(this);
@@ -112,9 +112,9 @@ public final class AccessibilitySettingsActivity extends Activity {
         distance.setContentDescription(distanceValue.getText());
 
         TextView durationValue = new TextView(this);
-        // Visible label only: the SeekBar below announces the same value
-        // through its contentDescription, so this must not be a second
-        // spoken item in the navigation order.
+
+
+
         durationValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         controls.addView(durationValue);
         SeekBar duration = new SeekBar(this);

@@ -48,4 +48,4 @@ class mod_tileset
         std::vector<std::string> compatibility;
 };
 
-#endif // CATA_SRC_MOD_TILESET_H
+#endif

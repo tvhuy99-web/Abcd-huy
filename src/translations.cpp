@@ -15,8 +15,8 @@
 #include "uilist.h"
 #endif
 
-// int version/generation that is incremented each time language is changed
-// used to invalidate translation cache
+
+
 static int current_language_version = INVALID_LANGUAGE_VERSION + 1;
 
 int detail::get_current_language_version()
@@ -44,7 +44,7 @@ std::string select_language()
 
     return languages[sm.ret].first;
 }
-#endif // LOCALIZE
+#endif
 
 std::string locale_dir()
 {
@@ -62,7 +62,7 @@ std::string locale_dir()
         loc_dir = PATH_INFO::langdir();
     }
 #endif
-#endif // LOCALIZE
+#endif
     return loc_dir;
 }
 
@@ -84,7 +84,7 @@ void set_language( const std::string &lang )
     DebugLog( D_INFO, D_MAIN ) << "Setting language to: '" << lang << '\'';
     TranslationManager::GetInstance().SetLanguage( lang );
 #if defined(_WIN32)
-    // Use the ANSI code page 1252 to work around some language output bugs. (#8665)
+
     if( setlocale( LC_ALL, ".1252" ) == nullptr ) {
         DebugLog( D_WARNING, D_MAIN ) << "Error while setlocale(LC_ALL, '.1252').";
     }
@@ -92,19 +92,19 @@ void set_language( const std::string &lang )
 
     reset_sanity_check_genders();
 
-    // increment version to invalidate translation cache
+
     do {
         current_language_version++;
     } while( current_language_version == INVALID_LANGUAGE_VERSION );
 
 #else
-    // Silence unused var warning
-    ( void ) lang;
-#endif // LOCALIZE
 
-    // Names depend on the language settings. They are loaded from different files
-    // based on the currently used language. If that changes, we have to reload the
-    // names.
+    ( void ) lang;
+#endif
+
+
+
+
     SNIPPET.reload_names( PATH_INFO::names() );
 
     set_title( string_format( _( "Cataclysm: Dark Days Ahead - %s" ), getVersionString() ) );

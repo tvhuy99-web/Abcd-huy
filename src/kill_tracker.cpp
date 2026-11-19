@@ -58,7 +58,7 @@ int kill_tracker::guilt_kill_count() const
             }
         }
     }
-    // Human kills always count for deadening purposes, even if the kill itself didn't trigger guilt.
+
     count += static_cast<int>( npc_kills.size() );
     return count;
 }
@@ -100,7 +100,7 @@ static Character *get_avatar_or_follower( const character_id &id )
     return nullptr;
 }
 
-// Legacy value, maintained until kill_xp rework/removal from dependent in-repo mods
+
 static constexpr int npc_kill_xp = 10;
 
 void kill_tracker::notify( const cata::event &e )
@@ -111,7 +111,7 @@ void kill_tracker::notify( const cata::event &e )
             if( Character *killer = get_avatar_or_follower( killer_id ) ) {
                 const mtype_id victim_type = e.get<mtype_id>( "victim_type" );
                 kills[victim_type]++;
-                // Legacy value update, maintained until kill_xp rework/removal from dependent in-repo mods
+
                 killer->kill_xp += e.get<int>( "exp" );
                 victim_type.obj().families.practice_kill( *killer );
             }
@@ -119,11 +119,11 @@ void kill_tracker::notify( const cata::event &e )
         }
         case event_type::character_kills_character: {
             const character_id killer_id = e.get<character_id>( "killer" );
-            // player is credited for NPC kills they or their followers make
+
             if( Character *killer = get_avatar_or_follower( killer_id ) ) {
                 const std::string victim_name = e.get<cata_variant_type::string>( "victim_name" );
                 npc_kills.push_back( victim_name );
-                // Legacy value update, maintained until kill_xp rework/removal from dependent in-repo mods
+
                 killer->kill_xp += npc_kill_xp;
             }
             break;

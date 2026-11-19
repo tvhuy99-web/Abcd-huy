@@ -148,7 +148,7 @@ void autodoc( Character &you, const tripoint_bub_ms &examp );
 void attunement_altar( Character &you, const tripoint_bub_ms &examp );
 void translocator( Character &you, const tripoint_bub_ms &examp );
 void on_smoke_out( map &here, const tripoint_bub_ms &examp,
-                   const time_point &start_time ); //activates end of smoking effects
+                   const time_point &start_time );
 void mill_finalize( Character &, map &here, const tripoint_bub_ms &examp );
 void quern_examine( Character &you, const tripoint_bub_ms &examp );
 void smoker_options( Character &you, const tripoint_bub_ms &examp );
@@ -172,7 +172,7 @@ bool has_keg( const tripoint_bub_ms &pos );
 std::list<item> get_harvest_items( const itype &type, int plant_count,
                                    int seed_count, bool byproducts );
 
-// Planting functions
+
 std::vector<seed_tuple> get_seed_entries( const std::vector<item_location> &seed_inv );
 int query_seed( const std::vector<seed_tuple> &seed_entries );
 void plant_seed( Character &you, const tripoint_bub_ms &examp, const itype_id &seed_id );
@@ -184,16 +184,16 @@ itype_id choose_fertilizer( Character &you, const std::string &pname, bool ask_p
 ret_val<void> can_fertilize( Character &you, const tripoint_bub_ms &tile,
                              const itype_id &fertilizer );
 
-// Skill training common functions
+
 void practice_survival_while_foraging( Character &who );
 
-} // namespace iexamine
+}
 
 namespace iexamine_helper
 {
 bool drink_nectar( Character &you );
 void handle_harvest( Character &you, const itype_id &itemid, bool force_drop );
-} // namespace iexamine_helper
+}
 
 using iexamine_examine_function = void ( * )( Character &, const tripoint_bub_ms & );
 using iexamine_can_examine_function = bool ( * )( const tripoint_bub_ms & );
@@ -209,10 +209,10 @@ struct iexamine_functions {
 
 iexamine_functions iexamine_functions_from_string( const std::string &function_name );
 
-// Find the best available intercom operator for a faction.
-// Prefers on-shift, awake operators. Falls back to any awake operator.
-// Returns nullptr if no operator is found.
+
+
+
 npc *find_intercom_operator( const trait_id &marker_trait,
                              const faction_id &fac_id );
 
-#endif // CATA_SRC_IEXAMINE_H
+#endif

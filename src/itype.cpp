@@ -24,7 +24,7 @@ static const flag_id json_flag_CAN_HAVE_CHARGES( "CAN_HAVE_CHARGES" );
 
 std::string gunmod_location::name() const
 {
-    // Yes, currently the name is just the translated id.
+
     return _( _id );
 }
 
@@ -40,7 +40,7 @@ std::string islot_book::recipe_with_description_t::name() const
     if( optional_name ) {
         return optional_name->translated();
     } else {
-        return recipe->result_name( /*decorated=*/true );
+        return recipe->result_name( true );
     }
 }
 
@@ -84,7 +84,7 @@ std::string enum_to_string<itype_variant_kind>( itype_variant_kind data )
     }
     return "";
 }
-} // namespace io
+}
 
 std::list<itype_id> islot_comestible::get_seasonings() const
 {
@@ -107,7 +107,7 @@ const material_type &itype::get_base_material() const
             m = &mat.first.obj();
         }
     }
-    // Material portions all equal / not specified. Select first material.
+
     if( portion == 1 ) {
         return *default_mat;
     }
@@ -149,7 +149,7 @@ std::string itype::item_measure_prefix( unsigned int quantity ) const
         }
         return vol_to_string( volume_per_charge * quantity, true, true );
     } else if( display_type == item_display_type::BY_LENGTH ) {
-        // Note: item::length() has some special cases where this might not work well!
+
         return length_to_string( longest_side * quantity, true );
     }
     return std::to_string( quantity );
@@ -157,8 +157,8 @@ std::string itype::item_measure_prefix( unsigned int quantity ) const
 
 std::string itype::nname( unsigned int quantity ) const
 {
-    // Always use singular form for liquids.
-    // (Maybe gases too?  There are no gases at the moment)
+
+
     if( phase == phase_id::LIQUID ) {
         quantity = 1;
     }
@@ -212,13 +212,13 @@ int itype::charges_to_use() const
 int itype::charges_per_volume( const units::volume &vol ) const
 {
     if( volume == 0_ml ) {
-        // TODO: items should not have 0 volume at all!
+
         return item::INFINITE_CHARGES;
     }
     return ( count_by_charges() ? stack_size : 1 ) * vol / volume;
 }
 
-// Members of iuse struct, which is slowly morphing into a class.
+
 bool itype::has_use() const
 {
     return !use_methods.empty();
@@ -395,7 +395,7 @@ float islot_armor::avg_thickness() const
 int armor_portion_data::max_coverage( bodypart_str_id bp ) const
 {
     if( bp->sub_parts.empty() ) {
-        // if the location doesn't have subparts then its always 100 coverage
+
         return 100;
     }
 
@@ -403,24 +403,24 @@ int armor_portion_data::max_coverage( bodypart_str_id bp ) const
     int secondary_max_coverage = 0;
     for( const sub_bodypart_str_id &sbp : sub_coverage ) {
         if( bp.id() == sbp->parent.id() && !sbp->secondary ) {
-            // add all sublocations that share the same parent limb
+
             primary_max_coverage += sbp->max_coverage;
         }
 
         if( bp.id() == sbp->parent.id() && sbp->secondary ) {
-            // add all sublocations that share the same parent limb
+
             secondary_max_coverage += sbp->max_coverage;
         }
     }
 
-    // return the max of primary or hanging sublocations (this only matters for hanging items on chest)
+
     return std::max( primary_max_coverage, secondary_max_coverage );
 }
 
 bool armor_portion_data::should_consolidate( const armor_portion_data &l,
         const armor_portion_data &r )
 {
-    //check if the following are equal:
+
     return l.encumber == r.encumber &&
            l.max_encumber == r.max_encumber &&
            l.volume_encumber_modifier == r.volume_encumber_modifier &&
@@ -439,9 +439,9 @@ bool armor_portion_data::should_consolidate( const armor_portion_data &l,
 
 int armor_portion_data::calc_encumbrance( units::mass weight, bodypart_id bp ) const
 {
-    // this function takes some fixed points for mass to encumbrance and interpolates them to get results for head encumbrance
-    // TODO: Generalize this for other body parts (either with a modifier or separated point graphs)
-    // TODO: Handle distributed weight
+
+
+
 
     int encumbrance = 0;
 
@@ -454,20 +454,20 @@ int armor_portion_data::calc_encumbrance( units::mass weight, bodypart_id bp ) c
         return 100;
     }
 
-    // get the bound below our given weight
+
     --itt;
 
     std::map<units::mass, int>::iterator next_itt = std::next( itt );
 
-    // between itt and next_itt need to figure out how much and scale values
+
     float scale = static_cast<float>( weight.value() - itt->first.value() ) / static_cast<float>
                   ( next_itt->first.value() - itt->first.value() );
 
-    // encumbrance is scaled by range between the two values
+
     encumbrance = itt->second + std::roundf( static_cast<float>( next_itt->second - itt->second ) *
                   scale );
 
-    // then add some modifiers
+
     int multiplier = 100;
     int additional_encumbrance = 0;
     for( const encumbrance_modifier &em : encumber_modifiers ) {
@@ -479,20 +479,20 @@ int armor_portion_data::calc_encumbrance( units::mass weight, bodypart_id bp ) c
             multiplier += std::get<1>( modifier );
         }
     }
-    // modify by multiplier
+
     encumbrance = std::roundf( static_cast<float>( encumbrance ) * static_cast<float>
                                ( multiplier ) / 100.0f );
-    // modify by flat
+
     encumbrance += additional_encumbrance;
 
-    // cap encumbrance at least 1
+
     return std::max( encumbrance, 1 );
 }
 
 std::tuple<encumbrance_modifier_type, int> armor_portion_data::convert_descriptor_to_val(
     encumbrance_modifier em )
 {
-    // this is where the values for each of these exist
+
     switch( em ) {
         case encumbrance_modifier::IMBALANCED:
         case encumbrance_modifier::RESTRICTS_NECK:
@@ -557,7 +557,7 @@ bool item_melee_damage::handle_proportional( const JsonValue &jval )
             const auto iter = damage_map.find( dt.first );
             if( iter != damage_map.end() ) {
                 iter->second *= dt.second;
-                // For maintaining legacy behaviour (when melee damage used ints)
+
                 iter->second = std::floor( iter->second );
             }
         }
@@ -573,7 +573,7 @@ item_melee_damage &item_melee_damage::operator+=( const item_melee_damage &rhs )
         const auto iter = damage_map.find( dt.first );
         if( iter != damage_map.end() ) {
             iter->second += dt.second;
-            // For maintaining legacy behaviour (when melee damage used ints)
+
             iter->second = std::floor( iter->second );
         }
     }
@@ -588,9 +588,9 @@ void item_melee_damage::finalize()
 void item_melee_damage::deserialize( const JsonObject &jo )
 {
     damage_map = load_damage_map( jo );
-    //we can do this because items are always loaded after damage types
-    // ^this is not true, objects are loaded as they are encountered, and in mod load order
-    // Being loaded in mod load order particularly is the risk here!
-    // FIXME: call finalize in the right place
+
+
+
+
     finalize();
 }

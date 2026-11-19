@@ -116,19 +116,19 @@ static const trait_id trait_XXXL( "XXXL" );
 
 static character_creator_uistate cc_uistate;
 
-// Whether or not use Outfit (M) at character creation
+
 static bool outfit = true;
 
 static constexpr int RANDOM_START_LOC_ENTRY = INT_MIN;
 
-// Colors used in this file: (Most else defaults to c_light_gray)
-#define COL_STAT_BONUS      c_light_green // Bonus
-#define COL_STAT_NEUTRAL    c_white   // Neutral Property
-#define COL_STAT_PENALTY    c_light_red   // Penalty
-#define COL_HEADER          c_white   // Captions, like "Profession items"
-#define COL_NOTE_MINOR      c_light_gray  // Just regular note
-#define COL_SELECTED        c_green  // uilist selected
-#define COL_NOT_SELECTED    c_light_gray  // uilist not selected
+
+#define COL_STAT_BONUS      c_light_green
+#define COL_STAT_NEUTRAL    c_white
+#define COL_STAT_PENALTY    c_light_red
+#define COL_HEADER          c_white
+#define COL_NOTE_MINOR      c_light_gray
+#define COL_SELECTED        c_green
+#define COL_NOT_SELECTED    c_light_gray
 
 static void draw_colored_text_wrap( const std::string &original_text, nc_color color )
 {
@@ -162,8 +162,8 @@ static void set_detail_scroll()
 static void setup_list_detail_ui( const std::string &header = std::string(),
                                   float uilist_width = 0.33f )
 {
-    ImGui::TableSetupScrollFreeze( 0, 1 ); // Make top row always visible
-    // reserve space for uilist
+    ImGui::TableSetupScrollFreeze( 0, 1 );
+
     ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthStretch, uilist_width );
     ImGui::TableSetupColumn( header.empty() ? _( "No entries found!" ) : header.c_str(),
                              ImGuiTableColumnFlags_WidthStretch, 1.0f - uilist_width );
@@ -231,7 +231,7 @@ static void append_screen_reader_active( std::string &entry_text )
 
 static void set_stat_base( avatar &u, character_stat stat, int amt )
 {
-    // minimum stat specific to character creator UI
+
     if( amt < CHARACTER_STAT_MIN ) {
         return;
     }
@@ -282,7 +282,7 @@ static int trait_points_used( const Character &u )
             locked = locked || hobby->is_locked_trait( cur_trait );
         }
         if( locked ) {
-            // The starting traits granted by scenarios, professions and hobbies cost nothing
+
             continue;
         }
         const mutation_branch &mdata = cur_trait.obj();
@@ -329,10 +329,10 @@ static int has_unspent_points( const Character &u )
 namespace
 {
 struct multi_pool {
-    // The amount of unspent points in the pool without counting the borrowed points
+
     const int pure_stat_points, pure_trait_points, pure_skill_points;
-    // The amount of points awailable in a pool minus the points that are borrowed
-    // by lower pools plus the points that can be borrowed from higher pools
+
+
     const int stat_points_left, trait_points_left, skill_points_left;
     explicit multi_pool( const Character &u ):
         pure_stat_points( stat_point_pool() - stat_points_used( u ) ),
@@ -346,9 +346,9 @@ struct multi_pool {
     {}
 
 };
-} // namespace
+}
 
-// Toggle this trait and all prereqs, removing upgrades on removal
+
 void Character::toggle_trait_deps( const trait_id &tr, const std::string &variant )
 {
     static const int depth_max = 10;
@@ -429,13 +429,13 @@ static matype_id choose_ma_style( const character_type type, const std::vector<m
 void Character::randomize( const bool random_scenario, bool play_now )
 {
     const int max_trait_points = get_option<int>( "MAX_TRAIT_POINTS" );
-    // Reset everything to the defaults to have a clean state.
+
     if( is_avatar() ) {
         *this->as_avatar() = avatar();
         portrait_filename = character_portrait_AVATAR;
     } else {
-        // Random NPC with no class --> generic portrait
-        // FIXME: Use null ID
+
+
         portrait_filename = character_portrait_GENERIC_NPC;
     }
 
@@ -478,7 +478,7 @@ void Character::randomize( const bool random_scenario, bool play_now )
     zero_all_skills();
 
     init_age = rng( this->prof->age_lower, this->prof->age_upper );
-    // random NPCs have a special minimum age
+
     if( init_age < NPC_RAND_AGE_MIN ) {
         init_age = NPC_RAND_AGE_MIN ;
     }
@@ -505,14 +505,14 @@ void Character::randomize( const bool random_scenario, bool play_now )
     int num_gtraits = 0;
     int num_btraits = 0;
     int tries = 0;
-    add_traits(); // adds mandatory profession/scenario traits.
+    add_traits();
     for( const trait_id &mut : get_mutations() ) {
         const mutation_branch &mut_info = mut.obj();
         if( mut_info.profession ) {
             continue;
         }
-        // Scenario/profession traits do not cost any points, but they are counted toward
-        // the limit (MAX_TRAIT_POINTS)
+
+
         if( mut_info.points >= 0 ) {
             num_gtraits += mut_info.points;
         } else {
@@ -520,7 +520,7 @@ void Character::randomize( const bool random_scenario, bool play_now )
         }
     }
 
-    /* The loops variable is used to prevent the algorithm running in an infinite loop */
+
     for( int loops = 0; loops <= 100000; loops++ ) {
         multi_pool p( *this );
         bool is_valid = p.stat_points_left >= 0 && p.trait_points_left >= 0 && p.skill_points_left >= 0;
@@ -617,7 +617,7 @@ void Character::randomize( const bool random_scenario, bool play_now )
                 const int level = get_skill_level( aSkill );
 
                 if( level < p.skill_points_left && level < MAX_SKILL && loops > 10000 ) {
-                    // For balance reasons, increasing a skill from level 0 gives you 1 extra level for free
+
                     set_skill_level( aSkill, ( level == 0 ? 2 : level + 1 ) );
                 }
                 break;
@@ -626,7 +626,7 @@ void Character::randomize( const bool random_scenario, bool play_now )
 
     randomize_cosmetics();
 
-    // Restart cardio accumulator
+
     reset_cardio_acc();
 
     if( is_npc() ) {
@@ -645,7 +645,7 @@ void Character::randomize( const bool random_scenario, bool play_now )
 
 void Character::add_profession_items()
 {
-    // Our profession should not be a hobby
+
     if( prof->is_hobby() ) {
         return;
     }
@@ -657,12 +657,12 @@ void Character::add_profession_items()
         for( item &it : prof_items ) {
             if( it.has_flag( json_flag_WET ) ) {
                 it.active = true;
-                it.item_counter = 450; // Give it some time to dry off
+                it.item_counter = 450;
             }
 
             item_location success;
             item *wield_or_wear = nullptr;
-            // TODO: debugmsg if food that isn't a seed is inedible
+
             if( it.has_flag( json_flag_no_auto_equip ) ) {
                 it.unset_flag( json_flag_no_auto_equip );
                 success = try_add( it, nullptr, nullptr, false );
@@ -697,12 +697,12 @@ void Character::add_profession_items()
         }
     };
 
-    //storage items may not be added first, so a second attempt is needed
+
     attempt_add_items( prof_items, try_adding_again );
     if( !try_adding_again.empty() ) {
         prof_items.clear();
         attempt_add_items( try_adding_again, prof_items );
-        //if there's one item left that still can't be added, attempt to wield it
+
         if( prof_items.size() == 1 ) {
             item last_item = prof_items.front();
             if( !has_wield_conflicts( last_item ) ) {
@@ -757,7 +757,7 @@ void Character::add_random_hobby( std::vector<profession_id> &choices )
     const profession_id hobby = random_entry_removed( choices );
     hobbies.insert( &*hobby );
 
-    // Add or remove traits from hobby
+
     for( const trait_and_var &cur : hobby->get_locked_traits() ) {
         toggle_trait( cur.trait );
     }
@@ -786,40 +786,40 @@ bool avatar::create( character_type type, const std::string &tempname )
             randomize_cosmetics();
             break;
         case character_type::RANDOM:
-            //random scenario, default name if exist
+
             randomize( true );
-            //tabs.position.last();
+
             break;
         case character_type::NOW:
-            //default world, fixed scenario, random name
+
             randomize( false, true );
             break;
         case character_type::FULL_RANDOM:
-            //default world, random scenario, random name
+
             randomize( true, true );
             break;
         case character_type::TEMPLATE:
-            if( !load_template( tempname, /*out*/ pool ) ) {
+            if( !load_template( tempname, pool ) ) {
                 if( a11y::enabled() ) {
-                    // load_template only debug-logs read/parse failures, so
-                    // without this the load silently returns to the menu
-                    // (R07.3).
+
+
+
                     popup( _( "The character template \"%s\" could not be loaded.  Its file may be missing or damaged." ),
                            tempname );
                 }
                 return false;
             }
 
-            // We want to prevent recipes known by the template from being applied to the
-            // new character. The recipe list will be rebuilt when entering the game.
-            // Except if it is a character transfer template
+
+
+
             if( pool != pool_type::TRANSFER ) {
                 forget_all_recipes();
             }
-            //tabs.position.last();
+
             break;
     }
-    // Don't apply the default backgrounds on a template or scenario with SKIP_DEFAULT_BACKGROUND
+
     if( type != character_type::TEMPLATE &&
         !get_scenario()->has_flag( flag_SKIP_DEFAULT_BACKGROUND ) ) {
         add_default_background();
@@ -838,7 +838,7 @@ bool avatar::create( character_type type, const std::string &tempname )
     }
 
     if( !interactive ) {
-        // no window is created because "Play now" does not require any configuration
+
         if( nameExists( name ) ) {
             return false;
         }
@@ -890,7 +890,7 @@ void Character::set_proficiencies_from_hobbies()
 {
     for( const profession *profession : hobbies ) {
         for( const proficiency_id &proficiency : profession->proficiencies() ) {
-            // Do not duplicate proficiencies
+
             if( !_proficiencies->has_learned( proficiency ) ) {
                 add_proficiency( proficiency );
             }
@@ -924,8 +924,8 @@ void Character::initialize( bool learn_recipes )
 
     set_wielded_item( item() );
 
-    // Grab skills from profession and increment level
-    // We want to do this before the recipes
+
+
     for( const profession::StartingSkill &e : prof->skills() ) {
         mod_skill_level( e.first, e.second );
     }
@@ -934,12 +934,12 @@ void Character::initialize( bool learn_recipes )
 
     set_trauma( prof->starting_trauma );
 
-    // setup staring bank money
+
     cash = prof->starting_cash().value_or( rng( -200000, 200000 ) );
 
     randomize_heartrate();
 
-    //set stored kcal to a normal amount for your height
+
     set_stored_kcal( get_healthy_kcal() );
     if( has_trait( trait_XS ) ) {
         set_stored_kcal( std::floor( get_stored_kcal() / 5 ) );
@@ -975,15 +975,15 @@ void Character::initialize( bool learn_recipes )
     }
 
     set_bionics_from_hobbies();
-    // Adjust current energy level to maximum
+
     set_power_level( get_max_power_level() );
 
-    // Add profession proficiencies
+
     for( const proficiency_id &pri : prof->proficiencies() ) {
         add_proficiency( pri );
     }
 
-    // Add profession recipes
+
     for( const recipe_id &id : prof->recipes() ) {
         const recipe &r = recipe_dictionary::get_craft( id->result() );
         learn_recipe( &r );
@@ -991,18 +991,18 @@ void Character::initialize( bool learn_recipes )
 
     prof->learn_spells( *this );
 
-    // Also learn spells from hobbies
+
     for( const profession *profession : hobbies ) {
         profession->learn_spells( *this );
     }
 
-    // Add hobby proficiencies
+
     set_proficiencies_from_hobbies();
 
-    // Add hobby recipes
+
     set_recipes_from_hobbies();
 
-    // Activate some mutations right from the start.
+
     for( const trait_id &mut : get_mutations() ) {
         const mutation_branch &branch = mut.obj();
         if( branch.starts_active ) {
@@ -1011,10 +1011,10 @@ void Character::initialize( bool learn_recipes )
     }
     trait_flag_cache.clear();
 
-    // Ensure that persistent morale effects (e.g. Optimist) are present at the start.
+
     apply_persistent_morale();
 
-    // Restart cardio accumulator
+
     reset_cardio_acc();
 
     recalc_speed_bonus();
@@ -1060,7 +1060,7 @@ void avatar::initialize( character_type type )
         }
     }
 
-    // Select a random known style
+
     std::vector<matype_id> selectable_styles = martial_arts_data->get_known_styles( false );
     if( !selectable_styles.empty() ) {
         std::vector<matype_id>::iterator it_max_priority = std::max_element( selectable_styles.begin(),
@@ -1102,7 +1102,7 @@ void draw_action_button( const std::string &button_text, const std::string &butt
     }
 }
 
-// @param draw_effective_stats - if true, draws effective (current) stat; base stat is always drawn
+
 void draw_character_stats( const Character &who, bool draw_effective_stats )
 {
 
@@ -1162,17 +1162,17 @@ void draw_character_skills( const Character &who )
             const skill_id checked_skill = skill->ident();
             int skill_level = who.get_skill_level( checked_skill );
 
-            // Handle skills from professions
-            //if (pool != pool_type::TRANSFER) {
+
+
             for( auto &prof_skill : who.prof->skills() ) {
                 if( prof_skill.first == checked_skill ) {
                     skill_level += prof_skill.second;
                     break;
                 }
             }
-            //}
 
-            // Handle skills from hobbies
+
+
             for( const profession *hobby : who.hobbies ) {
                 for( auto &hobby_skill : hobby->skills() ) {
                     if( hobby_skill.first == checked_skill ) {
@@ -1189,7 +1189,7 @@ void draw_character_skills( const Character &who )
                 cataimgui::draw_colored_text( string_format( "%s:", skill->name() ), c_light_gray );
                 ImGui::TableNextColumn();
                 cataimgui::draw_colored_text( string_format( "%d", skill_level ), c_light_gray );
-                //has_skills = true;
+
             }
         }
         ImGui::EndTable();
@@ -1216,14 +1216,14 @@ void draw_starting_vehicle( const Character &who )
 
 void draw_character_proficiencies( const Character &who )
 {
-    // Load in proficiencies from profession and hobbies
+
     std::vector<proficiency_id> prof_proficiencies = who.prof->proficiencies();
     const std::vector<proficiency_id> &known_proficiencies = who._proficiencies->known_profs();
     prof_proficiencies.insert( prof_proficiencies.end(), known_proficiencies.begin(),
                                known_proficiencies.end() );
     for( const profession *profession : who.hobbies ) {
         for( const proficiency_id &proficiency : profession->proficiencies() ) {
-            // Do not add duplicate proficiencies
+
             if( std::find( prof_proficiencies.begin(), prof_proficiencies.end(),
                            proficiency ) == prof_proficiencies.end() ) {
                 prof_proficiencies.push_back( proficiency );
@@ -1397,7 +1397,7 @@ void draw_stat_details( avatar &u )
 
 std::string stat_level_description( int stat_value )
 {
-    // Breakpoint values are largely borrowed from GAME_BALANCE.md.
+
     std::string description;
     if( stat_value >= 20 ) {
         //~Description of a character's main stats. Should not exceed 18 characters of width.
@@ -1414,7 +1414,7 @@ std::string stat_level_description( int stat_value )
     } else if( stat_value > 8 ) {
         //~Description of a character's main stats. Should not exceed 18 characters of width.
         description = _( "above average" );
-    } else if( stat_value == 8 ) { // special handling
+    } else if( stat_value == 8 ) {
         //~Description of a character's main stats. Should not exceed 18 characters of width.
         description = _( "average human" );
     } else if( stat_value > 6 ) {
@@ -1442,11 +1442,11 @@ std::string get_character_stat_header( int selected_stat_index )
 
 const mutation_variant *variant_trait_selection_menu( const trait_id &cur_trait )
 {
-    // Because the keys will change on each loop if I clear the entries, and
-    // if I don't clear the entries, the menu bugs out
+
+
     static std::array<int, 60> keys = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                                         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-                                        'n', 'o', 'p',/*q */'r', 's', 't',/*u */'v', 'w', 'x', 'y', 'z',
+                                        'n', 'o', 'p', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z',
                                         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
                                         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
                                       };
@@ -1486,7 +1486,7 @@ const mutation_variant *variant_trait_selection_menu( const trait_id &cur_trait 
         menu.addentry_desc( idx, true, 'q', _( "Done" ), _( "Exit menu." ) );
         menu.query();
         if( menu.ret == UILIST_CANCEL || menu.ret == UILIST_ERROR ) {
-            // Cancel preserves the previously selected variant.
+
             return ret;
         }
         if( menu.ret == 0 ) {
@@ -1494,8 +1494,8 @@ const mutation_variant *variant_trait_selection_menu( const trait_id &cur_trait 
         } else if( menu.ret > 0 && menu.ret < idx ) {
             ret = variants[menu.ret - 1];
         }
-        // A variant is a single choice. In reader mode, choosing it (or
-        // Unselect) immediately closes this nested menu, never the trait tab.
+
+
         if( a11y::enabled() && menu.ret >= 0 && menu.ret < idx ) {
             break;
         }
@@ -1570,7 +1570,7 @@ void draw_profession_proficiencies( bool &drawn_anything, const std::string &hea
 void draw_profession_bionics( bool &drawn_anything, const std::string &header,
                               const profession &selected_profession )
 {
-    // active bionics shown first
+
     auto prof_CBMs = selected_profession.CBMs();
     if( !prof_CBMs.empty() ) {
         draw_header( drawn_anything, header );
@@ -1635,7 +1635,7 @@ void draw_profession_details()
             draw_colored_text_wrap( string_format( n_gettext( _( "Completed \"%s\"\n" ), _( "Completed: %s\n" ),
                                                    req_names.size() ), enumerate_as_string( req_names ) ),
                                     COL_NOTE_MINOR );
-        } else { // fail, can't pick so display ret_val's reason
+        } else {
             draw_colored_text_wrap( can_pick_prof.str(), c_red );
         }
     }
@@ -1643,7 +1643,7 @@ void draw_profession_details()
     draw_profession_addictions( drawn_anything, _( "Profession addictions:" ), selected_profession );
     draw_profession_traits( drawn_anything, _( "Profession traits:" ), selected_profession );
 
-    // Profession martial art styles
+
     const auto prof_ma_known = selected_profession.ma_known();
     const auto prof_ma_choices = selected_profession.ma_choices();
     int ma_amount = selected_profession.ma_choice_amount;
@@ -1669,7 +1669,7 @@ void draw_profession_details()
         }
     }
 
-    // Profession skills
+
     const profession::StartingSkillList prof_skills = selected_profession.skills();
     if( !prof_skills.empty() ) {
         draw_header( drawn_anything, _( "Profession skills:" ) );
@@ -1695,7 +1695,7 @@ void draw_profession_details()
     if( !selected_profession.pets().empty() ) {
         draw_header( drawn_anything, _( "Profession pets:" ) );
         for( const mtype_id &elem : selected_profession.pets() ) {
-            monster mon( elem ); // why not get name from mtype?
+            monster mon( elem );
             draw_colored_text_wrap( mon.get_name(), COL_NOTE_MINOR );
         }
     }
@@ -1746,10 +1746,10 @@ void draw_profession_inventory( const avatar &u )
         ImGui::NewLine();
         draw_colored_text_wrap( pgettext( "set_profession_item", "None" ), COL_NOTE_MINOR );
     } else {
-        // TODO: If the item group is randomized *at all*, these will be different each time
-        // and it won't match what you actually start with
-        // TODO: Put like items together like the inventory does, so we don't have to scroll
-        // through a list of a dozen forks.
+
+
+
+
         std::vector<std::string> assembled_wielded;
         std::vector<std::string> assembled_worn;
         std::vector<std::string> assembled_inventory;
@@ -1786,7 +1786,7 @@ void draw_hobby_details()
     draw_profession_addictions( drawn_anything, _( "Background addictions:" ), selected_hobby );
     draw_profession_traits( drawn_anything, _( "Background traits:" ), selected_hobby );
 
-    // Background skills
+
     const profession::StartingSkillList prof_skills = selected_hobby.skills();
     if( !prof_skills.empty() ) {
         draw_header( drawn_anything, _( "Background skill experience:" ) );
@@ -1833,21 +1833,21 @@ void draw_skill_details( const avatar &u,
     draw_spacer();
 
     std::string assembled;
-    // We want recipes from profession skills displayed, but
-    // without boosting the skills. Copy the skills, and boost the copy
+
+
     SkillLevelMap with_prof_skills = u.get_all_skills();
     for( const auto &sk : prof_skills ) {
         with_prof_skills.mod_skill_level( sk.first, sk.second );
     }
 
-    //TODO: this recipe list is not easily navigable, put it in a searchable list
+
     std::map<std::string, std::vector<std::pair<std::string, int> > > recipes;
     for( const auto &e : recipe_dict ) {
         const recipe &r = e.second;
         if( r.is_practice() || r.has_flag( "SECRET" ) ) {
             continue;
         }
-        //Find out if the current skill and its level is in the requirement list
+
         auto req_skill = r.required_skills.find( currentSkill );
         int skill = req_skill != r.required_skills.end() ? req_skill->second : 0;
         bool would_autolearn_recipe =
@@ -1858,10 +1858,10 @@ void draw_skill_details( const avatar &u,
             ( r.skill_used == currentSkill || skill > 0 ) &&
             with_prof_skills.has_recipe_requirements( r ) ) {
 
-            recipes[r.skill_used->name()].emplace_back( r.result_name( /*decorated=*/true ),
+            recipes[r.skill_used->name()].emplace_back( r.result_name( true ),
                     ( skill > 0 ) ? skill : r.difficulty );
         }
-        // TODO: Find out why kevlar gambeson hood disppears when going from tailoring 7->8
+
     }
 
     for( auto &elem : recipes ) {
@@ -1918,7 +1918,7 @@ void draw_scenario_details( const avatar &u )
             if( can_pick_scenario.success() ) {
                 draw_colored_text_wrap(
                     string_format( _( "Completed \"%s\"" ), scenRequirement.value()->name() ), c_green );
-            } else { // fail, can't pick so display ret_val's reason
+            } else {
                 draw_colored_text_wrap( can_pick_scenario.str(), c_red );
             }
             draw_spacer();
@@ -1957,7 +1957,7 @@ void draw_scenario_details( const avatar &u )
         draw_spacer();
     }
 
-    //TODO: Move this to JSON?
+
     const std::vector<std::pair<std::string, std::string>> flag_descriptions = {
         { "FIRE_START", translate_marker( "Fire nearby" ) },
         { "SUR_START", translate_marker( "Zombies nearby" ) },
@@ -1989,7 +1989,7 @@ enum description_selector {
     BLOOD,
     LOCATION
 };
-} // namespace
+}
 
 void draw_name( const avatar &you, bool no_name_entered )
 {
@@ -2086,7 +2086,7 @@ void draw_location( const avatar &you )
     if( you.random_start_location ) {
         cataimgui::draw_colored_text( random_start_location_text, c_red );
     } else {
-        // ::find will return empty location if id was not found. Debug msg will be printed too.
+
         cataimgui::draw_colored_text( string_format( n_gettext( "%s (%d variant)", "%s (%d variants)",
                                       you.start_location.obj().targets_count() ),
                                       you.start_location.obj().name(), you.start_location.obj().targets_count() ),
@@ -2104,7 +2104,7 @@ void draw_starting_city( const avatar &you )
     }
 }
 
-} // namespace char_creation
+}
 
 std::vector<trait_id> Character::get_base_traits() const
 {
@@ -2340,10 +2340,10 @@ bool avatar::load_template( const std::string &template_name, pool_type &pool )
 {
     return read_from_file_json( PATH_INFO::templatedir_path() / ( template_name + ".template" ), [&](
     const JsonValue & jv ) {
-        // Legacy templates are an object. Current templates are an array of 0, 1, or 2 objects.
+
         JsonObject legacy_template;
         if( jv.test_array() ) {
-            // not a legacy template
+
             JsonArray template_array = jv;
             if( template_array.empty() ) {
                 return;
@@ -2362,7 +2362,7 @@ bool avatar::load_template( const std::string &template_name, pool_type &pool )
 
             outfit = jobj.get_bool( "outfit_gender", true );
 
-            // get_scenario()->allowed_start( loc.ident() ) is checked once scenario loads in avatar::load()
+
             for( const class start_location &loc : start_locations::get_all() ) {
                 if( loc.id.str() == jobj_start_location ) {
                     random_start_location = false;
@@ -2379,14 +2379,14 @@ bool avatar::load_template( const std::string &template_name, pool_type &pool )
 
         deserialize( legacy_template );
 
-        // If stored_calories the template is under a million (kcals < 1000), assume it predates the
-        // kilocalorie-to-literal-calorie conversion and is off by a factor of 1000.
+
+
         if( get_stored_kcal() < 1000 ) {
             set_stored_kcal( 1000 * get_stored_kcal() );
         }
 
         if( MAP_SHARING::isSharing() ) {
-            // just to make sure we have the right name
+
             name = MAP_SHARING::getUsername();
         }
     } );
@@ -2519,8 +2519,8 @@ void character_creator_ui::setup_new_uilist()
             new_uilist = get_current_tab_uilist();
             new_uilist->allow_additional = true;
             if( a11y::enabled() ) {
-                // Give the Android reader an unambiguous context for the six
-                // creator steps without affecting unrelated UILIST dialogs.
+
+
                 new_uilist->input_category = "character-creator-step-" +
                                              std::to_string( static_cast<int>( cc_uistate.selected_tab ) + 1 );
             }
@@ -2530,7 +2530,7 @@ void character_creator_ui::setup_new_uilist()
             new_uilist->hilight_disabled = true;
             new_uilist->size_to_all_categories = true;
             new_uilist->callback = &cc_callback;
-            //snap to left edge of screen, position and height updated later
+
             new_uilist->desired_bounds = uilist_reset_desired_bounds();
             new_uilist->force_desired_bounds = true;
         }
@@ -2608,10 +2608,10 @@ void character_creator_ui::setup_new_uilist()
                 break;
             }
             default:
-                // do nothing; doesn't use a uilist
+
                 break;
         }
-        //add inputs from uilist to input_context
+
         if( new_uilist ) {
             new_uilist->register_uilist_inputs( new_uilist_input );
             new_uilist->setup();
@@ -2623,11 +2623,11 @@ void character_creator_ui::setup_new_uilist()
 static void set_uilist_selected( std::shared_ptr<uilist> &menu, int idx )
 {
     if( !menu->entries.empty() ) {
-        // idx is a logical (unfiltered) entry index. set_selected now also
-        // syncs the filtered-space cursor; the old scrollby(abs(idx)) call
-        // reinterpreted the same number as a filtered-space position and
-        // selected a different entry whenever a category/filter was active
-        // (R04.1).
+
+
+
+
+
         menu->set_selected( idx );
     }
 }
@@ -2648,8 +2648,8 @@ void character_creator_ui::update_uilist_entries()
             for( const scenario *scen : cc_uistate.sorted_scenarios ) {
                 uilist_entry entry = get_uilist_entry( scen->gender_appropriate_name( u.male ) );
                 entry.text_color = scen == cc_uistate.get_selected_scenario() ? COL_SELECTED : COL_NOT_SELECTED;
-                // Scenarios have a point cost (counted by skill_points_used)
-                // but it was published nowhere at this tab (R07.2).
+
+
                 entry.a11y_value = string_format( _( "Point cost: %d" ), scen->point_cost() );
                 if( scen == get_scenario() ) {
                     entry.a11y_value += ". " + std::string( _( "Current choice" ) );
@@ -2659,8 +2659,8 @@ void character_creator_ui::update_uilist_entries()
                 if( !entry.enabled ) {
                     entry.a11y_disabled_reason = scen->can_pick().str();
                 } else if( scen->has_flag( "CITY_START" ) && !cities_enabled() ) {
-                    // can_pick does not cover this requirement; confirm used
-                    // to drop the choice with no message at all.
+
+
                     entry.enabled = false;
                     entry.a11y_disabled_reason =
                         _( "This scenario starts in a city, but cities are disabled." );
@@ -2681,15 +2681,15 @@ void character_creator_ui::update_uilist_entries()
                 if( prof_id == u.prof->ident() ) {
                     entry.a11y_value += ". " + std::string( _( "Current choice" ) );
                 }
-                // the header pane shows the mod origin, but the reader
-                // entry did not. Publish it as part of the spoken value.
+
+
                 entry.a11y_value += ". " + get_origin( prof_id->src );
                 entry.enabled = prof_id->can_pick().success();
                 entry.desc = prof_id->description( u.male );
                 if( !entry.enabled ) { entry.a11y_disabled_reason = prof_id->can_pick().str(); }
-                // The detail pane lists the profession's bionics and spells,
-                // but at this tab the reader only receives desc, so name them
-                // here (R07.2; the same data is repeated at the summary tab).
+
+
+
                 if( !prof_id->CBMs().empty() ) {
                     std::vector<std::string> bionic_names;
                     bionic_names.reserve( prof_id->CBMs().size() );
@@ -2723,12 +2723,12 @@ void character_creator_ui::update_uilist_entries()
                 entry.a11y_checked = u.hobbies.count( &*prof_id ) != 0;
                 entry.a11y_value = string_format( _( "Point cost: %d" ), prof_id->point_cost() );
                 entry.desc = prof_id->description( u.male );
-                // Same pane parity as the profession tab: backgrounds can
-                // grant bionics and spells (R07.2). Trait conflicts of a
-                // background are checked at confirm time by
-                // hobby_conflict_check, which explains itself with a popup;
-                // they are not pre-published here because that check is a
-                // confirm-time function with its own messages.
+
+
+
+
+
+
                 if( !prof_id->CBMs().empty() ) {
                     std::vector<std::string> bionic_names;
                     bionic_names.reserve( prof_id->CBMs().size() );
@@ -2761,17 +2761,17 @@ void character_creator_ui::update_uilist_entries()
             const int stat_count = static_cast<int>( character_stat::DUMMY_STAT );
             for( int i = 0; i < stat_count; i++ ) {
                 uilist_entry entry = get_uilist_entry( char_creation::get_character_stat_header( i ) );
-                // The raw number alone hid the level wording, the allowed
-                // range and the remaining stat pool (R07.2); the level
-                // wording is the same one the header text uses.
+
+
+
                 entry.a11y_value = string_format( _( "%1$d (%2$s). Range %3$d to %4$d." ),
                                                   cc_uistate.stats[i],
                                                   char_creation::stat_level_description(
                                                           cc_uistate.stats[i] ),
                                                   CHARACTER_STAT_MIN, CHARACTER_STAT_MAX );
-                // the tab title alone cannot carry the per-tab pool
-                // once the user moves between rows, so each focused row also
-                // states the remaining stat points (spoken as the node value).
+
+
+
                 entry.a11y_value += " " + string_format( _( "Stat points left: %d." ),
                                         multi_pool( u ).stat_points_left );
                 entry.desc = string_format( _( "Stat points left: %d." ),
@@ -2790,8 +2790,8 @@ void character_creator_ui::update_uilist_entries()
                 trait_entry.text_color = u.has_trait( current_trait ) ? COL_SELECTED : COL_NOT_SELECTED;
                 trait_entry.a11y_checked = u.has_trait( current_trait );
                 trait_entry.a11y_value = string_format( _( "Trait point value: %d" ), current_trait->points );
-                // trait_points_left was published nowhere on this tab
-                // (only inside the summary document); state it on each focused row.
+
+
                 trait_entry.a11y_value += " " + string_format( _( "Trait points left: %d." ),
                                               multi_pool( u ).trait_points_left );
                 trait_entry.desc = u.mutation_desc( current_trait );
@@ -2830,10 +2830,10 @@ void character_creator_ui::update_uilist_entries()
                                             _( "The following bionics prevent you from taking this trait: %s." ),
                                             enumerate_as_string( bionic_names ) );
                     if( !u.has_trait( current_trait ) ) {
-                        // Publish this block the same way as the three
-                        // forbidden cases above (disabled with a reason)
-                        // instead of leaving the entry selectable and only
-                        // explaining at confirm time (R07.2).
+
+
+
+
                         trait_entry.enabled = false;
                         trait_entry.a11y_disabled_reason = string_format(
                                 _( "The following bionics prevent you from taking this trait: %s." ),
@@ -2847,8 +2847,8 @@ void character_creator_ui::update_uilist_entries()
                 [&]( const profession * hobby ) {
                     return hobby->is_locked_trait( current_trait );
                 } ) ) ) {
-                    // Removal is refused at confirm time with a popup; say
-                    // so in advance as part of the entry (R07.2).
+
+
                     trait_entry.desc += "\n" + std::string(
                             _( "This trait is locked by your scenario, profession or background and cannot be removed." ) );
                 }
@@ -2866,10 +2866,10 @@ void character_creator_ui::update_uilist_entries()
                                                skill->ident(), u ) );
                 skill_entry.retval = i;
                 skill_entry.desc = skill->description();
-                // This tab published no value at all: the level only existed
-                // inside the entry text, which screen-reader mode blanks
-                // (R07.2). Split it the same way get_skill_entry_text does:
-                // own level, plus the profession/background bonus.
+
+
+
+
                 const int own_level = u.get_skill_level( skill->ident() );
                 int bonus_level = 0;
                 for( const auto &prof_skill : u.prof->skills() ) {
@@ -2890,8 +2890,8 @@ void character_creator_ui::update_uilist_entries()
                                          ? string_format( _( "Level: %d" ), own_level )
                                          : string_format( _( "Level: %1$d + %2$d from profession or background" ),
                                                  own_level, bonus_level );
-                // state the remaining skill points on each focused row,
-                // like the stat rows do (the title alone is not re-read on move).
+
+
                 skill_entry.a11y_value += " " + string_format( _( "Skill points left: %d." ),
                                               creator_points.skill_points_left );
                 skill_entry.desc += "\n" + string_format( _( "Skill points left: %d." ),
@@ -2915,10 +2915,10 @@ void character_creator_ui::update_uilist_entries()
                 case CHARCREATOR_SKILLS: step_label = _( "Set skills" ); break;
                 default: break;
             }
-            // the title used to report the combined pool
-            // (skill_points_left) on every tab, e.g. 6 remaining while only
-            // 2 stat points were left. Report this tab's own pool instead;
-            // scenario/profession/background keep the combined total.
+
+
+
+
             const multi_pool tab_points( u );
             int points_for_tab = tab_points.skill_points_left;
             switch( cc_uistate.selected_tab ) {
@@ -2947,8 +2947,8 @@ void character_creator_ui::setup_avatar()
             u.reset_stats();
             u.recalc_speed_bonus();
             u.set_stored_kcal( u.get_healthy_kcal() );
-            // Removes pollution of stats by modifications appearing inside reset_stats().
-            // Is reset_stats() even necessary in this context?
+
+
             u.reset_bonuses();
             break;
         default:
@@ -2976,7 +2976,7 @@ void character_creator_ui_impl::draw_controls()
     std::array<ImGuiTabItemFlags, CHARACTER_CREATOR_TAB_COUNT> tab_selected;
     tab_selected.fill( ImGuiTabItemFlags_None );
 
-    // handle tab switch keyboard input
+
     if( switched_tab != character_creator_tab_LAST ) {
         tab_selected[static_cast<int>( switched_tab )] = ImGuiTabItemFlags_SetSelected;
         cc_uistate.selected_tab = switched_tab;
@@ -3121,8 +3121,8 @@ static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, 
     snapshot.summary = remove_color_tags( string_format( _( "Character: %1$s. Scenario: %2$s. Profession: %3$s." ),
                                      name, scenario_name, profession_name ) );
 
-    // Direct editable controls precede the read-only character review.
-    // Other commands stay in the one-finger long-press action drawer.
+
+
     const std::set<std::string> direct_controls = {
         "CHANGE_NAME", "CHANGE_AGE", "CHANGE_HEIGHT",
         "CHANGE_GENDER", "CHANGE_OUTFIT", "CHANGE_BLOOD_TYPE",
@@ -3230,8 +3230,8 @@ static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, 
     add_document( "character:traits", _( "Starting traits" ), traits );
 
     std::vector<proficiency_id> proficiencies = profession_data.proficiencies();
-    // The summary pane also lists proficiencies the character already
-    // knows (draw_character_proficiencies); include them here too (R07.2).
+
+
     for( const proficiency_id &proficiency : you._proficiencies->known_profs() ) {
         if( std::find( proficiencies.begin(), proficiencies.end(), proficiency ) == proficiencies.end() ) {
             proficiencies.push_back( proficiency );
@@ -3343,8 +3343,8 @@ static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, 
     const vproto_id scenario_vehicle = scenario_data->vehicle();
     const vproto_id profession_vehicle = profession_data.vehicle();
     if( scenario_vehicle ) {
-        // The visual pane labels which source provides the vehicle
-        // (draw_starting_vehicle); keep the same distinction (R07.2).
+
+
         vehicle = string_format( _( "%s (from scenario)" ), scenario_vehicle->name.translated() );
     } else if( profession_vehicle ) {
         vehicle = string_format( _( "%s (from profession)" ),
@@ -3375,7 +3375,7 @@ bool character_creator_ui::display()
     cc_uistate.reset();
     character_creator_ui_impl ccui( this );
 
-    // setup all uilists/inputs
+
     character_creator_tab preserve_first_tab = cc_uistate.selected_tab;
     cc_uistate.selected_tab = CHARCREATOR_SCENARIO;
     for( int i = 0; i < CHARACTER_CREATOR_TAB_COUNT; i++ ) {
@@ -3384,11 +3384,11 @@ bool character_creator_ui::display()
     }
     cc_uistate.selected_tab = preserve_first_tab;
 
-    // load scenarios so that the past_games_info::ensure_loaded
-    // redraw isn't called during uilist setup
+
+
     cc_uistate.recalc_scenario_list( get_avatar() );
 
-    // set first tab
+
     upon_switching_tab();
 
     ui_manager::invalidate_all_ui_adaptors();
@@ -3433,12 +3433,12 @@ bool character_creator_ui::display()
                 append_character_reader_summary( snapshot, you );
                 snapshot.title = string_format( _( "Summary.  Step 7 of 7. Points remaining: %d." ),
                                                 multi_pool( you ).skill_points_left );
-                // (C++ part): the reader's tab-entry feedback reads
-                // only the title, so the summary line built by
-                // append_character_reader_summary ("Character: … Scenario: …
-                // Profession: …") was never spoken on entry. Append it to
-                // the title so it is heard immediately; the Java side should
-                // eventually speak snapshot.summary itself instead.
+
+
+
+
+
+
                 if( !snapshot.summary.empty() ) {
                     snapshot.title += " " + snapshot.summary;
                 }
@@ -3721,7 +3721,7 @@ void character_creator_uistate::recalc_hobbies_taken_list( const avatar &u )
 
 bool character_creator_uistate::hobby_conflict_check( const avatar &u )
 {
-    // Do not allow selection of hobby if there's a trait conflict
+
     const profession_id &selected_hobby = get_selected_hobby();
     bool conflict_found = false;
     bool conflict_reason_found = false;
@@ -3761,12 +3761,12 @@ void character_creator_uistate::recalc_trait_list( const avatar &u )
     if( recalc_traits ) {
         sorted_traits.clear();
         for( const mutation_branch &traits_iter : mutation_branch::get_all() ) {
-            // Don't list blacklisted traits
+
             if( mutation_branch::trait_is_blacklisted( traits_iter.id ) ) {
                 continue;
             }
 
-            // Always show profession locked traits, regardless of if they are forbidden
+
             const std::vector<trait_and_var> proftraits = u.prof->get_locked_traits();
             auto pred = [&traits_iter]( const trait_and_var & query ) {
                 return query.trait == traits_iter.id;
@@ -3779,7 +3779,7 @@ void character_creator_uistate::recalc_trait_list( const avatar &u )
                 is_hobby_locked_trait = is_hobby_locked_trait || hobby->is_locked_trait( traits_iter.id );
             }
 
-            // We show all starting traits, even if we can't pick them, to keep the interface consistent.
+
             if( traits_iter.startingtrait || get_scenario()->traitquery( traits_iter.id ) || is_proftrait ||
                 is_hobby_locked_trait ) {
                 sorted_traits.emplace_back( traits_iter.id );
@@ -3942,12 +3942,12 @@ bool character_creator_ui::handle_action( const std::string &action )
 {
     avatar &you = get_avatar();
 
-    // the ±1 commands used to clamp only to the hard 4-20 / 0-10
-    // range with no points check and no feedback, so the player could
-    // overspend without knowing. Trial-apply like the value picker does:
-    // refuse (and revert) when this step would push the tab's pool below
-    // zero, and announce the new value otherwise. All of this is gated on
-    // the reader: sighted/desktop behaviour is unchanged.
+
+
+
+
+
+
     auto mod_stat_base = [&you]( int mod_value ) {
         character_stat selected_stat = static_cast<character_stat>( cc_uistate.selected_stat_index );
         const int old_value = cc_uistate.stats[cc_uistate.selected_stat_index];
@@ -4030,11 +4030,11 @@ bool character_creator_ui::handle_action( const std::string &action )
                     is_overpowered = true;
                 }
             }
-            query += "\n\n"; // Extra empty lines so the (Case Sensitive) prompt doesn't appear on the same line as some of our text.
+            query += "\n\n";
             if( query_yn( query ) ) {
                 if( !is_overpowered ) {
                     cc_uistate.finished_character_creator = true;
-                    if( you.name.empty() ) { // This can be changed at any time ingame. Assume someone who left it at random wants random.
+                    if( you.name.empty() ) {
                         you.pick_name();
                     }
                 } else {
@@ -4057,13 +4057,13 @@ bool character_creator_ui::handle_action( const std::string &action )
             you.save_template( *name, pool_type::FREEFORM );
         }
     } else if( action == "RANDOMIZE_CHAR_NAME" ) {
-        // Don't allow random names when sharing maps.
-        // We don't need to check at the top as you won't be able to edit the name
+
+
         if( !MAP_SHARING::isSharing() ) {
             you.pick_name();
-            // announce the new name (reuses the translated
-            // "Name: %s" string); without this the player had to swipe
-            // back over the rows to learn the result.
+
+
+
             if( a11y::enabled() ) {
                 a11y::android::announce( string_format( _( "Name: %1$s" ), you.name ), 1 );
             }
@@ -4078,7 +4078,7 @@ bool character_creator_ui::handle_action( const std::string &action )
         }
         if( !MAP_SHARING::isSharing() ) {
             you.pick_name();
-            // as above, announce the new name right away.
+
             if( a11y::enabled() ) {
                 a11y::android::announce( string_format( _( "Name: %1$s" ), you.name ), 1 );
             }
@@ -4242,16 +4242,16 @@ bool character_creator_ui::handle_action( const std::string &action )
     return true;
 }
 
-// Reader-only quick value picker. A confirmed valid choice returns to the
-// current creator step. Rejected values keep the same list open for retry.
-// Desktop creation keeps its existing number popup unchanged.
+
+
+
 static std::optional<int> choose_accessible_creation_value( const std::string &label,
         int current, int min_value, int max_value,
         const std::function<std::optional<std::string>( int )> &validate )
 {
-    // List the full valid range: stats are 4-20, skills 0-10.
-    // The old code hardcoded 1-10, so valid stats 11-20 were only reachable
-    // through the silent manual number dialog and 1-3 were offered then rejected.
+
+
+
     int initial_index = std::clamp( current, min_value, max_value ) - min_value;
     const int manual_entry = max_value + 1;
     for( ;; ) {
@@ -4274,8 +4274,8 @@ static std::optional<int> choose_accessible_creation_value( const std::string &l
             number_input_popup<int> manual( 0, current,
                                             string_format( _( "Enter %s (from %d to %d):" ),
                                                     label, min_value, max_value ) );
-            // Keep the Android number field open for values that exceed
-            // the remaining creation points, not only hard game limits.
+
+
             int maximum_affordable = max_value;
             while( maximum_affordable > min_value && validate( maximum_affordable ) ) {
                 --maximum_affordable;
@@ -4350,15 +4350,15 @@ void character_creator_callback::confirm( uilist *menu )
                 return;
             }
 
-            // Remove traits from the previous profession
+
             for( const trait_and_var &old : u.prof->get_locked_traits() ) {
                 u.toggle_trait_deps( old.trait );
             }
 
             u.prof = &*selected_profession;
 
-            // Remove pre-selected traits that conflict
-            // with the new profession's traits
+
+
             for( const trait_and_var &new_trait : selected_profession->get_locked_traits() ) {
                 if( u.has_conflicting_trait( new_trait.trait ) ) {
                     for( const trait_id &suspect_trait : u.get_mutations() ) {
@@ -4370,8 +4370,8 @@ void character_creator_callback::confirm( uilist *menu )
                     }
                 }
             }
-            // Add traits for the new profession (and perhaps scenario, if, for example,
-            // both the scenario and old profession require the same trait)
+
+
             u.add_traits();
 
             cc_uistate.recalc_hobbies = true;
@@ -4389,18 +4389,18 @@ void character_creator_callback::confirm( uilist *menu )
             }
 
             const profession *selected_hobby = &*cc_uistate.get_selected_hobby();
-            // Toggle hobby
+
             bool enabling = false;
             if( u.hobbies.count( selected_hobby ) == 0 ) {
-                // Add hobby, and decrement point cost
+
                 u.hobbies.insert( selected_hobby );
                 enabling = true;
             } else {
-                // Remove hobby and refund point cost
+
                 u.hobbies.erase( selected_hobby );
             }
 
-            // Add or remove traits from hobby
+
             for( const trait_and_var &cur : selected_hobby->get_locked_traits() ) {
                 const trait_id &trait = cur.trait;
                 if( enabling ) {
@@ -4482,7 +4482,7 @@ void character_creator_callback::confirm( uilist *menu )
             const trait_id cur_trait = cc_uistate.get_selected_trait();
             std::string variant;
 
-            // Look through the profession bionics, and see if any of them conflict with this trait
+
             std::vector<bionic_id> cbms_blocking_trait = bionics_cancelling_trait( u.prof->CBMs(), cur_trait );
             const std::unordered_set<trait_id> conflicting_traits = u.get_conflicting_traits( cur_trait );
 
@@ -4529,8 +4529,8 @@ void character_creator_callback::confirm( uilist *menu )
                 popup( _( "Your profession of %s prevents you from taking this trait." ),
                        u.prof->gender_appropriate_name( u.male ) );
             } else if( !cbms_blocking_trait.empty() ) {
-                // Grab a list of the names of the bionics that block this trait
-                // So that the player know what is preventing them from taking it
+
+
                 std::vector<std::string> conflict_names;
                 conflict_names.reserve( cbms_blocking_trait.size() );
                 for( const bionic_id &conflict : cbms_blocking_trait ) {
@@ -4552,7 +4552,7 @@ void character_creator_callback::confirm( uilist *menu )
                 }
             }
 
-            //inc_type is either -1 or 1, so we can just multiply by it to invert
+
             if( inc_type != 0 ) {
                 u.toggle_trait_deps( cur_trait, variant );
             }

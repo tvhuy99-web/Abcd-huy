@@ -50,4 +50,4 @@ struct end_screen {
         std::string last_words_label;
 };
 
-#endif // CATA_SRC_DEATH_SCREEN_H
+#endif

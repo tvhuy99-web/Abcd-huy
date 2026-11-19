@@ -1,6 +1,6 @@
 #include "character.h" // IWYU pragma: associated
 
-#include <algorithm> //std::min
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <iterator>
@@ -39,8 +39,8 @@ enum class mutation_tab_mode {
     passive,
     none
 };
-} // namespace
-// '!' and '=' are uses as default bindings in the menu
+}
+
 static const invlet_wrapper
 mutation_chars( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\"#&()*+./:;@[\\]^_{|}" );
 
@@ -59,7 +59,7 @@ static const auto shortcut_desc = []( std::string_view comment, const std::strin
     return string_format( comment, string_format( "[<color_yellow>%s</color>]", keys ) );
 };
 
-// needs extensive improvement
+
 
 static std::optional<trait_id> GetTrait( const std::vector<trait_id> &active,
         const std::vector<trait_id> &passive,
@@ -123,7 +123,7 @@ void avatar::power_mutations()
         } else {
             active.push_back( mut.first );
         }
-        // New mutations are initialized with no key at all, so we have to do this here.
+
         if( mut.second.key == ' ' ) {
             for( const char &letter : mutation_chars ) {
                 if( trait_by_invlet( letter ).is_null() && mut.first->activated ) {
@@ -134,27 +134,27 @@ void avatar::power_mutations()
         }
     }
 
-    // maximal number of rows in both columns
+
     const int mutations_count = std::max( passive.size(), active.size() );
     const int TITLE_HEIGHT = 2;
 
     const int DESCRIPTION_HEIGHT = 5;
-    // + lines with text in titlebar, local
+
     const int HEADER_LINE_Y = TITLE_HEIGHT + 1;
     const int list_start_y = HEADER_LINE_Y + 2;
 
-    // Main window
-    /** Total required height is:
-    * top frame line:                                         + 1
-    * height of title window:                                 + TITLE_HEIGHT
-    * line after the title:                                   + 1
-    * line with active/passive mutation captions:               + 1
-    * height of the biggest list of active/passive mutations:   + mutations_count
-    * line before mutation description:                         + 1
-    * height of description window:                           + DESCRIPTION_HEIGHT
-    * bottom frame line:                                      + 1
-    * TOTAL: TITLE_HEIGHT + mutations_count + DESCRIPTION_HEIGHT + 5
-    */
+
+
+
+
+
+
+
+
+
+
+
+
 
     int HEIGHT = 0;
     int WIDTH = 0;
@@ -203,13 +203,13 @@ void avatar::power_mutations()
         const point START( ( TERMX - WIDTH ) / 2, ( TERMY - HEIGHT ) / 2 );
         wBio = catacurses::newwin( HEIGHT, WIDTH, START );
 
-        // Description window @ the bottom of the bionic window
+
         const int DESCRIPTION_START_Y = START.y + HEIGHT - DESCRIPTION_HEIGHT - 1;
         DESCRIPTION_LINE_Y = DESCRIPTION_START_Y - START.y - 1;
         w_description = catacurses::newwin( DESCRIPTION_HEIGHT, WIDTH - 2,
                                             point( START.x + 1, DESCRIPTION_START_Y ) );
 
-        // Title window
+
         const int TITLE_START_Y = START.y + 1;
         w_title = catacurses::newwin( TITLE_HEIGHT, WIDTH - 2,
                                       point( START.x + 1, TITLE_START_Y ) );
@@ -217,7 +217,7 @@ void avatar::power_mutations()
         recalc_max_scroll_position();
         examine_pos = 0;
 
-        // X-coordinate of the list of active mutations
+
         second_column = 32 + ( TERMX - FULL_SCREEN_WIDTH ) / 4;
 
         ui.position_from_window( wBio );
@@ -248,27 +248,27 @@ void avatar::power_mutations()
 
     std::optional<trait_id> examine_id;
 
-    // Reader adapter (R17): this screen previously had no a11y points at
-    // all. The snapshot below publishes exactly what the original UI
-    // prints: the titlebar mode word, the active/passive captions with
-    // their counts, and for the current tab's column the row text as
-    // drawn (assigned key, name, and for active traits the cost/cooldown
-    // text and the " - Active" suffix). Two states are carried only by
-    // color or symbol in the original -- powered (green versus red) and,
-    // for passive traits, the sprite-hidden " H" suffix -- so the entry
-    // detail restates them in words, next to the same description text
-    // the examining window shows (mutation_desc plus the purifier note).
-    // Nothing the screen does not print is synthesized here.
-    // Intents never touch mutation state directly: focus only moves the
-    // original cursor (and the examining target, exactly as UP/DOWN do)
-    // and never activates; activate returns the loop's own CONFIRM, so
-    // the original branch for the current menu mode runs --
-    // choose_key_from_user when reassigning, activation/deactivation
-    // with the engine's own resource checks and popups when activating,
-    // examining, or the sprite-visibility toggle when hiding. Tab
-    // activation returns the original NEXT_TAB (PREV_TAB does the same
-    // toggle, and the loop itself resets cursor/scroll); tab focus only
-    // observes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const auto sync_reader_cursor = [&]( const int index ) {
         cursor = index;
         examine_pos = 0;
@@ -300,9 +300,9 @@ void avatar::power_mutations()
         }
         if( intent.node.compare( 0, 16, "mutations:entry:" ) == 0 &&
             ( intent.action == "focus" || intent.action == "activate" ) ) {
-            // Re-resolve the row against the lists the loop is using at
-            // intent time; an index minted against an older snapshot
-            // must never act on a trait that is no longer there.
+
+
+
             if( tab_mode == mutation_tab_mode::none ) {
                 return std::nullopt;
             }
@@ -355,8 +355,8 @@ void avatar::power_mutations()
                                           mode_word, static_cast<int>( active.size() ),
                                           static_cast<int>( passive.size() ) );
         if( menu_mode == mutation_menu_mode::reassigning ) {
-            // The one titlebar sentence that is not a keybinding hint:
-            // the reassigning instructions, including the SPACE cancel.
+
+
             snapshot.summary += " " + remove_color_tags(
                                       _( "Select a mutation to reassign or press [<color_yellow>SPACE</color>] to cancel." ) );
         }
@@ -383,7 +383,7 @@ void avatar::power_mutations()
         const std::vector<trait_id> &current = tab_mode == mutation_tab_mode::active
                                                ? active : passive;
         if( tab_mode == mutation_tab_mode::none || current.empty() ) {
-            // The original columns print "None" for an empty list.
+
             a11y::semantic_node node;
             node.id = "mutations:empty";
             node.role = "status";
@@ -404,18 +404,18 @@ void avatar::power_mutations()
                 node.id = "mutations:entry:" + std::to_string( i );
                 node.role = "listitem";
                 if( tab_mode == mutation_tab_mode::passive ) {
-                    // Row as drawn: "<key> <name>", plus " H" when the
-                    // sprite is hidden.
+
+
                     node.label = string_format( "%c %s", td.key, mutation_name( md.id ) );
                     if( !td.show_sprite ) {
                         node.label += _( " H" );
                     }
                 } else {
-                    // Row as drawn: the key, then the text built by
-                    // on_redraw (name, cost/cooldown, " - Active"). The
-                    // resource-unit assembly is copied verbatim from
-                    // on_redraw so the spoken row matches the printed
-                    // one, quirks included.
+
+
+
+
+
                     std::string mut_desc;
                     std::string resource_unit;
                     int number_of_resource = 0;
@@ -462,9 +462,9 @@ void avatar::power_mutations()
                     node.label = string_format( "%c %s", td.key, mut_desc );
                 }
                 node.label = remove_color_tags( node.label );
-                // Detail: the description the examining window shows
-                // for this trait, with the states the original only
-                // encodes in color or the " H" symbol restated in words.
+
+
+
                 std::string detail = mutation_desc( tid );
                 if( !purifiable( tid ) ) {
                     detail +=
@@ -497,14 +497,14 @@ void avatar::power_mutations()
         werase( wBio );
         draw_border( wBio, BORDER_COLOR, _( "Mutations" ) );
         wattron( wBio, BORDER_COLOR );
-        // Draw line under title
+
         mvwhline( wBio, point( 1, HEADER_LINE_Y ), LINE_OXOX, WIDTH - 2 );
-        // Draw symbols to connect additional lines to border
-        mvwaddch( wBio, point( 0, HEADER_LINE_Y ), LINE_XXXO ); // |-
-        mvwaddch( wBio, point( WIDTH - 1, HEADER_LINE_Y ), LINE_XOXX ); // -|
+
+        mvwaddch( wBio, point( 0, HEADER_LINE_Y ), LINE_XXXO );
+        mvwaddch( wBio, point( WIDTH - 1, HEADER_LINE_Y ), LINE_XOXX );
         wattroff( wBio, BORDER_COLOR );
 
-        // Captions
+
         mvwprintz( wBio, point( 2, HEADER_LINE_Y + 1 ), c_light_blue, _( "Passive:" ) );
         mvwprintz( wBio, point( second_column, HEADER_LINE_Y + 1 ), c_light_blue, _( "Active:" ) );
 
@@ -559,7 +559,7 @@ void avatar::power_mutations()
                         type = has_base_trait( active[i] ) ? c_red : c_light_red;
                     }
                 }
-                // TODO: track resource(s) used and specify
+
                 mvwputch( wBio, point( second_column, list_start_y + i - scroll_position ),
                           type, td.key );
                 std::string mut_desc;
@@ -640,11 +640,11 @@ void avatar::power_mutations()
         }
     } );
 
-    // Reader-only failure reason: the generic "Not enough
-    // resources" message never said which resource was short, so the
-    // player had to leave the screen and check every status value. Name
-    // the first requirement that fails, in the same order the activation
-    // check below tests them. The sighted popup path is untouched.
+
+
+
+
+
     const auto activation_shortage = [this]( const mutation_branch &mut_data ) -> std::string {
         const std::string name = mutation_name( mut_data.id );
         if( mut_data.hunger && get_kcal_percent() < 0.8f ) {
@@ -677,7 +677,7 @@ void avatar::power_mutations()
         const input_event evt = ctxt.get_raw_input();
         if( evt.type == input_event_t::keyboard_char && !evt.sequence.empty() ) {
             const int ch = evt.get_first_input();
-            if( ch == ' ' ) { //skip if space is pressed (space is used as an empty hotkey)
+            if( ch == ' ' ) {
                 continue;
             }
             const trait_id mut_id = trait_by_invlet( ch );
@@ -706,17 +706,17 @@ void avatar::power_mutations()
 
                         menu_mode = mutation_menu_mode::activating;
                         examine_id = std::nullopt;
-                        // TODO: show a message like when reassigning a key to an item?
+
                         break;
                     }
                     case mutation_menu_mode::activating: {
                         if( mut_data.activated ) {
                             if( cached_mutations[mut_id].powered ) {
                                 add_msg_if_player( m_neutral, _( "You stop using your %s." ), mutation_name( mut_data.id ) );
-                                // Reset menu in advance
+
                                 ui.reset();
                                 deactivate_mutation( mut_id );
-                                // Action done, leave screen
+
                                 exit = true;
                             } else if( ( !mut_data.hunger || get_kcal_percent() >= 0.8f ) &&
                                        ( !mut_data.thirst || get_thirst() <= 400 ) &&
@@ -725,10 +725,10 @@ void avatar::power_mutations()
                                        ( !mut_data.stamina || get_stamina() >= mut_data.cost ) ) {
                                 add_msg_if_player( m_neutral,
                                                    string_format( mut_data.activation_msg.translated(), mutation_name( mut_data.id ) ) );
-                                // Reset menu in advance
+
                                 ui.reset();
                                 activate_mutation( mut_id );
-                                // Action done, leave screen
+
                                 exit = true;
                             } else {
                                 if( a11y::enabled() ) {
@@ -752,7 +752,7 @@ void avatar::power_mutations()
                         break;
                     }
                     case mutation_menu_mode::examining:
-                        // Describing mutations, not activating them!
+
                         examine_id = mut_id;
                         break;
                     case mutation_menu_mode::hiding:
@@ -766,7 +766,7 @@ void avatar::power_mutations()
         }
         if( !handled ) {
 
-            // Essentially, up-down navigation adapted from the bionics_ui.cpp, with a bunch of extra workarounds to keep functionality
+
 
             if( action == "DOWN" ) {
 
@@ -794,7 +794,7 @@ void avatar::power_mutations()
                 }
                 examine_pos = 0;
 
-                // Draw the description, shabby workaround
+
                 examine_id = GetTrait( active, passive, cursor, tab_mode );
 
             } else if( action == "UP" ) {
@@ -875,17 +875,17 @@ void avatar::power_mutations()
 
                             menu_mode = mutation_menu_mode::activating;
                             examine_id = std::nullopt;
-                            // TODO: show a message like when reassigning a key to an item?
+
                             break;
                         }
                         case mutation_menu_mode::activating: {
                             if( mut_data.activated ) {
                                 if( cached_mutations[mut_id].powered ) {
                                     add_msg_if_player( m_neutral, _( "You stop using your %s." ), mutation_name( mut_data.id ) );
-                                    // Reset menu in advance
+
                                     ui.reset();
                                     deactivate_mutation( mut_id );
-                                    // Action done, leave screen
+
                                     exit = true;
                                 } else if( ( !mut_data.hunger || get_kcal_percent() >= 0.8f ) &&
                                            ( !mut_data.thirst || get_thirst() <= 400 ) &&
@@ -894,10 +894,10 @@ void avatar::power_mutations()
                                            ( !mut_data.mana || magic->available_mana() >= mut_data.cost ) ) {
                                     add_msg_if_player( m_neutral,
                                                        string_format( mut_data.activation_msg.translated(), mutation_name( mut_data.id ) ) );
-                                    // Reset menu in advance
+
                                     ui.reset();
                                     activate_mutation( mut_id );
-                                    // Action done, leave screen
+
                                     exit = true;
                                 } else {
                                     if( a11y::enabled() ) {
@@ -921,7 +921,7 @@ void avatar::power_mutations()
                             break;
                         }
                         case mutation_menu_mode::examining:
-                            // Describing mutations, not activating them!
+
                             examine_id = mut_id;
                             break;
                         case mutation_menu_mode::hiding:
@@ -933,7 +933,7 @@ void avatar::power_mutations()
                 menu_mode = mutation_menu_mode::reassigning;
                 examine_id = std::nullopt;
             } else if( action == "TOGGLE_EXAMINE" ) {
-                // switches between activation and examination
+
                 menu_mode = menu_mode == mutation_menu_mode::activating ?
                             mutation_menu_mode::examining : mutation_menu_mode::activating;
                 if( menu_mode == mutation_menu_mode::examining ) {

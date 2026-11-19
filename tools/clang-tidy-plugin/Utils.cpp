@@ -64,4 +64,4 @@ NameConvention::MatchResult NameConvention::Match( StringRef name ) const
     }
 }
 
-} // namespace clang::tidy::cata
+}

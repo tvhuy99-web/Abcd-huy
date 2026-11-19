@@ -27,7 +27,7 @@ static void pass_time( Character &p, time_duration amt, time_duration tick )
 static void daily_routine( npc &dude, int numb_stam_burn, int vitamin_amount,
                            bool sleep_deprivation )
 {
-    // set to midnight
+
     calendar::turn = calendar::turn_zero;
     dude.remove_effect( effect_sleep );
     dude.remove_effect( effect_lying_down );
@@ -36,12 +36,12 @@ static void daily_routine( npc &dude, int numb_stam_burn, int vitamin_amount,
     dude.update_body();
 
     for( int i = 0; i < numb_stam_burn; i++ ) {
-        //Cardio: burn more than half stamina
+
         dude.mod_stamina( -dude.get_stamina_max() );
         dude.set_stamina( dude.get_stamina_max() );
     }
 
-    //RDA: get some vitamins
+
     dude.vitamin_mod( vitamin_iron, vitamin_amount );
     dude.vitamin_mod( vitamin_vitC, vitamin_amount );
     dude.vitamin_mod( vitamin_calcium, vitamin_amount );
@@ -50,11 +50,11 @@ static void daily_routine( npc &dude, int numb_stam_burn, int vitamin_amount,
         dude.set_sleep_deprivation( static_cast<int>( SLEEP_DEPRIVATION_MASSIVE ) - 160 );
     }
 
-    // pass a day
+
     pass_time( dude, 24_hours, 1_hours );
 }
 
-// Healthy lifetyle makes health go up
+
 TEST_CASE( "healthy_lifestyle", "[health]" )
 {
     standard_npc dude( "healthy lifestyle" );
@@ -70,7 +70,7 @@ TEST_CASE( "healthy_lifestyle", "[health]" )
     CHECK( dude.get_lifestyle() > init_lifestyle );
 }
 
-// Unhealthy lifestyle makes health go down
+
 TEST_CASE( "unhealthy_lifestyle", "[health]" )
 {
     standard_npc dude( "unhealthy lifestyle" );

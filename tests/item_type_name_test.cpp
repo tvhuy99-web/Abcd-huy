@@ -5,7 +5,7 @@
 #include "item.h"
 #include "type_id.h"
 
-// Test cases focused on item::type_name
+
 static const itype_id itype_blood( "blood" );
 static const itype_id itype_shotgun_s( "shotgun_s" );
 static const itype_id itype_test_block_of_cheese( "test_block_of_cheese" );
@@ -43,17 +43,17 @@ TEST_CASE( "item_name_pluralization", "[item][type_name][plural]" )
             item test_lorry( itype_test_lorry );
             item test_test_item( itype_test_test_item );
 
-            // just add +s
+
             CHECK( test_item.type_name( 1 ) == "item" );
             CHECK( test_item.type_name( 2 ) == "items" );
             CHECK( test_test_item.type_name( 1 ) == "test item" );
             CHECK( test_test_item.type_name( 2 ) == "test items" );
 
-            // -y to +ies
+
             CHECK( test_lorry.type_name( 1 ) == "lorry" );
             CHECK( test_lorry.type_name( 2 ) == "lorries" );
 
-            // -ss to +sses
+
             CHECK( test_mass.type_name( 1 ) == "mass" );
             CHECK( test_mass.type_name( 2 ) == "masses" );
 
@@ -85,7 +85,7 @@ TEST_CASE( "item_name_pluralization", "[item][type_name][plural]" )
 
 TEST_CASE( "custom_named_item", "[item][type_name][named]" )
 {
-    // Shop smart. Shop S-Mart.
+
     item shotgun( itype_shotgun_s );
     shotgun.set_var( "name", "Boomstick" );
     REQUIRE( shotgun.get_var( "name" ) == "Boomstick" );
@@ -126,7 +126,7 @@ TEST_CASE( "blood_item", "[item][type_name][blood]" )
 
 TEST_CASE( "corpse_item", "[item][type_name][corpse]" )
 {
-    // Anonymous corpses
+
 
     SECTION( "human corpse" ) {
         item corpse = item::make_corpse( mtype_id::NULL_ID(), calendar::turn, "" );
@@ -152,7 +152,7 @@ TEST_CASE( "corpse_item", "[item][type_name][corpse]" )
         CHECK( corpse.type_name() == "corpse of a chicken" );
     }
 
-    // Corpses with names
+
 
     SECTION( "human corpse with a name" ) {
         item corpse = item::make_corpse( mtype_id::NULL_ID(), calendar::turn, "Dead Dude" );
@@ -178,4 +178,3 @@ TEST_CASE( "corpse_item", "[item][type_name][corpse]" )
         CHECK( corpse.type_name() == "corpse of Herb, chicken" );
     }
 }
-

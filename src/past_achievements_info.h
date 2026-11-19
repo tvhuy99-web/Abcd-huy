@@ -27,4 +27,4 @@ class past_achievements_info
 const past_achievements_info &get_past_achievements();
 void clear_past_achievements();
 
-#endif // CATA_SRC_PAST_ACHIEVEMENTS_INFO_H
+#endif

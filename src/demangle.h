@@ -4,9 +4,9 @@
 
 #include <string>
 
-/**
- * Demangles a C++ symbol
- */
+
+
+
 std::string demangle( const char *symbol );
 
-#endif // CATA_SRC_DEMANGLE_H
+#endif

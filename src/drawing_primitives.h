@@ -23,4 +23,4 @@ void draw_circle( const std::function<void( const point_bub_ms & )> &set, const 
 void draw_circle( const std::function<void( const point_bub_ms & )> &set, const point_bub_ms &p,
                   int rad );
 
-#endif // CATA_SRC_DRAWING_PRIMITIVES_H
+#endif

@@ -166,7 +166,7 @@ TEST_CASE( "all_monitor_targets_table_invariants", "[debug_console]" )
     }
 }
 
-// Per-tab persistence: load_state -> save_state shape preservation.
+
 
 namespace
 {
@@ -188,7 +188,7 @@ JsonObject save_to_object( const debug_menu::console_tab_view &tab )
     return json_object_from( os.str() );
 }
 
-} // namespace
+}
 
 TEST_CASE( "tab_creatures_view_persistence_roundtrip", "[debug_console][persistence]" )
 {
@@ -208,8 +208,8 @@ TEST_CASE( "tab_creatures_view_persistence_roundtrip", "[debug_console][persiste
         CHECK_FALSE( within );
     }
     SECTION( "filter_within_bubble default stays true on empty input" ) {
-        // Pins emit-on-default: empty input -> field present with true.
-        // Relax to "absent or true" if save_state ever omits defaults.
+
+
         debug_menu::tab_creatures_view tab;
         tab.load_state( json_object_from( "{}" ) );
         JsonObject out = save_to_object( tab );

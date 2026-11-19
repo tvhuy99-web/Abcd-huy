@@ -1,6 +1,6 @@
 package com.cleverraven.cataclysmdda;
 
-/** Host-side lifecycle/race tests; no Android runtime or network required. */
+
 public final class SpeechSessionTest {
     private static int assertions;
 

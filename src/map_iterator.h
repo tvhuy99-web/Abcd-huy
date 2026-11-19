@@ -14,9 +14,9 @@ class tripoint_range
         static_assert( Tripoint::dimension == 3, "Requires tripoint type" );
     private:
         using traits = point_traits<Tripoint>;
-        /**
-         * Generates points in a rectangle.
-         */
+
+
+
         class point_generator
         {
                 friend class tripoint_range;
@@ -33,14 +33,14 @@ class tripoint_range
 
                 point_generator( const Tripoint &_p, const tripoint_range &_range )
                     : p( _p ), range( _range ) {
-                    // Make sure we start on a valid point
+
                     if( range.predicate && !range.predicate( p ) && p != range.endp ) {
                         operator++();
                     }
                 }
 
-                // Increment x, then if it goes outside range, "wrap around" and increment y
-                // Same for y and z
+
+
                 inline point_generator &operator++() {
                     do {
                         traits::x( p )++;
@@ -66,10 +66,10 @@ class tripoint_range
                 }
 
                 inline bool operator!=( const point_generator &other ) const {
-                    // Reverse coordinates order, because it will usually only be compared with endpoint
-                    // which will always differ in Z, except for the very last comparison
-                    // TODO: In C++17 this range should use a sentinel to
-                    // optimise the comparison.
+
+
+
+
                     const Tripoint &pt = other.p;
                     return traits::z( p ) != traits::z( pt ) || p.xy() != pt.xy();
                 }
@@ -86,13 +86,13 @@ class tripoint_range
 
         std::function<bool( const Tripoint & )> predicate;
 
-        // True when min lies above max on any axis, so the box holds no points.
+
         bool is_inverted() const {
             return traits::x( minp ) > traits::x( maxp ) || traits::y( minp ) > traits::y( maxp ) ||
                    traits::z( minp ) > traits::z( maxp );
         }
 
-        // inverted box ends on its first point, so begin() == end()
+
         Tripoint end_point() const {
             if( is_inverted() ) {
                 return minp;
@@ -124,8 +124,8 @@ class tripoint_range
         }
 
         point_generator end() const {
-            // Return the point AFTER the last one
-            // That is, point under (in z-levels) the first one, but one z-level below the last one
+
+
             return point_generator( endp, *this );
         }
 
@@ -201,10 +201,10 @@ inline tripoint_range<Tripoint> points_on_radius_circ( const Tripoint &center, c
     } );
 }
 
-/* Template vodoo to allow passing lambdas to the below function without a compiler complaint
- * Courtesy of
- * https://stackoverflow.com/questions/13358672/how-to-convert-a-lambda-to-an-stdfunction-using-templates#13359347
- */
+
+
+
+
 template <typename T>
 struct tripoint_predicate_fun {
     using type = T;
@@ -220,4 +220,4 @@ inline tripoint_range<Tripoint> points_in_radius_where( const Tripoint &center, 
     return tripoint_range<Tripoint>( center - offset, center + offset, func );
 }
 
-#endif // CATA_SRC_MAP_ITERATOR_H
+#endif

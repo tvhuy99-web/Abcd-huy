@@ -35,7 +35,7 @@ class too_old_memorial_file_error : std::runtime_error
 {
         using runtime_error::runtime_error;
 };
-} // namespace
+}
 
 past_game_info::past_game_info( const JsonObject &jo )
 {
@@ -52,11 +52,11 @@ past_game_info::past_game_info( const JsonObject &jo )
         throw JsonError( string_format( "unexpected memorial version %d", version ) );
     }
 
-    // See past_games_info::legacy_achievement
+
     legacy_achievements = version == 0;
 
-    // Extract avatar name info from the game_avatar_new event
-    // gives the starting character name; "et. al." is appended if there was character switching
+
+
     event_multiset &new_avatar_events = stats_->get_events( event_type::game_avatar_new );
     const event_multiset::summaries_type &new_avatar_counts = new_avatar_events.counts();
     if( !new_avatar_counts.empty() ) {
@@ -67,7 +67,7 @@ past_game_info::past_game_info( const JsonObject &jo )
                            ( new_avatar_counts.size() > 1 ? " et. al." : "" );
         }
     } else {
-        // Legacy approach using the game_start event
+
         event_multiset &start_events = stats_->get_events( event_type::game_start );
         const event_multiset::summaries_type &start_counts = start_events.counts();
         if( start_counts.size() != 1 ) {
@@ -87,7 +87,7 @@ past_game_info::past_game_info( const JsonObject &jo )
 
 static past_games_info past_games;
 
-// Using lazy initialization, so no need to do anything in the constructor
+
 past_games_info::past_games_info() = default;
 
 void past_games_info::clear()
@@ -110,7 +110,7 @@ void past_games_info::ensure_loaded( bool show_popup )
 
     loaded_ = true;
 
-    // TODO: Had to guard UI refresh because it corrupted imgui window stack
+
     if( show_popup ) {
         static_popup popup;
         popup.message( "%s", _( "Please wait while past game data loads…" ) );
@@ -122,7 +122,7 @@ void past_games_info::ensure_loaded( bool show_popup )
     assure_dir_exist( memorial_dir );
     std::vector<cata_path> filenames = get_files_from_path( ".json", memorial_dir, true, true );
 
-    // Sort the files by the date & time encoded in the filename
+
     std::vector<std::pair<std::string, cata_path>> sortable_filenames;
     for( const cata_path &filename : filenames ) {
         std::vector<std::string> components = string_split(
@@ -139,7 +139,7 @@ void past_games_info::ensure_loaded( bool show_popup )
     std::sort( sortable_filenames.begin(),
                sortable_filenames.end(), []( const std::pair<std::string, cata_path> &l,
     const std::pair<std::string, cata_path> &r ) {
-        // Manually replicating std::pair<T,U>::operator < to avoid implementing operator< on cata_path.
+
         // NOLINTNEXTLINE(cata-use-localized-sorting)
         if( l.first < r.first ) {
             return true;
@@ -160,7 +160,7 @@ void past_games_info::ensure_loaded( bool show_popup )
         } catch( const JsonError &err ) {
             debugmsg( "Error reading memorial file %s: %s", filename.generic_u8string(), err.what() );
         } catch( const too_old_memorial_file_error & ) {
-            // do nothing
+
         }
     }
 

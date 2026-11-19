@@ -30,7 +30,7 @@ struct rotatable_symbol {
 
 std::vector<rotatable_symbol> symbols;
 
-} // anonymous namespace
+}
 
 namespace rotatable_symbols
 {
@@ -102,4 +102,4 @@ uint32_t get( const uint32_t &symbol, int n )
     return found ? iter->rotated_symbol[n - 1] : symbol;
 }
 
-} // namespace rotatable_symbols
+}

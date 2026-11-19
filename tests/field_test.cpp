@@ -46,20 +46,20 @@ static int count_fields( const field_type_str_id &field_type )
     return live_fields;
 }
 
-// This is a large scale integration test, it gets prohibitively expensive if it uses
-// a long-lived field, and it isn't capable of handling fields that trigger spread/join mechanics
-// or dynamically update their own lifetimes.
+
+
+
 TEST_CASE( "acid_field_expiry_on_map", "[field]" )
 {
     clear_map_without_vision();
     map &m = get_map();
-    // place a smoke field
+
     for( const tripoint_bub_ms &cursor : m.points_on_zlevel() ) {
         m.add_field( cursor, field_fd_acid, 1 );
     }
     REQUIRE( count_fields( field_fd_acid ) == 17424 );
     const time_point before_time = calendar::turn;
-    // run time forward until it goes away
+
     while( calendar::turn - before_time < field_fd_acid.obj().half_life ) {
         m.process_fields();
         calendar::turn += 1_seconds;
@@ -76,7 +76,7 @@ static void test_field_expiry( const std::string &field_type_str )
         test_fields.emplace_back( field_type, 1, 0_seconds );
         test_fields[i].initialize_decay();
     }
-    // Reduce time advancement by 2 seconds because age gets incremented by do_decay()
+
     calendar::turn += field_type.obj().half_life - 1_seconds;
     float decayed = 0.0f;
     float alive = 0.0f;
@@ -94,7 +94,7 @@ static void test_field_expiry( const std::string &field_type_str )
 
 TEST_CASE( "field_expiry", "[field]" )
 {
-    // Test fields with a wide range of half lives.
+
     test_field_expiry( "fd_acid" );
     test_field_expiry( "fd_smoke" );
     test_field_expiry( "fd_blood" );
@@ -149,7 +149,7 @@ TEST_CASE( "firebugs", "[field]" )
     fire_duration( "t_shrub_raspberry", 60_minutes, 120_minutes );
 }
 
-// helper method that stores a global variable used to remember calendar::turn value before the test
+
 static time_point &fields_test_time_before()
 {
     static time_point time_before;
@@ -190,7 +190,7 @@ TEST_CASE( "fd_acid_falls_down", "[field]" )
     calendar::turn += 1_turns;
     m.process_fields();
 
-    // remove floor under the acid field
+
     m.ter_set( p, ter_t_open_air );
     m.build_floor_cache( 0 );
     REQUIRE( m.valid_move( p, p + tripoint::below ) );
@@ -242,14 +242,14 @@ TEST_CASE( "fire_spreading", "[field][!mayfail]" )
         for( tripoint_bub_ms p0 = p; p0 != far_p + tripoint::east; p0 += tripoint::east ) {
             m.add_field( p0, fd_web, 1 );
         }
-        // note: time limit here was chosen arbitrarily. It could be too low or too high.
+
         check_spreading( 5_minutes );
     }
     SECTION( "fire spreads on flammable items" ) {
         for( tripoint_bub_ms p0 = p; p0 != far_p + tripoint::east; p0 += tripoint::east ) {
             m.add_item( p0, item( itype_test_2x4 ) );
         }
-        // note: time limit here was chosen arbitrarily. It could be too low or too high.
+
         check_spreading( 30_minutes );
     }
     SECTION( "fire spreads on flammable terrain" ) {
@@ -257,14 +257,14 @@ TEST_CASE( "fire_spreading", "[field][!mayfail]" )
             REQUIRE( ter_t_tree_walnut->has_flag( ter_furn_flag::TFLAG_FLAMMABLE_ASH ) );
             m.ter_set( p0, ter_t_tree_walnut );
         }
-        // note: time limit here was chosen arbitrarily. It could be too low or too high.
+
         check_spreading( 30_minutes );
     }
 
     fields_test_cleanup();
 }
 
-// tests fd_fire_vent <-> fd_flame_burst cycle
+
 TEST_CASE( "fd_fire_and_fd_fire_vent_test", "[field]" )
 {
     fields_test_setup();
@@ -298,8 +298,8 @@ TEST_CASE( "fd_fire_and_fd_fire_vent_test", "[field]" )
         CHECK( flame_burst->get_field_intensity() >= 2 );
     }
 
-    // With the current implementation `fd_flame_burst` can be processed once in the same turn it is created.
-    // This could be a bug.
+
+
 
     const int flame_burst_intensity = m.get_field( p, fd_flame_burst )->get_field_intensity();
 
@@ -326,7 +326,7 @@ TEST_CASE( "fd_fire_and_fd_fire_vent_test", "[field]" )
     fields_test_cleanup();
 }
 
-// tests wandering_field property fd_smoke_vent
+
 TEST_CASE( "wandering_field_test", "[field]" )
 {
     fields_test_setup();
@@ -336,7 +336,7 @@ TEST_CASE( "wandering_field_test", "[field]" )
 
     REQUIRE( fd_smoke_vent->wandering_field == fd_smoke );
 
-    // 1 second old, so gets processed right away
+
     m.add_field( p, fd_smoke_vent, 3, 1_seconds );
 
     REQUIRE( m.get_field( p, fd_smoke_vent ) );
@@ -381,7 +381,7 @@ TEST_CASE( "radioactive_field", "[field]" )
         CHECK( fields_test_turns() <= time_limit_turns );
     }
 
-    // cleanup
+
     clear_radiation();
     fields_test_cleanup();
 }
@@ -395,14 +395,14 @@ TEST_CASE( "fungal_haze_test", "[field]" )
     REQUIRE_FALSE( m.has_flag( "FUNGUS", p ) );
     m.add_field( p, fd_fungal_haze, 3 );
 
-    // note: time limit was chosen arbitrary. It could be too low.
+
     const int time_limit_turns = to_turns<int>( 1_hours );
 
     while( !m.has_flag( "FUNGUS", p ) && fields_test_turns() < time_limit_turns ) {
         calendar::turn += 1_turns;
         m.process_fields();
 
-        // maintain fungal field up to the time limit
+
         if( !m.get_field( p, fd_fungal_haze ) ) {
             m.add_field( p, fd_fungal_haze, 3 );
         }
@@ -430,7 +430,7 @@ TEST_CASE( "player_in_field_test", "[field][player]" )
 
     m.add_field( p, fd_sap, 3 );
 
-    // Also add bunch of unrelated fields
+
     m.add_field( p, fd_blood, 3 );
     m.add_field( p, fd_blood_insect, 3 );
     m.add_field( p, fd_blood_veggy, 3 );
@@ -467,7 +467,7 @@ TEST_CASE( "field_API_test", "[field]" )
     CHECK( m.add_field( p, fd_fire, 1 ) );
 
     CHECK( f.find_field( fd_fire ) );
-    CHECK( f.find_field( fd_fire, /*alive_only*/ false ) );
+    CHECK( f.find_field( fd_fire, false ) );
     CHECK( m.get_field( p, fd_fire ) );
     CHECK( m.get_field_intensity( p, fd_fire ) == 1 );
 
@@ -476,7 +476,7 @@ TEST_CASE( "field_API_test", "[field]" )
     CHECK_FALSE( f.find_field( fd_fire ) );
     {
         INFO( "Field is still there, actually removed only by process_fields" );
-        CHECK( f.find_field( fd_fire, /*alive_only*/ false ) );
+        CHECK( f.find_field( fd_fire, false ) );
     }
     CHECK_FALSE( m.get_field( p, fd_fire ) );
     CHECK( m.get_field_intensity( p, fd_fire ) == 0 );

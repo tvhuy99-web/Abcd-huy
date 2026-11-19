@@ -96,7 +96,7 @@ TEST_CASE( "craft_character_resources_follow_progress_and_batch_size",
         CHECK( you.get_stamina() == initial_stamina - 500 );
         CHECK( you.vitamin_get( vitamin_blood ) == -5000 );
 
-        // Repeating the same target must not charge the craft twice.
+
         REQUIRE( you.craft_consume_character_resources( craft, 2500000 ) );
         CHECK( you.magic->available_mana() == initial_mana - 500 );
         CHECK( you.get_stamina() == initial_stamina - 500 );

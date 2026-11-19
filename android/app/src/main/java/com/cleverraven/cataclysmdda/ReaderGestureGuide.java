@@ -4,13 +4,13 @@ import android.content.Context;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * One focused, short explanation per gesture. These rows are NEVER actions:
- * the help layer only speaks their labels and returns to the original focus.
- *
- * The native snapshot owns the screen identity; world driving/combat modes
- * refine that identity without changing any user-assigned world bindings.
- */
+
+
+
+
+
+
+
 final class ReaderGestureGuide {
     private ReaderGestureGuide() {}
 
@@ -18,8 +18,8 @@ final class ReaderGestureGuide {
         rows.add(c.getString(gesture) + ": " + c.getString(meaning));
     }
 
-    /** Shared controls are appended once, even when a screen has a more
-     * precise instruction for the same gesture. */
+
+
     private static void addOnce(List<String> rows, Context c, int gesture, int meaning) {
         String prefix = c.getString(gesture) + ": ";
         for (String row : rows) {
@@ -28,8 +28,8 @@ final class ReaderGestureGuide {
         add(rows, c, gesture, meaning);
     }
 
-    /** Field options/number ranges override the ordinary menu's vertical
-     * navigation instruction only when the native node exposes an edit API. */
+
+
     private static void describeFocusedField(List<String> rows, Context c,
                                              ReaderSnapshot snapshot) {
         if (snapshot == null) { return; }
@@ -51,9 +51,9 @@ final class ReaderGestureGuide {
         add(rows, c, R.string.a11yGuideOneVertical, R.string.a11yGuideAdjustField);
     }
 
-    /** Read the live shortcut map, not an obsolete table of default keys.
-     * Combat disables old three-finger movement, but its other saved
-     * shortcuts still reach executeShortcutTarget in the controller. */
+
+
+
     private static void appendLiveShortcuts(List<String> rows, Context context,
                                            ReaderSnapshot snapshot,
                                            ReaderGestureBindings bindings,
@@ -137,8 +137,8 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yBindHold1,
                     R.string.a11yGuideOpenHelp);
         } else if (readingDocument) {
-            // DocumentReader intercepts swipes to move the reading cursor
-            // through paragraphs, independent of the underlying category.
+
+
             add(rows, context, R.string.a11yGuideOneHorizontal,
                     R.string.a11yGuideBrowseParagraph);
             add(rows, context, R.string.a11yGuideOneVertical,
@@ -164,8 +164,8 @@ final class ReaderGestureGuide {
                     R.string.a11yGuideOpenHelp);
         } else if (driving && "activity".equals(category) && snapshot != null
                 && snapshot.find("activity:autodrive") != null) {
-            // Fully autonomous Explore Places reuses Drive. The four
-            // straight one-finger controls are deliberately absent.
+
+
             addSwipe(rows, context, "swipe_up_down", R.string.a11yGuideSpeed);
             addSwipe(rows, context, "swipe_down_up", R.string.a11yGuideSpeed);
             addSwipe(rows, context, "swipe_left_right", R.string.a11yGuideAutoReadHeading);
@@ -192,8 +192,8 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideTravelStatus);
         } else if (inHub) {
-            // This overlay is itself a distinct screen even if the underlying
-            // native snapshot still says DEFAULTMODE.
+
+
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideHubItemOptions);
@@ -301,9 +301,9 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
         } else if (category.startsWith("character-creator-step-")) {
-            // Native creator publishes a separate category for EVERY tab.
-            // The first two steps activate a selection; steps 3-6 use
-            // NEXT_TAB to validate multiselect attributes/skills/traits.
+
+
+
             add(rows, context, R.string.a11yGuideOneHorizontal,
                     R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideOneVertical,
@@ -333,8 +333,8 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuidePlayMinigame);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
         } else if ("CHARACTER_CREATION".equals(category)) {
-            // Final summary is a separate native category. Two-finger UP
-            // requests NEXT_TAB (Finish), not the focused summary row.
+
+
             add(rows, context, R.string.a11yGuideOneHorizontal,
                     R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideOneVertical,
@@ -346,7 +346,7 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yBindHold1,
                     R.string.a11yGuideScreenMenu);
         } else if ("YESNO".equals(category) || "YESNOQUIT".equals(category)) {
-            // Confirm selects Yes regardless of which answer has focus.
+
             add(rows, context, R.string.a11yGuideOneHorizontal,
                     R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap,
@@ -354,8 +354,8 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideTwoUp,
                     R.string.a11yGuideAcceptYes);
         } else {
-            // Generic read-only guidance for dialog, diary, missions,
-            // inventories, configuration screens and future native scopes.
+
+
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
@@ -374,13 +374,13 @@ final class ReaderGestureGuide {
                 }
             }
         }
-        // The following mappings come from ReaderGestureSurface and
-        // GameReaderController, and apply independently of native screen
-        // labels. Do not copy them into dozens of screen-specific blocks.
-        // Two-finger tap twice reads cached game messages in EVERY screen.
+
+
+
+
         addOnce(rows, context, R.string.a11yBindTap22,
                 R.string.a11yGuideRecentMessages);
-        // A single tap stops speech in both the world and native menus.
+
         addOnce(rows, context, R.string.a11yGuideSingleTap,
                 R.string.a11yGuideStopSpeech);
         boolean autonomousTrip = driving && "activity".equals(category)
@@ -389,7 +389,7 @@ final class ReaderGestureGuide {
                 && !inHub && !traveling && !editing && !debugging
                 && !readingDocument && pocketStage == 0;
         if (liveWorld) {
-            // The two hub gestures work in Map, Combat and Drive.
+
             addOnce(rows, context, R.string.a11yBindTap23,
                     R.string.a11yGuideOpenHub);
             addOnce(rows, context, R.string.a11yGuideTripleTap,
@@ -402,9 +402,9 @@ final class ReaderGestureGuide {
                 addOnce(rows, context, R.string.a11yBindTap21,
                         R.string.a11yGuideReadDetails);
             }
-            // All modal screens share the same 2-finger UP confirm and
-            // 2-finger DOWN Back dispatchers. A screen-specific definition
-            // above takes precedence (creator, crafting, calendar, editor).
+
+
+
             if (!debugging && !readingDocument
                     && !("crafting".equals(category) && snapshot != null
                          && snapshot.find("craft:detail:qty:current") != null)) {
@@ -426,7 +426,7 @@ final class ReaderGestureGuide {
         if (!liveWorld && !autonomousTrip && !editing && !debugging && !readingDocument
                 && pocketStage == 0 && !"character-creator-calendar".equals(category)
                 && !"surroundings".equals(category) && !"crafting".equals(category)) {
-            // All other ordinary menus receive configured focus navigation.
+
             addOnce(rows, context, R.string.a11yGuideOneHorizontal,
                     R.string.a11yGuideBrowseItems);
             addOnce(rows, context, R.string.a11yGuideOneVertical,
@@ -438,8 +438,8 @@ final class ReaderGestureGuide {
             describeFocusedField(rows, context, snapshot);
         }
         if (liveWorld && !driving) {
-            // Vehicle mode consumes all unknown swipes for safety, while
-            // Map and Combat may execute live saved actions.
+
+
             appendLiveShortcuts(rows, context, snapshot, bindings, combat);
         }
         return rows;

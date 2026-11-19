@@ -38,7 +38,7 @@ struct requirement_failure_reasons {
 
 namespace zone_sorting
 {
-// the boolean in this pair being true indicates the item is from a vehicle storage space
+
 using zone_items = std::vector<std::pair<item *, bool>>;
 
 struct unload_sort_options {
@@ -57,8 +57,8 @@ bool sorter_out_of_bounds( Character &you, const T &act )
 {
     const map &here = get_map();
     if( !here.inbounds( you.pos_bub() ) ) {
-        // p is implicitly an NPC that has been moved off the map, so reset the activity
-        // and unload them
+
+
         you.cancel_activity();
         you.assign_activity( act );
         you.set_moves( 0 );
@@ -68,40 +68,40 @@ bool sorter_out_of_bounds( Character &you, const T &act )
     return false;
 }
 
-//returns true if there's an existing route to destination
+
 bool route_to_destination( Character &you, player_activity &act,
                            const tripoint_bub_ms &dest, zone_activity_stage &stage );
-/**
-* Returns true if the given item should be skipped while sorting.
-*/
+
+
+
 bool sort_skip_item( Character &you, const item *it,
                      const std::vector<item_location> &other_activity_items,
                      bool ignore_favorite, const tripoint_abs_ms &src,
                      bool *spillable_skipped = nullptr );
 
-/**
-* Sets sorting options given nearby UNLOAD_ALL zones
-* @param use_zone_type - check for zone types other than UNLOAD_ALL
-* @param unloading - whether to set unload_always
-*/
+
+
+
+
+
 unload_sort_options set_unload_options( Character &you, const tripoint_abs_ms &src,
                                         bool use_zone_type );
 
-// return items at the given location from vehicle cargo and ground
-// TODO: build into map class
+
+
 zone_items populate_items( const tripoint_bub_ms &src_bub );
-// returns whether to ignore the zones at `src`
-// if one zone is ignored, all will be
+
+
 bool ignore_contents( Character &you, const tripoint_abs_ms &src );
 
-// skip tiles in IGNORE zone or with ignore option,
-// tiles on fire (to prevent taking out wood off the lit brazier)
-// and inaccessible furniture, like filled charcoal kiln
+
+
+
 bool ignore_zone_position( Character &you, const tripoint_abs_ms &src, bool ignore_contents );
 
-// of `items` at `src`, do any need to be sorted?
-// If pickup_failure is true on return, at least one item can't be sorted because it can't be picked up.
-// Note that this check is performed before the presence of a destination has been made.
+
+
+
 bool has_items_to_sort( Character &you, const tripoint_abs_ms &src,
                         zone_sorting::unload_sort_options zone_unload_options,
                         const std::vector<item_location> &other_activity_items,
@@ -110,21 +110,21 @@ bool has_items_to_sort( Character &you, const tripoint_abs_ms &src,
 bool dest_has_capacity( const tripoint_abs_ms &dest, const zone_type_id &ztype,
                         const item &sample, const faction_id &fac );
 
-// why the carry gate turned an item down. the pickup path reports a knock-down
-// refusal to the player and stays quiet about the others
+
+
 enum class carry_gate_result : int {
     ok = 0,
-    // no pockets, no free hands
+
     no_space,
-    // would put the character over max_pickup_capacity
+
     knockdown,
-    // would put the character over weight_capacity with a batch staged
+
     over_capacity,
 };
 
-// can `you` take `it` into the inventory right now? `have_staged_items` is
-// whether a batch is already waiting for dropoff; the first item of a batch is
-// always allowed, so heavy things can still be sorted one at a time
+
+
+
 carry_gate_result carry_gate_check( Character &you, const item &it, bool have_staged_items );
 bool can_unload( item *it );
 void add_item( const std::optional<vpart_reference> &vp, const tripoint_bub_ms &src_bub,
@@ -140,18 +140,18 @@ void move_item( Character &you, const std::optional<vpart_reference> &vpr_src,
                 const tripoint_bub_ms &src_bub, const std::unordered_set<tripoint_abs_ms> &dest_set,
                 item &it, int &num_processed );
 
-// Returns A* route length from the player to a tile adjacent to dest.
-// Uses grab-aware routing when the player is dragging a vehicle.
-// Returns INT_MAX if unreachable.
+
+
+
 int route_length( const Character &you, const tripoint_bub_ms &dest );
 
-// Worst-terrain tile on the route to nearest dropoff destination for a
-// grabbed single-tile vehicle.  Returns nullopt if no grabbed vehicle,
-// multi-tile vehicle, or trivial/unreachable route.
+
+
+
 std::optional<tripoint_bub_ms> worst_drag_tile_on_route(
     const Character &who, const std::vector<tripoint_abs_ms> &dropoff_coords );
 
-// Bounding box for viewport lock during zone sorting.
+
 struct viewport_bbox {
     tripoint_abs_ms min_corner;
     tripoint_abs_ms max_corner;
@@ -161,58 +161,58 @@ struct viewport_bbox {
     int height() const;
 };
 
-// Compute bounding box around a set of tile coordinates.
-// Returns a default bbox at origin if tiles is empty.
+
+
 viewport_bbox calc_zone_bbox( const std::unordered_set<tripoint_abs_ms> &tiles );
 
-// Expand bbox to include a new tile. Returns true if bbox actually grew.
-// Updates centroid.
+
+
 bool expand_bbox( viewport_bbox &bbox, const tripoint_abs_ms &tile );
 
-// Expand raw min/max corners to include a new tile. Returns true if grew.
-// For use with inline bbox on Character (avoids circular include).
+
+
 bool expand_bbox_raw( tripoint_abs_ms &bbox_min, tripoint_abs_ms &bbox_max,
                       const tripoint_abs_ms &tile );
 
-// Largest zoom from {4,8,16,32,64} where bbox (plus padding) fits on screen.
-// Capped at saved_zoom so we never zoom in beyond the player's original level.
-// visible_w/h are TERRAIN_WINDOW dimensions measured at current_zoom.
+
+
+
 int calc_target_zoom( int bbox_w, int bbox_h,
                       int visible_w, int visible_h, int current_zoom,
                       int saved_zoom, int padding = 4 );
-} //namespace zone_sorting
+}
 
 
 namespace multi_activity_actor
 {
 
-//TODO: move to JSON flag?
+
 bool can_do_in_dark( const activity_id &act_id );
 bool activity_must_be_in_zone( activity_id act_id, const tripoint_bub_ms &src_loc );
-// whether the given activity reason needs to check activity requirements
+
 bool activity_reason_continue( do_activity_reason reason );
-// the activity reason has no activity requirements
+
 bool activity_reason_quit( do_activity_reason reason );
-// the activity (reason) requires picking up tools
+
 bool activity_reason_picks_up_tools( do_activity_reason reason );
 void check_npc_revert( Character &you );
-// converts invalid do_activity_reason into failed requirement_check_result
+
 requirement_check_result requirement_fail( Character &you, const do_activity_reason &reason,
         const activity_id &act_id, const zone_data *zone );
-// hashes and caches custom requirement data if new
+
 requirement_id hash_and_cache_requirement_data( const requirement_data &reqs_data );
-// creates a custom requirement
+
 requirement_id synthesize_requirements(
     const requirement_data::alter_item_comp_vector &requirement_comp_vector,
     const requirement_data::alter_quali_req_vector &quality_comp_vector,
     const requirement_data::alter_tool_comp_vector &tool_comp_vector );
-// eliminates satisfied requirements from tools/qualities, keeps items
+
 requirement_id remove_met_requirements( requirement_id base_req_id, Character &you );
 
 std::optional<requirement_id> vehicle_work_requirements( Character &you,
         activity_reason_info &act_info, const tripoint_bub_ms &src_loc );
 
-//general function for non-specific multi activities
+
 std::unordered_set<tripoint_abs_ms> generic_locations( Character &you, const activity_id &act_id );
 void prune_same_tile_locations( Character &you, std::unordered_set<tripoint_abs_ms> &src_set );
 void prune_dark_locations( Character &you, std::unordered_set<tripoint_abs_ms> &src_set,
@@ -238,4 +238,4 @@ bool are_requirements_nearby(
     Character &you, const activity_id &activity_to_restore, bool in_loot_zones,
     const tripoint_bub_ms &src_loc );
 
-} //namespace multi_activity_actor
+}

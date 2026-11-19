@@ -12,8 +12,8 @@
 #include <CoreFoundation/CoreFoundation.h>
 #elif defined(__ANDROID__)
 #include <jni.h>
-#include "sdl_wrappers.h" // for GetAndroidJNIEnv()
-#include "debug.h" // for DebugLog/D_INFO/D_MAIN
+#include "sdl_wrappers.h"
+#include "debug.h"
 #elif defined(__linux__)
 #include <langinfo.h>
 #endif
@@ -25,9 +25,9 @@
 #ifndef _WIN32
 namespace
 {
-// Try to match language code to a supported game language by prefix
-// For example, "fr_CA.UTF-8" -> "fr"
-// Returns std::nullopt if the language is not supported by the game
+
+
+
 std::optional<std::string> matchGameLanguage( std::string_view lang )
 {
     const std::vector<options_manager::id_and_option> available_languages =
@@ -39,7 +39,7 @@ std::optional<std::string> matchGameLanguage( std::string_view lang )
     }
     return std::nullopt;
 }
-} // namespace
+}
 #endif
 
 namespace SystemLocale
@@ -48,11 +48,11 @@ namespace SystemLocale
 std::optional<std::string> Language()
 {
 #if defined(_WIN32)
-    /* "Useful" links:
-     *  https://www.science.co.il/language/Locale-codes.php
-     *  https://support.microsoft.com/de-de/help/193080/how-to-use-the-getuserdefaultlcid-windows-api-function-to-determine-op
-     *  https://msdn.microsoft.com/en-us/library/cc233965.aspx
-     */
+
+
+
+
+
     static const std::map<std::string, std::set<int>> lang_lcid {
         {"en", { 1033, 2057, 3081, 4105, 5129, 6153, 7177, 8201, 9225, 10249, 11273 }},
         {"ar", {{ 1025, 2049, 3073, 4097, 5121, 6145, 7169, 8193, 9217, 10241, 11265, 12289, 13313, 14337, 15361, 16385 }} },
@@ -90,7 +90,7 @@ std::optional<std::string> Language()
     }
     return std::nullopt;
 #elif defined(__APPLE__)
-    // Get the user's language list (in order of preference)
+
     CFArrayRef langs = CFLocaleCopyPreferredLanguages();
     if( CFArrayGetCount( langs ) == 0 ) {
         return std::nullopt;
@@ -99,9 +99,9 @@ std::optional<std::string> Language()
     CFStringRef lang = static_cast<CFStringRef>( CFArrayGetValueAtIndex( langs, 0 ) );
     const char *lang_code_raw_fast = CFStringGetCStringPtr( lang, kCFStringEncodingUTF8 );
     std::string lang_code;
-    if( lang_code_raw_fast ) { // fast way, probably it's never works
+    if( lang_code_raw_fast ) {
         lang_code = lang_code_raw_fast;
-    } else { // fallback to slow way
+    } else {
         CFIndex length = CFStringGetLength( lang ) + 1;
         std::vector<char> lang_code_raw_slow( length, '\0' );
         bool success = CFStringGetCString( lang, lang_code_raw_slow.data(), length, kCFStringEncodingUTF8 );
@@ -111,15 +111,15 @@ std::optional<std::string> Language()
         lang_code = lang_code_raw_slow.data();
     }
 
-    // Convert to the underscore format expected by gettext
+
     std::replace( lang_code.begin(), lang_code.end(), '-', '_' );
 
-    /**
-     * Handle special case for simplified/traditional Chinese. Simplified/Traditional
-     * is actually denoted by the region code in older iterations of the
-     * language codes, whereas now (at least on OS X) region is distinct.
-     * That is, CDDA expects 'zh_CN' but OS X might give 'zh-Hans-CN'.
-     */
+
+
+
+
+
+
     if( string_starts_with( lang_code, "zh_Hans" ) ) {
         return "zh_CN";
     } else if( string_starts_with( lang_code, "zh_Hant" ) ) {
@@ -135,7 +135,7 @@ std::optional<std::string> Language()
     jstring ans = ( jstring )env->CallObjectMethod( activity, method_id, 0 );
     const char *ans_c_str = env->GetStringUTFChars( ans, 0 );
     if( ans_c_str == nullptr ) {
-        // fail-safe if retrieving Java string failed
+
         return std::nullopt;
     }
     const std::string lang( ans_c_str );
@@ -164,15 +164,15 @@ std::optional<std::string> Language()
 std::optional<bool> UseMetricSystem()
 {
 #if defined(_WIN32)
-    // https://docs.microsoft.com/en-us/globalization/locale/units-of-measurement
+
     DWORD measurementUnit;
     if( GetLocaleInfo( LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER,
                        reinterpret_cast<LPSTR>( &measurementUnit ),
                        sizeof( measurementUnit ) / sizeof( TCHAR ) ) == 0 ) {
         return std::nullopt;
     }
-    // measurementUnit == 0 => Metric System
-    // measurementUnit == 1 => Imperial System
+
+
     return measurementUnit == 0;
 #elif defined(__APPLE__)
     CFLocaleRef localeRef = CFLocaleCopyCurrent();
@@ -189,4 +189,4 @@ std::optional<bool> UseMetricSystem()
 #endif
 }
 
-} // namespace SystemLocale
+}

@@ -6,11 +6,11 @@
 #include "point.h"
 #include "point_traits.h"
 
-// The following templates check existence of parent class and template type
-// argument's member with the template parameter list, since GCC 5 and earlier
-// versions do not handle SFINAE in class body correctly. std::declval +
-// decltype are used in rectangle/cuboid to workaround incorrect "left operand
-// has no effect" warning.
+
+
+
+
+
 
 template<typename Point, decltype( std::declval<decltype( Point::dimension )>(), int() ) = 0>
 struct rectangle {
@@ -116,11 +116,11 @@ struct inclusive_cuboid : cuboid<Tripoint> {
     }
 };
 
-// Clamp p to the rectangle r.
-// This independently clamps each coordinate of p to the bounds of the
-// rectangle.
-// Useful for example to round an arbitrary point to the nearest point on the
-// screen, or the nearest point in a particular submap.
+
+
+
+
+
 template<typename Point>
 Point clamp( const Point &p, const half_open_rectangle<Point> &r )
 {
@@ -194,4 +194,4 @@ int run_for_point_in( const std::map<Index, inclusive_rectangle<Point>> &m, cons
 inline constexpr rectangle<point> rectangle_zero( point::zero, point::zero );
 inline constexpr cuboid<tripoint> cuboid_zero( tripoint::zero, tripoint::zero );
 
-#endif // CATA_SRC_CUBOID_RECTANGLE_H
+#endif

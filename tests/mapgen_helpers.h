@@ -22,4 +22,4 @@ void manual_mapgen( tripoint_abs_omt const &where, F const &fmg, ID const &id,
     fmg( where, id );
 }
 
-#endif // CATA_TESTS_MAPGEN_HELPERS_H
+#endif

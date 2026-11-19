@@ -44,97 +44,97 @@ template <typename E> class enum_bitset;
 template<typename T> struct weighted_int_list;
 template <typename T, typename W> struct weighted_list;
 
-/**
-A generic class to store objects identified by a `string_id`.
 
-The class handles loading (including overriding / replacing existing objects) and
-querying for specific objects. The class is designed to work with @ref string_id and
-can be by it to implement its interface.
 
-----
 
-@tparam T The type of the managed objects. The type must have:
-  - a default constructor,
-  - a `load( JsonObject & )` function,
-  - an `id` member of type `string_id<T>`,
-  - a `was_loaded` member of type `bool`, which must have the value `false` before
-    the first call to `load`.
 
-  The type can also have:
-  - a 'check()' function (to run `generic_factory::check()` on all objects)
 
-  Those things must be visible from the factory, you may have to add this class as
-  friend if necessary.
 
-  `T::load` should load all the members of `T`, except `id` and `was_loaded` (they are
-  set by the `generic_factory` before calling `load`). Failures should be reported by
-  throwing an exception (e.g. via `JsonObject::throw_error`).
-  if `T::load`, for whatever reason, cannot report failures by throwing an expection and
-  instead wishes to defer loading, it may have a boolean return type. Returning false will
-  defer loading of this JSON.
-  It is preferred that errors are reported and an exception is thrown.
 
-----
 
-Usage:
 
-- Create an instance, it can be static, or packed into another object.
-- Implement `string_id::load` as simply forwarding to `generic_factory::load`.
-  Register `string_id::load` in the @ref DynamicDataLoader (init.cpp) to be called when
-  an object of the matching type is encountered.
-- Similar: implement and register `string_id::reset` and let it call `generic_factory::reset`.
 
-The functions can contain more code:
-- `load` typically does nothing special beside forwarding to `generic_factory`.
-- `reset` removes the loaded objects. It usually needs to remove the additional data that was set
-  up in `finalize`. It must call `generic_factory::reset`.
 
-Optional: implement the other functions used by the DynamicDataLoader: `finalize`,
-`check_consistency`. There is no implementation of them in the generic factory.
 
-`check_consistency` typically goes over all loaded items and checks them somehow.
 
-`finalize` typically populates some other data (e.g. some cache) or sets up connection between
-loaded objects of different type.
 
-A sample implementation looks like this:
-\code
-class my_class { ... }
 
-namespace {
-generic_factory<my_class> my_class_factory( "my class" );
-std::map<...> some_cache;
-}
 
-template<>
-void string_id<my_class>::load( const JsonObject &jo ) {
-    my_class_factory.load( jo );
-}
 
-template<>
-void string_id<my_class>::reset() {
-    some_cache.clear();
-    my_class_factory.reset();
-}
 
-template<>
-void string_id<my_class>::finalize() {
-    for( auto &ptr : my_class_factory.all() )
-        // populate a cache just as an example
-        some_cache.insert( ... );
-    }
-}
 
-// Implementation of the string_id functions:
-template<>
-const my_class &string_id<my_class>::obj() const
-{
-    return my_class_factory.obj( *this );
-}
-// ... more functions of string_id, similar to the above.
 
-\endcode
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 template<typename T>
 class generic_factory
@@ -144,10 +144,10 @@ class generic_factory
 
     private:
         DynamicDataLoader::deferred_json deferred;
-        // generation or "modification count" of this factory
-        // it's incremented when any changes to the inner id containers occur
-        // version value corresponds to the string_id::_version,
-        // so incrementing the version here effectively invalidates all cached string_id::_cid
+
+
+
+
         int64_t  version = 0;
 
         void inc_version() {
@@ -170,8 +170,8 @@ class generic_factory
                 return is_valid( result );
             }
             const auto iter = map.find( id );
-            // map lookup happens at most once per string_id instance per generic_factory::version
-            // id was not found, explicitly marking it as "invalid"
+
+
             if( iter == map.end() ) {
                 id.set_cid_version( INVALID_CID, version );
                 return false;
@@ -185,12 +185,12 @@ class generic_factory
 
     public:
         const bool initialized;
-        /**
-         * @param type_name A string used in debug messages as the name of `T`,
-         * for example "vehicle type".
-         * @param id_member_name The name of the JSON member that contains the id(s) of the
-         * loaded object(s).
-         */
+
+
+
+
+
+
         explicit generic_factory( const std::string &type_name, const std::string &id_member_name = "id" )
             : type_name( type_name ),
               id_member_name( id_member_name ),
@@ -198,11 +198,11 @@ class generic_factory
               initialized( true ) {
         }
 
-        // Begin template magic for T::handle_inheritance; if T has handle_inheritance function
-        // that accepts the correct args - the inherited object and map of the abstracts then it
-        // will be invoked to handle the copy-from, if not the assignment operator is used.
-        // At time of writing this is used for vehicle parts (vpart_info class)
-        // *INDENT-OFF* astyle turns templates unreadable
+
+
+
+
+
         template<typename U>
         using T_has_handle_inheritance_t = decltype(
             std::declval<U>().handle_inheritance(
@@ -215,33 +215,33 @@ class generic_factory
         struct T_has_handle_inheritance<U, std::void_t<T_has_handle_inheritance_t<U>>> : std::true_type {};
         template<typename U=T, std::enable_if_t<T_has_handle_inheritance<U>::value>* = nullptr>
         void handle_inheritance_on_T( T &def, const T &copy_from ) {
-            def.handle_inheritance( copy_from, abstracts ); // let the function handle it
+            def.handle_inheritance( copy_from, abstracts );
         }
         template<typename U=T, std::enable_if_t<!T_has_handle_inheritance<U>::value>* = nullptr>
         void handle_inheritance_on_T( T &def, const T &copy_from ) {
-            def = copy_from; // just use assignment
+            def = copy_from;
         }
-        // *INDENT-ON* astyle turns templates unreadable
-        // End template magic for T::handle_inheritance
+
+
 
         template<typename U, typename = void>
         struct T_has_finalize : std::false_type {};
 
-        // astyle, please?
+
         template<typename U>
     struct T_has_finalize<U, std::void_t<decltype( std::declval<U &>().finalize() )>> :
         std::true_type {};
 
-        /**
-        * Perform JSON inheritance handling for `T def` and returns true if JsonObject is real.
-        *
-        * If the object contains a "copy-from" member the corresponding abstract gets copied if found.
-        *    If abstract is not found, object is added to deferred.
-        * If the object is abstract, it is loaded via `T::load` and added to `abstracts`
-        *
-        * @return true if `jo` is loaded and false if loading is deferred.
-        * @throws JsonError If `jo` is both abstract and real. (contains "abstract" and "id" members)
-        */
+
+
+
+
+
+
+
+
+
+
         bool handle_inheritance( T &def, const JsonObject &jo, const std::string &src ) {
             static const std::string copy_from_member_name( "copy-from" );
             static const std::string abstract_member_name( "abstract" );
@@ -277,7 +277,7 @@ class generic_factory
                 check_plural = check_plural_t::none;
                 const std::string abstract_id =  jo.get_string( abstract_member_name );
                 def.id = string_id<T>( abstract_id );
-                // def is a local stack object; virtual dispatch is fine here.
+
                 // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall)
                 def.load( jo, src );
                 abstracts[abstract_id] = def;
@@ -289,24 +289,24 @@ class generic_factory
         struct load_is_bool : std::false_type { };
 
         template<typename LT>
-        // astyle??
+
     struct load_is_bool<LT, std::void_t<std::is_same<decltype( std::declval<LT &>().load() ), bool>>> :
         std:: true_type {};
 
-        /**
-         * Load an object of type T with the data from the given JSON object.
-         *
-         * The id of the object is taken from the JSON object. The object data is loaded by
-         * calling `T::load(jo)` (either on a new object or on an existing object).
-         * See class documentation for intended behavior of that function.
-         *
-         * @throws JsonError If loading fails for any reason (thrown by `T::load`).
-         *
-         * The first function is for a load() function that returns a bool. This allows a type
-         * to skip being inserted and instead defer loading.
-         * The second is for load() functions that do not return a bool. This loads and inserts
-         * the object
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         template<typename U = T, std::enable_if_t<load_is_bool<U>::value>* = nullptr>
         void load( const JsonObject &jo, const std::string &src ) {
             static const std::string abstract_member_name( "abstract" );
@@ -349,7 +349,7 @@ class generic_factory
                                                abstract_member_name, id_member_name ) );
             }
         }
-        // astyle???
+
         template < typename U = T, std::enable_if_t < !load_is_bool<T>::value > * = nullptr >
         void load( const JsonObject &jo, const std::string &src ) {
             static const std::string abstract_member_name( "abstract" );
@@ -373,7 +373,7 @@ class generic_factory
                     }
                     def.id = string_id<T>( e );
                     mod_tracker::assign_src( def, src );
-                    // def is a local stack object; virtual dispatch is fine here.
+
                     // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall)
                     def.load( jo, src );
                     insert( def );
@@ -384,17 +384,17 @@ class generic_factory
                                                abstract_member_name, id_member_name ) );
             }
         }
-        /**
-         * Add an object to the factory, without loading from JSON.
-         * The new object replaces any existing object of the same id.
-         * The function returns the actual object reference.
-         */
+
+
+
+
+
         T &insert( const T &obj ) {
-            // this invalidates `_cid` cache for all previously added string_ids,
-            // but! it's necessary to invalidate cache for all possibly cached "missed" lookups
-            // (lookups for not-yet-inserted elements)
-            // in the common scenario there is no loss of performance, as `finalize` will make cache
-            // for all ids valid again
+
+
+
+
+
             inc_version();
             const auto iter = map.find( obj.id );
             if( iter != map.end() ) {
@@ -414,7 +414,7 @@ class generic_factory
             return result;
         }
 
-        /** Finalize all entries (derived classes should chain to this method) */
+
         virtual void finalize() {
             DynamicDataLoader::get_instance().load_deferred( deferred );
             abstracts.clear();
@@ -428,32 +428,32 @@ class generic_factory
             }
         }
 
-        /**
-         * Checks loaded/inserted objects for consistency
-         */
+
+
+
         void check() const {
             for( const T &obj : list ) {
                 obj.check();
             }
         }
-        /**
-         * Returns the number of loaded objects.
-         */
+
+
+
         size_t size() const {
             return list.size();
         }
-        /**
-         * Returns whether factory is empty.
-         */
+
+
+
         bool empty() const {
             return list.empty();
         }
-        /**
-         * Removes all loaded objects.
-         * Postcondition: `size() == 0`
-         */
+
+
+
+
         void reset() {
-            /* Avoid unvisited member errors when iterating on json */
+
             for( std::pair<JsonObject, std::string> &deferred_json : deferred ) {
                 deferred_json.first.allow_omitted_members();
             }
@@ -462,34 +462,34 @@ class generic_factory
             map.clear();
             inc_version();
         }
-        /**
-         * Returns all the loaded objects. It can be used to iterate over them.
-         */
+
+
+
         const std::vector<T> &get_all() const {
             return list;
         }
-        /**
-         * Returns all the loaded objects. It can be used to iterate over them.
-         * Getting modifiable objects should be done sparingly!
-         */
+
+
+
+
         std::vector<T> &get_all_mod() {
             return list;
         }
-        /**
-         * @name `string_id/int_id` interface functions
-         *
-         * The functions here are supposed to be used by the id classes, they have the
-         * same behavior as described in the id classes and can be used directly by
-         * forwarding the parameters to them and returning their result.
-         */
-        /**@{*/
-        /**
-         * Returns the object with the given id.
-         * The input id should be valid, otherwise a debug message is issued.
-         * This function can be used to implement @ref int_id::obj().
-         * Note: If the id was valid, the returned object can be modified (after
-         * casting the const away).
-         */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         const T &obj( const int_id<T> &id ) const {
             if( !is_valid( id ) ) {
                 debugmsg( "invalid %s id \"%d\"", type_name, id.to_i() );
@@ -497,13 +497,13 @@ class generic_factory
             }
             return list[id.to_i()];
         }
-        /**
-         * Returns the object with the given id.
-         * The input id should be valid, otherwise a debug message is issued.
-         * This function can be used to implement @ref string_id::obj().
-         * Note: If the id was valid, the returned object can be modified (after
-         * casting the const away).
-         */
+
+
+
+
+
+
+
         const T &obj( const string_id<T> &id ) const {
             int_id<T> i_id;
             if( !find_id( id, i_id ) ) {
@@ -512,25 +512,25 @@ class generic_factory
             }
             return list[i_id.to_i()];
         }
-        /**
-         * Checks whether the factory contains an object with the given id.
-         * This function can be used to implement @ref int_id::is_valid().
-         */
+
+
+
+
         bool is_valid( const int_id<T> &id ) const {
             return static_cast<size_t>( id.to_i() ) < list.size();
         }
-        /**
-         * Checks whether the factory contains an object with the given id.
-         * This function can be used to implement @ref string_id::is_valid().
-         */
+
+
+
+
         bool is_valid( const string_id<T> &id ) const {
             int_id<T> dummy;
             return find_id( id, dummy );
         }
-        /**
-         * Converts string_id<T> to int_id<T>. Returns null_id on failure.
-         * When optional flag warn is true, issues a warning if `id` is not found and null_id was returned.
-         */
+
+
+
+
         int_id<T> convert( const string_id<T> &id, const int_id<T> &null_id,
                            const bool warn = true ) const {
             int_id<T> result;
@@ -542,19 +542,19 @@ class generic_factory
             }
             return null_id;
         }
-        /**
-         * Converts int_id<T> to string_id<T>. Returns null_id on failure.
-         */
+
+
+
         const string_id<T> &convert( const int_id<T> &id ) const {
             return obj( id ).id;
         }
-        /**@}*/
 
-        /**
-         * Wrapper around generic_factory::version.
-         * Allows to have local caches that invalidate when corresponding generic factory invalidates.
-         * Note: when created using it's default constructor, Version is guaranteed to be invalid.
-        */
+
+
+
+
+
+
         class Version
         {
                 friend generic_factory<T>;
@@ -572,95 +572,95 @@ class generic_factory
                 }
         };
 
-        // current version of this generic_factory
+
         Version get_version() {
             return Version( version );
         }
 
-        // checks whether given version is the same as current version of this generic_factory
+
         bool is_valid( const Version &v ) {
             return v.version == version;
         }
 };
 
-/**
-@file
-Helper for loading from JSON
 
-Loading (inside a `T::load(JsonObject &jo)` function) can be done with two functions
-(defined here):
-- `mandatory` loads required data and throws an error if the JSON data does not contain
-  the required data.
-- `optional` is for optional data, it has the same parameters and an additional default
-  value that will be used if the JSON data does not contain the requested data. It may
-  throw an error if the existing data is not valid (e.g. string instead of requested int).
 
-The functions are designed to work with the `generic_factory` and therefore support the
-`was_loaded` parameter (set by `generic_factory::load`). If that parameter is `true`, it
-is assumed the object has already been loaded and missing JSON data is simply ignored
-(the default value is not applied and no error is thrown upon missing mandatory data).
 
-The parameters are this:
-- `JsonObject jo` the object to load from.
-- `bool was_loaded` whether the object had already been loaded completely.
-- `std::string member_name` the name of the JSON member to load from.
-- `T &member` a reference to the C++ object to store the loaded data.
-- (for `optional`) a default value of any type that can be assigned to `member`.
 
-Both functions use the native `read` functions of `JsonIn` (see there) to load the value.
 
-Example:
-\code
-class Dummy {
-    bool was_loaded = false;
-    int a;
-    std::string b;
-    void load(JsonObject &jo) {
-        mandatory(jo, was_loaded, "a", a);
-        optional(jo, was_loaded, "b", b, "default value of b");
-    }
-};
-\endcode
 
-This only works if there is function with the matching type defined in `JsonIn`. For other
-types, or if the loaded value needs to be converted (e.g. to `nc_color`), one can use the
-reader classes/functions. `mandatory` and `optional` have an overload that requires the same
-parameters and an additional reference to such a reader object.
 
-\code
-class Dummy2 {
-    bool was_loaded = false;
-    int b;
-    nc_color c;
-    void load(JsonObject &jo) {
-        mandatory(jo, was_loaded, "b", b); // uses JsonIn::read(int&)
-    }
-};
-\endcode
 
-Both versions of `optional` have yet another overload that does not require an explicit default
-value, a default initialized object of the member type will be used instead.
 
-----
 
-Readers must provide the following function:
-`bool operator()( const JsonObject &jo, const std::string &member_name, T &member, bool was_loaded ) const
 
-(This can be implemented as free function or as operator in a class.)
 
-The parameters are the same as the for the `mandatory` function (see above). The `function shall
-return `true` if the loading was done, or `false` if the JSON data did
-not contain the requested member. If loading fails because of invalid data (but not missing
-data), it should throw.
 
-*/
 
-// warn when relative/proportional/extend/delete is used for a member but is not read
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void warn_disabled_feature( const JsonObject &jo, std::string_view feature,
                             std::string_view member, std::string_view reason );
 
-/** @name Implementation of `mandatory` and `optional`. */
-/**@{*/
+
+
 template<typename MemberType>
 inline void mandatory( const JsonObject &jo, const bool was_loaded, const std::string_view name,
                        MemberType &member )
@@ -698,17 +698,17 @@ inline void mandatory( const JsonObject &jo, const bool was_loaded, const std::s
     }
 }
 
-/*
- * Template vodoo:
- * The compiler will construct the appropriate one of these based on if the
- * type can support the operations being done.
- * So, it defaults to the false_type, but if it can use the *= operator
- * against a float OR defines member function handle_proportional (not both!),
- * it then supports proportional, and the handle_proportional
- * template that isn't just a dummy is constructed.
- * Similarly, if it can use a += operator against it's own type, the non-dummy
- * handle_relative template is constructed.
- */
+
+
+
+
+
+
+
+
+
+
+
 template<typename T, typename = std::void_t<>>
 struct supports_proportional : std::false_type { };
 
@@ -742,8 +742,8 @@ struct supports_delete_handler : std::false_type {};
 template<typename T>
 struct supports_delete_handler<T, std::void_t<decltype( &T::handle_delete )>> : std::true_type {};
 
-// Explicitly specialize these templates for a couple types
-// So the compiler does not attempt to use a template that it should not
+
+
 template<>
 struct supports_proportional<bool> : std::false_type {};
 
@@ -753,7 +753,7 @@ struct supports_relative<bool> : std::false_type {};
 template<>
 struct supports_relative<std::string> : std::false_type {};
 
-// This checks that all units:: types will support relative and proportional
+
 static_assert( supports_relative<units::energy>::value, "units should support relative" );
 static_assert( supports_proportional<units::energy>::value, "units should support proportional" );
 
@@ -763,15 +763,15 @@ static_assert( supports_proportional<int>::value, "ints should support proportio
 static_assert( !supports_relative<bool>::value, "bools should not support relative" );
 static_assert( !supports_proportional<bool>::value, "bools should not support proportional" );
 
-// Using string ids with ints doesn't make sense in practice, but it doesn't matter here
-// The type that it is templated with does not change its behavior
+
+
 static_assert( !supports_relative<string_id<int>>::value,
                "string ids should not support relative" );
 static_assert( !supports_proportional<string_id<int>>::value,
                "string ids should not support proportional" );
 
-// Using int ids with ints doesn't make sense in practice, but it doesn't matter here
-// The type that it is templated with does not change its behavior
+
+
 static_assert( !supports_relative<int_id<int>>::value,
                "int ids should not support relative" );
 static_assert( !supports_proportional<int_id<int>>::value,
@@ -781,18 +781,18 @@ static_assert( !supports_relative<std::string>::value, "strings should not suppo
 static_assert( !supports_proportional<std::string>::value,
                "strings should not support proportional" );
 
-// Grab an enum class from debug.h
+
 static_assert( !supports_relative<DebugOutput>::value, "enum classes should not support relative" );
 static_assert( !supports_proportional<DebugOutput>::value,
                "enum classes should not support proportional" );
 
-// Grab a normal enum from there too
+
 static_assert( !supports_relative<DebugLevel>::value, "enums should not support relative" );
 static_assert( !supports_proportional<DebugLevel>::value, "enums should not support relative" );
 
-// Dummy template:
-// Warn if it's trying to use proportional where it cannot, but otherwise just
-// return.
+
+
+
 template < typename MemberType, std::enable_if_t < !supports_proportional<MemberType>::value &&
            !supports_proportional_handler<MemberType>::value > * = nullptr >
 inline bool handle_proportional( const JsonObject &jo, const std::string_view name, MemberType & )
@@ -808,11 +808,11 @@ inline bool handle_proportional( const JsonObject &jo, const std::string_view na
     return false;
 }
 
-// Real template:
-// Copy-from makes it so the thing we're inheriting from is used to construct
-// this, so member will contain the value of the thing we inherit from
-// So, check if there is a proportional entry, check if it's got a valid value
-// and if it does, multiply the member by it.
+
+
+
+
+
 template<typename MemberType, std::enable_if_t<supports_proportional<MemberType>::value>* = nullptr>
 inline bool handle_proportional( const JsonObject &jo, const std::string_view name,
                                  MemberType &member )
@@ -820,7 +820,7 @@ inline bool handle_proportional( const JsonObject &jo, const std::string_view na
     if( jo.has_object( "proportional" ) ) {
         JsonObject proportional = jo.get_object( "proportional" );
         proportional.allow_omitted_members();
-        // We need to check this here, otherwise we get problems with unvisited members
+
         if( !proportional.has_member( name ) ) {
             return false;
         }
@@ -839,7 +839,7 @@ inline bool handle_proportional( const JsonObject &jo, const std::string_view na
     return false;
 }
 
-//handles proportional for a class/struct with member function handle_proportional
+
 template<typename MemberType, std::enable_if_t<supports_proportional_handler<MemberType>::value>* = nullptr>
 inline bool handle_proportional( const JsonObject &jo, const std::string_view name,
                                  MemberType &member )
@@ -847,7 +847,7 @@ inline bool handle_proportional( const JsonObject &jo, const std::string_view na
     if( jo.has_object( "proportional" ) ) {
         JsonObject proportional = jo.get_object( "proportional" );
         proportional.allow_omitted_members();
-        // We need to check this here, otherwise we get problems with unvisited members
+
         if( !proportional.has_member( name ) ) {
             return false;
         }
@@ -860,9 +860,9 @@ inline bool handle_proportional( const JsonObject &jo, const std::string_view na
     return false;
 }
 
-// Dummy template:
-// Warn when trying to use relative when it's not supported, but otherwise,
-// return
+
+
+
 template < typename MemberType,
            std::enable_if_t < !supports_relative<MemberType>::value > * = nullptr
            >
@@ -880,17 +880,17 @@ inline bool handle_relative( const JsonObject &jo, const std::string_view name, 
     return false;
 }
 
-// Real template:
-// Copy-from makes it so the thing we're inheriting from is used to construct
-// this, so member will contain the value of the thing we inherit from
-// So, check if there is a relative entry, then add it to our member
+
+
+
+
 template<typename MemberType, std::enable_if_t<supports_relative<MemberType>::value>* = nullptr>
 inline bool handle_relative( const JsonObject &jo, const std::string_view name, MemberType &member )
 {
     if( jo.has_object( "relative" ) ) {
         JsonObject relative = jo.get_object( "relative" );
         relative.allow_omitted_members();
-        // This needs to happen here, otherwise we get unvisited members
+
         if( !relative.has_member( name ) ) {
             return false;
         }
@@ -917,9 +917,9 @@ void handle_extend( const JsonObject &jo, const std::string_view name, MemberTyp
             }
         }
     } else {
-        // the most common reason to see this is because you're trying to use this feature on
-        // something that is in a container, but is not using a reader.
-        // If the type is not in a container, it should implement a handle_feature function
+
+
+
         warn_disabled_feature( jo, "extend", name, "does not use reader" );
     }
 }
@@ -936,14 +936,14 @@ void handle_delete( const JsonObject &jo, const std::string_view name, MemberTyp
             }
         }
     } else {
-        // the most common reason to see this is because you're trying to use this feature on
-        // something that is in a container, but is not using a reader.
-        // If the type is not in a container, it should implement a handle_feature function
+
+
+
         warn_disabled_feature( jo, "delete", name, "does not use reader" );
     }
 }
 
-// No template magic here, yay!
+
 template<typename MemberType>
 inline void optional( const JsonObject &jo, const bool was_loaded, const std::string_view name,
                       MemberType &member )
@@ -963,16 +963,16 @@ inline void optional( const JsonObject &jo, const bool was_loaded, const std::st
     handle_extend( jo, name, member );
     handle_delete( jo, name, member );
 }
-/*
-Template trickery, not for the faint of heart. It is required because there are two functions
-with 5 parameters. The first 4 are always the same: JsonObject, bool, member name, member reference.
-The last one is different: in one case it's the default value, in the other case it's the reader
-and there is no explicit default value there.
-The enable_if stuff assumes that a `MemberType` can not be constructed from a `ReaderType`, in other
-words: `MemberType foo( ReaderType(...) );` does not work. This is what `is_constructible` checks.
-If the 5. parameter can be used to construct a `MemberType`, it is assumed to be the default value,
-otherwise it is assumed to be the reader.
-*/
+
+
+
+
+
+
+
+
+
+
 template<typename MemberType, typename DefaultType = MemberType,
          typename = std::enable_if_t<std::is_constructible_v<MemberType, const DefaultType &>>>
                                      inline void optional( const JsonObject &jo, const bool was_loaded, const std::string_view name,
@@ -999,7 +999,7 @@ template < typename MemberType, typename ReaderType, typename DefaultType = Memb
 inline void optional( const JsonObject &jo, const bool was_loaded, const std::string_view name,
                       MemberType &member, const ReaderType &reader )
 {
-    // reader handles disabled features
+
     if( !reader( jo, name, member, was_loaded ) ) {
         if( !was_loaded ) {
             member = MemberType();
@@ -1010,36 +1010,36 @@ template<typename MemberType, typename ReaderType, typename DefaultType = Member
 inline void optional( const JsonObject &jo, const bool was_loaded, const std::string_view name,
                       MemberType &member, const ReaderType &reader, const DefaultType &default_value )
 {
-    // reader handles disabled features
+
     if( !reader( jo, name, member, was_loaded ) ) {
         if( !was_loaded ) {
             member = default_value;
         }
     }
 }
-/**@}*/
 
-/**
- * Reads a string and stores the first byte of it in `sym`. Throws if the input contains more
- * or less than one byte.
- */
+
+
+
+
+
 bool one_char_symbol_reader( const JsonObject &jo, std::string_view member_name, int &sym,
                              bool );
 
-/**
- * Reads a UTF-8 string (or int as legacy fallback) and stores Unicode codepoint of it in `symbol`.
- * Throws if the inputs width is more than one console cell wide.
- */
+
+
+
+
 bool unicode_codepoint_from_symbol_reader(
     const JsonObject &jo, std::string_view member_name, uint32_t &member, bool );
 
-/**
- * unicode_codepoint_from_symbol_reader, but with a string instead of a codepoint
- */
+
+
+
 bool unicode_symbol_reader( const JsonObject &jo, std::string_view member_name, std::string &member,
                             bool was_loaded );
 
-//Reads a standard single-float "proportional" entry
+
 float read_proportional_entry( const JsonObject &jo, std::string_view key );
 
 namespace reader_detail
@@ -1336,7 +1336,7 @@ struct handler<std::map<Key, Val>> {
         container.clear();
     }
     bool insert( std::map<Key, Val> &container, const std::pair<Key, Val> &data ) const {
-        // emplace can fail if the key already exists
+
         if( !container.emplace( data ).second ) {
             debugmsg( "Insert of <%s, %s> failed, key already exists",
                       data_string( data.first ), data_string( data.second ) );
@@ -1379,7 +1379,7 @@ struct handler<std::unordered_map<Key, Val>> {
         container.clear();
     }
     bool insert( std::unordered_map<Key, Val> &container, const std::pair<Key, Val> &data ) const {
-        // emplace can fail if the key already exists
+
         if( !container.emplace( data ).second ) {
             debugmsg( "Insert of <%s, %s> failed, key already exists",
                       data_string( data.first ), data_string( data.second ) );
@@ -1415,7 +1415,7 @@ struct handler<std::unordered_map<Key, Val>> {
     }
     static constexpr bool is_container = true;
 };
-} // namespace reader_detail
+}
 
 template<typename T, typename = void>
 struct T_has_do_extend : std::false_type {};
@@ -1429,40 +1429,40 @@ struct T_has_do_delete : std::false_type {};
 template<typename T>
 struct T_has_do_delete<T, std::void_t<decltype( &T::do_delete )>> : std::true_type {};
 
-/**
- * Base class for reading generic objects from JSON.
- * It can load members being certain containers or being a single value.
- * The function get_next() needs to be implemented to read and convert the data from JSON.
- * It uses the curiously recurring template pattern, you have to derive your new class
- * `MyReader` from `generic_typed_reader<MyReader>` and implement `get_next` and
- * optionally `erase_next`.
- * Most function calls here are done on a `Derived`, which means it can "override" them.
- * This even allows changing their signature and return type.
- *
- * - If the object is new (`was_loaded` is `false`), only the given JSON member is read
- *   and assigned, overriding any existing content of it.
- * - If the object is not new and the member exists, it is read and assigned as well.
- * - If the object is not new and the member does not exists, two further members are examined:
- *   entries from `"extend"` are added to the set and entries from `"delete"`
- *   are removed. This only works if the member is actually a container, not just a single value.
- *
- * Example:
- * The JSON `{ "f": ["a","b","c"] }` would be loaded as the set `{"a","b","c"}`.
- * Loading the set again from the JSON `{ "delete": { "f": ["c","x"] }, "extend": { "f": ["h"] } }`
- * would add the "h" flag and removes the "c" and the "x" flag, resulting in `{"a","b","h"}`.
- *
- * @tparam Derived The class that inherits from this. It must implement the following:
- *   - `Foo get_next( V ) const`: reads the next value from JSON, converts it into some
- *      type `Foo` and returns it. The returned value is assigned to the loaded member (see reader
- *      interface above), or is inserted into the member (if it's a container). The type `Foo` must
- *      be compatible with those uses (read: it should be the same type). V is a type convertible from
- *      JsonValue.
- *   - (optional) `erase_next( V v, C &container ) const`, the default implementation here
- *      reads a value from JSON via `get_next` and removes the matching value in the container.
- *      The value in the container must match *exactly*. You may override this function to allow
- *      a different matching algorithm, e.g. reading a simple id from JSON and remove entries with
- *      the same id from the container. V is a value convertible from JsonValue.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename Derived>
 class generic_typed_reader
 {
@@ -1471,7 +1471,7 @@ public:
     static constexpr bool check_extend_delete_copy_from = true;
 
     template<typename C, typename Fn>
-    // I tried using a member function pointer and couldn't work it out
+
     void apply_all_values( JsonValue &jv, C &container, Fn apply ) const {
         if constexpr( Derived::read_objects ) {
             if( jv.test_array() ) {
@@ -1496,8 +1496,8 @@ public:
         }
     }
 
-    // We allow either a single value or an array of values. Note that this will not work
-    // correctly if the thing we load from JSON is itself an array.
+
+
     template<typename C>
     void insert_values_from( const JsonObject &jo, const std::string_view member_name,
                              C &container ) const {
@@ -1558,20 +1558,20 @@ public:
         }
     }
 
-    /**
-     * Implements the reader interface, handles members that are containers of flags.
-     * The functions forwards the actual changes to assign(), insert()
-     * and erase(), which are specialized for various container types.
-     * The `enable_if` is here to prevent the compiler from considering it
-     * when called on a simple data member, the other `operator()` will be used.
-     */
+
+
+
+
+
+
+
     template<typename C, std::enable_if_t<reader_detail::handler<C>::is_container, int> = 0>
     bool operator()( const JsonObject &jo, const std::string_view member_name,
                      C &container, bool was_loaded ) const {
         const Derived &derived = static_cast<const Derived &>( *this );
-        // If you get an error about "incomplete type 'struct reader_detail::handler...",
-        // you have to implement a specialization of your container type, so above for
-        // existing specializations in namespace reader_detail.
+
+
+
         if( jo.has_member( member_name ) ) {
             reader_detail::handler<C>().clear( container );
             derived.insert_values_from( jo, member_name, container );
@@ -1603,13 +1603,13 @@ public:
         }
     }
 
-    /*
-     * These two functions are effectively handle_relative but they need to
-     * use the reader, so they must be here.
-     * proportional does not need these, because it's only reading a float
-     * whereas these are reading values of the same type.
-     */
-    // Type does not support relative
+
+
+
+
+
+
+
     template < typename C, std::enable_if_t < !reader_detail::handler<C>::is_container,
                int > = 0,
                std::enable_if_t < !supports_relative<C>::value > * = nullptr
@@ -1627,7 +1627,7 @@ public:
         return false;
     }
 
-    // Type supports relative
+
     template < typename C, std::enable_if_t < !reader_detail::handler<C>::is_container,
                int > = 0, std::enable_if_t<supports_relative<C>::value> * = nullptr >
     bool do_relative( const JsonObject &jo, const std::string_view name, C &member ) const {
@@ -1635,7 +1635,7 @@ public:
             JsonObject relative = jo.get_object( "relative" );
             relative.allow_omitted_members();
             const Derived &derived = static_cast<const Derived &>( *this );
-            // This needs to happen here, otherwise we get unvisited members
+
             if( !relative.has_member( name ) ) {
                 return false;
             }
@@ -1646,7 +1646,7 @@ public:
         return false;
     }
 
-    // These functions enable readers for non-container types to implement extend/delete functions
+
     template<typename T>
     bool do_extend( const JsonObject &jo, const std::string_view name, T &member ) const {
         if( !jo.has_member( name ) ) {
@@ -1687,19 +1687,19 @@ public:
         return false;
     }
 
-    /**
-     * Implements the reader interface, handles a simple data member.
-     */
-    // was_loaded is ignored here, if the value is not found in JSON, report to
-    // the caller, which will take action on their own.
+
+
+
+
+
     template < typename C, std::enable_if_t < !reader_detail::handler<C>::is_container,
                int > = 0 >
     bool operator()( const JsonObject &jo, const std::string_view member_name,
                      C &member, bool was_loaded ) const {
         const Derived &derived = static_cast<const Derived &>( *this );
-        // or no handler for the container
+
         if( !was_loaded ) {
-            // this is gross, but some JSON wants to delete from things loaded by a different member on the same entity
+
             if( Derived::check_extend_delete_copy_from ) {
                 warn_disabled_feature( jo, "extend", member_name, "no copy-from" );
                 warn_disabled_feature( jo, "delete", member_name, "no copy-from" );
@@ -1718,21 +1718,21 @@ public:
             do_delete( tmp, member_name, member );
         }
         return derived.read_normal( jo, member_name, member ) ||
-               // not every reader handles proportional
+
                handle_proportional( jo, member_name, member ) ||
-               // readers can override relative handling
+
                derived.do_relative( jo, member_name, member );
     }
 };
 
-/**
- * This reader is for any object that can be read from a JsonValue,
- * but does not otherwise need special handling in a reader.
- * This enables using extend/delete for arbitrary types without a specialized reader,
- * by implementing a deserialize function for the type and using this reader.
- * The type must be constructible with no arguments, and may need to implement some operators,
- * depending on the underlying container. (e.g. vector requires operator==() for the handler above)
- */
+
+
+
+
+
+
+
+
 template<typename T>
 class json_read_reader : public generic_typed_reader<json_read_reader<T>>
 {
@@ -1774,18 +1774,18 @@ public:
     }
 };
 
-/**
- * Converts the JSON string to some type that must be construable from a `std::string`,
- * e.g. @ref string_id.
- * Example:
- * \code
- *   std::set<string_id<Foo>> set;
- *   mandatory( jo, was_loaded, "set", set, auto_flags_reader<string_id<Foo>>{} );
- *   // It also works for containers of simple strings:
- *   std::set<std::string> set2;
- *   mandatory( jo, was_loaded, "set2", set2, auto_flags_reader<>{} );
- * \endcode
- */
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename FlagType = std::string>
 class auto_flags_reader : public generic_typed_reader<auto_flags_reader<FlagType>>
 {
@@ -1821,19 +1821,19 @@ class money_reader : public generic_typed_reader<money_reader>
         }
 };
 
-/**
- * Uses a map (unordered or standard) to convert strings from JSON to some other type
- * (the mapped type of the map: `C::mapped_type`). It works for all mapped types, not just enums.
- *
- * One can use this if the member is `std::set<some_enum>` or `some_enum` and a
- * map `std::map<std::string, some_enum>` with all the value enumeration values exists.
- *
- * The class can be conveniently instantiated for a given map `mapping` using
- * the helper function @ref make_flag_reader (see below).
- * The flag type (@ref flag_type) is used when the input contains invalid flags
- * (a string that is not contained in the map). It should sound something like
- * "my-enum-type".
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename T>
 class typed_flag_reader : public generic_typed_reader<typed_flag_reader<T>>
 {
@@ -1873,9 +1873,9 @@ typed_flag_reader<T> make_flag_reader( const std::unordered_map<std::string, T> 
     return typed_flag_reader<T>( m, e );
 }
 
-/**
- * Uses @ref io::string_to_enum to convert the string from JSON to a C++ enum.
- */
+
+
+
 template<typename E>
 class enum_flags_reader : public generic_typed_reader<enum_flags_reader<E>>
 {
@@ -1892,14 +1892,14 @@ public:
             return io::string_to_enum<E>( flag );
         } catch( const io::InvalidEnumString & ) {
             jv.throw_error( string_format( "invalid %s: \"%s\"", flag_type, flag ) );
-            throw; // ^^ throws already
+            throw;
         }
     }
 };
 
-/**
- * Loads string_id from JSON
- */
+
+
+
 template<typename T>
 class string_id_reader : public generic_typed_reader<string_id_reader<T>>
 {
@@ -1909,21 +1909,21 @@ public:
     }
 };
 
-/**
- * Loads std::pair of [K = string_id, V = int/float] values from JSON -- usually into an std::map
- * It can load either an array, an object, or a single value
- * Accepted formats for elements in an array:
- * 1. A named key/value pair object: "addiction_type": [ { "addiction": "caffeine", "potential": 3 } ]
- * 2. A key/value pair array: "addiction_type": [ [ "caffeine", 3 ] ]
- * 3. A single value: "addiction_type": [ "caffeine" ]
- * For an object, only the following format is supported
- * 4. "addiction_type": { "caffeine": 3, "alcohol": 2 }
- * A single value can be provided as follows:
- * 5. "addiction_type": "caffeine"
- * For single values, weights are assigned default_weight
- */
-// TODO: format 1 is quite gross, and just accepts arbitrary keys. The only way it works is by limiting
-// the types of V, which is unfortunate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename K, typename V>
 class weighted_string_id_reader : public generic_typed_reader<weighted_string_id_reader<K, V>>
 {
@@ -1975,9 +1975,9 @@ public:
     }
 };
 
-// For loading pairs from a JSON object. { "a1": b1, "a2": b2 }, etc
-// Only supports JSON objects! Json objects are not ordered, so if you're using something where
-// the order matters, use pair_reader.
+
+
+
 template<typename K, typename V>
 class generic_map_reader : public generic_typed_reader<generic_map_reader<K, V>>
 {
@@ -1998,25 +1998,25 @@ public:
     }
 };
 
-// Supports three formats:
-// 1. [ a, b ]
-// 2. { "a": b }, if there exists a key_from_json_string specialization for a
-// 3. a, if T = U and a is not represented in JSON as an array or object (iff the object format is valid)
-// This would load [ "a", [ "b", "c" ], { "d": "e" } ] into three pairs:
-// ("a", "a"), ("b", "c"), ("d", "e")
-//
-// If you only need format 1, you can also use json_read_reader<std::pair<T, U>>
-//
-// TODO: constructor argument to enable/disable the shorthand format?
+
+
+
+
+
+
+
+
+
+
 template<typename T, typename U = T>
 class pair_reader : public generic_typed_reader<pair_reader<T, U>>
 {
 public:
     std::pair<T, U> get_next( const JsonValue &jv ) const {
-        // elements of the pair to return
+
         T a;
         U b;
-        // [ a, b ]
+
         if( jv.test_array() ) {
             JsonArray ja = jv.get_array();
             if( ja.size() != 2 ) {
@@ -2026,14 +2026,14 @@ public:
             ja[1].read( b, true );
             return std::make_pair( a, b );
         }
-        // { "a": b }
+
         if constexpr( key_from_json_string<T>::valid ) {
             if( jv.test_object() ) {
                 JsonObject jo = jv.get_object();
                 if( jo.size() != 1 ) {
                     jo.throw_error( "bad object pair, has too many elements" );
                 }
-                // gross - we need to get the name of the member, this just unwraps it
+
                 for( JsonMember jm : jo ) {
                     a = key_from_json_string<T>()( jm.name() );
                     jm.read( b, true );
@@ -2041,7 +2041,7 @@ public:
                 }
             }
         }
-        // shorthand for a = b
+
         if constexpr( std::is_same_v<T, U> ) {
             jv.read( a, true );
             b = a;
@@ -2052,9 +2052,9 @@ public:
     }
 };
 
-// Loads pairs as objects { key1: t1, key2: t2 }, or just t1, which uses the default for the value of t2
-// e.g. named_pair_reader<string, int>( "a", "b", 3 ) loads
-// [ "1", { "a": "3", "b": 4 } ] -> ("1", 3), ("3", 4)
+
+
+
 template<typename T1, typename T2>
 class named_pair_reader : public generic_typed_reader<named_pair_reader<T1, T2>>
 {
@@ -2078,7 +2078,7 @@ public:
             jo.read( key2, ret.second, true );
             return ret;
         }
-        // TODO: support pair format? Forward to pair_reader<T1, T2>?
+
         if( jv.test_array() ) {
             jv.throw_error( "invalid format" );
         }
@@ -2129,14 +2129,14 @@ template<typename T>
 struct supports_primitives < T, std::void_t < decltype( std::is_arithmetic_v<T> )
                              >> : std::true_type {};
 
-/**
- * Throws an error if a single read value is outside those bounds,
- * then clamps that read value between low and, if included, high.
- *
- * bound_reader should not be used alone -- use an extending class
- *
- * TO-DO: handle proportional bounds?
- */
+
+
+
+
+
+
+
+
 template <typename T>
 class bound_reader : public generic_typed_reader<bound_reader<T>>
 {
@@ -2145,26 +2145,26 @@ public:
     T high;
 
     bound_reader() = default;
-    //override relative handling from generic_typed_reader: check bounds for (original + relative) value
+
     bool do_relative( const JsonObject &jo, const std::string_view name, T &member ) const {
         if( jo.has_object( "relative" ) ) {
             JsonObject relative = jo.get_object( "relative" );
             relative.allow_omitted_members();
-            // This needs to happen here, otherwise we get unvisited members
+
             if( !relative.has_member( name ) ) {
                 return false;
             }
             JsonValue jv = relative.get_member( name );
             T adder = read( jv );
             member += adder;
-            //note: passes copy of parameter and then assigns the result to the parameter
+
             member = bound_check( low, high, jv, member );
             return true;
         }
         return false;
     }
 
-    //reads value as usual for type (i.e. without bound check)
+
     T read( const JsonValue &jv ) const {
         T read_member;
         if( !jv.read( read_member ) ) {
@@ -2178,7 +2178,7 @@ public:
     }
 };
 
-//bound_reader for primitive numbers
+
 template<typename T, std::enable_if_t<supports_primitives<T>::value >* = nullptr >
 class numeric_bound_reader : public bound_reader<T>
 {
@@ -2190,7 +2190,7 @@ public:
     };
 };
 
-//bound_reader for units:: namespace
+
 template<typename T, std::enable_if_t<supports_units<T>::value >* = nullptr >
 class units_bound_reader : public bound_reader<T>
 {
@@ -2201,7 +2201,7 @@ public:
     };
 };
 
-//bound_reader for time_duration, which is not a units::
+
 template <typename T = time_duration, std::enable_if_t<supports_time<T>::value >* = nullptr >
 class time_bound_reader : public bound_reader<T>
 {
@@ -2240,10 +2240,10 @@ struct weakpoints_reader : generic_typed_reader<weakpoints_reader> {
     bool do_delete( const JsonObject &jo, std::string_view name, weakpoints &member ) const;
 };
 
-/**
- * Only for external use in legacy code where migrating to `class translation`
- * is impractical. For new code load with `class translation` instead.
- */
+
+
+
+
 class text_style_check_reader : public generic_typed_reader<text_style_check_reader>
 {
     public:
@@ -2274,4 +2274,4 @@ class activity_level_reader : public generic_typed_reader<activity_level_reader>
         float get_next( const JsonValue &jv ) const;
 };
 
-#endif // CATA_SRC_GENERIC_FACTORY_H
+#endif

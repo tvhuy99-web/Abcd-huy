@@ -45,19 +45,19 @@ static const mtype_id pseudo_debug_mon( "pseudo_debug_mon" );
 static const vitamin_id vitamin_test_vitv( "test_vitv" );
 static const vitamin_id vitamin_test_vitx( "test_vitx" );
 
-// Test `effect` class
 
-// Effect initialization
-// ---------------------
-// Simple initialization sanity check, tests the constructor and a few accessors:
-//
-// effect::get_duration
-// effect::get_bp
-// effect::is_permanent
-// effect::get_intensity
-// effect::get_start_time
-//
-// Create an `effect` object with given parameters, and check they were initialized correctly.
+
+
+
+
+
+
+
+
+
+
+
+
 static void check_effect_init( const std::string &eff_name,
                                const time_duration &requested_dur, const time_duration &expected_dur,
                                const std::string &bp_name, const bool permanent,
@@ -80,11 +80,11 @@ static void check_effect_init( const std::string &eff_name,
 
 TEST_CASE( "effect_initialization_test", "[effect][init]" )
 {
-    // "debugged" effect is defined in data/mods/TEST_DATA/effects.json
-    // "debugged" effect has max_duration 1 hour, so 1 day gets clamped
+
+
     check_effect_init( "debugged", 1_days, 1_hours, "head", false, 5, 5, calendar::turn_zero );
     check_effect_init( "debugged", 1_minutes, 1_minutes, "head", false, 5, 5, calendar::turn_zero );
-    // "bite" effect has int_dur_factor, so intensity is calculated from duration regardless of requested intensity
+
     check_effect_init( "bite", 60_minutes, 60_minutes, "torso", true, 99, 2, calendar::turn );
     check_effect_init( "bite", 30_minutes, 30_minutes, "torso", true, 99, 1, calendar::turn );
     check_effect_init( "grabbed", 1_turns, 1_turns, "arm_r", false, 100, 100,
@@ -94,24 +94,24 @@ TEST_CASE( "effect_initialization_test", "[effect][init]" )
     check_effect_init( "grabbed", 1_turns, 1_turns, "arm_r", false, 10, 10, calendar::turn + 1_hours );
 }
 
-// Effect duration
-// ---------------
-// effect::get_max_duration
-// effect::get_duration
-// effect::set_duration
-// TODO:
-// effect::get_start_time
-// effect::mod_duration
-// effect::mult_duration
-//
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "effect_duration", "[effect][duration]" )
 {
-    // "debugged" and "intensified" effects come from JSON effect data (data/mods/TEST_DATA/effects.json)
+
     effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 1_turns,
                          bodypart_str_id::NULL_ID(),
                          false, 1, calendar::turn );
 
-    // Current duration from effect initialization
+
     REQUIRE( eff_debugged.get_duration() == 1_turns );
     REQUIRE( eff_debugged.get_max_duration() == 1_hours );
 
@@ -125,61 +125,61 @@ TEST_CASE( "effect_duration", "[effect][duration]" )
         CHECK( eff_debugged.get_duration() == 1_hours );
     }
 
-    // Example Effect (from EFFECTS_JSON.md):
-    //
-    // "id": "drunk",
-    // "name": [ "Tipsy", "Drunk", "Trashed", "Wasted" ],
-    // "max_intensity": 3,
-    // "apply_message": "You feel lightheaded.",
-    // "int_dur_factor": 1000,
-    //
-    // It has "int_dur_factor": 1000, meaning that its intensity will always be equal to its duration /
-    // 1000 rounded up, and it has "max_intensity": 3 meaning the highest its intensity will go is 3 at
-    // a duration of 3000 or higher.
+
+
+
+
+
+
+
+
+
+
+
     SECTION( "set_duration modifies intensity if effect is duration-based" ) {
         effect eff_intense( effect_source::empty(), &effect_intensified.obj(), 1_turns,
                             bodypart_str_id::NULL_ID(),
                             false, 1, calendar::turn );
         REQUIRE( eff_intense.get_int_dur_factor() == 1_minutes );
 
-        // At zero duration, intensity is minimum (1)
+
         eff_intense.set_duration( 0_seconds );
         CHECK( eff_intense.get_intensity() == 1 );
 
-        // At duration == int_dur_factor, intensity is 1
+
         eff_intense.set_duration( 1_minutes );
         CHECK( eff_intense.get_intensity() == 1 );
 
-        // At duration == 2 * int_dur_factor, intensity is 2
+
         eff_intense.set_duration( 2_minutes );
         CHECK( eff_intense.get_intensity() == 2 );
 
-        // At duration == (2m1s) * int_dur_factor, intensity is 3 (rounds up)
+
         eff_intense.set_duration( 2_minutes + 1_seconds );
         CHECK( eff_intense.get_intensity() == 3 );
 
-        // At duration == 3 * int_dur_factor, intensity is still 3
+
         eff_intense.set_duration( 3_minutes );
         CHECK( eff_intense.get_intensity() == 3 );
 
-        // At duration == 4 * int_dur_factor, intensity is still 3
+
         eff_intense.set_duration( 4_minutes );
         CHECK( eff_intense.get_intensity() == 3 );
     }
 }
 
-// Effect intensity
-// ----------------
-// effect::get_intensity
-// effect::get_max_intensity
-// effect::set_intensity
-// effect::mod_intensity
-//
-// TODO:
-// effect::get_dur_add_perc
-// effect::get_int_dur_factor
-// effect::get_int_add_val
-//
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "effect_intensity", "[effect][intensity]" )
 {
     effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 3_turns,
@@ -197,10 +197,10 @@ TEST_CASE( "effect_intensity", "[effect][intensity]" )
     }
 
     SECTION( "intensity cannot be set greater than maximum" ) {
-        // These don't go to 11
+
         eff_debugged.set_intensity( 11 );
         CHECK( eff_debugged.get_intensity() == 10 );
-        // or 9+2
+
         eff_debugged.set_intensity( 9 );
         eff_debugged.mod_intensity( 2 );
         CHECK( eff_debugged.get_intensity() == 10 );
@@ -234,10 +234,10 @@ TEST_CASE( "max_effective_intensity", "[effect][max][intensity]" )
     REQUIRE( eff_maxed.get_max_intensity() == 10 );
 
     SECTION( "scaling_mods apply up to max_effective_intensity" ) {
-        // No scaling_mod effects at baseline intensity (1)
+
         eff_maxed.set_intensity( 1 );
         CHECK( eff_maxed.get_mod( "INT" ) == 0 );
-        // Adds 1 INT per intensity greater than 1, up to max_effective_intensity
+
         eff_maxed.set_intensity( 2 );
         CHECK( eff_maxed.get_mod( "INT" ) == 1 );
         eff_maxed.set_intensity( 3 );
@@ -248,7 +248,7 @@ TEST_CASE( "max_effective_intensity", "[effect][max][intensity]" )
         CHECK( eff_maxed.get_mod( "INT" ) == 4 );
         eff_maxed.set_intensity( 6 );
         CHECK( eff_maxed.get_mod( "INT" ) == 5 );
-        // The scaling_mods should stop applying above max_effective_intensity (6)
+
         eff_maxed.set_intensity( 7 );
         CHECK( eff_maxed.get_mod( "INT" ) == 5 );
         eff_maxed.set_intensity( 8 );
@@ -260,10 +260,10 @@ TEST_CASE( "max_effective_intensity", "[effect][max][intensity]" )
     }
 }
 
-// Effect decay
-// ------------
-// effect::decay
-//
+
+
+
+
 TEST_CASE( "effect_decay", "[effect][decay]" )
 {
     std::vector<efftype_id> rem_ids;
@@ -273,31 +273,31 @@ TEST_CASE( "effect_decay", "[effect][decay]" )
         effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 2_turns,
                              bodypart_str_id::NULL_ID(),
                              false, 5, calendar::turn );
-        // Ensure it will last 2 turns, and is not permanent/paused
+
         REQUIRE( to_turns<int>( eff_debugged.get_duration() ) == 2 );
         REQUIRE_FALSE( eff_debugged.is_permanent() );
 
-        // First decay - 1 turn left
+
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_debugged.get_duration() ) == 1 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Second decay - 0 turns left
+
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_debugged.get_duration() ) == 0 );
-        // Effect still not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Third decay - 0 turns left
+
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_debugged.get_duration() ) == 0 );
-        // Effect is removed
+
         CHECK( rem_ids.size() == 1 );
         CHECK( rem_bps.size() == 1 );
-        // Effect ID and body part are pushed to the arrays
+
         CHECK( rem_ids.front() == eff_debugged.get_id() );
         CHECK( rem_bps.front() == bodypart_id( "bp_null" ) );
     }
@@ -306,11 +306,11 @@ TEST_CASE( "effect_decay", "[effect][decay]" )
         effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 2_turns,
                              bodypart_str_id::NULL_ID(),
                              true, 1, calendar::turn );
-        // Ensure it will last 2 turns, and is permanent/paused
+
         REQUIRE( to_turns<int>( eff_debugged.get_duration() ) == 2 );
         REQUIRE( eff_debugged.is_permanent() );
 
-        // Decay twice - should have no effect on duration
+
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_debugged.get_duration() ) == 2 );
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
@@ -321,59 +321,59 @@ TEST_CASE( "effect_decay", "[effect][decay]" )
         effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 1_hours,
                              bodypart_str_id::NULL_ID(),
                              false, 10, calendar::turn );
-        // Ensure it has a decay tick  of 2 turns and a decay step of -1, and int removal is allwed
-        // Also check max duration
+
+
         REQUIRE( eff_debugged.get_max_duration() == 1_hours );
         REQUIRE( eff_debugged.get_intensity() == 10 );
         REQUIRE( eff_debugged.get_int_decay_step() == -1 );
         REQUIRE( eff_debugged.get_int_decay_tick() == 2 );
         REQUIRE( eff_debugged.get_int_decay_remove() == true );
-        // Reset time
+
         calendar::turn = calendar::start_of_cataclysm;
 
-        // First decay - at max duration, no intensity decay
+
         CHECK( eff_debugged.get_duration() == eff_debugged.get_max_duration() );
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( eff_debugged.get_intensity() == 10 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Progress turns, checking for the appropriate intensity and no removal
 
-        // Turn 1, no intensity change
+
+
         calendar::turn += 1_turns;
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( eff_debugged.get_intensity() == 10 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Turn 2, intensity decays
+
         calendar::turn += 1_turns;
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( eff_debugged.get_intensity() == 9 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Turn 3, no intensity change
+
         calendar::turn += 1_turns;
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( eff_debugged.get_intensity() == 9 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Skip the intermediate levels, set intensity to 1 manually before proceeding
+
         eff_debugged.set_intensity( 1 );
         calendar::turn += 1_turns;
         eff_debugged.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( eff_debugged.get_intensity() == 0 );
-        // Effect is removed
+
         CHECK( rem_ids.size() == 1 );
         CHECK( rem_bps.size() == 1 );
-        // Effect ID and body part are pushed to the arrays
+
         REQUIRE( !rem_ids.empty() );
         CHECK( rem_ids.front() == eff_debugged.get_id() );
         REQUIRE( !rem_ids.empty() );
@@ -385,49 +385,49 @@ TEST_CASE( "effect_decay", "[effect][decay]" )
         effect eff_test_int_remove( effect_source::empty(), &effect_test_int_remove.obj(), 3_turns,
                                     bodypart_str_id::NULL_ID(),
                                     false, 3, calendar::turn );
-        // Ensure it has the -2 int decay step, is protected from removal and has a decay tick of 1
+
         REQUIRE( eff_test_int_remove.get_int_decay_step() == -2 );
         REQUIRE( eff_test_int_remove.get_int_decay_tick() == 1 );
         REQUIRE( eff_test_int_remove.get_int_decay_remove() == false );
-        // Ensure it will last 3 turns, and is not permanent/paused
+
         REQUIRE( to_turns<int>( eff_test_int_remove.get_duration() ) == 3 );
         REQUIRE_FALSE( eff_test_int_remove.is_permanent() );
 
-        // First decay - 2 turns left, intensity decay procs
+
         eff_test_int_remove.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_test_int_remove.get_duration() ) == 2 );
         CHECK( eff_test_int_remove.get_intensity() == 1 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Second decay - 1 turns left, intensity stays 1 (but wouldn't proc anyway)
+
         calendar::turn += 1_turns;
         eff_test_int_remove.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_test_int_remove.get_duration() ) == 1 );
         CHECK( eff_test_int_remove.get_intensity() == 1 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Third decay - 0 turn left, intensity decay procs but intensity is capped to 1
+
         calendar::turn += 1_turns;
         eff_test_int_remove.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_test_int_remove.get_duration() ) == 0 );
         CHECK( eff_test_int_remove.get_intensity() == 1 );
-        // Effect not removed
+
         CHECK( rem_ids.empty() );
         CHECK( rem_bps.empty() );
 
-        // Fourth decay - 0 turns left, intensity stays 1 (but wouldn't proc anyway)
+
         calendar::turn += 1_turns;
         eff_test_int_remove.decay( rem_ids, rem_bps, calendar::turn, false );
         CHECK( to_turns<int>( eff_test_int_remove.get_duration() ) == 0 );
         CHECK( eff_test_int_remove.get_intensity() == 1 );
-        // Effect is removed
+
         CHECK( rem_ids.size() == 1 );
         CHECK( rem_bps.size() == 1 );
-        // Effect ID and body part are pushed to the arrays
+
         REQUIRE( !rem_ids.empty() );
         CHECK( rem_ids.front() == eff_test_int_remove.get_id() );
         REQUIRE( !rem_ids.empty() );
@@ -436,17 +436,17 @@ TEST_CASE( "effect_decay", "[effect][decay]" )
     }
 }
 
-// Effect description
-// ------------------
-// effect::disp_short_desc
-//
+
+
+
+
 TEST_CASE( "display_short_description", "[effect][desc]" )
 {
     effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 1_turns, body_part_arm_r,
                          false, 1,
                          calendar::turn );
 
-    // TODO: Determine a case where `reduced` (true/false) makes a difference
+
 
     CHECK( eff_debugged.disp_short_desc( false ) == "You have been debugged!\n"
            "Everything is working perfectly now." );
@@ -455,33 +455,33 @@ TEST_CASE( "display_short_description", "[effect][desc]" )
            "Everything is working perfectly now." );
 }
 
-// effect::disp_name
-// effect::get_speed_name
-//
-// From EFFECTS_JSON.md:
-//
-// "name":
-// """If "max_intensity" > 1 and the number of entries in "name" >= "max_intensity" then it will
-// attempt to use the proper intensity name."""
-//
-// "speed_name":
-// """This is the value used in the list of modifiers on a player's speed. It will default to the
-// first entry in "name" if it doesn't exist, and if neither one exists or if "speed_name" is the
-// empty string (""), then it will not appear in the list of modifiers on the players speed (though
-// the effect might still have an effect)."""
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "effect_display_and_speed_name_may_vary_with_intensity",
            "[effect][intensity][disp_name][speed_name]" )
 {
     GIVEN( "effect with names for each intensity level" ) {
-        // "intensified" effect (data/mods/TEST_DATA/effects.json) has 3 names:
-        // "name": [ "Whoa", "Wut?", "Wow!" ]
-        // "max_intensity": 3
+
+
+
         effect eff_intense( effect_source::empty(), &effect_intensified.obj(), 1_turns,
                             bodypart_str_id::NULL_ID(), false, 1, calendar::turn );
         REQUIRE( eff_intense.get_max_intensity() == 3 );
 
-        // use_name_ints is true if there are names for each intensity
+
         const effect_type *etype_intense = eff_intense.get_effect_type();
         REQUIRE( etype_intense->use_name_ints() );
 
@@ -494,8 +494,8 @@ TEST_CASE( "effect_display_and_speed_name_may_vary_with_intensity",
             CHECK( eff_intense.disp_name() == "Wow!" );
         }
 
-        // For this effect, "speed_name" is not explicitly defined, so
-        // get_speed_name is the same as disp_name for each intensity.
+
+
         THEN( "get_speed_name has the name for the current intensity" ) {
             eff_intense.set_intensity( 1 );
             CHECK( eff_intense.get_speed_name() == "Whoa" );
@@ -507,9 +507,9 @@ TEST_CASE( "effect_display_and_speed_name_may_vary_with_intensity",
     }
 
     GIVEN( "effect with a single name and explicit speed_name" ) {
-        // "debugged" effect has only one name and a speed_name:
-        // "name": [ "Debugged" ]
-        // "speed_name": "Optimized"
+
+
+
         effect eff_debugged( effect_source::empty(), &effect_debugged.obj(), 1_minutes,
                              bodypart_str_id::NULL_ID(), false, 1, calendar::turn );
 
@@ -533,64 +533,64 @@ TEST_CASE( "effect_display_and_speed_name_may_vary_with_intensity",
     }
 }
 
-// Effect permanence
-// -----------------
-// effect::is_permanent
-// effect::pause_effect
-// effect::unpause_effect
-//
+
+
+
+
+
+
 TEST_CASE( "effect_permanence", "[effect][permanent]" )
 {
-    // Grab right arm, not permanent
+
     effect eff_grabbed( effect_source::empty(), &effect_grabbed.obj(), 1_turns, body_part_arm_r, false,
                         1,
                         calendar::turn );
     CHECK_FALSE( eff_grabbed.is_permanent() );
-    // Pause makes it permanent
+
     eff_grabbed.pause_effect();
     CHECK( eff_grabbed.is_permanent() );
-    // Pause again does nothing
+
     eff_grabbed.pause_effect();
     CHECK( eff_grabbed.is_permanent() );
-    // Unpause removes permanence
+
     eff_grabbed.unpause_effect();
     CHECK_FALSE( eff_grabbed.is_permanent() );
-    // Unpause again does nothing
+
     eff_grabbed.unpause_effect();
     CHECK_FALSE( eff_grabbed.is_permanent() );
 }
 
-// Effect body part
-// ----------------
-// effect::set_bp
-// effect::get_bp
-//
+
+
+
+
+
 TEST_CASE( "effect_body_part", "[effect][bodypart]" )
 {
-    // Grab right arm, initially
+
     effect eff_grabbed( effect_source::empty(), &effect_grabbed.obj(), 1_turns, body_part_arm_r, false,
                         1,
                         calendar::turn );
     CHECK( eff_grabbed.get_bp() == body_part_arm_r.id() );
-    // Switch to left arm
+
     eff_grabbed.set_bp( body_part_arm_l );
     CHECK( eff_grabbed.get_bp() == body_part_arm_l.id() );
     CHECK_FALSE( eff_grabbed.get_bp() == body_part_arm_r.id() );
-    // Back to right arm
+
     eff_grabbed.set_bp( body_part_arm_r );
     CHECK( eff_grabbed.get_bp() == body_part_arm_r.id() );
     CHECK_FALSE( eff_grabbed.get_bp() == body_part_arm_l.id() );
 }
 
-// Effect modifiers
-// ----------------
-// TODO:
-// effect::get_avg_mod
-// effect::get_min_val
-// effect::get_max_val
-// effect::get_sizing
-// effect::get_percentage
-//
+
+
+
+
+
+
+
+
+
 TEST_CASE( "effect_modifiers", "[effect][modifier]" )
 {
     SECTION( "base_mods apply equally for any intensity" ) {
@@ -607,14 +607,14 @@ TEST_CASE( "effect_modifiers", "[effect][modifier]" )
         CHECK( eff_debugged.get_amount( "HEAL_TORSO" ) == 150 );
     }
 
-    // Scaling mods - vary based on intensity
+
     SECTION( "scaling_mods vary based on intensity" ) {
         effect eff_intense( effect_source::empty(), &effect_intensified.obj(), 1_turns,
                             bodypart_str_id::NULL_ID(),
                             false, 1, calendar::turn );
         REQUIRE( eff_intense.get_max_intensity() == 3 );
 
-        // Subtracts 1 INT and 2 PER per intensity greater than 1
+
         eff_intense.set_intensity( 1 );
         CHECK( eff_intense.get_mod( "INT" ) == 0 );
         CHECK( eff_intense.get_mod( "PER" ) == 0 );
@@ -624,7 +624,7 @@ TEST_CASE( "effect_modifiers", "[effect][modifier]" )
         eff_intense.set_intensity( 3 );
         CHECK( eff_intense.get_mod( "INT" ) == -2 );
         CHECK( eff_intense.get_mod( "PER" ) == -4 );
-        // Max intensity is 3
+
         eff_intense.set_intensity( 4 );
         CHECK( eff_intense.get_mod( "INT" ) == -2 );
         CHECK( eff_intense.get_mod( "PER" ) == -4 );
@@ -670,7 +670,7 @@ TEST_CASE( "bleed_effect_attribution", "[effect][bleed][monster]" )
         WHEN( "when player cuts npc" ) {
 
             npc &test_npc = *spawn_npc( player.pos_bub().xy() + point::south_west, "thug" );
-            test_npc.clear_worn(); // Ensure the victim doesn't generate with too much protection.
+            test_npc.clear_worn();
             REQUIRE( test_npc.get_hp() == test_npc.get_hp_max() );
             THEN( "bleed effect gets attributed to player" ) {
                 test_npc.deal_damage( player.as_character(), body_part_torso, cut_damage );
@@ -685,7 +685,7 @@ TEST_CASE( "bleed_effect_attribution", "[effect][bleed][monster]" )
     GIVEN( "two npcs" ) {
         npc &npc_src = *spawn_npc( player.pos_bub().xy() + point::south, "bandit" );
         npc &npc_dst = *spawn_npc( player.pos_bub().xy() + point::south_east, "thug" );
-        npc_dst.clear_worn(); // Ensure the victim doesn't generate with too much protection.
+        npc_dst.clear_worn();
         WHEN( "when npc_src cuts npc_dst" ) {
             REQUIRE( npc_dst.get_hp() == npc_dst.get_hp_max() );
             THEN( "bleed effect gets attributed to npc_src" ) {
@@ -710,7 +710,7 @@ TEST_CASE( "Vitamin_Effects", "[effect][vitamins]" )
     subject.guts.empty();
     subject.clear_effects();
 
-    // Our effect influencing vitamins, and the two vitamins it influences
+
     const efftype_id vits = effect_test_vitamineff;
     const vitamin_id vitv = vitamin_test_vitv;
     const vitamin_id vitx = vitamin_test_vitx;
@@ -719,17 +719,17 @@ TEST_CASE( "Vitamin_Effects", "[effect][vitamins]" )
                            calendar::turn );
     subject.add_effect( vitamin_effect );
 
-    // A food rich in in vitamin x - we need 2 of them, for with/without the effect
+
     item food1( itype_test_vitfood );
     item food2( food1 );
 
-    // Make sure they have none of these vitamins at the start
-    // Except vitv, because the vitamin tick applies immediately when the effect is added
+
+
     subject.vitamin_set( vitv, 0 );
     REQUIRE( subject.vitamin_get( vitv ) == 0 );
     REQUIRE( subject.vitamin_get( vitx ) == 0 );
 
-    // Track 5 hours under the effect, and register the affected vitamins after
+
     subject.consume( food1 );
     for( time_duration turn = 0_turns; turn < 5_hours; turn += 1_turns ) {
         calendar::turn += 1_turns;
@@ -739,7 +739,7 @@ TEST_CASE( "Vitamin_Effects", "[effect][vitamins]" )
     const int posteffect_vitv = subject.vitamin_get( vitv );
     const int posteffect_vitx = subject.vitamin_get( vitx );
 
-    // Clear the avatar, and try 5 hours without the effect, under the same conditions
+
     clear_avatar();
     REQUIRE( subject.vitamin_get( vitv ) == 0 );
     REQUIRE( subject.vitamin_get( vitx ) == 0 );
@@ -752,11 +752,11 @@ TEST_CASE( "Vitamin_Effects", "[effect][vitamins]" )
     const int post_vitv = subject.vitamin_get( vitv );
     const int post_vitx = subject.vitamin_get( vitx );
 
-    // The effect roughly halves the absorbed vitamin x
+
     CHECK( posteffect_vitx == Approx( 22 ).margin( 3 ) );
     CHECK( post_vitx == 46 );
 
-    // Without the effect, no vitamin v is gained
+
     CHECK( posteffect_vitv == 120 );
     CHECK( post_vitv == 0 );
 }
@@ -767,13 +767,13 @@ static void test_deadliness( const effect &applied, const int expected_dead, con
     clear_map_without_vision();
     std::vector<monster *> mons;
 
-    // Place a hundred debug monsters, our subjects
+
     for( int i = 0; i < 10; ++i ) {
         for( int j = 0; j < 10; ++j ) {
             tripoint_bub_ms cursor( i + 20, j + 20, 0 );
 
             mons.push_back( g->place_critter_at( pseudo_debug_mon, cursor ) );
-            // make sure they're there!
+
             CHECK( creatures.creature_at<Creature>( cursor ) != nullptr );
         }
     }
@@ -782,7 +782,7 @@ static void test_deadliness( const effect &applied, const int expected_dead, con
         mon->add_effect( applied );
     }
 
-    // Let them suffer under it for 5 turns.
+
     for( int i = 0; i < 5; ++i ) {
         calendar::turn += 1_turns;
         for( monster *const mon : mons ) {
@@ -790,7 +790,7 @@ static void test_deadliness( const effect &applied, const int expected_dead, con
         }
     }
 
-    // See how many remain
+
     int alive = 0;
     for( int i = 0; i < 10; ++i ) {
         for( int j = 0; j < 10; ++j ) {
@@ -817,8 +817,8 @@ TEST_CASE( "Death_Effects", "[effect][death]" )
                          calendar::turn );
 
     test_deadliness( placebo_effect, 0, 0 );
-    // Need a pretty big margin here, it's fairly random
-    // Just make sure that not everone lives and not everyone dies
+
+
     test_deadliness( deadly_effect, 50, 25 );
     test_deadliness( fatal_effect, 100, 0 );
 }

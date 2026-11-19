@@ -21,20 +21,20 @@ class JsonOut;
 struct point {
     static constexpr int dimension = 2;
 
-    // Point representing the origin
+
     static const point zero;
-    // Point with minimum representable coordinates
+
     static const point min;
-    // Point with maximum representable coordinates
+
     static const point max;
-    // Sentinel value for an invalid point
-    // Equal to @ref min for backward compatibility.
+
+
     static const point invalid;
     inline bool is_invalid() const {
         return *this == invalid;
     }
 
-    // Points representing unit steps in cardinal directions
+
     static const point north;
     static const point north_east;
     static const point east;
@@ -89,8 +89,8 @@ struct point {
         return point( std::abs( x ), std::abs( y ) );
     }
 
-    // Dummy implementation of raw() to allow reasoning about
-    // generic points.
+
+
     constexpr point raw() const {
         return *this;
     }
@@ -103,11 +103,11 @@ struct point {
      * NOLINTNEXTLINE(cata-use-named-point-constants) */
     point rotate( int turns, const point &dim = { 1, 1 } ) const;
 
-    /**
-     * Rotate point clockwise @param turns times, 90 degrees per turn,
-     * around the center of a 24x24 rectangle (i.e. a map).
-     * Equivalent to hypothetical rotate(turns,{11.5,11.5})
-     */
+
+
+
+
+
     point rotate_in_map( int turns ) const;
 
     float distance( const point &rhs ) const;
@@ -136,9 +136,9 @@ struct point {
 inline int divide_round_to_minus_infinity( int n, int d )
 {
     // The NOLINT comments here are to suppress a clang-tidy warning that seems
-    // to be a clang-tidy bug.  I'd like to get rid of them if the bug is ever
-    // fixed.  The warning comes via a project_remain call in
-    // mission_companion.cpp.
+
+
+
     if( n >= 0 ) {
         return n / d; // NOLINT(clang-analyzer-core.DivideZero)
     }
@@ -158,7 +158,7 @@ inline point divide_xy_round_to_minus_infinity( const point &p, int d )
 
 inline point divide_xy_round_to_minus_infinity_non_negative( const point &p, int d )
 {
-    // This results in code only being generated for the case where x/y are positive.
+
     return point( static_cast<unsigned int>( p.x ) / d, static_cast<unsigned int>( p.y ) / d );
 }
 
@@ -166,21 +166,21 @@ inline point divide_xy_round_to_minus_infinity_non_negative( const point &p, int
 struct tripoint {
     static constexpr int dimension = 3;
 
-    // Tripoint representing the origin
+
     static const tripoint zero;
-    // Tripoint with minimum representable coordinates
+
     static const tripoint min;
-    // Tripoint with maximum representable coordinates
+
     static const tripoint max;
-    // Sentinel value for an invalid tripoint
-    // Equal to @ref min for backward compatibility.
+
+
     static const tripoint invalid;
     inline bool is_invalid() const {
         return *this == invalid;
     }
 
 
-    // Tripoints representing unit steps in cardinal directions
+
     static const tripoint north;
     static const tripoint north_east;
     static const tripoint east;
@@ -231,7 +231,7 @@ struct tripoint {
     constexpr tripoint operator/( const int rhs ) const {
         return tripoint( x / rhs, y / rhs, z / rhs );
     }
-    /*** some point operators and functions ***/
+
     constexpr tripoint operator+( const point &rhs ) const {
         return tripoint( x + rhs.x, y + rhs.y, z );
     }
@@ -266,8 +266,8 @@ struct tripoint {
         return point( x, y );
     }
 
-    // Dummy implementation of raw() to allow reasoning about
-    // abstract generic points.
+
+
     constexpr tripoint raw() const {
         return *this;
     }
@@ -279,8 +279,8 @@ struct tripoint {
         return tripoint( xy().rotate( turns, dim ), z );
     }
 
-    /**
-     * Rotates just the x,y component of the tripoint. @ref point::rotate_in_map() */
+
+
     tripoint rotate_in_map( int turns ) const {
         return tripoint( xy().rotate_in_map( turns ), z );
     }
@@ -362,10 +362,10 @@ struct sphere {
     explicit sphere( const tripoint &center, int radius ) : radius( radius ), center( center ) {}
 };
 
-/**
- * Following functions return points in a spiral pattern starting at center_x/center_y until it hits the radius. Clockwise fashion.
- * Credit to Tom J Nowell; http://stackoverflow.com/a/1555236/1269969
- */
+
+
+
+
 std::vector<tripoint> closest_points_first( const tripoint &center, int max_dist );
 std::vector<tripoint> closest_points_first( const tripoint &center, int min_dist, int max_dist );
 
@@ -381,22 +381,22 @@ std::optional<Point> find_point_closest_first( const Point &center, int max_dist
         PredicateFn &&fn );
 
 
-// Calculate the number of tiles in a square from min_dist to max_dist about an arbitrary centre.
+
 std::optional<int> rectangle_size( int min_dist, int max_dist );
 
-// Make point hashable so it can be used as an unordered_set or unordered_map key,
-// or a component of one.
+
+
 namespace std
 {
 template <>
 struct hash<point> {
     std::size_t operator()( const point &k ) const noexcept {
-        // We cast k.y to uint32_t because otherwise when promoting to uint64_t for binary `or` it
-        // will sign extend and turn the upper 32 bits into all 1s.
+
+
         uint64_t x = static_cast<uint64_t>( k.x ) << 32 | static_cast<uint32_t>( k.y );
 
-        // Found through https://nullprogram.com/blog/2018/07/31/
-        // Public domain source from https://xoshiro.di.unimi.it/splitmix64.c
+
+
         x ^= x >> 30;
         x *= 0xbf58476d1ce4e5b9U;
         x ^= x >> 27;
@@ -407,33 +407,33 @@ struct hash<point> {
         return x;
     }
 };
-} // namespace std
+}
 
-// Make tripoint hashable so it can be used as an unordered_set or unordered_map key,
-// or a component of one.
+
+
 namespace std
 {
 template <>
 struct hash<tripoint> {
     std::size_t operator()( const tripoint &k ) const noexcept {
-        // We cast k.y to uint32_t because otherwise when promoting to uint64_t for binary `or` it
-        // will sign extend and turn the upper 32 bits into all 1s.
+
+
         uint64_t x = static_cast<uint64_t>( k.x ) << 32 | static_cast<uint32_t>( k.y );
 
-        // Found through https://nullprogram.com/blog/2018/07/31/
-        // Public domain source from https://xoshiro.di.unimi.it/splitmix64.c
+
+
         x ^= x >> 30;
         x *= 0xbf58476d1ce4e5b9U;
         x ^= x >> 27;
 
-        // Sprinkle in z now.
+
         x ^= static_cast<uint64_t>( k.z );
         x *= 0x94d049bb133111ebU;
         x ^= x >> 31;
         return x;
     }
 };
-} // namespace std
+}
 
 inline constexpr const std::array<point, 4> four_adjacent_offsets{{
         point::north, point::east, point::south, point::west
@@ -472,20 +472,20 @@ inline constexpr const std::array<tripoint, 8> eight_horizontal_neighbors = { {
     }
 };
 
-/* Return points in a clockwise spiral from min_dist to max_dist, inclusive, ordered by
- * the closest points first. The distance is calculated using roguelike distances, so
- * movement in any direction only counts as 1.
- *
- * The predicate function is evaluated on each point. If the function returns true, the
- * point is returned. If the predicate function never returns true then std::nullopt is
- * returned once max_dist is reached.
- *
- * @param center The center of the spiral.
- * @param min_dist minimum distance to start the spiral from.
- * @param max_dist greatest distance from the centre that the spiral will go to.
- * @returns std::nullopt if min_dist > max_dist or predicate_fn evaluated to true for
- *      no points.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template <typename PredicateFn, typename Point>
 std::optional<Point> find_point_closest_first( const Point &center, int min_dist, int max_dist,
         PredicateFn &&predicate_fn )
@@ -524,4 +524,4 @@ std::optional<Point> find_point_closest_first( const Point &center, int min_dist
     return std::nullopt;
 }
 
-#endif // CATA_SRC_POINT_H
+#endif

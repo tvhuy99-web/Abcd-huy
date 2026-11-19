@@ -15,13 +15,13 @@
 #include "rng.h"
 #include "units.h"
 
-//  Frequency: If you don't use the whole 1000 points of frequency for each of
-//     the monsters, the remaining points will go to the defaultMonster.
-//     I.e. a group with 1 monster at frequency 500 will have 50% chance to spawn
-//     the default monster.
-//     In the same spirit, if you have a total point count of over 1000, the
-//     default monster will never get picked, and nor will the others past the
-//     monster that makes the point count go over 1000
+
+
+
+
+
+
+
 
 std::map<mongroup_id, MonsterGroup> MonsterGroupManager::monsterGroupMap;
 MonsterGroupManager::t_string_set MonsterGroupManager::monster_blacklist;
@@ -35,14 +35,14 @@ static const mtype_id mon_null( "mon_null" );
 
 static bool monster_whitelist_is_exclusive = false;
 
-/** @relates string_id */
+
 template<>
 bool string_id<MonsterGroup>::is_valid() const
 {
     return MonsterGroupManager::isValidMonsterGroup( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const MonsterGroup &string_id<MonsterGroup>::obj() const
 {
@@ -56,19 +56,19 @@ template<>
 std::string enum_to_string<mongroup::horde_behaviour>( mongroup::horde_behaviour data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case mongroup::horde_behaviour::none: return "none";
         case mongroup::horde_behaviour::city: return "city";
         case mongroup::horde_behaviour::roam: return "roam";
         case mongroup::horde_behaviour::nemesis: return "nemesis";
-        // *INDENT-ON*
+
         case mongroup::horde_behaviour::last:
             break;
     }
     cata_fatal( "Invalid mongroup::horde_behaviour" );
 }
 
-} // namespace io
+}
 
 bool mongroup::is_safe() const
 {
@@ -86,10 +86,10 @@ void mongroup::clear()
     monsters.clear();
 }
 
-/**
- * The average speed of the monsters in the group.
- * If monsters vector is empty, the average speed of the group is calculated.
- */
+
+
+
+
 float mongroup::avg_speed() const
 {
     float avg_speed = 0.0f;
@@ -98,7 +98,7 @@ float mongroup::avg_speed() const
         int remaining_frequency = g.freq_total;
         for( const MonsterGroupEntry &elem : g.monsters ) {
             if( elem.is_group() ) {
-                // TODO: recursively derive average speed from subgroups
+
                 avg_speed += elem.frequency * 100;
             } else {
                 avg_speed += elem.frequency * elem.mtype->speed;
@@ -122,13 +122,13 @@ static bool is_spawn_valid(
     const MonsterGroupEntry &entry, const time_point &sunset, const time_point &sunrise,
     const season_type season, const bool can_spawn_events )
 {
-    // If an event was specified for this entry, check if it matches the current holiday
+
     if( entry.event != holiday::none && ( !can_spawn_events ||
                                           entry.event != get_holiday_from_time() ) ) {
         return false;
     }
 
-    //Insure that the time is not before the spawn first appears or after it stops appearing
+
     if( calendar::turn < calendar::start_of_cataclysm + entry.starts ) {
         return false;
     }
@@ -139,9 +139,9 @@ static bool is_spawn_valid(
     std::vector<std::pair<time_point, time_point> > valid_times_of_day;
     bool season_limited = false;
     bool season_matched = false;
-    //Collect the various spawn conditions, and then insure they are met appropriately
+
     for( const std::string &elem : entry.conditions ) {
-        //Collect valid time of day ranges
+
         if( elem == "DAY" || elem == "NIGHT" || elem == "DUSK" || elem == "DAWN" ) {
             if( elem == "DAY" ) {
                 valid_times_of_day.emplace_back( sunrise, sunset );
@@ -154,7 +154,7 @@ static bool is_spawn_valid(
             }
         }
 
-        //If we have any seasons listed, we know to limit by season, and if any season matches this season, we are good to spawn
+
         if( elem == "SUMMER" || elem == "WINTER" || elem == "SPRING" || elem == "AUTUMN" ) {
             season_limited = true;
             if( ( season == SUMMER && elem == "SUMMER" ) ||
@@ -166,13 +166,13 @@ static bool is_spawn_valid(
         }
     }
 
-    //Make sure the current time of day is within one of the valid time ranges for this spawn
+
     bool is_valid_time_of_day = false;
     if( valid_times_of_day.empty() ) {
-        //Then it can spawn whenever, since no times were defined
+
         is_valid_time_of_day = true;
     } else {
-        //Otherwise, it's valid if it matches any of the times of day
+
         for( auto &elem : valid_times_of_day ) {
             if( calendar::turn > elem.first && calendar::turn < elem.second ) {
                 is_valid_time_of_day = true;
@@ -183,7 +183,7 @@ static bool is_spawn_valid(
         return false;
     }
 
-    //If we are limited by season, make sure we matched a season
+
     if( season_limited && !season_matched ) {
         return false;
     }
@@ -191,32 +191,32 @@ static bool is_spawn_valid(
     return true;
 }
 
-// Quantity is adjusted directly as a side effect of this function
-// is_recursive is only true when called recursively from this function
+
+
 std::vector<MonsterGroupResult> MonsterGroupManager::GetResultFromGroup(
     const mongroup_id &group_name, int *quantity, bool *mon_found, bool is_recursive,
     bool *returned_default, bool use_pack_size )
 {
     const MonsterGroup &group = GetMonsterGroup( group_name );
     int spawn_chance = rng( 1, group.event_adjusted_freq_total() );
-    //Our spawn details specify, by default, a single instance of the default monster
+
     std::vector<MonsterGroupResult> spawn_details;
 
     bool monster_found = false;
-    // Loop invariant values
+
     const time_point sunset = ::sunset( calendar::turn );
     const time_point sunrise = ::sunrise( calendar::turn );
     const season_type season = season_of_year( calendar::turn );
     std::string opt = get_option<std::string>( "EVENT_SPAWNS" );
     const bool can_spawn_events = opt == "monsters" || opt == "both";
 
-    // Step through spawn definitions from the monster group until one is found or
+
     for( const MonsterGroupEntry &entry : group.monsters ) {
         if( !is_spawn_valid( entry, sunset, sunrise, season, can_spawn_events ) ) {
             continue;
         }
 
-        // Only keep if the monsters frequency is at least the spawn_chance
+
         if( entry.frequency < spawn_chance ) {
             spawn_chance -= entry.frequency;
             continue;
@@ -226,7 +226,7 @@ std::vector<MonsterGroupResult> MonsterGroupManager::GetResultFromGroup(
             entry.pack_maximum > 1 ? rng( entry.pack_minimum, entry.pack_maximum ) : 1;
 
         if( entry.is_group() ) {
-            // Check for monsters within subgroup
+
             for( int i = 0; i < pack_size; i++ ) {
                 std::vector<MonsterGroupResult> tmp_grp =
                     GetResultFromGroup( entry.group, quantity, &monster_found, true );
@@ -236,16 +236,16 @@ std::vector<MonsterGroupResult> MonsterGroupManager::GetResultFromGroup(
             if( use_pack_size ) {
                 for( int i = 0; i < pack_size; i++ ) {
                     spawn_details.emplace_back( entry.mtype, pack_size, entry.data );
-                    // And if a quantity pointer with remaining value was passed, will modify the external
-                    // value as a side effect.  We will reduce it by the spawn rule's cost multiplier.
+
+
                     if( quantity ) {
                         *quantity -= std::max( 1, entry.cost_multiplier * pack_size );
                     }
                 }
             } else {
                 spawn_details.emplace_back( entry.mtype, pack_size, entry.data );
-                // And if a quantity pointer with remaining value was passed, will modify the external
-                // value as a side effect.  We will reduce it by the spawn rule's cost multiplier.
+
+
                 if( quantity ) {
                     *quantity -= std::max( 1, entry.cost_multiplier * pack_size );
                 }
@@ -264,7 +264,7 @@ std::vector<MonsterGroupResult> MonsterGroupManager::GetResultFromGroup(
         if( returned_default ) {
             ( *returned_default ) = true;
         }
-        // Force quantity to decrement regardless of whether we found a monster.
+
         if( quantity ) {
             ( *quantity )--;
         }
@@ -351,8 +351,8 @@ const MonsterGroup &MonsterGroupManager::GetMonsterGroup( const mongroup_id &gro
     const auto it = monsterGroupMap.find( group );
     if( it == monsterGroupMap.end() ) {
         debugmsg( "Unable to get the group '%s'", group.c_str() );
-        // Initialize the group with a null-monster, it's ignored while spawning,
-        // but it prevents further messages about invalid monster type id
+
+
         auto &g = monsterGroupMap[group];
         g.id = group;
         g.defaultMonster = mtype_id::NULL_ID();
@@ -409,7 +409,7 @@ bool MonsterGroupManager::monster_is_blacklisted( const mtype_id &m )
     if( monster_blacklist.count( m.str() ) > 0 ) {
         return true;
     }
-    // Return true if the whitelist mode is exclusive and any whitelist is populated.
+
     return monster_whitelist_is_exclusive &&
            ( !monster_whitelist.empty() || !monster_categories_whitelist.empty() ||
              !monster_species_whitelist.empty() );
@@ -427,7 +427,7 @@ void MonsterGroupManager::FinalizeMonsterGroups()
             debugmsg( "monster on blacklist %s does not exist", mtid.c_str() );
         }
     }
-    // Further, remove all blacklisted monsters
+
     for( auto &elem : monsterGroupMap ) {
         MonsterGroup &mg = elem.second;
         for( FreqDef::iterator c = mg.monsters.begin(); c != mg.monsters.end(); ) {
@@ -458,7 +458,7 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
 
     g.id = mongroup_id( jo.get_string( "id" ) );
 
-    bool extending = false;  //If already a group with that name, add to it instead of overwriting it
+    bool extending = false;
     if( monsterGroupMap.count( g.id ) != 0 && !jo.get_bool( "override", false ) ) {
         g = monsterGroupMap[g.id];
         extending = true;
@@ -539,7 +539,7 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
             g.event_freq[event] += freq;
             g.monsters.push_back( new_mon_group );
         }
-        // If no default monster specified, use the highest frequency spawn as the default
+
         if( g.defaultMonster == mon_null && !explicit_def_null ) {
             g.defaultMonster = max_freq.first;
         }
@@ -553,7 +553,7 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
     g.is_safe = jo.get_bool( "is_safe", false );
 
     g.freq_total = jo.get_int( "freq_total", ( extending ? g.freq_total : 0 ) + freq_total );
-    if( jo.get_bool( "auto_total", false ) ) { //Fit the max size to the sum of all freqs
+    if( jo.get_bool( "auto_total", false ) ) {
         int total = 0;
         for( MonsterGroupEntry &mon : g.monsters ) {
             total += mon.frequency;

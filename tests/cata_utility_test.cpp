@@ -15,7 +15,7 @@
 #include "units.h"
 #include "units_utility.h"
 
-// tests both variants of string_starts_with
+
 template <std::size_t N>
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static bool test_string_starts_with( const std::string &s1, const char( &s2 )[N] )
@@ -27,7 +27,7 @@ static bool test_string_starts_with( const std::string &s1, const char( &s2 )[N]
     return r1;
 }
 
-// tests both variants of string_ends_with
+
 template <std::size_t N>
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static bool test_string_ends_with( const std::string &s1, const char( &s2 )[N] )
@@ -220,14 +220,14 @@ TEST_CASE( "equal_ignoring_elements", "[utility][nogame]" )
 
         CAPTURE( set1, set2, ignored_els );
 
-        // generate set symmetric difference into v
+
         std::vector<int> v( set1.size() + set2.size() );
         auto it = std::set_symmetric_difference( set1.begin(), set1.end(), set2.begin(), set2.end(),
                   v.begin() );
         v.resize( it - v.begin() );
 
-        // equal_ignoring_elements is the same as checking if symmetric difference of tho sets
-        // contains only "ignored" elements
+
+
         bool equal = std::all_of( v.begin(), v.end(), [&]( int i ) {
             return ignored_els.count( i );
         } );
@@ -261,20 +261,20 @@ TEST_CASE( "map_without_keys", "[map][filter][nogame]" )
     };
     std::vector<std::string> dirt = { "dirt" };
 
-    // Empty maps compare equal to maps with all keys filtered out
+
     CHECK( map_without_keys( map_empty, dirt ) == map_without_keys( map_dirt_1, dirt ) );
     CHECK( map_without_keys( map_empty, dirt ) == map_without_keys( map_dirt_2, dirt ) );
 
-    // Maps are equal when all differing keys are filtered out
-    // (same name, dirt filtered out)
+
+
     CHECK( map_without_keys( map_name_a, dirt ) == map_without_keys( map_name_a_dirt_1, dirt ) );
     CHECK( map_without_keys( map_name_a, dirt ) == map_without_keys( map_name_a_dirt_2, dirt ) );
 
-    // Maps are different if some different keys remain after filtering
-    // (different name, no dirt to filter out)
+
+
     CHECK_FALSE( map_without_keys( map_name_a, dirt ) == map_without_keys( map_name_b, dirt ) );
     CHECK_FALSE( map_without_keys( map_name_b, dirt ) == map_without_keys( map_name_a, dirt ) );
-    // (different name, dirt filtered out)
+
     CHECK_FALSE( map_without_keys( map_dirt_1, dirt ) == map_without_keys( map_name_a_dirt_1, dirt ) );
     CHECK_FALSE( map_without_keys( map_dirt_2, dirt ) == map_without_keys( map_name_a_dirt_2, dirt ) );
 }
@@ -304,24 +304,24 @@ TEST_CASE( "map_equal_ignoring_keys", "[map][filter][nogame]" )
     };
     std::set<std::string> dirt = { "dirt" };
 
-    // Empty maps compare equal to maps with all keys filtered out
+
     CHECK( map_equal_ignoring_keys( map_empty, map_dirt_1, dirt ) );
     CHECK( map_equal_ignoring_keys( map_empty, map_dirt_2, dirt ) );
 
-    // Maps are equal when all differing keys are filtered out
-    // (same name, dirt filtered out)
+
+
     CHECK( map_equal_ignoring_keys( map_name_a, map_name_a_dirt_1, dirt ) );
     CHECK( map_equal_ignoring_keys( map_name_a, map_name_a_dirt_2, dirt ) );
 
-    // Maps are different if some different keys remain after filtering
-    // (different name, no dirt to filter out)
+
+
     CHECK_FALSE( map_equal_ignoring_keys( map_name_a, map_name_b, dirt ) );
     CHECK_FALSE( map_equal_ignoring_keys( map_name_b, map_name_a, dirt ) );
-    // (different name, dirt filtered out)
+
     CHECK_FALSE( map_equal_ignoring_keys( map_dirt_1, map_name_a_dirt_1, dirt ) );
     CHECK_FALSE( map_equal_ignoring_keys( map_dirt_2, map_name_a_dirt_2, dirt ) );
 
-    // Maps with different ignored keys are equal after filtering them out.
+
     std::map<std::string, std::string> rock_and_beer = {
         { "rock", "granite" },
         { "beer", "stout" }
@@ -341,7 +341,7 @@ TEST_CASE( "map_equal_ignoring_keys", "[map][filter][nogame]" )
     std::set<std::string> rock_and_stone = { "rock", "stone" };
     CHECK( map_equal_ignoring_keys( rock_and_beer, beer_and_stone, rock_and_stone ) );
 
-    // Tests still work when one map has more keys than the other, as long as all are ignored.
+
     CHECK( map_equal_ignoring_keys( major_lager, lagers_are_best, rock_and_stone ) );
     CHECK( map_equal_ignoring_keys( lagers_are_best, major_lager, rock_and_stone ) );
 

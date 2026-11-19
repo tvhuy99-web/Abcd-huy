@@ -286,26 +286,26 @@ std::string TranslateStringLiteralCheck::extractText( const std::string_view str
 bool TranslateStringLiteralCheck::isUnit( const std::string &str )
 {
     static const std::unordered_set<std::string> units = {
-        // mass
+
         "mg",
         "g",
         "kg",
-        // volume
+
         "ml",
         "L",
-        // energy
+
         "mJ",
         "J",
         "kJ",
-        // radiation
+
         "rad",
-        // time
+
         "ms",
         "s",
         "m",
         "h",
         "d",
-        // length
+
         "cm",
         "m"
     };
@@ -354,4 +354,4 @@ void TranslateStringLiteralCheck::check( const MatchFinder::MatchResult &Result 
     }
 }
 
-} // namespace clang::tidy::cata
+}

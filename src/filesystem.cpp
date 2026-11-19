@@ -93,9 +93,9 @@ bool assure_dir_exist( const std::filesystem::path &path )
             }
             created = std::filesystem::create_directories( p, ec );
             if( !created ) {
-                // TEMPORARY until we drop VS2019 support
-                // VS2019 std::filesystem doesn't handle trailing slashes well in this
-                // situation.  We think this is a bug.  Work around it by checking again
+
+
+
                 created = std::filesystem::exists( p, ec );
             }
         }
@@ -137,7 +137,7 @@ std::string as_norm_dir( const std::string &path )
     std::filesystem::path norm = dir.lexically_normal();
     std::string ret = norm.generic_u8string();
     if( "." == ret ) {
-        ret = "./"; // TODO Change the many places that use strings instead of paths
+        ret = "./";
     }
     return ret;
 }
@@ -210,7 +210,7 @@ bool remove_directory( const std::filesystem::path &path )
 const char *cata_files::eol()
 {
 #if defined(_WIN32)
-    // carriage return is necessary here
+
     // NOLINTNEXTLINE(cata-text-style, modernize-avoid-c-arrays)
     static const char local_eol[] = "\r\n";
 #else
@@ -236,9 +236,9 @@ std::string read_entire_file( const std::filesystem::path &path )
 
 namespace
 {
-//--------------------------------------------------------------------------------------------------
-// For non-empty path, call function for each file at path.
-//--------------------------------------------------------------------------------------------------
+
+
+
 template <typename Function>
 void for_each_dir_entry( const std::filesystem::path &path, Function &&function )
 {
@@ -259,13 +259,13 @@ void for_each_dir_entry( const std::filesystem::path &path, Function &&function 
     }
 }
 
-//--------------------------------------------------------------------------------------------------
-// Returns true if entry is a directory, false otherwise.
-//--------------------------------------------------------------------------------------------------
+
+
+
 bool is_directory( const std::filesystem::directory_entry &entry,
                    const std::string &full_path = "" )
 {
-    // We do an extra dance here because directory_entry might not have a cached valid stat result.
+
     std::error_code ec;
     bool result = entry.is_directory( ec );
 
@@ -279,10 +279,10 @@ bool is_directory( const std::filesystem::directory_entry &entry,
     return result;
 }
 
-//--------------------------------------------------------------------------------------------------
-// If at_end is true, returns whether entry's name ends in match.
-// Otherwise, returns whether entry's name contains match.
-//--------------------------------------------------------------------------------------------------
+
+
+
+
 bool name_contains( const std::filesystem::directory_entry &entry, const std::string &match,
                     const bool at_end,
                     const bool match_path )
@@ -304,17 +304,17 @@ bool name_contains( const std::filesystem::directory_entry &entry, const std::st
     return strstr( entry_name.c_str() + offset, match.c_str() ) != nullptr;
 }
 
-//--------------------------------------------------------------------------------------------------
-// Return every file at root_path matching predicate.
-//
-// If root_path is empty, search the current working directory.
-// If recursive_search is true, search breadth-first into the directory hierarchy.
-//
-// Results are ordered depth-first with directories searched in lexically order. Furthermore,
-// regular files at each level are also ordered lexically by file name.
-//
-// Files ending in ~ are excluded.
-//--------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 template <typename Predicate>
 std::vector<std::string> find_file_if_bfs( const std::string &root_path,
         const bool recursive_search,
@@ -330,22 +330,22 @@ std::vector<std::string> find_file_if_bfs( const std::string &root_path,
         const std::ptrdiff_t n_dirs    = static_cast<std::ptrdiff_t>( directories.size() );
         const std::ptrdiff_t n_results = static_cast<std::ptrdiff_t>( results.size() );
 
-        // We could use std::filesystem::recursive_directory_iterator maybe
+
         for_each_dir_entry( path, [&]( const std::filesystem::directory_entry & entry ) {
             const std::string full_path = entry.path().generic_u8string();
 
-            // don't add files ending in '~'.
+
             if( full_path.back() == '~' ) {
                 return;
             }
 
-            // add sub directories to recursive_search if requested
+
             const bool is_dir = is_directory( entry, full_path );
             if( recursive_search && is_dir ) {
                 directories.emplace_back( full_path );
             }
 
-            // check the file
+
             if( !predicate( entry, is_dir ) ) {
                 return;
             }
@@ -353,8 +353,8 @@ std::vector<std::string> find_file_if_bfs( const std::string &root_path,
             results.emplace_back( full_path );
         } );
 
-        // Keep files and directories to recurse ordered consistently
-        // by sorting from the old end to the new end.
+
+
         // NOLINTNEXTLINE(cata-use-localized-sorting)
         std::sort( std::begin( directories ) + n_dirs,    std::end( directories ) );
         // NOLINTNEXTLINE(cata-use-localized-sorting)
@@ -380,23 +380,23 @@ std::vector<cata_path> find_file_if_bfs( const cata_path &root_path,
         const std::ptrdiff_t n_dirs = static_cast<std::ptrdiff_t>( directories.size() );
         const std::ptrdiff_t n_results = static_cast<std::ptrdiff_t>( results.size() );
 
-        // We could use std::filesystem::recursive_directory_iterator maybe
+
         for_each_dir_entry( path, [&]( const std::filesystem::directory_entry & entry ) {
             const std::filesystem::path &full_path = entry.path();
 
-            // don't add files ending in '~'.
+
             std::filesystem::path filename = full_path.filename();
             if( !filename.empty() && filename.generic_u8string().back() == '~' ) {
                 return;
             }
 
-            // add sub directories to recursive_search if requested
+
             const bool is_dir = is_directory( entry );
             if( recursive_search && is_dir ) {
                 directories.emplace_back( full_path );
             }
 
-            // check the file
+
             if( !predicate( entry, is_dir ) ) {
                 return;
             }
@@ -404,8 +404,8 @@ std::vector<cata_path> find_file_if_bfs( const cata_path &root_path,
             results.emplace_back( full_path );
         } );
 
-        // Keep files and directories to recurse ordered consistently
-        // by sorting from the old end to the new end.
+
+
         // NOLINTNEXTLINE(cata-use-localized-sorting)
         std::sort( std::begin( directories ) + n_dirs, std::end( directories ) );
         // NOLINTNEXTLINE(cata-use-localized-sorting)
@@ -415,16 +415,16 @@ std::vector<cata_path> find_file_if_bfs( const cata_path &root_path,
     std::vector<cata_path> cps;
     cps.reserve( results.size() );
     for( const std::filesystem::path &result_path : results ) {
-        // Re-relativize paths against the root.
+
         cps.emplace_back( norm_root_path.get_logical_root(),
                           result_path.lexically_relative( norm_root_path.get_logical_root_path() ) );
     }
     return cps;
 }
 
-} //anonymous namespace
+}
 
-//--------------------------------------------------------------------------------------------------
+
 template<typename P>
 std::vector<P> get_files_from_path( const std::string &pattern, const P &root_path,
                                     const bool recursive_search, const bool match_extension )
@@ -458,13 +458,13 @@ template std::vector<cata_path> get_files_from_path_with_path_exclusion(
     const std::string &pattern, const std::string &pattern_clash, const cata_path &root_path,
     bool recursive_search, bool match_extension );
 
-/**
- *  Find directories which containing pattern.
- *  @param pattern Search pattern.
- *  @param root_path Search root.
- *  @param recursive_search Be recurse or not.
- *  @return vector or directories without pattern filename at end.
- */
+
+
+
+
+
+
+
 template<typename P>
 std::vector<P> get_directories_with( const std::string &pattern, const P &root_path,
                                      const bool recursive_search )
@@ -476,13 +476,13 @@ template std::vector<std::string> get_directories_with( const std::string &patte
 template std::vector<cata_path> get_directories_with( const std::string &pattern,
         const cata_path &root_path, const bool recursive_search );
 
-/**
- *  Find directories which containing pattern.
- *  @param patterns Search patterns.
- *  @param root_path Search root.
- *  @param recursive_search Be recurse or not.
- *  @return vector or directories without pattern filename at end.
- */
+
+
+
+
+
+
+
 template<typename P>
 std::vector<P> get_directories_with( const std::vector<std::string> &patterns, const P &root_path,
                                      const bool recursive_search )
@@ -502,7 +502,7 @@ std::vector<P> get_directories_with( const std::vector<std::string> &patterns, c
         } );
     } );
 
-    //chop off the file names
+
     if constexpr( std::is_same_v<P, cata_path> ) {
         for( cata_path &file : files ) {
             file = cata_path{ file.get_logical_root(), file.get_relative_path().parent_path() };
@@ -513,7 +513,7 @@ std::vector<P> get_directories_with( const std::vector<std::string> &patterns, c
         }
     }
 
-    //remove resulting duplicates
+
     files.erase( std::unique( std::begin( files ), std::end( files ) ), std::end( files ) );
 
     return files;
@@ -523,12 +523,12 @@ template std::vector<std::string> get_directories_with( const std::vector<std::s
 template std::vector<cata_path> get_directories_with( const std::vector<std::string> &patterns,
         const cata_path &root_path, const bool recursive_search );
 
-/**
- * Finds all directories within given path
- * @param root_path Search root.
- * @param recursive_search Be recurse or not.
- * @return vector or directories without pattern filename at end.
- */
+
+
+
+
+
+
 template <typename P>
 std::vector<P> get_directories( const P &root_path, const bool recursive_search )
 {
@@ -575,7 +575,7 @@ std::string ensure_valid_file_name( const std::string &file_name )
 {
     const char replacement_char = ' ';
 
-    // do any replacement in the file name, if needed.
+
     std::string new_file_name = file_name;
     std::transform( new_file_name.begin(), new_file_name.end(),
     new_file_name.begin(), [&]( const char c ) {
@@ -591,10 +591,10 @@ std::string ensure_valid_file_name( const std::string &file_name )
 #if defined(_WIN32)
 bool is_lexically_valid( const std::filesystem::path &path )
 {
-    // Windows has strict rules for file naming
+
     std::filesystem::path rel = path.relative_path();
-    // "Do not end a file or directory name with a space or a period."
-    // https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions
+
+
     for( auto &it : rel ) {
         std::string item = it.generic_u8string();
         if( item == "." || item == ".." ) {

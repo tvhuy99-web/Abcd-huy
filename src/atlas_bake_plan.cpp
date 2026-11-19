@@ -16,7 +16,7 @@ atlas_bake_plan compute_atlas_bake_plan( const bool shader_variants_available,
     plan.shadow = false;
     plan.night = false;
     plan.overexposed = false;
-    // color_pixel_custom has no memory shader, so it keeps the bake
+
     plan.memory = !preset.has_value();
     plan.silhouette = !tint_shader_available;
     return plan;
@@ -39,8 +39,8 @@ bundle_state classify_bundle( const tileset *ts )
     if( !ts ) {
         return bundle_state::none;
     }
-    // precheck returns before loader assigns id or uploads any atlas;
-    // default-constructed tileset looks the same
+
+
     if( ts->get_tileset_id().empty() || ts->get_tile( 0 ) == nullptr ) {
         return bundle_state::metadata_only;
     }
@@ -54,8 +54,8 @@ bool bundle_needs_repair( const atlas_bake_plan &plan,
                           const uint64_t applied_fingerprint,
                           const bool shader_variants_available )
 {
-    // Every atlas texture carries the fingerprint's scale mode, so a changed
-    // fingerprint makes the whole bundle stale.
+
+
     if( fingerprint_at_upload != applied_fingerprint ) {
         return true;
     }
@@ -78,4 +78,4 @@ silhouette_miss classify_silhouette_miss( const atlas_bake_plan &plan,
     return silhouette_miss::invalid;
 }
 
-#endif // TILES
+#endif

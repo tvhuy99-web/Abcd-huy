@@ -165,7 +165,7 @@ void run_test_case( Character &u )
 
     u.wear_item( item( itype_test_backpack ), false, false );
     u.wear_item( item( itype_wearable_test_lamp ), false, true );
-    //TODO: this test assumes that tools are on-person, but it should also test without tools on-person
+
     u.i_add( item( itype_test_multitool ) );
     u.i_add( item( itype_hammer ) );
     u.i_add( item( itype_bow_saw ) );
@@ -216,7 +216,7 @@ void run_test_case( Character &u )
         zone_manager::get_manager().clear();
         construction const build =
             setup_testcase( u, "test_constr_remove_gravel", tri_gravel, tripoint_bub_ms() );
-        // first check that we don't get stuck in a loop
+
         here.ter_set( tri_gravel, ter_t_dirt );
         run_activities( u, 1 );
         REQUIRE( here.partial_con_at( tri_gravel ) == nullptr );
@@ -331,7 +331,7 @@ void run_test_case( Character &u )
     }
 }
 
-} // namespace
+}
 
 TEST_CASE( "act_multiple_construction", "[zones][activities][construction]" )
 {

@@ -42,9 +42,9 @@ effect_source::effect_source( const Character *character )
 effect_source::effect_source( const Creature *creature )
 {
     if( creature == nullptr ) {
-        // TODO: most unassigned effects will fall here with nullptrs
-        // once everything is assigned this warning can be enabled
-        // debugmsg( "effect_source constructor called with nullptr creature" );
+
+
+
         return;
     }
 
@@ -88,7 +88,7 @@ std::optional<mfaction_id> effect_source::get_mfaction_id() const
 
 Creature *effect_source::resolve_creature() const
 {
-    // if effect has source try figuring out who to credit
+
     const std::optional<character_id> eff_source = get_character_id();
     Creature *source_creature;
     if( !eff_source ) {

@@ -57,4 +57,4 @@ const char *TranslationManager::TranslatePluralWithContext( const char *context,
     return impl->TranslatePluralWithContext( context, singular, plural, n );
 }
 
-#endif // defined(LOCALIZE)
+#endif

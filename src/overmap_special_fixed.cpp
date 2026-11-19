@@ -23,8 +23,8 @@ void fixed_overmap_special_data::finalize(
     const std::string &,
     const cata::flat_set<string_id<overmap_location>> &default_locations )
 {
-    // If the special has default locations, then add those to the locations
-    // of each of the terrains IF the terrain has no locations already.
+
+
     for( overmap_special_terrain &t : terrains ) {
         if( t.locations.empty() ) {
             t.locations = default_locations;
@@ -34,21 +34,21 @@ void fixed_overmap_special_data::finalize(
     for( overmap_special_connection &elem : connections ) {
         const overmap_special_terrain &oter = get_terrain_at( elem.p );
         if( !elem.terrain && oter.terrain ) {
-            elem.terrain = oter.terrain->get_type_id();    // Defaulted.
+            elem.terrain = oter.terrain->get_type_id();
         }
 
-        // If the connection type hasn't been specified, we'll guess for them.
-        // The guess isn't always right (hence guessing) in the case where
-        // multiple connections types can be made on a single location type,
-        // e.g. both roads and forest trails can be placed on "forest" locations.
+
+
+
+
         if( elem.connection.is_null() ) {
             elem.connection = overmap_connections::guess_for( elem.terrain );
         }
 
-        // If the connection has a "from" hint specified, then figure out what the
-        // resulting direction from the hinted location to the connection point is,
-        // and use that as the initial direction to be passed off to the connection
-        // building code.
+
+
+
+
         if( elem.from ) {
             const direction calculated_direction = direction_from( *elem.from, elem.p );
             switch( calculated_direction ) {
@@ -65,11 +65,11 @@ void fixed_overmap_special_data::finalize(
                     elem.initial_dir = cube_direction::west;
                     break;
                 default:
-                    // The only supported directions are north/east/south/west
-                    // as those are the four directions that overmap connections
-                    // can be made in. If the direction we figured out wasn't
-                    // one of those, just set this as invalid. We'll provide
-                    // a warning to the user/developer in overmap_special::check().
+
+
+
+
+
                     elem.initial_dir = cube_direction::last;
                     break;
             }
@@ -104,10 +104,10 @@ void fixed_overmap_special_data::check( const std::string &context ) const
 
         if( !oter.is_valid() ) {
             if( !invalid_terrains.count( oter ) ) {
-                // Not a huge fan of the direct id manipulation here, but I don't know
-                // how else to do this
-                // Because we try to access all the terrains in the finalization,
-                // this is a little redundant, but whatever
+
+
+
+
                 oter_str_id invalid( oter.str() + "_north" );
                 if( invalid.is_valid() ) {
                     debugmsg( "In %s, terrain \"%s\" rotates, but is specified without a "
@@ -166,10 +166,10 @@ void fixed_overmap_special_data::check( const std::string &context ) const
         }
 
         if( elem.from ) {
-            // The only supported directions are north/east/south/west
-            // as those are the four directions that overmap connections
-            // can be made in. If the direction we figured out wasn't
-            // one of those, warn the user/developer.
+
+
+
+
             const direction calculated_direction = direction_from( *elem.from, elem.p );
             switch( calculated_direction ) {
                 case direction::NORTH:
@@ -248,7 +248,7 @@ int fixed_overmap_special_data::score_rotation_at( const overmap &om, const trip
         const oter_id &oter = om.ter( rp );
 
         if( ( oter->get_type_id() == oter_type_str_id( con.terrain.str() ) ) ) {
-            ++score; // Found another one satisfied connection.
+            ++score;
         } else if( !oter || con.existing || !con.connection->pick_subtype_for( oter ) ) {
             return -1;
         }
@@ -269,7 +269,7 @@ special_placement_result fixed_overmap_special_data::place(
             const oter_id tid = elem.terrain->get_rotated( dir );
             om.ter_set( location, tid );
             if( elem.camp_owner.has_value() ) {
-                // This always results in z=0, but pos() doesn't return z-level information...
+
                 tripoint_abs_omt camp_loc =  {project_combine( om.pos(), location.xy() ), 0};
                 get_map().add_camp( camp_loc, "faction_camp", false );
                 std::optional<basecamp *> bcp = overmap_buffer.find_camp( camp_loc.xy() );
@@ -279,7 +279,7 @@ special_placement_result fixed_overmap_special_data::place(
                     basecamp *temp_camp = *bcp;
                     temp_camp->set_owner( elem.camp_owner.value() );
                     temp_camp->set_name( elem.camp_name.translated() );
-                    // FIXME? Camp types are raw strings! Not ideal.
+
                     temp_camp->define_camp( camp_loc, "faction_base_bare_bones_NPC_camp_0", false );
                 }
             }
@@ -299,7 +299,7 @@ special_placement_result fixed_overmap_special_data::place(
             }
         }
     }
-    // Make connections.
+
     for( const overmap_special_connection &elem : connections ) {
         if( elem.connection ) {
             const tripoint_om_omt rp = origin + om_direction::rotate( elem.p, dir );
@@ -308,7 +308,7 @@ special_placement_result fixed_overmap_special_data::place(
             if( initial_dir != cube_direction::last ) {
                 initial_dir = initial_dir + dir;
             }
-            // TODO: JSONification of logic + don't treat non roads like roads
+
             point_om_omt target;
             if( cit ) {
                 target = cit.pos;

@@ -24,20 +24,20 @@ class event_transformation;
 namespace cata
 {
 struct range_hash;
-}  // namespace cata
+}
 
 enum class monotonically : int;
 class score;
 class stats_tracker;
 
-// The stats_tracker is intended to keep a summary of events that have occurred.
-// For each event_type it stores an event_multiset.
-// Within the event_tracker, the events are partitioned according to their data
-// (an event::data_type object, which is a map of keys to values).
-// Within each partition, an event_summary is stored, which contains the first
-// and last times such events were seen, and the number of them seen.
-// The stats_tracker can be queried in various ways to get summary statistics
-// about events that have occurred.
+
+
+
+
+
+
+
+
 
 struct event_summary {
     event_summary();
@@ -60,8 +60,8 @@ class event_multiset
         using summaries_type =
             std::unordered_map<cata::event::data_type, event_summary, cata::range_hash>;
 
-        // Default constructor for deserialization deliberately uses invalid
-        // type
+
+
         event_multiset() : type_( event_type::num_event_types ) {}
         explicit event_multiset( event_type type ) : type_( type ) {}
 
@@ -71,20 +71,20 @@ class event_multiset
             return summaries_;
         }
 
-        // count returns the number of events matching given criteria that have
-        // occurred.
-        // total returns the sum of some integer-valued field across every
-        // event satisfying certain criteria.
-        // maximum and minimum return the max and min respectively of some
-        // integer-valued field across every event satisfying certain criteria.
-        // For example, count might return the number of times the avatar has
-        // taken damage, total might return the total damage taken in all
-        // those cases, and maximum might return the single largest amount
-        // of damage taken in a single event across all those cases.
-        // The criteria takes the form of an event::data_type map specifying
-        // some values that must be matched in the events of that type.  You can
-        // provide just a subset of the relevant keys from the event_type in
-        // your criteria.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         int count() const;
         int count( const cata::event::data_type &criteria ) const;
         int total( const std::string &field ) const;
@@ -150,9 +150,9 @@ class watcher_set
         void send_to_all( void ( Class::*mem_fn )( FnArgs... ), Args &&... args ) const {
             static_assert( std::is_base_of_v<Class, Watcher>,
                            "Watcher must be derived from Class" );
-            // Sending an event to a watcher can cause it to be erased, so we
-            // need to always ensure we have the next iterator prepared in
-            // advance.
+
+
+
             auto current = watchers_.begin();
 
             while( current != watchers_.end() ) {
@@ -196,7 +196,7 @@ class stats_tracker : public event_subscriber
 
         void add_watcher( event_type, event_multiset_watcher * );
         void add_watcher( const string_id<event_transformation> &, event_multiset_watcher * );
-        // Returns the current value of the watched statistic
+
         const cata_variant &add_watcher( const string_id<event_statistic> &, stat_watcher * );
 
         void unwatch( base_watcher * );
@@ -208,7 +208,7 @@ class stats_tracker : public event_subscriber
         void stat_value_changed( const string_id<event_statistic> &,
                                  const cata_variant &new_value );
 
-        // Return all scores which are valid now and existed at game start
+
         std::vector<const score *> valid_scores() const;
 
         void clear();
@@ -238,4 +238,4 @@ class stats_tracker : public event_subscriber
 
 stats_tracker &get_stats();
 
-#endif // CATA_SRC_STATS_TRACKER_H
+#endif

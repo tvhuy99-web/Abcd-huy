@@ -69,7 +69,7 @@ static void test_reloading( item &target, item &ammo, bool expect_success = true
     Character &dummy = get_avatar();
 
     clear_avatar();
-    // Make sure the player doesn't drop anything :P
+
     dummy.wear_item( item( itype_backpack, calendar::turn_zero ) );
 
     dummy.i_add( ammo );
@@ -87,8 +87,8 @@ static void test_reloading( item &target, item &ammo, bool expect_success = true
 
     process_activity( dummy );
 
-    // Quick and dirty check to see if anything was actually reloaded.
-    // Doesn't check if right thing went to right place. But something did go somewhere
+
+
     const item_contents &contents_before = target.get_contents();
     item_contents contents_after = dummy.get_wielded_item()->get_contents();
     bool contents_changed = !contents_before.same_contents( contents_after );
@@ -411,7 +411,7 @@ TEST_CASE( "liquid_reloading", "[reload]" )
         }
     }
 
-    // Note: The reloading doesn't care which item is what. The liquid can go from either bottle to the other.
+
     SECTION( "partially empty bottle" ) {
 
         item container( itype_bottle_twoliter );
@@ -806,7 +806,7 @@ TEST_CASE( "reload_gun_with_integral_magazine", "[reload] [gun]" )
     Character &dummy = get_avatar();
 
     clear_avatar();
-    // Make sure the player doesn't drop anything :P
+
     dummy.wear_item( item( itype_backpack, calendar::turn_zero ) );
 
     item_location ammo = dummy.i_add( item( itype_40sw, calendar::turn_zero, item::default_charges_tag{} ) );
@@ -827,7 +827,7 @@ TEST_CASE( "reload_gun_with_integral_magazine_using_speedloader", "[reload] [gun
     Character &dummy = get_avatar();
 
     clear_avatar();
-    // Make sure the player doesn't drop anything :P
+
     dummy.wear_item( item( itype_backpack, calendar::turn_zero ) );
 
     item_location speedloader = dummy.i_add( item( itype_38_speedloader, calendar::turn_zero, false ) );
@@ -847,9 +847,9 @@ TEST_CASE( "reload_gun_with_integral_magazine_using_speedloader", "[reload] [gun
     REQUIRE( speedloader_success );
     REQUIRE( speedloader->remaining_ammo_capacity() == 0 );
 
-    // This automatically selects the speedloader as ammo
-    // as long as dummy has nothing else available.
-    // If there are multiple options, it will crash from opening a ui.
+
+
+
     item::reload_option opt = dummy.select_ammo( gun );
 
     REQUIRE( opt );
@@ -859,9 +859,9 @@ TEST_CASE( "reload_gun_with_integral_magazine_using_speedloader", "[reload] [gun
         process_activity( dummy );
     }
 
-    //REQUIRE( success );
+
     REQUIRE( gun->remaining_ammo_capacity() == 0 );
-    // Speedloader is still in inventory.
+
     REQUIRE( dummy.has_item( *speedloader ) );
 }
 
@@ -870,7 +870,7 @@ TEST_CASE( "reload_gun_with_swappable_magazine", "[reload] [gun]" )
     Character &dummy = get_avatar();
 
     clear_avatar();
-    // Make sure the player doesn't drop anything :P
+
     dummy.wear_item( item( itype_backpack, calendar::turn_zero ) );
 
     item_location ammo = dummy.i_add( item( itype_9mm, calendar::turn_zero, item::default_charges_tag{} ) );
@@ -894,7 +894,7 @@ TEST_CASE( "reload_gun_with_swappable_magazine", "[reload] [gun]" )
     REQUIRE( guns.size() == 1 );
     item &glock = *guns.front();
     REQUIRE( glock.magazine_current() != nullptr );
-    // We're expecting the magazine to end up in the inventory.
+
     item_location glock_loc( dummy, &glock );
     REQUIRE( dummy.unload( glock_loc ) );
     const std::vector<item *> glock_mags = dummy.items_with( []( const item & it ) {
@@ -924,7 +924,7 @@ static void reload_a_revolver( Character &dummy, item &gun, item &ammo )
 {
     if( !dummy.is_wielding( gun ) ) {
         if( dummy.has_weapon() ) {
-            // to avoid dispose_option in avatar::unwield()
+
             dummy.i_add( *dummy.get_wielded_item() );
             dummy.remove_weapon();
         }
@@ -947,7 +947,7 @@ TEST_CASE( "automatic_reloading_action", "[reload] [gun]" )
     Character &dummy = get_avatar();
 
     clear_avatar();
-    // Make sure the player doesn't drop anything :P
+
     dummy.wear_item( item( itype_backpack, calendar::turn_zero ) );
 
     GIVEN( "an unarmed player" ) {
@@ -1126,7 +1126,7 @@ TEST_CASE( "automatic_reloading_action", "[reload] [gun]" )
     }
 }
 
-// TODO: nested containers and frozen liquids.
+
 TEST_CASE( "reload_liquid_container", "[reload] [liquid]" )
 {
     Character &dummy = get_avatar();

@@ -92,23 +92,23 @@ TEST_CASE( "Gaining_losing_limbs", "[limb]" )
     clear_character( dude, true );
     static std::vector<bodypart_id> base_parts = dude.get_all_body_parts();
     REQUIRE( base_parts.size() == 12 );
-    // Gain a tail and re-check
+
     dude.toggle_trait( trait_DEBUG_TAIL );
     REQUIRE( dude.has_trait( trait_DEBUG_TAIL ) );
     CHECK( dude.get_all_body_parts().size() == 13 );
 
-    // Lose trait and lose the tail
+
     dude.toggle_trait( trait_DEBUG_TAIL );
     REQUIRE( !dude.has_trait( trait_DEBUG_TAIL ) );
     CHECK( dude.get_all_body_parts().size() == 12 );
 
-    // Lose every limb aside from the head
+
     dude.toggle_trait( trait_DEBUG_ONLY_HEAD );
     REQUIRE( dude.has_trait( trait_DEBUG_ONLY_HEAD ) );
     CHECK( dude.get_all_body_parts().size() == 3 );
     REQUIRE( dude.has_part( body_part_head ) );
 
-    // Turn our head into a big head
+
     dude.toggle_trait( trait_DEBUG_BIG_HEAD );
     CHECK( dude.get_all_body_parts().size() == 3 );
     REQUIRE( !dude.has_part( body_part_head ) );
@@ -119,25 +119,25 @@ TEST_CASE( "limb_conditional_flags", "[character][encumbrance][limb]" )
     standard_npc dude( "Test NPC" );
     item wing_cover_left( itype_test_winglets_left );
     create_bird_char( dude );
-    // Flags are recognized and counted correctly
+
     REQUIRE( dude.has_bodypart_with_flag( json_flag_WALL_CLING ) );
     REQUIRE( dude.count_flag( json_flag_WALL_CLING ) == 2 );
 
-    // Damage the right wing below its health limit, disabling one instance of the flag
+
     dude.set_part_hp_cur( body_part_test_bird_wing_r, 10 );
     CHECK( dude.has_bodypart_with_flag( json_flag_WALL_CLING ) );
     CHECK( dude.count_flag( json_flag_WALL_CLING ) == 1 );
 
-    // Encumber the left wing above its enc limit, disabling all flags
+
     dude.wear_item( wing_cover_left, false );
     REQUIRE( dude.get_part_encumbrance( body_part_test_bird_wing_l ) >= 15 );
     CHECK( !dude.has_bodypart_with_flag( json_flag_WALL_CLING ) );
     CHECK( dude.count_flag( json_flag_WALL_CLING ) == 0 );
 
-    // Reset our right wing, flag still is enabled again
+
     dude.set_part_hp_cur( body_part_test_bird_wing_r, 100 );
     CHECK( dude.count_flag( json_flag_WALL_CLING ) == 1 );
-    // Disable it with a windage effect
+
     dude.add_effect( effect_winded_arm, 1_hours, body_part_test_bird_wing_r, false, 1, true );
     REQUIRE( dude.get_effects_with_flag( flag_EFFECT_LIMB_DISABLE_CONDITIONAL_FLAGS ).size() == 1 );
     CHECK( dude.count_flag( json_flag_WALL_CLING ) == 0 );
@@ -149,17 +149,17 @@ TEST_CASE( "Limb_ugliness_calculations", "[character][npc][limb]" )
     standard_npc dude( "Test NPC" );
     standard_npc beholder( "Beholder" );
     item wing_covers( itype_test_winglets );
-    // We start at +/- 3 because of being unarmed
+
     REQUIRE( beholder.get_opinion_values( dude ).fear == -3 );
     REQUIRE( beholder.get_opinion_values( dude ).trust == 3 );
 
-    //Fear gets increased by half of ugliness total, trust decreased by a third
-    // But there are knock-on effects from +fear leading to -trust
+
+
     create_bird_char( dude );
     CHECK( beholder.get_opinion_values( dude ).fear == 39 );
     CHECK( beholder.get_opinion_values( dude ).trust == -25 );
 
-    // TODO: fix covered ugliness and test it...
+
 }
 
 TEST_CASE( "Healing/mending_bonuses", "[character][limb]" )
@@ -214,16 +214,16 @@ TEST_CASE( "drying_rate", "[character][limb]" )
     dude.drench( 100, dude.get_drenching_body_parts(), false );
     REQUIRE( dude.get_part_wetness( body_part_arm_l ) == 200 );
 
-    // Baseline arm dries in 450ish turns
+
     int base_dry = 0;
     while( dude.get_part_wetness( body_part_arm_l ) > 0 ) {
         dude.update_body_wetness( weather_point );
         base_dry++;
     }
-    // 200 wetness / (1000 drench cap / ~1800 turns ) = 360
+
     REQUIRE( base_dry == Approx( 360 ).margin( 120 ) );
 
-    // Birdify, clear water
+
     clear_character( dude, true );
     create_bird_char( dude );
     REQUIRE( here.ter( dude.pos_bub() ).id() == ter_t_grass );
@@ -238,7 +238,7 @@ TEST_CASE( "drying_rate", "[character][limb]" )
 
     int high_dry = 0;
     int low_dry = 0;
-    // Filter on the slower drying limb
+
     while( dude.get_part_wetness( body_part_test_bird_wing_r ) > 0 ) {
         dude.update_body_wetness( weather_point );
         if( dude.get_part_wetness( body_part_test_bird_wing_l ) > 0 ) {
@@ -247,11 +247,11 @@ TEST_CASE( "drying_rate", "[character][limb]" )
         low_dry++;
     }
 
-    // A drying rate of 2 should halve the drying time
-    // Higher margin for the lower rate to account for the randomness
-    // 200 wetness / (1000 drench cap / ~(1800/2) turns) = 180
+
+
+
     CHECK( high_dry == Approx( 180 ).margin( 60 ) );
-    // 200 wetness / (1000 drench cap / ~(1800*2) turns) = 720
+
     CHECK( low_dry == Approx( 720 ).margin( 240 ) );
 }
 
@@ -261,13 +261,13 @@ TEST_CASE( "Limb_consumption", "[limb]" )
     const item solid( itype_test_pine_nuts );
     const item liquid( itype_test_liquid );
     clear_character( dude, true );
-    // Normal chars are normal
+
     REQUIRE( dude.get_modifier( character_modifier_liquid_consume_mod ) == 1.0f );
     REQUIRE( dude.get_modifier( character_modifier_solid_consume_mod ) == 1.0f );
     const time_duration base_solid = dude.get_consume_time( solid );
     const time_duration base_liquid = dude.get_consume_time( liquid );
     create_bird_char( dude );
-    // Testbird chars are birdy
+
     REQUIRE( dude.get_modifier( character_modifier_liquid_consume_mod ) == 2.0f );
     REQUIRE( dude.get_modifier( character_modifier_solid_consume_mod ) == 0.5f );
     CHECK( dude.get_consume_time( liquid ) == base_liquid * 2 );
@@ -291,25 +291,25 @@ TEST_CASE( "Limb_armor_coverage", "[character][limb][armor]" )
     REQUIRE( body_part_test_bird_wing_l->similar_bodypart.has_value() );
     REQUIRE( body_part_test_bird_wing_r->similar_bodypart.has_value() );
 
-    // Explicitly-defined armor covers custom limbs
+
     CHECK( wing_covers.covers( body_part_test_bird_wing_l ) );
     CHECK( wing_covers.portion_for_bodypart( body_part_test_bird_wing_l )->coverage == 100 );
 
-    // Armor covering a base BP covers derived bodyparts, but not non-derived ones
+
     CHECK( test_shackles.covers( body_part_test_bird_wing_l ) );
     CHECK( test_shackles.covers( body_part_test_bird_wing_r ) );
     CHECK( test_shackles.portion_for_bodypart( body_part_test_bird_wing_l )->coverage == 100 );
     CHECK( test_shackles.portion_for_bodypart( body_part_test_bird_wing_r )->coverage == 100 );
     CHECK( !test_jumpsuit_cotton.covers( body_part_test_bird_wing_l ) );
 
-    // Sublimb substitution works the same
+
     CHECK( bird_boots.covers( sub_body_part_sub_limb_test_bird_foot_l ) );
     CHECK( bird_boots.covers( sub_body_part_sub_limb_test_bird_foot_r ) );
     CHECK( bird_boots.portion_for_bodypart( sub_body_part_sub_limb_test_bird_foot_l )->coverage ==
            100 );
     CHECK( bird_boots.portion_for_bodypart( sub_body_part_sub_limb_test_bird_foot_r )->coverage ==
            100 );
-    // Backwards population of coverage works as well
+
     CHECK( bird_boots.covers( body_part_test_bird_foot_l ) );
     CHECK( bird_boots.covers( body_part_test_bird_foot_r ) );
 }
@@ -319,7 +319,7 @@ TEST_CASE( "get_avg_coverage_filters_phantom_limbs", "[character][limb][armor]" 
     item test_shackles( itype_test_shackles );
 
     SECTION( "fixture wiring" ) {
-        // Partial wing picked up via similar_bodypart with scaled coverage
+
         REQUIRE( test_shackles.covers( body_part_test_partial_wing_l ) );
         REQUIRE( test_shackles.portion_for_bodypart( body_part_test_partial_wing_l ) );
         REQUIRE( test_shackles.portion_for_bodypart(
@@ -328,7 +328,7 @@ TEST_CASE( "get_avg_coverage_filters_phantom_limbs", "[character][limb][armor]" 
 
     SECTION( "default human sees only own body parts" ) {
         clear_avatar();
-        // Default filters by player character (human) - only arm_l/r match
+
         CHECK( test_shackles.get_avg_coverage() == 100 );
 
         item longshirt( itype_test_longshirt );
@@ -341,7 +341,7 @@ TEST_CASE( "get_avg_coverage_filters_phantom_limbs", "[character][limb][armor]" 
         body_part_set bird_parts;
         bird_parts.fill( dude.get_all_body_parts() );
 
-        // Bird has arm_l/r(100) and test_bird_wing_l/r(100) from this item
+
         CHECK( test_shackles.get_avg_coverage( bird_parts ) == 100 );
     }
 
@@ -353,7 +353,7 @@ TEST_CASE( "get_avg_coverage_filters_phantom_limbs", "[character][limb][armor]" 
         REQUIRE( viewer.has_part( body_part_test_alt_arm_l ) );
 
         item longshirt( itype_test_longshirt );
-        // Default uses player character which now has alt arms
+
         CHECK( longshirt.get_avg_coverage() == 90 );
     }
 }

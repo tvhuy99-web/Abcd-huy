@@ -115,7 +115,7 @@ TEST_CASE( "map_memory_forgets", "[map_memory]" )
     CHECK( mt.get_dec_rotation() == 3 );
     memory.set_tile_symbol( p1, 1 );
     CHECK( mt.symbol == 1 );
-    memory.clear_tile_decoration( p1, /* prefix = */ "vp_" );
+    memory.clear_tile_decoration( p1, "vp_" );
     CHECK( mt.symbol == 0 );
     CHECK( mt.get_ter_id() == "t_foo" );
     CHECK( mt.get_ter_subtile() == 43 );
@@ -125,7 +125,7 @@ TEST_CASE( "map_memory_forgets", "[map_memory]" )
     CHECK( mt.get_dec_rotation() == 0 );
 }
 
-// TODO: map memory save / load
+
 
 #include <chrono>
 
@@ -145,27 +145,27 @@ TEST_CASE( "lru_cache_perf", "[.]" )
     const long long diff1 = std::chrono::duration_cast<std::chrono::microseconds>
                             ( end1 - start1 ).count();
     printf( "completed %d insertions in %lld microseconds.\n", max_size, diff1 );
-    /*
-     * Original tripoint hash    completed 1000000 insertions in 96136925 microseconds.
-     * Table based interleave v1 completed 1000000 insertions in 41435604 microseconds.
-     * Table based interleave v2 completed 1000000 insertions in 40856530 microseconds.
-     * Jbtw hash                 completed 1000000 insertions in 19049163 microseconds.
-     *                                                     rerun 21152804
-     * With 1024 batch           completed 1000000 insertions in 39902325 microseconds.
-     * backed out batching       completed 1000000 insertions in 20332498 microseconds.
-     * rerun                     completed 1000000 insertions in 21659107 microseconds.
-     * simple batching, disabled completed 1000000 insertions in 18541486 microseconds.
-     * simple batching, 1024     completed 1000000 insertions in 23102395 microseconds.
-     * rerun                     completed 1000000 insertions in 31337290 microseconds.
-     */
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
-// There are 4 quadrants we want to check,
-// 1 | 2
-// -----
-// 3 | 4
-// The partitions are defined by partition.x and partition.y
-// Each partition has an expected value, and should be homogenous.
+
+
+
+
+
+
 static void check_quadrants( std::bitset<MAPSIZE *SEEX *MAPSIZE *SEEY> &test_cache,
                              const point &partition,
                              bool first_val, bool second_val, bool third_val, bool fourth_val )
@@ -267,7 +267,7 @@ TEST_CASE( "shift_map_memory_bitset_cache" )
 
 TEST_CASE( "cleared_level_cache_arms_the_memorize_sweep", "[map_memory]" )
 {
-    // several MB of arrays, so not on the stack
+
     const std::unique_ptr<level_cache> cache = std::make_unique<level_cache>();
     cache->map_memory_sweep_pending = false;
     cache->clear();

@@ -17,4 +17,4 @@ void DefaultGeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, const SDL_
     RenderFillRect( renderer, &rect );
 }
 
-#endif // TILES
+#endif

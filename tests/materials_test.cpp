@@ -130,8 +130,8 @@ TEST_CASE( "Glass_portion_breakability", "[material] [slow]" )
 
 TEST_CASE( "Override_derived_resistance", "[material]" )
 {
-    // Materials don't store derived resistances, instead they're derived at the item level.
-    // Just check that this is still the case.
+
+
     REQUIRE( damage_stab->derived_from.first == damage_cut );
     CHECK( material_lycra->resist( damage_cut ) == 1.f );
     CHECK( material_lycra->resist( damage_stab ) == 0.f );

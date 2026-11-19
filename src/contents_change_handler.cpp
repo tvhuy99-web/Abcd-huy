@@ -20,8 +20,8 @@ void contents_change_handler::unseal_pocket_containing( const item_location &loc
         item_location parent = loc.parent_item();
         item_pocket *const pocket = loc.parent_pocket();
         if( pocket ) {
-            // on_contents_changed restacks the pocket and should be called later
-            // in Character::handle_contents_changed
+
+
             pocket->unseal();
         } else {
             debugmsg( "parent container does not contain item" );
@@ -33,7 +33,7 @@ void contents_change_handler::unseal_pocket_containing( const item_location &loc
 
 void contents_change_handler::handle_by( Character &guy )
 {
-    // some containers could have been destroyed by e.g. monster attack
+
     auto it = std::remove_if( unsealed.begin(), unsealed.end(),
     []( const item_location & loc ) -> bool {
         return !loc;
@@ -52,4 +52,3 @@ void contents_change_handler::deserialize( const JsonValue &jsin )
 {
     jsin.read( unsealed );
 }
-

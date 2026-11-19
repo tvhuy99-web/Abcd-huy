@@ -19,7 +19,7 @@ static const activity_id ACT_WAIT( "ACT_WAIT" );
 static const itype_id itype_milk( "milk" );
 static const itype_id itype_sausage( "sausage" );
 
-// Set up our scenarios ahead of time
+
 static const int moves_for_25h = to_seconds<int>( 25_hours ) * 100;
 static const clear_rubble_activity_actor dig_actor( moves_for_25h );
 static const activity_schedule task_dig( dig_actor, 5_minutes );
@@ -124,8 +124,8 @@ static void check_weary_mutation_nosleep( const std::string &trait_name, float s
         clear_avatar();
         set_single_trait( guy, trait_name );
         guy.set_stored_kcal( guy.get_healthy_kcal() );
-        // How do we make sure they don't sleep? Set sleepiness to -1000?
-        // Doesn't seem to be a problem, fortunately.
+
+
 
         soldier_8h.enschedule( task_dig, 8_hours );
         soldier_8h.enschedule( task_wait, 8_hours );
@@ -137,7 +137,7 @@ static void check_weary_mutation_nosleep( const std::string &trait_name, float s
         INFO( info.summarize() );
         INFO( guy.debug_weary_info() );
         REQUIRE( !info.empty() );
-        if( multiplier >= 1.0f ) { // sleepiness alterations from mutations themselves affect thresholds...
+        if( multiplier >= 1.0f ) {
             CHECK( info.transition_minutes( 0, 1, 165_minutes ) <= 170 );
             CHECK( info.transition_minutes( 0, 1, 165_minutes ) >= ( 160.0f / multiplier ) );
             CHECK( info.transition_minutes( 1, 2, 295_minutes ) <= 300 );
@@ -152,14 +152,14 @@ static void check_weary_mutation_nosleep( const std::string &trait_name, float s
             CHECK( info.transition_minutes( 1, 2, 295_minutes ) <= ( 300.0f / multiplier ) );
             CHECK( info.transition_minutes( 2, 3, 390_minutes ) >= 385 );
             CHECK( info.transition_minutes( 2, 3, 390_minutes ) <= ( 395.0f / multiplier ) );
-            // CHECK( info.transition_minutes( 3, 4, 485_minutes ) >= 480 );
+
             if( ( 490.0f / multiplier ) < ( 8 * 60 ) ) {
                 CHECK( info.transition_minutes( 3, 4, 485_minutes ) <= ( 490.0f / multiplier ) );
             }
         }
         time_duration time1 = ( ( 500_minutes - 8_hours ) * multiplier ) + 8_hours;
         time_duration time2 = ( ( 620_minutes - 8_hours ) * multiplier ) + 8_hours;
-        // Increased below margin for floats to 9.5 (from 5) to account for roundoff vs 5-minute weariness cycle
+
         if( time1 < 16_hours ) {
             if( multiplier >= 1.0f ) {
                 CHECK( info.transition_minutes( 4, 3,
@@ -185,7 +185,7 @@ static void check_weary_mutation_nosleep( const std::string &trait_name, float s
         }
 
         if( multiplier >= 1.0f ) {
-            CHECK( info.transition_minutes( 1, 0, 0_minutes ) > ( 16 * 60 ) ); // should be INT_MAX
+            CHECK( info.transition_minutes( 1, 0, 0_minutes ) > ( 16 * 60 ) );
         }
         CHECK( info.transition_minutes( 2, 1, 0_minutes ) > to_minutes<float>( time2 ) - 9.5f );
     }
@@ -220,12 +220,12 @@ static void check_weary_mutation_sleep( const std::string &trait_name, float sle
         INFO( info.summarize() );
         INFO( guy.debug_weary_info() );
         REQUIRE( !info.empty() );
-        // Appears to take about 5 minutes to sleep, from messages.
+
         time_duration time1 = ( ( 495_minutes - 8_hours ) * multiplier2 ) + ( 5_minutes * multiplier ) +
                               8_hours;
         time_duration time2 = ( ( 615_minutes - 8_hours ) * multiplier2 ) + ( 5_minutes * multiplier ) +
                               8_hours;
-        // Increased below margin for floats to 13 due to sleep uncertainty re 5-minute weary timer.
+
         if( time1 < 16_hours ) {
             if( multiplier2 >= 1.0f ) {
                 CHECK( info.transition_minutes( 4, 3,
@@ -251,7 +251,7 @@ static void check_weary_mutation_sleep( const std::string &trait_name, float sle
         }
 
         if( multiplier2 >= 1.0f ) {
-            CHECK( info.transition_minutes( 1, 0, 0_minutes ) > ( 16 * 60 ) ); // should be INT_MAX
+            CHECK( info.transition_minutes( 1, 0, 0_minutes ) > ( 16 * 60 ) );
         }
         CHECK( info.transition_minutes( 2, 1, 0_minutes ) > to_minutes<float>( time2 ) - 13.0f );
     }
@@ -266,15 +266,15 @@ static void check_weary_mutation( const std::string &trait_name, float sleepines
 
 TEST_CASE( "weary_recovery_mutations", "[weary][activities][mutations]" )
 {
-    // WAKEFUL: sleepiness_mod -0.15
-    // SLEEPY: sleepiness_mod 0.33, sleepiness_regen_mod 0.33
-    // WAKEFUL2: sleepiness_mod -0.25
-    // WAKEFUL3: sleepiness_mod -0.5, sleepiness_regen_mod 0.5
-    // HUGE: sleepiness_mod 0.15 (HUGE_OK - does it remove this? Should it?)
-    // PERSISTENCE_HUNTER: sleepiness_mod -0.1
-    // PERSISTENCE_HUNGER2: sleepiness_mod -0.2
-    // MET_RAT: sleepiness_mod 0.5, sleepiness_regen_mod 0.33
-    // SLEEPY2: sleepiness_mod 1.0 (does this include SLEEPY's sleepiness_regen_mod? looks like it?)
+
+
+
+
+
+
+
+
+
 
     check_weary_mutation( "WAKEFUL", -0.15f, 0.0f );
     check_weary_mutation( "SLEEPY", 0.33f, 0.33f );
@@ -298,9 +298,9 @@ TEST_CASE( "weary_recovery", "[weary][activities]" )
     soldier_8h.enschedule( task_wait, 8_hours );
 
     tasklist mechanic_day;
-    // Clear the guts, we're providing our own food
+
     mechanic_day.enschedule( sched_clear_guts, 0_turns );
-    // Have a nice meal, get to work, eat more, read some, sleep
+
     mechanic_day.enschedule( sausage, 0_turns );
     mechanic_day.enschedule( sausage, 0_turns );
     mechanic_day.enschedule( milk, 0_turns );
@@ -330,11 +330,11 @@ TEST_CASE( "weary_recovery", "[weary][activities]" )
         REQUIRE( !info.empty() );
         CHECK( info.transition_minutes( 4, 3, 500_minutes ) == Approx( 500 ).margin( 10 ) );
         CHECK( info.transition_minutes( 3, 2, 620_minutes ) == Approx( 620 ).margin( 10 ) );
-        CHECK( info.transition_minutes( 1, 0, 0_minutes ) > ( 8 * 60 ) ); // should be INT_MAX
+        CHECK( info.transition_minutes( 1, 0, 0_minutes ) > ( 8 * 60 ) );
         CHECK( info.transition_minutes( 2, 1, 0_minutes ) > ( 8 * 60 ) );
         CHECK( info.transition_minutes( 1, 2, 16_hours ) <= ( 8 * 60 ) );
         CHECK( info.transition_minutes( 2, 3, 16_hours ) <= ( 8 * 60 ) );
-        // CHECK( info.transition_minutes( 3, 4, 16_hours ) <= ( 8 * 60 ) );
+
         CHECK( guy.weariness_level() == 1 );
     }
 
@@ -390,8 +390,8 @@ TEST_CASE( "weary_24h_tasks", "[weary][activities]" )
         CHECK( info.transition_minutes( 6, 7, 800_minutes ) == Approx( 800 ).margin( 10 ) );
         CHECK( info.transition_minutes( 7, 8, 870_minutes ) == Approx( 870 ).margin( 10 ) );
         CHECK( !info.have_weary_decrease() );
-        // TODO: You should collapse from this - currently we
-        // just get really high levels of weariness
+
+
         CHECK( guy.weariness_level() > 8 );
     }
 }

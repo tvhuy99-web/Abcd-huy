@@ -30,18 +30,18 @@ class relic_procgen_data
 {
     public:
 
-        /*
-         * various procgen values for passive enchantment values
-         * this is a template for the ability to write a little bit
-         * less code and easier maintainability for additional values
-         */
+
+
+
+
+
         template<typename T = int>
         struct enchantment_value_passive {
             enchant_vals::mod type;
-            // THIS CANNOT BE 0
+
             int power_per_increment = 1;
-            // whatever increment is used for the point values
-            // THIS CANNOT BE 0
+
+
             T increment = 1;
             T min_value = 0;
             T max_value = 0;
@@ -59,17 +59,17 @@ class relic_procgen_data
 
         struct enchantment_active {
             spell_id activated_spell;
-            // power cost of spell at level 0
+
             int base_power = 0;
-            // power cost increment per spell level increment
+
             int power_per_increment = 1;
-            // number of spell levels that give the power per increment at
+
             int increment = 1;
-            // min level of the spell allowed
+
             int min_level = 0;
-            // max level of the spell allowed
+
             int max_level = 0;
-            // where artifact must be to trigger for hit_me and hit_you effects
+
             enchantment::has ench_has;
 
             int calc_power( int level ) const {
@@ -84,11 +84,11 @@ class relic_procgen_data
         };
 
         struct generation_rules {
-            // the desired power level for the generated artifact
+
             int power_level = 0;
-            // the most negative (total) attributes a generated artifact can have
+
             int max_negative_power = 0;
-            // the maximum number of attributes a generated artifact can have
+
             int max_attributes = INT_MAX;
 
             bool was_loaded = false;
@@ -121,7 +121,7 @@ class relic_procgen_data
         std::vector<std::pair<relic_procgen_id, mod_id>> src;
 
         int power_level( const enchant_cache &ench ) const;
-        // power level of the active spell
+
         int power_level( const fake_spell &sp ) const;
 
         item create_item( const relic_procgen_data::generation_rules &rules ) const;
@@ -187,12 +187,12 @@ struct relic_charge_info {
 
     relic_charge_info() = default;
 
-    // Because multiple different charge types can overlap, cache the power
-    // level from the charge type we were generated from here to avoid confusion
+
+
     int power = 0; // NOLINT(cata-serialize)
 
-    // accumulates time for charge, and increases charge if it has enough accumulated.
-    // assumes exactly one second has passed.
+
+
     void accumulate_charge( item &parent );
 
     void deserialize( const JsonObject &jo );
@@ -207,16 +207,16 @@ class relic
         std::vector<enchant_cache> proc_passive_effects;
         std::vector<enchantment> defined_passive_effects; // NOLINT(cata-serialize)
 
-        // the item's name will be replaced with this if the string is not empty
+
         translation item_name_override; // NOLINT(cata-serialize)
 
         relic_charge_info charge;
 
-        // activating an artifact overrides all spell casting costs
+
         int moves = 0;
         relic_has activation_req = relic_has::NUM;
 
-        // passive enchantments to add by id in finalize once we can guarantee that they have loaded
+
         std::vector<enchantment_id> passive_enchant_ids; // NOLINT(cata-serialize)
 
         static bool satisfies_has( relic_has req, const item *parent, const Character *carrier );
@@ -224,7 +224,7 @@ class relic
         ~relic();
 
         std::string name() const;
-        // returns number of charges that should be consumed
+
         int activate( Creature &caster, const tripoint_bub_ms &target );
         bool can_activate( const item &parent, const Creature &caster ) const;
         int charges() const;
@@ -232,7 +232,7 @@ class relic
         int max_charges() const;
 
         bool has_activation() const;
-        // has a recharge type (which needs to be actively processed)
+
         bool has_recharge() const;
 
         void try_recharge( item &parent, Character *carrier, const tripoint_bub_ms &pos );
@@ -256,7 +256,7 @@ class relic
 
         void overwrite_charge( const relic_charge_info &info );
 
-        // what is the power level of this artifact, given a specific ruleset
+
         int power_level( const relic_procgen_id &ruleset ) const;
 
         friend bool operator==( const relic &source_relic, const relic &target_relic );
@@ -279,4 +279,4 @@ struct enum_traits<relic_has> {
     static constexpr relic_has last = relic_has::NUM;
 };
 
-#endif // CATA_SRC_RELIC_H
+#endif

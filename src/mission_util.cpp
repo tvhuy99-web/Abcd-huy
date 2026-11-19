@@ -101,14 +101,14 @@ bool mission_util::reveal_road( const tripoint_abs_omt &source, const tripoint_a
     return omb.reveal_route( source_road, dest_road );
 }
 
-/**
- * Reveal the cloest overmap terrain of a type and return the its location
- */
+
+
+
 tripoint_abs_omt mission_util::reveal_om_ter( tripoint_abs_omt origin, const std::string &omter,
         int reveal_rad,
         bool must_see, int target_z )
 {
-    // Missions are normally on z-level 0, but allow an optional argument.
+
     origin.z() = target_z;
     const tripoint_abs_omt place = overmap_buffer.find_closest( origin, omter, 0, must_see );
     if( !place.is_invalid() && reveal_rad >= 0 ) {
@@ -117,10 +117,10 @@ tripoint_abs_omt mission_util::reveal_om_ter( tripoint_abs_omt origin, const std
     return place;
 }
 
-/**
- * Given a (valid!) city reference, select a random house within the city borders.
- * @return global overmap terrain coordinates of the house.
- */
+
+
+
+
 static tripoint_abs_omt random_house_in_city( const city_reference &cref )
 {
     const tripoint_abs_omt city_center_omt =
@@ -131,7 +131,7 @@ static tripoint_abs_omt random_house_in_city( const city_reference &cref )
             valid.push_back( p );
         }
     }
-    return random_entry( valid, city_center_omt ); // center of the city is a good fallback
+    return random_entry( valid, city_center_omt );
 }
 
 tripoint_abs_omt mission_util::random_house_in_closest_city()
@@ -183,44 +183,44 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
         }
     }
     auto get_target_position = [&]() {
-        // Either find a random or closest match, based on the criteria.
+
         if( params.random ) {
             target_pos = overmap_buffer.find_random( origin_pos, find_params );
         } else {
             target_pos = overmap_buffer.find_closest( origin_pos, find_params );
         }
 
-        // If we didn't find a match, and we're allowed to create new terrain, and the player didn't
-        // have to see the location beforehand, then we can attempt to create the new terrain.
+
+
         if( target_pos.is_invalid() && params.create_if_necessary &&
             !params.must_see ) {
-            // If this terrain is part of an overmap special...
+
             if( params.overmap_special ) {
-                // ...then attempt to place the whole special.
+
                 const bool placed = overmap_buffer.place_special( static_cast<overmap_special_id >(
                                         ( *params.overmap_special ).evaluate( d ) ), origin_pos,
                                     params.search_range.evaluate( d ) );
-                // If we succeeded in placing the special, then try and find the particular location
-                // we're interested in.
+
+
                 if( placed ) {
                     find_params.must_see = false;
                     target_pos = overmap_buffer.find_closest( origin_pos, find_params );
                 }
             } else if( params.replaceable_overmap_terrain ) {
-                // This terrain wasn't part of an overmap special, but we do have a replacement
-                // terrain specified. Find a random location of that replacement type.
+
+
                 find_params.must_see = false;
                 find_params.types.front().first = ( *params.replaceable_overmap_terrain ).evaluate( d );
                 target_pos = overmap_buffer.find_random( origin_pos, find_params );
 
-                // We didn't find it, so allow this search to create new overmaps and try again.
+
                 find_params.existing_only = true;
                 if( target_pos.is_invalid() ) {
                     target_pos = overmap_buffer.find_random( origin_pos, find_params );
                 }
 
-                // We found a match, so set this position (which was our replacement terrain)
-                // to our desired mission terrain.
+
+
                 if( !target_pos.is_invalid() ) {
                     overmap_buffer.ter_set( target_pos, oter_id( params.overmap_terrain.evaluate( d ) ) );
                 }
@@ -228,18 +228,18 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
         }
     };
 
-    // First try to get the position where we only allow existing overmaps.
+
     get_target_position();
 
     if( target_pos.is_invalid() ) {
-        // If it's invalid, then that means we couldn't find it or create it (if allowed) on
-        // our current overmap. We'll now go ahead and try again but allow it to create new overmaps.
+
+
         find_params.existing_only = false;
         get_target_position();
     }
 
-    // If we got here and this is still invalid, it means that we couldn't find it nor create it
-    // on any overmap (new or existing) within the allowed search range.
+
+
     if( target_pos.is_invalid() ) {
         debugmsg( "Unable to find and assign mission target %s within %d tiles.",
                   params.overmap_terrain.evaluate( d ), find_params.search_range );
@@ -250,7 +250,7 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
 
 static tripoint_abs_omt get_mission_om_origin( const mission_target_params &params, dialogue &d )
 {
-    // use the player or NPC's current position, adjust for the z value if any
+
     tripoint_abs_omt origin_pos = get_player_character().pos_abs_omt();
     if( !params.origin_u ) {
         npc *guy = nullptr;
@@ -273,7 +273,7 @@ static tripoint_abs_omt get_mission_om_origin( const mission_target_params &para
 std::optional<tripoint_abs_omt> mission_util::assign_mission_target(
     const mission_target_params &params, dialogue &d )
 {
-    // use the player or NPC's current position, adjust for the z value if any
+
     tripoint_abs_omt origin_pos = get_mission_om_origin( params, d );
 
     std::optional<tripoint_abs_omt> target_pos = find_or_create_om_terrain( origin_pos, params, d );
@@ -282,12 +282,12 @@ std::optional<tripoint_abs_omt> mission_util::assign_mission_target(
             *target_pos += *params.offset;
         }
 
-        // If we specified a reveal radius, then go ahead and reveal around our found position.
+
         if( params.reveal_radius ) {
             overmap_buffer.reveal( *target_pos, ( *params.reveal_radius ).evaluate( d ) );
         }
 
-        // Set the mission target to our found position.
+
         params.mission_pointer->set_target( *target_pos );
     }
 
@@ -297,7 +297,7 @@ std::optional<tripoint_abs_omt> mission_util::assign_mission_target(
 tripoint_abs_omt mission_util::get_om_terrain_pos( const mission_target_params &params,
         dialogue &d )
 {
-    // use the player or NPC's current position, adjust for the z value if any
+
     tripoint_abs_omt origin_pos = get_mission_om_origin( params, d );
     tripoint_abs_omt target_pos = origin_pos;
     if( !params.overmap_terrain.evaluate( d ).empty() ) {
@@ -311,7 +311,7 @@ tripoint_abs_omt mission_util::get_om_terrain_pos( const mission_target_params &
         target_pos += *params.offset;
     }
 
-    // If we specified a reveal radius, then go ahead and reveal around our found position.
+
     if( params.reveal_radius ) {
         overmap_buffer.reveal( target_pos, ( *params.reveal_radius ).evaluate( d ) );
     }
@@ -319,11 +319,11 @@ tripoint_abs_omt mission_util::get_om_terrain_pos( const mission_target_params &
     return target_pos;
 }
 
-/**
- * Set target of mission to closest overmap terrain of that type,
- * reveal the area around it (uses reveal with reveal_rad),
- * and returns the mission target.
-*/
+
+
+
+
+
 tripoint_abs_omt mission_util::target_om_ter(
     tripoint_abs_omt origin, const std::string &omter, int reveal_rad, mission *miss, bool must_see,
     int target_z )
@@ -512,9 +512,9 @@ bool mission_type::parse_funcs( const JsonObject &jo, std::string_view src,
         return false;
     }
 
-    /* this is a kind of gross hijack of the dialogue responses effect system, but I don't want to
-     * write that code in two places so here it goes.
-     */
+
+
+
     talk_effect_t talk_effects;
     talk_effects.load_effect( jo, "effect", src );
     phase_func = [ funcs, talk_effects ]( mission * miss ) {

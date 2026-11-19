@@ -9,13 +9,13 @@
 #include "coordinates.h"
 #include "point.h"
 
-// how a self-care walk ends
+
 enum class npc_trip_kind : int {
-    // on the source itself
+
     stand_on,
-    // in range of the source, on its z level
+
     within_range,
-    // on nearest_passable( source )
+
     legacy_nearest_passable
 };
 
@@ -46,20 +46,20 @@ struct npc_trip {
     tripoint_bub_ms from;
     npc_trip_spec spec;
     bool feasible = false;
-    // where the NPC stands to act; its own tile when it can act already
+
     tripoint_bub_ms dest;
-    // steps after current tile, ending at dest; empty when it can act already
+
     std::vector<tripoint_bub_ms> path;
 };
 
-// which trip npc::path was resolved for, so the next turn reuses it instead of routing
+
 struct npc_retained_trip {
     bool valid = false;
     npc_trip_spec spec;
 };
 
-// p if passable, else its passable neighbor closest to closest_to
+
 std::optional<tripoint_bub_ms> nearest_passable( const tripoint_bub_ms &p,
         const tripoint_bub_ms &closest_to );
 
-#endif // CATA_SRC_NPC_TRIP_H
+#endif

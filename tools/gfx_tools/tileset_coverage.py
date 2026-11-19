@@ -160,18 +160,18 @@ def merge_datasets(
 
     tileset_ids['id'] = tileset_ids['tileset_id'].apply(strip_overlay_id)
 
-    # TODO: output the original ID and type in the generate_overlay_ids.py
-    overlay_ids['id'] = overlay_ids['overlay_id'].apply(strip_overlay_id)
-    # game_data = pandas.merge(all_game_ids, overlay_ids, on=['type', 'id'])
 
-    # match tileset with game data
+    overlay_ids['id'] = overlay_ids['overlay_id'].apply(strip_overlay_id)
+
+
+
     result = all_game_ids.merge(
         tileset_ids,
         how='outer',
         on='id',
         sort=False,
     )
-    # match overlays
+
     result = result.merge(
         overlay_ids,
         how='outer',
@@ -179,7 +179,7 @@ def merge_datasets(
         right_on=['id', 'overlay_id'],
         sort=False,
     )
-    # rearrange columns
+
     overlay_id_column = result.pop('overlay_id')
     result.insert(
         result.columns.get_loc('tileset_id'),
@@ -195,7 +195,7 @@ def write_output(data: pandas.DataFrame, output_filename: str) -> int:
     """
     result = data.to_csv(output_filename)
     if result is None:
-        # error
+
         return 1
 
     return 0

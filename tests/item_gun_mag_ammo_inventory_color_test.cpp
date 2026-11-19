@@ -38,7 +38,7 @@ TEST_CASE( "full_gun_with_spare_mag_is_green", "[item][color][gun][inventory][re
     avatar &u = get_avatar();
     prepare_avatar( u );
 
-    // Put a fully-loaded gun in the inventory.
+
     item_location gun = u.i_add( item( itype_glock_19 ) );
     item_location mag_for_gun = u.i_add( item( itype_glockmag ) );
     const int mag_cap = mag_for_gun->ammo_capacity( ammo_9mm );
@@ -47,14 +47,14 @@ TEST_CASE( "full_gun_with_spare_mag_is_green", "[item][color][gun][inventory][re
     REQUIRE( gun->reload( u, mag_for_gun, mag_cap ) );
     REQUIRE( gun->remaining_ammo_capacity() == 0 );
 
-    // Player also carries a second loaded magazine.
+
     item_location spare_mag = u.i_add( item( itype_glockmag ) );
     item_location ammo_for_spare = u.i_add( item( itype_9mm, calendar::turn, mag_cap ) );
     REQUIRE( spare_mag->reload( u, ammo_for_spare, mag_cap ) );
 
-    // Gun is full, but the player still possesses a loaded magazine for it,
-    // so the display color should signal "equipped" (green), not "missing
-    // something" (light red).
+
+
+
     CHECK( gun->color_in_inventory( &u ) == c_green );
 }
 
@@ -67,13 +67,13 @@ TEST_CASE( "full_revolver_with_spare_ammo_is_green", "[item][color][gun][invento
     const int cylinder_cap = gun->ammo_capacity( ammo_38 );
     REQUIRE( cylinder_cap > 0 );
 
-    // Two cylinders' worth of rounds: one to load the revolver, one to keep.
+
     item_location ammo =
         u.i_add( item( itype_38_special, calendar::turn, cylinder_cap * 2 ) );
     REQUIRE( gun->reload( u, ammo, cylinder_cap ) );
     REQUIRE( gun->remaining_ammo_capacity() == 0 );
 
-    // Integral-magazine gun is full but the player still has loose rounds.
+
     CHECK( gun->color_in_inventory( &u ) == c_green );
 }
 
@@ -90,8 +90,8 @@ TEST_CASE( "full_magazine_with_gun_and_spare_ammo_is_green",
     REQUIRE( mag->reload( u, ammo, mag_cap ) );
     REQUIRE( mag->remaining_ammo_capacity() == 0 );
 
-    // Magazine is full, but the player still has a compatible gun and spare
-    // loose rounds, so it should color green.
+
+
     CHECK( mag->color_in_inventory( &u ) == c_green );
 }
 
@@ -101,7 +101,7 @@ TEST_CASE( "empty_gun_alone_is_uncolored", "[item][color][gun][inventory]" )
     prepare_avatar( u );
 
     item_location gun = u.i_add( item( itype_glock_19 ) );
-    // No ammo, no magazine in inventory: neither green nor light red (will be default).
+
     const nc_color c = gun->color_in_inventory( &u );
     CHECK( c != c_green );
     CHECK( c != c_light_red );
@@ -114,7 +114,7 @@ TEST_CASE( "gun_with_ammo_but_no_mag_is_light_red", "[item][color][gun][inventor
 
     item_location gun = u.i_add( item( itype_glock_19 ) );
     u.i_add( item( itype_9mm, calendar::turn, 10 ) );
-    // Compatible loose ammo but no magazine -> light red.
+
     CHECK( gun->color_in_inventory( &u ) == c_light_red );
 }
 

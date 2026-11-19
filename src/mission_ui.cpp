@@ -50,7 +50,7 @@ enum class mission_ui_tab_enum : int {
     POINTS_OF_INTEREST,
     num_tabs
 };
-} // namespace
+}
 
 static mission_ui_tab_enum &operator++( mission_ui_tab_enum &c )
 {
@@ -139,11 +139,11 @@ void mission_ui::draw_mission_ui()
     ctxt.register_action( "CONFIRM",
                           to_translation( "Set selected mission/point of interest as current objective" ) );
     ctxt.register_action( "DELETE_POINT_OF_INTEREST", to_translation( "Delete Point of Interest" ) );
-    // We don't actually have a way to remap this right now
-    //ctxt.register_action( "DOUBLE_CLICK", to_translation( "Set selected mission as current objective" ) );
+
+
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "QUIT" );
-    // Smooths out our handling, makes tabs load immediately after input instead of waiting for next.
+
     ctxt.set_timeout( 10 );
 
     a11y::screen_scope reader( &ctxt, "missions",
@@ -188,10 +188,10 @@ void mission_ui_impl::draw_controls()
         switch_tab = selected_tab;
         --switch_tab;
     } else if( last_action == "PAGE_UP" ) {
-        ImGui::SetWindowFocus(); // Dumb hack! Clear our focused item so listbox selection isn't nav highlighted.
+        ImGui::SetWindowFocus();
         s = cataimgui::scroll::page_up;
     } else if( last_action == "PAGE_DOWN" ) {
-        ImGui::SetWindowFocus(); // Dumb hack! Clear our focused item so listbox selection isn't nav highlighted.
+        ImGui::SetWindowFocus();
         s = cataimgui::scroll::page_down;
     }
 
@@ -265,7 +265,7 @@ void mission_ui_impl::draw_controls()
     }
     adjust_selected |= selected_mission != previous_selected_mission;
 
-    // This action needs to be after umissions is populated
+
     if( last_action == "CONFIRM" ) {
         if( selected_tab == mission_ui_tab_enum::ACTIVE && !umissions.empty() ) {
             get_avatar().set_active_mission( *umissions[selected_mission] );
@@ -303,7 +303,7 @@ void mission_ui_impl::draw_controls()
 
     if( ImGui::BeginTable( "##MISSION_TABLE", 2, ImGuiTableFlags_None,
                            ImGui::GetContentRegionAvail() ) ) {
-        // Missions selection is purposefully thinner than the description, it has less to convey.
+
         if( selected_tab != mission_ui_tab_enum::POINTS_OF_INTEREST ) {
             ImGui::TableSetupColumn( _( "Missions" ), ImGuiTableColumnFlags_WidthStretch,
                                      table_column_width * 0.8 );
@@ -544,9 +544,9 @@ a11y::semantic_snapshot mission_ui_impl::reader_snapshot( const input_context &c
         return ( node.id == "CONFIRM" && !can_set_objective ) ||
                ( node.id == "DELETE_POINT_OF_INTEREST" && !can_delete_point );
     } ), snapshot.nodes.end() );
-    // State the real effect of the two commands that change game state
-    // (R13.4): setting an objective only changes what is tracked, and the
-    // game deletes a point of interest immediately, with no confirmation.
+
+
+
     for( a11y::semantic_node &node : snapshot.nodes ) {
         if( node.id == "CONFIRM" ) {
             node.detail = _( "Set the selected mission or point of interest as the current objective.  "
@@ -740,16 +740,16 @@ void mission_ui_impl::draw_selected_description( std::vector<mission *> missions
     ImGui::Separator();
     static std::string raw_description;
     static std::string parsed_description;
-    // We do this to avoid replacing expanded snippets with other valid snippet text on redraw. The raw description includes un-parsed snippet tags.
-    // The parsed description is, obviously, after they've been parsed. So "<zombie_name>" becomes "undead thing" or "zed" or whatever.
-    // Whenever the user changes which mission they're looking at, this will update to parse the description *once* and keep displaying that parsed version
-    // until the mission changes again. The raw_description string is stored for as long as the program is running.
-    // This hinges on the 'static' keyword influencing storage duration. See https://en.cppreference.com/w/cpp/language/storage_duration.html etc
+
+
+
+
+
     if( raw_description != miss->get_description() ) {
         raw_description = miss->get_description();
         parsed_description = raw_description;
-        // Handles(example)  <reward_count:item>   in description
-        // Not handled in parse_tags for some reason!
+
+
         dialogue d( get_talker_for( get_avatar() ), nullptr, {} );
         const talk_effect_fun_t::likely_rewards_t &rewards = miss->get_likely_rewards();
         for( const auto &reward : rewards ) {
@@ -758,7 +758,7 @@ void mission_ui_impl::draw_selected_description( std::vector<mission *> missions
                                                  reward.first.evaluate( d ) ) );
         }
         const Character &other_talker = mission_giver ? *mission_giver : get_player_character();
-        // parse_tags() modifies the argument string directly, no return value.
+
         parse_tags( parsed_description, get_player_character(), other_talker );
     }
     cataimgui::draw_colored_text( parsed_description, c_unset, table_column_width * 1.15 );
@@ -800,11 +800,11 @@ void mission_ui_impl::draw_selected_description( std::vector<mission *> missions
         }
     }
     if( miss->has_target() ) {
-        // TODO: target does not contain a z-component, targets are assumed to be on z=0
+
         draw_location( _( "Target:" ), miss->get_target() );
     }
     dimension_id mission_dimension = miss->get_dimension();
-    // If dimension isn't the default one
+
     if( mission_dimension != dimension_world_default ) {
         draw_label_with_value( _( "Dimension:" ), mission_dimension.str() );
     }
@@ -825,12 +825,12 @@ void mission_ui_impl::draw_location( const std::string &label,
     const tripoint_abs_omt pos = get_player_character().pos_abs_omt();
     draw_label_with_value( label, display::overmap_position_text( loc ) );
     if( !you_know_where_you_are() ) {
-        // Don't display "Distance:" or direction arrow if we don't know where we are
+
         return;
     }
     int omt_distance = rl_dist( pos, loc );
     if( omt_distance > 0 ) {
-        // One OMT is 24 tiles across, at 1x1 meters each, so we can simply do number of OMTs * 24
+
         units::length actual_distance = omt_distance * 24_meter;
         const std::string dir_arrow = direction_arrow( direction_from( pos.xy(), loc.xy() ) );
         //~Parenthesis is a real-world value for distance. Example string: "223 tiles (5.35km) ⇗"
@@ -839,7 +839,7 @@ void mission_ui_impl::draw_location( const std::string &label,
         draw_label_with_value( _( "Distance:" ), distance_str );
     }
 }
-} // namespace
+}
 
 void game::list_missions()
 {

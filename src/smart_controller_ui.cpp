@@ -55,15 +55,15 @@ void smart_controller_ui::refresh()
     const nc_color lgreen = c_light_green;
     const nc_color red = c_red;
 
-    // header
+
     const std::string title =  _( "Smart Engine Controller ® Interface" );
     mvwprintz( win, point( ( WIDTH - title.length() ) / 2, 1 ), white, title );
     mvwhline( win, point( 1, 2 ), BORDER_COLOR, LINE_OXOX, WIDTH - 2 );
 
-    // for menu items, y points to the center of the menu item vertical space
+
     int y = 3 + MENU_ITEM_HEIGHT / 2;
 
-    // enabled flag
+
     mvwprintz( win, point( LEFT_MARGIN, y ), gray,  "[ ]" );
     if( settings.enabled ) {
         mvwprintz( win, point( LEFT_MARGIN + 1, y ), white, "X" );
@@ -72,7 +72,7 @@ void smart_controller_ui::refresh()
                selection == smart_controller_ui_selection::enabled ? hilite( white ) : gray,
                _( "Enabled" ) );
 
-    // battery % slider
+
     y += MENU_ITEM_HEIGHT;
     mvwprintz( win, point( LEFT_MARGIN, y - 1 ),
                selection == smart_controller_ui_selection::lo_and_hi_slider ? white : gray,
@@ -80,7 +80,7 @@ void smart_controller_ui::refresh()
 
     int lo_slider_x = settings.battery_lo * SLIDER_W / 100;
     int hi_slider_x = settings.battery_hi * SLIDER_W / 100 ;
-    // print selected % numbers
+
     std::string battery_low_text = string_format( "%d%%", settings.battery_lo );
     mvwprintz( win, point( LEFT_MARGIN + lo_slider_x - battery_low_text.length() + 1, y + 2 ),
                selection == smart_controller_ui_selection::lo_and_hi_slider &&
@@ -88,12 +88,12 @@ void smart_controller_ui::refresh()
     mvwprintz( win, point( LEFT_MARGIN + hi_slider_x, y + 2 ),
                selection == smart_controller_ui_selection::lo_and_hi_slider &&
                slider == 1 ? hilite( white ) : lgreen, "%d%%", settings.battery_hi );
-    // draw slider horizontal line
+
     for( int i = 0; i < SLIDER_W; ++i ) {
         nc_color col = selection == smart_controller_ui_selection::lo_and_hi_slider ? white : gray;
         mvwprintz( win, point( LEFT_MARGIN + i, y + 1 ), col, "-" );
     }
-    // print LO and HI on the slider line
+
     //~ abbreviation for the "LOW" battery zone displayed on the Smart Controller UI slider. Keep it short (2-3 chars)
     std::string lo_text = _( "LO" );
     mvwprintz( win, point( LEFT_MARGIN + ( lo_slider_x - lo_text.length() ) / 2, y + 1 ), red,
@@ -103,7 +103,7 @@ void smart_controller_ui::refresh()
     int hi_text_l = hi_text.length();
     mvwprintz( win, point( LEFT_MARGIN + hi_slider_x + std::max( ( SLIDER_W - hi_slider_x -
                            hi_text_l ) / 2, 1 ), y + 1 ), lgreen, hi_text );
-    // print bars on the slider
+
     mvwprintz( win, point( LEFT_MARGIN + lo_slider_x, y + 1 ),
                selection == smart_controller_ui_selection::lo_and_hi_slider &&
                slider == 0 ? hilite( white ) : red, "|" );
@@ -111,13 +111,13 @@ void smart_controller_ui::refresh()
                selection == smart_controller_ui_selection::lo_and_hi_slider &&
                slider == 1 ? hilite( white ) : lgreen, "|" );
 
-    // user manual
+
     y += MENU_ITEM_HEIGHT;
     mvwprintz( win, point( LEFT_MARGIN, y ),
                selection == smart_controller_ui_selection::manual ? hilite( white ) : gray,
                _( "User manual" ) );
 
-    // key descriptions
+
     std::string keys_text = string_format(
                                 _( "Use [<color_yellow>%s</color> and <color_yellow>%s</color>] to select option.\n"
                                    "Use [<color_yellow>%s</color>] to change value.\n"
@@ -152,19 +152,19 @@ void smart_controller_ui::control()
         refresh();
     } );
 
-    // Reader adapter (R15.4): this screen is drawn by hand, so its input
-    // context would otherwise only get the generic command fallback,
-    // which never publishes the thresholds themselves. The settings are
-    // published as R02 form fields with the domains the slider math in
-    // this same function enforces: multiples of 5 percent, the low
-    // threshold in [5, 90], the high threshold in [10, 95], and always
-    // at least 5 points between them. Reader edits follow the form
-    // contract -- set_value/select_choice only record a draft, apply
-    // writes it through the same settings references the sliders write,
-    // with the same coupling (raising low pushes high up, lowering high
-    // pulls low down). The one exception mirrors the original screen:
-    // activating the Enabled field is the screen's own CONFIRM, which
-    // toggles the flag immediately, exactly as the keypress does.
+
+
+
+
+
+
+
+
+
+
+
+
+
     std::optional<bool> draft_enabled;
     std::optional<int> draft_lo;
     std::optional<int> draft_hi;
@@ -364,7 +364,7 @@ void smart_controller_ui::control()
                         SNIPPET.random_from_category( "smart_engine_controller_manual" ).value_or( translation() );
 
                     scrollable_text( [&] {
-                        //note: ui.on_screen_resize will be called first and reinit `win`
+
                         return win;
                     }, _( "Smart Engine Controller ® User Manual" ), manual.translated() );
 
@@ -378,11 +378,11 @@ void smart_controller_ui::control()
 
             if( slider == 0 ) {
                 settings.battery_lo = clamp( ( settings.battery_lo / 5 + dx ) * 5, 5, 90 );
-                // keep the min space of 5 between this and other slider
+
                 settings.battery_hi = std::max( settings.battery_lo + 5, settings.battery_hi );
             } else {
                 settings.battery_hi = clamp( ( settings.battery_hi / 5 + dx ) * 5, 10, 95 );
-                // keep the min space of 5 between this and other slider
+
                 settings.battery_lo = std::min( settings.battery_hi - 5, settings.battery_lo );
             }
         }

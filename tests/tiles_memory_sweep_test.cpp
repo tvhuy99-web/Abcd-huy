@@ -24,8 +24,8 @@ static const ter_str_id ter_t_wall( "t_wall" );
 namespace
 {
 
-// avatar is mid-bubble, viewport a few tiles wide, so `far_point` is inside the
-// bubble, in plain view, and off screen
+
+
 constexpr int view_tiles = 5;
 const tripoint_bub_ms player_pos( 65, 65, 0 );
 const tripoint_bub_ms far_point( 85, 65, 0 );
@@ -42,8 +42,8 @@ struct sweep_fixture {
         map &here = get_map();
         here.invalidate_map_cache( 0 );
         here.build_map_cache( 0, true );
-        // set_time_to_day refreshes visibility cache before map cache is built,
-        // leaving it blank on a fresh map
+
+
         here.invalidate_visibility_cache();
         here.update_visibility_cache( 0 );
         const std::shared_ptr<const tileset> ts =
@@ -71,7 +71,7 @@ struct sweep_fixture {
     std::unique_ptr<cata_tiles> tiles_;
 };
 
-} // namespace
+}
 
 TEST_CASE( "tiles_idle_redraw_memorizes_an_offscreen_terrain_change", "[tiles][map_memory]" )
 {
@@ -146,4 +146,4 @@ TEST_CASE( "tiles_idle_redraw_skips_the_memorize_sweep", "[tiles][map_memory]" )
     }
 }
 
-#endif // TILES
+#endif

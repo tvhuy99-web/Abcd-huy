@@ -1,16 +1,16 @@
-#include <algorithm> // std::find
+#include <algorithm>
 #include <cstddef>
-#include <functional> // std::greater
+#include <functional>
 #include <string>
 #include <utility>
-#include <vector> // range-insert testing
+#include <vector>
 
 #include "cata_catch.h"
 #include "colony.h"
 #include "colony_list_test_helpers.h"
 
-// Fast xorshift+128 random number generator function
-// original: https://codingforspeed.com/using-faster-psudo-random-generator-xorshift/
+
+
 unsigned int xor_rand()
 {
     static unsigned int x = 123456789;
@@ -20,7 +20,7 @@ unsigned int xor_rand()
 
     const unsigned int t = x ^ ( x << 11 );
 
-    // Rotate the static values (w rotation in return statement):
+
     x = y;
     y = z;
     z = w;
@@ -32,22 +32,22 @@ TEST_CASE( "colony_basics", "[colony]" )
 {
     cata::colony<int *> test_colony;
 
-    // Starts empty
+
     CHECK( test_colony.empty() );
 
     int ten = 10;
     test_colony.insert( &ten );
 
-    // Not empty after insert
+
     CHECK_FALSE( test_colony.empty() );
-    // Begin working
+
     CHECK( **test_colony.begin() == 10 );
-    // End working
+
     CHECK_FALSE( test_colony.begin() == test_colony.end() );
 
     test_colony.clear();
 
-    // Begin = End after clear
+
     CHECK( test_colony.begin() == test_colony.end() );
 
     int twenty = 20;
@@ -63,9 +63,9 @@ TEST_CASE( "colony_basics", "[colony]" )
         sum += **it;
     }
 
-    // Iterator count
+
     CHECK( count == 400 );
-    // Iterator access
+
     CHECK( sum == 6000 );
 
     cata::colony<int *>::iterator plus_20 = test_colony.begin();
@@ -73,22 +73,22 @@ TEST_CASE( "colony_basics", "[colony]" )
     advance( plus_20, 20 );
     advance( plus_200, 200 );
 
-    // Iterator + distance
+
     CHECK( distance( test_colony.begin(), plus_20 ) == 20 );
-    // Iterator - distance
+
     CHECK( distance( plus_200, test_colony.begin() ) == -200 );
 
     cata::colony<int *>::iterator next_iterator = next( test_colony.begin(), 5 );
     cata::colony<int *>::const_iterator cprev_iterator = prev( test_colony.cend(), 300 );
 
-    // Iterator next
+
     CHECK( distance( test_colony.begin(), next_iterator ) == 5 );
-    // Const iterator prev
+
     CHECK( distance( test_colony.cend(), cprev_iterator ) == -300 );
 
     cata::colony<int *>::iterator prev_iterator = prev( test_colony.end(), 300 );
 
-    // Iterator/const iterator equality operator
+
     CHECK( cprev_iterator == prev_iterator );
 
     cata::colony<int *> test_colony_2;
@@ -97,21 +97,21 @@ TEST_CASE( "colony_basics", "[colony]" )
     cata::colony<int *> test_colony_3( test_colony );
     cata::colony<int *> test_colony_4( test_colony_2, test_colony_2.get_allocator() );
 
-    // Copy
+
     CHECK( test_colony_2.size() == 400 );
-    // Copy construct
+
     CHECK( test_colony_3.size() == 400 );
-    // Allocator-extended copy construct
+
     CHECK( test_colony_4.size() == 400 );
 
-    // Equality operator
+
     CHECK( test_colony == test_colony_2 );
     CHECK( test_colony_2 == test_colony_3 );
     CHECK( test_colony_3 == test_colony_4 );
 
     test_colony_2.insert( &ten );
 
-    // Inequality operator
+
     CHECK( test_colony_2 != test_colony_3 );
 
     count = 0;
@@ -122,20 +122,20 @@ TEST_CASE( "colony_basics", "[colony]" )
         sum += **it;
     }
 
-    // Reverse iterator count
+
     CHECK( count == 400 );
-    // Reverse iterator access
+
     CHECK( sum == 6000 );
 
     cata::colony<int *>::reverse_iterator r_iterator = test_colony.rbegin();
     advance( r_iterator, 50 );
 
-    // Reverse iterator advance and distance test
+
     CHECK( distance( test_colony.rbegin(), r_iterator ) == 50 );
 
     cata::colony<int *>::reverse_iterator r_iterator2 = next( r_iterator, 2 );
 
-    // Reverse iterator next and distance test
+
     CHECK( distance( test_colony.rbegin(), r_iterator2 ) == 52 );
 
     count = 0;
@@ -146,9 +146,9 @@ TEST_CASE( "colony_basics", "[colony]" )
         sum += **it;
     }
 
-    // Multiple iteration count
+
     CHECK( count == 200 );
-    // Multiple iteration access
+
     CHECK( sum == 2000 );
 
     count = 0;
@@ -158,9 +158,9 @@ TEST_CASE( "colony_basics", "[colony]" )
         sum += *p;
     }
 
-    // Constant iterator count
+
     CHECK( count == 400 );
-    // Constant iterator access
+
     CHECK( sum == 6000 );
 
     count = 0;
@@ -172,9 +172,9 @@ TEST_CASE( "colony_basics", "[colony]" )
         sum += **it;
     }
 
-    // Const_reverse_iterator -- count
+
     CHECK( count == 399 );
-    //Const_reverse_iterator -- access
+
     CHECK( sum == 5980 );
 
     count = 0;
@@ -184,14 +184,14 @@ TEST_CASE( "colony_basics", "[colony]" )
         it = test_colony.erase( it );
     }
 
-    // Partial erase iteration test
+
     CHECK( count == 200 );
-    // Post-erase size test
+
     CHECK( test_colony.size() == 200 );
 
     const unsigned int temp_capacity = static_cast<unsigned int>( test_colony.capacity() );
     test_colony.shrink_to_fit();
-    // Shrink_to_fit test
+
     CHECK( test_colony.capacity() < temp_capacity );
     CHECK( test_colony.capacity() == 200 );
 
@@ -203,12 +203,12 @@ TEST_CASE( "colony_basics", "[colony]" )
         test_colony.erase( --temp );
     }
 
-    // Full erase reverse iteration test
+
     CHECK( count == 200 );
-    // Post-erase size test
+
     CHECK( test_colony.empty() );
 
-    // Restore previous state after erasure
+
     for( int temp = 0; temp < 200; ++temp ) {
         test_colony.insert( &ten );
         test_colony.insert( &twenty );
@@ -220,7 +220,7 @@ TEST_CASE( "colony_basics", "[colony]" )
         ++count;
     }
 
-    // Negative iteration test
+
     CHECK( count == 399 );
 
     count = 0;
@@ -229,44 +229,44 @@ TEST_CASE( "colony_basics", "[colony]" )
         ++count;
     }
 
-    // Negative multiple iteration test
+
     CHECK( count == 200 );
 
     test_colony_2 = std::move( test_colony );
 
-    // Move test
+
     CHECK( test_colony_2.size() == 400 );
 
     // NOLINTNEXTLINE(bugprone-use-after-move)
     test_colony.insert( &ten );
 
-    // Insert to post-moved-colony test
+
     CHECK( test_colony.size() == 1 );
 
     cata::colony<int *> test_colony_5( test_colony_2 );
     cata::colony<int *> test_colony_6( std::move( test_colony_5 ), test_colony_2.get_allocator() );
 
-    // Allocator-extended move construct test
+
     CHECK( test_colony_6.size() == 400 );
 
     test_colony_3 = test_colony_2;
 
-    //Copy test 2
+
     CHECK( test_colony_3.size() == 400 );
 
     test_colony_2.insert( &ten );
 
     test_colony_2.swap( test_colony_3 );
 
-    //Swap test
+
     CHECK( test_colony_2.size() == test_colony_3.size() - 1 );
 
     swap( test_colony_2, test_colony_3 );
 
-    //Swap test 2
+
     CHECK( test_colony_3.size() == test_colony_2.size() - 1 );
 
-    //max_size()
+
     CHECK( test_colony_2.max_size() > test_colony_2.size() );
 }
 
@@ -278,23 +278,23 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         test_colony.insert( i );
     }
 
-    // Size after insert
+
     CHECK( test_colony.size() == 500000 );
 
     cata::colony<int>::iterator found = std::find( test_colony.begin(), test_colony.end(), 5000 );
     cata::colony<int>::reverse_iterator found2 = std::find( test_colony.rbegin(), test_colony.rend(),
             5000 );
 
-    // std::find reverse_iterator
+
     CHECK( *found == 5000 );
-    // std::find iterator
+
     CHECK( *found2 == 5000 );
 
     for( cata::colony<int>::iterator it = test_colony.begin(); it != test_colony.end(); ++it ) {
         it = test_colony.erase( it );
     }
 
-    // Erase alternating
+
     CHECK( test_colony.size() == 250000 );
 
     do {
@@ -308,7 +308,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
 
     } while( !test_colony.empty() );
 
-    //Erase randomly till-empty
+
     CHECK( test_colony.empty() );
 
     test_colony.reset();
@@ -318,7 +318,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         test_colony.insert( 1 );
     }
 
-    // Size after reshape + insert
+
     CHECK( test_colony.size() == 30000 );
 
     int count = 0;
@@ -334,14 +334,14 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
 
     } while( count < 15000 );
 
-    // Erase randomly till half-empty
+
     CHECK( test_colony.size() == static_cast<size_t>( 30000 - count ) );
 
     for( int i = 0; i < count; ++i ) {
         test_colony.insert( 1 );
     }
 
-    // Size after reinsert
+
     CHECK( test_colony.size() == 30000 );
 
     count = 0;
@@ -355,7 +355,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         }
     }
 
-    // Alternating insert/erase
+
     CHECK( test_colony.size() == 45001 );
 
     do {
@@ -369,14 +369,14 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         }
     } while( !test_colony.empty() );
 
-    // Random insert/erase till empty
+
     CHECK( test_colony.empty() );
 
     for( int i = 0; i != 500000; ++i ) {
         test_colony.insert( 10 );
     }
 
-    // Insert post-erase
+
     CHECK( test_colony.size() == 500000 );
 
     cata::colony<int>::iterator it = test_colony.begin();
@@ -386,7 +386,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         it = test_colony.erase( it );
     }
 
-    // Large multi-increment iterator
+
     CHECK( test_colony.size() == 250000 );
 
     for( int i = 0; i < 250000; ++i ) {
@@ -400,7 +400,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         it = test_colony.erase( it );
     }
 
-    // Large multi-decrement iterator
+
     CHECK( test_colony.size() == 250000 );
 
     for( int i = 0; i < 250000; ++i ) {
@@ -412,7 +412,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         sum += it;
     }
 
-    // Re-insert post-heavy-erasure
+
     CHECK( sum == 5000000 );
 
     end_it = test_colony.end();
@@ -424,7 +424,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         it = test_colony.erase( it );
     }
 
-    // Non-end decrement + erase
+
     CHECK( test_colony.size() == 350001 );
 
     for( int i = 0; i < 100000; ++i ) {
@@ -438,40 +438,40 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         it = test_colony.erase( it );
     }
 
-    // Non-beginning increment + erase
+
     CHECK( test_colony.size() == 300001 );
 
     it = test_colony.begin();
-    advance( it, 2 ); // Advance test 1
+    advance( it, 2 );
     unsigned int index = static_cast<unsigned int>( cata::get_index_from_iterator( test_colony, it ) );
 
-    // Advance + iterator-to-index test
+
     CHECK( index == 2 );
 
-    // Check edge-case with advance when erasures present in initial group
+
     test_colony.erase( it );
     it = test_colony.begin();
     advance( it, 500 );
     index = static_cast<unsigned int>( cata::get_index_from_iterator( test_colony, it ) );
 
-    // Advance + iterator-to-index test
+
     CHECK( index == 500 );
 
     cata::colony<int>::iterator it2 = test_colony.get_iterator( &( *it ) );
 
-    // Pointer-to-iterator test
+
     CHECK( it2 != test_colony.end() );
 
     it2 = cata::get_iterator_from_index( test_colony, 500 );
 
-    // Index-to-iterator test
+
     CHECK( it2 == it );
 
     for( cata::colony<int>::iterator it = test_colony.begin(); it != test_colony.end(); ) {
         it = test_colony.erase( it );
     }
 
-    // Total erase
+
     CHECK( test_colony.empty() );
 
     test_colony.reset();
@@ -479,7 +479,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
     const unsigned int temp_capacity2 = static_cast<unsigned int>( test_colony.capacity() );
     test_colony.reserve( 1000 );
 
-    // Colony reserve
+
     CHECK( temp_capacity2 != test_colony.capacity() );
     CHECK( test_colony.capacity() >= 1000 );
 
@@ -501,7 +501,7 @@ TEST_CASE( "colony_insert_and_erase", "[colony]" )
         }
     }
 
-    // Multiple sequential small insert/erase commands
+
     CHECK( test_colony.size() == static_cast<size_t>( count ) );
 }
 
@@ -527,7 +527,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    //Simple range erase 1
+
     CHECK( count == 700 );
     CHECK( test_colony.size() == 700 );
 
@@ -535,7 +535,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
     it2 = test_colony.begin();
 
     advance( it1, 400 );
-    advance( it2, 500 ); // This should put it2 past the point of previous erasures
+    advance( it2, 500 );
 
     test_colony.erase( it1, it2 );
 
@@ -544,14 +544,14 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    //Simple range erase 2
+
     CHECK( count == 600 );
     CHECK( test_colony.size() == 600 );
 
     it2 = it1 = test_colony.begin();
 
     advance( it1, 4 );
-    advance( it2, 9 ); // This should put it2 past the point of previous erasures
+    advance( it2, 9 );
 
     test_colony.erase( it1, it2 );
 
@@ -560,7 +560,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    // Simple range erase 3
+
     CHECK( count == 595 );
     CHECK( test_colony.size() == 595 );
 
@@ -576,14 +576,14 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    // Range erase from begin()
+
     CHECK( count == 545 );
     CHECK( test_colony.size() == 545 );
 
     it1 = test_colony.begin();
     it2 = test_colony.end();
 
-    // Test erasing and validity when it removes the final group in colony
+
     advance( it1, 345 );
     test_colony.erase( it1, it2 );
 
@@ -592,7 +592,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    // Range erase to end()
+
     CHECK( count == 345 );
     CHECK( test_colony.size() == 345 );
 
@@ -618,7 +618,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    // Range erase with colony already half-erased, alternating erasures
+
     CHECK( count == 904 );
     CHECK( test_colony.size() == 904 );
 
@@ -652,7 +652,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         ++count;
     }
 
-    // Range-erase with colony already third-erased, randomized erasures
+
     CHECK( count == 400 );
     CHECK( test_colony.size() == 400 );
 
@@ -690,12 +690,12 @@ TEST_CASE( "colony_range_erase", "[colony]" )
                 ++count;
             }
 
-            // Fuzz-test range-erase randomly Fails
+
             CAPTURE( loop_count, internal_loop_count );
             CHECK( test_colony.size() == static_cast<unsigned int>( count ) );
 
             if( test_colony.size() > 2 ) {
-                // Test to make sure our stored erased_locations are valid
+
                 test_colony.insert( 1 );
                 test_colony.insert( 10 );
             }
@@ -704,14 +704,14 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         }
     }
 
-    // "Fuzz-test range-erase randomly until empty"
+
     CHECK( test_colony.empty() );
 
     for( loop_count = 0; loop_count < 50; ++loop_count ) {
         test_colony.clear();
         internal_loop_count = 0;
 
-        test_colony.insert( 10000, 10 ); // fill-insert
+        test_colony.insert( 10000, 10 );
 
         while( !test_colony.empty() ) {
             it1 = test_colony.begin();
@@ -733,16 +733,16 @@ TEST_CASE( "colony_range_erase", "[colony]" )
                 ++count;
             }
 
-            // Fuzz-test range-erase + fill-insert randomly fails during erase
+
             CAPTURE( loop_count, internal_loop_count );
             CHECK( test_colony.size() == static_cast<unsigned int>( count ) );
 
             if( test_colony.size() > 100 ) {
-                // Test to make sure our stored erased_locations are valid & fill-insert is functioning properly in these scenarios
+
                 const unsigned int extra_size = xor_rand() % 128;
                 test_colony.insert( extra_size, 5 );
 
-                // Fuzz-test range-erase + fill-insert randomly fails during insert
+
                 CAPTURE( loop_count, internal_loop_count );
                 CHECK( test_colony.size() == static_cast<unsigned int>( count ) + extra_size );
 
@@ -751,7 +751,7 @@ TEST_CASE( "colony_range_erase", "[colony]" )
                     ++count;
                 }
 
-                // Fuzz-test range-erase + fill-insert randomly fails during count-test fill-insert
+
                 CHECK( test_colony.size() == static_cast<unsigned int>( count ) );
             }
 
@@ -759,18 +759,18 @@ TEST_CASE( "colony_range_erase", "[colony]" )
         }
     }
 
-    // Fuzz-test range-erase + fill-insert randomly until empty
+
     CHECK( test_colony.empty() );
 
     test_colony.erase( test_colony.begin(), test_colony.end() );
 
-    // Range-erase when colony is empty test (crash test)
+
     CHECK( test_colony.empty() );
 
     test_colony.insert( 10, 1 );
     test_colony.erase( test_colony.begin(), test_colony.begin() );
 
-    // Range-erase when range is empty test (crash test)
+
     CHECK( test_colony.size() == 10 );
 }
 
@@ -797,7 +797,7 @@ TEST_CASE( "colony_sort", "[colony]" )
         prev = cur;
     }
 
-    // Less-than sort test
+
     CHECK( sorted );
 
     test_colony.sort( std::greater<>() );
@@ -812,7 +812,7 @@ TEST_CASE( "colony_sort", "[colony]" )
         prev = cur;
     }
 
-    // Greater-than sort test
+
     CHECK( sorted );
 }
 
@@ -820,29 +820,29 @@ TEST_CASE( "colony_insertion_methods", "[colony]" )
 {
     cata::colony<int> test_colony = {1, 2, 3};
 
-    // Initializer-list constructor
+
     CHECK( test_colony.size() == 3 );
 
     cata::colony<int> test_colony_2( test_colony.begin(), test_colony.end() );
 
-    // Range constructor
+
     CHECK( test_colony_2.size() == 3 );
 
     cata::colony<int> test_colony_3( 5000, 2, plf::limits( 100, 250 ) );
 
-    // Fill construction
+
     CHECK( test_colony_3.size() == 5000 );
 
     test_colony_2.insert( 500000, 5 );
 
-    // Fill insertion
+
     CHECK( test_colony_2.size() == 500003 );
 
     std::vector<int> some_ints( 500, 2 );
 
     test_colony_2.insert( some_ints.begin(), some_ints.end() );
 
-    // Range insertion
+
     CHECK( test_colony_2.size() == 500503 );
 
     test_colony_3.clear();
@@ -856,7 +856,7 @@ TEST_CASE( "colony_insertion_methods", "[colony]" )
         sum += it;
     }
 
-    // Reserve + fill insert
+
     CHECK( test_colony_2.size() == 60000 );
     CHECK( sum == 60000 );
 
@@ -870,7 +870,7 @@ TEST_CASE( "colony_insertion_methods", "[colony]" )
         sum += it;
     }
 
-    // Reserve + fill insert
+
     CHECK( test_colony_2.size() == 60 );
     CHECK( sum == 60 );
 
@@ -882,7 +882,7 @@ TEST_CASE( "colony_insertion_methods", "[colony]" )
         sum += it;
     }
 
-    // Reserve + fill + fill
+
     CHECK( test_colony_2.size() == 6060 );
     CHECK( sum == 6060 );
 
@@ -894,7 +894,7 @@ TEST_CASE( "colony_insertion_methods", "[colony]" )
         sum += it;
     }
 
-    // Reserve + fill + fill + reserve + fill
+
     CHECK( test_colony_2.size() == 12060 );
     CHECK( sum == 12060 );
 }
@@ -927,9 +927,9 @@ TEST_CASE( "colony_emplace", "[colony]" )
         sum2 += s.number;
     }
 
-    //Basic emplace
+
     CHECK( sum1 == sum2 );
-    //Basic emplace
+
     CHECK( test_colony.size() == 100 );
 }
 
@@ -940,14 +940,14 @@ TEST_CASE( "colony_group_size_and_capacity", "[colony]" )
 
     test_colony.insert( 27 );
 
-    // reshape min-size
+
     CHECK( test_colony.capacity() == 50 );
 
     for( int i = 0; i != 100; ++i ) {
         test_colony.insert( i );
     }
 
-    // reshape max-size
+
     CHECK( test_colony.capacity() == 200 );
 
     test_colony.clear();
@@ -955,24 +955,24 @@ TEST_CASE( "colony_group_size_and_capacity", "[colony]" )
 
     test_colony.insert( 27 );
 
-    // reshape min-size after clear
+
     CHECK( test_colony.capacity() == 200 );
 
     for( int i = 0; i != 3300; ++i ) {
         test_colony.insert( i );
     }
 
-    // reshape max-size after fill
+
     CHECK( test_colony.capacity() == 3460 );
 
     test_colony.reshape( plf::limits( 150, 150 ) );
 
-    // reshape resize
+
     CHECK( test_colony.capacity() == 3450 );
 
     test_colony.reshape( plf::limits( 200, 200 ) );
 
-    // reshape resize 2
+
     CHECK( test_colony.capacity() == 3400 );
 }
 
@@ -1152,7 +1152,7 @@ TEST_CASE( "colony_splice", "[colony]" )
         test_colony_1.erase( --test_colony_1.end() );
         test_colony_2.erase( --test_colony_2.end() );
 
-        // element order after splice depends on internal block layout
+
         const size_t expected_size = test_colony_1.size() + test_colony_2.size();
         test_colony_1.splice( test_colony_2 );
         CHECK( test_colony_1.size() == expected_size );
@@ -1172,7 +1172,7 @@ TEST_CASE( "colony_splice", "[colony]" )
 
         } while( !test_colony_1.empty() );
 
-        // Post-splice insert-and-erase randomly till-empty
+
         CHECK( test_colony_1.empty() );
     }
 }

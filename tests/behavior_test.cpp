@@ -91,7 +91,7 @@ static sequential_t default_sequential;
 static fallback_t default_fallback;
 static sequential_until_done_t default_until_done;
 static utility_t default_utility;
-} // namespace behavior
+}
 
 static behavior::node_t make_test_node( const std::string &goal, const behavior::status_t *status )
 {
@@ -139,72 +139,72 @@ TEST_CASE( "behavior_tree", "[behavior]" )
     behavior::tree maslows;
     maslows.add( &basic_needs );
 
-    // First and therefore highest priority goal.
+
     CHECK( maslows.tick( nullptr ) == "wear" );
     thirsty_state = behavior::status_t::success;
-    // Later states don't matter.
+
     CHECK( maslows.tick( nullptr ) == "wear" );
     hungry_state = behavior::status_t::success;
-    // This one either.
+
     CHECK( maslows.tick( nullptr ) == "wear" );
     cold_state = behavior::status_t::success;
     thirsty_state = behavior::status_t::running;
-    // First need met, second branch followed.
+
     CHECK( maslows.tick( nullptr ) == "get_water" );
     cold_state = behavior::status_t::failure;
-    // First need failed, second branch followed.
+
     CHECK( maslows.tick( nullptr ) == "get_water" );
     water_state = behavior::status_t::success;
-    // Got water, proceed to next goal.
+
     CHECK( maslows.tick( nullptr ) == "clean_water" );
     clean_water_state = behavior::status_t::success;
     hungry_state = behavior::status_t::running;
-    // Got clean water, proceed to food.
+
     CHECK( maslows.tick( nullptr ) == "get_food" );
     water_state = behavior::status_t::failure;
     clean_water_state = behavior::status_t::running;
-    // Failed to get water, give up.
+
     CHECK( maslows.tick( nullptr ) == "get_food" );
     water_state = behavior::status_t::running;
     CHECK( maslows.tick( nullptr ) == "get_water" );
     cold_state = behavior::status_t::success;
     thirsty_state = behavior::status_t::success;
     hungry_state = behavior::status_t::running;
-    // Second need also met, third branch taken.
+
     CHECK( maslows.tick( nullptr ) == "get_food" );
     cold_state = behavior::status_t::success;
-    // Status_T::Failure also causes third branch to be taken.
+
     CHECK( maslows.tick( nullptr ) == "get_food" );
     thirsty_state = behavior::status_t::success;
-    // Status_T::Failure in second branch too.
+
     CHECK( maslows.tick( nullptr ) == "get_food" );
     thirsty_state = behavior::status_t::running;
     cold_state = behavior::status_t::running;
-    // First need appears again and becomes highest priority again.
+
     CHECK( maslows.tick( nullptr ) == "wear" );
     clothes_state = behavior::status_t::failure;
-    // First alternative failed, attempting second.
+
     CHECK( maslows.tick( nullptr ) == "fire" );
     fire_state = behavior::status_t::failure;
-    // Both alternatives failed, check other needs.
+
     CHECK( maslows.tick( nullptr ) == "get_water" );
     clothes_state = behavior::status_t::success;
-    // Either status_t::failure or status_t::success meets requirements.
+
     CHECK( maslows.tick( nullptr ) == "get_water" );
     clothes_state = behavior::status_t::failure;
     fire_state = behavior::status_t::success;
-    // Either order does it.
+
     CHECK( maslows.tick( nullptr ) == "get_water" );
     hungry_state = behavior::status_t::running;
-    // Still thirsty, so changes to hunger are irrelevant.
+
     CHECK( maslows.tick( nullptr ) == "get_water" );
     thirsty_state = behavior::status_t::success;
     hungry_state = behavior::status_t::success;
-    // All needs met, so no goals remain.
+
     CHECK( maslows.tick( nullptr ) == "idle" );
 }
 
-// Make assertions about loaded behaviors.
+
 TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
 {
     clear_map_without_vision();
@@ -225,8 +225,8 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "idle" );
         test_npc.worn.wear_item( test_npc, item( itype_backpack ), false, false );
         item_location sweater = test_npc.i_add( item( itype_sweater ) );
-        // With warmth unified under seek_warmth, inventory clothing
-        // triggers can_obtain_warmth (not legacy can_wear_warmer_clothes).
+
+
         CHECK( oracle.can_obtain_warmth( "" ) == behavior::status_t::running );
         CHECK( npc_needs.tick( &oracle ) == "seek_warmth" );
         item sweater_copy = *sweater;
@@ -237,8 +237,8 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         test_npc.i_add( item( itype_2x4 ) );
         get_map().build_map_cache( 0 );
         REQUIRE( oracle.can_make_fire( "" ) == behavior::status_t::running );
-        // Fire supplies make can_obtain_warmth return running (fire is
-        // a warmth strategy), so npc_obtain_warmth succeeds with seek_warmth.
+
+
         CHECK( npc_needs.tick( &oracle ) == "seek_warmth" );
     }
     SECTION( "Hungry" ) {
@@ -256,7 +256,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         override_option no_food( "NO_NPC_FOOD", "true" );
         REQUIRE_FALSE( test_npc.needs_food() );
 
-        // Extreme values that would normally trigger needs.
+
         test_npc.set_hunger( 500 );
         test_npc.set_stored_kcal( 1000 );
         test_npc.set_thirst( 700 );
@@ -265,7 +265,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( oracle.hunger_urgency( "" ) == 0.0f );
         CHECK( oracle.thirst_urgency( "" ) == 0.0f );
 
-        // Even with food and water in inventory, BT returns idle.
+
         test_npc.i_add( item( itype_sandwich_cheese_grilled ) );
         const item_group::ItemList water_items = item_group::items_from(
                     Item_spawn_data_test_bottle_water );
@@ -275,7 +275,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
     SECTION( "Thirsty" ) {
         const item_group::ItemList items = item_group::items_from( Item_spawn_data_test_bottle_water );
 
-        // make sure only water bottles are in this group
+
         REQUIRE( items.size() == 1 );
         REQUIRE( item_group::group_contains_item( Item_spawn_data_test_bottle_water, itype_water_clean ) );
 
@@ -291,9 +291,9 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "idle" );
     }
     SECTION( "Thirsty and hungry" ) {
-        // With utility strategy, the more urgent need wins.
-        // Near-starvation (stored_kcal=1000, urgency ~0.98) beats
-        // moderate dehydration (thirst=700, urgency ~0.58).
+
+
+
         test_npc.set_thirst( 700 );
         test_npc.set_hunger( 500 );
         test_npc.set_stored_kcal( 1000 );
@@ -308,10 +308,10 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "eat_food" );
     }
     SECTION( "Hunger wins over thirst when starvation is more urgent" ) {
-        // Hunger comes AFTER thirst in tree order, so under sequential_until_done
-        // thirst would always win. With utility, hunger wins when its score is
-        // higher. stored_kcal=1000 gives hunger_urgency ~0.98 vs
-        // thirst_urgency at 600 = 0.5.
+
+
+
+
         test_npc.set_stored_kcal( 1000 );
         test_npc.set_hunger( 500 );
         test_npc.set_thirst( 600 );
@@ -326,11 +326,11 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "eat_food" );
     }
     SECTION( "Thirst wins over hunger when dehydration is more urgent" ) {
-        // Guards the "score": "npc_thirst_urgency" wiring on npc_thirst.
-        // Without it, thirst defaults to score 0 and loses to any scored hunger.
-        // At 45% healthy kcal, starvation ~2794 > base_metabolic_rate (2500)
-        // so needs_food_badly fires. But hunger_urgency (0.55) < thirst_urgency
-        // at 800 (0.667), so thirst wins.
+
+
+
+
+
         const int healthy = test_npc.get_healthy_kcal();
         test_npc.set_stored_kcal( healthy * 45 / 100 );
         test_npc.set_hunger( 500 );
@@ -355,7 +355,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         test_npc.set_thirst( 700 );
         REQUIRE( oracle.needs_water_badly( "" ) == behavior::status_t::running );
 
-        // Warm clothes + water available
+
         test_npc.worn.wear_item( test_npc, item( itype_backpack ), false, false );
         test_npc.i_add( item( itype_sweater ) );
         const item_group::ItemList water_items = item_group::items_from(
@@ -364,13 +364,13 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         REQUIRE( oracle.can_obtain_warmth( "" ) == behavior::status_t::running );
         REQUIRE( oracle.has_water( "" ) == behavior::status_t::running );
 
-        // warmth_urgency (near 1.0) >> thirst_urgency (0.58)
+
         CHECK( npc_needs.tick( &oracle ) == "seek_warmth" );
     }
     SECTION( "Freezing with fire supplies also wins over thirst" ) {
-        // Proves the score lives on npc_homeostasis (the fallback branch),
-        // not on npc_obtain_warmth. If the score were misplaced on the
-        // leaf, this path through npc_make_fire would be unscored.
+
+
+
         weather_manager &weather = get_weather();
         weather.temperature = units::from_fahrenheit( 0 );
         weather.clear_temp_cache();
@@ -380,17 +380,17 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         test_npc.set_thirst( 700 );
         REQUIRE( oracle.needs_water_badly( "" ) == behavior::status_t::running );
 
-        // Fire supplies + water, no warm clothes or shelter
+
         test_npc.worn.wear_item( test_npc, item( itype_backpack ), false, false );
         test_npc.i_add( tool_with_ammo( itype_lighter, 20 ) );
         test_npc.i_add( item( itype_2x4 ) );
         const item_group::ItemList water_items = item_group::items_from(
                     Item_spawn_data_test_bottle_water );
         test_npc.i_add( water_items.front() );
-        // find_fire_spot needs map cache for move_cost/is_flammable.
+
         get_map().build_map_cache( 0 );
-        // Fire supplies make can_obtain_warmth return running (fire is
-        // a warmth strategy inside find_warmth_candidates).
+
+
         REQUIRE( oracle.can_obtain_warmth( "" ) == behavior::status_t::running );
         REQUIRE( oracle.can_make_fire( "" ) == behavior::status_t::running );
         REQUIRE( oracle.has_water( "" ) == behavior::status_t::running );
@@ -398,8 +398,8 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "seek_warmth" );
     }
     SECTION( "Dead tired -- sleep is feasible" ) {
-        // can_sleep threshold matches needs_sleep_badly at DEAD_TIRED.
-        // Utility scoring handles duty priority, not can_sleep gating.
+
+
         test_npc.set_sleepiness( 500 );
         REQUIRE( oracle.needs_sleep_badly( "" ) == behavior::status_t::running );
         REQUIRE( oracle.can_sleep( "" ) == behavior::status_t::running );
@@ -419,17 +419,17 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "idle" );
     }
     SECTION( "Exhausted with stim -- sleep still feasible" ) {
-        // Stim is a soft modifier in Character::can_sleep() whose effect
-        // depends on comfort at the sleep location. The oracle can't
-        // evaluate that, so only meth is a hard blocker.
+
+
+
         test_npc.set_sleepiness( 600 );
         test_npc.set_stim( 20 );
         REQUIRE( oracle.needs_sleep_badly( "" ) == behavior::status_t::running );
         CHECK( oracle.can_sleep( "" ) == behavior::status_t::running );
     }
     SECTION( "Exhausted and hungry -- hunger wins" ) {
-        // sleepiness=600 (urgency 0.6), stored_kcal=1000 (urgency ~0.98)
-        // Near-starvation beats moderate exhaustion.
+
+
         test_npc.set_sleepiness( 600 );
         test_npc.set_stored_kcal( 1000 );
         test_npc.set_hunger( 500 );
@@ -441,7 +441,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "eat_food" );
     }
     SECTION( "Exhausted beats moderate thirst" ) {
-        // sleepiness=800 (urgency 0.8), thirst=600 (urgency 0.5)
+
         test_npc.set_sleepiness( 800 );
         test_npc.set_thirst( 600 );
         REQUIRE( oracle.needs_sleep_badly( "" ) == behavior::status_t::running );
@@ -454,9 +454,9 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( npc_needs.tick( &oracle ) == "go_to_sleep" );
     }
     SECTION( "can_make_fire returns failure without supplies" ) {
-        // Regression: can_make_fire used to return success instead of failure
-        // when no FIRESTARTER or flammable items were present, causing the
-        // warmth fallback to short-circuit to success before reaching shelter.
+
+
+
         CHECK( oracle.can_make_fire( "" ) == behavior::status_t::failure );
     }
     SECTION( "can_take_shelter outdoors with adjacent indoor tile" ) {
@@ -469,7 +469,7 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         CHECK( oracle.can_take_shelter( "" ) == behavior::status_t::failure );
     }
     SECTION( "can_take_shelter ignores impassable indoor tiles" ) {
-        // A pony wall is INDOORS but impassable -- not a shelter target
+
         map &here = get_map();
         tripoint_bub_ms adj = test_npc.pos_bub() + point::east;
         here.ter_set( adj, ter_t_ponywall );
@@ -484,10 +484,10 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
     }
     SECTION( "can_take_shelter detects indoor tile beyond adjacent" ) {
         map &here = get_map();
-        // Distance 2 only: earlier sections in this TEST_CASE mutate global
-        // weather (temperature -> 0F) without cleanup, reducing NPC vision
-        // range via stale weather state. Radius-4+ detection is covered by
-        // npc_find_nearby_shelters in npc_test.cpp which has a clean fixture.
+
+
+
+
         const tripoint_bub_ms shelter = test_npc.pos_bub() + tripoint( 2, 0, 0 );
         here.ter_set( shelter, ter_t_floor );
         here.invalidate_map_cache( 0 );
@@ -521,14 +521,14 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         test_npc.update_bodytemp();
         REQUIRE( oracle.needs_warmth_badly( "" ) == behavior::status_t::running );
 
-        // No warm clothes, no fire, but indoor tile adjacent
+
         map &here = get_map();
         tripoint_bub_ms adj = test_npc.pos_bub() + point::east;
         here.ter_set( adj, ter_t_floor );
         REQUIRE( oracle.can_take_shelter( "" ) == behavior::status_t::running );
 
-        // seek_warmth fires before legacy take_shelter because
-        // npc_obtain_warmth is first in the warmth fallback chain.
+
+
         CHECK( npc_needs.tick( &oracle ) == "seek_warmth" );
     }
     SECTION( "Freezing outdoors with no shelter" ) {
@@ -539,16 +539,16 @@ TEST_CASE( "check_npc_behavior_tree", "[npc][behavior]" )
         REQUIRE( oracle.needs_warmth_badly( "" ) == behavior::status_t::running );
         REQUIRE( oracle.can_obtain_warmth( "" ) == behavior::status_t::failure );
 
-        // No warmth sources, no fire supplies -> idle
+
         CHECK( npc_needs.tick( &oracle ) == "idle" );
     }
 }
 
 TEST_CASE( "tree_tick_full_returns_score", "[behavior]" )
 {
-    // Verify tick_full exposes the BT's utility score.
-    // A cold, thirsty NPC with both water and warmth sources available
-    // should produce a goal with a nonzero urgency score.
+
+
+
     clear_map_without_vision();
     set_time_to_day();
     get_weather().forced_temperature = -30_C;
@@ -558,14 +558,14 @@ TEST_CASE( "tree_tick_full_returns_score", "[behavior]" )
     test_npc.set_fac( faction_your_followers );
     test_npc.set_attitude( NPCATT_FOLLOW );
 
-    // Make the NPC cold and thirsty so npc_needs produces a scored goal.
+
     test_npc.set_all_parts_temp_conv( BODYTEMP_VERY_COLD );
     test_npc.set_thirst( 700 );
     test_npc.set_stored_kcal( 55000 );
     test_npc.set_hunger( 0 );
     test_npc.worn.wear_item( test_npc, item( itype_backpack ), false, false );
 
-    // Give warmth source (inventory sweater) and water source (inventory).
+
     test_npc.i_add( item( itype_sweater ) );
     const item_group::ItemList water_items = item_group::items_from(
                 Item_spawn_data_test_bottle_water );
@@ -579,10 +579,10 @@ TEST_CASE( "tree_tick_full_returns_score", "[behavior]" )
     bt.add( &behavior_node_t_npc_needs.obj() );
 
     auto [goal, score] = bt.tick_full( &oracle );
-    // The BT should select a needs goal with a positive urgency score.
+
     CHECK_FALSE( goal == "idle" );
     CHECK( score > 0.0f );
-    // tick_full and tick should agree on the goal.
+
     CHECK( bt.tick( &oracle ) == goal );
 }
 
@@ -609,7 +609,7 @@ TEST_CASE( "check_monster_behavior_tree_locust", "[monster][behavior]" )
         test_monster.set_special( "EAT_CROP", 0 );
         CHECK( monster_goals.tick( &oracle ) == "idle" );
 
-        // Gross but I couldn't figure out how to place a sealed item without manual mapgen and the mapgen helper version doesn't let you specify rel_ms and adding that as a defaulted arg breaks the templated manual_mapgen()...
+
         const tripoint_abs_ms abs_pos = here.get_abs( monster_location );
         tripoint_abs_omt pos;
         point_omt_ms pos_rel;
@@ -653,12 +653,12 @@ TEST_CASE( "check_monster_behavior_tree_shoggoth", "[monster][behavior]" )
         CHECK( monster_goals.tick( &oracle ) == "ABSORB_ITEMS" );
 
         mattack::absorb_items( &test_monster );
-        // test that the frame is removed and no items remain
+
         CHECK( here.i_at( test_monster.pos_bub() ).empty() );
 
         test_monster.set_special( "ABSORB_ITEMS", 0 );
 
-        // test that the monster is idle with no items around and not enough HP to split
+
         CHECK( monster_goals.tick( &oracle ) == "idle" );
     }
     SECTION( "Special Attack SPLIT" ) {
@@ -666,7 +666,7 @@ TEST_CASE( "check_monster_behavior_tree_shoggoth", "[monster][behavior]" )
         int new_hp = test_monster.type->hp * 2 + 2;
         test_monster.set_hp( new_hp );
 
-        // also set proper conditions for ABSORB_ITEMS to make sure SPLIT takes priority
+
         test_monster.set_special( "ABSORB_ITEMS", 0 );
         here.add_item( test_monster.pos_bub(), item( itype_frame ) );
 
@@ -674,7 +674,7 @@ TEST_CASE( "check_monster_behavior_tree_shoggoth", "[monster][behavior]" )
 
         mattack::split( &test_monster );
 
-        // test that the monster returns to absorbing items after the split occurs
+
         CHECK( monster_goals.tick( &oracle ) == "ABSORB_ITEMS" );
         CHECK( test_monster.get_hp() < new_hp );
     }
@@ -712,7 +712,7 @@ TEST_CASE( "check_monster_behavior_tree_theoretical_corpse_eater", "[monster][be
 
         mattack::absorb_items( &test_monster );
 
-        // test that the pencil remains after the corpse is absorbed
+
         CHECK( ( here.i_at( test_monster.pos_bub() ).begin() )->display_name().rfind( "pencil" ) !=
                std::string::npos );
 
@@ -723,7 +723,7 @@ TEST_CASE( "check_monster_behavior_tree_theoretical_corpse_eater", "[monster][be
         int new_hp = test_monster.type->hp * 2 + 2;
         test_monster.set_hp( new_hp );
 
-        // also set proper conditions for ABSORB_ITEMS to make sure SPLIT takes priority
+
         here.add_item( test_monster.pos_bub(), item( itype_corpse ) );
         test_monster.set_special( "ABSORB_ITEMS", 0 );
 
@@ -732,7 +732,7 @@ TEST_CASE( "check_monster_behavior_tree_theoretical_corpse_eater", "[monster][be
         mattack::split( &test_monster );
         test_monster.set_special( "SPLIT", 1 );
 
-        // test that the monster is idle after split since it shouldn't absorb if split is on cooldown
+
         CHECK( monster_goals.tick( &oracle ) == "idle" );
         CHECK( test_monster.get_hp() < new_hp );
     }
@@ -740,7 +740,7 @@ TEST_CASE( "check_monster_behavior_tree_theoretical_corpse_eater", "[monster][be
 
 TEST_CASE( "check_monster_behavior_tree_theoretical_absorb", "[monster][behavior]" )
 {
-    // tests a monster with the ABSORB_ITEMS ability but NOT the SPLIT ability
+
     const tripoint_bub_ms monster_location( 5, 5, 0 );
     clear_map_without_vision();
     map &here = get_map();
@@ -770,8 +770,8 @@ TEST_CASE( "check_monster_behavior_tree_theoretical_absorb", "[monster][behavior
 
         mattack::absorb_items( &test_monster );
 
-        // test that the pencil does not remain after the corpse is absorbed
-        // because this shoggoth absorbs all matter indiscriminately
+
+
         CHECK( here.i_at( test_monster.pos_bub() ).empty() );
 
         CHECK( monster_goals.tick( &oracle ) == "idle" );
@@ -812,26 +812,26 @@ TEST_CASE( "behavior_tree_utility_strategy", "[behavior]" )
         behavior::tree needs;
         needs.add( &root );
 
-        // Highest score wins
+
         CHECK( needs.tick( nullptr ) == "goal_b" );
 
-        // Change scores -- now A is most urgent
+
         score_a = 20.0f;
         CHECK( needs.tick( nullptr ) == "goal_a" );
 
-        // B succeeds (need met) -- skipped, A still wins
+
         status_b = behavior::status_t::success;
         CHECK( needs.tick( nullptr ) == "goal_a" );
 
-        // A also succeeds -- C is the only running child
+
         status_a = behavior::status_t::success;
         CHECK( needs.tick( nullptr ) == "goal_c" );
 
-        // All succeed -- idle
+
         status_c = behavior::status_t::success;
         CHECK( needs.tick( nullptr ) == "idle" );
 
-        // All fail -- also idle
+
         status_a = behavior::status_t::failure;
         status_b = behavior::status_t::failure;
         status_c = behavior::status_t::failure;
@@ -839,9 +839,9 @@ TEST_CASE( "behavior_tree_utility_strategy", "[behavior]" )
     }
 
     SECTION( "branch nodes with scores" ) {
-        // Mimics the real NPC tree structure:
-        // root (utility) -> branch_a (sequential) -> leaf_a1
-        //                 -> branch_b (sequential) -> leaf_b1
+
+
+
 
         behavior::status_t leaf_a1_status = behavior::status_t::running;
         behavior::status_t leaf_b1_status = behavior::status_t::running;
@@ -881,28 +881,28 @@ TEST_CASE( "behavior_tree_utility_strategy", "[behavior]" )
         behavior::tree needs;
         needs.add( &root );
 
-        // Branch B has higher score, so goal_b1 is selected
+
         CHECK( needs.tick( nullptr ) == "goal_b1" );
 
-        // Swap scores -- now branch A wins
+
         score_a = 15.0f;
         score_b = 2.0f;
         CHECK( needs.tick( nullptr ) == "goal_a1" );
 
-        // Branch A's predicate fails -- falls through to B
+
         branch_a_pred = behavior::status_t::failure;
         CHECK( needs.tick( nullptr ) == "goal_b1" );
     }
 
     SECTION( "JSON-loaded score predicate" ) {
-        // Exercises the actual node_t::load() path for "score" field parsing
+
         float test_score = 42.0f;
         behavior::score_predicate_map["test_urgency"] =
         [&test_score]( const behavior::oracle_t *, std::string_view ) {
             return test_score;
         };
 
-        // Load a node from JSON with a score predicate, same as the generic factory does
+
         const std::string json = R"({
             "goal": "scored_goal",
             "score": "test_urgency"
@@ -911,7 +911,7 @@ TEST_CASE( "behavior_tree_utility_strategy", "[behavior]" )
         JsonObject jo = json_loader::from_string( json );
         node.load( jo, "" );
 
-        // The node should have picked up the score function from the map
+
         behavior::node_t root;
         root.set_strategy( &behavior::default_utility );
         root.add_child( &node );
@@ -921,7 +921,7 @@ TEST_CASE( "behavior_tree_utility_strategy", "[behavior]" )
 
         CHECK( needs.tick( nullptr ) == "scored_goal" );
 
-        // Clean up
+
         behavior::score_predicate_map.erase( "test_urgency" );
     }
 }
@@ -957,17 +957,17 @@ TEST_CASE( "npc_urgency_score_predicates", "[npc][behavior]" )
     }
 
     SECTION( "warmth_urgency responds to cold bodyparts" ) {
-        // Explicitly set baseline -- clear_character does not guarantee temps
+
         guy.set_all_parts_temp_conv( BODYTEMP_NORM );
         CHECK( oracle.warmth_urgency( "" ) < 0.01f );
 
-        // Single cold bodypart drives the score
+
         guy.set_part_temp_conv( body_part_torso, BODYTEMP_VERY_COLD );
         float cold_score = oracle.warmth_urgency( "" );
         CHECK( cold_score > 0.5f );
         CHECK( cold_score < 1.0f );
 
-        // At BODYTEMP_FREEZING the score saturates near 1.0
+
         guy.set_part_temp_conv( body_part_torso, BODYTEMP_FREEZING );
         CHECK( oracle.warmth_urgency( "" ) == Approx( 1.0f ).margin( 0.05f ) );
     }
@@ -1000,14 +1000,14 @@ TEST_CASE( "npc_decision_combat_predicates", "[npc][behavior]" )
     clear_map();
     npc &guy = spawn_npc( { 50, 50 }, "test_talker" );
     clear_character( guy );
-    // Allied faction ensures assess_danger considers zombies as threats,
-    // matching npc_attack_test setup.
+
+
     guy.set_fac( faction_your_followers );
     behavior::character_oracle_t oracle( &guy );
 
     SECTION( "in_danger running with hostile creature nearby" ) {
         map &here = get_map();
-        // Player underground so they don't interfere with NPC threat assessment
+
         get_player_character().setpos( here, guy.pos_bub() + tripoint( 0, 0, -2 ) );
         monster *zed = g->place_critter_at( mon_zombie,
                                             guy.pos_bub() + point::east );
@@ -1104,8 +1104,8 @@ TEST_CASE( "npc_decision_duty_predicates", "[npc][behavior]" )
         CHECK( oracle.displaced_from_post( "" ) == behavior::status_t::failure );
     }
     SECTION( "displaced detects persistent guard_pos from mission" ) {
-        // Refugee Center guards have npc::guard_pos set by dialogue,
-        // not ai_cache.guard_pos. The predicate must check both.
+
+
         guy.guard_pos = guy.pos_abs() + tripoint( 10, 0, 0 );
         CHECK( oracle.displaced_from_post( "" ) == behavior::status_t::running );
     }
@@ -1113,7 +1113,7 @@ TEST_CASE( "npc_decision_duty_predicates", "[npc][behavior]" )
         CHECK( oracle.duty_urgency( "" ) == Approx( 0.0f ) );
     }
     SECTION( "on_shift follows work_hours from npc_class" ) {
-        // Default work_hours [0,24] means always on shift.
+
         guy.set_guard_pos( guy.pos_abs() );
         calendar::turn = calendar::turn_zero + 14_hours;
         CHECK( oracle.on_shift( "" ) == behavior::status_t::running );
@@ -1124,7 +1124,7 @@ TEST_CASE( "npc_decision_duty_predicates", "[npc][behavior]" )
         CHECK( oracle.on_shift( "" ) == behavior::status_t::failure );
     }
     SECTION( "duty_urgency on-shift at post" ) {
-        // Default work_hours [0,24]: always on shift.
+
         guy.set_guard_pos( guy.pos_abs() );
         calendar::turn = calendar::turn_zero + 12_hours;
         CHECK( oracle.duty_urgency( "" ) == Approx( 0.45f ) );
@@ -1205,9 +1205,9 @@ TEST_CASE( "npc_decision_tree_priorities", "[npc][behavior]" )
         CHECK( npc_decision.tick( &oracle ) == "drink_water" );
     }
     SECTION( "infeasible need does not inflate score over duty" ) {
-        // Sleepiness 800 -> urgency 0.8, but on meth -> can_sleep fails.
-        // Thirst 200 -> below needs_water_badly threshold -> not running.
-        // No feasible need runs, so duty should win.
+
+
+
         guy.set_sleepiness( 800 );
         guy.add_effect( effect_meth, 1_hours );
         guy.set_thirst( 200 );
@@ -1222,8 +1222,8 @@ TEST_CASE( "npc_decision_tree_priorities", "[npc][behavior]" )
         CHECK( npc_decision.tick( &oracle ) == "return_to_guard_pos" );
     }
     SECTION( "exhausted guard sleeps over duty" ) {
-        // sleepiness 600 -> urgency 0.6 > duty 0.5. Policy: exhaustion
-        // is dangerous (microsleeps), guard should sleep.
+
+
         guy.set_sleepiness( 600 );
         REQUIRE( oracle.needs_sleep_badly( "" ) == behavior::status_t::running );
         REQUIRE( oracle.can_sleep( "" ) == behavior::status_t::running );
@@ -1231,9 +1231,9 @@ TEST_CASE( "npc_decision_tree_priorities", "[npc][behavior]" )
         CHECK( npc_decision.tick( &oracle ) == "go_to_sleep" );
     }
     SECTION( "tired but not exhausted guard stays on duty" ) {
-        // sleepiness 400 -> can_sleep passes (DEAD_TIRED=383), but
-        // sleepiness_urgency(0.4) < duty_urgency(0.5) -> duty wins.
-        // Default work_hours [0,24] means always on shift.
+
+
+
         guy.set_sleepiness( 400 );
         REQUIRE( oracle.needs_sleep_badly( "" ) == behavior::status_t::running );
         REQUIRE( oracle.can_sleep( "" ) == behavior::status_t::running );
@@ -1241,8 +1241,8 @@ TEST_CASE( "npc_decision_tree_priorities", "[npc][behavior]" )
         CHECK( npc_decision.tick( &oracle ) == "return_to_guard_pos" );
     }
     SECTION( "on-shift at post beats DEAD_TIRED sleep" ) {
-        // At post during shift: duty 0.45 > sleepiness_urgency 0.383.
-        // Default work_hours [0,24], so NPC is always on shift.
+
+
         guy.set_sleepiness( 383 );
         REQUIRE( oracle.needs_sleep_badly( "" ) == behavior::status_t::running );
         REQUIRE( oracle.can_sleep( "" ) == behavior::status_t::running );
@@ -1250,7 +1250,7 @@ TEST_CASE( "npc_decision_tree_priorities", "[npc][behavior]" )
         CHECK( npc_decision.tick( &oracle ) == "hold_position" );
     }
     SECTION( "idle when nothing fires" ) {
-        // Ensure no stale guard_pos from spawn (random traits may set it).
+
         guy.guard_pos = std::nullopt;
         guy.clear_ai_guard_pos();
         CHECK( npc_decision.tick( &oracle ) == "idle" );
@@ -1268,7 +1268,7 @@ TEST_CASE( "npc_decision_category_mapping", "[npc][behavior]" )
         CHECK( bt_goal_to_category( "go_to_sleep" ) == decision_category::needs );
         CHECK( bt_goal_to_category( "start_fire" ) == decision_category::needs );
         CHECK( bt_goal_to_category( "seek_warmth" ) == decision_category::needs );
-        // Legacy warmth goals removed from BT; now unmodeled.
+
         CHECK( bt_goal_to_category( "wear_warmer_clothes" ) == decision_category::unmodeled );
         CHECK( bt_goal_to_category( "take_shelter" ) == decision_category::unmodeled );
         CHECK( bt_goal_to_category( "return_to_guard_pos" ) == decision_category::duty );
@@ -1322,8 +1322,8 @@ TEST_CASE( "npc_decision_bt_contract_guard_duty", "[npc][behavior]" )
     }
     SECTION( "guard at post on shift: BT returns hold_position" ) {
         guy.set_guard_pos( guy.pos_abs() );
-        // Default work_hours [0,24] = always on shift. At post, on shift
-        // means hold_position (duty 0.45 beats any sub-threshold need).
+
+
         CHECK( npc_decision.tick( &oracle ) == "hold_position" );
     }
 }
@@ -1447,8 +1447,8 @@ TEST_CASE( "npc_is_following_predicate", "[npc][behavior]" )
     }
 }
 
-// Provisional urgency thresholds -- will change when the time_to_die
-// evaluation contract lands (#28681). Tests pin current behavior.
+
+
 TEST_CASE( "npc_following_urgency_policy", "[npc][behavior]" )
 {
     clear_map_without_vision();
@@ -1479,15 +1479,15 @@ TEST_CASE( "npc_following_urgency_policy", "[npc][behavior]" )
         CHECK( follow_score > hunger_score );
     }
     SECTION( "follow_close cleared: still fires, loose radius (6)" ) {
-        // follow_close rule controls preferred spacing, not whether-to-follow.
-        // Cleared rule = loose follow at radius 6.
+
+
         guy.rules.clear_flag( ally_rule::follow_close );
         get_player_character().setpos( here, tripoint_bub_ms( 55, 50, 0 ) );
         REQUIRE( rl_dist( guy.pos_abs(), get_player_character().pos_abs() ) == 5 );
-        // Within loose radius -> 0 urgency (already in position).
+
         CHECK( oracle.npc_following_urgency( "" ) == Approx( 0.0f ) );
         get_player_character().setpos( here, tripoint_bub_ms( 70, 50, 0 ) );
-        // Beyond loose radius -> non-zero urgency.
+
         CHECK( oracle.npc_following_urgency( "" ) > 0.0f );
     }
     SECTION( "follow capped below life-threatening needs" ) {
@@ -1750,7 +1750,7 @@ TEST_CASE( "bt_priority_matrix", "[npc][behavior]" )
         CHECK( bt_goal( guy ) != "follow_player" );
     }
     SECTION( "waiting NPC with follow_close: follows" ) {
-        // WAIT is in is_following(), same as old cascade.
+
         guy.set_attitude( NPCATT_WAIT );
         guy.rules.set_flag( ally_rule::follow_close );
         get_player_character().setpos( here, tripoint_bub_ms( 70, 50, 0 ) );
@@ -1842,7 +1842,7 @@ TEST_CASE( "bt_priority_matrix", "[npc][behavior]" )
     }
 }
 
-// --- Camp resident state split tests ---
+
 
 TEST_CASE( "duty_predicates_skip_camp_residents", "[npc][behavior]" )
 {
@@ -1886,7 +1886,7 @@ TEST_CASE( "bt_camp_resident_goals", "[npc][behavior]" )
     guy.set_fac( faction_your_followers );
     guy.set_mission( NPC_MISSION_CAMP_RESIDENT );
 
-    // Create a real camp so the BT predicates can resolve it.
+
     const tripoint_abs_omt camp_omt = project_to<coords::omt>( guy.pos_abs() );
     here.add_camp( camp_omt, "faction_camp" );
     std::optional<basecamp *> bcp = overmap_buffer.find_camp( camp_omt.xy() );
@@ -1924,7 +1924,7 @@ TEST_CASE( "bt_camp_resident_expansion_tile", "[npc][behavior]" )
     clear_avatar();
     map &here = get_map();
 
-    // Place camp at mid-map so we control OMT alignment.
+
     const tripoint_bub_ms mid{ MAPSIZE_X / 2, MAPSIZE_Y / 2, 0 };
     const tripoint_abs_omt camp_omt = project_to<coords::omt>( here.get_abs( mid ) );
 
@@ -1934,13 +1934,13 @@ TEST_CASE( "bt_camp_resident_expansion_tile", "[npc][behavior]" )
     basecamp *test_camp = *bcp;
     test_camp->define_camp( camp_omt, "faction_base_bare_bones_NPC_camp_0", false );
 
-    // Add an expansion one OMT to the east.
+
     const tripoint_abs_omt expansion_omt = camp_omt + tripoint::east;
     test_camp->add_expansion( "faction_base_farm_0", expansion_omt,
                               point_rel_omt{ 1, 0 } );
     REQUIRE( test_camp->point_within_camp( expansion_omt ) );
 
-    // Spawn NPC anywhere, then teleport to the expansion tile.
+
     npc &guy = spawn_npc( mid.xy(), "test_talker" );
     clear_character( guy, true );
     const tripoint_abs_ms expansion_center =

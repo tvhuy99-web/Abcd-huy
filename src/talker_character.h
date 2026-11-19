@@ -13,10 +13,10 @@
 #include "type_id.h"
 #include "units_fwd.h"
 
-/*
- * Talker wrapper class for const Character access.
- * Should never be invoked directly.  Only talker_avatar and talker_npc are really valid.
- */
+
+
+
+
 class talker_character_const: virtual public const_talker
 {
     public:
@@ -34,7 +34,7 @@ class talker_character_const: virtual public const_talker
             return me_chr_const;
         }
 
-        // identity and location
+
         std::string disp_name() const override;
         std::string get_name() const override;
         character_id getID() const override;
@@ -50,7 +50,7 @@ class talker_character_const: virtual public const_talker
         int get_hp_max( const bodypart_id &bp ) const override;
         units::temperature get_cur_part_temp( const bodypart_id &bp ) const override;
 
-        // stats, skills, traits, bionics, and magic
+
         int get_trauma() const override;
         int get_artifact_resonance() const override;
         int str_cur() const override;
@@ -105,7 +105,7 @@ class talker_character_const: virtual public const_talker
         bool knows_proficiency( const proficiency_id &proficiency ) const override;
         time_duration proficiency_practiced_time( const proficiency_id & ) const override;
 
-        // effects and values
+
         bool has_effect( const efftype_id &effect_id, const bodypart_id &bp ) const override;
         effect get_effect( const efftype_id &effect_id, const bodypart_id &bp ) const override;
         float get_limb_score( const limb_score_id &score,
@@ -114,7 +114,7 @@ class talker_character_const: virtual public const_talker
         bool is_mute() const override;
         diag_value const *maybe_get_value( const std::string &var_name ) const override;
 
-        // stats, skills, traits, bionics, magic, and proficiencies
+
         std::vector<skill_id> skills_teacheable() const override;
         std::vector<skill_id> skills_offered_to( const_talker const &student ) const override;
         std::string skill_seminar_text( const skill_id &s ) const override;
@@ -133,7 +133,7 @@ class talker_character_const: virtual public const_talker
         std::string spell_seminar_text( const spell_id & ) const override;
         std::string spell_training_text( const_talker const &, const spell_id & ) const override;
 
-        // inventory, buying, and selling
+
         bool is_wearing( const itype_id &item_id ) const override;
         int charges_of( const itype_id &item_id ) const override;
         bool has_charges( const itype_id &item_id, int count ) const override;
@@ -149,10 +149,10 @@ class talker_character_const: virtual public const_talker
         bool has_software( const itype_id &software_id, int min_charges = 0,
                            const itype_id &device_id = itype_id::NULL_ID() ) const override;
 
-        // factions and alliances
+
         faction *get_faction() const override;
 
-        // other descriptors
+
         std::string short_description() const override;
         bool has_activity() const override;
         bool is_mounted() const override;
@@ -223,10 +223,10 @@ class talker_character_const: virtual public const_talker
         talker_character_const() = default;
 };
 
-/*
- * Talker wrapper class for mutable Character access.
- * Should never be invoked directly.  Only talker_avatar and talker_npc are really valid.
- */
+
+
+
+
 class talker_character: virtual public talker
 {
     public:
@@ -247,7 +247,7 @@ class talker_character: virtual public talker
         void set_pos( tripoint_bub_ms new_pos ) override;
         void set_pos( tripoint_abs_ms new_pos ) override;
 
-        // stats, skills, traits, bionics, and magic
+
         void set_trauma( int value ) override;
         void set_str_max( int value ) override;
         void set_dex_max( int value ) override;
@@ -286,7 +286,7 @@ class talker_character: virtual public talker
         void set_value( const std::string &var_name, diag_value const &value ) override;
         void remove_value( const std::string &var_name ) override;
 
-        // inventory, buying, and selling
+
         std::list<item> use_charges( const itype_id &item_name, int count ) override;
         std::list<item> use_charges( const itype_id &item_name, int count, bool in_tools ) override;
         std::list<item> use_amount( const itype_id &item_name, int count ) override;
@@ -298,7 +298,7 @@ class talker_character: virtual public talker
         void mod_stored_kcal( int value, bool ignore_weariness ) override;
         void set_thirst( int value ) override;
 
-        // speaking
+
         void shout( const std::string &speech = "", bool order = false ) override;
 
         void set_sleepiness( int amount ) override;
@@ -339,4 +339,4 @@ class talker_character: virtual public talker
     protected:
         talker_character() = default;
 };
-#endif // CATA_SRC_TALKER_CHARACTER_H
+#endif

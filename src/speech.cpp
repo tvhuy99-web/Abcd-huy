@@ -34,7 +34,7 @@ const SpeechBubble &get_speech( const std::string &label )
                 label );
 
     if( speech_type == speech.end() || speech_type->second.empty() ) {
-        // Bad lookup, return a fake sound, also warn?
+
         return nullSpeech;
     }
 

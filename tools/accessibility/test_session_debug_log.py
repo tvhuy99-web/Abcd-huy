@@ -65,9 +65,9 @@ class SessionDebugLogSourceTest(unittest.TestCase):
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text("utf-8")
         self.assertIn("public void setContent(View content, int initialFocus)", surface)
 
-        # A singleInstance game creates a separate Android task for every
-        # child Activity. singleTask keeps the debug log inside the game task
-        # so Recents names the game and Back reveals gameplay.
+
+
+
         manifest = ET.parse(RES.parent / "AndroidManifest.xml").getroot()
         android = "{http://schemas.android.com/apk/res/android}"
         activities = manifest.find("application").findall("activity")

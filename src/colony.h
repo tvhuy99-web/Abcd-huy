@@ -12,9 +12,9 @@ namespace cata
 template<class T, class Allocator = std::allocator<T>>
 using colony = plf::colony<T, Allocator>;
 
-// plf::colony has no index<->iterator member helpers; use ADL friend
-// advance/distance on the iterator (std::distance is not specialized for
-// plf iterators and would fall back to a linear walk).
+
+
+
 template<class T, class Allocator>
 inline std::size_t get_index_from_iterator( const colony<T, Allocator> &c,
         typename colony<T, Allocator>::const_iterator it )
@@ -33,6 +33,6 @@ inline typename colony<T, Allocator>::iterator get_iterator_from_index(
     advance( it, static_cast<typename colony<T, Allocator>::iterator::difference_type>( idx ) );
     return it;
 }
-} // namespace cata
+}
 
-#endif // CATA_SRC_COLONY_H
+#endif

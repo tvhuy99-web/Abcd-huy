@@ -18,17 +18,17 @@
 
 namespace ff
 {
-/**
-* Given a starting point, flood fill out to the 4-connected points, applying the provided predicate
-* to determine if a given point should be added to the collection of flood-filled points, and then
-* return that collection.
-* @param starting_point starting point of the flood fill. No assumptions made about if it will satisfy
-* the predicate.
-* @param visited externally provided set of points that have already been designated as visited which
-* will be updated by this call.
-* @param predicate UnaryPredicate that will be provided with a point for evaluation as to whether or
-* not the point should be filled.
-*/
+
+
+
+
+
+
+
+
+
+
+
 template<template <typename...> typename Container, typename Point, typename UnaryPredicate>
 Container<Point> point_flood_fill_4_connected( const Point &starting_point,
         std::unordered_set<Point> &visited, UnaryPredicate predicate )
@@ -129,13 +129,13 @@ void flood_fill_visit_10_connected( const tripoint_bub_ms &starting_point, Unary
             }
         }
         tripoint_bub_ms current_point{ static_cast<int>( current_span.startX ), static_cast <int>( current_span.y ), static_cast<int>( current_span.z ) };
-        // Special handling for spans with a vertical offset.
+
         if( current_span.dz != 0 ) {
             bool span_found = false;
             struct span new_span {
                 current_span.startX, current_span.endX, current_span.y, current_span.dy, current_span.z, 0
             };
-            // Iterate over tiles in the span, adding to new span as long as check passes.
+
             while( current_point.x() <= current_span.endX ) {
                 if( check_vertical( current_point, current_span.dz ) ) {
                     span_found = true;
@@ -162,9 +162,9 @@ void flood_fill_visit_10_connected( const tripoint_bub_ms &starting_point, Unary
             continue;
         }
 
-        // Scan to the left of the leftmost point in the current span.
+
         if( check( current_point, 0 ) ) {
-            // This decrements before visiting because the next loop will visit the current value of startX
+
             current_point.x()--;
             while( check( current_point, 0 ) ) {
                 visitor( current_point );
@@ -172,7 +172,7 @@ void flood_fill_visit_10_connected( const tripoint_bub_ms &starting_point, Unary
                 current_point.x()--;
             }
             current_point.x()++;
-            // If we found visitable tiles to the left of the span, emit a new span going in the other y direction to go around corners.
+
             if( current_point.x() < current_span.startX ) {
                 add_span( spans_to_process[current_z + OVERMAP_DEPTH], current_point.x() - 1,
                           current_span.startX - 1, current_span.y - current_span.dy, -current_span.dy,
@@ -181,14 +181,14 @@ void flood_fill_visit_10_connected( const tripoint_bub_ms &starting_point, Unary
         }
         int furthestX = current_point.x();
         current_point.x() = current_span.startX;
-        // Scan the span itself, running off the edge to the right if possible.
+
         while( current_point.x() <= current_span.endX ) {
             while( check( current_point, 0 ) ) {
                 visitor( current_point );
                 visited[current_point.z() + OVERMAP_DEPTH][current_point.y()].set( current_point.x() );
                 current_point.x()++;
             }
-            // If we have made any progress in the above loops, emit a span going in our initial y direction as well as in both vertical directions.
+
             if( current_point.x() > furthestX ) {
                 add_span( spans_to_process[current_z + OVERMAP_DEPTH], furthestX - 1, current_point.x(),
                           current_span.y + current_span.dy, current_span.dy,
@@ -202,22 +202,22 @@ void flood_fill_visit_10_connected( const tripoint_bub_ms &starting_point, Unary
                               current_span.y, 0, current_span.z - 1, -1 );
                 }
             }
-            // If we found visitable tiles to the right of the span, emit a new span going in the other y direction to go around corners.
+
             if( current_point.x() - 1 > current_span.endX ) {
                 add_span( spans_to_process[current_z + OVERMAP_DEPTH], current_span.endX + 1, current_point.x(),
                           current_span.y - current_span.dy, -current_span.dy, current_span.z, 0 );
             }
-            // This is pointing to a tile that faied the predicate, so advance to the next tile.
+
             current_point.x()++;
-            // Scan past any unvisitable tiles up to the end of the current span.
+
             while( current_point.x() < current_span.endX && !predicate( current_point, 0 ) ) {
                 current_point.x()++;
             }
-            // We either found a new visitable tile or ran off the end of the span, record our new scan start point regardless.
+
             furthestX = current_point.x();
         }
     }
 }
-} // namespace ff
+}
 
-#endif // CATA_SRC_FLOOD_FILL_H
+#endif

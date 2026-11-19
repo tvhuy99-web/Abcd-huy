@@ -73,7 +73,7 @@ static const skill_id skill_fabrication( "fabrication" );
 
 static const trait_id trait_DEBUG_CNF( "DEBUG_CNF" );
 
-// ---- Data model tests ----
+
 
 TEST_CASE( "step_recipe_loads_correctly", "[recipe][steps]" )
 {
@@ -172,9 +172,9 @@ TEST_CASE( "step_recipe_root_requirements_separate_from_step_tools", "[recipe][s
         }
     }
 
-    // Root charged tools are metered across all timed steps, attended or
-    // unattended, so finalize accepts them regardless of which tiers the recipe
-    // uses.  Inline finalize keeps these probe recipes out of loaded TEST_DATA.
+
+
+
     const auto finalize_msg = []( const std::string & steps_json ) -> std::string {
         recipe r;
         JsonObject jo = json_loader::from_string( string_format(
@@ -267,14 +267,14 @@ TEST_CASE( "step_recipe_can_start_craft_requires_all_step_tools", "[recipe][step
 
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
 
-    // Component present but CUT quality from Finish step is missing
+
     guy.i_add( item( itype_2x4 ) );
     guy.invalidate_crafting_inventory();
 
     CHECK_FALSE( guy.can_start_craft( &r, recipe_filter_flags::none, 1 ) );
 }
 
-// ---- Proficiency time math ----
+
 
 TEST_CASE( "step_recipe_proficiency_malus_clean_miss", "[recipe][steps]" )
 {
@@ -285,7 +285,7 @@ TEST_CASE( "step_recipe_proficiency_malus_clean_miss", "[recipe][steps]" )
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
     const int64_t raw_time = to_moves<int64_t>( 20_minutes );
 
-    // Shape: 10m * 2.0, Sand: 5m * 1.0, Finish: 5m * 1.5 => 32.5m total
+
     const int64_t with_malus = r.time_to_craft_moves( guy, {} );
     const double expected = 10.0 * to_moves<int64_t>( 1_minutes ) * 2.0 +
                             5.0 * to_moves<int64_t>( 1_minutes ) * 1.0 +
@@ -310,7 +310,7 @@ TEST_CASE( "step_recipe_proficiency_grant_removes_step_penalty", "[recipe][steps
 
     CHECK( full_malus_time > no_a_malus_time );
 
-    // Difference is exactly the Shape step penalty: 10m * (2.0 - 1.0)
+
     const int64_t diff = full_malus_time - no_a_malus_time;
     CHECK( diff == to_moves<int64_t>( 10_minutes ) );
 }
@@ -328,7 +328,7 @@ TEST_CASE( "step_recipe_partial_proficiency_sigmoid_mitigation", "[recipe][steps
     guy.add_proficiency( proficiency_prof_test_step_a, true );
     const int64_t no_malus = r.time_to_craft_moves( guy, {} );
 
-    // Train to ~75%, well past the sigmoid midpoint
+
     guy.lose_proficiency( proficiency_prof_test_step_a, true );
     const time_duration three_quarter = proficiency_prof_test_step_a->time_to_learn() * 3 / 4;
     guy.practice_proficiency( proficiency_prof_test_step_a, three_quarter );
@@ -337,7 +337,7 @@ TEST_CASE( "step_recipe_partial_proficiency_sigmoid_mitigation", "[recipe][steps
 
     CHECK( partial_malus < full_malus );
     CHECK( partial_malus > no_malus );
-    // At 75% the sigmoid should have mitigated most of the penalty
+
     CHECK( partial_malus < ( full_malus + no_malus ) / 2 );
 }
 
@@ -348,13 +348,13 @@ TEST_CASE( "step_recipe_same_prof_in_two_steps", "[recipe][steps]" )
     REQUIRE( r.has_steps() );
     REQUIRE( r.steps().size() == 2 );
 
-    // Aggregate should deduplicate to one entry with max time_multiplier
+
     const std::vector<recipe_proficiency> &profs = r.get_proficiencies();
     CHECK( profs.size() == 1 );
     CHECK( profs[0].id == proficiency_prof_test_step_a );
     CHECK( profs[0].time_multiplier == Approx( 2.0f ) );
 
-    // Both steps penalized independently: 10m * 2.0 + 10m * 2.0 = 40m
+
     clear_avatar();
     Character &guy = get_player_character();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -364,7 +364,7 @@ TEST_CASE( "step_recipe_same_prof_in_two_steps", "[recipe][steps]" )
     CHECK( with_malus == static_cast<int64_t>( expected ) );
 }
 
-// ---- Proficiency display ----
+
 
 TEST_CASE( "step_recipe_missing_proficiencies_string", "[recipe][steps]" )
 {
@@ -392,15 +392,15 @@ TEST_CASE( "step_recipe_display_malus_is_step_derived", "[recipe][steps]" )
     const int64_t raw_time = to_moves<int64_t>( 20_minutes );
     const int64_t actual_time = r.time_to_craft_moves( guy, {} );
 
-    // Display ratio should match actual_time / raw_time
+
     CHECK( display_malus == Approx( static_cast<float>( actual_time ) /
                                     static_cast<float>( raw_time ) ).margin( 0.01f ) );
 
-    // Should NOT be the raw product of aggregate profs (2.0 * 1.5 = 3.0)
+
     CHECK( display_malus < 3.0f );
 }
 
-// ---- Batch ----
+
 
 TEST_CASE( "step_recipe_per_step_batch_savings", "[recipe][steps]" )
 {
@@ -419,7 +419,7 @@ TEST_CASE( "step_recipe_per_step_batch_savings", "[recipe][steps]" )
     CHECK( batch4_time < single_time * 4 );
     CHECK( batch4_time > single_time );
 
-    // Verify against manual per-step calculation
+
     double manual_batch = 0.0;
     for( const recipe_step &s : r.steps() ) {
         manual_batch += s.batch_info.apply( static_cast<double>( s.time ), batch );
@@ -427,7 +427,7 @@ TEST_CASE( "step_recipe_per_step_batch_savings", "[recipe][steps]" )
     CHECK( batch4_time == static_cast<int64_t>( manual_batch ) );
 }
 
-// ---- Backwards compatibility ----
+
 
 TEST_CASE( "stepless_recipe_unchanged", "[recipe][steps]" )
 {
@@ -445,7 +445,7 @@ TEST_CASE( "stepless_recipe_unchanged", "[recipe][steps]" )
     CHECK_FALSE( r.get_proficiencies().empty() );
 }
 
-// ---- Schema rejection (load-time throws) ----
+
 
 static void check_step_recipe_throws( const std::string &json )
 {
@@ -457,7 +457,7 @@ static void check_step_recipe_throws( const std::string &json )
 
 TEST_CASE( "step_recipe_schema_rejection", "[recipe][steps]" )
 {
-    // Verify a well-formed step recipe loads without throwing
+
     const std::string base = R"({
         "type": "recipe",
         "result": "cudgel",
@@ -611,8 +611,8 @@ TEST_CASE( "step_recipe_schema_rejection", "[recipe][steps]" )
     }
 
     SECTION( "copy-from on step recipe is allowed" ) {
-        // copy-from is consumed by recipe_dictionary::load(), not recipe::load().
-        // allow_omitted_members() suppresses the unread-data error.
+
+
         const std::string json = R"({
             "type": "recipe",
             "result": "cudgel",
@@ -634,7 +634,7 @@ TEST_CASE( "step_recipe_schema_rejection", "[recipe][steps]" )
     }
 }
 
-// Helper: load + finalize an inline recipe
+
 static recipe load_and_finalize( const std::string &json )
 {
     JsonObject jo = json_loader::from_string( json );
@@ -646,7 +646,7 @@ static recipe load_and_finalize( const std::string &json )
 
 TEST_CASE( "step_recipe_root_using_merges_into_simple_requirements", "[recipe][steps]" )
 {
-    // sewing_standard has qualities SEW/1, CUT/2, FABRIC_CUT/1 and component filament
+
     const recipe r = load_and_finalize( R"({
         "type": "recipe", "result": "cudgel", "id_suffix": "test_root_using_merge",
         "category": "CC_WEAPON", "subcategory": "CSC_WEAPON_BASHING",
@@ -670,7 +670,7 @@ TEST_CASE( "step_recipe_root_using_merges_into_simple_requirements", "[recipe][s
     }
     CHECK( has_sew );
 
-    // filament is a LIST requirement that expands to thread, sinew, etc.
+
     bool has_thread = false;
     for( const std::vector<item_comp> &comp_group : reqs.get_components() ) {
         for( const item_comp &comp : comp_group ) {
@@ -684,7 +684,7 @@ TEST_CASE( "step_recipe_root_using_merges_into_simple_requirements", "[recipe][s
 
 TEST_CASE( "step_recipe_step_using_merges_into_step_requirements", "[recipe][steps]" )
 {
-    // sewing_standard has qualities SEW/1, CUT/2, FABRIC_CUT/1
+
     const recipe r = load_and_finalize( R"({
         "type": "recipe", "result": "cudgel", "id_suffix": "test_step_using_merge",
         "category": "CC_WEAPON", "subcategory": "CSC_WEAPON_BASHING",
@@ -713,7 +713,7 @@ TEST_CASE( "step_recipe_step_using_merges_into_step_requirements", "[recipe][ste
     }
     CHECK( step_has_sew );
 
-    // Recipe-level requirements should also include SEW (merged from step)
+
     bool recipe_has_sew = false;
     for( const std::vector<quality_requirement> &qual_group :
          r.simple_requirements().get_qualities() ) {
@@ -726,7 +726,7 @@ TEST_CASE( "step_recipe_step_using_merges_into_step_requirements", "[recipe][ste
     CHECK( recipe_has_sew );
 }
 
-// ---- End-to-end craft ----
+
 
 static void setup_step_craft( const recipe_id &rid )
 {
@@ -831,14 +831,14 @@ TEST_CASE( "step_recipe_interrupt_and_resume", "[recipe][steps][crafting]" )
     }
     REQUIRE( first_turns == 5 );
 
-    // Kill light to force interrupt
+
     set_time( calendar::turn_zero + 0_hours );
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
     const bool craft_stopped = !guy.activity || guy.activity.id() != ACT_CRAFT;
     REQUIRE( craft_stopped );
 
-    // Find in-progress craft and resume
+
     std::vector<item *> crafts = guy.items_with( []( const item & itm ) {
         return itm.is_craft();
     } );
@@ -857,23 +857,23 @@ TEST_CASE( "step_recipe_interrupt_and_resume", "[recipe][steps][crafting]" )
     CHECK( std::abs( total_turns - expected_turns ) <= 1 );
 }
 
-// ---- Step iteration tests ----
 
-// Helper: setup step craft WITHOUT granting proficiencies
+
+
 static void setup_step_craft_no_profs( const recipe_id &rid )
 {
     setup_step_craft( rid );
     avatar &guy = get_avatar();
     const recipe &r = rid.obj();
 
-    // Strip all step proficiencies (setup_step_craft grants them)
+
     for( const recipe_proficiency &p : r.get_proficiencies() ) {
         if( !p.required ) {
             guy.lose_proficiency( p.id, true );
         }
     }
 
-    // Restart craft without profs, re-supplying consumed components
+
     guy.cancel_activity();
     guy.remove_weapon();
     map &here = get_map();
@@ -890,7 +890,7 @@ static void setup_step_craft_no_profs( const recipe_id &rid )
     REQUIRE( guy.activity.id() == ACT_CRAFT );
 }
 
-// Helper: advance N turns, with periodic focus updates
+
 static void advance_turns( avatar &guy, int n )
 {
     for( int i = 0; i < n && guy.activity.id() == ACT_CRAFT; ++i ) {
@@ -902,12 +902,12 @@ static void advance_turns( avatar &guy, int n )
     }
 }
 
-// Helper: advance until craft reaches a given step index
+
 static void advance_until_step( avatar &guy, int target_step )
 {
     int safety = 0;
     while( guy.activity.id() == ACT_CRAFT && safety < 100000 ) {
-        // Find the in-progress craft item
+
         item *craft = nullptr;
         for( item *it : guy.items_with( []( const item & itm ) {
         return itm.is_craft();
@@ -916,7 +916,7 @@ static void advance_until_step( avatar &guy, int target_step )
             break;
         }
         if( !craft ) {
-            // Craft is wielded
+
             if( guy.get_wielded_item() && guy.get_wielded_item()->is_craft() ) {
                 craft = &*guy.get_wielded_item();
             }
@@ -934,7 +934,7 @@ static void advance_until_step( avatar &guy, int target_step )
     REQUIRE( safety < 100000 );
 }
 
-// Helper: find the in-progress craft item on the avatar
+
 static item *find_craft_item( avatar &guy )
 {
     for( item *it : guy.items_with( []( const item & itm ) {
@@ -948,7 +948,7 @@ static item *find_craft_item( avatar &guy )
     return nullptr;
 }
 
-// step_budget_moves helper returns correct values
+
 TEST_CASE( "step_budget_moves_direct", "[recipe][steps]" )
 {
     clear_avatar();
@@ -974,9 +974,9 @@ TEST_CASE( "step_budget_moves_direct", "[recipe][steps]" )
 
     SECTION( "prof_A missing, batch 1" ) {
         guy.lose_proficiency( proficiency_prof_test_step_a, true );
-        // Step 0 has prof_A with 2x malus -> doubled
+
         CHECK( r.step_budget_moves( guy, 0, 1, {} ) == Approx( 120000.0 ) );
-        // Other steps unaffected
+
         CHECK( r.step_budget_moves( guy, 1, 1, {} ) == Approx( 30000.0 ) );
         CHECK( r.step_budget_moves( guy, 2, 1, {} ) == Approx( 30000.0 ) );
     }
@@ -990,14 +990,14 @@ TEST_CASE( "step_budget_moves_direct", "[recipe][steps]" )
     }
 }
 
-// step transitions at exact boundaries
+
 TEST_CASE( "step_transitions_exact_boundaries", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
     avatar &guy = get_avatar();
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
 
-    // With all profs and batch=1, step budgets are 600, 300, 300 turns
+
     const int step_0_turns = static_cast<int>( r.step_budget_moves( guy, 0, 1, {} ) / 100 );
     const int step_1_turns = static_cast<int>( r.step_budget_moves( guy, 1, 1, {} ) / 100 );
     REQUIRE( step_0_turns == 600 );
@@ -1006,26 +1006,26 @@ TEST_CASE( "step_transitions_exact_boundaries", "[recipe][steps][crafting]" )
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
 
-    // Just before step 0 boundary
+
     advance_turns( guy, step_0_turns - 1 );
     CHECK( craft->get_current_step() == 0 );
 
-    // Cross step 0 boundary
+
     advance_turns( guy, 1 );
     CHECK( craft->get_current_step() == 1 );
-    // Remainder should be small (at most one turn's worth of work)
+
     CHECK( craft->get_step_progress() >= 0.0 );
     CHECK( craft->get_step_progress() < 200.0 );
 
-    // Cross step 1 boundary
+
     advance_turns( guy, step_1_turns );
     CHECK( craft->get_current_step() == 2 );
 
-    // Complete
+
     run_craft_to_completion( guy );
 }
 
-// multiple step boundaries crossed in single turn
+
 TEST_CASE( "step_multi_boundary_single_turn", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
@@ -1034,51 +1034,51 @@ TEST_CASE( "step_multi_boundary_single_turn", "[recipe][steps][crafting]" )
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
 
-    // Step budgets: 60000 + 30000 + 30000 = 120000mv.
-    // Give 100000 moves -> crosses step 0 and step 1, lands in step 2.
+
+
     guy.set_moves( 100000 );
     guy.activity.do_turn( guy );
 
     CHECK( craft->get_current_step() == 2 );
     CHECK( craft->get_step_progress() == Approx( 100000.0 - 60000.0 - 30000.0 ).margin( 100.0 ) );
-    // Should NOT have completed (need 120000 total)
+
     CHECK( guy.activity.id() == ACT_CRAFT );
 }
 
-// exertion changes per step
+
 TEST_CASE( "step_exertion_per_step", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
     avatar &guy = get_avatar();
 
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
-    // Step 0: MODERATE_EXERCISE
+
     CHECK( guy.activity.exertion_level() == Approx( r.steps()[0].exertion ) );
 
-    // Advance to step 1 (LIGHT_EXERCISE)
+
     advance_until_step( guy, 1 );
-    // Need one more do_turn for exertion_level to read the updated step
+
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
     CHECK( guy.activity.exertion_level() == Approx( r.steps()[1].exertion ) );
 
-    // Advance to step 2 (NO_EXERCISE)
+
     advance_until_step( guy, 2 );
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
     CHECK( guy.activity.exertion_level() == Approx( r.steps()[2].exertion ) );
 }
 
-// exertion correct on resume
+
 TEST_CASE( "step_exertion_correct_on_resume", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
     avatar &guy = get_avatar();
 
-    // Advance into step 1
+
     advance_until_step( guy, 1 );
 
-    // Interrupt (kill light)
+
     set_time( calendar::turn_zero + 0_hours );
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
@@ -1087,7 +1087,7 @@ TEST_CASE( "step_exertion_correct_on_resume", "[recipe][steps][crafting]" )
         REQUIRE( craft_stopped );
     }
 
-    // Resume
+
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
     REQUIRE( craft->get_current_step() == 1 );
@@ -1097,12 +1097,12 @@ TEST_CASE( "step_exertion_correct_on_resume", "[recipe][steps][crafting]" )
     REQUIRE( guy.activity );
     REQUIRE( guy.activity.id() == ACT_CRAFT );
 
-    // Exertion should be step 1's value (LIGHT_EXERCISE), not step 0 or average
+
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
     CHECK( guy.activity.exertion_level() == Approx( r.steps()[1].exertion ) );
 }
 
-// proficiency learning is targeted to current step
+
 TEST_CASE( "step_proficiency_learning_targeted", "[recipe][steps][crafting]" )
 {
     setup_step_craft_no_profs( recipe_cudgel_test_steps_basic );
@@ -1114,16 +1114,16 @@ TEST_CASE( "step_proficiency_learning_targeted", "[recipe][steps][crafting]" )
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
 
-    // Run through step 0 into step 1. Step 0 has prof_A.
+
     advance_until_step( guy, 1 );
 
-    // At this point, all step 0 learning is done. Snapshot.
+
     float prof_a_at_step1_entry = guy.get_proficiency_practice( proficiency_prof_test_step_a );
     float prof_b_at_step1_entry = guy.get_proficiency_practice( proficiency_prof_test_step_b );
     CHECK( prof_a_at_step1_entry > 0.0f );
     CHECK( prof_b_at_step1_entry == 0.0f );
 
-    // Run in step 1 (Sand, no profs) past a 5% tick boundary.
+
     const int counter_at_step1_entry = craft->item_counter;
     while( craft->get_current_step() == 1 &&
            craft->item_counter / 500000 == counter_at_step1_entry / 500000 ) {
@@ -1133,15 +1133,15 @@ TEST_CASE( "step_proficiency_learning_targeted", "[recipe][steps][crafting]" )
             break;
         }
     }
-    // Verify we crossed a 5% tick while in step 1
+
     REQUIRE( craft->item_counter / 500000 > counter_at_step1_entry / 500000 );
 
-    // prof_A should not have changed (Sand has no profs)
+
     CHECK( guy.get_proficiency_practice( proficiency_prof_test_step_a ) ==
            Approx( prof_a_at_step1_entry ) );
     CHECK( guy.get_proficiency_practice( proficiency_prof_test_step_b ) == 0.0f );
 
-    // Advance into step 2 (Finish, prof_B). Run past a 5% tick.
+
     advance_until_step( guy, 2 );
     const int counter_at_step2_entry = craft->item_counter;
     while( craft->get_current_step() == 2 &&
@@ -1155,7 +1155,7 @@ TEST_CASE( "step_proficiency_learning_targeted", "[recipe][steps][crafting]" )
     CHECK( guy.get_proficiency_practice( proficiency_prof_test_step_b ) > 0.0f );
 }
 
-// retroactive repricing when proficiency learned mid-step
+
 TEST_CASE( "step_retroactive_repricing", "[recipe][steps][crafting]" )
 {
     setup_step_craft_no_profs( recipe_cudgel_test_steps_basic );
@@ -1164,22 +1164,22 @@ TEST_CASE( "step_retroactive_repricing", "[recipe][steps][crafting]" )
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
 
-    // Step 0 budget with missing prof_A (2x) = 120000mv = 1200 turns.
-    // Run 800 turns (2/3 of doubled budget).
+
+
     advance_turns( guy, 800 );
     REQUIRE( guy.activity.id() == ACT_CRAFT );
     CHECK( craft->get_current_step() == 0 );
 
-    // Grant prof_A. Budget drops to 60000mv. step_progress (~80000) > new budget.
+
     guy.add_proficiency( proficiency_prof_test_step_a, true );
 
-    // Next turn should transition past step 0.
+
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
     CHECK( craft->get_current_step() == 1 );
 }
 
-// progress message contains step name
+
 TEST_CASE( "step_progress_message_contains_step_name", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
@@ -1190,7 +1190,7 @@ TEST_CASE( "step_progress_message_contains_step_name", "[recipe][steps][crafting
     CHECK( msg->find( "Shape" ) != std::string::npos );
 
     advance_until_step( guy, 1 );
-    // Need one turn to update the progress message path
+
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
     msg = guy.activity.get_progress_message( guy );
@@ -1205,7 +1205,7 @@ TEST_CASE( "step_progress_message_contains_step_name", "[recipe][steps][crafting
     CHECK( msg->find( "Finish" ) != std::string::npos );
 }
 
-// item round-trip preserves step state
+
 TEST_CASE( "step_item_state_round_trip", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
@@ -1218,14 +1218,14 @@ TEST_CASE( "step_item_state_round_trip", "[recipe][steps][crafting]" )
     REQUIRE( craft->get_current_step() == 1 );
     REQUIRE( craft->get_step_progress() >= 0.0 );
 
-    // Advance a few more turns to accumulate some step_progress
+
     advance_turns( guy, 10 );
 
     const int saved_step = craft->get_current_step();
     const double saved_progress = craft->get_step_progress();
     const int saved_counter = craft->item_counter;
 
-    // Serialize
+
     std::string serialized;
     {
         std::ostringstream os;
@@ -1234,7 +1234,7 @@ TEST_CASE( "step_item_state_round_trip", "[recipe][steps][crafting]" )
         serialized = os.str();
     }
 
-    // Deserialize into fresh item
+
     item loaded_item;
     {
         std::istringstream is( serialized );
@@ -1247,7 +1247,7 @@ TEST_CASE( "step_item_state_round_trip", "[recipe][steps][crafting]" )
     CHECK( loaded_item.item_counter == saved_counter );
 }
 
-// interrupt and resume completes at expected time
+
 TEST_CASE( "step_interrupt_resume_completes", "[recipe][steps][crafting]" )
 {
     setup_step_craft( recipe_cudgel_test_steps_basic );
@@ -1257,16 +1257,16 @@ TEST_CASE( "step_interrupt_resume_completes", "[recipe][steps][crafting]" )
     const int expected_moves = r.batch_time( guy, 1, 1.0f, 0, {} );
     const int expected_turns = divide_round_up( expected_moves, 100 );
 
-    // Advance into step 1
+
     advance_until_step( guy, 1 );
 
-    // Count turns so far
+
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
     int first_turns = static_cast<int>( craft->item_counter *
                                         static_cast<double>( expected_turns ) / 10000000.0 );
 
-    // Interrupt
+
     set_time( calendar::turn_zero + 0_hours );
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
@@ -1275,7 +1275,7 @@ TEST_CASE( "step_interrupt_resume_completes", "[recipe][steps][crafting]" )
         REQUIRE( craft_stopped );
     }
 
-    // Resume
+
     craft = find_craft_item( guy );
     REQUIRE( craft );
     set_time( calendar::turn_zero + 12_hours );
@@ -1287,8 +1287,8 @@ TEST_CASE( "step_interrupt_resume_completes", "[recipe][steps][crafting]" )
     CHECK( std::abs( total_turns - expected_turns ) <= 2 );
 }
 
-// legacy migration from saves without step fields
-// Strips a JSON key-value pair from a serialized string.
+
+
 static void strip_json_field( std::string &json, const std::string &field_name )
 {
     std::string quoted = "\"" + field_name + "\"";
@@ -1313,7 +1313,7 @@ TEST_CASE( "step_legacy_migration", "[recipe][steps][crafting]" )
     avatar &guy = get_avatar();
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
 
-    // Advance to ~60% progress
+
     const int total_turns = divide_round_up(
                                 static_cast<int>( r.batch_time( guy, 1, 1.0f, 0, {} ) ), 100 );
     advance_turns( guy, total_turns * 6 / 10 );
@@ -1323,7 +1323,7 @@ TEST_CASE( "step_legacy_migration", "[recipe][steps][crafting]" )
     REQUIRE( craft );
     REQUIRE( craft->item_counter > 0 );
 
-    // Interrupt the craft so we can swap the item
+
     set_time( calendar::turn_zero + 0_hours );
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
@@ -1332,13 +1332,13 @@ TEST_CASE( "step_legacy_migration", "[recipe][steps][crafting]" )
         REQUIRE( craft_stopped );
     }
 
-    // Find the interrupted craft item
+
     craft = find_craft_item( guy );
     REQUIRE( craft );
     const int saved_counter = craft->item_counter;
     REQUIRE( saved_counter > 0 );
 
-    // Serialize it, strip the step fields to simulate a pre-step-iteration save
+
     std::string serialized;
     {
         std::ostringstream os;
@@ -1351,7 +1351,7 @@ TEST_CASE( "step_legacy_migration", "[recipe][steps][crafting]" )
     CHECK( serialized.find( "current_step" ) == std::string::npos );
     CHECK( serialized.find( "step_progress" ) == std::string::npos );
 
-    // Deserialize into a legacy item (missing fields default to 0)
+
     item legacy_item;
     {
         JsonValue jsin = json_loader::from_string( serialized );
@@ -1362,12 +1362,12 @@ TEST_CASE( "step_legacy_migration", "[recipe][steps][crafting]" )
     CHECK( legacy_item.get_step_progress() == 0.0 );
     CHECK( legacy_item.item_counter == saved_counter );
 
-    // Swap: remove the current craft, add the legacy item
+
     guy.i_rem( craft );
     guy.i_add( legacy_item );
     guy.invalidate_crafting_inventory();
 
-    // Resume the legacy craft
+
     set_time( calendar::turn_zero + 12_hours );
     item *legacy_craft = find_craft_item( guy );
     REQUIRE( legacy_craft );
@@ -1375,23 +1375,23 @@ TEST_CASE( "step_legacy_migration", "[recipe][steps][crafting]" )
     REQUIRE( guy.activity );
     REQUIRE( guy.activity.id() == ACT_CRAFT );
 
-    // Find the craft item again (may have moved due to wielding)
+
     legacy_craft = find_craft_item( guy );
     REQUIRE( legacy_craft );
 
-    // Run one turn to trigger migration
+
     guy.set_moves( 100 );
     guy.activity.do_turn( guy );
 
-    // At 60% progress: step 0 is 50% of total, so migration should land in step 1
+
     CHECK( legacy_craft->get_current_step() == 1 );
     CHECK( legacy_craft->get_step_progress() > 0.0 );
 }
 
-// stepless recipe is unaffected by step iteration
+
 TEST_CASE( "stepless_recipe_step_state_unchanged", "[recipe][steps][crafting]" )
 {
-    // Use cudgel_simple from TEST_DATA -- a non-step recipe
+
     setup_step_craft( recipe_cudgel_simple );
     avatar &guy = get_avatar();
 
@@ -1401,17 +1401,17 @@ TEST_CASE( "stepless_recipe_step_state_unchanged", "[recipe][steps][crafting]" )
     item *craft = find_craft_item( guy );
     REQUIRE( craft );
 
-    // Run partway
+
     advance_turns( guy, 50 );
     REQUIRE( guy.activity.id() == ACT_CRAFT );
 
     CHECK( craft->get_current_step() == 0 );
     CHECK( craft->get_step_progress() == 0.0 );
 
-    // Exertion is recipe-level
+
     CHECK( guy.activity.exertion_level() == Approx( r.exertion_level() ) );
 
-    // Progress message contains craft name but no step names
+
     std::optional<std::string> msg = guy.activity.get_progress_message( guy );
     REQUIRE( msg.has_value() );
     CHECK( msg->find( "Shape" ) == std::string::npos );
@@ -1419,8 +1419,8 @@ TEST_CASE( "stepless_recipe_step_state_unchanged", "[recipe][steps][crafting]" )
     CHECK( msg->find( "Finish" ) == std::string::npos );
 }
 
-// Simulate copy-from: load base, then child onto same object.
-// Matches recipe_dictionary::load() behavior.
+
+
 static recipe load_base_then_child( const std::string &base_json,
                                     const std::string &child_json )
 {
@@ -1430,7 +1430,7 @@ static recipe load_base_then_child( const std::string &base_json,
         jo.allow_omitted_members();
         r.load( jo, "dda" );
     }
-    // Mark as loaded so optional() preserves inherited values
+
     r.was_loaded = true;
     {
         JsonObject jo = json_loader::from_string( child_json );
@@ -1440,7 +1440,7 @@ static recipe load_base_then_child( const std::string &base_json,
     return r;
 }
 
-// Base fixture with steps + step-level using (reused across tests)
+
 static const std::string step_base_json = R"({
     "type": "recipe",
     "result": "cudgel",
@@ -1464,7 +1464,7 @@ static const std::string step_base_json = R"({
 
 TEST_CASE( "step_recipe_inherited_steps_with_root_fields_rejected", "[recipe][steps]" )
 {
-    // Child inherits steps but declares stepless-only root fields -> error
+
     SECTION( "root time" ) {
         CHECK_THROWS_AS( load_base_then_child( step_base_json, R"({
             "type": "recipe", "result": "cudgel", "id_suffix": "test_inherit_time",
@@ -1528,8 +1528,8 @@ TEST_CASE( "step_recipe_inherited_steps_with_root_fields_rejected", "[recipe][st
 
 TEST_CASE( "step_recipe_copy_from_inherits_steps", "[recipe][steps]" )
 {
-    // Child inherits steps from base (no "steps" in child JSON).
-    // Base has step-level using to verify reqs_external carriage.
+
+
     recipe r = load_base_then_child( step_base_json, R"({
         "type": "recipe", "result": "cudgel", "id_suffix": "test_inherit_steps",
         "category": "CC_WEAPON", "subcategory": "CSC_WEAPON_BASHING",
@@ -1543,7 +1543,7 @@ TEST_CASE( "step_recipe_copy_from_inherits_steps", "[recipe][steps]" )
     CHECK( r.steps()[1].name.translated() == "Finish" );
     CHECK( r.difficulty == 2 );
 
-    // Finalize and verify step-level using resolved
+
     r.finalize();
     bool step_has_sew = false;
     for( const std::vector<quality_requirement> &qual_group :
@@ -1576,7 +1576,7 @@ TEST_CASE( "step_recipe_copy_from_overrides_steps", "[recipe][steps]" )
 
 TEST_CASE( "step_recipe_copy_from_inherits_root_using", "[recipe][steps]" )
 {
-    // Base has root using (sewing_standard). Child inherits steps, no own using.
+
     recipe r = load_base_then_child( step_base_json, R"({
         "type": "recipe", "result": "cudgel", "id_suffix": "test_inherit_using",
         "category": "CC_WEAPON", "subcategory": "CSC_WEAPON_BASHING",
@@ -1624,11 +1624,11 @@ TEST_CASE( "step_recipe_copy_from_preserves_root_using_when_steps_overridden", "
 
 TEST_CASE( "step_recipe_copy_from_child_using_replaces_base_using", "[recipe][steps]" )
 {
-    // Use a base with root sewing_standard but NO step-level using.
-    // This way, SEW only appears if root using survives.
-    // Child replaces root using with welding_standard (has GLARE, not SEW).
-    // If replacement works: GLARE present, SEW absent.
-    // If it regressed to merge: both GLARE and SEW present.
+
+
+
+
+
     static const std::string root_only_using_base = R"({
         "type": "recipe", "result": "cudgel", "id_suffix": "test_root_only_using_base",
         "category": "CC_WEAPON", "subcategory": "CSC_WEAPON_BASHING",
@@ -1668,8 +1668,8 @@ TEST_CASE( "step_recipe_copy_from_child_using_replaces_base_using", "[recipe][st
 
 TEST_CASE( "step_recipe_copy_from_missing_components_absent", "[recipe][steps]" )
 {
-    // Base has root components (2x4). Child omits components.
-    // The debugmsg about missing components is expected.
+
+
     recipe r;
     capture_debugmsg_during( [&]() {
         r = load_base_then_child( step_base_json, R"({
@@ -1732,13 +1732,13 @@ TEST_CASE( "step_recipe_abstract_base_to_concrete_child", "[recipe][steps]" )
     }
     CHECK( has_2x4 );
 
-    // Time should be sum of steps
+
     CHECK( r.time_to_craft_moves( get_player_character(), {},
                                   recipe_time_flag::ignore_proficiencies ) ==
            to_moves<int64_t>( 15_minutes ) );
 }
 
-// ---- Edge case: required/optional proficiency conflict across steps ----
+
 
 TEST_CASE( "step_recipe_required_optional_prof_conflict", "[recipe][steps]" )
 {
@@ -1777,7 +1777,7 @@ TEST_CASE( "step_recipe_required_optional_prof_conflict", "[recipe][steps]" )
     } );
     CHECK( dmsg.find( "required in one step but optional" ) != std::string::npos );
 
-    // Fallback: required wins, multipliers zeroed
+
     const std::vector<recipe_proficiency> &profs = r.get_proficiencies();
     REQUIRE( profs.size() == 1 );
     CHECK( profs[0].id == proficiency_prof_test_step_required );
@@ -1786,13 +1786,13 @@ TEST_CASE( "step_recipe_required_optional_prof_conflict", "[recipe][steps]" )
     CHECK( profs[0].skill_penalty == 0.0f );
 }
 
-// ---- Edge case: required prof zero-divisor guard in craft_proficiency_gain ----
+
 
 TEST_CASE( "step_recipe_required_prof_no_crash_in_learning", "[recipe][steps][crafting]" )
 {
-    // This recipe has a required prof (zero time_multiplier in aggregate) and
-    // an optional prof. Without the guard in craft_proficiency_gain, the
-    // required prof would cause division by zero during learning.
+
+
+
     const recipe &r = recipe_cudgel_test_steps_required_prof.obj();
 
     bool has_zero_mult = false;
@@ -1811,7 +1811,7 @@ TEST_CASE( "step_recipe_required_prof_no_crash_in_learning", "[recipe][steps][cr
     guy.setpos( here, origin );
     guy.toggle_trait( trait_DEBUG_CNF );
     guy.set_skill_level( skill_fabrication, 10 );
-    // Grant required prof (gating), but NOT the optional one (will be learned)
+
     guy.add_proficiency( proficiency_prof_test_step_required, true );
     REQUIRE( !guy.has_proficiency( proficiency_prof_test_step_a ) );
 
@@ -1826,16 +1826,16 @@ TEST_CASE( "step_recipe_required_prof_no_crash_in_learning", "[recipe][steps][cr
     REQUIRE( guy.activity );
     REQUIRE( guy.activity.id() == ACT_CRAFT );
 
-    // Without the zero-divisor guard this crashes with SIGFPE
+
     const int turns = run_craft_to_completion( guy );
     CHECK( turns > 0 );
 
     CHECK( guy.get_proficiency_practice( proficiency_prof_test_step_a ) > 0.0f );
 }
 
-// ---- Tool speed modifier tests ----
 
-// Helper: place a single item on the ground at avatar origin and refresh crafting inv.
+
+
 static void place_tool( const itype_id &tool_id )
 {
     map &here = get_map();
@@ -1846,7 +1846,7 @@ static void place_tool( const itype_id &tool_id )
 
 TEST_CASE( "tool_quality_object_loads", "[recipe][steps][tool_speed]" )
 {
-    // test_fast_cutter uses object quality format with speed
+
     const itype *fast = &*itype_test_fast_cutter;
     REQUIRE( fast != nullptr );
 
@@ -1858,7 +1858,7 @@ TEST_CASE( "tool_quality_object_loads", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "tool_quality_array_still_works", "[recipe][steps][tool_speed]" )
 {
-    // knife_hunting uses old array format, speed defaults to 1.0
+
     const itype *knife = &*itype_knife_hunting;
     REQUIRE( knife != nullptr );
 
@@ -1870,8 +1870,8 @@ TEST_CASE( "tool_quality_array_still_works", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "tool_quality_speed_only_declared", "[recipe][steps][tool_speed]" )
 {
-    // Speed only applies to the quality it's declared on.
-    // test_fast_cutter has CUT with speed 0.5 but no BUTCHER quality at all.
+
+
     const itype *fast = &*itype_test_fast_cutter;
     REQUIRE( fast != nullptr );
 
@@ -1879,13 +1879,13 @@ TEST_CASE( "tool_quality_speed_only_declared", "[recipe][steps][tool_speed]" )
     REQUIRE( cut_it != fast->qualities.end() );
     CHECK( cut_it->second.speed == Approx( 0.5f ) );
 
-    // BUTCHER must not be present -- verifies the default-speed path:
-    // a missing quality means no speed modifier (effectively 1.0)
+
+
     auto butcher_it = fast->qualities.find( qual_BUTCHER );
     CHECK( butcher_it == fast->qualities.end() );
 
-    // Also verify a tool that HAS multiple qualities gets speed only on declared ones.
-    // knife_hunting has CUT and BUTCHER, both without speed -> both default to 1.0
+
+
     const itype *knife = &*itype_knife_hunting;
     REQUIRE( knife != nullptr );
     auto knife_cut = knife->qualities.find( qual_CUT );
@@ -1896,11 +1896,11 @@ TEST_CASE( "tool_quality_speed_only_declared", "[recipe][steps][tool_speed]" )
     CHECK( knife_butcher->second.speed == Approx( 1.0f ) );
 }
 
-// ---- Tool speed: query infrastructure ----
+
 
 TEST_CASE( "best_speed_single_item", "[recipe][steps][tool_speed]" )
 {
-    // Single fast tool on ground, query returns its speed
+
     clear_avatar();
     clear_map();
     avatar &guy = get_avatar();
@@ -1915,7 +1915,7 @@ TEST_CASE( "best_speed_single_item", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "best_speed_picks_fastest", "[recipe][steps][tool_speed]" )
 {
-    // Two tools, one fast (0.5) one slow (1.5), should pick fastest
+
     clear_avatar();
     clear_map();
     avatar &guy = get_avatar();
@@ -1931,7 +1931,7 @@ TEST_CASE( "best_speed_picks_fastest", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "best_speed_no_modifier_returns_one", "[recipe][steps][tool_speed]" )
 {
-    // knife_hunting has CUT but no speed modifier -> 1.0
+
     clear_avatar();
     clear_map();
     avatar &guy = get_avatar();
@@ -1946,7 +1946,7 @@ TEST_CASE( "best_speed_no_modifier_returns_one", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "best_speed_insufficient_level_ignored", "[recipe][steps][tool_speed]" )
 {
-    // test_fast_cutter is CUT level 1; query for CUT level 2 -> doesn't qualify -> 1.0
+
     clear_avatar();
     clear_map();
     avatar &guy = get_avatar();
@@ -1956,15 +1956,15 @@ TEST_CASE( "best_speed_insufficient_level_ignored", "[recipe][steps][tool_speed]
     place_tool( itype_test_fast_cutter );
     const temp_crafting_inventory &inv = guy.crafting_inventory();
 
-    // Level 1 should work
+
     CHECK( best_quality_speed_modifier( inv, guy, qual_CUT, 1 ) == Approx( 0.5f ) );
-    // Level 2 should not qualify
+
     CHECK( best_quality_speed_modifier( inv, guy, qual_CUT, 2 ) == Approx( 1.0f ) );
 }
 
 TEST_CASE( "best_speed_slow_tool_returns_above_one", "[recipe][steps][tool_speed]" )
 {
-    // Slow tool (1.5x) is the only qualifying item -- must return 1.5, not 1.0
+
     clear_avatar();
     clear_map();
     avatar &guy = get_avatar();
@@ -1979,7 +1979,7 @@ TEST_CASE( "best_speed_slow_tool_returns_above_one", "[recipe][steps][tool_speed
 
 TEST_CASE( "best_speed_charged_quality_when_charged", "[recipe][steps][tool_speed]" )
 {
-    // Charged tool (copy-from cordless_drill) with CUT level 2, speed 0.3
+
     clear_avatar();
     clear_map();
     map &here = get_map();
@@ -1987,9 +1987,9 @@ TEST_CASE( "best_speed_charged_quality_when_charged", "[recipe][steps][tool_spee
     const tripoint_bub_ms origin( 60, 60, 0 );
     guy.setpos( here, origin );
 
-    // Create the tool and give it a loaded battery magazine
+
     item tool( itype_test_charged_fast_cutter );
-    // Insert a charged battery into the magazine well
+
     item battery( itype_heavy_battery_cell );
     battery.ammo_set( itype_battery, 100 );
     tool.put_in( battery, pocket_type::MAGAZINE_WELL );
@@ -1999,21 +1999,21 @@ TEST_CASE( "best_speed_charged_quality_when_charged", "[recipe][steps][tool_spee
     guy.invalidate_crafting_inventory();
     const temp_crafting_inventory &inv = guy.crafting_inventory();
 
-    // Level 1 query -- charged quality at level 2 qualifies, speed 0.3
+
     CHECK( best_quality_speed_modifier( inv, guy, qual_CUT, 1 ) == Approx( 0.3f ) );
-    // Level 2 query -- still qualifies (charged quality is level 2)
+
     CHECK( best_quality_speed_modifier( inv, guy, qual_CUT, 2 ) == Approx( 0.3f ) );
 }
 
-// ---- Tool speed: step time integration ----
 
-// cudgel_test_steps_basic: Shape (10m/60000mv, no quals), Sand (5m/30000mv, no quals),
-//                          Finish (5m/30000mv, CUT quality level 1)
-// With all profs known, no tool speed: budgets are 60000, 30000, 30000.
+
+
+
+
 
 TEST_CASE( "step_budget_with_tool_speed", "[recipe][steps][tool_speed]" )
 {
-    // Finish step with fast cutter (0.5x) -> 15000. Without -> 30000.
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -2024,10 +2024,10 @@ TEST_CASE( "step_budget_with_tool_speed", "[recipe][steps][tool_speed]" )
     REQUIRE( r.has_steps() );
     REQUIRE( r.steps().size() == 3 );
 
-    // Without tool speed: Finish step (idx 2) budget = 30000
+
     CHECK( r.step_budget_moves( guy, 2, 1, {} ) == Approx( 30000.0 ) );
 
-    // With tool speed vector: [1.0, 1.0, 0.5] -- only Finish affected
+
     std::vector<float> speeds = { 1.0f, 1.0f, 0.5f };
     CHECK( r.step_budget_moves( guy, 0, 1, crafting_cost_context{ {}, speeds } ) == Approx( 60000.0 ) );
     CHECK( r.step_budget_moves( guy, 1, 1, crafting_cost_context{ {}, speeds } ) == Approx( 30000.0 ) );
@@ -2036,12 +2036,12 @@ TEST_CASE( "step_budget_with_tool_speed", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "tool_speed_composes_with_proficiency", "[recipe][steps][tool_speed]" )
 {
-    // Missing prof_B (1.5x malus on Finish), fast cutter (0.5x) -> 30000*1.5*0.5 = 22500
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
     guy.add_proficiency( proficiency_prof_test_step_a, true );
-    // prof_B NOT granted -- Finish step has it with time_multiplier 1.5
+
 
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
     std::vector<float> speeds = { 1.0f, 1.0f, 0.5f };
@@ -2050,7 +2050,7 @@ TEST_CASE( "tool_speed_composes_with_proficiency", "[recipe][steps][tool_speed]"
 
 TEST_CASE( "batch_time_with_tool_speed", "[recipe][steps][tool_speed]" )
 {
-    // batch_time with fast tool < without
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -2062,14 +2062,14 @@ TEST_CASE( "batch_time_with_tool_speed", "[recipe][steps][tool_speed]" )
     std::vector<float> speeds = { 1.0f, 1.0f, 0.5f };
     int64_t time_with_speed = r.batch_time( guy, 1, 1.0f, 0, crafting_cost_context{ {}, speeds } );
 
-    // Finish step is 30000 -> 15000 with tool speed, so total drops by 15000
+
     CHECK( time_with_speed < time_no_speed );
     CHECK( time_no_speed - time_with_speed == 15000 );
 }
 
 TEST_CASE( "step_without_qualities_unaffected", "[recipe][steps][tool_speed]" )
 {
-    // Shape and Sand steps have no qualities; tool speed doesn't affect them
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -2078,12 +2078,12 @@ TEST_CASE( "step_without_qualities_unaffected", "[recipe][steps][tool_speed]" )
 
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
 
-    // Even with a speed vector that has non-1.0 values, steps without
-    // qualities in their requirements should use 1.0 regardless.
-    // (The tool_speed_for_step computation would return 1.0 for them.)
-    // But step_budget_moves takes the vector directly, so the values matter.
-    // This test verifies that the CALLER (compute_tool_speeds) produces 1.0
-    // for steps without quality requirements. For now, test the vector path.
+
+
+
+
+
+
     std::vector<float> speeds = { 1.0f, 1.0f, 0.5f };
     CHECK( r.step_budget_moves( guy, 0, 1, crafting_cost_context{ {}, speeds } ) == Approx( 60000.0 ) );
     CHECK( r.step_budget_moves( guy, 1, 1, crafting_cost_context{ {}, speeds } ) == Approx( 30000.0 ) );
@@ -2091,7 +2091,7 @@ TEST_CASE( "step_without_qualities_unaffected", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "slow_tool_increases_step_time", "[recipe][steps][tool_speed]" )
 {
-    // Slow tool (1.5x) on Finish step -> 45000
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -2105,7 +2105,7 @@ TEST_CASE( "slow_tool_increases_step_time", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "mixed_speed_multi_step_invariant", "[recipe][steps][tool_speed]" )
 {
-    // sum(step_budget_moves) ~= batch_time() with the same speed vector
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -2120,14 +2120,14 @@ TEST_CASE( "mixed_speed_multi_step_invariant", "[recipe][steps][tool_speed]" )
         sum += r.step_budget_moves( guy, i, 1, crafting_cost_context{ {}, speeds } );
     }
     int64_t bt = r.batch_time( guy, 1, 1.0f, 0, crafting_cost_context{ {}, speeds } );
-    // batch_time truncates to int64_t; sum is double. Within 1 move.
+
     CHECK( std::abs( sum - static_cast<double>( bt ) ) <= 1.0 );
 }
 
 TEST_CASE( "single_item_floor_with_tool_speed", "[recipe][steps][tool_speed]" )
 {
-    // batch=1 with fast tool. The single-item floor in batch_time()
-    // must be speed-aware. Result should be less than without tool speed.
+
+
     clear_avatar();
     avatar &guy = get_avatar();
     guy.set_skill_level( skill_fabrication, 10 );
@@ -2139,14 +2139,14 @@ TEST_CASE( "single_item_floor_with_tool_speed", "[recipe][steps][tool_speed]" )
     std::vector<float> speeds = { 1.0f, 1.0f, 0.5f };
     int64_t with_speed = r.batch_time( guy, 1, 1.0f, 0, crafting_cost_context{ {}, speeds } );
 
-    // batch=1 hits the single-item floor. If the floor is NOT speed-aware,
-    // with_speed would equal no_speed (clamped back up). It must be less.
+
+
     CHECK( with_speed < no_speed );
 }
 
-// ---- Tool speed: end-to-end ----
 
-// Variant of setup_step_craft that places a specific tool for CUT quality.
+
+
 static void setup_step_craft_with_tool( const recipe_id &rid, const itype_id &cut_tool )
 {
     clear_avatar();
@@ -2169,7 +2169,7 @@ static void setup_step_craft_with_tool( const recipe_id &rid, const itype_id &cu
                                          comp_group.front().count ) );
         }
     }
-    // Place the specified tool for CUT quality instead of knife_hunting
+
     here.add_item( origin, item( cut_tool ) );
     guy.invalidate_crafting_inventory();
     guy.learn_recipe( &r );
@@ -2184,31 +2184,31 @@ static void setup_step_craft_with_tool( const recipe_id &rid, const itype_id &cu
 
 TEST_CASE( "craft_completes_faster_with_fast_tool", "[recipe][steps][tool_speed]" )
 {
-    // End-to-end craft with fast cutter takes fewer turns.
-    // Run with normal knife
+
+
     setup_step_craft_with_tool( recipe_cudgel_test_steps_basic, itype_knife_hunting );
     avatar &guy1 = get_avatar();
     const int normal_turns = run_craft_to_completion( guy1 );
 
-    // Run with fast cutter (0.5x on CUT quality, Finish step)
+
     setup_step_craft_with_tool( recipe_cudgel_test_steps_basic, itype_test_fast_cutter );
     avatar &guy2 = get_avatar();
     const int fast_turns = run_craft_to_completion( guy2 );
 
-    // Fast tool should complete in fewer turns
+
     CHECK( fast_turns < normal_turns );
 
-    // The difference should be approximately half of the Finish step time
-    // Finish step = 30000mv = 300 turns at 100 moves/turn.
-    // With 0.5x speed: 150 turns. Saved: ~150 turns.
+
+
+
     int saved = normal_turns - fast_turns;
-    CHECK( saved > 100 );  // at least 100 turns saved (conservative)
-    CHECK( saved < 200 );  // not more than 200 (only Finish step affected)
+    CHECK( saved > 100 );
+    CHECK( saved < 200 );
 }
 
 TEST_CASE( "stepless_recipe_unaffected_by_tool_speed", "[recipe][steps][tool_speed]" )
 {
-    // Non-step recipe time unchanged by tool speed items nearby
+
     clear_avatar();
     clear_map();
     map &here = get_map();
@@ -2224,32 +2224,32 @@ TEST_CASE( "stepless_recipe_unaffected_by_tool_speed", "[recipe][steps][tool_spe
         guy.add_proficiency( p.id, true );
     }
 
-    // batch_time with and without tool speeds should be identical for stepless
+
     int64_t no_speed = r.batch_time( guy, 1, 1.0f, 0, {} );
-    std::vector<float> speeds;  // empty for stepless
+    std::vector<float> speeds;
     int64_t with_speed = r.batch_time( guy, 1, 1.0f, 0, crafting_cost_context{ {}, speeds } );
     CHECK( no_speed == with_speed );
 }
 
-// ---- Tool speed: validation ----
 
-// ---- Tool speed: crafter-aware qualification in compute_tool_speeds ----
+
+
 
 TEST_CASE( "compute_tool_speeds_charged_quality_npc_crafter", "[recipe][steps][tool_speed]" )
 {
-    // Regression: compute_tool_speeds() gates alternatives with inv.has_quality()
-    // which resolves charged qualities via get_player_character(), not the actual
-    // crafter.  This test uses an NPC as crafter to expose the leak.
+
+
+
     clear_avatar();
     clear_map();
     map &here = get_map();
     const tripoint_bub_ms npc_pos( 60, 60, 0 );
 
-    // Create an NPC at the test position
+
     standard_npc crafter_npc( "TestCrafter", npc_pos, {}, 0, 8, 8, 8, 8 );
     crafter_npc.setpos( here, npc_pos );
 
-    // Place charged fast cutter (charged_qualities CUT level 2 speed 0.3) on ground
+
     item tool( itype_test_charged_fast_cutter );
     item battery( itype_heavy_battery_cell );
     battery.ammo_set( itype_battery, 100 );
@@ -2260,18 +2260,18 @@ TEST_CASE( "compute_tool_speeds_charged_quality_npc_crafter", "[recipe][steps][t
     const recipe &r = recipe_cudgel_test_steps_basic.obj();
     REQUIRE( r.has_steps() );
 
-    // compute_tool_speeds with the NPC as crafter (not the player character)
+
     std::vector<float> speeds = compute_tool_speeds( r, crafter_npc );
     REQUIRE( speeds.size() == 3 );
 
-    // Steps 0 and 1 have no CUT quality -> 1.0
+
     CHECK( speeds[0] == Approx( 1.0f ) );
     CHECK( speeds[1] == Approx( 1.0f ) );
-    // Step 2 (Finish) has CUT quality -> charged tool should provide 0.3
+
     CHECK( speeds[2] == Approx( 0.3f ) );
 }
 
-// Helper to load an item type from inline JSON.  Throws on invalid data.
+
 static void check_item_quality_throws( const std::string &json )
 {
     JsonObject jo = json_loader::from_string( json );
@@ -2304,14 +2304,14 @@ TEST_CASE( "tool_speed_negative_rejected", "[recipe][steps][tool_speed]" )
 
 TEST_CASE( "step_recipe_root_tool_distributed_by_step_budget", "[recipe][steps][crafting]" )
 {
-    // Root tool charges split across active steps by move budget, not raw time,
-    // so a per-step proficiency malus shifts more of the root tool onto the
-    // slower step even when the steps share the same nominal duration.
+
+
+
     clear_avatar();
     clear_map();
     avatar &u = get_avatar();
     u.set_skill_level( skill_fabrication, 10 );
-    // Has the Finish proficiency but not the Shape one, so only Shape is slowed.
+
     u.add_proficiency( proficiency_prof_test_step_b, true );
     u.i_add( tool_with_ammo( itype_soldering_iron_portable, 500 ) );
     u.i_add( item( itype_2x4 ) );
@@ -2354,6 +2354,6 @@ TEST_CASE( "step_recipe_root_tool_distributed_by_step_budget", "[recipe][steps][
     const int finish = root_units( 1 );
     REQUIRE( shape > 0 );
     REQUIRE( finish > 0 );
-    // Raw time alone would split the root tool evenly; the Shape malus tips it.
+
     CHECK( shape > finish );
 }

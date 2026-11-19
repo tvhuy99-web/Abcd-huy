@@ -21,8 +21,8 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         )
 
     def test_visual_list_keeps_original_search(self):
-        # The native visual tabs are unchanged; Android reader has its own
-        # separate 20-tile square and skips the 60-tile tab initialization.
+
+
         self.assertIn("const int radius = 60;", self.header)
         self.assertIn("closest_points_first( pos, radius )", self.menu)
         self.assertIn("get_visible_creatures( radius )", self.menu)
@@ -41,8 +41,8 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
                       self.menu)
         self.assertIn("lhs.distance < rhs.distance", self.menu)
         self.assertIn('"nearby:target:"', self.menu)
-        # Spoken direction includes the only distance phrase, but the
-        # underlying distance still drives nearest-first sorting.
+
+
         self.assertIn("node.value = relative_words( entry.relative );",
                       self.menu)
 
@@ -51,7 +51,7 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn('"nearby:page:next"', self.menu)
         self.assertIn('"nearby:page:previous"', self.menu)
         self.assertIn("const std::size_t end = std::min(", self.menu)
-        # No spoken position counters on each entry.
+
         self.assertNotIn("node.total = static_cast<int>( nearby.size() );",
                          self.menu)
 
@@ -67,8 +67,8 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("execute_accessible();", self.menu)
 
     def test_out_of_sight_nearby_destinations_can_be_routed_safely(self):
-        # Only the spoken nearby list relaxes the direct visibility gate.
-        # The path still uses the game's obstacle and danger avoidance.
+
+
         call = self.menu.split(
             "g->safe_route_to( you, target.target", 1
         )[1].split("if( !route )", 1)[0]
@@ -82,7 +82,7 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("if( is_dangerous_tile( p ) )", self.game)
         self.assertIn("who.get_pathfinding_settings()", self.game)
         self.assertIn("you.set_destination( *route );", self.menu)
-        # Preserve the non-accessible behavior.
+
         self.assertIn('} else if( action == "TRAVEL_TO" && path_end )', self.menu)
         self.assertIn("if( !you.sees( get_map(), *path_end ) )", self.menu)
 

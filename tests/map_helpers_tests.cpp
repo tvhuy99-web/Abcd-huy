@@ -65,8 +65,8 @@ monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub
     return *test_monster_ptr;
 }
 
-// Build a map of size MAPSIZE_X x MAPSIZE_Y around tripoint::zero with a given
-// terrain, and no furniture, traps, or items.
+
+
 void build_test_map( const ter_id &terrain )
 {
     map &here = get_map();
@@ -87,7 +87,7 @@ void build_water_test_map( const ter_id &surface, const ter_id &mid, const ter_i
     constexpr int z_surface = 0;
     constexpr int z_bottom = -2;
 
-    clear_map_with_vision( z_bottom - 1, z_surface + 1, /* with_vision = */ false );
+    clear_map_with_vision( z_bottom - 1, z_surface + 1, false );
 
     map &here = get_map();
     const tripoint_bub_ms p1( 0, 0, z_bottom - 1 );
@@ -137,7 +137,7 @@ void set_time_to_day()
     set_time( noon );
 }
 
-// Set current time of day, and refresh map and caches for the new light level
+
 void set_time( const time_point &time )
 {
     calendar::turn = time;
@@ -169,14 +169,14 @@ namespace
 {
 struct vision_cache_snapshot {
     std::map<int, std::unique_ptr<level_cache_default_zero_members>> levels;
-    // per pair: optical and physical trace, each with and without fields
+
     std::vector<std::array<bool, 4>> sees;
     std::vector<int> vision_levels;
     uint64_t seen_generation = 0;
     std::map<int, std::pair<uint64_t, uint64_t>> level_generations;
     std::map<int, bool> has_colored_lights;
 };
-} // namespace
+}
 
 static std::array<bool, 4> sees_all_traces( const map &here, const tripoint_bub_ms &from,
         const tripoint_bub_ms &to )
@@ -192,7 +192,7 @@ static vision_cache_snapshot snapshot_vision_caches( const los_pairs &pairs )
     const map &here = get_map();
     vision_cache_snapshot snap;
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
-        // any reader may ask any level for light, which builds it on demand
+
         here.light_at( tripoint_bub_ms( 0, 0, z ) );
     }
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
@@ -229,8 +229,8 @@ static void check_layer_matches( const std::string &layer, const int z, const Ge
     CHECK( mismatches == 0 );
 }
 
-// light is compared on every level; final classification on the levels a
-// request at zlev reads, from the avatar's view range down
+
+
 static void check_snapshots_match( const vision_cache_snapshot &a, const vision_cache_snapshot &b,
                                    const vision_layers layers, const int zlev )
 {

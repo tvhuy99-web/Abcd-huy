@@ -38,7 +38,7 @@ struct test_subscriber : public event_subscriber {
     std::vector<cata::event> events;
 };
 
-} // namespace
+}
 
 TEST_CASE( "push_event_on_vector", "[event]" )
 {
@@ -96,7 +96,7 @@ struct expect_subscriber : public event_subscriber {
     bool found = false;
 };
 
-} // namespace
+}
 
 TEST_CASE( "notify_subscriber_2", "[event]" )
 {

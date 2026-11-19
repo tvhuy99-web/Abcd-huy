@@ -52,7 +52,7 @@ static void check_reload_time( const itype_id &weapon, const itype_id &ammo,
     }
 
     REQUIRE( !!shooter.used_weapon() );
-    // Spooky action at a distance to tell load_RAS_weapon where to find the ammo.
+
     item::reload_option opt = shooter.select_ammo( shooter.used_weapon(), false );
     shooter.ammo_location = opt.ammo;
 
@@ -75,7 +75,7 @@ static void check_reload_time( const itype_id &weapon, const itype_id &ammo,
 
 TEST_CASE( "reload_from_inventory_times", "[reload] [inventory] [balance]" )
 {
-    // Build a list of gear loadouts ranked by expected firing speed.
+
     clear_avatar();
     SECTION( "reloading a slingshot" ) {
         SECTION( "from a backpack" ) {

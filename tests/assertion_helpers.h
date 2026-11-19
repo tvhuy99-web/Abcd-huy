@@ -15,4 +15,4 @@ void check_containers_equal( const Container1 &c1, const Container2 &c2 )
     CHECK( std::equal( c1.begin(), c1.end(), c2.begin() ) );
 }
 
-#endif // CATA_TESTS_ASSERTION_HELPERS_H
+#endif

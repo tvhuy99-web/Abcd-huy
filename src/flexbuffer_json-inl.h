@@ -20,7 +20,7 @@
 #include "memory_fast.h"
 #include "string_id.h"
 
-// The iterators have to come first because clang requires complete definitions when we call begin/end in definitions later in the header.
+
 class JsonArray::const_iterator
 {
         const_iterator( const JsonArray &object, size_t pos )
@@ -135,7 +135,7 @@ inline JsonValue::operator int64_t() const
 inline JsonValue::operator uint64_t() const
 {
     if( json_.IsIntOrUint() ) {
-        // These are always stored as signed ints.
+
         int64_t signed_value = json_.AsInt64();
         if( signed_value >= 0 ) {
             return static_cast<uint64_t>( signed_value );
@@ -148,7 +148,7 @@ inline JsonValue::operator uint64_t() const
 inline JsonValue::operator unsigned() const
 {
     if( json_.IsIntOrUint() ) {
-        // These are always stored as signed ints.
+
         int64_t signed_value = json_.AsInt64();
         if( signed_value >= 0 ) {
             return static_cast<unsigned int>( signed_value );
@@ -277,7 +277,7 @@ inline JsonObject JsonValue::get_object() const
     return static_cast<JsonObject>( *this );
 }
 
-// This is for the string_id type
+
 template <typename T>
 auto JsonValue::read( string_id<T> &thing, bool throw_on_error ) const -> bool
 {
@@ -289,7 +289,7 @@ auto JsonValue::read( string_id<T> &thing, bool throw_on_error ) const -> bool
     return true;
 }
 
-// This is for the int_id type
+
 template <typename T>
 auto JsonValue::read( int_id<T> &thing, bool throw_on_error ) const -> bool
 {
@@ -301,7 +301,7 @@ auto JsonValue::read( int_id<T> &thing, bool throw_on_error ) const -> bool
     return true;
 }
 
-/// Overload that calls a global function `deserialize(T&,JsonIn&)`, if available.
+
 template<typename T>
 auto JsonValue::read( T &v, bool throw_on_error ) const ->
 decltype( deserialize( v, *this ), true )
@@ -317,7 +317,7 @@ decltype( deserialize( v, *this ), true )
     }
 }
 
-/// Overload that calls a member function `T::deserialize(JsonIn&)`, if available.
+
 template<typename T>
 auto JsonValue::read( T &v, bool throw_on_error ) const -> decltype( v.deserialize( *this ),
         true )
@@ -349,7 +349,7 @@ bool JsonValue::read( T &val, bool throw_on_error ) const
     return false;
 }
 
-/// Overload for std::pair
+
 template<typename T, typename U>
 bool JsonValue::read( std::pair<T, U> &p, bool throw_on_error ) const
 {
@@ -375,7 +375,7 @@ bool JsonValue::read( std::pair<T, U> &p, bool throw_on_error ) const
     }
 }
 
-// array ~> vector, deque, list
+
 template < typename T, std::enable_if_t <
                !std::is_same_v<void, typename T::value_type> > * >
 auto JsonValue::read( T &v, bool throw_on_error ) const -> decltype( v.front(), true )
@@ -401,7 +401,7 @@ auto JsonValue::read( T &v, bool throw_on_error ) const -> decltype( v.front(), 
     return true;
 }
 
-// array ~> array
+
 template <typename T, size_t N>
 bool JsonValue::read( std::array<T, N> &v, bool throw_on_error ) const
 {
@@ -420,7 +420,7 @@ bool JsonValue::read( std::array<T, N> &v, bool throw_on_error ) const
         size_t i = 0;
         for( JsonValue jv : ja ) {
             if( !jv.read( v[ i ], throw_on_error ) ) {
-                return false; // invalid entry
+                return false;
             }
             ++i;
         }
@@ -433,8 +433,8 @@ bool JsonValue::read( std::array<T, N> &v, bool throw_on_error ) const
     }
 }
 
-// object ~> containers with matching key_type and value_type
-// set, unordered_set ~> object
+
+
 template <typename T, std::enable_if_t<
               std::is_same_v<typename T::key_type, typename T::value_type>> *>
 bool JsonValue::read( T &v, bool throw_on_error ) const
@@ -460,7 +460,7 @@ bool JsonValue::read( T &v, bool throw_on_error ) const
     return true;
 }
 
-// special case for enum_bitset
+
 template <typename T>
 bool JsonValue::read( enum_bitset<T> &v, bool throw_on_error ) const
 {
@@ -490,8 +490,8 @@ bool JsonValue::read( enum_bitset<T> &v, bool throw_on_error ) const
     return true;
 }
 
-// special case for colony<item> as it supports RLE
-// see corresponding `write` for details
+
+
 template <typename T, std::enable_if_t<std::is_same_v<T, item>>* >
 bool JsonValue::read( cata::colony<T> &v, bool throw_on_error ) const
 {
@@ -511,14 +511,14 @@ bool JsonValue::read( cata::colony<T> &v, bool throw_on_error ) const
                 int run_l;
                 if( rle_element[ 0 ].read( element, throw_on_error ) &&
                     rle_element[ 1 ].read( run_l, throw_on_error )
-                  ) { // all is good
-                    // first insert (run_l-1) elements
+                  ) {
+
                     for( int i = 0; i < run_l - 1; i++ ) {
                         v.insert( element );
                     }
-                    // micro-optimization, move last element
+
                     v.insert( std::move( element ) );
-                } else { // array is malformed, skipping it entirely
+                } else {
                     error_or_false( throw_on_error, "Expected end of array" );
                 }
             } else {
@@ -537,9 +537,9 @@ bool JsonValue::read( cata::colony<T> &v, bool throw_on_error ) const
     return true;
 }
 
-// special case for colony as it uses `insert()` instead of `push_back()`
-// and therefore doesn't fit with vector/deque/list
-// for colony of items there is another specialization with RLE
+
+
+
 template < typename T, std::enable_if_t < !std::is_same_v<T, item> > * >
 bool JsonValue::read( cata::colony<T> &v, bool throw_on_error ) const
 {
@@ -564,8 +564,8 @@ bool JsonValue::read( cata::colony<T> &v, bool throw_on_error ) const
     return true;
 }
 
-// object ~> containers with unmatching key_type and value_type
-// map, unordered_map ~> object
+
+
 template < typename T, std::enable_if_t <
                !std::is_same_v<typename T::key_type, typename T::value_type> > * >
 bool JsonValue::read( T &m, bool throw_on_error ) const
@@ -593,7 +593,7 @@ bool JsonValue::read( T &m, bool throw_on_error ) const
     return true;
 }
 
-// array ~> vector, deque, list
+
 template < typename T, std::enable_if_t <
                !std::is_same_v<void, typename T::value_type> > * >
 auto JsonArray::read( T &v, bool throw_on_error ) const -> decltype( v.front(), true )
@@ -618,9 +618,9 @@ auto JsonArray::read( T &v, bool throw_on_error ) const -> decltype( v.front(), 
 
 inline JsonValue JsonArray::operator[]( size_t idx ) const
 {
-    // Manually bsearch for the key idx to store in visited_fields_bitset_.
-    // flexbuffers::Map::operator[] will probably be faster but won't give us the idx,
-    // which we need to track visited fields.
+
+
+
 
     if( idx < size_ ) {
         mark_visited( idx );
@@ -763,13 +763,13 @@ E JsonArray::next_enum_value()
     }
 }
 
-// random-access read values by reference
+
 template <typename T> bool JsonArray::read_next( T &t, bool throw_on_error )
 {
     return get_next().read( t, throw_on_error );
 }
 
-// random-access read values by reference
+
 template <typename T> bool JsonArray::read( size_t idx, T &t, bool throw_on_error ) const
 {
     return ( *this )[ idx ].read( t, throw_on_error );
@@ -788,7 +788,7 @@ Res JsonArray::get_tags( const size_t idx ) const
 
     JsonValue jv = ( *this )[ idx ];
 
-    // allow single string as tag
+
     if( jv.test_string() ) {
         res.insert( T( jv.get_string() ) );
         return res;
@@ -806,7 +806,7 @@ inline JsonValue JsonArray::get_next()
     return ( *this )[ next_++ ];
 }
 
-// When the body is ifdef'd out, this tidy lint fires.
+
 //NOLINTNEXTLINE(modernize-use-equals-default)
 inline JsonObject::~JsonObject()
 {
@@ -847,7 +847,7 @@ std::string JsonObject::get_string( const char *key, T &&fallback ) const
     return std::forward<T>( fallback );
 }
 
-// Vanilla accessors. Just return the named member and use it's conversion function.
+
 inline int JsonObject::get_int( const std::string_view key ) const
 {
     return get_member( key );
@@ -1022,9 +1022,9 @@ inline bool JsonObject::has_object( const std::string_view key ) const
     return ref.IsMap();
 }
 
-// Fallback accessors. Test if the named member exists, and if yes, return it,
-// else will return the fallback value. Does *not* test the member is the type
-// being requested.
+
+
+
 inline int JsonObject::get_int( const std::string_view key, int fallback ) const
 {
     std::optional<JsonValue> member_opt = get_member_opt( key );
@@ -1052,7 +1052,7 @@ inline bool JsonObject::get_bool( const std::string_view key, bool fallback ) co
     return fallback;
 }
 
-// Tries to get the member, and if found, calls it visited.
+
 inline std::optional<JsonValue> JsonObject::get_member_opt( const std::string_view key ) const
 {
     size_t idx = 0;
@@ -1066,9 +1066,9 @@ inline std::optional<JsonValue> JsonObject::get_member_opt( const std::string_vi
 
 inline JsonValue JsonObject::get_member( const std::string_view key ) const
 {
-    // Manually bsearch for the key idx to store in visited_fields_bitset_.
-    // flexbuffers::Map::operator[] will probably be faster but won't give us the idx,
-    // which we need to track visited fields.
+
+
+
     size_t idx = 0;
     bool found = find_map_key_idx( key, keys_, idx );
     if( found ) {
@@ -1105,13 +1105,13 @@ Res JsonObject::get_tags( const std::string_view name ) const
 
     JsonValue &member = *member_opt;
 
-    // allow single string as tag
+
     if( member.test_string() ) {
         res.insert( T{ static_cast<std::string>( member ) } );
         return res;
     }
 
-    // otherwise assume it's an array and error if it isn't.
+
     for( const std::string line : static_cast<JsonArray>( member ) ) {
         res.insert( T( line ) );
     }
@@ -1144,4 +1144,4 @@ inline void add_array_to_set( std::set<std::string> &s, const JsonObject &json,
     }
 }
 
-#endif // CATA_SRC_FLEXBUFFER_JSON_INL_H
+#endif

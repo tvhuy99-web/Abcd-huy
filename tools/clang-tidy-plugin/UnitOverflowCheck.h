@@ -27,8 +27,8 @@ class UnitOverflowCheck : public ClangTidyCheck
                        std::string_view ValueType, std::string_view FunctionName, const FixItHint &fix );
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_UNITOVERFLOWCHECK_H
+#endif

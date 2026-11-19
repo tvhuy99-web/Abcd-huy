@@ -90,16 +90,16 @@ bool is_permanent_morale( const morale_type &id )
     return permanent_morale.count( id ) != 0;
 }
 
-} // namespace
+}
 
-// Morale multiplier
+
 struct morale_mult {
     morale_mult(): good( 1.0 ), bad( 1.0 ) {}
     morale_mult( double good, double bad ): good( good ), bad( bad ) {}
     explicit morale_mult( double both ): good( both ), bad( both ) {}
 
-    double good;    // For good morale
-    double bad;     // For bad morale
+    double good;
+    double bad;
 
     morale_mult operator * ( const morale_mult &rhs ) const {
         return morale_mult( *this ) *= rhs;
@@ -123,22 +123,22 @@ static int operator *= ( int &morale, const morale_mult &mult )
     return morale;
 }
 
-// Commonly used morale multipliers
+
 namespace morale_mults
 {
-// Optimistic characters focus on the good things in life,
-// and downplay the bad things.
+
+
 static const morale_mult optimist( 1.2, 0.8 );
-// Again, those grouchy Bad-Tempered folks always focus on the negative.
-// They can't handle positive things as well.  They're No Fun.  D:
+
+
 static const morale_mult badtemper( 0.8, 1.2 );
-// Numb characters have trouble feeling anything
+
 static const morale_mult numb( 0.25, 0.25 );
-// Prozac reduces overall negative morale by 75%.
+
 static const morale_mult prozac( 1.0, 0.25 );
-// The bad prozac effect reduces good morale by 75%.
+
 static const morale_mult prozac_bad( 0.25, 1.0 );
-} // namespace morale_mults
+}
 
 std::string player_morale::morale_point::get_name() const
 {
@@ -159,7 +159,7 @@ int player_morale::morale_point::get_net_bonus( const morale_mult &mult ) const
 
 bool player_morale::morale_point::is_expired() const
 {
-    // Zero morale bonuses will be shown occasionally anyway
+
     return ( !is_permanent() && age >= duration ) || bonus == 0;
 }
 
@@ -198,19 +198,19 @@ void player_morale::morale_point::add( const int new_bonus, const int new_max_bo
     if( new_duration == 0_turns ) {
         sqrt_of_sum_of_squares = new_bonus;
     } else if( new_cap || !same_sign ) {
-        // If the morale bonus is capped apply the full bonus
-        // This is because some morale types build up slowly to a cap over time (e.g. morale_wet)
-        // If the new bonus is opposing apply the full bonus
+
+
+
         sqrt_of_sum_of_squares = get_net_bonus() + new_bonus;
     } else {
-        // Otherwise use the sqrt of sum of squares to nerf stacking
+
         sqrt_of_sum_of_squares = std::pow( get_net_bonus(), 2 ) + std::pow( new_bonus, 2 );
         sqrt_of_sum_of_squares = std::sqrt( sqrt_of_sum_of_squares );
         sqrt_of_sum_of_squares *= sgn( bonus );
     }
 
     bonus = normalize_bonus( sqrt_of_sum_of_squares, new_max_bonus, new_cap );
-    age = 0_turns; // Brand new. The assignment should stay below get_net_bonus() and pick_time().
+    age = 0_turns;
 }
 
 time_duration player_morale::morale_point::pick_time( const time_duration &current_time,
@@ -275,7 +275,7 @@ player_morale::player_morale() :
     perceived_pain( 0 ),
     radiation( 0 )
 {
-    // Cannot use 'this' because the object is copyable
+
     const auto set_optimist = []( player_morale * pm, int bonus ) {
         pm->set_permanent( morale_perm_optimist, bonus, nullptr );
     };
@@ -535,13 +535,13 @@ void player_morale::decay( const time_duration &ticks )
 void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_penalty,
                              Character &who )
 {
-    /*calculates the percent contributions of the morale points,
-     * must be done before anything else in this method
-     */
+
+
+
     calculate_percentage();
 
-    constexpr int left_padding = 2; // including border
-    constexpr int right_padding = 2; // including border
+    constexpr int left_padding = 2;
+    constexpr int right_padding = 2;
     constexpr int middle_padding_min = 2;
     constexpr int middle_padding_max = 12;
 
@@ -641,7 +641,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_pena
             }
     };
 
-    // Separate and sort positive and negative morale
+
     const morale_mult mult = get_temper_mult();
     std::vector<morale_point> positive_morale;
     std::vector<morale_point> negative_morale;
@@ -663,7 +663,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_pena
     std::sort( positive_morale.begin(), positive_morale.end(), sort_morale );
     std::sort( negative_morale.begin(), negative_morale.end(), sort_morale );
 
-    // Initialize lines
+
     const std::vector<morale_line> top_lines {
         {},
         { _( "Morale" ), c_white },
@@ -712,10 +712,10 @@ void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_pena
     }
 
     std::vector<morale_line> bottom_lines;
-    bottom_lines.reserve( 6 ); // We need 6 lines for everything.
+    bottom_lines.reserve( 6 );
     bottom_lines.emplace_back( morale_line::separation_line {} );
     bottom_lines.emplace_back(
-        // NOTE: We can't use morale_level() directly here, but must access it through the getter. Otherwise, we aren't accounting for possible modifiers.
+
         _( "Total morale:" ), who.get_morale_level(),
         morale_line::number_format::signed_or_dash,
         morale_line::line_color::green_gray_red
@@ -843,14 +843,14 @@ void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_pena
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    // Reader adapter (R10.1): this screen previously had no a11y points
-    // at all, so opening it from the character sheet silenced the
-    // reader. The documents below publish exactly what this screen
-    // prints: each source's name and percent contribution (the screen
-    // never prints durations, and none are derived here), the signed
-    // totals, the deadened modifier, the penalties shown, and the focus
-    // trend. Scrolling remains the screen's own UP/DOWN actions through
-    // the registered commands.
+
+
+
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "morale",
     [&ctxt]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
@@ -942,27 +942,27 @@ bool player_morale::consistent_with( const player_morale &morale ) const
 
 void player_morale::sync_permanent( const player_morale &reference )
 {
-    // Remove all permanent points, keep temporaries
+
     const auto new_end = std::remove_if( points.begin(), points.end(),
     []( const morale_point & mp ) {
         return mp.is_permanent();
     } );
     points.erase( new_end, points.end() );
 
-    // Copy permanent points from reference
+
     for( const morale_point &mp : reference.points ) {
         if( mp.is_permanent() ) {
             points.push_back( mp );
         }
     }
 
-    // Sync non-point state that consistent_with() checks
+
     took_prozac = reference.took_prozac;
     took_prozac_bad = reference.took_prozac_bad;
     perceived_pain = reference.perceived_pain;
     radiation = reference.radiation;
 
-    // Sync mutation and body part state for correct future updates
+
     body_parts = reference.body_parts;
     no_body_part = reference.no_body_part;
     mutations = reference.mutations;
@@ -1091,7 +1091,7 @@ void player_morale::set_worn( const item &it, bool worn )
         if( filthy_gear ) {
             bp_data.filthy += sign;
         }
-        // If armor is integrated (Subdermal CBM, Skin armor mutation) don't count it as covering
+
         if( !integrated ) {
             bp_data.covered += sign;
         }

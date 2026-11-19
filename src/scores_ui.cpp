@@ -47,7 +47,7 @@ enum class scores_ui_tab : int {
     memorial,
     num_tabs
 };
-} // namespace
+}
 
 template<>
 struct enum_traits<scores_ui_tab> {
@@ -126,7 +126,7 @@ void scores_ui::draw_scores_ui()
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "QUIT" );
-    // Smooths out our handling, makes tabs load immediately after input instead of waiting for next.
+
     ctxt.set_timeout( 10 );
 
     a11y::screen_scope reader( &ctxt, "scores",
@@ -149,8 +149,8 @@ void scores_ui::draw_scores_ui()
 void scores_ui_impl::init_data()
 {
     const achievements_tracker &achievements = g->achievements();
-    // Load past game info beforehand because otherwise it may erase an `achievement_tracker`
-    // within a call to its method when lazy-loaded, causing dangling pointer.
+
+
     get_past_games();
     std::vector<const achievement *> valid_achievements = achievements.valid_achievements();
     valid_achievements.erase(
@@ -397,8 +397,8 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
                 const int total = static_cast<int>( scores_text.size() + 1 );
                 for( std::size_t i = 0; i < scores_text.size(); ++i ) {
                     const int position = static_cast<int>( i + 1 );
-                    // Read the actual scoring criterion rather than "Score 1".
-                    // The full value remains available in the document detail.
+
+
                     const std::string score_text = remove_color_tags( scores_text[i] );
                     const std::size_t line_break = score_text.find( '\n' );
                     const std::string label = score_text.substr( 0, line_break );
@@ -594,7 +594,7 @@ void scores_ui_impl::draw_controls()
 
     cataimgui::set_scroll( s );
 }
-} // namespace
+}
 
 void show_scores_ui()
 {

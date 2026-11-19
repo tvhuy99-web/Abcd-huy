@@ -39,7 +39,7 @@ inline std::string _translate_internal( const std::string &msg )
 
 #endif
 
-// returns current language generation/version
+
 int get_current_language_version();
 
 template<typename T>
@@ -88,8 +88,8 @@ class local_translation_cache<const char *>
                 same_as_arg = cached_translation == arg;
                 cached_arg = arg;
             }
-            // mimic gettext() behavior: return `arg` if no translation is found
-            // `same_as_arg` is needed to ensure that the current `arg` is returned (not a cached one)
+
+
             return same_as_arg ? arg : cached_translation;
 #else
             return arg;
@@ -97,8 +97,8 @@ class local_translation_cache<const char *>
         }
 };
 
-// these getters are used to work around the MSVC bug that happened with using decltype in lambda
-// see build log: https://gist.github.com/Aivean/e76a70edce0a1589c76bcf754ffb016b
+
+
 inline local_translation_cache<const char *> get_local_translation_cache( const char * )
 {
     return local_translation_cache<const char *>();
@@ -110,6 +110,6 @@ inline local_translation_cache<std::string> get_local_translation_cache(
     return local_translation_cache<std::string>();
 }
 
-} // namespace detail
+}
 
-#endif // CATA_SRC_TRANSLATION_CACHE_H
+#endif

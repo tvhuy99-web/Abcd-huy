@@ -7,7 +7,7 @@ class ui_adaptor;
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 namespace ui_helpers
 {
@@ -18,6 +18,6 @@ void full_screen_window( ui_adaptor &ui,
                          int *content_height = nullptr, int border_width = 1,
                          int header_height = 0, int footer_height = 0 );
 
-} // namespace ui_helpers
+}
 
-#endif // CATA_SRC_UI_HELPERS_H
+#endif

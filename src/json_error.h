@@ -14,4 +14,4 @@ class JsonError : public std::runtime_error
         }
 };
 
-#endif // CATA_SRC_JSON_ERROR_H
+#endif

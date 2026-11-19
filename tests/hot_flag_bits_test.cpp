@@ -47,7 +47,7 @@ TEST_CASE( "hot_flag_bits_unset_flags_clears_all_own_bits", "[item][flag]" )
 TEST_CASE( "hot_flag_bits_type_bits_reflect_itype_json_flags", "[item][flag]" )
 {
     item it( itype_helmet_army );
-    // helmet_army declares VARSIZE in JSON.
+
     CHECK( ( it.combined_hot_flags() & bit_varsize ) == bit_varsize );
     CHECK( ( it.own_hot_flags() & bit_varsize ) == 0 );
 }
@@ -87,8 +87,8 @@ TEST_CASE( "hot_flag_bits_save_load_restores_own_bits", "[item][flag]" )
     CHECK( ( loaded.combined_hot_flags() & bit_varsize ) == bit_varsize );
 }
 
-// Build a helmet_army with an inherits_flags pocket holding an item that carries
-// flag_FIT, so the parent's hot_flags_inherited gains the FIT bit.
+
+
 static item make_parent_with_inherited_fit()
 {
     item parent( itype_helmet_army );

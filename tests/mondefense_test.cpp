@@ -55,7 +55,7 @@ TEST_CASE( "zapback_npc_nonconductive_weapon", "[mondefense]" )
 TEST_CASE( "zapback_npc_nonconductive_unarmed_weapon", "[mondefense]" )
 {
     standard_npc attacker( "Attacker" );
-    // AFAICT this is the only nonconductive unarmed weapon.
+
     item knuckle_nail( itype_knuckle_nail );
     attacker.wield( knuckle_nail );
     test_zapback( attacker, false );
@@ -109,9 +109,9 @@ TEST_CASE( "zapback_npc_electricity_immune", "[mondefense]" )
     attacker.add_bionic( bio_power_storage );
     attacker.set_power_level( attacker.get_max_power_level() );
     attacker.add_bionic( bio_faraday );
-    // Don't forget to turn it on...
+
     test_zapback( attacker, true );
-    // Wow this is a raw index?
+
     attacker.activate_bionic( attacker.bionic_at_index( attacker.num_bionics() - 1 ) );
     test_zapback( attacker, false );
 }

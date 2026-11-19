@@ -41,23 +41,23 @@ using mon_action_defend = void ( * )( monster &, Creature *, dealt_projectile_at
 using bodytype_id = std::string;
 class JsonObject;
 
-// These are triggers which may affect the monster's anger or morale.
-// They are handled in monster::check_triggers(), in monster.cpp
-enum class mon_trigger : int {
-    STALK,              // Increases when following the player
-    HOSTILE_WEAK,       // Hurt hostile player/npc/monster seen
-    HOSTILE_CLOSE,      // Hostile creature within a few tiles
-    HOSTILE_SEEN,       // Hostile creature in visual range
-    HURT,               // We are hurt
-    FIRE,               // Fire nearby
-    FRIEND_DIED,        // A monster of the same type died
-    FRIEND_ATTACKED,    // A monster of the same type attacked
-    SOUND,              // Heard a sound
-    PLAYER_NEAR_BABY,   // Player/npc is near a baby monster of this type
-    MATING_SEASON,      // It's the monster's mating season (defined by baby_flags)
-    BRIGHT_LIGHT,       // Illumination in the monster's tile is 75% of full daylight or higher
 
-    LAST               // This item must always remain last.
+
+enum class mon_trigger : int {
+    STALK,
+    HOSTILE_WEAK,
+    HOSTILE_CLOSE,
+    HOSTILE_SEEN,
+    HURT,
+    FIRE,
+    FRIEND_DIED,
+    FRIEND_ATTACKED,
+    SOUND,
+    PLAYER_NEAR_BABY,
+    MATING_SEASON,
+    BRIGHT_LIGHT,
+
+    LAST
 };
 
 template<>
@@ -76,9 +76,9 @@ struct mon_flag {
     static const std::vector<mon_flag> &get_all();
 };
 
-// Fast access to monster flags used in game logic.
-//
-// These are only safe to use after set_mon_flag_ids is called during game load.
+
+
+
 // NOLINTNEXTLINE(cata-static-int_id-constants)
 extern mon_flag_id mon_flag_ACIDPROOF,
        mon_flag_ACIDTRAIL,
@@ -219,24 +219,24 @@ extern mon_flag_id mon_flag_ACIDPROOF,
        mon_flag_WEBWALK,
        mon_flag_WIELDED_WEAPON;
 
-// Initializes all hardcoded flags above. String flags must already be loaded.
+
 void set_mon_flag_ids();
 
-/** Used to store monster effects placed on attack */
+
 struct mon_effect_data {
-    // The type of the effect.
+
     efftype_id id;
-    // The percent chance of causing the effect.
+
     float chance;
-    // Whether the effect is permanent.
+
     bool permanent;
     bool affect_hit_bp;
     bodypart_str_id bp;
-    // The range of the durations (in turns) of the effect.
+
     std::pair<int, int> duration;
-    // The range of the intensities of the effect.
+
     std::pair<int, int> intensity;
-    // The message to print, if the player causes the effect.
+
     std::string message;
 
     mon_effect_data();
@@ -246,7 +246,7 @@ struct mon_effect_data {
     }
 };
 
-/** Pet food data */
+
 struct pet_food_data {
     std::set<std::string> food;
     std::string pet;
@@ -264,9 +264,9 @@ struct monster_block_data {
     bool ranged = false;
 };
 
-/** movement data */
+
 struct move_skills_data {
-    // 10 means max movecost of 500 * terrain-difficulty with 0 skill
+
     const static int max_movemod_penalty = 10;
     std::optional<int> climb;
     std::optional<int> dig;
@@ -305,21 +305,21 @@ struct monster_death_effect {
 };
 
 struct mount_item_data {
-    /**
-     * If this monster is a rideable mount that spawns with a tied item (leash), this is the tied item id
-     */
+
+
+
     itype_id tied;
-    /**
-     * If this monster is a rideable mount that spawns with a tack item, this is the tack item id
-     */
+
+
+
     itype_id tack;
-    /**
-     * If this monster is a rideable mount that spawns with armor, this is the armor item id
-     */
+
+
+
     itype_id armor;
-    /**
-     * If this monster is a rideable mount that spawns with storage bags, this is the storage item id
-     */
+
+
+
     itype_id storage;
 
     void deserialize( const JsonObject &jo );
@@ -349,13 +349,13 @@ struct mtype {
         enum_bitset<mon_trigger> placate;
     public:
         units::mass weight;
-        // This monster's special "defensive" move that may trigger when the monster is attacked.
-        // Note that this can be anything, and is not necessarily beneficial to the monster
+
+
         mon_action_defend sp_defense;
     private:
         ascii_art_id picture_id;
         mon_flag_id_set flags;
-        std::set<mon_flag_str_id> pre_flags_; // used only for initial loading
+        std::set<mon_flag_str_id> pre_flags_;
     public:
         mtype_id id;
         mfaction_str_id default_faction;
@@ -363,93 +363,93 @@ struct mtype {
         harvest_id dissect;
         harvest_id decay;
         speed_description_id speed_desc;
-        // Monster upgrade variables
+
         mtype_id upgrade_into;
         mongroup_id upgrade_group;
         mtype_id burn_into;
 
         std::vector<revive_type> revive_types;
 
-        mtype_id zombify_into; // mtype_id this monster zombifies into
-        mtype_id fungalize_into; // mtype_id this monster fungalize into
+        mtype_id zombify_into;
+        mtype_id fungalize_into;
 
         reproduction_type baby_type;
 
-        // Monster biosignature variables
+
         itype_id biosig_item;
 
-        /**
-         * If this is not empty, the monster can be converted into an item
-         * of this type (if it's friendly).
-         */
+
+
+
+
         itype_id revert_to_itype;
 
-        /**
-         * If this is not empty, the monster will become this item when mdeath::BROKEN
-         * is triggered. Overwrites the normal hardcoded broken item.
-         */
+
+
+
+
         itype_id broken_itype;
-        /**
-         * If this monster is a rideable mech with built-in weapons, this is the weapons id
-         */
+
+
+
         itype_id mech_weapon;
-        /**
-         * If this monster is a rideable mech it needs a power source battery type
-         */
+
+
+
         itype_id mech_battery;
 
-        /** Stores effect data for effects placed on attack */
+
         std::vector<mon_effect_data> atk_effs;
 
-        /** Mod origin */
+
         std::vector<std::pair<mtype_id, mod_id>> src;
         weakpoint_families families;
     private:
         std::vector<weakpoints_id> weakpoints_deferred;
     public:
 
-        // The type of material this monster can absorb. Leave unspecified for all materials.
+
         std::vector<material_id> absorb_material;
-        // The type of material this monster cannot absorb. Leave unspecified for no materials (blacklist none).
+
         std::vector<material_id> no_absorb_material;
-        damage_instance melee_damage; // Basic melee attack damage
-        std::vector<std::string> special_attacks_names; // names of attacks, in json load order
-        std::vector<std::string> chat_topics; // What it has to say.
+        damage_instance melee_damage;
+        std::vector<std::string> special_attacks_names;
+        std::vector<std::string> chat_topics;
         std::vector<std::string> baby_flags;
-        /** UTF-8 encoded symbol, should be exactly one cell wide. */
+
         std::string sym;
-        /** hint for tilesets that don't have a tile for this monster */
+
         std::string looks_like;
         bodytype_id bodytype;
         shearing_data shearing;
 
-        std::map<itype_id, int> starting_ammo; // Amount of ammo the monster spawns with.
-        // Name of item group that is used to create item dropped upon death, or empty.
+        std::map<itype_id, int> starting_ammo;
+
         item_group_id death_drops;
 
         std::set<species_id> species;
         std::set<std::string> categories;
         std::map<material_id, int> mat;
-        // Effects that can modify regeneration
+
         std::map<efftype_id, int> regeneration_modifiers;
 
-        std::set<scenttype_id> scents_tracked; /**Types of scent tracked by this mtype*/
-        std::set<scenttype_id> scents_ignored; /**Types of scent ignored by this mtype*/
+        std::set<scenttype_id> scents_tracked;
+        std::set<scenttype_id> scents_ignored;
 
         resistances armor;
-        // Traps avoided by this monster
+
         std::set<trap_str_id> trap_avoids;
     private:
         std::set<std::string> weakpoints_deferred_deleted;
     public:
-        // special attack frequencies and function pointers
-        std::map<std::string, mtype_special_attack> special_attacks;
-        /** Emission sources that cycle each turn the monster remains alive */
-        std::map<emit_id, time_duration> emit_fields;
-        std::optional<resistances> armor_proportional; /**load-time only*/
-        std::optional<resistances> armor_relative; /**load-time only*/
 
-        /** Mount-specific items this monster spawns with */
+        std::map<std::string, mtype_special_attack> special_attacks;
+
+        std::map<emit_id, time_duration> emit_fields;
+        std::optional<resistances> armor_proportional;
+        std::optional<resistances> armor_relative;
+
+
         mount_item_data mount_items;
     private:
 
@@ -457,7 +457,7 @@ struct mtype {
         translation description;
     public:
 
-        // Pet food category this monster is in
+
         pet_food_data petfood;
     private:
 
@@ -469,9 +469,9 @@ struct mtype {
 
     private:
         ::weakpoints weakpoints_deferred_inline;
-        // How dangerous is this thing?
+
         int difficulty = 0;
-        // Manually-defined adjustment in JSON. *Not* additive, use the getter functions.
+
         int difficulty_adjustment = 0;
     public:
         int mat_portion_total = 0;
@@ -479,120 +479,120 @@ struct mtype {
         creature_size size;
         phase_id phase;
 
-        // Return the total difficulty as used to determine monster coloring etc
+
         int get_total_difficulty() const;
-        // You should probably not be using this!! This was already factored into the difficulty calculation!
+
         int get_difficulty_adjustment() const;
 
         int hp = 0;
-        int speed = 0;          /** e.g. human = 100 */
-        move_skills_data move_skills;   /** climb, dig, swim; 0-100, defaults to 0 */
+        int speed = 0;
+        move_skills_data move_skills;
 
-        int agro = 0;           /** chance will attack [-100,100] */
-        int morale = 0;         /** initial morale level at spawn */
+        int agro = 0;
+        int morale = 0;
 
-        // how close the monster is willing to approach its target while under the MATT_FOLLOW attitude
+
         int tracking_distance = 8;
 
-        // Number of hitpoints regenerated per turn.
+
         int regenerates = 0;
-        // mountable ratio for rider weight vs. mount weight, default 0.2
+
         float mountable_weight_ratio = 0.2f;
 
-        int attack_cost = 100;  /** moves per regular attack */
-        int melee_skill = 0;    /** melee hit skill, 20 is superhuman hitting abilities */
-        int melee_dice = 0;     /** number of dice of bonus bashing damage on melee hit */
-        int melee_sides = 0;    /** number of sides those dice have */
-        int melee_dice_ap = 0;  /** ap value of the melee dice*/
+        int attack_cost = 100;
+        int melee_skill = 0;
+        int melee_dice = 0;
+        int melee_sides = 0;
+        int melee_dice_ap = 0;
 
         monster_block_data
-        block; /**monsters ability to block attacks for reduced damage defaults to unable to block */
+        block;
 
-        int grab_strength = 1;    /**intensity of the effect_grabbed applied*/
-        int sk_dodge = 0;       /** dodge skill */
+        int grab_strength = 1;
+        int sk_dodge = 0;
 
-        // Multiplier to chance to apply status effects (only zapped for now)
+
         float status_chance_multiplier = 1.0f;
 
-        // Bleed rate in percent, 0 makes the monster immune to bleeding
+
         int bleed_rate = 100;
 
-        // The amount of volume in milliliters that this monster needs to absorb to gain 1 HP (default 250)
+
         int absorb_ml_per_hp = 250;
 
-        // The move cost for this monster splitting via SPLITS_ABSORBS flag (default 200)
+
         int split_move_cost = 200;
 
-        // Move cost per ml of matter consumed for this monster (default 0.025).
+
         float absorb_move_cost_per_ml = 0.025f;
 
-        // Minimum move cost for this monster to absorb an item (default 1)
+
         int absorb_move_cost_min = 1;
-        // Maximum move cost for this monster to absorb an item (default -1, -1 for no limit)
+
         int absorb_move_cost_max = -1;
 
-        float luminance = 0;       // 0 is default, >0 gives luminance to lightmap
-        // Vision range is linearly scaled depending on lighting conditions
-        int vision_day = 40;    /** vision range in bright light */
-        int vision_night = 1;   /** vision range in total darkness */
+        float luminance = 0;
 
-        unsigned int def_chance; // How likely a special "defensive" move is to trigger (0-100%, default 0)
-        // Monster's ability to destroy terrain and vehicles
+        int vision_day = 40;
+        int vision_night = 1;
+
+        unsigned int def_chance;
+
         std::map<damage_type_id, int> bash_skill;
 
-        // Monster upgrade variables
+
         int half_life;
         int age_grow;
 
-        // Monster reproduction variables
+
         int baby_count;
 
-        /**
-         * If this monster is a rideable mech with enhanced strength, this is the strength it gives to the player
-         */
+
+
+
         int mech_str_bonus = 0;
 
-        // Grinding cap for training player's melee skills when hitting this monster, defaults to MAX_SKILL.
+
         int melee_training_cap;
 
         nc_color color = c_white;
 
         std::optional<int> upgrade_multi_range;
 
-        // Monster reproduction variables
+
         std::optional<time_duration> baby_timer;
 
-        // Monster biosignature variables
+
         std::optional<time_duration> biosig_timer;
 
         pathfinding_settings path_settings;
 
-        // All the bools together for space efficiency
-        //
-        // Monster regenerates very quickly in poorly lit tiles.
+
+
+
         bool regenerates_in_dark = false;
-        // Will stop fleeing if at max hp, and regen anger and morale.
+
         bool regen_morale = false;
         bool upgrade_null_despawn;
-        // TODO: maybe make this private as well? It must be set to `true` only once,
-        // and must never be set back to `false`.
+
+
         bool was_loaded = false;
         bool upgrades;
         bool reproduces;
         bool biosignatures;
 
-        // Do we indiscriminately attack characters, or should we wait until one annoys us?
+
         bool aggro_character = true;
 
         mtype();
-        /**
-         * Check if this type is of the same species as the other one, because
-         * species is a set and can contain several species, one entry that is
-         * in both monster types fulfills that test.
-         */
+
+
+
+
+
         bool same_species( const mtype &other ) const;
 
-        // Used to fetch the properly pluralized monster type name
+
         std::string nname( unsigned int quantity = 1 ) const;
         bool has_special_attack( const std::string &attack_name ) const;
         bool has_flag( const mon_flag_id &flag ) const {
@@ -608,11 +608,11 @@ struct mtype {
         bool in_species( const species_id &spec ) const;
         std::vector<std::string> species_descriptions() const;
         field_type_id get_bleed_type() const;
-        //Used for corpses.
+
         field_type_id bloodType() const;
         field_type_id gibType() const;
-        // The item id of the meat items that are produced by this monster (or "null")
-        // if there is no matching item type. e.g. "veggy" for plant monsters.
+
+
         itype_id get_meat_itype() const;
         int get_meat_chunks_count() const;
         std::string get_description() const;
@@ -624,8 +624,8 @@ struct mtype {
         std::string get_difficulty_description() const;
         std::string get_size_name() const;
 
-        // Historically located in monstergenerator.cpp
+
         void load( const JsonObject &jo, std::string_view src );
 };
 
-#endif // CATA_SRC_MTYPE_H
+#endif

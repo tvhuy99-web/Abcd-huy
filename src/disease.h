@@ -31,13 +31,12 @@ class disease_type
         time_duration max_duration = 1_turns;
         int min_intensity = 1;
         int max_intensity = 1;
-        /**Affected body parts*/
+
         std::set<bodypart_str_id> affected_bodyparts;
-        /**If not empty this sets the health threshold above which you're immune to the disease*/
+
         std::optional<int> health_threshold;
-        /**effect applied by this disease*/
+
         efftype_id symptoms;
 
 };
-#endif // CATA_SRC_DISEASE_H
-
+#endif

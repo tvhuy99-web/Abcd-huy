@@ -127,15 +127,15 @@ TEST_CASE( "variant_type_for", "[variant][nogame]" )
 
 TEST_CASE( "variant_is_valid", "[variant]" )
 {
-    // A string_id
+
     CHECK( cata_variant( mon_zombie ).is_valid() );
     CHECK_FALSE( cata_variant( This_is_not_a_valid_id ).is_valid() );
 
-    // An int_id
+
     CHECK( cata_variant( ter_id( "t_grass" ) ).is_valid() );
     CHECK_FALSE( cata_variant::from_string( cata_variant_type::ter_id, "invalid id" ).is_valid() );
 
-    // An enum
+
     CHECK( cata_variant( debug_menu::debug_menu_index::WISH ).is_valid() );
     CHECK_FALSE( cata_variant::from_string(
                      cata_variant_type::debug_menu_index, "invalid enum" ).is_valid() );

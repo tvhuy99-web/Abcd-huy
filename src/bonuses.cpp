@@ -220,7 +220,7 @@ bool affected_type::operator<( const affected_type &other ) const
 }
 bool affected_type::operator==( const affected_type &other ) const
 {
-    // NOTE: Constructor has to ensure type is set to NULL for some stats
+
     return stat == other.stat && type == other.type;
 }
 
@@ -259,7 +259,7 @@ float bonus_container::get_mult( const Character &u, affected_stat stat,
         ret *= es.get( u );
     }
 
-    // Currently all relevant effects require non-negative values
+
     return std::max( 0.0f, ret );
 }
 float bonus_container::get_mult( const Character &u, affected_stat stat ) const

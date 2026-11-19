@@ -1,10 +1,10 @@
-/* Main Loop for cataclysm
- * Linux only I guess
- * But maybe not
- * Who knows
- */
 
-// KG: Yes, the above is inaccurate now. It's also a poem, it stays.
+
+
+
+
+
+
 
 // IWYU pragma: no_include <sys/signal.h>
 #include <algorithm>
@@ -63,7 +63,7 @@
 #include "ui_manager.h"
 #include "cata_imgui.h"
 #if defined(MACOSX) || defined(__CYGWIN__)
-#   include <unistd.h> // getpid()
+#   include <unistd.h>
 #endif
 
 #if defined(EMSCRIPTEN)
@@ -88,10 +88,10 @@ class ui_adaptor;
 #if defined(__ANDROID__)
 #include <android/log.h>
 #include <unistd.h>
-#include "sdl_wrappers.h" // for GetAndroidExternalStoragePath(), SDL_main
+#include "sdl_wrappers.h"
 
-// Taken from: https://codelab.wordpress.com/2014/11/03/how-to-use-standard-output-streams-for-logging-in-android-apps/
-// Force Android standard output to adb logcat output
+
+
 
 static int pfd[2];
 static pthread_t thr;
@@ -106,7 +106,7 @@ static void *thread_func( void * )
             if( buf[rdsz - 1] == '\n' ) {
                 --rdsz;
             }
-            buf[rdsz] = 0;  /* add null-terminator */
+            buf[rdsz] = 0;
             __android_log_write( ANDROID_LOG_DEBUG, tag, buf );
         }
     }
@@ -117,16 +117,16 @@ int start_logger( const char *app_name )
 {
     tag = app_name;
 
-    /* make stdout line-buffered and stderr unbuffered */
+
     setvbuf( stdout, 0, _IOLBF, 0 );
     setvbuf( stderr, 0, _IONBF, 0 );
 
-    /* create the pipe and redirect stdout and stderr */
+
     pipe( pfd );
     dup2( pfd[1], 1 );
     dup2( pfd[1], 2 );
 
-    /* spawn the logging thread */
+
     if( pthread_create( &thr, 0, thread_func, 0 ) == -1 ) {
         return -1;
     }
@@ -134,13 +134,13 @@ int start_logger( const char *app_name )
     return 0;
 }
 
-#endif //__ANDROID__
+#endif
 
 namespace
 {
 
 #if defined(_WIN32) and defined(TILES)
-// Used only if AttachConsole() works
+
 FILE *CONOUT;
 #endif
 void exit_handler( int s )
@@ -156,8 +156,8 @@ void exit_handler( int s )
         catacurses::endwin();
 
 #if defined(__ANDROID__)
-        // Avoid capturing SIGABRT on exit on Android in crash report
-        // Can be removed once the SIGABRT on exit problem is fixed
+
+
         signal( SIGABRT, SIG_DFL );
 #endif
 
@@ -170,25 +170,25 @@ void exit_handler( int s )
 }
 
 struct arg_handler {
-    //! Handler function to be invoked when this argument is encountered. The handler will be
-    //! called with the number of parameters after the flag was encountered, along with the array
-    //! of following parameters. It must return an integer indicating how many parameters were
-    //! consumed by the call or -1 to indicate that a required argument was missing.
+
+
+
+
     using handler_method = std::function<int ( int, const char ** )>;
 
-    std::string_view flag;  //!< The commandline parameter to handle (e.g., "--seed").
-    std::string_view param_documentation;  //!< Human readable description of this arguments parameter.
-    std::string_view documentation;  //!< Human readable documentation for this argument.
-    std::string_view help_group; //!< Section of the help message in which to include this argument.
-    int num_args; //!< How many further arguments are expected for this parameter (usually 0 or 1).
-    handler_method handler;  //!< The callback to be invoked when this argument is encountered.
+    std::string_view flag;
+    std::string_view param_documentation;
+    std::string_view documentation;
+    std::string_view help_group;
+    int num_args;
+    handler_method handler;
 };
 
 template<typename FirstPassArgs, typename SecondPassArgs>
 void printHelpMessage( const FirstPassArgs &first_pass_arguments,
                        const SecondPassArgs &second_pass_arguments )
 {
-    // Group all arguments by help_group.
+
     std::multimap<std::string, const arg_handler *> help_map;
     for( const arg_handler &handler : first_pass_arguments ) {
         help_map.emplace( handler.help_group, &handler );
@@ -214,9 +214,9 @@ void printHelpMessage( const FirstPassArgs &first_pass_arguments,
     std::cout << std::endl;
 }
 
-/**
- * Displays current application version and compile options values
- */
+
+
+
 void printVersionMessage()
 {
 #if defined(TILES)
@@ -264,7 +264,7 @@ void process_args( const char **argv, int argc, const std::vector<arg_handler> &
                 break;
             }
         }
-        // Skip other options.
+
         if( !arg_handled ) {
             --argc;
             ++argv;
@@ -278,7 +278,7 @@ struct cli_opts {
     bool noverify = false;
     bool check_mods = false;
     std::vector<std::string> opts;
-    std::string world; /** if set try to load first save in this world on startup */
+    std::string world;
     bool disable_ascii_art = false;
 };
 
@@ -437,8 +437,8 @@ cli_opts parse_commandline( int argc, const char **argv )
         }
     };
 
-    // The following arguments are dependent on one or more of the previous flags and are run
-    // in a second pass.
+
+
     const std::vector<arg_handler> second_pass_arguments = {{
             {
                 "--worldmenu", {},
@@ -543,7 +543,7 @@ cli_opts parse_commandline( int argc, const char **argv )
         std::exit( 0 );
     }
 
-    // skip program name
+
     --argc;
     ++argv;
 
@@ -573,7 +573,7 @@ bool assure_essential_dirs_exist()
     return true;
 }
 
-} // namespace
+}
 
 #if defined(EMSCRIPTEN)
 EM_ASYNC_JS( void, mount_idbfs, (), {
@@ -646,7 +646,7 @@ void initialize_platform_output()
     }
 #endif
 #if defined(__ANDROID__)
-    // Start the standard output logging redirector
+
     start_logger( "cdda" );
 #endif
 }
@@ -654,13 +654,13 @@ void initialize_platform_output()
 void initialize_default_paths()
 {
 #if defined(__ANDROID__)
-    // On Android first launch, we copy all data files from the APK into the app's writeable folder so std::io stuff works.
-    // Use the external storage so it's publicly modifiable data (so users can mess with installed data, save games etc.)
+
+
     std::string external_storage_path( GetAndroidExternalStoragePath() );
 
     PATH_INFO::init_base_path( external_storage_path );
 #else
-    // Set default file paths
+
 #if defined(PREFIX)
     PATH_INFO::init_base_path( std::string( PREFIX ) );
 #else
@@ -708,10 +708,10 @@ void initialize_debugging()
 
 void initialize_locale()
 {
-    /**
-     * OS X does not populate locale env vars correctly (they usually default to
-     * "C") so don't bother trying to set the locale based on them.
-     */
+
+
+
+
 #if !defined(MACOSX)
     if( setlocale( LC_ALL, "" ) == nullptr ) {
         DebugLog( D_WARNING, D_MAIN ) << "Error while setlocale(LC_ALL, '').";
@@ -720,9 +720,9 @@ void initialize_locale()
         try {
             std::locale::global( std::locale( "" ) );
         } catch( const std::exception & ) {
-            // if user default locale retrieval isn't implemented by system
+
             try {
-                // default to basic C locale
+
                 std::locale::global( std::locale::classic() );
             } catch( const std::exception &err ) {
                 debugmsg( "%s", err.what() );
@@ -761,15 +761,15 @@ bool initialize_interface( const cli_opts &cli )
     get_options().load();
 #endif
 
-    // in test mode don't initialize curses to avoid escape sequences being inserted into output stream
+
     if( !test_mode ) {
         try {
-            // set minimum FULL_SCREEN sizes
+
             FULL_SCREEN_WIDTH = EVEN_MINIMUM_TERM_WIDTH;
             FULL_SCREEN_HEIGHT = EVEN_MINIMUM_TERM_HEIGHT;
             catacurses::init_interface();
         } catch( const std::exception &err ) {
-            // can't use any curses function as it has not been initialized
+
             std::cerr << "Error while initializing the interface: " << err.what() << std::endl;
             DebugLog( D_ERROR, DC_ALL ) << "Error while initializing the interface: " << err.what() << "\n";
             return false;
@@ -784,8 +784,8 @@ bool initialize_interface( const cli_opts &cli )
 
 void load_static_game_data( const cli_opts &cli )
 {
-    // First load and initialize everything that does not
-    // depend on the mods.
+
+
     try {
         g->load_static_data();
         if( cli.verifyexit ) {
@@ -804,18 +804,18 @@ void load_static_game_data( const cli_opts &cli )
 
 void initialize_imgui()
 {
-    // Load the colors of ImGui to match the colors set by the user.
+
     cataimgui::init_colors();
 
-    // set decimal point for float input widgets
-    // uses system locale, because that's what imgui uses to parse and display floats
+
+
     ImGui::GetPlatformIO().Platform_LocaleDecimalPoint =
         static_cast<unsigned char>( *localeconv()->decimal_point );
 }
 
 void apply_runtime_cli_overrides( const cli_opts &cli )
 {
-    // Override existing settings from cli options
+
     if( cli.disable_ascii_art ) {
         get_options().get_option( "ENABLE_ASCII_ART" ).setValue( "false" );
         get_options().get_option( "ENABLE_ASCII_TITLE" ).setValue( "false" );
@@ -831,9 +831,9 @@ void configure_curses_cursor()
 #if defined(DEBUG_CURSES_CURSOR)
     catacurses::curs_set( 2 );
 #else
-    // I have no clue what this comment is on about
-    // Any value works well enough for debugging at least
-    catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
+
+
+    catacurses::curs_set( 0 );
 #endif
 }
 
@@ -856,7 +856,7 @@ void select_initial_language()
         display_buffer_draw_scope draw_scope;
         if( !display_buffer_scope_is_invalid() ) {
 #endif
-            imclient->new_frame(); // we have to prime the pump, because of reasons
+            imclient->new_frame();
             imclient->end_frame();
             const std::string lang = select_language();
             get_options().get_option( "USE_LANG" ).setValue( lang );
@@ -884,11 +884,11 @@ void run_game_loop( cli_opts &cli )
     }
 }
 
-}  // namespace
+}
 
 #if defined(USE_WINMAIN)
-int APIENTRY WinMain( _In_ HINSTANCE /* hInstance */, _In_opt_ HINSTANCE /* hPrevInstance */,
-                      _In_ LPSTR /* lpCmdLine */, _In_ int /* nCmdShow */ )
+int APIENTRY WinMain( _In_ HINSTANCE , _In_opt_ HINSTANCE ,
+                      _In_ LPSTR , _In_ int )
 {
     int argc = __argc;
     char **argv = __argv;
@@ -906,7 +906,7 @@ int main( int argc, const char *argv[] )
 #endif
 
     on_out_of_scope json_member_reporting_guard{ [] {
-            // Disable reporting unvisited members if stack unwinding leaves main early.
+
             Json::globally_report_unvisited_members( false );
         } };
 
@@ -936,7 +936,7 @@ int main( int argc, const char *argv[] )
     initialize_imgui();
     apply_runtime_cli_overrides( cli );
 
-    // Now we do the actual game.
+
     configure_curses_cursor();
     install_signal_handlers();
 

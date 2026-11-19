@@ -14,7 +14,7 @@
 #include "rng.h"
 
 #define SGN(a) (((a)<0) ? -1 : 1)
-// Compare all future line_to implementations to the canonical one.
+
 static std::vector <point> canonical_line_to( const point &p1, const point &p2, int t )
 {
     std::vector<point> ret;
@@ -132,7 +132,7 @@ TEST_CASE( "test_normalized_angle", "[line]" )
 // NOLINTNEXTLINE(readability-function-size)
 TEST_CASE( "Test_bounds_for_mapping_x/y/z/_offsets_to_direction_enum", "[line]" )
 {
-    // Test the unit cube, which are the only values this function is valid for.
+
     REQUIRE( make_xyz_unit( tripoint( -1, -1, 1 ) ) == direction::ABOVENORTHWEST );
     REQUIRE( make_xyz_unit( tripoint::north_west ) == direction::NORTHWEST );
     REQUIRE( make_xyz_unit( tripoint( -1, -1, -1 ) ) == direction::BELOWNORTHWEST );
@@ -161,9 +161,9 @@ TEST_CASE( "Test_bounds_for_mapping_x/y/z/_offsets_to_direction_enum", "[line]" 
     REQUIRE( make_xyz_unit( tripoint::south_east ) == direction::SOUTHEAST );
     REQUIRE( make_xyz_unit( tripoint( 1, 1, -1 ) ) == direction::BELOWSOUTHEAST );
 
-    // Test the unit square values at distance 1 and 2.
-    // Test the multiples of 30deg at 60 squares.
-    // Test 22 deg to either side of the cardinal directions.
+
+
+
     REQUIRE( make_xyz( tripoint( -1, -1, 1 ) ) == direction::ABOVENORTHWEST );
     REQUIRE( make_xyz( tripoint( -2, -2, 2 ) ) == direction::ABOVENORTHWEST );
     REQUIRE( make_xyz( tripoint( -30, -60, 1 ) ) == direction::ABOVENORTHWEST );
@@ -314,7 +314,7 @@ TEST_CASE( "direction_name", "[line]" )
 
 TEST_CASE( "squares_closer_to_test", "[line]" )
 {
-    // TODO: make this ordering agnostic.
+
     auto actual = squares_closer_to( tripoint_bub_ms::zero, {10, 0, 0} );
     std::vector<tripoint_bub_ms> expected = {tripoint_bub_ms::zero + tripoint::east, tripoint_bub_ms::zero + tripoint::south_east, tripoint_bub_ms::zero + tripoint::north_east};
     CHECK( actual == expected );
@@ -412,7 +412,7 @@ static void line_to_comparison( const int iterations )
     }
 }
 
-// Check the boundaries of inputs we can give line_to without breaking it.
+
 TEST_CASE( "line_to_boundaries", "[line]" )
 {
     for( int i = -60; i < 60; ++i ) {
@@ -421,7 +421,7 @@ TEST_CASE( "line_to_boundaries", "[line]" )
             const int dominant = std::max( a.x, a.y );
             const int minor = std::min( a.x, a.y );
             const int ideal_start_offset = minor - ( dominant / 2 );
-            // get the sign of the start offset.
+
             const int st( ( ideal_start_offset > 0 ) - ( ideal_start_offset < 0 ) );
             const int max_start_offset = std::abs( ideal_start_offset ) * 2 + 1;
             for( int k = -1; k <= max_start_offset; ++k ) {

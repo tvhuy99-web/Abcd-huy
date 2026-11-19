@@ -39,7 +39,7 @@ static const profession_id profession_unemployed( "unemployed" );
 
 player_difficulty::player_difficulty()
 {
-    // set up an average NPC
+
     average = npc();
     reset_npc( average );
     average.prof = &profession_unemployed.obj();
@@ -52,25 +52,25 @@ player_difficulty::player_difficulty()
     };
 }
 
-// creates an npc with similar stats to an avatar for testing
+
 void player_difficulty::npc_from_avatar( const avatar &u, npc &dummy )
 {
-    // set stats
+
     dummy.set_str_base( u.get_str_base() );
     dummy.set_dex_base( u.get_dex_base() );
     dummy.set_int_base( u.get_int_base() );
     dummy.set_per_base( u.get_per_base() );
 
-    // set skills
+
     for( const auto &t : u.get_all_skills() ) {
         dummy.set_skill_level( t.first, t.second.level() );
     }
 
-    // set profession and hobbies
+
     dummy.prof = u.prof;
     dummy.hobbies = u.hobbies;
 
-    // set mutations
+
     for( const trait_id &t : u.get_functioning_mutations( true ) ) {
         dummy.set_mutation( t );
     }
@@ -82,24 +82,24 @@ void player_difficulty::npc_from_avatar( const avatar &u, npc &dummy )
 void player_difficulty::reset_npc( Character &dummy )
 {
     dummy.set_body();
-    dummy.normalize(); // In particular this clears martial arts style
+    dummy.normalize();
 
-    // delete all worn items.
+
     dummy.clear_worn();
     dummy.calc_encumbrance();
     dummy.remove_weapon();
     dummy.clear_mutations();
 
-    // Clear stomach and then eat a nutritious meal to normalize stomach
-    // contents (needs to happen before clear_morale).
+
+
     dummy.stomach.empty();
     dummy.guts.empty();
     dummy.clear_vitamins();
 
-    // This sets HP to max, clears addictions and morale,
-    // and sets hunger, thirst, sleepiness and such to zero
+
+
     dummy.environmental_revert_effect();
-    // However, the above does not set stored kcal
+
     dummy.set_stored_kcal( dummy.get_healthy_kcal() );
 
     dummy.empty_skills();
@@ -121,16 +121,16 @@ void player_difficulty::reset_npc( Character &dummy )
     dummy.set_skills_from_hobbies();
 
 
-    // Reset cardio_acc to baseline
+
     dummy.reset_cardio_acc();
-    // Restore all stamina and go to walk mode
+
     dummy.set_stamina( dummy.get_stamina_max() );
     dummy.reset_activity_level();
 
-    // Make sure we don't carry around weird effects.
+
     dummy.clear_effects();
 
-    // Make stats nominal.
+
     dummy.set_str_base( 8 );
     dummy.set_dex_base( 8 );
     dummy.set_int_base( 8 );
@@ -197,7 +197,7 @@ std::string enum_to_string<OP_level>( OP_level data )
     cata_fatal( "Invalid OP_level" );
 }
 
-} // namespace io
+}
 
 std::string player_difficulty::format_text_for( OP_level overpowered, float per )
 {
@@ -243,19 +243,19 @@ static OP_level level_for( float percent_band, float per )
 
 double player_difficulty::calc_armor_value( const Character &u )
 {
-    // a low damage value to be concerned about early
-    // only concerned with bash damage since it is most
-    // prevalent early game
+
+
+
 
     const float head_protection = 0.2f;
     const float torso_protection = 0.4f;
     const float arms_protection = 0.2f;
     const float legs_protection = 0.2f;
 
-    // don't want divide by zeroes later
+
     float armor_val = 0.01f;
 
-    // check any other items the character has on them
+
     if( u.prof ) {
         for( const item &i : u.prof->items( true, std::vector<trait_id>() ) ) {
             armor_val += head_protection * i.resist( damage_bash, false, bodypart_id( "head" ) );
@@ -270,38 +270,38 @@ double player_difficulty::calc_armor_value( const Character &u )
 
 std::pair<OP_level, std::string> player_difficulty::get_defense_difficulty( const Character &u )
 {
-    // figure out how survivable the character is.
 
-    // the percent margin between result bands
+
+
     const float percent_band = 0.5f;
 
-    // how much each portion is valued compared to the deviation of others
-    // movement is negative since lower is better
-    // small deviations in movement value leads to massive defense value
+
+
+
     const float standard_movement = -6.0f;
     const float difficult_movement = -2.0f;
     const float dodge = 1.0f;
     const float armor_value = 0.2f;
 
-    // calculate move cost on simple ground
+
     float player_run_cost = static_cast<float>( u.run_cost( 100 ) ) / static_cast<float>
                             ( u.get_speed() );
     float average_run_cost = static_cast<float>( average.run_cost( 100 ) ) / static_cast<float>
                              ( average.get_speed() );
     float per = standard_movement * ( player_run_cost - average_run_cost ) / average_run_cost;
 
-    // calculate move cost on simple ground
+
     player_run_cost = static_cast<float>( u.run_cost( 400 ) ) / static_cast<float>
                       ( u.get_speed() );
     average_run_cost = static_cast<float>( average.run_cost( 400 ) ) / static_cast<float>
                        ( average.get_speed() );
     per += difficult_movement * ( player_run_cost - average_run_cost ) / average_run_cost;
 
-    // calculate armor value
+
     float player_armor = calc_armor_value( u );
     float average_armor = calc_armor_value( average );
     per += armor_value * ( player_armor - average_armor ) / average_armor;
-    // calculate dodge
+
     per += dodge * ( u.get_dodge() - average.get_dodge() ) / average.get_dodge();
 
     OP_level rating = level_for( percent_band, per );
@@ -311,13 +311,13 @@ std::pair<OP_level, std::string> player_difficulty::get_defense_difficulty( cons
 
 double player_difficulty::calc_dps_value( const Character &u )
 {
-    // check against the big three
-    // efficient early weapons you can easily get access to
+
+
     item early_piercing = item( itype_knife_combat );
     item early_cutting = item( itype_machete );
     item early_bashing = item( itype_bat );
 
-    // and some firearms, based on availability.
+
     item most_common_pistol = item( itype_swbodyguard );
     item most_common_rifle = item( itype_ruger_1022 );
     item most_common_shotgun = item( itype_mossberg_500 );
@@ -330,7 +330,7 @@ double player_difficulty::calc_dps_value( const Character &u )
         baseline = std::max( baseline, new_weapon_value );
     }
 
-    // check any other items the character has on them
+
     if( u.prof ) {
         for( const item &i : u.prof->items( true, std::vector<trait_id>() ) ) {
             baseline = std::max( baseline, u.evaluate_weapon( i, true ) );
@@ -342,14 +342,14 @@ double player_difficulty::calc_dps_value( const Character &u )
 
 std::pair<OP_level, std::string> player_difficulty::get_combat_difficulty( const Character &u )
 {
-    // figure out how good the player is at combat.
-    // get the best dps of a basic civilian with 3 scavengable weapons
-    // compare to the dps of this character with 1 of those 3 or their best weapon they spawn with
 
-    // the percent margin between result bands
+
+
+
+
     const float percent_band = 0.5f;
 
-    // dps should be multiplied by speed which is a multiplier
+
     double npc_dps = calc_dps_value( average ) * average.get_speed();
     double player_dps = calc_dps_value( u ) * u.get_speed();
 
@@ -362,15 +362,15 @@ std::pair<OP_level, std::string> player_difficulty::get_combat_difficulty( const
 
 std::pair<OP_level, std::string> player_difficulty::get_genetics_difficulty( const Character &u )
 {
-    // figure out how genetically advantaged the character is
 
-    // how many attributes the average character has
+
+
     const int average_stats = 38;
-    // how much stats above HIGH_STAT penalize the player
+
     const int high_stat_penalty = 4;
-    // how much traits are valued at
+
     const int trait_value = 1;
-    // the percent margin between result bands
+
     const float percent_band = 2.5f;
 
     int genetics_total = u.get_str_base() + u.get_dex_base() + u.get_per_base() + u.get_int_base();
@@ -379,7 +379,7 @@ std::pair<OP_level, std::string> player_difficulty::get_genetics_difficulty( con
     genetics_total += std::max( 0, u.get_per_base() - HIGH_STAT ) * high_stat_penalty;
     genetics_total += std::max( 0, u.get_int_base() - HIGH_STAT ) * high_stat_penalty;
 
-    // each trait effects genetics slightly as well
+
     for( const trait_id &trait : u.get_mutations( true ) ) {
         if( trait->points > 0 ) {
             genetics_total += trait_value;
@@ -388,9 +388,9 @@ std::pair<OP_level, std::string> player_difficulty::get_genetics_difficulty( con
         }
     }
 
-    // note, not doing a percent calc here just actually evaluating closeness average
-    // we subtract percent band from the average since "average" in the menu goes from
-    // 0 to 1 percent band
+
+
+
     float per = static_cast<float>( genetics_total - ( average_stats - percent_band ) );
 
     OP_level rating = level_for( percent_band, per );
@@ -400,11 +400,11 @@ std::pair<OP_level, std::string> player_difficulty::get_genetics_difficulty( con
 
 static int get_character_skill_value( const Character &u )
 {
-    // sum player skills and proficiencies
+
     int character_skills = 0;
-    // every skill point is worth 1 point of value
+
     for( const auto &t : u.get_all_skills() ) {
-        // combat skills will be handled in offence
+
         if( !t.first->is_combat_skill() ) {
             character_skills += t.second.level();
         }
@@ -416,37 +416,37 @@ std::pair<OP_level, std::string> player_difficulty::get_expertise_difficulty( co
 {
     const float percent_band = 0.6f;
 
-    // how much each proficiency is valued compared to a skill point
+
     const int proficiency_value = 2;
 
-    // how much each portion is valued compared to the deviation of others
+
     const float skill_weighting = 1.0f;
     const float reading_weighting = 2.0f;
     const float learn_weighting = 2.0f;
     const float focus_weighting = 2.0f;
 
-    // sum player skills and proficiencies
+
     int player_skills = get_character_skill_value( u );
     int average_skill_ranks = get_character_skill_value( average );
 
-    // every proficiency is worth about the value of 2 skill points
+
     player_skills += proficiency_value * u._proficiencies->known_profs().size();
     average_skill_ranks += proficiency_value * average._proficiencies->known_profs().size();
 
-    // skills and professions
+
     float per = skill_weighting * static_cast<float>( player_skills - average_skill_ranks ) /
                 static_cast<float>( average_skill_ranks );
 
-    // focus
+
     per += focus_weighting * static_cast<float>( u.calc_focus_equilibrium(
                 true ) - average.calc_focus_equilibrium(
                 true ) ) / static_cast<float>( average.calc_focus_equilibrium( true ) );
 
-    // reading speed negative is good
+
     per -= reading_weighting * static_cast<float>( u.read_speed() - average.read_speed() ) /
            static_cast<float>( average.read_speed() );
 
-    // how much each point of experience is worth to your character
+
     per += learn_weighting * static_cast<float>( u.adjust_for_focus( 100 ) -
             average.adjust_for_focus( 100 ) ) / static_cast<float>( average.adjust_for_focus( 100 ) );
 
@@ -457,7 +457,7 @@ std::pair<OP_level, std::string> player_difficulty::get_expertise_difficulty( co
 
 int player_difficulty::calc_social_value( const Character &u, const npc &compare )
 {
-    // weighting skill and underlying values equally
+
 
     int social = std::max( u.intimidation(), u.persuade_skill() );
     int lying = u.lie_skill();
@@ -474,7 +474,7 @@ int player_difficulty::calc_social_value( const Character &u, const npc &compare
 
 std::pair<OP_level, std::string> player_difficulty::get_social_difficulty( const Character &u )
 {
-    // compare the characters social value to an average npc
+
     int player_val = calc_social_value( u, average );
     int average_val = calc_social_value( average, average );
 
@@ -500,7 +500,7 @@ std::map<rating_category, OP_level> player_difficulty::get_ratings() const
 
 std::string player_difficulty::difficulty_to_string( const avatar &u )
 {
-    // make a faux avatar that can have the effects of creation applied to it
+
     npc n = npc();
     reset_npc( n );
     npc_from_avatar( u, n );

@@ -321,7 +321,7 @@ TEST_CASE( "route_with_grab_respects_avoid_callback",
     here.invalidate_map_cache( 0 );
     here.build_map_cache( 0, true );
 
-    // Avoid callback that rejects the only gap in the wall
+
     auto avoid = [&blocked_pos]( const tripoint_bub_ms & p ) {
         return p == blocked_pos;
     };
@@ -330,7 +330,7 @@ TEST_CASE( "route_with_grab_respects_avoid_callback",
                                   pathfinding_target::adjacent( dest_pos ), avoid );
     CHECK( route.empty() );
 
-    // Without the avoid callback, route should succeed
+
     auto route_no_avoid = route_with_grab( here, dummy,
                                            pathfinding_target::adjacent( dest_pos ) );
     CHECK( !route_no_avoid.empty() );
@@ -352,7 +352,7 @@ TEST_CASE( "route_with_grab_accounts_for_broken_wheels",
 
     vehicle *cart = setup_grabbed_cart( dummy, here, start_pos, tripoint_rel_ms::south );
 
-    // Add heavy cargo so mass-based drag cap is meaningful
+
     const tripoint_bub_ms cart_pos = start_pos + tripoint::south;
     std::optional<vpart_reference> cargo = here.veh_at( cart_pos ).cargo();
     REQUIRE( cargo.has_value() );
@@ -368,8 +368,8 @@ TEST_CASE( "route_with_grab_accounts_for_broken_wheels",
 
     const int healthy_req = cart->drag_str_req_at( here, cart_pos );
 
-    // Remove the wheel -- simulates complete wheel destruction from collision.
-    // Without wheels, drag_str_req_at returns the mass-based maximum.
+
+
     std::vector<int> wheels = cart->wheelcache;
     for( const int idx : wheels ) {
         cart->remove_part( cart->part( idx ) );
@@ -380,7 +380,7 @@ TEST_CASE( "route_with_grab_accounts_for_broken_wheels",
     const int broken_req = cart->drag_str_req_at( here, cart_pos );
     REQUIRE( broken_req > healthy_req );
 
-    // Set strength between healthy and broken requirements
+
     dummy.set_str_base( healthy_req + 1 );
     dummy.set_str_bonus( 0 );
     REQUIRE( dummy.get_arm_str() >= healthy_req );

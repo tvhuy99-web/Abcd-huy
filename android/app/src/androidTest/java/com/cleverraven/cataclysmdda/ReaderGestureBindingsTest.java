@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.List;
 
-/** Device-level contracts for shortcuts and swipe classifier (compilation in CI). */
+
 @RunWith(AndroidJUnit4.class)
 public final class ReaderGestureBindingsTest {
     private static final String STORE = "internal_reader";
@@ -46,29 +46,29 @@ public final class ReaderGestureBindingsTest {
             bindings.assign("swipe_up_down", "action:open");
             assertEquals("action:open", bindings.targetFor("swipe_up_down"));
 
-            // Newest wins the gesture; the former action has no custom mapping.
+
             ReaderGestureBindings.Assignment conflict = bindings.assign(
                     "swipe_up_down", "action:fire");
             assertEquals("action:open", conflict.displacedTarget);
             assertNull(bindings.gestureFor("action:open"));
             assertEquals("action:fire", bindings.targetFor("swipe_up_down"));
 
-            // Reassigning an action also frees its previous gesture.
+
             ReaderGestureBindings.Assignment move = bindings.assign(
                     "swipe_3_up", "action:fire");
             assertEquals("swipe_up_down", move.displacedGesture);
             assertNull(bindings.targetFor("swipe_up_down"));
             assertEquals("action:fire", bindings.targetFor("swipe_3_up"));
 
-            // Persist across instances and restore original behavior.
+
             assertEquals("swipe_3_up",
                     new ReaderGestureBindings(context).gestureFor("action:fire"));
             bindings.restoreDefault("action:fire");
             assertNull(bindings.gestureFor("action:fire"));
-            // Direction-changing swipes remain customizable outside combat.
+
             bindings.assign("swipe_down_up", "action:reload");
             assertEquals("action:reload", bindings.targetFor("swipe_down_up"));
-            // Holds share the same newest-assignment-wins persistence.
+
             bindings.assign("hold_2", "action:open");
             assertEquals("action:open", bindings.targetFor("hold_2"));
             ReaderGestureBindings.Assignment replaced = bindings.assign(
@@ -77,7 +77,7 @@ public final class ReaderGestureBindingsTest {
             assertNull(bindings.targetFor("hold_2"));
             assertEquals("hold_3", bindings.gestureFor("action:open"));
 
-            // Fixed gameplay gestures cannot be remapped by this storage API.
+
             for (String locked : new String[]{"swipe_up", "swipe_down",
                     "swipe_left", "swipe_right", "tap_2_1", "tap_2_2",
                     "tap_2_3", "tap_3_1", "tap_3_2", "tap_3_3", "hold_1"}) {
@@ -87,16 +87,16 @@ public final class ReaderGestureBindingsTest {
                     bindings.assign(locked, "action:open");
                     fail("Should reject reserved gesture: " + locked);
                 } catch (IllegalArgumentException expected) {
-                    // The original built-in action remains available.
+
                 }
             }
-            // A pre-upgrade binding is discarded, never activated.
+
             store.edit().putString(KEY, "{\"tap_3_2\":\"action:fire\",\"tap_3_3\":\"action:open\","
                     + "\"swipe_3_up\":\"action:open\"}").commit();
             ReaderGestureBindings migrated = new ReaderGestureBindings(context);
             assertNull(migrated.targetFor("tap_3_2"));
             assertNull(migrated.targetFor("tap_3_3"));
-            // A retired triple tap must not erase any other custom shortcut.
+
             assertEquals("action:open", migrated.targetFor("swipe_3_up"));
         } finally {
             SharedPreferences.Editor edit = store.edit();
@@ -108,8 +108,8 @@ public final class ReaderGestureBindingsTest {
 
     @Test
     public void classifiesNewVehicleStatusBrakeAndHornSwipes() {
-        // Each bend is a single finger. Two-finger cardinal world scans
-        // continue through their separate pointer classifier.
+
+
         String[][] gestures = {
             { "swipe_down_left", "0", "90", "-90", "90" },
             { "swipe_down_right", "0", "90", "90", "90" },

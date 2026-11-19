@@ -58,10 +58,10 @@ void advanced_inv_area::init()
     pos = player_character.pos_bub() + off;
     veh = nullptr;
     vstor = -1;
-    // must update in main function
+
     volume = 0_ml;
     volume_veh = 0_ml;
-    // must update in main function
+
     weight = 0_gram;
     weight_veh = 0_gram;
     map &here = get_map();
@@ -76,9 +76,9 @@ void advanced_inv_area::init()
                 desc[0] = _( "Not dragging any vehicle!" );
                 break;
             }
-            // offset for dragged vehicles is not statically initialized, so get it
+
             off = player_character.grab_point;
-            // Reset position because offset changed
+
             pos = player_character.pos_bub() + off;
             if( const std::optional<vpart_reference> vp = here.veh_at( pos ).cargo() ) {
                 veh = &vp->vehicle();
@@ -92,13 +92,13 @@ void advanced_inv_area::init()
             }
             break;
         case AIM_CONTAINER:
-            // set container position based on location
+
             set_container_position();
-            // location always valid, actual check is done in canputitems()
-            // and depends on selected item in pane (if it is valid container)
+
+
             canputitemsloc = true;
-            // write "invalid container" by default, in case it
-            // doesn't get overwritten in advanced_inv_pane.add_items_from_area()
+
+
             desc[0] = _( "Invalid container!" );
             break;
         case AIM_ALL:
@@ -125,7 +125,7 @@ void advanced_inv_area::init()
                 std::string part_name = vp->info().name();
                 desc[1] = vp->get_label().value_or( part_name );
             }
-            // get graffiti or terrain name
+
             desc[0] = here.has_graffiti_at( pos ) ?
                       here.graffiti_at( pos ) : here.name( pos );
         }
@@ -134,8 +134,8 @@ void advanced_inv_area::init()
             break;
     }
 
-    /* assemble a list of interesting traits of the target square */
-    // fields? with a special case for fire
+
+
     bool danger_field = false;
     const field &tmpfld = here.field_at( pos );
     for( const auto &fld : tmpfld ) {
@@ -152,19 +152,19 @@ void advanced_inv_area::init()
         flags.append( _( " DANGER" ) );
     }
 
-    // trap?
+
     const trap &tr = here.tr_at( pos );
     if( tr.can_see( pos, player_character ) && !tr.is_benign() ) {
         flags.append( _( " TRAP" ) );
     }
 
-    // water?
+
     if( here.has_flag_ter( ter_furn_flag::TFLAG_SHALLOW_WATER, pos ) ||
         here.has_flag_ter( ter_furn_flag::TFLAG_DEEP_WATER, pos ) ) {
         flags.append( _( " WATER" ) );
     }
 
-    // remove leading space
+
     if( !flags.empty() && flags[0] == ' ' ) {
         flags.erase( 0, 1 );
     }
@@ -172,15 +172,15 @@ void advanced_inv_area::init()
 
 bool advanced_inv_area::is_same( const advanced_inv_area &other ) const
 {
-    // All locations (sans the below) are compared by the coordinates,
-    // e.g. dragged vehicle (to the south) and AIM_SOUTH are the same.
+
+
     if( id != AIM_INVENTORY && other.id != AIM_INVENTORY &&
         id != AIM_WORN && other.id != AIM_WORN &&
         id != AIM_CONTAINER && other.id != AIM_CONTAINER ) {
-        //     have a vehicle?...     ...do the cargo index and pos match?...    ...at least pos?
+
         return veh == other.veh ? pos == other.pos && vstor == other.vstor : pos == other.pos;
     }
-    //      ...is the id?
+
     return id == other.id;
 }
 
@@ -216,15 +216,15 @@ static tripoint_rel_ms aim_vector( aim_location id )
 void advanced_inv_area::set_container_position()
 {
     avatar &player_character = get_avatar();
-    // update the offset of the container based on location
+
     if( uistate.adv_inv_container_location == AIM_DRAGGED ) {
         off = player_character.grab_point;
     } else {
         off = aim_vector( static_cast<aim_location>( uistate.adv_inv_container_location ) );
     }
-    // update the absolute position
+
     pos = player_character.pos_bub() + off;
-    // update vehicle information
+
     if( const std::optional<vpart_reference> vp = get_map().veh_at( pos ).cargo() ) {
         veh = &vp->vehicle();
         vstor = vp->part_index();
@@ -246,11 +246,11 @@ aim_location advanced_inv_area::offset_to_location() const
 
 bool advanced_inv_area::can_store_in_vehicle() const
 {
-    // disallow for non-valid vehicle locations
+
     if( id > AIM_DRAGGED || id < AIM_SOUTHWEST ) {
         return false;
     }
-    // Prevent AIM access to activated dishwasher, washing machine, or autoclave.
+
     if( veh != nullptr && vstor >= 0 ) {
         return !veh->part( vstor ).is_cleaner_on();
     } else {
@@ -269,18 +269,18 @@ vehicle_stack advanced_inv_area::get_vehicle_stack() const
 template <typename T>
 advanced_inv_area::itemstack advanced_inv_area::i_stacked( T items )
 {
-    //create a new container for our stacked items
+
     advanced_inv_area::itemstack stacks;
-    // used to recall indices we stored `itype_id' item at in itemstack
+
     std::unordered_map<itype_id, std::set<int>> cache;
-    // iterate through and create stacks
+
     for( item &elem : items ) {
         const itype_id id = elem.typeId();
         auto iter = cache.find( id );
         bool got_stacked = false;
-        // cache entry exists
+
         if( iter != cache.end() ) {
-            // check to see if it stacks with each item in a stack, not just front()
+
             for( const int &idx : iter->second ) {
                 for( item *&it : stacks[idx] ) {
                     if( ( got_stacked = it->display_stacked_with( elem ) ) ) {
@@ -301,7 +301,7 @@ advanced_inv_area::itemstack advanced_inv_area::i_stacked( T items )
     return stacks;
 }
 
-// instantiate the template
+
 template
 advanced_inv_area::itemstack advanced_inv_area::i_stacked<vehicle_stack>( vehicle_stack items );
 

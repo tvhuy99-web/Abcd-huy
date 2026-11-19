@@ -7,16 +7,16 @@ namespace
 
 generic_factory<construction_category> all_construction_categories( "construction categories" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 bool string_id<construction_category>::is_valid() const
 {
     return all_construction_categories.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const construction_category &string_id<construction_category>::obj() const
 {

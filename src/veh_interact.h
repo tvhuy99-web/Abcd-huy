@@ -32,17 +32,17 @@ class time_duration;
 class vpart_info;
 struct requirement_data;
 
-/** Represents possible return values from the cant_do function. */
+
 enum class task_reason : int {
-    UNKNOWN_TASK = -1, //No such task
-    CAN_DO, //Task can be done
-    INVALID_TARGET, //No valid target i.e. can't "change tire" if no tire present
-    LACK_TOOLS, //Player doesn't have all the tools they need
-    NOT_FREE, //Part is attached to something else and can't be unmounted
-    LACK_SKILL, //Player doesn't have high enough mechanics skill
-    MOVING_VEHICLE, // vehicle is moving, no modifications allowed
-    LOW_MORALE, // Player has too low morale (for operations that require it)
-    LOW_LIGHT // Player cannot see enough to work (for operations that require it)
+    UNKNOWN_TASK = -1,
+    CAN_DO,
+    INVALID_TARGET,
+    LACK_TOOLS,
+    NOT_FREE,
+    LACK_SKILL,
+    MOVING_VEHICLE,
+    LOW_MORALE,
+    LOW_LIGHT
 };
 
 class ui_adaptor;
@@ -51,25 +51,25 @@ struct vehicle_part;
 
 template <typename T> struct enum_traits;
 
-// For marking 'leaking' tanks/reactors/batteries
+
 const std::string leak_marker = "<color_red>*</color>";
 
-// the action done by this vehicle activity
+
 enum vehicle_action {
-    VEHICLE_INSTALL,    // 'i'
-    VEHICLE_REPAIR,     // 'r'
-    VEHICLE_REFILL,     // 'f'
-    VEHICLE_REMOVE,     // 'o'
-    VEHICLE_REMOVE_APPLIANCE,     // 'O'
-    VEHICLE_UNPLUG,     // 'u'
-    VEHICLE_MEND_FAULTS,// 'm'
-    VEHICLE_SIPHON,     // 's'
-    VEHICLE_UNLOAD,     // 'd'
-    // not intended to be activities or legacy
-    VEHICLE_SHAPE,      // 'p'
-    VEHICLE_ASSIGN_CREW,// 'w'
-    VEHICLE_RELABEL,    // 'a'
-    VEHICLE_QUIT,        // 'q' or ' '
+    VEHICLE_INSTALL,
+    VEHICLE_REPAIR,
+    VEHICLE_REFILL,
+    VEHICLE_REMOVE,
+    VEHICLE_REMOVE_APPLIANCE,
+    VEHICLE_UNPLUG,
+    VEHICLE_MEND_FAULTS,
+    VEHICLE_SIPHON,
+    VEHICLE_UNLOAD,
+
+    VEHICLE_SHAPE,
+    VEHICLE_ASSIGN_CREW,
+    VEHICLE_RELABEL,
+    VEHICLE_QUIT,
     VEHICLE_LAST
 };
 
@@ -77,7 +77,7 @@ namespace io
 {
 template<>
 std::string enum_to_string<vehicle_action>( vehicle_action stage );
-} // namespace io
+}
 
 template<>
 struct enum_traits<vehicle_action> {
@@ -91,7 +91,7 @@ class veh_interact
     public:
         static void run( map &here,  vehicle &veh, const point_rel_ms &p );
 
-        /** Prompt for a part matching the selector function */
+
         static std::optional<vpart_reference> select_part( map &here, const vehicle &veh,
                 const part_selector &sel,
                 const std::string &title = std::string() );
@@ -100,37 +100,37 @@ class veh_interact
         explicit veh_interact( map &here, vehicle &veh, const point_rel_ms &p = point_rel_ms::zero );
         ~veh_interact();
 
-        // vehicle part mount position, only set during constructor
-        // functionally, this works as the cursor position for the top-down vehicle view
-        // see vehicle::build_interact_menu for initial assignment
+
+
+
         point_rel_ms cursor_vp_mount = point_rel_ms::zero;
-        /* starting offset for vehicle parts description display and max offset for scrolling */
+
         int start_at = 0;
         int start_limit = 0;
-        /* starting offset for the overview and the max offset for scrolling */
+
         int overview_offset = 0;
         int overview_limit = 0;
-        /* starting offset for installation scrolling */
+
         int w_msg_scroll_offset = 0;
-        /* starting offset for fuels scrolling */
+
         int fuel_index = 0;
 
-        // target vehicle tank for refill with liquids
+
         item_location refill_target;
 
         const vehicle_part *sel_vehicle_part = nullptr;
         const vpart_info *sel_vpart_info = nullptr;
 
-        // Command currently being run by the player
+
         vehicle_action sel_cmd = VEHICLE_QUIT;
 
         int cpart = -1;
         int page_size = 0;
-        // height of the stats window
+
         const int stats_h = 8;
-        // element width defaults for 80 column display
-        int disp_w = 26; // width of the left column
-        int pane_w = 25; // width of the center and right columns
+
+        int disp_w = 26;
+        int pane_w = 25;
         catacurses::window w_border;
         catacurses::window w_mode;
         catacurses::window w_msg;
@@ -157,16 +157,16 @@ class veh_interact
 
         std::unique_ptr<install_info_t> install_info;
 
-        // Reader adapter session (R15.1/R15.2), defined in veh_interact.cpp.
-        // It publishes the vehicle panes for the screen reader and keeps the
-        // reader's list positions in sync with the loops below.
+
+
+
         class reader_session;
 
         std::unique_ptr<reader_session> reader;
 
-        // Position within need_repair of the part do_repair is showing.
-        // A member (not a do_repair local) so the reader session can keep
-        // it in sync when the reader browses the repair list.
+
+
+
         int repair_pos = 0;
 
         struct remove_info_t;
@@ -175,13 +175,13 @@ class veh_interact
 
         vehicle *veh;
         const temp_crafting_inventory *crafting_inv;
-        // install candidates for crafting_inv, refreshed with it; move_cursor filters them per tile
+
         veh_utils::install_candidates install_options;
         input_context main_context;
 
-        // maximum weight capacity of available lifting equipment (if any)
+
         units::mass max_lift;
-        // maximum weight_capacity of available jacking equipment (if any)
+
         units::mass max_jack;
 
         shared_ptr_fast<ui_adaptor> create_or_get_ui_adaptor( map &here );
@@ -189,33 +189,33 @@ class veh_interact
 
         void assign_activity( map &here );
 
-        /** Format list of requirements returning true if all are met */
+
         bool format_reqs( std::string &msg, const requirement_data &reqs,
                           const std::map<skill_id, int> &skills, time_duration time ) const;
 
         int part_at( const point_rel_ms &d );
         void move_cursor( map &here, const point_rel_ms &d, int dstart_at = 0 );
         task_reason cant_do( const map &here, vehicle_action mode );
-        /** Move index (parameter pos) according to input action:
-         * (up or down, single step or whole page).
-         * @param pos index to change.
-         * @param action input action (taken from input_context::handle_input)
-         * @param size size of the list to scroll, used to wrap the cursor around.
-         * @param header number of lines reserved for list header.
-         * @return false if the action is not a move action, the index is not changed in this case.
-         */
+
+
+
+
+
+
+
+
         bool move_in_list( int &pos, const std::string &action, int size,
                            int header = 0 ) const;
         void move_fuel_cursor( map &here, int delta );
 
-        /**
-         * @name Task handlers
-         *
-         * One function for each specific task
-         * @warning presently functions may mutate local state
-         * @param msg failure message to display (if any)
-         */
-        /*@{*/
+
+
+
+
+
+
+
+
         void do_install( map &here );
         void do_repair( map &here );
         void do_mend( map &here );
@@ -223,17 +223,17 @@ class veh_interact
         void do_remove( map &here );
         void do_rename();
         void do_siphon( map &here );
-        // Returns true if exiting the screen
+
         bool do_unload( map &here );
         void do_assign_crew( map &here );
         void do_relabel( const map &here );
-        /*@}*/
 
-        /**
-        * Calculates the lift requirements for a given vehicle_part
-        * @return bool true if lift requirements are fulfilled
-        * @return string msg for the ui to show the lift requirements
-        */
+
+
+
+
+
+
         std::pair<bool, std::string> calc_lift_requirements( map &here, const vpart_info &sel_vpart_info );
 
         void display_grid();
@@ -260,19 +260,19 @@ class veh_interact
             std::string key;
             vehicle_part *part;
 
-            /** Can the part be selected and used */
+
             bool selectable;
 
-            /** Can @param action be run for this entry? */
+
             input_event hotkey;
 
-            /** Writes any extra details for this entry */
+
             std::function<void( const vehicle_part &pt, const catacurses::window &w, int y )> details;
 
-            /** Number of additional rows past the title row that details writes. */
+
             std::function<int( const vehicle_part &pt )> extra_rows;
 
-            /** Writes to message window when part is selected */
+
             std::function<void( const vehicle_part &pt )> message;
         };
         std::vector<part_option> overview_opts;
@@ -285,14 +285,14 @@ class veh_interact
 
         void calc_overview( map &here );
         void display_overview( const map &here );
-        /**
-         * Display overview of parts, optionally with interactive selection of one part
-         *
-         * @param enable used to determine parts of interest. If \p action also present, these
-                         parts are the ones that can be selected. Otherwise, these are the parts
-                         that will be highlighted
-         * @param action callback when part is selected.
-         */
+
+
+
+
+
+
+
+
         void overview( map &here, const overview_enable_t &enable = {},
                        const overview_action_t &action = {} );
         void move_overview_line( int );
@@ -302,38 +302,38 @@ class veh_interact
         nc_color total_durability_color;
         std::string total_durability_text;
 
-        /** Returns the most damaged part's index, or -1 if they're all healthy. */
+
         vehicle_part *get_most_damaged_part() const;
 
-        /** Returns the index of the part that needs repair the most.
-         * This may not be mostDamagedPart since not all parts can be repaired
-         * If there are no damaged parts this returns -1 */
+
+
+
         vehicle_part *get_most_repairable_part() const;
 
-        //do_remove supporting operation, writes requirements to ui
+
         bool can_remove_part( map &here, int idx, const Character &you );
-        //do install support, writes requirements to ui
+
         bool update_part_requirements( map &here );
 
-        /* Vector of all vpart TYPES that can be mounted in the current square.
-         * Can be converted to a vector<vpart_info>.
-         * Updated whenever the cursor moves. */
+
+
+
         std::vector<const vpart_info *> can_mount;
 
-        /* Vector of vparts in the current square that can be repaired. Strictly a
-         * subset of parts_here.
-         * Can probably be removed entirely, otherwise is a vector<vehicle_part>.
-         * Updated whenever parts_here is updated.
-         */
+
+
+
+
+
         std::vector<int> need_repair;
 
-        /* Vector of all vparts that exist on the vehicle in the current square.
-         * Can be converted to a vector<vehicle_part>.
-         * Updated whenever the cursor moves. */
+
+
+
         std::vector<int> parts_here;
 
-        /* Terrain at current square.
-         * Updated whenever the cursor moves. */
+
+
         ter_t terrain_here;
 
         void cache_tool_availability();
@@ -342,7 +342,7 @@ class veh_interact
 
         void cache_tool_availability_update_lifting( const tripoint_bub_ms &world_cursor_pos );
 
-        /** Returns true if the vehicle has a jack powerful enough to lift itself installed */
+
         bool can_self_jack( map &here );
 };
 
@@ -351,4 +351,4 @@ void act_vehicle_siphon( map &here, vehicle *veh );
 void orient_part( map &here, vehicle *veh, const vpart_info &vpinfo, int partnum,
                   const std::optional<point_rel_ms> &part_placement = std::nullopt );
 
-#endif // CATA_SRC_VEH_INTERACT_H
+#endif

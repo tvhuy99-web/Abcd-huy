@@ -9,7 +9,7 @@
 namespace cataimgui
 {
 struct Paragraph;
-}  // namespace cataimgui
+}
 
 class imgui_demo_ui : public cataimgui::window
 {
@@ -28,4 +28,4 @@ class imgui_demo_ui : public cataimgui::window
         std::shared_ptr<cataimgui::Paragraph> stuff;
 };
 
-#endif // CATA_SRC_IMGUI_DEMO_H
+#endif

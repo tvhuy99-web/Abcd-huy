@@ -240,20 +240,20 @@ template<>
 std::string enum_to_string<blood_type>( blood_type data )
 {
     switch( data ) {
-            // *INDENT-OFF*
+
         case blood_type::blood_O: return "O";
         case blood_type::blood_A: return "A";
         case blood_type::blood_B: return "B";
         case blood_type::blood_AB: return "AB";
         case blood_type::blood_acid: return "Acid";
-            // *INDENT-ON*
+
         case blood_type::num_bt:
             break;
     }
     cata_fatal( "Invalid blood_type" );
 }
 
-} // namespace io
+}
 
 bool Character::can_recover_oxygen() const
 {
@@ -286,7 +286,7 @@ void Character::react_to_felt_pain( int intensity )
     if( uistate.distraction_pain && is_avatar() && intensity >= 2 ) {
         g->cancel_activity_or_ignore_query( distraction_type::pain, _( "Ouch, something hurts!" ) );
     }
-    // Only a large pain burst will actually wake people while sleeping.
+
     if( has_effect( effect_sleep ) && get_effect( effect_sleep ).get_duration() > 0_turns &&
         !has_effect( effect_narcosis ) ) {
         int pain_thresh = rng( 3, 5 );
@@ -312,7 +312,7 @@ bool Character::is_dead_state() const
     }
 
     cached_dead_state = false;
-    // we want to warn the player with a debug message if they are invincible. this should be unimportant once wounds exist and bleeding is how you die.
+
     bool has_vitals = false;
     for( const bodypart_id &bp : get_all_body_parts( get_body_part_flags::only_main ) ) {
         if( bp->is_vital ) {
@@ -334,7 +334,7 @@ void Character::set_part_hp_cur( const bodypart_id &id, int set )
     bool is_broken_before = get_part_hp_cur( id ) <= 0;
     Creature::set_part_hp_cur( id, set );
     bool is_broken_after = get_part_hp_cur( id ) <= 0;
-    // detect unbroken->broken (possible death) as well as broken->unbroken (possible revival)
+
     if( is_broken_before != is_broken_after ) {
         cached_dead_state.reset();
     }
@@ -345,7 +345,7 @@ void Character::mod_part_hp_cur( const bodypart_id &id, int set )
     bool is_broken_before = get_part_hp_cur( id ) <= 0;
     Creature::mod_part_hp_cur( id, set );
     bool is_broken_after = get_part_hp_cur( id ) <= 0;
-    // detect unbroken->broken (possible death) as well as broken->unbroken (possible revival)
+
     if( is_broken_before != is_broken_after ) {
         cached_dead_state.reset();
     }
@@ -374,7 +374,7 @@ void Character::expose_to_disease( const diseasetype_id &dis_type )
 
 void Character::recalc_hp()
 {
-    // Mutated toughness stacks with starting, by design.
+
     float hp_mod = 1.0f + enchantment_cache->get_value_multiply( enchant_vals::mod::MAX_HP );
     float hp_adjustment = enchantment_cache->get_value_add( enchant_vals::mod::MAX_HP );
     calc_all_parts_hp( hp_mod, hp_adjustment, get_str_base(), get_dex_base(), get_per_base(),
@@ -448,7 +448,7 @@ void Character::conduct_blood_analysis()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     bool stop = false;
-    // Display new messages
+
     g->invalidate_main_ui_adaptor();
     while( !stop ) {
         ui_manager::redraw();
@@ -461,11 +461,11 @@ void Character::conduct_blood_analysis()
 
 int Character::get_standard_stamina_cost( const item *thrown_item ) const
 {
-    // Previously calculated as 2_gram * std::max( 1, get_str() )
-    // using 16_gram normalizes it to 8 str. Same effort expenditure
-    // for each strike, regardless of weight. This is compensated
-    // for by the additional move cost as weapon weight increases
-    //If the item is thrown, override with the thrown item instead.
+
+
+
+
+
 
     item current_weapon = used_weapon() ? *used_weapon() : null_item_reference();
 
@@ -474,7 +474,7 @@ int Character::get_standard_stamina_cost( const item *thrown_item ) const
     return ( weight_cost + 50 ) * -1 * get_modifier( character_modifier_melee_stamina_cost_mod );
 }
 
-// Actual player death is mostly handled in game::is_game_over
+
 void Character::die( map *here, Creature *nkiller )
 {
     g->set_critter_died();
@@ -526,7 +526,7 @@ int Character::calc_focus_equilibrium( bool ignore_pain ) const
         const item_location book = activity.targets[0];
         if( book && book->is_book() ) {
             const cata::value_ptr<islot_book> &bt = book->type->book;
-            // apply a penalty when we're actually learning something
+
             const SkillLevel &skill_level = get_skill_level_object( bt->skill );
             if( skill_level.can_train() && skill_level < bt->level ) {
                 focus_equilibrium -= 50;
@@ -535,8 +535,8 @@ int Character::calc_focus_equilibrium( bool ignore_pain ) const
     }
 
     int eff_morale = get_morale_level();
-    // Factor in perceived pain, since it's harder to rest your mind while your body hurts.
-    // Cenobites don't mind, though
+
+
     if( !ignore_pain && !has_trait( trait_CENOBITE ) ) {
         int perceived_pain = get_perceived_pain();
         if( has_trait( trait_MASOCHIST ) ) {
@@ -549,39 +549,39 @@ int Character::calc_focus_equilibrium( bool ignore_pain ) const
     }
 
     if( eff_morale < -99 ) {
-        // At very low morale, focus is at it's minimum
+
         focus_equilibrium = 1;
     } else if( eff_morale <= 50 ) {
-        // At -99 to +50 morale, each point of morale gives or takes 1 point of focus
+
         focus_equilibrium += eff_morale;
     } else {
-        /* Above 50 morale, we apply strong diminishing returns.
-        * Each block of 50 takes twice as many morale points as the previous one:
-        * 150 focus at 50 morale (as before)
-        * 200 focus at 150 morale (100 more morale)
-        * 250 focus at 350 morale (200 more morale)
-        * ...
-        * Cap out at 400% focus gain with 3,150+ morale, mostly as a sanity check.
-        */
+
+
+
+
+
+
+
+
 
         int block_multiplier = 1;
         int morale_left = eff_morale;
         while( focus_equilibrium < 400 ) {
             if( morale_left > 50 * block_multiplier ) {
-                // We can afford the entire block.  Get it and continue.
+
                 morale_left -= 50 * block_multiplier;
                 focus_equilibrium += 50;
                 block_multiplier *= 2;
             } else {
-                // We can't afford the entire block.  Each block_multiplier morale
-                // points give 1 focus, and then we're done.
+
+
                 focus_equilibrium += morale_left / block_multiplier;
                 break;
             }
         }
     }
 
-    // This should be redundant, but just in case...
+
     if( focus_equilibrium < 1 ) {
         focus_equilibrium = 1;
     } else if( focus_equilibrium > 400 ) {
@@ -597,14 +597,14 @@ int Character::calc_focus_change() const
 
 void Character::update_mental_focus()
 {
-    // calc_focus_change() returns percentile focus, applying it directly
-    // to focus pool is an implicit / 100.
+
+
     focus_pool += 10 * calc_focus_change();
 }
 
 void Character::calc_discomfort()
 {
-    // clear all instances of discomfort
+
     remove_effect( effect_chafing );
     for( const bodypart_id &bp : worn.where_discomfort( *this ) ) {
         if( bp->feels_discomfort ) {
@@ -616,10 +616,10 @@ void Character::calc_discomfort()
 void Character::apply_murder_penalties( Creature *victim )
 {
     Character &player_character = get_player_character();
-    // Currently no support for handling anyone else's murdering
+
     cata_assert( this == &player_character );
     if( !victim || !victim->is_dead_state() || victim->get_killer() != &player_character ) {
-        return; // Nothing to do here
+        return;
     }
     if( player_character.has_trait( trait_PACIFIST ) ) {
         add_msg( _( "A cold shock of guilt washes over you." ) );
@@ -627,10 +627,10 @@ void Character::apply_murder_penalties( Creature *victim )
     }
     if( victim->as_monster() || ( victim->as_npc() && victim->as_npc()->hit_by_player ) ) {
         int morale_effect = -90;
-        // Just because you like eating people doesn't mean you love killing innocents
+
         if( player_character.has_flag( json_flag_CANNIBAL ) && morale_effect < 0 ) {
             morale_effect = std::min( 0, morale_effect + 50 );
-        } // Pacifists double dip on penalties if they kill an innocent
+        }
         if( player_character.has_trait( trait_PACIFIST ) ) {
             morale_effect -= 15;
         }
@@ -638,7 +638,7 @@ void Character::apply_murder_penalties( Creature *victim )
             player_character.has_flag( json_flag_SAPIOVORE ) ||
             player_character.has_flag( json_flag_NUMB ) ) {
             morale_effect = 0;
-        } // only god can juge me
+        }
         if( player_character.has_flag( json_flag_SPIRITUAL ) &&
             !player_character.has_flag( json_flag_PSYCHOPATH ) &&
             !player_character.has_flag( json_flag_SAPIOVORE ) &&
@@ -648,20 +648,20 @@ void Character::apply_murder_penalties( Creature *victim )
         }
         cata_assert( morale_effect <= 0 );
         if( morale_effect == 0 ) {
-            // No morale effect
+
         } else if( morale_effect <= -50 ) {
             player_character.add_morale( morale_killed_innocent, morale_effect, 0, 14_days, 7_days );
         } else if( morale_effect > -50 && morale_effect < 0 ) {
             player_character.add_morale( morale_killed_innocent, morale_effect, 0, 10_days, 7_days );
         }
     }
-    // Guilt kills incur an extra point of "temporary" trauma that can be reduced over time, in addition to their point of "permanent" deadening.
+
     player_character.mod_trauma( 1 );
 }
 
 std::pair<int, int> Character::climate_control_strength() const
 {
-    // In warmth points
+
     const int DEFAULT_STRENGTH = 50;
 
     int power_heat = enchantment_cache->get_value_add( enchant_vals::mod::CLIMATE_CONTROL_HEAT );
@@ -677,28 +677,28 @@ std::pair<int, int> Character::climate_control_strength() const
 
     bool regulated_area = false;
     if( calendar::turn >= next_climate_control_check ) {
-        // save CPU and simulate acclimation.
+
         next_climate_control_check = calendar::turn + 20_turns;
         if( const optional_vpart_position vp = here.veh_at( pos_bub() ) ) {
-            // TODO: (?) Force player to scrounge together an AC unit
+
             regulated_area = (
                                  (
-                                     vp->is_inside() && // Already checks for opened doors
+                                     vp->is_inside() &&
                                      vp->vehicle().engine_on &&
                                      vp->vehicle().has_engine_type_not( fuel_type_muscle, true ) &&
                                      vp->vehicle().has_engine_type_not( fuel_type_animal, true )
                                  ) ||
-                                 // Also check for a working alternator. Muscle or animal could be powering it.
+
                                  (
                                      vp->is_inside() &&
                                      vp->vehicle().total_alternator_epower( here ) > 0_W
                                  )
                              );
         }
-        // TODO: AC check for when building power is implemented
+
         last_climate_control_ret = regulated_area;
         if( !regulated_area ) {
-            // Takes longer to cool down / warm up with AC, than it does to step outside and feel cruddy.
+
             next_climate_control_check += 40_turns;
         }
     } else {
@@ -718,7 +718,7 @@ std::map<bodypart_id, int> Character::get_wind_resistance() const
     std::map<bodypart_id, int> ret = worn.wind_resistance( *this );
     const bool in_shell = has_active_mutation( trait_SHELL2 ) ||
                           has_active_mutation( trait_SHELL3 );
-    // Your shell provides complete wind protection if you're inside it
+
     if( in_shell ) {
         for( std::pair<const bodypart_id, int> &this_bp : ret ) {
             this_bp.second = 100;
@@ -729,15 +729,15 @@ std::map<bodypart_id, int> Character::get_wind_resistance() const
 
 int Character::get_lifestyle() const
 {
-    // gets your health_tally variable + the factor of your bmi on your healthiness.
 
-    // being over or underweight makes your "effective healthiness" lower.
-    // for example, you have a lifestyle of 0 and a bmi_fat of 15 (border between obese and very obese)
-    // 0 - 25 - 0 = -25. So your "effective lifestyle" is -25 (feel a little cruddy)
-    // ex2 you have a lifestyle of 50 and a bmi_fat of 15 because you get exercise and eat well
-    // 50 - 25 - 0 = 25. So your "effective lifestyle" is 25 (feel decent despite being obese)
-    // ex3 you have a lifestyle of -50 and a bmi_fat of 15 because you eat candy and don't exercise
-    // -50 - 25 - 0 = -75. So your "effective lifestyle" is -75 (you'd feel crappy normally but because of your weight you feel worse)
+
+
+
+
+
+
+
+
 
     const float bmi = get_bmi_fat();
     int over_factor = std::round( std::max( 0.0f,
@@ -764,7 +764,7 @@ void Character::set_lifestyle( int nhealthy )
 void Character::mod_livestyle( int nhealthy )
 {
     lifestyle += enchantment_cache->modify_value( enchant_vals::mod::HEALTHY_RATE, nhealthy );
-    // Clamp lifestyle between [-200, 200]
+
     lifestyle = std::max( lifestyle, -200 );
     lifestyle = std::min( lifestyle, 200 );
 }
@@ -774,13 +774,13 @@ void Character::set_daily_health( int nhealthy_mod )
 }
 void Character::mod_daily_health( int nhealthy_mod, int cap )
 {
-    // TODO: This really should be a full morale-like system, with per-effect caps
-    //       and durations.  This version prevents any single effect from exceeding its
-    //       intended ceiling, but multiple effects will overlap instead of adding.
 
-    // Cap indicates how far the mod is allowed to shift in this direction.
-    // It can have a different sign to the mod, e.g. for items that treat
-    // extremely low health, but can't make you healthy.
+
+
+
+
+
+
     if( nhealthy_mod == 0 || cap == 0 ) {
         return;
     }
@@ -794,7 +794,7 @@ void Character::mod_daily_health( int nhealthy_mod, int cap )
         high_cap = cap;
     }
 
-    // If we're already out-of-bounds, we don't need to do anything.
+
     if( ( daily_health <= low_cap && nhealthy_mod < 0 ) ||
         ( daily_health >= high_cap && nhealthy_mod > 0 ) ) {
         return;
@@ -802,8 +802,8 @@ void Character::mod_daily_health( int nhealthy_mod, int cap )
 
     daily_health += nhealthy_mod;
 
-    // Since we already bailed out if we were out-of-bounds, we can
-    // just clamp to the boundaries here.
+
+
     daily_health = std::min( daily_health, high_cap );
     daily_health = std::max( daily_health, low_cap );
 }
@@ -892,9 +892,9 @@ void Character::set_stored_calories( int cal )
         int cached_bmi = std::floor( get_bmi_fat() );
         stored_calories = cal;
 
-        //some mutant change their max_hp according to their bmi
+
         recalc_hp();
-        //need to check obesity penalties when this happens if BMI changed
+
         if( std::floor( get_bmi_fat() ) != cached_bmi ) {
             calc_encumbrance();
         }
@@ -927,13 +927,13 @@ void Character::mod_hunger( int nhunger )
 void Character::set_hunger( int nhunger )
 {
     if( hunger != nhunger ) {
-        // cap hunger at 300, just below famished
+
         hunger = std::min( 300, nhunger );
         on_stat_change( "hunger", hunger );
     }
 }
 
-// this is a translation from a legacy value
+
 int Character::get_starvation() const
 {
     static const std::vector<std::pair<float, float>> starv_thresholds = { {
@@ -1064,12 +1064,12 @@ bool Character::is_mute() const
 void Character::on_damage_of_type( const effect_source &source, int adjusted_damage,
                                    const damage_type_id &dt, const bodypart_id &bp )
 {
-    // Handle bp onhit effects
+
     bodypart *body_part = get_part( bp );
     const bool is_minor = bp->main_part != bp->id;
     add_msg_debug( debugmode::DF_CHARACTER, "Targeting limb %s with %d %s type damage", bp->name,
                    adjusted_damage, dt->name.translated() );
-    // Damage as a percent of the limb's max hp or raw dmg for minor parts
+
     float dmg_ratio = is_minor ? adjusted_damage : 100 * adjusted_damage / body_part->get_hp_max();
     add_msg_debug( debugmode::DF_CHARACTER, "Main BP max hp %d, damage ratio %.1f",
                    body_part->get_hp_max(), dmg_ratio );
@@ -1082,18 +1082,18 @@ void Character::on_damage_of_type( const effect_source &source, int adjusted_dam
                            scaling, eff.chance, scaled_chance );
             if( x_in_y( scaled_chance, 100 ) ) {
 
-                // Scale based on damage done
+
                 int scaled_dur = roll_remainder( std::max( static_cast<float>( eff.duration ),
                                                  eff.duration + eff.duration_dmg_scaling * scaling ) );
                 int scaled_int = roll_remainder( std::max( static_cast<float>( eff.intensity ),
                                                  eff.intensity + eff.intensity_dmg_scaling * scaling ) );
 
-                // go through all effects. if they modify effect duration, scale dur accordingly.
-                // obviously inefficient, but probably fast enough since this only is calculated once per attack.
+
+
                 float eff_scale = 1.0f;
                 for( const effect &e : get_effects() ) {
                     for( const effect_dur_mod &eff_dur_mod : e.get_effect_dur_scaling() ) {
-                        // debugmsg( "Checking effect %s, with same_bp, modifier %f", eff.id.c_str(), eff_dur_mod.modifier);
+
                         if( eff_dur_mod.effect_id == eff.id ) {
                             if( eff_dur_mod.same_bp ) {
                                 if( e.get_bp() != body_part->get_id() ) {
@@ -1114,7 +1114,7 @@ void Character::on_damage_of_type( const effect_source &source, int adjusted_dam
                                scaled_int,
                                eff_scale );
 
-                // Handle intensity/duration clamping
+
                 if( eff.max_intensity != INT_MAX ) {
                     int prev_int = get_effect( eff.id, bp ).get_intensity();
                     add_msg_debug( debugmode::DF_CHARACTER,
@@ -1135,18 +1135,18 @@ void Character::on_damage_of_type( const effect_source &source, int adjusted_dam
                                        "Limiting added duration to %d seconds", scaled_dur );
                     }
                 }
-                // Add the effect globally if defined
+
                 add_effect( source, eff.id, 1_turns * scaled_dur, eff.global ? bodypart_str_id::NULL_ID() : bp,
                             false, scaled_int );
             }
         }
     }
-    // Electrical damage has a chance to temporarily incapacitate bionics in the damaged body_part.
+
     if( dt == damage_electric ) {
         const time_duration min_disable_time = 10_turns * adjusted_damage;
         for( bionic &i : *my_bionics ) {
             if( !i.powered ) {
-                // Unpowered bionics are protected from power surges.
+
                 continue;
             }
             const bionic_data &info = i.info();
@@ -1157,7 +1157,7 @@ void Character::on_damage_of_type( const effect_source &source, int adjusted_dam
             const std::map<bodypart_str_id, size_t> &bodyparts = info.occupied_bodyparts;
             if( bodyparts.find( bp.id() ) != bodyparts.end() ) {
                 const int bp_hp = get_part_hp_cur( bp );
-                // The chance to incapacitate is as high as 50% if the attack deals damage equal to one third of the body part's current health.
+
                 if( x_in_y( adjusted_damage * 3, bp_hp ) && one_in( 2 ) ) {
                     if( i.incapacitated_time == 0_turns ) {
                         add_msg_if_player( m_bad, _( "Your %s bionic shorts out!" ), info.name );
@@ -1198,21 +1198,21 @@ void Character::regen( int rate_multiplier )
                 if( part_healing > 0 ) {
                     mod_part_healed_total( healed_part, part_healing );
                     heal( healed_part, part_healing );
-                    // Consume 1 "health" for every Hit Point healed via non-medicine healing.
-                    // Using medicine reduces the ratio of health consumed to damage healed.
+
+
                     mod_daily_health( -part_healing, -200 );
                 }
             }
         }
     } else if( heal_rate < 0.0f ) {
         int rot_rate = roll_remainder( rate_multiplier * -heal_rate );
-        // Has to be in loop because some effects depend on rounding
+
         while( rot_rate-- > 0 ) {
             hurtall( 1, nullptr, false );
         }
     }
 
-    // include healing effects
+
     for( const bodypart_id &bp : get_all_body_parts( get_body_part_flags::only_main ) ) {
         float healing = healing_rate_medicine( rest, bp ) * to_turns<int>( 5_minutes );
         int healing_apply = roll_remainder( healing );
@@ -1235,7 +1235,7 @@ void Character::regen( int rate_multiplier )
             }
         }
 
-        // remove effects if the limb was healed by other way
+
         if( has_effect( effect_bandaged, bp.id() ) && is_part_at_max_hp( bp ) ) {
             set_part_damage_bandaged( bp, 0 );
             remove_effect( effect_bandaged, bp );
@@ -1255,15 +1255,15 @@ void Character::regen( int rate_multiplier )
 
 void Character::update_health()
 {
-    // Limit daily_health to [-200, 200].
-    // This also sets approximate bounds for the character's health.
+
+
     if( get_daily_health() > 200 ) {
         set_daily_health( 200 );
     } else if( get_daily_health() < -200 ) {
         set_daily_health( -200 );
     }
 
-    // Active leukocyte breeder will keep your mean health_tally near 100
+
     int effective_daily_health = enchantment_cache->modify_value(
                                      enchant_vals::mod::EFFECTIVE_HEALTH_MOD, 0 );
     if( effective_daily_health == 0 ) {
@@ -1283,7 +1283,7 @@ void Character::update_health()
 
 int Character::weariness() const
 {
-    // if we're magically inexhaustable or something, weariness is 0.
+
     if( has_flag( json_flag_CANNOT_GAIN_WEARINESS ) ) {
         return 0;
     } else {
@@ -1295,22 +1295,22 @@ int Character::weary_threshold() const
 {
     const int bmr = base_bmr();
     int threshold = bmr * get_option<float>( "WEARY_BMR_MULT" );
-    // reduce by 1% per 14 points of sleepiness after 150 points
+
     threshold *= 1.0f - ( ( std::max( sleepiness, -20 ) - 150 ) / 1400.0f );
-    // Each 2 points of morale increase or decrease by 1%
+
     threshold *= 1.0f + ( get_morale_level() / 200.0f );
-    // TODO: Hunger effects this
+
 
     return std::max( threshold, bmr / 10 );
 }
 
 std::pair<int, int> Character::weariness_transition_progress() const
 {
-    // Mostly a duplicate of the below function. No real way to clean this up
+
     int amount = weariness();
     int threshold = weary_threshold();
     amount -= threshold * get_option<float>( "WEARY_INITIAL_STEP" );
-    // failsafe if threshold is zero; see #72242
+
     if( threshold == 0 ) {
         return { std::abs( amount ), threshold };
     } else {
@@ -1322,8 +1322,8 @@ std::pair<int, int> Character::weariness_transition_progress() const
         }
     }
 
-    // If we return the absolute value of the amount, it will work better
-    // Because as it decreases, we will approach a transition
+
+
     return {std::abs( amount ), threshold};
 }
 
@@ -1333,7 +1333,7 @@ int Character::weariness_level() const
     int threshold = weary_threshold();
     int level = 0;
     amount -= threshold * get_option<float>( "WEARY_INITIAL_STEP" );
-    // failsafe if threshold is zero; see #72242
+
     if( threshold == 0 ) {
         return level;
     } else {
@@ -1355,7 +1355,7 @@ int Character::weariness_transition_level() const
     int amount = weariness();
     int threshold = weary_threshold();
     amount -= threshold * get_option<float>( "WEARY_INITIAL_STEP" );
-    // failsafe if threshold is zero; see #72242
+
     if( threshold == 0 ) {
         return std::abs( amount );
     } else {
@@ -1391,9 +1391,9 @@ float Character::maximum_exertion_level() const
 
 float Character::exertion_adjusted_move_multiplier( float level ) const
 {
-    // The default value for level is -1.0
-    // And any values we get that are negative or 0
-    // will cause incorrect behavior
+
+
+
     if( level <= 0 ) {
         level = activity_history.activity( in_sleep_state() );
     }
@@ -1411,16 +1411,16 @@ bool Character::needs_food() const
 
 void Character::update_needs( int rate_multiplier )
 {
-    // Stasis NPCs don't accumulate any needs.
+
     if( has_trait( trait_NPC_STASIS ) ) {
         return;
     }
     const int current_stim = get_stim();
-    // Hunger, thirst, & sleepiness up every 5 minutes
+
     effect &sleep = get_effect( effect_sleep );
-    // No food/thirst/sleepiness clock at all
+
     const bool debug_ls = has_trait( trait_DEBUG_LS );
-    // No food/thirst, capped sleepiness clock (only up to tired)
+
     const bool asleep = !sleep.is_null();
     const bool lying = asleep || has_effect( effect_lying_down ) ||
                        activity.id() == ACT_TRY_SLEEP;
@@ -1428,19 +1428,19 @@ void Character::update_needs( int rate_multiplier )
     needs_rates rates = calc_needs_rates();
 
     const bool wasnt_sleepinessd = get_sleepiness() <= sleepiness_levels::DEAD_TIRED;
-    // Don't increase sleepiness if sleeping or trying to sleep or if we're at the cap.
+
     if( get_sleepiness() < 1050 && !asleep && !debug_ls ) {
         if( rates.sleepiness > 0.0f ) {
             int sleepiness_roll = roll_remainder( rates.sleepiness * rate_multiplier );
             mod_sleepiness( sleepiness_roll );
 
-            // Synaptic regen bionic stops SD while awake and boosts it while sleeping
-            if( !has_flag( json_flag_STOP_SLEEP_DEPRIVATION ) ) {
-                // sleepiness_roll should be around 1 - so the counter increases by 1 every minute on average,
-                // but characters who need less sleep will also get less sleep deprived, and vice-versa.
 
-                // Note: Since needs are updated in 5-minute increments, we have to multiply the roll again by
-                // 5. If rate_multiplier is > 1, sleepiness_roll will be higher and this will work out.
+            if( !has_flag( json_flag_STOP_SLEEP_DEPRIVATION ) ) {
+
+
+
+
+
                 mod_sleep_deprivation( sleepiness_roll * 5 );
             }
 
@@ -1453,7 +1453,7 @@ void Character::update_needs( int rate_multiplier )
         if( rates.recovery > 0.0f ) {
             int recovered = roll_remainder( rates.recovery * rate_multiplier );
             if( get_sleepiness() - recovered < -20 ) {
-                // Should be wake up, but that could prevent some retroactive regeneration
+
                 sleep.set_duration( 1_turns );
                 mod_sleepiness( -25 );
             } else {
@@ -1465,13 +1465,13 @@ void Character::update_needs( int rate_multiplier )
                 }
                 mod_sleepiness( -recovered );
 
-                // Sleeping on the ground, no bionic = 1x rest_modifier
-                // Sleeping on a bed, no bionic      = 2x rest_modifier
-                // Sleeping on a comfy bed, no bionic= 3x rest_modifier
 
-                // Sleeping on the ground, bionic    = 3x rest_modifier
-                // Sleeping on a bed, bionic         = 6x rest_modifier
-                // Sleeping on a comfy bed, bionic   = 9x rest_modifier
+
+
+
+
+
+
                 float rest_modifier = ( has_flag( json_flag_STOP_SLEEP_DEPRIVATION ) ? 3 : 1 );
 
                 const int comfort = get_comfort_at( pos_bub() ).comfort;
@@ -1483,22 +1483,22 @@ void Character::update_needs( int rate_multiplier )
                     rest_modifier *= 2;
                 }
 
-                // If we're just tired, we'll get a decent boost to our sleep quality.
-                // The opposite is true for very tired characters.
+
+
                 if( get_sleepiness() < sleepiness_levels::DEAD_TIRED ) {
                     rest_modifier += 2;
                 } else if( get_sleepiness() >= sleepiness_levels::EXHAUSTED ) {
                     rest_modifier = ( rest_modifier > 2 ) ? rest_modifier - 2 : 1;
                 }
 
-                // Recovered is multiplied by 2 as well, since we spend 1/3 of the day sleeping
+
                 mod_sleep_deprivation( -rest_modifier * ( recovered * 2 ) );
 
             }
         }
         if( calendar::once_every( 10_minutes ) &&
             ( has_trait( trait_WATERSLEEP ) || has_trait( trait_UNDINE_SLEEP_WATER ) ) ) {
-            mod_sleepiness( -3 ); // Fish sleep less in water
+            mod_sleepiness( -3 );
         }
     }
 
@@ -1566,8 +1566,8 @@ needs_rates Character::calc_needs_rates() const
     }
 
     if( has_activity( ACT_TREE_COMMUNION ) ) {
-        // Much of the body's needs are taken care of by the trees.
-        // Hair Roots don't provide any bodily needs.
+
+
         if( has_trait( trait_ROOTS2 ) || has_trait( trait_ROOTS3 ) || has_trait( trait_CHLOROMORPH ) ) {
             rates.hunger *= 0.5f;
             rates.thirst *= 0.5f;
@@ -1576,7 +1576,7 @@ needs_rates Character::calc_needs_rates() const
     }
 
     if( has_trait( trait_TRANSPIRATION ) ) {
-        // Transpiration, the act of moving nutrients with evaporating water, can take a very heavy toll on your thirst when it's really hot.
+
         rates.thirst *= ( ( units::to_fahrenheit( get_weather().get_temperature(
                                 pos_bub() ) ) - 32.5f ) / 40.0f );
     }
@@ -1594,7 +1594,7 @@ void Character::calc_sleep_recovery_rate( needs_rates &rates ) const
     const effect &sleep = get_effect( effect_sleep );
     rates.recovery = enchantment_cache->modify_value( enchant_vals::mod::SLEEPINESS_REGEN, 1 );
 
-    // -5% sleep recovery rate for every main part below cold
+
     float temp_mod = 0.0f;
     for( const bodypart_id &bp : get_all_body_parts( get_body_part_flags::only_main ) ) {
         if( get_part_temp_cur( bp ) <= BODYTEMP_COLD ) {
@@ -1604,17 +1604,17 @@ void Character::calc_sleep_recovery_rate( needs_rates &rates ) const
     rates.recovery += temp_mod;
 
     if( !is_hibernating() ) {
-        // Hunger and thirst advance more slowly while we sleep. This is the standard rate.
+
         rates.hunger *= 0.5f;
         rates.thirst *= 0.5f;
         const int intense = sleep.is_null() ? 0 : sleep.get_intensity();
-        // Accelerated recovery capped to 2x over 2 hours
-        // After 16 hours of activity, equal to 7.25 hours of rest
+
+
         const int accelerated_recovery_chance = 24 - intense + 1;
         const float accelerated_recovery_rate = 1.0f / accelerated_recovery_chance;
         rates.recovery += accelerated_recovery_rate;
     } else {
-        // Hunger and thirst advance *much* more slowly whilst we hibernate.
+
         rates.hunger *= ( 2.0f / 7.0f );
         rates.thirst *= ( 2.0f / 7.0f );
     }
@@ -1623,7 +1623,7 @@ void Character::calc_sleep_recovery_rate( needs_rates &rates ) const
 
 void Character::check_needs_extremes()
 {
-    // Check if we've overdosed... in any deadly way.
+
     if( get_stim() > 250 ) {
         add_msg_player_or_npc( m_bad,
                                _( "You have a sudden heart attack!" ),
@@ -1661,7 +1661,7 @@ void Character::check_needs_extremes()
         set_part_hp_cur( body_part_torso, 0 );
     }
 
-    // check if we've starved
+
     if( needs_food() ) {
         if( get_stored_kcal() <= 0 ) {
             add_msg_if_player( m_bad, _( "You have starved to death." ) );
@@ -1700,7 +1700,7 @@ void Character::check_needs_extremes()
         }
     }
 
-    // Check if we're dying of thirst
+
     if( needs_food() && get_thirst() >= 600 && ( stomach.get_water() == 0_ml ||
             guts.get_water() == 0_ml ) ) {
         if( get_thirst() >= 1200 ) {
@@ -1716,7 +1716,7 @@ void Character::check_needs_extremes()
         }
     }
 
-    // Check if we're falling asleep, unless we're sleeping
+
     if( get_sleepiness() >= sleepiness_levels::EXHAUSTED + 25 && !in_sleep_state() ) {
         if( get_sleepiness() >= sleepiness_levels::MASSIVE_SLEEPINESS &&
             !has_flag( json_flag_CANNOT_SLEEP ) ) {
@@ -1731,17 +1731,17 @@ void Character::check_needs_extremes()
         }
     }
 
-    // Even if we're not Exhausted, we really should be feeling lack/sleep earlier
-    // Penalties start at Dead Tired and go from there
+
+
     if( get_sleepiness() >= sleepiness_levels::DEAD_TIRED && !in_sleep_state() ) {
         if( get_sleepiness() >= 700 ) {
             if( calendar::once_every( 30_minutes ) ) {
                 add_msg_if_player( m_warning, _( "You're too physically tired to stop yawning." ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
-            /** @EFFECT_INT slightly decreases occurrence of short naps when dead tired */
+
             if( one_in( 50 + get_int() ) ) {
-                // Rivet's idea: look out for microsleeps!
+
                 fall_asleep( 30_seconds );
             }
         } else if( get_sleepiness() >= sleepiness_levels::EXHAUSTED ) {
@@ -1749,7 +1749,7 @@ void Character::check_needs_extremes()
                 add_msg_if_player( m_warning, _( "How much longer until bedtime?" ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
-            /** @EFFECT_INT slightly decreases occurrence of short naps when exhausted */
+
             if( one_in( 100 + get_int() ) && !has_flag( json_flag_CANNOT_SLEEP ) ) {
                 fall_asleep( 30_seconds );
             }
@@ -1760,7 +1760,7 @@ void Character::check_needs_extremes()
         }
     }
 
-    // Sleep deprivation kicks in if lack of sleep is avoided with stimulants or otherwise for long periods of time
+
     int sleep_deprivation = get_sleep_deprivation();
     float sleep_deprivation_pct = sleep_deprivation / static_cast<float>( SLEEP_DEPRIVATION_MASSIVE );
 
@@ -1793,22 +1793,22 @@ void Character::check_needs_extremes()
 
                 mod_daily_health( -5, -10 );
             }
-            // else you pass out for 20 hours, guaranteed
 
-            // Microsleeps are slightly worse if you're sleep deprived, but not by much. (chance: 1 in (75 + get_int()) at lethal sleep deprivation)
-            // Note: these can coexist with sleepiness-related microsleeps
-            /** @EFFECT_INT slightly decreases occurrence of short naps when sleep deprived */
+
+
+
+
             if( one_in( static_cast<int>( sleep_deprivation_pct * 75 ) + get_int() ) &&
                 !has_flag( json_flag_CANNOT_SLEEP ) ) {
                 fall_asleep( 30_seconds );
             }
 
-            // Stimulants can be used to stay awake a while longer, but after a while you'll just collapse.
+
             bool can_pass_out = ( ( get_stim() < 30 && sleep_deprivation >= SLEEP_DEPRIVATION_MINOR ) ||
                                   sleep_deprivation >= SLEEP_DEPRIVATION_MAJOR ) && !has_flag( json_flag_CANNOT_SLEEP );
 
             if( can_pass_out && calendar::once_every( 10_minutes ) ) {
-                /** @EFFECT_PER slightly increases resilience against passing out from sleep deprivation */
+
                 if( one_in( static_cast<int>( ( 1 - sleep_deprivation_pct ) * 100 ) + get_per() ) ||
                     sleep_deprivation >= SLEEP_DEPRIVATION_MASSIVE ) {
                     add_msg_player_or_npc( m_bad,
@@ -1834,15 +1834,15 @@ void Character::check_needs_extremes()
 
 void Character::get_sick( bool is_flu )
 {
-    // Health is in the range [-200,200].
-    // Diseases are half as common for every 50 health you gain.
+
+
     const float health_factor = std::pow( 2.0f, get_lifestyle() / 50.0f );
     const float env_factor = 2.0f + std::pow( get_env_resist( body_part_mouth ), 0.3f );
     const int disease_rarity = static_cast<int>( health_factor + env_factor );
     add_msg_debug( debugmode::DF_CHAR_HEALTH, "disease_rarity = %d", disease_rarity );
 
     if( one_in( disease_rarity ) ) {
-        // Normal people get sick about 2-4 times/year. If they are disease resistant, it's 1 time per year.
+
         const int base_diseases_per_year = has_trait( trait_DISRESISTANT ) ? 1 : 3;
         const time_duration immunity_duration = calendar::season_length() * 4 / base_diseases_per_year;
 
@@ -1854,11 +1854,11 @@ void Character::get_sick( bool is_flu )
                                 count_queued_effects( "common_cold" );
 
         if( is_flu && !already_has_flu ) {
-            // Total duration of symptoms
+
             time_duration total_duration = rng( 3_days, 10_days );
-            // Time before first symptoms
+
             time_duration incubation_period = rng( 18_hours, 36_hours );
-            // Time from first symptoms to full blown disease
+
             time_duration warning_period = std::min( rng( 18_hours, 36_hours ), total_duration );
 
             add_msg_debug( debugmode::DF_CHAR_HEALTH, "Queuing flu: incubation %d h, warning %d h, total %d h",
@@ -1871,11 +1871,11 @@ void Character::get_sick( bool is_flu )
             queue_effect( "flushot", incubation_period + total_duration, immunity_duration );
 
         } else if( !already_has_cold ) {
-            // Total duration of symptoms
+
             time_duration total_duration = rng( 1_days, 14_days );
-            // Time before first symptoms
+
             time_duration incubation_period = rng( 18_hours, 36_hours );
-            // Time from first symptoms to full blown disease
+
             time_duration warning_period = std::min( rng( 18_hours, 36_hours ), total_duration );
 
             add_msg_debug( debugmode::DF_CHAR_HEALTH, "Queuing cold: incubation %d h, warning %d h, total %d h",
@@ -1892,12 +1892,12 @@ void Character::get_sick( bool is_flu )
 
 bool Character::is_hibernating() const
 {
-    // Hibernating only kicks in whilst Engorged; separate tracking for hunger/thirst here
-    // as a safety catch.  One test subject managed to get two Colds during hibernation;
-    // since those add sleepiness and dry out the character, the subject went for the full 10 days plus
-    // a little, and came out of it well into Parched.  Hibernating shouldn't endanger your
-    // life like that--but since there's much less fluid reserve than food reserve,
-    // simply using the same numbers won't work.
+
+
+
+
+
+
     return has_effect( effect_sleep ) && get_kcal_percent() > 0.8f &&
            get_thirst() <= 80 && has_active_mutation( trait_HIBERNATE );
 }
@@ -1914,18 +1914,18 @@ float Character::rest_quality() const
     const tripoint_bub_ms your_pos = pos_bub();
     float rest = 0.0f;
     const float ur_act_level = instantaneous_activity_level();
-    // Negative morales are penalties
+
     int cold_penalty = -has_morale( morale_cold );
     int heat_penalty = -has_morale( morale_hot );
     if( cold_penalty > 0 || heat_penalty > 0 ) {
-        // Extreme temperatures have the body working harder to fight them, with less energy dedicated to healing, even just laying around will have you shivering or sweating.
+
         rest -= cold_penalty / 10.0f;
         rest -= heat_penalty / 10.0f;
     }
 
     if( has_effect( effect_sleep ) ) {
-        // Beds should normally have a maximum of 2C warmth, rest == 1.0 on a pristine bed. Less comfortable beds provide less rest quality.
-        // Cannot be lower than 0, even though some beds(like *the bare ground*) have negative floor_bedding_warmth. Maybe this should change?
+
+
         rest += ( std::max( units::to_kelvin_delta( floor_bedding_warmth( your_pos ) ),
                             0.f ) / 2.0f ) ;
         return std::max( rest, 0.0f );
@@ -1935,17 +1935,17 @@ float Character::rest_quality() const
     if( ur_act_level <= LIGHT_EXERCISE ) {
         rest += 0.1f;
         if( here.has_flag_ter_or_furn( "CAN_SIT", your_pos.xy() ) || has_vehicle_seat ) {
-            // If not performing any real exercise (not even moving around), chairs allow you to rest a little bit.
+
             rest += 0.2f;
         } else if( floor_bedding_warmth( your_pos ) > 0_C_delta ) {
-            // Any comfortable bed can substitute for a chair, but only if you don't have one.
+
             rest += 0.2f * ( units::to_celsius_delta( floor_bedding_warmth( your_pos ) ) / 2.0f );
         }
         if( ur_act_level <= NO_EXERCISE ) {
             rest += 0.2f;
         }
     }
-    // These stack!
+
     if( ur_act_level >= BRISK_EXERCISE ) {
         rest -= 0.1f;
     }
@@ -1971,12 +1971,12 @@ float _hp_modified_rate( Character const &who, float rate )
 
     return rate;
 }
-} // namespace
+}
 
 float Character::healing_rate( float at_rest_quality ) const
 {
     float const rest = clamp( at_rest_quality, 0.0f, 1.0f );
-    // TODO: Cache
+
     float const base_heal_rate = is_avatar() ? get_option<float>( "PLAYER_HEALING_RATE" )
                                  : get_option<float>( "NPC_HEALING_RATE" );
     float const heal_rate = enchantment_cache->modify_value( enchant_vals::mod::REGEN_HP,
@@ -1986,8 +1986,8 @@ float Character::healing_rate( float at_rest_quality ) const
                   1 ) - 1;
     float const asleep_rate = rest * heal_rate * ( 1.0f + get_lifestyle() / 200.0f );
     float final_rate = awake_rate + asleep_rate;
-    // Most common case: awake player with no regenerative abilities
-    // ~7e-5 is 1 hp per day, anything less than that is totally negligible
+
+
     static constexpr float eps = 0.000007f;
     add_msg_debug( debugmode::DF_CHAR_HEALTH, "%s healing: %.6f", get_name(), final_rate );
     if( std::abs( final_rate ) < eps ) {
@@ -2022,10 +2022,10 @@ float Character::healing_rate_medicine( float at_rest_quality, const bodypart_id
 
     rate_medicine = enchantment_cache->modify_value( enchant_vals::mod::REGEN_HP,
                     rate_medicine );
-    // Sufficiently negative rest quality can completely eliminate your healing, but never turn it negative.
+
     rate_medicine *= 1.0f + std::max( at_rest_quality, -1.0f );
 
-    // Increase healing if character has both effects on this body part.
+
     if( has_effect( effect_bandaged, bp ) && has_effect( effect_disinfected, bp ) ) {
         rate_medicine *= 1.25;
     }
@@ -2045,7 +2045,7 @@ float Character::get_bmi() const
 
 float Character::get_bmi_lean() const
 {
-    //strength BMIs decrease to zero as you starve (muscle atrophy)
+
     if( get_bmi_fat() < character_weight_category::normal ) {
         const stat_mod wpen = get_weight_penalty();
         return 12.0f + get_str_base() - wpen.strength;
@@ -2077,10 +2077,10 @@ units::mass Character::bodyweight_fat() const
 
 units::mass Character::bodyweight_lean() const
 {
-    //12 plus base strength gives non fat bmi, adjusted by starvation in get_bmi_lean()
-    //this is multiplied by our total hit size from mutated body parts (or lack of parts thereof)
-    //for example a tail with a hit size of 10 means our lean mass is 10% greater
-    //or if we chop off our arms and legs to get bionic replacements, we're down to about 42% of our original lean mass
+
+
+
+
     return get_cached_organic_size() * units::from_kilogram( get_bmi_lean() * std::pow(
                 height() / 100.0f,
                 2 ) );
@@ -2153,7 +2153,7 @@ void Character::mod_rad( int mod )
 void Character::calculate_leak_level()
 {
     float ret = 0.0f;
-    // This is bad way to calculate radiation and should be rewritten some day.
+
     visit_items( [&ret]( const item_location & item_loc ) {
         const item *it = item_loc.get_item();
         if( it->has_flag( flag_RADIOACTIVE ) ) {
@@ -2182,7 +2182,7 @@ void Character::invalidate_leak_level_cache()
 int Character::get_stamina() const
 {
     if( is_npc() ) {
-        // No point in doing a bunch of checks on NPCs for now since they can't use stamina.
+
         return get_stamina_max();
     }
     return stamina;
@@ -2191,17 +2191,17 @@ int Character::get_stamina() const
 int Character::get_stamina_max() const
 {
     if( is_npc() ) {
-        // No point in doing a bunch of checks on NPCs for now since they can't use stamina.
+
         return 10000;
     }
-    // Since adding cardio, 'player_max_stamina' is really 'base max stamina' and gets further modified
-    // by your CV fitness.  Name has been kept this way to avoid needing to change the code.
-    // Default base maximum stamina and cardio scaling are defined in data/core/game_balance.json
+
+
+
     static const std::string player_max_stamina( "PLAYER_MAX_STAMINA_BASE" );
     static const std::string player_cardiofit_stamina_scale( "PLAYER_CARDIOFIT_STAMINA_SCALING" );
 
-    // Cardiofit stamina mod defaults to 5, and get_cardiofit() should return a value in the vicinity
-    // of 1000-3000, so this should add somewhere between 3000 to 15000 stamina.
+
+
     int max_stamina = get_option<int>( player_max_stamina ) +
                       get_option<int>( player_cardiofit_stamina_scale ) * get_cardiofit();
     max_stamina = enchantment_cache->modify_value( enchant_vals::mod::MAX_STAMINA, max_stamina );
@@ -2216,7 +2216,7 @@ void Character::set_stamina( int new_stamina )
 
 void Character::mod_stamina( int mod )
 {
-    // TODO: Make NPCs smart enough to use stamina
+
     if( is_npc() || has_trait( trait_DEBUG_STAMINA ) ) {
         return;
     }
@@ -2251,11 +2251,11 @@ void Character::burn_move_stamina( int moves )
 {
     map &here = get_map();
     int overburden_percentage = 0;
-    //add half the difference between current stored kcal weight and healthy stored kcal weight to weight of carried gear
+
     units::mass fat_penalty = units::from_kilogram( 0.5f * std::max( 0.0f,
                               ( get_healthy_kcal() - get_stored_kcal() ) / KCAL_PER_KG ) );
     units::mass current_weight = weight_carried() + fat_penalty;
-    // Make it at least 1 gram to avoid divide-by-zero warning
+
     units::mass max_weight = std::max( weight_capacity(), 1_gram );
     if( current_weight > max_weight ) {
         overburden_percentage = ( current_weight - max_weight ) * 100 / max_weight;
@@ -2269,8 +2269,8 @@ void Character::burn_move_stamina( int moves )
     }
     burn_ratio += overburden_percentage;
 
-    ///\EFFECT_SWIMMING decreases stamina burn when swimming
-    //Appropriate traits let you walk along the bottom without getting as tired
+
+
     if( here.has_flag( ter_furn_flag::TFLAG_DEEP_WATER, pos_bub( here ) ) &&
         !has_flag( json_flag_WATERWALKING ) &&
         ( !has_flag( json_flag_WALK_UNDERWATER ) ||
@@ -2285,12 +2285,12 @@ void Character::burn_move_stamina( int moves )
                           character_modifier_stamina_move_cost_mod ) * get_modifier(
                           character_modifier_move_mode_move_cost_mod ) );
     add_msg_debug( debugmode::DF_CHARACTER, "Stamina burn: %d", -( ( moves * burn_ratio ) / 100 ) );
-    // Chance to suffer pain if overburden and stamina runs out or has trait BADBACK
-    // Starts at 1 in 25, goes down by 5 for every 50% more carried
+
+
     if( ( current_weight > max_weight ) && ( has_trait( trait_BADBACK ) || get_stamina() == 0 ) &&
         one_in( 35 - 5 * current_weight / ( max_weight / 2 ) ) ) {
         add_msg_if_player( m_bad, _( "Your body strains under the weight!" ) );
-        // 1 more pain for every 800 grams more (5 per extra STR needed)
+
         if( ( ( current_weight - max_weight ) / 800_gram > get_pain() && get_pain() < 100 ) ) {
             mod_pain( 1 );
         }
@@ -2301,41 +2301,41 @@ void Character::update_stamina( int turns )
 {
     static const std::string player_base_stamina_regen_rate( "PLAYER_BASE_STAMINA_REGEN_RATE" );
     const float base_regen_rate = get_option<float>( player_base_stamina_regen_rate );
-    // Your stamina regen rate works as a function of how fit you are compared to your body size.
-    // This allows it to scale more quickly than your stamina, so that at higher fitness levels you
-    // recover stamina faster.
+
+
+
     const float effective_regen_rate = base_regen_rate * get_cardiofit() / get_cardio_acc_base();
     const int current_stim = get_stim();
-    // Values above or below normal will increase or decrease stamina regen
+
     const float mod_regen = enchantment_cache->modify_value( enchant_vals::mod::STAMINA_REGEN_MOD, 0 );
-    // Mutated stamina works even when winded
+
     const float base_multiplier = mod_regen + ( has_effect( effect_winded ) ? 0.1f : 1.0f );
-    // Ensure multiplier is at least 0.1
+
     const float stamina_multiplier = std::max<float>( 0.1f, base_multiplier );
 
-    // Recover some stamina every turn. Start with zero, then increase recovery factor based on
-    // mutations, stimulants, and bionics before rolling random recovery based on this factor.
+
+
     float stamina_recovery = 0.0f;
-    // But mouth encumbrance interferes, even with mutated stamina.
+
     stamina_recovery += stamina_multiplier * std::max( 1.0f,
                         effective_regen_rate * get_modifier( character_modifier_stamina_recovery_breathing_mod ) );
-    // only apply stim-related and mutant stamina boosts if you don't have bionic lungs
+
     if( !has_bionic( bio_synlungs ) ) {
         stamina_recovery = enchantment_cache->modify_value( enchant_vals::mod::REGEN_STAMINA,
                            stamina_recovery );
-        // TODO: recovering stamina causes hunger/thirst/sleepiness.
-        // TODO: Tiredness slowing recovery
 
-        // stim recovers stamina (or impairs recovery)
+
+
+
         if( current_stim > 0 ) {
-            // TODO: Make stamina recovery with stims cost health
+
             stamina_recovery += std::min( 5.0f, current_stim / 15.0f );
         } else if( current_stim < 0 ) {
-            // Affect it less near 0 and more near full
-            // Negative stim kill at -200
-            // At -100 stim it inflicts -20 malus to regen at 100%  stamina,
-            // effectivly countering stamina gain of default 20,
-            // at 50% stamina its -10 (50%), cuts by 25% at 25% stamina
+
+
+
+
+
             stamina_recovery += current_stim / 5.0f * get_stamina() / get_stamina_max();
         }
     }
@@ -2343,7 +2343,7 @@ void Character::update_stamina( int turns )
     if( get_power_level() >= 3_kJ && has_active_bionic( bio_gills ) ) {
         int bonus = std::min<int>( units::to_kilojoule( get_power_level() ) / 3,
                                    max_stam - get_stamina() - stamina_recovery * turns );
-        // so the effective recovery is up to 5x default
+
         bonus = std::min( bonus, 4 * static_cast<int>( effective_regen_rate ) );
         if( bonus > 0 ) {
             stamina_recovery += bonus;
@@ -2353,46 +2353,46 @@ void Character::update_stamina( int turns )
         }
     }
 
-    // Roll to determine actual stamina recovery over this period
+
     int recover_amount = std::ceil( stamina_recovery * turns );
     mod_stamina( recover_amount );
     add_msg_debug( debugmode::DF_CHARACTER, "Stamina recovery: %d", recover_amount );
 
-    // Cap at max
+
     set_stamina( std::min( std::max( get_stamina(), 0 ), max_stam ) );
 }
 
 int Character::get_cardiofit() const
 {
     if( is_npc() ) {
-        // No point in doing a bunch of checks on NPCs for now since they can't use cardio.
+
         return 2 * get_cardio_acc_base();
     }
 
     if( has_bionic( bio_synlungs ) ) {
-        // If you have the synthetic lungs bionic your cardioacc is forced to a specific value
+
         return 3 * get_cardio_acc_base();
     }
 
     const int cardio_base = get_cardio_acc();
 
-    // Mut mod contains the base 1.0f for all modifiers
+
     const float mut_mod = enchantment_cache->modify_value( enchant_vals::mod::CARDIO_MULTIPLIER, 1 );
-    // 1 point of athletics skill = 1% more cardio, up to 10% cardio
+
     const float athletics_mod = get_skill_level( skill_swimming ) / 100.0f;
-    // At some point we might have proficiencies that affect this.
+
     const float prof_mod = 0.0f;
-    // 10 points of health = 1% cardio, up to 20% cardio
+
     float health_mod = get_lifestyle() / 1000.0f;
 
-    // Negative effects of health are doubled, up to 40% cardio
+
     if( health_mod < 0.0f ) {
         health_mod *= 2.0f;
     }
 
-    // Add up all of our cardio mods.
+
     float cardio_modifier = mut_mod + athletics_mod + prof_mod + health_mod;
-    // Modify cardio accumulator by our cardio mods.
+
     const int cardio_fitness = static_cast<int>( cardio_base * cardio_modifier );
 
     return cardio_fitness;
@@ -2426,7 +2426,7 @@ void Character::cough( bool harmful, int loudness )
 
     if( harmful ) {
         const int stam = get_stamina();
-        const int malus = get_stamina_max() * 0.05; // 5% max stamina
+        const int malus = get_stamina_max() * 0.05;
         mod_stamina( -malus );
         if( stam < malus && x_in_y( malus - stam, malus ) && one_in( 20 ) ) {
             apply_damage( nullptr, body_part_torso, 1 );
@@ -2446,15 +2446,15 @@ void Character::cough( bool harmful, int loudness )
 
 void Character::wake_up()
 {
-    //Can't wake up if under anesthesia
+
     if( has_effect( effect_narcosis ) ) {
         return;
     }
 
-    // Do not remove effect_sleep or effect_alarm_clock now otherwise it invalidates an effect
-    // iterator in player::process_effects().
-    // We just set it for later removal (also happening in player::process_effects(), so no side
-    // effects) with a duration of 0 turns.
+
+
+
+
 
     if( has_effect( effect_sleep ) ) {
         get_effect( effect_sleep ).set_duration( 0_turns );
@@ -2481,11 +2481,11 @@ void Character::vomit()
         get_map().add_field( adjacent_tile(), fd_bile, 1 );
         add_msg_player_or_npc( m_bad, _( "You throw up heavily!" ), _( "<npcname> throws up heavily!" ) );
     }
-    // needed to ensure digesting vitamin_type::DRUGs are also emptied, even on an empty stomach.
+
     stomach.empty();
 
 
-    if( !has_effect( effect_nausea ) ) {  // Prevents never-ending nausea
+    if( !has_effect( effect_nausea ) ) {
         const effect dummy_nausea( effect_source( this ), &effect_nausea.obj(), 0_turns,
                                    bodypart_str_id::NULL_ID(), false, 1, calendar::turn );
         add_effect( effect_nausea, std::max( dummy_nausea.get_max_duration() * units::to_milliliter(
@@ -2508,13 +2508,13 @@ void Character::vomit()
     remove_effect( effect_pkill1_nsaid );
     remove_effect( effect_pkill2 );
     remove_effect( effect_pkill3 );
-    // Don't wake up when just retching
+
     if( stomach_contents_before_vomit > 0_ml ) {
         wake_up();
     }
 }
 
-/// Returns a weighted list of all mutation categories with current blood vitamin levels
+
 weighted_int_list<mutation_category_id> Character::get_vitamin_weighted_categories() const
 {
     weighted_int_list<mutation_category_id> weighted_output;
@@ -2552,18 +2552,18 @@ void Character::update_wounds( time_duration time_passed )
     morale->on_stat_change( "perceived_pain", get_perceived_pain() );
 }
 
-/*
-    Where damage to character is actually applied to hit body parts
-    Might be where to put bleed stuff rather than in player::deal_damage()
- */
+
+
+
+
 void Character::apply_damage( Creature *source, bodypart_id hurt, int dam,
                               const bool bypass_med )
 {
     if( is_dead_state() || has_effect( effect_incorporeal ) ||
         has_flag( json_flag_CANNOT_TAKE_DAMAGE ) ) {
-        // don't do any more damage if we're already dead
-        // Or if we're debugging and don't want to die
-        // Or we are intangible
+
+
+
         return;
     }
 
@@ -2579,7 +2579,7 @@ void Character::apply_damage( Creature *source, bodypart_id hurt, int dam,
     const int dam_to_bodypart = std::min( dam, get_part_hp_cur( part_to_damage ) );
 
     if( has_flag( json_flag_DISTRIBUTED_DAMAGE ) ) {
-        int num_limbs = 0; // number of limbs
+        int num_limbs = 0;
         for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {
             if( elem.first == bodypart_str_id::NULL_ID() ) {
                 continue;
@@ -2625,7 +2625,7 @@ void Character::apply_damage( Creature *source, bodypart_id hurt, int dam,
     }
 
     if( !bypass_med ) {
-        // remove healing effects if damaged
+
         int remove_med = roll_remainder( dam / 5.0f );
         if( remove_med > 0 && has_effect( effect_bandaged, part_to_damage.id() ) ) {
             remove_med -= reduce_healing_effect( effect_bandaged, remove_med, part_to_damage );
@@ -2685,28 +2685,28 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
         return dealt_damage_instance();
     }
 
-    //damage applied here
+
     dealt_damage_instance dealt_dams = Creature::deal_damage( source, bp, d, attack );
-    //block reduction should be by applied this point
+
     int dam = dealt_dams.total_damage();
 
     const tripoint_bub_ms pos = pos_bub( here );
 
-    // TODO: Pre or post blit hit tile onto "this"'s location here
+
     if( dam > 0 && get_player_view().sees( here, pos ) ) {
         g->draw_hit_player( *this, dam );
 
         if( is_avatar() && source ) {
             const tripoint_bub_ms source_pos = source->pos_bub( here );
 
-            //monster hits player melee
+
             SCT.add( pos.xy().raw(),
                      direction_from( point::zero, point( pos.x() - source_pos.x(), pos.y() - source_pos.y() ) ),
                      get_hp_bar( dam, get_hp_max( bp ) ).first, m_bad, body_part_name( bp ), m_neutral );
         }
     }
 
-    // And slimespawners too
+
     if( has_trait( trait_SLIMESPAWNER ) && ( dam >= 10 ) && one_in( 20 - dam ) ) {
         if( monster *const slime = g->place_critter_around( mon_player_blob, pos, 1 ) ) {
             slime->friendly = -1;
@@ -2715,9 +2715,9 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
     }
 
     Character &player_character = get_player_character();
-    //Acid blood effects.
+
     bool u_see = player_character.sees( here, *this );
-    // FIXME: Hardcoded damage type
+
     int cut_dam = dealt_dams.type_damage( damage_cut );
     if( source && has_flag( json_flag_ACIDBLOOD ) && !bp->has_flag( json_flag_BIONIC_LIMB ) &&
         !one_in( 3 ) &&
@@ -2730,7 +2730,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
                      disp_name(), source->disp_name() );
         }
         damage_instance acidblood_damage;
-        // FIXME: Hardcoded damage type
+
         acidblood_damage.add_damage( damage_acid, rng( 4, 16 ) );
         if( !one_in( 4 ) ) {
             source->deal_damage( this, body_part_arm_l, acidblood_damage );
@@ -2750,7 +2750,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
         debugmsg( "Wacky body part hit!" );
     }
 
-    // TODO: Scale with damage in a way that makes sense for power armors, plate armor and naked skin.
+
     recoil += recoil_mul * weapon.volume() / 250_ml;
     recoil = std::min( MAX_RECOIL, recoil );
 
@@ -2761,7 +2761,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
         if( !du.type->physical ) {
             continue;
         }
-        // Assume that ranged == getting shot
+
         if( !du.type->melee_only ) {
             dealt_ranged = true;
         } else {
@@ -2770,12 +2770,12 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
     }
     sum_cover += worn.sum_filthy_cover( dealt_ranged, dealt_melee, bp );
 
-    // Chance of infection is damage (with cut and stab x4) * sum of coverage on affected body part, in percent.
-    // i.e. if the body part has a sum of 100 coverage from filthy clothing,
-    // each point of damage has a 1% change of causing infection.
-    // if the bodypart doesn't bleed, it doesn't have blood, and cannot get infected
+
+
+
+
     if( sum_cover > 0 && !bp->has_flag( json_flag_BIONIC_LIMB ) ) {
-        // FIXME: Hardcoded damage types
+
         const int cut_type_dam = dealt_dams.type_damage( damage_cut ) +
                                  dealt_dams.type_damage( damage_stab );
         const int combined_dam = dealt_dams.type_damage( damage_bash ) + ( cut_type_dam * 4 );
@@ -2858,19 +2858,19 @@ void Character::healall( int dam )
     }
 }
 
-void Character::hurtall( int dam, Creature *source, bool disturb /*= true*/ )
+void Character::hurtall( int dam, Creature *source, bool disturb )
 {
     if( is_dead_state() || has_effect( effect_incorporeal ) ||
         dam <= 0 || has_flag( json_flag_CANNOT_TAKE_DAMAGE ) ) {
         return;
     }
 
-    // Low pain: damage is spread all over the body, so not as painful as 6 hits in one part
+
     int pain = mod_pain( dam );
 
     std::vector<bodypart_id> body_parts = get_all_body_parts( get_body_part_flags::only_main );
     for( const bodypart_id &bp : body_parts ) {
-        // Don't use apply_damage here or it will annoy the player with 6 queries
+
         const int dam_to_bodypart = std::min( dam, get_part_hp_cur( bp ) );
         mod_part_hp_cur( bp, - dam_to_bodypart );
 
@@ -2893,18 +2893,18 @@ int Character::hitall( int dam, int vary, Creature *source )
     int damage_taken = 0;
     for( const bodypart_id &bp : get_all_body_parts( get_body_part_flags::only_main ) ) {
         int ddam = vary ? dam * rng( 100 - vary, 100 ) / 100 : dam;
-        // FIXME: Hardcoded damage type
+
         damage_instance damage( damage_bash, ddam );
         damage_taken += deal_damage( source, bp, damage ).total_damage();
     }
     return damage_taken;
 }
 
-void Character::on_hurt( Creature *source, bool disturb /*= true*/ )
+void Character::on_hurt( Creature *source, bool disturb )
 {
     const map &here = get_map();
 
-    // If we actually know the source, and the source is the player, flag the NPC as being unjustly attacked
+
     if( is_npc() && source && source == &get_player_character() && !as_npc()->guaranteed_hostile() ) {
         as_npc()->hit_by_player = true;
     }
@@ -2955,7 +2955,7 @@ void Character::spores()
 
 void Character::blossoms()
 {
-    // Player blossoms are shorter-ranged, but you can fire much more frequently if you like.
+
     sounds::sound( pos_bub(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
     map &here = get_map();
     for( const tripoint_bub_ms &tmp : here.points_in_radius( pos_bub(), 2 ) ) {
@@ -2966,7 +2966,7 @@ void Character::blossoms()
 void Character::update_vitamins( const vitamin_id &vit )
 {
     if( !needs_food() ) {
-        return; // NPCs can only develop vitamin diseases if their needs are enabled
+        return;
     }
 
     efftype_id def = vit.obj().deficiency();
@@ -3005,16 +3005,16 @@ void Character::rooted_message() const
 }
 
 void Character::rooted()
-// This assumes that daily Iron, Calcium, and Thirst needs should be filled at the same rate.
-// Baseline humans need 96 Iron and Calcium, and 288 Thirst per day.
-// Thirst level -40 puts it right in the middle of the 'Hydrated' zone.
-// TODO: The rates for iron, calcium, and thirst should probably be pulled from the nutritional data rather than being hardcoded here, so that future balance changes don't break this.
+
+
+
+
 {
     if( ( has_trait( trait_ROOTS2 ) || has_trait( trait_ROOTS3 ) || has_trait( trait_CHLOROMORPH ) ) &&
         get_map().has_flag( ter_furn_flag::TFLAG_PLOWABLE, pos_bub() ) && is_barefoot() ) {
-        int time_to_full = 43200; // 12 hours
+        int time_to_full = 43200;
         if( has_trait( trait_ROOTS3 ) || has_trait( trait_CHLOROMORPH ) ) {
-            time_to_full += -14400;    // -4 hours
+            time_to_full += -14400;
         }
         if( x_in_y( 96, time_to_full ) ) {
             vitamin_mod( vitamin_iron, 1 );
@@ -3069,17 +3069,17 @@ int Character::get_painkiller() const
 
 int Character::heartrate_bpm() const
 {
-    //Dead have no heartbeat usually and no heartbeat in omnicell
+
     if( is_dead_state() || has_trait( trait_SLIMESPAWNER ) ) {
         return 0;
     }
 
     int average_heartbeat = avg_nat_bpm * get_heartrate_index();
 
-    // minor moment-to-moment variation
+
     average_heartbeat += rng( -5, 5 );
 
-    //Chemical imbalance makes this less predictable. It's possible this range needs tweaking
+
     if( has_trait( trait_CHEMIMBALANCE ) ) {
         average_heartbeat += rng( -15, 15 );
     }
@@ -3109,7 +3109,7 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
         return false;
     }
 
-    // source is in-ear and at our square, we can hear it
+
     if( source == pos_bub() && volume == 0 ) {
         return true;
     }
@@ -3126,7 +3126,7 @@ float Character::hearing_ability() const
                         volume_multiplier );
 
     if( has_effect( effect_deaf ) ) {
-        // Scale linearly up to 30 minutes
+
         volume_multiplier *= ( 30_minutes - get_effect_dur( effect_deaf ) ) / 30_minutes;
     }
 
@@ -3139,8 +3139,8 @@ double Character::vomit_mod()
 
     mod = enchantment_cache->modify_value( enchant_vals::mod::VOMIT_MUL, mod );
 
-    // If you're already nauseous, any food in your stomach greatly
-    // increases chance of vomiting. Liquids don't provoke vomiting, though.
+
+
     if( stomach.contains() != 0_ml && has_effect( effect_nausea ) ) {
         mod *= get_effect_int( effect_nausea );
     }
@@ -3149,7 +3149,7 @@ double Character::vomit_mod()
 
 int Character::get_lowest_hp() const
 {
-    // Set lowest_hp to an arbitrarily large number.
+
     int lowest_hp = INT_MAX;
     for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {
         const int cur_hp = elem.second.get_hp_cur();
@@ -3162,7 +3162,7 @@ int Character::get_lowest_hp() const
 
 int Character::get_highest_hp() const
 {
-    // Set lowest_hp to an arbitrarily large number.
+
     int highest_hp = INT_MIN;
     for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {
         const int cur_hp = elem.second.get_hp_cur();
@@ -3237,8 +3237,8 @@ bool Character::schizo_symptoms( int chance ) const
 
 int Character::thirst_speed_penalty( int thirst )
 {
-    // We die at 1200 thirst
-    // Start by dropping speed really fast, but then level it off a bit
+
+
     static const std::vector<std::pair<float, float>> thirst_thresholds = {{
             std::make_pair( 40.0f, 0.0f ),
             std::make_pair( 300.0f, -25.0f ),
@@ -3265,7 +3265,7 @@ stat_mod Character::get_pain_penalty() const
 {
     stat_mod ret;
     int pain = get_perceived_pain();
-    // if less than 10 pain, do not apply any penalties
+
     if( pain <= 10 ) {
         return ret;
     }
@@ -3289,8 +3289,8 @@ stat_mod Character::get_pain_penalty() const
                      get_per() * penalty_per );
 
 
-    // Prevent negative penalties, there is better ways to give bonuses for pain
-    // Also not make character has 0 stats
+
+
     ret.strength = get_str() > 2 ? std::clamp( ret.strength, 1, get_str() - 1 ) :
                    std::max( 0, get_str() - 1 );
     ret.dexterity = get_dex() > 2 ? std::clamp( ret.dexterity, 1, get_dex() - 1 ) :
@@ -3374,7 +3374,7 @@ int Character::mod_pain( int npain, const bodypart_id bp )
         if( has_flag( json_flag_PAIN_IMMUNE ) || has_effect( effect_narcosis ) ) {
             return 0;
         }
-        // if there is a positive multiplier we always want to add at least 1 pain
+
         if( mult > 0 ) {
             npain += std::max( 1, roll_remainder( npain * mult ) );
         }
@@ -3385,7 +3385,7 @@ int Character::mod_pain( int npain, const bodypart_id bp )
 
         npain *= bp->pain_mod;
 
-        // no matter how powerful the enchantment if we are gaining pain we don't lose any
+
         npain = std::max( 0, npain );
     }
     Creature::mod_pain( npain );
@@ -3419,7 +3419,7 @@ int Character::hp_percentage() const
     const bodypart_id torso_id = bodypart_id( "torso" );
     int total_cur = 0;
     int total_max = 0;
-    // Head and torso HP are weighted 3x and 2x, respectively
+
     total_cur = get_part_hp_cur( head_id ) * 3 + get_part_hp_cur( torso_id ) * 2;
     total_max = get_part_hp_max( head_id ) * 3 + get_part_hp_max( torso_id ) * 2;
     for( const std::pair< const bodypart_str_id, bodypart> &elem : get_body() ) {

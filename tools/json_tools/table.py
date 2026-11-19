@@ -21,7 +21,7 @@ import sys
 import util
 
 
-# Command-line arguments
+
 parser = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -98,15 +98,15 @@ def item_values(item, fields, none_string="None"):
             subkeys = field.split(".")
         else:
             subkeys = [field]
-        # Descend into dotted keys
+
         it = item
         for subkey in subkeys:
-            # Is it a dict with this subkey?
+
             if isinstance(it, dict) and subkey in it:
                 it = it[subkey]
-            # Is it a list of dicts having this subkey?
+
             elif isinstance(it, list) and all(subkey in o for o in it):
-                # Pull from all subkeys, or just the one
+
                 if len(it) == 1:
                     if isinstance(it[0], dict):
                         it = it[0][subkey]
@@ -114,14 +114,14 @@ def item_values(item, fields, none_string="None"):
                         it = it[0]
                 else:
                     it = [i[subkey] for i in it]
-            # Stop if any subkey is not found
+
             else:
                 it = none_string
                 break
 
         if isinstance(it, dict):
             if set(it.keys()) <= I18N_DICT_KEYS_SET:
-                # it dict contains only i18zed values
+
                 first_good_value = None
                 for k in I18N_DICT_KEYS:
                     value = it.get(k, None)
@@ -130,13 +130,13 @@ def item_values(item, fields, none_string="None"):
                         break
                 values.append("%s" % first_good_value or none_string)
             else:
-                # Make dict presentable
+
                 values.append("%s" % it.items())
-        # Separate lists with slashes
+
         elif isinstance(it, list):
             values.append(" / ".join(
                 "%s" % i if i is not None else none_string for i in it))
-        # Otherwise just force string
+
         else:
             values.append("%s" % it if it is not None else none_string)
 
@@ -167,7 +167,7 @@ class MDFormat:
     """
     def header(self, columns):
         self.row(columns)
-        # Markdown table needs a separator after the header
+
         print("| --- " * len(columns))
 
     def row(self, values):
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     if args.tileset_types_only:
         args.type = TILESET_TYPES
 
-    # Get data (don't care about load errors)
+
     json_data, _ = util.import_data(json_fmatch=args.fnmatch)
 
     worker = CDDAValues(args.format)

@@ -93,7 +93,7 @@ static power_network_node make_node_from_vehicle( const vehicle &veh )
 
 void power_network_manager::begin_rebuild()
 {
-    // Build position-to-old-network-id lookup from current networks
+
     old_pos_to_id_.clear();
     for( const auto &[net_id, net] : networks_ ) {
         for( const power_network_node &nd : net.nodes ) {
@@ -112,7 +112,7 @@ void power_network_manager::add_grid( vehicle *root,
     net.root_position = root->pos_abs();
     net.last_resolved = calendar::turn;
 
-    // Count overlaps with old networks to find best match for id stability
+
     std::unordered_map<int, int> overlap_counts;
     for( const auto &[grid_veh, loss] : grid ) {
         net.nodes.push_back( make_node_from_vehicle( *grid_veh ) );
@@ -123,7 +123,7 @@ void power_network_manager::add_grid( vehicle *root,
         }
     }
 
-    // Find the old id with the most overlap that hasn't been claimed yet
+
     int best_old_id = 0;
     int best_count = 0;
     for( const auto &[prev_id, count] : overlap_counts ) {
@@ -148,7 +148,7 @@ void power_network_manager::finish_rebuild()
     networks_ = std::move( pending_networks_ );
     next_id_ = rebuild_next_id_;
 
-    // Clean up temporary state
+
     old_pos_to_id_.clear();
     claimed_ids_.clear();
     pending_networks_.clear();

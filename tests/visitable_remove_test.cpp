@@ -65,11 +65,11 @@ TEST_CASE( "visitable_remove", "[visitable]" )
     clear_avatar();
     Character &p = get_player_character();
     p.worn.wear_item( p, item( itype_backpack ), false, false );
-    p.wear_item( item( itype_backpack ) ); // so we don't drop anything
+    p.wear_item( item( itype_backpack ) );
     clear_map_without_vision();
     map &here = get_map();
 
-    // check if all tiles within radius are loaded within current submap and passable
+
     const auto suitable = [&here]( const tripoint_bub_ms & pos, const int radius ) {
         std::vector<tripoint_bub_ms> tiles = closest_points_first( pos, radius );
         return std::all_of( tiles.begin(), tiles.end(), [&here]( const tripoint_bub_ms & e ) {
@@ -84,7 +84,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
         } );
     };
 
-    // move player randomly until we find a suitable position
+
     constexpr int num_trials = 100;
     for( int i = 0; i < num_trials && !suitable( p.pos_bub( here ), 1 ); ++i ) {
         CHECK( !p.in_vehicle );
@@ -313,18 +313,18 @@ TEST_CASE( "visitable_remove", "[visitable]" )
 
     GIVEN( "A player surrounded by several bottles of water" ) {
         std::vector<tripoint_bub_ms> tiles = closest_points_first( p.pos_bub(), 1 );
-        tiles.erase( tiles.begin() ); // player tile
+        tiles.erase( tiles.begin() );
 
-        int our = 0; // bottles placed on player tile
-        int adj = 0; // bottles placed on adjacent tiles
+        int our = 0;
+        int adj = 0;
 
         for( int i = 0; i != count; ++i ) {
             if( i == 0 || tiles.empty() ) {
-                // always place at least one bottle on player tile
+
                 our++;
                 here.add_item( p.pos_bub(), obj );
             } else {
-                // randomly place bottles on adjacent tiles
+
                 adj++;
                 here.add_item( random_entry( tiles ), obj );
             }
@@ -430,7 +430,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
 
     GIVEN( "An adjacent vehicle contains several bottles of water" ) {
         std::vector<tripoint_bub_ms> tiles = closest_points_first( p.pos_bub(), 1 );
-        tiles.erase( tiles.begin() ); // player tile
+        tiles.erase( tiles.begin() );
         tripoint_bub_ms veh = tripoint_bub_ms( random_entry( tiles ) );
         REQUIRE( here.add_vehicle( vehicle_prototype_shopping_cart, veh, 0_degrees, 0,
                                    veh_spawn_status::UNDAMAGED ) );
@@ -444,7 +444,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
         vehicle *const v = &vp->vehicle();
         const int part = vp->part_index();
         REQUIRE( part >= 0 );
-        // Empty the vehicle of any cargo.
+
         v->get_items( vp->part() ).clear();
         for( int i = 0; i != count; ++i ) {
             v->add_item( here,  vp->part(), obj );

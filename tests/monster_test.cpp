@@ -68,9 +68,9 @@ static int moves_to_destination( const std::string &monster_type,
                                  const tripoint_bub_ms &start, const tripoint_bub_ms &end )
 {
     clear_creatures();
-    REQUIRE( g->num_creatures() == 1 ); // the player
+    REQUIRE( g->num_creatures() == 1 );
     monster &test_monster = spawn_test_monster( monster_type, start );
-    // Get it riled up and give it a goal.
+
     test_monster.anger = 100;
     test_monster.set_dest( get_map().get_abs( end ) );
     test_monster.set_moves( 0 );
@@ -88,14 +88,14 @@ static int moves_to_destination( const std::string &monster_type,
                 g->remove_zombie( test_monster );
                 return moves_spent;
 
-                // return early if it doesn't move at all
+
             } else if( test_monster.pos_bub() == start ) {
                 return 100000;
             }
         }
     }
     g->remove_zombie( test_monster );
-    // Return an unreasonably high number.
+
     return 100000;
 }
 
@@ -126,18 +126,18 @@ std::ostream &operator<<( std::ostream &os, const std::vector<track> &vec )
     return os;
 }
 
-} // namespace
+}
 
-/**
- * Simulate a player running from the monster, checking if it can catch up.
- **/
+
+
+
 static int can_catch_player( const std::string &monster_type, const tripoint &direction_of_flight )
 {
     map &here = get_map();
     clear_map_without_vision();
-    REQUIRE( g->num_creatures() == 1 ); // the player
+    REQUIRE( g->num_creatures() == 1 );
     Character &test_player = get_player_character();
-    // Strip off any potentially encumbering clothing.
+
     test_player.remove_worn_items_with( []( const item & ) {
         return true;
     } );
@@ -145,11 +145,11 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     const tripoint_bub_ms center{ 65, 65, 0 };
     test_player.setpos( here, center );
     test_player.set_moves( 0 );
-    // Give the player a head start.
+
     const tripoint_bub_ms monster_start = { -10 * direction_of_flight + test_player.pos_bub()
                                           };
     monster &test_monster = spawn_test_monster( monster_type, monster_start );
-    // Get it riled up and give it a goal.
+
     test_monster.anger = 100;
     test_monster.set_dest( test_player.pos_abs() );
     test_monster.set_moves( 0 );
@@ -170,7 +170,7 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
                 tripoint_rel_ms offset = center - test_player.pos_bub();
                 test_player.setpos( here, center );
                 test_monster.setpos( test_monster.pos_abs() + offset );
-                // Verify that only the player and one monster are present.
+
                 REQUIRE( g->num_creatures() == 2 );
             }
             const int move_cost = here.combined_movecost(
@@ -205,17 +205,17 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     return -1000;
 }
 
-// Verify that the named monster has the expected effective speed, not reduced
-// due to wasted motion from shambling.
+
+
 static void check_shamble_speed( const std::string &monster_type,
                                  const tripoint_bub_ms &destination )
 {
-    // Scale the scaling factor based on the ratio of diagonal to cardinal steps.
+
     const float slope = get_normalized_angle( point::zero, destination.xy().raw() );
     const float diagonal_multiplier = 1.0 + ( get_option<bool>( "CIRCLEDIST" ) ?
                                       ( slope * 0.41 ) : 0.0 );
     INFO( monster_type << " " << destination );
-    // Wandering makes things nondeterministic, so look at the distribution rather than a target number.
+
     move_statistics move_stats;
     for( int i = 0; i < 10; ++i ) {
         move_stats.add( moves_to_destination( monster_type, tripoint_bub_ms::zero, destination ) );
@@ -236,7 +236,7 @@ static void test_moves_to_squares( const std::string &monster_type, const bool w
     std::map<int, move_statistics> turns_at_distance;
     std::map<int, move_statistics> turns_at_slope;
     std::map<int, move_statistics> turns_at_angle;
-    // For the regression test we want just enough samples, for data we want a lot more.
+
     const int required_samples = write_data ? 100 : 20;
     const int sampling_resolution = write_data ? 1 : 20;
     bool not_enough_samples = true;
@@ -246,17 +246,17 @@ static void test_moves_to_squares( const std::string &monster_type, const bool w
             for( int y = 0; y <= 100; y += sampling_resolution ) {
                 const int distance = square_dist( {50, 50, 0}, {x, y, 0} );
                 if( distance <= 5 ) {
-                    // Very short ranged tests are squirrely.
+
                     continue;
                 }
                 const int rise = 50 - y;
                 const int run = 50 - x;
                 const float angle = atan2( run, rise );
-                // Bail out if we already have enough samples for this angle.
+
                 if( turns_at_angle[angle * 100].n() >= required_samples ) {
                     continue;
                 }
-                // Scale the scaling factor based on the ratio of diagonal to cardinal steps.
+
                 const float slope = get_normalized_angle( {50, 50}, {x, y} );
                 const float diagonal_multiplier = 1.0 + ( get_option<bool>( "CIRCLEDIST" ) ?
                                                   ( slope * 0.41 ) : 0.0 );
@@ -311,7 +311,7 @@ static void test_moves_to_squares( const std::string &monster_type, const bool w
 static void monster_check()
 {
     const float diagonal_multiplier = ( get_option<bool>( "CIRCLEDIST" ) ? 1.41 : 1.0 );
-    // Have a monster walk some distance in a direction and measure how long it takes.
+
     float vert_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero, {100, 0, 0} );
     CHECK( ( vert_move / 10000.0 ) == Approx( 1.0 ) );
     int horiz_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero, {0, 100, 0} );
@@ -335,11 +335,11 @@ static void monster_check()
     check_shamble_speed( "mon_jabberwock", {0, 100, 0} );
     check_shamble_speed( "mon_jabberwock", {100, 100, 0} );
 
-    // Check moves to all squares relative to monster start within 50 squares.
+
     test_moves_to_squares( "mon_zombie_dog" );
     test_moves_to_squares( "mon_pig" );
 
-    // Verify that a walking player can escape from a zombie, but is caught by a zombie dog.
+
     INFO( "Trigdist is " << ( get_option<bool>( "CIRCLEDIST" ) ? "on" : "off" ) );
     CHECK( can_catch_player( "mon_zombie", tripoint::east ) < 0 );
     CHECK( can_catch_player( "mon_zombie", tripoint::south_east ) < 0 );
@@ -360,7 +360,7 @@ TEST_CASE( "check_mon_id" )
     }
 }
 
-// Write out a map of slope at which monster is moving to time required to reach their destination.
+
 TEST_CASE( "write_slope_to_speed_map_trig", "[.]" )
 {
     clear_map_and_put_player_underground();
@@ -381,8 +381,8 @@ TEST_CASE( "write_slope_to_speed_map_square", "[.]" )
     test_moves_to_squares( "mon_pig", true );
 }
 
-// Characterization test for monster movement speed.
-// It's not necessarally the one true speed for monsters, we just want notice if it changes.
+
+
 TEST_CASE( "monster_speed_square", "[speed]" )
 {
     clear_map_and_put_player_underground();
@@ -603,14 +603,14 @@ TEST_CASE( "monster_special_move", "[speed]" )
 
 TEST_CASE( "monster_extend_flags", "[monster]" )
 {
-    // mon_dog_zombie_brute is copy-from mon_dog_zombie_rot
-    // mon_dog_zombie_rot contains
-    // "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON", "FILTHY" ]
-    // mon_dog_zombie_brute contains
-    // "extend": { "flags": [ "GROUP_BASH", "PUSH_VEH" ] }
 
-    // This test verifies that "extend" works on monster flags by checking both
-    // those take effect
+
+
+
+
+
+
+
     const mtype &m = *mon_dog_zombie_brute;
     CHECK( m.has_flag( mon_flag_SEES ) );
     CHECK( m.has_flag( mon_flag_PUSH_VEH ) );
@@ -618,8 +618,8 @@ TEST_CASE( "monster_extend_flags", "[monster]" )
 
 TEST_CASE( "monster_broken_verify", "[monster]" )
 {
-    // verify monsters with death_function = BROKEN
-    // actually have appropriate broken_name items
+
+
     const MonsterGenerator &generator = MonsterGenerator::generator();
     for( const mtype &montype : generator.get_all_mtypes() ) {
         if( montype.mdeath_effect.corpse_type != mdeath_type::BROKEN ) {
@@ -630,13 +630,13 @@ TEST_CASE( "monster_broken_verify", "[monster]" )
             CHECK( montype.broken_itype.is_valid() );
             continue;
         }
-        // this contraption should match mdeath::broken in mondeath.cpp
-        // FIXME: Rewrite test so it doesn't use string manipulation or require broken_itype and delete it
+
+
         std::string broken_id_str = montype.id.str();
         if( broken_id_str.compare( 0, 4, "mon_" ) == 0 ) {
             broken_id_str.erase( 0, 4 );
         }
-        broken_id_str.insert( 0, "broken_" ); // "broken_manhack", or "broken_eyebot", ...
+        broken_id_str.insert( 0, "broken_" );
         const itype_id targetitemid( broken_id_str );
 
         CAPTURE( montype.id.c_str() );
@@ -771,8 +771,8 @@ static void test_move_to_location( monster &test_monster, const tripoint_bub_ms 
         test_monster.set_moves( 100 );
         test_monster.anger = 100;
         test_monster.wandf = 100;
-        // Monsters can do silly things like trigger a no-op special attack instead of moving.
-        // So keep trying until the monster does something meaningful.
+
+
         while( test_monster.get_moves() >= 0 && test_monster.pos_bub() == old_location && steps < 1000 ) {
             test_monster.move();
             steps++;
@@ -797,24 +797,24 @@ static void test_move_to_location( monster &test_monster, const tripoint_bub_ms 
 
 static void monster_can_move_to_map_center( const tripoint_bub_ms &origin )
 {
-    // Head for map center?
+
     const tripoint_bub_ms destination{ 11 * 6, 11 * 6, 0 };
     clear_creatures();
-    REQUIRE( g->num_creatures() == 1 ); // the player
+    REQUIRE( g->num_creatures() == 1 );
     monster &test_monster = spawn_test_monster( "mon_zombie", origin );
     map &m = get_map();
     test_monster.anger = 100;
-    // TODO: check wander too
+
     test_monster.set_dest( m.get_abs( destination ) );
     test_move_to_location( test_monster, destination );
 }
 
-// This is a pathological test for an optimization added to mattack::parrot_at_danger because the monster
-// does a flood-fill every time it tries to move instead of reusing an existing flood fill.
-// Possibly this is because there's context that we normally set up first that this test is missing.
+
+
+
 TEST_CASE( "monster_can_navigate_from_anywhere_in_reality_bubble", "[monster]" )
 {
-    // Remove interacting with the player as a complication.
+
     clear_map_and_put_player_underground();
     map &m = get_map();
     for( tripoint_bub_ms start_loc : m.points_on_zlevel( 0 ) ) {
@@ -828,22 +828,22 @@ TEST_CASE( "monster_can_navigate_from_anywhere_in_reality_bubble", "[monster]" )
 TEST_CASE( "monster_can_navigate_from_overmap_to_reality_bubble", "[monster][hordes]" )
 {
     map &m = get_map();
-    // Remove interacting with the player as a complication.
+
     clear_map_and_put_player_underground();
     const tripoint_bub_ms destination{ 11 * 6, 11 * 6, 0 };
     const tripoint_abs_ms spawn_location = m.get_abs( { -12, 66, 0 } );
-    // Place monster on the local overmap.monster_map just outside the reality bubble.
+
     overmap_buffer.spawn_monster( spawn_location, mon_test_zombie );
-    // Give the monster a goal location inside the bubble.
+
     overmap_buffer.alert_entity( spawn_location, m.get_abs( destination ), 100 );
-    // This reference will be invalidated once the monster spawns in the reality bubble,
-    // don't access it again after calling move_hordes().
+
+
     horde_entity *test_entity = overmap_buffer.entity_at( spawn_location );
     REQUIRE( test_entity != nullptr );
     REQUIRE( test_entity->is_active() );
     REQUIRE( test_entity->destination == m.get_abs( destination ) );
     REQUIRE( test_entity->tracking_intensity > 0 );
-    // Process hordes and verify the monster appears on the reality bubble.
+
     int num_steps = 0;
     do {
         num_steps++;
@@ -858,23 +858,23 @@ TEST_CASE( "monster_can_navigate_from_overmap_to_reality_bubble", "[monster][hor
 TEST_CASE( "monster_can_navigate_from_overmap_to_reality_bubble_following_sound",
            "[monster][hordes][sound]" )
 {
-    // Remove interacting with the player as a complication.
+
     clear_map_and_put_player_underground();
-    // Clear lingering sounds from queue.
+
     sounds::process_sounds();
     const tripoint_bub_ms destination{ 11 * 6, 11 * 6, 0 };
-    // Place monster on the local overmap.monster_map just outside the reality bubble.
+
     map &m = get_map();
     tripoint_abs_ms entity_spawn_location( m.get_abs( { -12, 66, 0 } ) );
     horde_entity &test_mon_initial = overmap_buffer.spawn_monster( entity_spawn_location,
                                      mon_test_zombie );
-    // Assert monster is not wandering
+
     REQUIRE( test_mon_initial.tracking_intensity == 0 );
-    // Give the monster a goal location inside the bubble by making a loud noise.
+
     std::string test_sound( "test sound" );
     sound( destination, 200, sounds::sound_t::combat, test_sound );
     sounds::process_sounds();
-    // Assert monster is wandering
+
     horde_entity *test_mon = overmap_buffer.entity_at( entity_spawn_location );
     REQUIRE( test_mon != nullptr );
     REQUIRE( test_mon->tracking_intensity > 0 );
@@ -882,9 +882,9 @@ TEST_CASE( "monster_can_navigate_from_overmap_to_reality_bubble_following_sound"
     CAPTURE( test_mon->destination );
     tripoint_bub_ms actual_destination = m.get_bub( test_mon->destination );
     REQUIRE( rl_dist( actual_destination, destination ) <= 12 );
-    // This reference will be invalidated once the monster spawns in the reality bubble,
-    // don't access it again after calling move_hordes().
-    // Process hordes and verify the monster appears on the reality bubble.
+
+
+
     int num_steps = 0;
     do {
         num_steps++;
@@ -900,17 +900,17 @@ TEST_CASE( "monster_moved_to_overmap_after_map_shift", "[monster][hordes]" )
 {
     clear_map_without_vision();
     map &here = get_map();
-    // Place character in the central submap of map.
+
     tripoint_bub_ms player_start_pos{ 11 * 6, 11 * 6, 0 };
     get_player_character().setpos( here, player_start_pos );
 
     const tripoint_bub_ms destination{ 11 * 6, 11 * 6, 0 };
     const tripoint_abs_ms abs_destination = here.get_abs( destination );
-    // Place monster on the left edge of the reality bubble.
+
     monster &test_monster = spawn_test_monster( "mon_test_zombie", { 0, 11 * 6, 0 } );
-    // Give the monster a goal location targting the player.
+
     test_monster.set_dest( abs_destination );
-    // Move player to right, shifting the map so the monster is no longer present.
+
     int num_steps = 0;
     while( g->num_creatures() != 1 && num_steps < 36 ) {
         ++num_steps;
@@ -921,9 +921,9 @@ TEST_CASE( "monster_moved_to_overmap_after_map_shift", "[monster][hordes]" )
             }
         }
     }
-    // In case something goes wrong, just how far did we move?
+
     CAPTURE( num_steps );
-    // Verify that we shifted the monster off the map.
+
     REQUIRE( g->num_creatures() == 1 );
 
     num_steps = 0;
@@ -940,24 +940,24 @@ TEST_CASE( "monster_moved_to_overmap_after_map_shift", "[monster][hordes]" )
 
 TEST_CASE( "monster_cant_enter_reality_bubble_because_wall", "[monster][hordes]" )
 {
-    // Remove interacting with the player as a complication.
+
     clear_map_and_put_player_underground();
     sounds::process_sounds();
     const tripoint_bub_ms destination{ 11 * 6, 11 * 6, 0 };
-    // Place monster on the local overmap.monster_map just outside the reality bubble.
+
     map &m = get_map();
     overmap_buffer.spawn_monster( m.get_abs( { -24, 66, 0 } ), mon_test_zombie );
-    // Give the monster a goal location inside the bubble by making a loud noise.
+
     std::string test_sound( "test sound" );
     sound( destination, 200, sounds::sound_t::combat, test_sound );
     sounds::process_sounds();
-    // Put a wall between the monster and the overmap so they can't enter.
+
     for( int i = -12; i < 12; ++i ) {
         overmap_buffer.set_passable( m.get_abs( { -12, 66 + i, 0 } ), false );
     }
-    // This reference will be invalidated once the monster spawns in the reality bubble,
-    // don't access it again after calling move_hordes().
-    // Process hordes and verify the monster doesn't make it onto the bubble.
+
+
+
     int step_attempts = 0;
     do {
         step_attempts++;
@@ -968,13 +968,13 @@ TEST_CASE( "monster_cant_enter_reality_bubble_because_wall", "[monster][hordes]"
     REQUIRE( g->num_creatures() == 1 );
 }
 
-// The idea here is we wipe all the map data and place the player at world origin so that
-// when we flatten the overmap area we will be using we don't have pre-existing mapgen outputs.
-// EG the failure that led to this was the monster being placed in a lake,
-// which prevented it from spawning since the target map space was "deep_water".
+
+
+
+
 static void clear_area( const tripoint_abs_omt &start, const tripoint_abs_omt &end )
 {
-    // This has the side effect of placing the player at abs 0,0
+
     clear_overmaps();
     for( const tripoint_abs_omt &to_flatten : tripoint_range<tripoint_abs_omt>( start, end ) ) {
         overmap_buffer.ter_set( to_flatten, oter_field );
@@ -991,24 +991,24 @@ static void walk_toward_monster_off_the_map( tripoint_abs_omt origin, point offs
     map &here = get_map();
     Character &test_player = get_player_character();
 
-    // Anywhere in the target omt is fine.
+
     g->place_player_overmap( origin );
 
-    // Verify we don't try to spawn the monster on a "tainted" area of the map.
+
     REQUIRE( !here.inbounds( monster_pos ) );
-    // Place monster in overmap::monster_map off the edge of the reality bubble.
+
     REQUIRE( nullptr == overmap_buffer.entity_at( monster_pos ) );
     REQUIRE( overmap_buffer.passable( monster_pos ) );
     overmap_buffer.spawn_monster( monster_pos, id );
     REQUIRE( nullptr != overmap_buffer.entity_at( monster_pos ) );
 
-    // move player toward monster, triggering map shifts
+
     int num_steps = 0;
     while( !here.inbounds( monster_pos ) ) {
         ++num_steps;
         tripoint_bub_ms prev_loc = test_player.pos_bub();
-        // Using game::place_player() instead of game::walk_move() to avoid
-        // a bunch of things that can break the test.
+
+
         g->place_player( prev_loc + walk_direction );
         tripoint_bub_ms new_loc = test_player.pos_bub();
         CAPTURE( here.ter( prev_loc + walk_direction ) );
@@ -1027,13 +1027,13 @@ static void walk_toward_monster_off_the_map( tripoint_abs_omt origin, point offs
         g->cleanup_dead();
     }
 
-    // Retry materialization in case placement failed due to terrain.
+
     wipe_map_terrain();
     overmap_buffer.spawn_monster( project_to<coords::sm>( monster_pos ) );
 
-    // place_critter_around() uses radius=1, so if the exact tile was blocked
-    // during the map shift the monster may have materialized up to 1 tile away.
-    // Search by type instead of exact position.
+
+
+
     tripoint_bub_ms expected_local = here.get_bub( monster_pos );
     CAPTURE( expected_local );
     CAPTURE( here.ter( expected_local ) );
@@ -1058,11 +1058,11 @@ static void dormant_monsters_spawn_correctly( const tripoint_abs_omt &origin )
     walk_toward_monster_off_the_map( origin, point(), point::east, pseudo_dormant_mon_zombie_fat );
 
     uint64_t num_creatures_prev = g->num_creatures();
-    // From here we know there is a monster at the expected location that has the right ID.
-    // We also know it's the only monster on the map.
+
+
 
     map &here = get_map();
-    // Verify it places the special dormant monster trap and corpse
+
     creature_tracker &creatures = get_creature_tracker();
     tripoint_bub_ms monster_location;
     bool found_target = false;
@@ -1074,7 +1074,7 @@ static void dormant_monsters_spawn_correctly( const tripoint_abs_omt &origin )
         monster_location = here.get_bub( creature->pos_abs() );
         while( !creature->is_dead() ) {
             creature->set_moves( 1 );
-            // Need process_turn to drop the special attack cooldown.
+
             creature->process_turn();
             creature->move();
         }
@@ -1090,26 +1090,26 @@ static void dormant_monsters_spawn_correctly( const tripoint_abs_omt &origin )
     CHECK( here.tr_at( monster_location ) == trap_id( "tr_dormant_corpse" ) );
     bool found_corpse = false;
     for( item &itm : here.i_at( monster_location ) ) {
-        // Can be multiples, but just need one corpse.
+
         if( itm.is_corpse() ) {
             found_corpse = true;
             break;
         }
     }
     CHECK( found_corpse );
-    // The monster count should have dropped by one since it destroyed itself.
-    // This handles NPCs being present at random.
+
+
     CHECK( g->num_creatures() == num_creatures_prev - 1UL );
 }
 
 TEST_CASE( "monsters_appear_on_map_as_expected", "[monster][map][hordes]" )
 {
     tripoint_abs_omt origin{ 90, 90, 0 };
-    // This clear_area call is very expensive, so just do it once for all the related
-    // tests and space them out far enough apart to avoid interfering with each other.
+
+
     clear_area( origin + point::north_west * 18, origin + point::south_east * 18 );
-    // One horizontal + one vertical direction per quadrant to catch edge cases
-    // concerning direction of movement or which quadrant of an OMT the monster is on.
+
+
     tripoint_abs_omt origin_nw = origin + point::north_west * 9;
     clear_creatures();
     walk_toward_monster_off_the_map( origin_nw, point( 6, 6 ), point::east );
@@ -1152,7 +1152,7 @@ TEST_CASE( "failed_horde_placement_preserves_entity", "[monster][hordes]" )
     tripoint_abs_sm submap_pos = project_to<coords::sm>( abs_pos );
 
     SECTION( "lightweight entity preserved on placement failure" ) {
-        // Block center + radius 1 so placement exhausts all candidates.
+
         for( const tripoint_bub_ms &p : here.points_in_radius( local_pos, 1 ) ) {
             here.ter_set( p, ter_t_palisade );
         }
@@ -1164,7 +1164,7 @@ TEST_CASE( "failed_horde_placement_preserves_entity", "[monster][hordes]" )
         overmap_buffer.spawn_monster( submap_pos );
         CHECK( overmap_buffer.entity_at( abs_pos ) != nullptr );
 
-        // Unblock and retry.
+
         for( const tripoint_bub_ms &p : here.points_in_radius( local_pos, 1 ) ) {
             here.ter_set( p, ter_t_grass );
         }
@@ -1174,7 +1174,7 @@ TEST_CASE( "failed_horde_placement_preserves_entity", "[monster][hordes]" )
     }
 
     SECTION( "heavyweight entity preserved on placement failure" ) {
-        // Place and despawn to create a heavyweight horde entity.
+
         here.ter_set( local_pos, ter_t_grass );
         monster *live = g->place_critter_at( mon_test_zombie, local_pos );
         REQUIRE( live != nullptr );
@@ -1183,7 +1183,7 @@ TEST_CASE( "failed_horde_placement_preserves_entity", "[monster][hordes]" )
         REQUIRE( entity != nullptr );
         REQUIRE( entity->monster_data != nullptr );
 
-        // Block center with another monster so critter_tracker::add fails.
+
         monster *blocker = g->place_critter_at( mon_test_zombie, local_pos );
         REQUIRE( blocker != nullptr );
 
@@ -1192,7 +1192,7 @@ TEST_CASE( "failed_horde_placement_preserves_entity", "[monster][hordes]" )
         } );
         CHECK( overmap_buffer.entity_at( abs_pos ) != nullptr );
 
-        // Remove blocker and retry.
+
         g->remove_zombie( *blocker );
         overmap_buffer.spawn_monster( submap_pos );
         CHECK( overmap_buffer.entity_at( abs_pos ) == nullptr );
@@ -1206,10 +1206,10 @@ TEST_CASE( "obstacles_placed_on_map_are_present_in_overmap", "[map][hordes]" )
     map &here = get_map();
     tripoint_bub_ms player_start_pos{ 11 * 6, 11 * 6, 0 };
     Character &test_player = get_player_character();
-    // Player spawned at known location.
+
     test_player.setpos( here, player_start_pos );
 
-    // Place a series of obstacles on the map while recording their coordinates.
+
     tripoint_bub_ms obstacle_origin{ 30, 30, 0 };
     int obstacle_radius = 10;
     tripoint_abs_ms obstacle_eastern_border = here.get_abs( obstacle_origin + point::east *
@@ -1235,22 +1235,22 @@ TEST_CASE( "obstacles_placed_on_map_are_present_in_overmap", "[map][hordes]" )
     submap *const current_submap = map_meddler::unsafe_get_submap_at( obstacle_origin, l );
     REQUIRE( current_submap->player_adjusted_map );
     REQUIRE( !obstacle_locations.empty() );
-    // Navigate away from said obstacles.
+
     int steps = 0;
     while( here.inbounds( obstacle_eastern_border ) || steps < 100 ) {
         steps++;
         tripoint_bub_ms dest = get_player_character().pos_bub() + point::east;
-        // Clear path ahead of player.
+
         here.set( dest, ter_t_grass, furn_f_null );
         REQUIRE( here.passable( dest ) );
         g->place_player( dest );
     }
     REQUIRE( !here.inbounds( obstacle_eastern_border ) );
-    // Check that for each OMT we touched, it's marked as non-placeholder.
+
     for( const tripoint_abs_omt &expected_altered_omt : edited_omts ) {
         CHECK( !overmap_buffer.get_omt_summary( expected_altered_omt )->placeholder );
     }
-    // Assert that obstacles are present and non-obstacles are not.
+
     for( const tripoint_abs_ms &expected_obstacle : obstacle_locations ) {
         CAPTURE( expected_obstacle );
         REQUIRE( !here.inbounds( expected_obstacle ) );
@@ -1269,10 +1269,10 @@ TEST_CASE( "dormant_zombie_places_corpse_and_trap", "[monster][map]" )
     map &here = get_map();
     tripoint_bub_ms player_start_pos{ 11 * 6, 11 * 6, 0 };
     Character &test_player = get_player_character();
-    // Player spawned at known location.
+
     test_player.setpos( here, player_start_pos );
 
-    // Arbitrary point away from the player.
+
     tripoint_bub_ms spawn_point{ 6, 6, 0 };
     monster dormant_monster( pseudo_dormant_mon_zombie_fat );
     REQUIRE( dormant_monster.can_move_to( spawn_point ) );
@@ -1284,7 +1284,7 @@ TEST_CASE( "dormant_zombie_places_corpse_and_trap", "[monster][map]" )
     placed_monster->on_load();
     while( !placed_monster->is_dead() ) {
         placed_monster->set_moves( 1 );
-        // Need process_turn to drop the special attack cooldown.
+
         placed_monster->process_turn();
         placed_monster->move();
     }
@@ -1301,6 +1301,6 @@ TEST_CASE( "dormant_zombie_places_corpse_and_trap", "[monster][map]" )
         }
     }
     CHECK( found_corpse );
-    // The monster count should have dropped by one since it destroyed itself.
+
     CHECK( g->num_creatures() == 1 );
 }

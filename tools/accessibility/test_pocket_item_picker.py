@@ -68,7 +68,7 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
         self.assertIn("commitPocketChoices();", CTRL)
         self.assertIn("cancelPocketPicker(); // Back has the same rollback as Cancel.", CTRL)
         self.assertIn("pocketDrafts.clear();", CTRL)
-        # No game changes take place during local draft edits or cancellation.
+
         draft = CTRL.split("private void selectPocketAmount(", 1)[1].split(
             "private void commitPocketChoices()", 1
         )[0]
@@ -89,9 +89,9 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
             "private void navigatePocketPicker(", 1
         )[0]
         self.assertIn("commitPocketChoices();", activate)
-        # Cancelling goes through cancelPocketPicker(), which rolls the
-        # staged drafts back (via resetPocketPicker) or steps back a
-        # stage when several items are staged.
+
+
+
         self.assertIn("cancelPocketPicker();", activate)
 
     def test_native_pockets_validate_live_items_and_preserve_sealed_rules(self):

@@ -20,7 +20,7 @@ class JsonObject;
 class JsonOut;
 enum class bp_type;
 
-// worsening wound when the same wound is hit again
+
 struct wound_progress {
     wound_type_id id;
     int chance;
@@ -35,7 +35,7 @@ struct wound_limb_score {
     void deserialize( const JsonObject &jo );
 };
 
-// replacing wound A with wound B over time
+
 struct wound_type_progress_timer {
     wound_type_id id;
     std::pair<time_duration, time_duration> time;
@@ -72,14 +72,14 @@ class wound_type
 
         std::vector<wound_limb_score> get_limb_scores() const;
 
-        // what damage types can apply this wound
+
         std::vector<damage_type_id> damage_types;
-        // how much damage an attack should deal to apply this wound, lower and upper bound
+
         std::pair<int, int> damage_required;
-        // general weight of this wound comparing to another wounds, smaller = lesser chance to got one
+
         int weight;
 
-        // this wound can or cannot be applied to this bodyparts
+
         std::vector<json_character_flag> whitelist_bp_with_flag;
         std::vector<json_character_flag> blacklist_bp_with_flag;
 
@@ -88,7 +88,7 @@ class wound_type
 
         std::set<wound_fix_id> fixes;
 
-        // list of wounds this wound can lead to
+
         std::vector<wound_progress> wound_progression;
 
         std::optional<wound_type_progress_timer> progress_timer;
@@ -96,15 +96,15 @@ class wound_type
         translation name_;
         translation description_;
 
-        // how many of this specific wound character can receive
-        // 0 means any amount
+
+
         unsigned int limit = 0;
 
         std::vector<wound_limb_score> limb_scores;
 
-        // if applied, how long it may take for it to heal
+
         std::pair<time_duration, time_duration> healing_time_;
-        // if applied, how much pain it might provide to you
+
         std::pair<int, int> pain_;
 };
 
@@ -125,20 +125,20 @@ class wound
 
         void serialize( JsonOut &jsout ) const;
         void deserialize( const JsonObject &jsin );
-        // returns the wound healing progress divided by healing time
+
         float healing_percentage() const;
-        // return how much pain this specific wound gives you, reduced depending on how long the wound presented.
+
         int get_pain() const;
-        // exposes healing_time
+
         time_duration get_healing_time() const;
         time_duration get_healing_progress() const;
-        // update the wound healing progress
+
         wound_update_ret update_wound( time_duration time_passed );
 
         wound &operator+=( const wound &wd ) {
             healing_time += wd.get_healing_time();
             pain += wd.get_pain();
-            // reset healing progress? maybe not necessary?
+
             healing_progress = 0_seconds;
 
             return *this;
@@ -149,16 +149,16 @@ class wound
         }
 
     private:
-        // how long it takes for this wound to heal. Can be adjusted by wound fix.
+
         time_duration healing_time;
-        // how much time passed since this wound was applied
+
         time_duration healing_progress;
-        // how much pain this specific wound provide.
+
         int pain;
 
     public:
 
-        // our wound will transform into this one, in time
+
         std::optional<std::pair<wound_type_id, time_duration>> wound_progress_timer;
 };
 
@@ -176,19 +176,19 @@ class wound_fix
         wound_fix_id id;
         translation name;
         translation description;
-        translation success_msg; // message to print on applying successfully
+        translation success_msg;
         time_duration time = 0_seconds;
-        // amount of hp that will be added to limb once the wound is fixes. Mainly for bionic
+
         int mod_hp = 0;
-        std::map<skill_id, int> skills; // map of skill_id to required level
-        // this profs make stuff faster, TODO safer?, and may be mandatory to perform the treatment
+        std::map<skill_id, int> skills;
+
         std::vector<wound_proficiency> proficiencies;
-        std::set<wound_type_id> wounds_removed; // which wounds are removed on applying
-        std::set<wound_type_id> wounds_added; // which wounds are added on applying
+        std::set<wound_type_id> wounds_removed;
+        std::set<wound_type_id> wounds_added;
 
         const requirement_data &get_requirements() const;
 
-        bool was_loaded = false; // used by generic_factory
+        bool was_loaded = false;
         static void load_wound_fixes( const JsonObject &jo, const std::string &src );
 
 
@@ -207,4 +207,4 @@ class wound_fix
         cata::value_ptr<requirement_data> requirements = cata::make_value<requirement_data>();
 };
 
-#endif // CATA_SRC_WOUND_H
+#endif

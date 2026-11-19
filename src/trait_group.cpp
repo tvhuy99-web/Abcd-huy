@@ -33,15 +33,15 @@ void trait_group::load_trait_group( const JsonObject &jsobj, const Trait_group_t
     mutation_branch::load_trait_group( jsobj, gid, subtype );
 }
 
-// NOTE: This function is largely based on item_group::get_unique_group_id()
+
 static Trait_group_tag get_unique_trait_group_id()
 {
-    // This is just a hint what id to use next. Overflow of it is defined and if the group
-    // name is already used, we simply go the next id.
+
+
     static unsigned int next_id = 0;
-    // Prefixing with a character outside the ASCII range, so it is hopefully unique and
-    // (if actually printed somewhere) stands out. Theoretically those auto-generated group
-    // names should not be seen anywhere.
+
+
+
     static const std::string unique_prefix = "\u01F7 ";
     while( true ) {
         Trait_group_tag new_group( unique_prefix + std::to_string( next_id++ ) );
@@ -80,7 +80,7 @@ Trait_group_tag trait_group::load_trait_group( const JsonValue &value,
     }
 }
 
-// NOTE: This is largely based on item_group::debug_spawn()
+
 void trait_group::debug_spawn()
 {
     std::vector<Trait_group_tag> groups = mutation_branch::get_all_group_names();
@@ -95,7 +95,7 @@ void trait_group::debug_spawn()
         if( index >= static_cast<int>( groups.size() ) || index < 0 ) {
             break;
         }
-        // Spawn traits from the group 100 times
+
         std::map<std::string, int> traitnames;
         for( size_t a = 0; a < 100; a++ ) {
             const Trait_list traits = traits_from( groups[index] );
@@ -103,7 +103,7 @@ void trait_group::debug_spawn()
                 traitnames[tr.name()]++;
             }
         }
-        // Invert the map to get sorting!
+
         std::multimap<int, std::string> traitnames2;
         for( const auto &e : traitnames ) {
             traitnames2.insert( std::pair<int, std::string>( e.second, e.first ) );
@@ -136,7 +136,7 @@ Single_trait_creator::Single_trait_creator( const trait_id &id, const std::strin
 {
 }
 
-Trait_list Single_trait_creator::create( RecursionList & /* rec */ ) const
+Trait_list Single_trait_creator::create( RecursionList & ) const
 {
     return Trait_list { { id, variant } };
 }
@@ -150,8 +150,8 @@ void Single_trait_creator::check_consistency() const
 
 bool Single_trait_creator::remove_trait( const trait_id &tid )
 {
-    // Return true if I would be empty after "removing" the given trait, thus
-    // signaling to my parent that I should be removed.
+
+
     return tid == id;
 }
 

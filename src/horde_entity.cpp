@@ -8,7 +8,7 @@ horde_entity::horde_entity( const monster &original )
 {
     if( original.has_dest() ) {
         destination = original.get_dest();
-        // TODO figure out a value? go here no matter what?
+
         tracking_intensity = 1000;
     } else if( original.wandf > 0 ) {
         destination = original.wander_pos;

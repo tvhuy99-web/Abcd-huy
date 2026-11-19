@@ -42,8 +42,8 @@ class UseStringViewCheck : public ClangTidyCheck
         std::unordered_map<const ParmVarDecl *, const FunctionDecl *> function_from_param_;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_USESTRINGVIEWCHECK_H
+#endif

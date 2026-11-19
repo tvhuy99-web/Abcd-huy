@@ -12,9 +12,9 @@
 
 class JsonObject;
 
-/*
- * Actually a pair of integers that can rng, for numbers that will never exceed INT_MAX
- */
+
+
+
 struct jmapgen_int {
     int16_t val;
     int16_t valmax;
@@ -25,14 +25,14 @@ struct jmapgen_int {
         cata_assert( v <= std::numeric_limits<int16_t>::max() );
         cata_assert( v2 <= std::numeric_limits<int16_t>::max() );
     }
-    /**
-     * Throws as usually if the json is invalid or missing.
-     */
+
+
+
     jmapgen_int( const JsonObject &jo, std::string_view tag );
-    /**
-     * Throws if the json is malformed (e.g. a string not an integer, but does not throw
-     * if the member is just missing (the default values are used instead).
-     */
+
+
+
+
     jmapgen_int( const JsonObject &jo, std::string_view tag, const int &def_val,
                  const int &def_valmax );
 
@@ -46,4 +46,4 @@ struct spawn_data {
     void deserialize( const JsonObject &jo );
 };
 
-#endif // CATA_SRC_MAPGEN_PRIMITIVES_H
+#endif

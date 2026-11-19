@@ -32,7 +32,7 @@ veh_shape::veh_shape( map &here, vehicle &vehicle ): veh( vehicle ), here( here 
 
 player_activity veh_shape::start( const tripoint_bub_ms &pos )
 {
-    map &temp = here; // Work around to get 'here' to be accepted into the lambda list
+    map &temp = here;
     avatar &you = get_avatar();
     on_out_of_scope cleanup( [&temp]() {
         temp.invalidate_map_cache( get_avatar().view_offset.z() );
@@ -102,7 +102,7 @@ player_activity veh_shape::start( const tripoint_bub_ms &pos )
 std::vector<vpart_reference> veh_shape::parts_under_cursor() const
 {
     std::vector<vpart_reference> res;
-    // TODO: tons of methods getting parts from vehicle but all of them seem inadequate?
+
     for( int part_idx = 0; part_idx < veh.part_count_real(); part_idx++ ) {
         const vehicle_part &p = veh.part( part_idx );
         if( veh.bub_part_pos( here, p ) == get_cursor_pos() && !p.is_fake ) {
@@ -148,7 +148,7 @@ void veh_shape::change_part_shape( vpart_reference vpr ) const
     vehicle_part &part = vpr.part();
     const vpart_info &vpi = part.info();
     veh_menu menu( this->veh, _( "Choose cosmetic variant:" ) );
-    std::string chosen_variant = part.variant; // support for cancel
+    std::string chosen_variant = part.variant;
 
     for( const auto &[vvid, vv] : vpi.variants ) {
         menu.add( vv.get_label() )
@@ -210,7 +210,7 @@ bool veh_shape::handle_cursor_movement( const std::string &action )
         tripoint_rel_ms edge_scroll = g->mouse_edge_scrolling_terrain( ctxt );
         set_cursor_pos( get_cursor_pos() + edge_scroll );
     } else if( const std::optional<tripoint_rel_ms> delta = ctxt.get_direction_rel_ms( action ) ) {
-        set_cursor_pos( get_cursor_pos() + *delta ); // move cursor with directional keys
+        set_cursor_pos( get_cursor_pos() + *delta );
     } else if( action == "zoom_in" ) {
         g->zoom_in();
     } else if( action == "zoom_out" ) {

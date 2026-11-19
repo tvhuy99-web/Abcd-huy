@@ -19,8 +19,8 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
         cls.translations = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
     def test_existing_nine_settings_are_preserved_and_two_appended(self):
-        # New master moved these entries into game_settings_items() so the
-        # Settings menu can also open in-game. Their order must stay stable.
+
+
         if "vSettingsSubItems.clear();" in self.menu:
             start = self.menu.index("vSettingsSubItems.clear();")
             end = self.menu.index("vSettingsHotkeys.clear();", start)
@@ -66,7 +66,7 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
         self.assertNotIn("GameSettingsActivity", (
             ROOT / "android/app/src/main/AndroidManifest.xml").read_text("utf-8"))
         self.assertFalse((JAVA / "GameSettingsActivity.java").exists())
-        # The native Settings command was renamed on newer master commits.
+
         self.assertTrue(any('"' + command + '"' in self.hub for command in (
             "open_options", "open_game_settings"
         )))

@@ -68,8 +68,8 @@
 
 #if defined(__ANDROID__)
 
-// Only raw, derived blueprint material requirements are cached. Never store
-// game objects, item instances, pointers, or the character save itself.
+
+
 namespace blueprint_cache
 {
 namespace
@@ -281,7 +281,7 @@ bool encode( const cache_state &cache, std::string &data )
     put( data, checksum, 8 );
     return data.size() <= max_file;
 }
-} // namespace
+}
 
 void clear()
 {
@@ -458,9 +458,9 @@ void persist()
                               " bytes=" << bytes.size();
     clear();
 }
-} // namespace blueprint_cache
+}
 
-#endif // __ANDROID__
+#endif
 
 static const itype_id itype_atomic_coffeepot( "atomic_coffeepot" );
 static const itype_id itype_hotplate( "hotplate" );
@@ -482,7 +482,7 @@ constexpr std::array<std::pair<std::string_view, scaling_stat>, 4> character_req
     }
 };
 
-} // namespace
+}
 
 
 std::string recipe::get_description( const Character &crafter ) const
@@ -579,11 +579,11 @@ double batch_savings::apply( double time, int batch_size ) const
             return time * batch_size;
         }
         double ret = 0.0;
-        // recipe benefits from batching, so batching scale factor needs to be calculated
-        // At batch_rsize, incremental time increase is 99.5% of batch_rscale
+
+
         const double scale = log->rsize / 6.0f;
         for( int x = 0; x < batch_size; x++ ) {
-            // scaled logistic function output
+
             const double logf = ( 2.0 / ( 1.0 + std::exp( -( x / scale ) ) ) ) - 1.0;
             ret += time * ( 1.0 - ( log->rscale * logf ) );
         }
@@ -595,10 +595,10 @@ double batch_savings::apply( double time, int batch_size ) const
 int64_t recipe::batch_time( const Character &guy, int batch, float multiplier,
                             size_t assistants, const crafting_cost_context &ctx ) const
 {
-    // 1.0f is full speed
-    // 0.33f is 1/3 speed
+
+
     if( multiplier == 0.0f ) {
-        // If an item isn't craftable in the dark, show the time to complete as if you could craft it
+
         multiplier = 1.0f;
     }
 
@@ -621,14 +621,14 @@ int64_t recipe::batch_time( const Character &guy, int batch, float multiplier,
         total_time = batch_info.apply( local_time, batch );
     }
 
-    //Assistants can decrease the time for production but never less than that of one unit
+
     if( assistants == 1 ) {
         total_time = total_time * .75;
     } else if( assistants >= 2 ) {
         total_time = total_time * .60;
     }
-    // Single-item floor: total can't be less than crafting one unit.
-    // For step recipes with tool speed, the floor must also be speed-aware.
+
+
     double single_time;
     if( has_steps() && !ts.empty() ) {
         single_time = 0.0;
@@ -687,7 +687,7 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
             jo.throw_error_at( "autolearn",
                                "nested category should not have an autolearn, they are only displayed if one of their recipes should be." );
         }
-        // nested recipes are never learned directly
+
         never_learn = true;
     } else {
         if( !jo.read( "result", result_, true ) && !result_ ) {
@@ -720,24 +720,24 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         mandatory( jo, was_loaded, "obsolete", obsolete );
     }
 
-    // If it's an obsolete recipe, we don't need any more data, skip loading
+
     if( obsolete ) {
         return;
     }
 
-    // --- Recipe steps detection and schema validation ---
+
     const bool child_has_steps = jo.has_array( "steps" );
     const bool had_inherited_steps = !steps_.empty();
 
     if( child_has_steps ) {
-        // Child provides own steps -- discard any inherited ones
+
         steps_.clear();
     }
     aggregate_proficiencies_.clear();
 
     const bool effectively_step_recipe = child_has_steps || had_inherited_steps;
 
-    // Step recipes must not have stepless-only root fields
+
     if( effectively_step_recipe ) {
         for( const char *field : {
                  "tools", "qualities", "proficiencies",
@@ -751,10 +751,10 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         }
     }
 
-    // Clear state for finalize rebuild.
-    // reqs_external NOT cleared: root "using" survives copy-from.
+
+
     if( child_has_steps ) {
-        // Fresh step recipe or step override: full rebuild in finalize
+
         requirements_ = requirement_data();
         deduped_requirements_ = deduped_requirement_data();
         reqs_internal.clear();
@@ -763,11 +763,11 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         batch_info = batch_savings();
         exertion = 0.0f;
     } else if( had_inherited_steps ) {
-        // Inheriting steps from unfinalized copy-from base; just reset dedup.
+
         deduped_requirements_ = deduped_requirement_data();
     }
 
-    // --- Fields that only apply to stepless recipes ---
+
     if( !effectively_step_recipe ) {
         optional( jo, was_loaded, "time", time, time_duration_as_moves_reader{}, 0 );
     }
@@ -777,7 +777,7 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
 
     optional( jo, was_loaded, "character_resources", character_resources );
 
-    // automatically set contained if we specify as container
+
     optional( jo, was_loaded, "contained", contained, false );
     if( jo.has_member( "container" ) ) {
         contained = true;
@@ -805,16 +805,16 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         required_skills.clear();
 
         if( sk.empty() ) {
-            // clear all requirements
+
 
         } else if( sk.has_array( 0 ) ) {
-            // multiple requirements
+
             for( JsonArray arr : sk ) {
                 required_skills[skill_id( arr.get_string( 0 ) )] = arr.get_int( 1 );
             }
 
         } else {
-            // single requirement
+
             required_skills[skill_id( sk.get_string( 0 ) )] = sk.get_int( 1 );
         }
     }
@@ -838,7 +838,7 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         jo.read( "proficiencies", proficiencies );
     }
 
-    // simplified autolearn sets requirements equal to required skills at finalization
+
     if( jo.has_bool( "autolearn" ) ) {
         optional( jo, was_loaded, "autolearn", autolearn, false );
 
@@ -851,12 +851,12 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
 
     optional( jo, was_loaded, "morale_modifier", morale_modifier, {0, 0_seconds} );
 
-    // Mandatory for stepless recipes; step recipes compute exertion during finalize
+
     if( !effectively_step_recipe ) {
         mandatory( jo, was_loaded, "activity_level", exertion, activity_level_reader{} );
     }
 
-    // Never let the player have a debug or NPC recipe
+
     optional( jo, was_loaded, "never_learn", never_learn, false );
 
     if( jo.has_member( "decomp_learn" ) ) {
@@ -904,10 +904,10 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         inherited_components = !r_data.get_components().empty();
     }
 
-    // inline requirements are always replaced (cannot be inherited)
+
     reqs_internal.clear();
 
-    // These cannot be inherited
+
     bp_autocalc = false;
     check_blueprint_needs = false;
     bp_build_reqs.reset();
@@ -922,7 +922,7 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
             mandatory( jo, was_loaded, "reversible", reversible );
         } else if( jo.has_object( "reversible" ) ) {
             reversible = true;
-            // Convert duration to time in moves
+
             uncraft_time = to_moves<int>( read_from_json_string<time_duration>
                                           ( jo.get_object( "reversible" ).get_member( "time" ), time_duration::units ) );
         }
@@ -956,13 +956,13 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
                 bp_provides.emplace_back( provide.get_string( "id" ),
                                           provide.get_int( "amount", 1 ) );
             }
-            // all blueprints provide themselves with needing it written in JSON
+
             bp_provides.emplace_back( result_.str(), 1 );
             for( JsonObject require : jo.get_array( "blueprint_requires" ) ) {
                 bp_requires.emplace_back( require.get_string( "id" ),
                                           require.get_int( "amount", 1 ) );
             }
-            // all blueprints exclude themselves with needing it written in JSON
+
             bp_excludes.emplace_back( result_.str(), 1 );
             for( JsonObject exclude : jo.get_array( "blueprint_excludes" ) ) {
                 bp_excludes.emplace_back( exclude.get_string( "id" ),
@@ -1001,8 +1001,8 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
             }
         }
     } else if( type == "practice" ) {
-        // A separate canonical display fallback for the accessibility reader.
-        // Keep the normal translation object intact for visual rendering.
+
+
         practice_source_name = jo.has_string( "name" ) ? jo.get_string( "name" ) : "";
         practice_source_description = jo.has_string( "description" ) ?
                                       jo.get_string( "description" ) : "";
@@ -1040,12 +1040,12 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
     }
 
     const requirement_id req_id( "inline_" + type + "_" + id.str() );
-    // Step recipes legitimately have root-level components; suppress abstract
-    // debugmsg for them (tools/qualities are already caught by field validation).
+
+
     requirement_data::load_requirement( jo, req_id, false, abstract && !effectively_step_recipe );
     reqs_internal.emplace_back( req_id, 1 );
 
-    // Parse recipe steps
+
     if( child_has_steps ) {
         int step_index = 0;
         for( JsonObject step_jo : jo.get_array( "steps" ) ) {
@@ -1099,11 +1099,11 @@ void recipe_step::load( const JsonObject &jo, const std::string &recipe_name, in
                         "use root-level components" );
     }
 
-    // Load external requirements via "using" syntax
+
     optional( jo, false, "using", reqs_external,
               weighted_string_id_reader<requirement_id, int> { 1 } );
 
-    // Load inline tools/qualities for this step
+
     const requirement_id step_req_id( "inline_recipe_" + recipe_name + "_step_"
                                       + std::to_string( step_index ) );
     requirement_data::load_requirement( jo, step_req_id, false, false );
@@ -1153,7 +1153,7 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
         return result;
     }
 
-    // We gather the mapgen params from the mapgen function
+
     const update_mapgen_function_json &json_func = *funcs.front();
     const mapgen_parameters &mapgen_params = json_func.get_parameters();
 
@@ -1171,7 +1171,7 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
     }
     cata_assert( std::is_sorted( mapgen_param_names.begin(), mapgen_param_names.end() ) );
 
-    // Then we gather the blueprint params from the recipe
+
     std::vector<std::string> bp_param_names;
     bp_param_names.reserve( bp_params.size() );
     for( const auto &bp_param : bp_params ) {
@@ -1180,7 +1180,7 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
     // NOLINTNEXTLINE(cata-use-localized-sorting)
     cata_assert( std::is_sorted( bp_param_names.begin(), bp_param_names.end() ) );
 
-    // And check they match
+
     if( mapgen_param_names != bp_param_names ) {
         debugmsg( "parameter names listed in blueprint do not match those from corresponding "
                   "update_mapgen id %s.\nBlueprint had %s.\nupdate_mapgen had %s.",
@@ -1190,8 +1190,8 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
         return result;
     }
 
-    // Furthermore, we check that, for each parameter, the set of possible
-    // values in the mapgen matches the set of translated ids in the blueprint
+
+
     for( const auto &bp_param : bp_params ) {
         const std::string &name = bp_param.first;
 
@@ -1218,11 +1218,11 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
         }
     }
 
-    // Each inner vector is a list of (param_name, param_value) pairs where
-    // every param_name is the same, and each param_value is the set of
-    // possible values for that param_name.  Once these lists are assembled we
-    // will need to iterate over their cartesian product to get all the
-    // possible options for parameter choices.
+
+
+
+
+
     std::vector<std::vector<std::pair<std::string, cata_variant>>> option_lists;
 
     for( const std::string &param_name : bp_param_names ) {
@@ -1320,25 +1320,25 @@ void recipe::finalize()
     if( !blueprint.is_empty() ) {
         incorporate_build_reqs();
     } else if( has_steps() ) {
-        // Step recipes: merge root using + root components + per-step tools/qualities
-        add_requirements( reqs_external );  // root using
-        add_requirements( reqs_internal );  // root components
+
+        add_requirements( reqs_external );
+        add_requirements( reqs_internal );
         reqs_external.clear();
         reqs_internal.clear();
 
-        // Snapshot the root-only requirements so root tools stay attributable
-        // after per-step requirements merge into requirements_ below.
+
+
         root_requirements_ = requirements_;
 
         for( recipe_step &step : steps_ ) {
-            // Resolve each step's external (using) + inline requirements
+
             step.requirements = std::accumulate(
                                     step.reqs_external.begin(), step.reqs_external.end(),
                                     step.requirements );
             step.requirements = std::accumulate(
                                     step.reqs_internal.begin(), step.reqs_internal.end(),
                                     step.requirements );
-            // Merge step requirements into recipe-level for whole-recipe gating
+
             requirements_ = requirements_ + step.requirements;
             step.reqs_external.clear();
             step.reqs_internal.clear();
@@ -1346,26 +1346,26 @@ void recipe::finalize()
 
         deduped_requirements_ = deduped_requirement_data( requirements_, ident() );
 
-        // Compute aggregate time
+
         time = 0;
         for( const recipe_step &step : steps_ ) {
             time += step.time;
         }
 
-        // Compute time-weighted average exertion
+
         double weighted_exertion = 0.0;
         for( const recipe_step &step : steps_ ) {
             weighted_exertion += step.exertion * step.time;
         }
         exertion = static_cast<float>( weighted_exertion / time );
 
-        // Step recipes use per-step batch logic, not recipe-level
+
         batch_info = batch_savings();
 
-        // Build aggregate proficiency view and validate
+
         finalize_step_proficiencies();
     } else {
-        // concatenate both external and inline requirements
+
         add_requirements( reqs_external );
         add_requirements( reqs_internal );
 
@@ -1382,9 +1382,9 @@ void recipe::finalize()
         }
     }
 
-    // Uncrafts always specify charges, so skip.
+
     const bool is_uncraft = is_reversible();
-    // The item is blacklisted (e.g. ammo in generic guns)
+
     const bool item_exists = result().is_valid();
     if( !is_uncraft && item_exists && result()->count_by_charges() &&
         !charges && result()->charges_default() > 1 && !obsolete ) {
@@ -1394,7 +1394,7 @@ void recipe::finalize()
 
     std::set<proficiency_id> required;
     std::set<proficiency_id> used;
-    // For step recipes, proficiencies is empty; validation done in finalize_step_proficiencies
+
     for( recipe_proficiency &rpof : proficiencies ) {
         if( !rpof.id.is_valid() ) {
             debugmsg( "proficiency %s does not exist in recipe %s", rpof.id.str(), id.str() );
@@ -1427,7 +1427,7 @@ void recipe::finalize()
                       rpof.id.str(), id.str(), rpof.skill_penalty, rpof.id->default_skill_penalty() );
         }
 
-        // Now that we've done the error checking, log that a proficiency with this id is used
+
         if( rpof.required ) {
             required.insert( rpof.id );
         } else {
@@ -1442,7 +1442,7 @@ void recipe::finalize()
         }
     }
 
-    // ensure result name is always in front of the name for searching in crafting menu
+
     if( !name_.empty() && !is_practice() && !is_nested() && result_ ) {
         name_ = translation::to_translation( string_format( name_.translated(),
                                              result_->nname( makes_amount() ) ) );
@@ -1461,11 +1461,11 @@ void recipe::add_requirements( const std::vector<std::pair<requirement_id, int>>
 
 void recipe::finalize_step_proficiencies()
 {
-    // Validate per-step proficiencies and build aggregate view.
-    // Ordering: first-seen across steps, merged into existing slot if duplicate.
+
+
     aggregate_proficiencies_.clear();
 
-    // Track required vs non-required state per proficiency ID
+
     std::map<proficiency_id, bool> seen_required;
 
     for( recipe_step &step : steps_ ) {
@@ -1481,7 +1481,7 @@ void recipe::finalize_step_proficiencies()
                           "required and provide a malus", rpof.id.str(), id.str() );
             }
 
-            // Apply defaults, then normalize required profs
+
             if( rpof.time_multiplier == 0.0f ) {
                 rpof.time_multiplier = rpof.id->default_time_multiplier();
             }
@@ -1493,24 +1493,24 @@ void recipe::finalize_step_proficiencies()
                 rpof.skill_penalty = 0.0f;
             }
 
-            // Check for required/optional conflict across steps
+
             auto it = seen_required.find( rpof.id );
             if( it != seen_required.end() && it->second != rpof.required ) {
                 debugmsg( "proficiency %s is required in one step but optional "
                           "in another in recipe %s; treating as required",
                           rpof.id.str(), id.str() );
-                // Fallback: required wins, zero multipliers
+
                 rpof.required = true;
                 rpof.time_multiplier = 0.0f;
                 rpof.skill_penalty = 0.0f;
             }
             seen_required[rpof.id] = rpof.required;
 
-            // Merge into aggregate: first-seen order
+
             bool found = false;
             for( recipe_proficiency &existing : aggregate_proficiencies_ ) {
                 if( existing.id == rpof.id ) {
-                    // Duplicate: merge using conservative rules
+
                     if( rpof.required ) {
                         existing.required = true;
                         existing.time_multiplier = 0.0f;
@@ -1522,7 +1522,7 @@ void recipe::finalize_step_proficiencies()
                                                            rpof.skill_penalty );
                         existing.learning_time_mult = std::max( existing.learning_time_mult,
                                                                 rpof.learning_time_mult );
-                        // nullopt wins (no artificial cap)
+
                         if( !rpof.max_experience.has_value() ) {
                             existing.max_experience = std::nullopt;
                         }
@@ -1533,7 +1533,7 @@ void recipe::finalize_step_proficiencies()
             }
             if( !found ) {
                 recipe_proficiency entry = rpof;
-                // Required profs in aggregate must have zero multipliers
+
                 if( entry.required ) {
                     entry.time_multiplier = 0.0f;
                     entry.skill_penalty = 0.0f;
@@ -1617,7 +1617,7 @@ std::vector<item> recipe::create_result( bool set_components, bool is_food,
         newit.set_flag( flag_FIT );
     }
 
-    // Newly-crafted items are perfect by default. Inspect their materials to see if they shouldn't be
+
     if( used ) {
         newit.inherit_flags( *used, *this );
     }
@@ -1626,14 +1626,14 @@ std::vector<item> recipe::create_result( bool set_components, bool is_food,
         newit.unset_flag( flag );
     }
 
-    // If the recipe has a `FULL_MAGAZINE` flag, fill it with ammo
+
     if( newit.is_magazine() && has_flag( flag_FULL_MAGAZINE ) ) {
         if( const std::optional<ammotype> at = item::ammotype_of( newit.ammo_default() ) ) {
             newit.ammo_set( newit.ammo_default(), newit.ammo_capacity( *at ) );
         }
     }
 
-    // if the first component has compatible pockets, try to preserve the contents
+
     if( used && !used->empty() ) {
         const item_components::type_vector_pair &first_component_pair = *used->begin();
 
@@ -1695,7 +1695,7 @@ std::vector<item> recipe::create_results( int batch, item_components *used ) con
                 items.insert( items.end(), newits.begin(), newits.end() );
             } else {
                 for( const item &it : newits ) {
-                    // try to combine batch results for liquid handling
+
                     auto found = std::find_if( items.begin(), items.end(), [it]( const item & rhs ) {
                         return it.can_combine( rhs );
                     } );
@@ -1841,7 +1841,7 @@ struct prof_penalty {
     float skill_penalty;
     bool mitigated = false;
 };
-} // namespace
+}
 
 static std::string profstring( const prof_penalty &prof,
                                std::string &color,
@@ -1956,8 +1956,8 @@ static float proficiency_time_malus( const Character &crafter, const recipe_prof
         double malus = prof.time_multiplier - 1.0;
         malus *= 1.0 - books.time_factor( prof.id );
         double pl = get_aided_proficiency_level( crafter, prof.id );
-        // Sigmoid function that mitigates 100% of the time malus as pl approaches 1.0
-        // but has little effect at pl < 0.5. See #49198
+
+
         malus *= 1.0 - std::pow( 0.5 - 0.5 * std::cos( pl * M_PI ), 2 );
         return static_cast<float>( 1.0 + malus );
     }
@@ -1968,7 +1968,7 @@ float recipe::proficiency_time_maluses( const Character &crafter,
                                         const book_proficiency_bonuses &books ) const
 {
     if( has_steps() && time > 0 ) {
-        // For step recipes, compute as effective ratio from per-step aggregation
+
         crafting_cost_context ctx{ books, {} };
         return static_cast<float>( time_to_craft_moves( crafter, ctx ) ) /
                static_cast<float>( time );
@@ -2014,7 +2014,7 @@ float best_quality_speed_modifier( const temp_crafting_inventory &inv,
     bool found = false;
     float best = 1.0f;
     inv.visit_items( [&]( item_location e ) {
-        // Crafter-aware: a charged quality otherwise resolves through the avatar.
+
         if( provider_quality_level( *e, qual, &crafter, false ) >= level ) {
             float s = e->get_quality_speed( qual, level, &crafter );
             if( !found || s < best ) {
@@ -2024,8 +2024,8 @@ float best_quality_speed_modifier( const temp_crafting_inventory &inv,
         }
         return VisitResponse::NEXT;
     } );
-    // Character-provided qualities (bionics, mutations) have no speed modifier.  Items
-    // reach this through the inventory alone, so a reserved one stays hidden.
+
+
     if( !found && crafter.has_intrinsic_quality( qual, level ) ) {
         return 1.0f;
     }
@@ -2046,8 +2046,8 @@ std::vector<float> compute_tool_speeds( const recipe &rec, const Character &craf
             bool found = false;
             float best_in_group = 1.0f;
             for( const quality_requirement &alt : group ) {
-                // The inventory is the whole item pool; the crafter contributes only
-                // what no item can supply.
+
+
                 if( !inv.has_quality( alt.type, alt.level, alt.count ) &&
                     !crafter.has_intrinsic_quality( alt.type, alt.level, alt.count ) ) {
                     continue;
@@ -2068,9 +2068,9 @@ std::vector<float> compute_tool_speeds( const recipe &rec, const Character &craf
 float recipe::max_proficiency_time_maluses( const Character & ) const
 {
     if( has_steps() && time > 0 ) {
-        // For step recipes, compute max malus from per-step data.
-        // Required profs (time_multiplier=0) contribute 1.0 (no penalty),
-        // not 0.0 which would drag the weighted average down.
+
+
+
         double total = 0.0;
         for( const recipe_step &s : steps_ ) {
             float step_malus = 1.0f;
@@ -2098,8 +2098,8 @@ static float proficiency_skill_malus( const Character &crafter, const recipe_pro
         double malus =  prof.skill_penalty;
         malus *= 1.0 - books.fail_factor( prof.id );
         double pl = get_aided_proficiency_level( crafter, prof.id );
-        // The failure malus is not completely eliminated until the proficiency is mastered.
-        // Most of the mitigation happens at higher pl. See #49198
+
+
         malus *= 1.0 - ( 0.75 * std::pow( pl, 3 ) );
         return static_cast<float>( malus );
     }
@@ -2161,9 +2161,9 @@ float recipe::exertion_level() const
     return exertion;
 }
 
-// Format a vector of std::pair<skill_id, int> for the crafting menu.
-// skill colored green, yellow or red according to character skill
-// with the skill level (player / difficulty)
+
+
+
 static std::string required_skills_as_string( const std::vector<std::pair<skill_id, int>> &skills,
         const Character &c )
 {
@@ -2186,8 +2186,8 @@ static std::string required_skills_as_string( const std::vector<std::pair<skill_
     } );
 }
 
-// Format a vector of std::pair<skill_id, int> for the basecamp bulletin board.
-// skill colored white with difficulty in parenthesis.
+
+
 static std::string required_skills_as_string( const std::vector<std::pair<skill_id, int>> &skills )
 {
     if( skills.empty() ) {
@@ -2238,7 +2238,7 @@ std::string recipe::required_skills_string( const Character &c ) const
 std::string recipe::required_all_skills_string( const std::map<skill_id, int> &skills ) const
 {
     std::vector<std::pair<skill_id, int>> skillList = sorted_lex( skills );
-    // There is primary skill used, add it to the front
+
     if( skill_used ) {
         skillList.insert( skillList.begin(), std::pair<skill_id, int>( skill_used, difficulty ) );
     }
@@ -2273,17 +2273,17 @@ std::string recipe::result_name( const bool decorated ) const
 {
     std::string name;
     if( !name_.empty() ) {
-        // if the recipe has an explicit name (such as for proficiency training) - use that
+
         name = name_.translated();
     } else {
-        // Names are tricky, so we have to create a temporary fake result item to get one.
-        // As of 2025-01-01 there's no better way around this.
+
+
         item temp_item( result_ );
-        // Use generic item name by default.
+
         tname::segment_bitset segs = tname::base_item_name;
         if( !variant().empty() ) {
-            // ..but if the recipe calls for a specific varaint - then use that variant.
-            // Note that `temp_item` is likely to already have a random variant set at the time of creation.
+
+
             temp_item.set_itype_variant( variant() );
             segs = tname::item_identity_name;
         }
@@ -2327,8 +2327,8 @@ std::function<bool( const item & )> recipe::get_component_filter(
 {
     const item result( result_ );
 
-    // Disallow crafting of non-perishables with rotten components
-    // Make an exception for items with the ALLOW_ROTTEN flag such as seeds
+
+
     const bool recipe_forbids_rotten =
         result.is_food() && !result.goes_bad() && !has_flag( "ALLOW_ROTTEN" );
     const bool flags_forbid_rotten =
@@ -2342,7 +2342,7 @@ std::function<bool( const item & )> recipe::get_component_filter(
         };
     }
 
-    // Disallow crafting using favorited items as components
+
     std::function<bool( const item & )> favorite_filter = return_true<item>;
     if( flags_forbid_favorites ) {
         favorite_filter = []( const item & component ) {
@@ -2350,9 +2350,9 @@ std::function<bool( const item & )> recipe::get_component_filter(
         };
     }
 
-    // If the result is made hot, we can allow frozen components.
-    // EDIBLE_FROZEN components ( e.g. flour, chocolate ) are allowed as well
-    // Otherwise forbid them
+
+
+
     std::function<bool( const item & )> frozen_filter = return_true<item>;
     if( result.has_temperature() && !hot_result() ) {
         frozen_filter = []( const item & component ) {
@@ -2360,8 +2360,8 @@ std::function<bool( const item & )> recipe::get_component_filter(
         };
     }
 
-    // Disallow usage of non-full magazines as components
-    // This is primarily used to require a fully charged battery, but works for any magazine.
+
+
     std::function<bool( const item & )> magazine_filter = return_true<item>;
     if( has_flag( "NEED_FULL_MAGAZINE" ) ) {
         magazine_filter = []( const item & component ) {
@@ -2532,13 +2532,13 @@ void recipe::check_blueprint_requirements()
     const build_reqs &reqs = no_param_reqs.second;
     requirement_data req_data_blueprint( reqs.raw_reqs );
     requirement_data req_data_calc( total_reqs.raw_reqs );
-    // do not consolidate req_data_blueprint: it actually changes the meaning of the requirement.
-    // instead we enforce specifying the exact consolidated requirement.
+
+
     req_data_calc.consolidate();
     if( reqs.time != total_reqs.time || reqs.skills != total_reqs.skills
         || !req_data_blueprint.has_same_requirements_as( req_data_calc ) ) {
         std::ostringstream os;
-        JsonOut jsout( os, /*pretty_print=*/true );
+        JsonOut jsout( os, true );
 
         jsout.start_object();
 
@@ -2547,13 +2547,13 @@ void recipe::check_blueprint_requirements()
             dump_to_json_string( time_duration::from_turns( total_reqs.time / 100 ),
                                  jsout, time_duration::units );
         } else {
-            // cannot precisely represent the value using time_duration format,
-            // write integer instead.
+
+
             jsout.write( total_reqs.time );
         }
 
         jsout.member( "skills" );
-        jsout.start_array( /*wrap=*/!total_reqs.skills.empty() );
+        jsout.start_array( !total_reqs.skills.empty() );
         for( const std::pair<const skill_id, int> &p : total_reqs.skills ) {
             jsout.start_array();
             jsout.write( p.first );
@@ -2572,7 +2572,7 @@ void recipe::check_blueprint_requirements()
                   "- Specify \"check_blueprint_needs\": false to disable the check.\n"
                   "- Remove \"blueprint_needs\" from the recipe json to have the requirements be autocalculated.\n"
                   "- Update \"blueprint_needs\" to the following value (you can use tools/update_blueprint_needs.py):\n"
-                  // mark it for the auto-update python script
+
                   "~~~ auto-update-blueprint: %1$s\n"
                   "%2$s\n"
                   "~~~ end-auto-update",
@@ -2588,22 +2588,22 @@ bool recipe::removes_raw() const
 
 bool recipe::hot_result() const
 {
-    // Check if the recipe tools make this food item hot upon making it.
-    // We don't actually know which specific tool the player used/will use here, but
-    // we're checking for a class of tools; because of the way requirements
-    // processing works, the "surface_heat" id gets nuked into an actual
-    // list of tools, see data/json/recipes/cooking_tools.json.
-    //
-    // Currently it's checking for a hotplate because that's a
-    // suitable item in both the "surface_heat" and "water_boiling_heat"
-    // tools, and it's usually the first item in a list of tools so if this
-    // does get heated we'll find it right away.
-    //
-    // Atomic coffee is an outlier in that it is a hot drink that cannot be crafted
-    // with any of the usual tools except the atomic coffee maker, which is why
-    // the check includes this tool in addition to the hotplate.
-    //
-    // TODO: Make this less of a hack
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     if( item( result_ ).has_temperature() ) {
         const requirement_data::alter_tool_comp_vector &tool_lists = simple_requirements().get_tools();
         for( const std::vector<tool_comp> &tools : tool_lists ) {
@@ -2719,7 +2719,7 @@ void recipe_proficiency::load( const JsonObject &jo )
     jo.read( "learning_time_multiplier", learning_time_mult );
     jo.read( "max_experience", max_experience );
 
-    // TODO: Remove at some point
+
     if( jo.has_number( "fail_multiplier" ) ) {
         debugmsg( "Proficiency %s in a recipe uses 'fail_multiplier' instead of 'skill_penalty'",
                   id.c_str() );

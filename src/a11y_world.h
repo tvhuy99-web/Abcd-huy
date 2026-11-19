@@ -14,8 +14,8 @@ namespace a11y
 {
 enum class world_scan_filter { all, known, noteworthy, heard };
 
-// Read-only, unrestricted tile data shared by both assistive map scans.
-// This intentionally examines the loaded map even behind walls.
+
+
 struct unrestricted_tile {
     std::string terrain;
     std::string furniture;
@@ -27,11 +27,11 @@ struct unrestricted_tile {
     std::vector<std::string> items;
 };
 unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position );
-// Unrestricted native vehicle-aid perception. Uses the exact same physical
-// tile classifier as native autodrive, including traps and road items.
-// Unloaded map-bubble edges are not treated as physical obstacles.
-// The returned distance is measured to the vehicle body's closest tile;
-// native vehicle physics still decides the actual braking distance.
+
+
+
+
+
 struct vehicle_obstacle {
     int distance = 0;
     std::string label;
@@ -39,30 +39,30 @@ struct vehicle_obstacle {
 std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         bool reverse = false );
 
-// explore_cursor, when set, is the explore-mode cursor position relative to
-// the avatar. The scan is then centered on the cursor instead of the avatar
-// and the snapshot publishes the explore controls; the cursor is purely a
-// reading position and never moves the avatar or advances game time.
+
+
+
+
 semantic_snapshot world_snapshot( const input_context &context, int scan_radius, int scan_depth,
                                   world_scan_filter filter,
                                   std::optional<point> camera_offset = std::nullopt,
                                   std::optional<tripoint_rel_ms> explore_cursor = std::nullopt );
 semantic_snapshot activity_snapshot( const input_context &context );
-// Unrestricted, read-only noteworthy scan of up to 30 tiles. Never moves the avatar or advances time.
+
 void announce_linear_scan( const point &delta );
-// Vehicle-heading-relative read-only scan shared by world and autonomous
-// activity. Never changes steering, speed, or consumes a game turn.
+
+
 void announce_vehicle_relative_scan( const std::string &relative );
 void announce_player_coordinates();
-// Announce a known overmap terrain change (forest, road, town, etc.).
-// Monitors the player's absolute overmap tile, not the renderer submap shift.
+
+
 void announce_area_transition();
-// Speak only meaningful transitions, while a live world input scope exists.
+
 void announce_status_changes();
 void reset_status_monitor();
-// Scope-limited auto-stow for the accessible Fire/weapon-cycle workflows.
-// Only stores a held item when the original inventory action permits it.
+
+
 void set_weapon_auto_stow( bool enabled );
 bool weapon_auto_stow_enabled();
-} // namespace a11y
-#endif // CATA_SRC_A11Y_WORLD_H
+}
+#endif

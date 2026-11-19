@@ -6,9 +6,9 @@
 #include <string_view>
 #if defined(SDL_SOUND)
 
-/**
- * Attempt to initialize an audio device.  Returns false if initialization fails.
- */
+
+
+
 bool init_sound();
 void initSDLAudioOnly();
 void shutdown_sound();
@@ -25,7 +25,7 @@ inline bool init_sound()
     return false;
 }
 inline void shutdown_sound() { }
-inline void play_music( std::string_view /*playlist*/ )
+inline void play_music( std::string_view )
 {
 }
 inline void update_music_volume() { }
@@ -33,4 +33,4 @@ inline void load_soundset() { }
 
 #endif
 
-#endif // CATA_SRC_SDLSOUND_H
+#endif

@@ -4,13 +4,13 @@
 #define __has_feature(x) 0
 #endif
 
-// snmalloc isn't compatible with any sanitizers.
+
 #if !defined(__SANITIZE_ADDRESS__) && !__has_feature(address_sanitizer)
 #define CATA_USE_SNMALLOC
 #endif
 
 #ifdef CATA_USE_SNMALLOC
-// Disable asserts and slower debug code in the allocator.
+
 #ifndef NDEBUG
 #define NDEBUG
 #endif

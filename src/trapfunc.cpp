@@ -113,9 +113,9 @@ static const trap_str_id tr_shotgun_1( "tr_shotgun_1" );
 static const trap_str_id tr_shotgun_2( "tr_shotgun_2" );
 static const trap_str_id tr_temple_flood( "tr_temple_flood" );
 
-// A pit becomes less effective as it fills with corpses. Returned values are between 0.0 and 1.0.
-// 0.0 - totally ineffective pit, filled with corpses. Should become a corpse-filled pit.
-// 1.0 - totally empty pit, maximum effectiveness.
+
+
+
 static float pit_effectiveness( const tripoint_bub_ms &p )
 {
     units::volume corpse_volume = 0_ml;
@@ -125,19 +125,19 @@ static float pit_effectiveness( const tripoint_bub_ms &p )
         }
     }
 
-    // Arbitrary value. A regular human body is about 70-75L. Our base zombified human size is 62.5L.
-    // This value allows one 'full kill' and then a second at seriously reduced effectiveness.
-    // A single large creature will instantly render the pit ineffective.
+
+
+
     const units::volume filled_volume = 100_liter;
 
     return std::max( 0.0f, 1.0f - corpse_volume / filled_volume );
 }
 
-// Returns true if pit was completely filled, becoming corpse-filled pit
+
 static bool cleanup_after_pit( map &here, const tripoint_bub_ms &p, Creature *c )
 {
     c->check_dead_state( &here );
-    // Pit filled with corpses? It becomes a corpse-filled pit.
+
     if( pit_effectiveness( p ) <= 0.0f ) {
         here.ter_set( p, ter_t_pit_corpsed );
         return true;
@@ -147,8 +147,8 @@ static bool cleanup_after_pit( map &here, const tripoint_bub_ms &p, Creature *c 
 
 static void pit_try_dismount( monster *z )
 {
-    // Note that it's possible for NPCs to ride horses or other mounts.
-    // FIXME: Only checks for/ejects player, need some way to match the rider and the mount
+
+
     if( z->has_effect( effect_ridden ) && z->pos_abs() == get_player_character().pos_abs() ) {
         add_msg( m_bad, _( "Your %s falls into a pit!" ), z->get_name() );
         get_player_character().forced_dismount();
@@ -162,7 +162,7 @@ bool trapfunc::none( const tripoint_bub_ms &, Creature *, item * )
 
 bool trapfunc::bubble( const tripoint_bub_ms &p, Creature *c, item * )
 {
-    // tiny animals don't trigger bubble wrap
+
     if( c != nullptr && c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -185,7 +185,7 @@ bool trapfunc::thin_ice( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // tiny animals aren't affected specially
+
     if( c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -197,8 +197,8 @@ bool trapfunc::thin_ice( const tripoint_bub_ms &p, Creature *c, item * )
         }
     }
 
-    // If this tile has an original terrain recorded (from a phase change),
-    // restore that instead of blindly switching to water based on ice flags.
+
+
     if( here.has_original_terrain_at( p ) ) {
         const ter_id orig = here.get_original_terrain_at( p );
         here.ter_set( p, orig );
@@ -209,7 +209,7 @@ bool trapfunc::thin_ice( const tripoint_bub_ms &p, Creature *c, item * )
     } else {
         return false;
     }
-    // Apply appropriate effects depending on what the restored terrain is.
+
     Character *you = dynamic_cast<Character *>( c );
     if( you != nullptr ) {
         const ter_t &cur = here.ter( p ).obj();
@@ -231,7 +231,7 @@ bool trapfunc::thick_ice( const tripoint_bub_ms &, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // tiny animals aren't affected specially
+
     if( c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -243,12 +243,12 @@ bool trapfunc::thick_ice( const tripoint_bub_ms &, Creature *c, item * )
         }
     }
 
-    // Basic chance: 1 in 4 to fall (downed), otherwise stumble.
+
     if( one_in( 4 ) ) {
         c->add_msg_player_or_npc( m_bad, _( "You slip on the thick ice and fall down!" ),
                                   _( "<npcname> slips on the thick ice and falls down!" ) );
         c->add_effect( effect_downed, 1_turns );
-        // Losing extra moves when falling
+
         c->mod_moves( -static_cast<int>( c->get_speed() * 2 ) );
     } else {
         c->add_msg_player_or_npc( m_warning, _( "You stumble on the thick ice." ),
@@ -266,7 +266,7 @@ bool trapfunc::glass( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // Only a chance to step on the glass, dependent on size
+
     if( !x_in_y( occupied_tile_fraction( c->get_size() ), 1.0f ) ) {
         return false;
     }
@@ -289,7 +289,7 @@ bool trapfunc::cot( const tripoint_bub_ms &, Creature *c, item * )
 {
     monster *z = dynamic_cast<monster *>( c );
     if( z != nullptr ) {
-        // Haha, only monsters stumble over a cot, humans are smart.
+
         add_msg( m_good, _( "The %s stumbles over the cot!" ), z->name() );
         c->mod_moves( -c->get_speed() );
         return true;
@@ -299,7 +299,7 @@ bool trapfunc::cot( const tripoint_bub_ms &, Creature *c, item * )
 
 bool trapfunc::beartrap( const tripoint_bub_ms &p, Creature *c, item * )
 {
-    // tiny animals don't trigger bear traps
+
     if( c != nullptr && c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -307,10 +307,10 @@ bool trapfunc::beartrap( const tripoint_bub_ms &p, Creature *c, item * )
     map &here = get_map();
     here.remove_trap( p );
     if( c != nullptr ) {
-        // What got hit?
+
         const bodypart_id hit = random_entry( c->get_ground_contact_bodyparts( true ) );
 
-        // Messages
+
         c->add_msg_player_or_npc( m_bad,
                                   string_format( _( "A bear trap closes on your %s!" ), body_part_name_accusative( hit ) ),
                                   string_format( _( "A bear trap closes on <npcname>'s %s!" ), body_part_name( hit ) ) );
@@ -318,7 +318,7 @@ bool trapfunc::beartrap( const tripoint_bub_ms &p, Creature *c, item * )
         if( c->has_effect( effect_ridden ) ) {
             add_msg( m_warning, _( "Your %s is caught by a beartrap!" ), c->get_name() );
         }
-        // Actual effects
+
         c->add_effect( effect_beartrap, 1_turns, hit, true );
         damage_instance d;
         d.add_damage( damage_bash, 12 );
@@ -343,7 +343,7 @@ bool trapfunc::beartrap( const tripoint_bub_ms &p, Creature *c, item * )
 
 static void mount_step_on_trap_make_slow_give_msg( monster *z, const tripoint_bub_ms &p )
 {
-    if( !z ) { // should never happen
+    if( !z ) {
         debugmsg( "non-monster creature passed to mount_step_on_trap_make_slow_give_msg" );
         return;
     }
@@ -386,7 +386,7 @@ bool trapfunc::board( const tripoint_bub_ms &p, Creature *c, item * )
     }
     map &here = get_map();
     const std::string trap_name = here.tr_at( p ).name();
-    // Only a chance to step on the board, dependent on size
+
     if( !x_in_y( occupied_tile_fraction( c->get_size() ), 1.0f ) ) {
         return false;
     }
@@ -403,9 +403,9 @@ bool trapfunc::board( const tripoint_bub_ms &p, Creature *c, item * )
                                damage_instance( damage_cut, rng( 3, 5 ) ) );
     try_apply_tetanus( c->as_character(), dd.type_damage( damage_cut ) );
     c->check_dead_state( &here );
-    // Weight of 100kg+ is guaranteed to break the trap, linear chance as weight increases
+
     if( x_in_y( c->get_weight() / 1_kilogram, 100 ) ) {
-        // destroy trap
+
         here.remove_trap( p );
         if( !c->is_avatar() ) {
             add_msg_if_player_sees( p, _( "%s destroys a %s as they move over it!" ),
@@ -414,7 +414,7 @@ bool trapfunc::board( const tripoint_bub_ms &p, Creature *c, item * )
             add_msg( _( "You destroy the %s as you step on it!" ), trap_name );
         }
     } else if( x_in_y( 40, 100 ) ) {
-        // 40% chance disarm trap
+
         here.tr_at( p ).on_disarmed( here, p );
     }
     return true;
@@ -427,7 +427,7 @@ bool trapfunc::caltrops( const tripoint_bub_ms &p, Creature *c, item * )
     }
     map &here = get_map();
     const std::string trap_name = here.tr_at( p ).name();
-    // Only a chance to step on the caltrop, dependent on size
+
     if( !x_in_y( occupied_tile_fraction( c->get_size() ), 1.0f ) ) {
         return false;
     }
@@ -443,10 +443,10 @@ bool trapfunc::caltrops( const tripoint_bub_ms &p, Creature *c, item * )
                                random_entry( c->get_ground_contact_bodyparts() ),
                                damage_instance( damage_cut, rng( 9, 15 ) ) );
     try_apply_tetanus( c->as_character(), dd.type_damage( damage_cut ) );
-    // Weight of 200kg+ is guaranteed to break the trap, linear chance as weight increases
-    // Arbitrary value, picked from hulk's weight value.
+
+
     if( x_in_y( c->get_weight() / 1_kilogram, 200 ) ) {
-        // destroy trap
+
         here.remove_trap( p );
         if( !c->is_avatar() ) {
             add_msg_if_player_sees( p, _( "%s destroys a %s as they move over it!" ),
@@ -455,7 +455,7 @@ bool trapfunc::caltrops( const tripoint_bub_ms &p, Creature *c, item * )
             add_msg( _( "You destroy the %s as you step on it!" ), trap_name );
         }
     } else if( x_in_y( 20, 100 ) ) {
-        // 20% chance disarm trap
+
         here.tr_at( p ).on_disarmed( here, p );
     }
     c->check_dead_state( &here );
@@ -468,7 +468,7 @@ bool trapfunc::caltrops_glass( const tripoint_bub_ms &p, Creature *c, item * )
         return false;
     }
     map &here = get_map();
-    // Only a chance to step on the caltrop, dependent on size
+
     if( !x_in_y( occupied_tile_fraction( c->get_size() ), 1.0f ) ) {
         return false;
     }
@@ -494,7 +494,7 @@ bool trapfunc::caltrops_glass( const tripoint_bub_ms &p, Creature *c, item * )
 bool trapfunc::eocs( const tripoint_bub_ms &p, Creature *critter, item * )
 {
     if( !critter ) {
-        //TODO: Pass the item as a talker somehow taking into account we don't have the item's tripoint in the case of ranged traps so something like get_talker_for( item_location( map_cursor( tripoint_bub_ms( p ) ), it ) ) isn't enough (and didn't work for non ranged traps on testing anyway)
+
         return false;
     }
     map &here = get_map();
@@ -515,7 +515,7 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // tiny animals don't trigger tripwires, they just squeeze under it
+
     if( c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -563,7 +563,7 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
             g->update_map( player_character );
         }
         if( !you->is_mounted() ) {
-            ///\EFFECT_DEX decreases chance of taking damage from a tripwire trap
+
             if( rng( 5, 20 ) > you->get_dex() ) {
                 you->hurtall( rng( 1, 4 ), nullptr );
             }
@@ -586,7 +586,7 @@ bool trapfunc::crossbow( const tripoint_bub_ms &p, Creature *c, item * )
         monster *z = dynamic_cast<monster *>( c );
         Character *you = dynamic_cast<Character *>( c );
         if( you != nullptr ) {
-            ///\EFFECT_DODGE reduces chance of being hit by crossbow trap
+
             if( !one_in( 4 ) && rng( 8, 20 ) > you->get_dodge() ) {
                 bodypart_id hit = bodypart_str_id::NULL_ID();
                 switch( rng( 1, 10 ) ) {
@@ -628,7 +628,7 @@ bool trapfunc::crossbow( const tripoint_bub_ms &p, Creature *c, item * )
         } else if( z != nullptr ) {
             bool seen = get_player_view().sees( here, *z );
             int chance = 0;
-            // adapted from shotgun code - chance of getting hit depends on size
+
             switch( z->type->size ) {
                 case creature_size::tiny:
                     chance = 50;
@@ -686,12 +686,12 @@ bool trapfunc::shotgun( const tripoint_bub_ms &p, Creature *c, item * )
         monster *z = dynamic_cast<monster *>( c );
         Character *you = dynamic_cast<Character *>( c );
         if( you != nullptr ) {
-            ///\EFFECT_STR_MAX increases chance of two shots from shotgun trap
+
             shots = ( one_in( 8 ) || one_in( 20 - you->get_str_base() ) ? 2 : 1 );
             if( here.tr_at( p ) != tr_shotgun_2 ) {
                 shots = 1;
             }
-            ///\EFFECT_DODGE reduces chance of being hit by shotgun trap
+
             if( rng( 5, 50 ) > you->get_dodge() ) {
                 bodypart_id hit = bodypart_str_id::NULL_ID();
                 switch( rng( 1, 10 ) ) {
@@ -773,7 +773,7 @@ bool trapfunc::shotgun( const tripoint_bub_ms &p, Creature *c, item * )
     return true;
 }
 
-// Remove after 0.J
+
 bool trapfunc::blade( const tripoint_bub_ms &, Creature *c, item * )
 {
     map &here = get_map();
@@ -797,15 +797,15 @@ bool trapfunc::snare_light( const tripoint_bub_ms &p, Creature *c, item * )
 {
     sounds::sound( p, 4, sounds::sound_t::combat, _( "Snap!" ), false, "trap", "snare" );
     map &here = get_map();
-    // Trap is always destroyed when triggered (function is not called unless trap is triggered, even if creature steps on tile)
+
     here.remove_trap( p );
     if( c == nullptr ) {
         return false;
     }
 
     if( c->get_size() == creature_size::tiny || c->get_size() == creature_size::small ) {
-        // The lightsnare effect multiplies speed by 0.01 so on average this is actually 10,000 turns duration.
-        // Creatures can still escape earlier (possibly much earlier) based on their melee dice(for creatures) or strength/limb scores (character)
+
+
         c->add_effect( effect_lightsnare, 100_turns, true );
         if( c->has_effect( effect_ridden ) ) {
             add_msg( m_bad, _( "A snare closes on your %s's leg!" ), c->get_name() );
@@ -814,7 +814,7 @@ bool trapfunc::snare_light( const tripoint_bub_ms &p, Creature *c, item * )
                                   _( "A snare closes on <npcname>s leg." ) );
     }
 
-    // Always get trap components back on triggering tile
+
     here.spawn_item( p, itype_light_snare_kit );
     return true;
 }
@@ -827,7 +827,7 @@ bool trapfunc::snare_heavy( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // Determine what got hit
+
     const bodypart_id hit = one_in( 2 ) ? bodypart_id( "leg_l" ) : bodypart_id( "leg_r" );
     if( c->has_effect( effect_ridden ) ) {
         add_msg( m_bad, _( "A snare closes on your %s's leg!" ), c->get_name() );
@@ -836,7 +836,7 @@ bool trapfunc::snare_heavy( const tripoint_bub_ms &p, Creature *c, item * )
     c->add_msg_player_or_npc( m_bad, _( "A snare closes on your %s." ),
                               _( "A snare closes on <npcname>s %s." ), body_part_name_accusative( hit ) );
 
-    // Actual effects
+
     c->add_effect( effect_heavysnare, 1_turns, hit, true );
     monster *z = dynamic_cast<monster *>( c );
     Character *you = dynamic_cast<Character *>( c );
@@ -867,12 +867,12 @@ bool trapfunc::snare_species( const tripoint_bub_ms &p, Creature *critter, item 
 {
     map &here = get_map();
     const trap &laid_trap = here.tr_at( p );
-    if( !critter ) { // Nothing to capture
+    if( !critter ) {
         return false;
     }
 
     if( laid_trap.is_null() ) {
-        return false; //Should never happen but just in case
+        return false;
     }
 
     if( !laid_trap.trap_item_type.has_value() ) {
@@ -916,7 +916,7 @@ bool trapfunc::snare_species( const tripoint_bub_ms &p, Creature *critter, item 
             add_msg_if_player_sees( p, _( "%1$s is caught by a %2$s!" ), critter->get_name(),
                                     laid_trap.name() );
         }
-        // Actual effects
+
         critter->add_effect( effect_immobilization, 10_turns, hit );
         critter->check_dead_state( &here );
     }
@@ -927,7 +927,7 @@ bool trapfunc::snare_species( const tripoint_bub_ms &p, Creature *critter, item 
 
 bool trapfunc::landmine( const tripoint_bub_ms &p, Creature *c, item * )
 {
-    // tiny animals are too light to trigger land mines
+
     if( c != nullptr && c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -989,10 +989,10 @@ bool trapfunc::goo( const tripoint_bub_ms &p, Creature *c, item * )
         if( z->has_effect( effect_ridden ) ) {
             get_player_character().forced_dismount();
         }
-        //All monsters except for blobs get a speed decrease
+
         if( z->type->id != mon_blob ) {
             z->set_speed_base( z->get_speed_base() - 15 );
-            //All monsters that aren't blobs or robots transform into a blob
+
             if( !z->type->in_species( species_ROBOT ) ) {
                 z->poly( mon_blob );
                 z->set_hp( z->get_speed() );
@@ -1017,15 +1017,15 @@ bool trapfunc::dissector( const tripoint_bub_ms &p, Creature *c, item * )
     bool player_sees = get_player_view().sees( here, p );
     if( z != nullptr ) {
         if( z->type->in_species( species_ROBOT ) ) {
-            //The monster is a robot. So the dissector should not try to dissect the monsters flesh.
-            //Dissector error sound.
+
+
             sounds::sound( p, 4, sounds::sound_t::electronic_speech,
                            _( "BEEPBOOP!  Please remove non-organic object." ), false, "speech", "robot" );
             c->add_msg_player_or_npc( m_bad, _( "The dissector lights up, and shuts down." ),
                                       _( "The dissector lights up, and shuts down." ) );
             return false;
         }
-        // distribute damage amongst player and horse
+
         if( z->has_effect( effect_ridden ) && z->mounted_player ) {
             Character *ch = z->mounted_player;
             ch->deal_damage( nullptr, bodypart_id( "head" ), damage_instance( damage_cut, 15 ) );
@@ -1073,12 +1073,12 @@ bool trapfunc::pit( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // tiny animals aren't hurt by falling into pits
+
     if( c->get_size() == creature_size::tiny ) {
         return false;
     }
 
-    // NOTE: This will be bash-type damage, and reduced by armor accordingly.
+
     const int expected_dmg = pit_effectiveness( p ) * rng( 6, 12 );
 
     const bool did_see = get_player_character().sees( here, p );
@@ -1103,7 +1103,7 @@ bool trapfunc::pit( const tripoint_bub_ms &p, Creature *c, item * )
             you->add_msg_if_player( m_bad, _( "You are hurt from falling into a pit!" ) );
             for( const bodypart_id &bp : you->get_all_body_parts( get_body_part_flags::only_main ) ) {
                 if( bp->primary_limb_type() == bp_type::leg ) {
-                    // Extra damage to legs or your tentacles, whatever you've got
+
                     you->deal_damage( nullptr, bp, damage_instance( damage_bash, expected_dmg * 2 ) );
                 } else {
                     you->deal_damage( nullptr, bp, damage_instance( damage_bash, expected_dmg ) );
@@ -1126,17 +1126,17 @@ bool trapfunc::pit_spikes( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // tiny animals aren't hurt by falling into spiked pits
+
     if( c->get_size() == creature_size::tiny ) {
         return false;
     }
 
-    // NOTE: This will be pierce-type damage, and reduced by armor accordingly. (Spike 'misses' will be bash damage at half this value)
-    // pit_effectiveness() intentionally does not change the damage - instead, partially-filled pits have a higher chance to miss the spikes.
+
+
     const int expected_dmg = rng( 10, 20 );
 
     const float pit_eff = pit_effectiveness( p );
-    // +20% chance to serendipitiously avoid spikes even in an empty pit. NOTE: Chances rolled separately for each main limb.
+
     const float miss_chance = 0.2f;
     const float total_pit_eff = std::max( 0.0f, pit_eff - miss_chance );
 
@@ -1152,13 +1152,13 @@ bool trapfunc::pit_spikes( const tripoint_bub_ms &p, Creature *c, item * )
     Character *you = c->as_character();
     if( you != nullptr ) {
         if( you->can_fly() ) {
-            // Gliding bullshit allows maneuvering to avoid spikes
+
             if( did_see ) {
                 you->add_msg_player_or_npc( _( "You spread your wings to slow your fall." ),
                                             _( "<npcname> spreads their wings to slow their fall." ) );
             }
         } else if( you->has_active_bionic( bio_shock_absorber ) ) {
-            // Not sure this should really work vs spikes, but whatever
+
             you->add_msg_if_player( m_info,
                                     _( "You hit the ground hard, but your grav chute handles the impact admirably!" ) );
         } else {
@@ -1197,7 +1197,7 @@ bool trapfunc::pit_spikes( const tripoint_bub_ms &p, Creature *c, item * )
         add_msg_if_player_sees( p, _( "The spears break!" ) );
         map &here = get_map();
         here.ter_set( p, ter_t_pit );
-        // 4 spears to a pit
+
         for( int i = 0; i < 4; i++ ) {
             if( one_in( 3 ) ) {
                 here.spawn_item( p, itype_pointy_stick );
@@ -1214,18 +1214,18 @@ bool trapfunc::pit_glass( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // tiny animals aren't hurt by falling into glass pits
+
     if( c->get_size() == creature_size::tiny ) {
         return false;
     }
 
-    // NOTE: This will be cut-type damage, and reduced by armor accordingly. (Glass 'misses' will be bash damage at 100% of this value)
-    // pit_effectiveness() intentionally does not change the damage - instead, partially-filled pits have a higher chance to miss the glass.
+
+
     const int expected_dmg = pit_effectiveness( p ) * rng( 6, 12 );
 
     const float pit_eff = pit_effectiveness( p );
-    // +50% chance to avoid glass even in an empty pit. NOTE: Chances rolled separately for each main limb.
-    // Random scattered glass is not very effective.
+
+
     const float miss_chance = 0.5f;
     const float total_pit_eff = std::max( 0.0f, pit_eff - miss_chance );
 
@@ -1283,7 +1283,7 @@ bool trapfunc::pit_glass( const tripoint_bub_ms &p, Creature *c, item * )
         add_msg_if_player_sees( p, _( "The shards shatter!" ) );
         map &here = get_map();
         here.ter_set( p, ter_t_pit );
-        // 20 shards in a pit.
+
         for( int i = 0; i < 20; i++ ) {
             if( one_in( 3 ) ) {
                 here.spawn_item( p, itype_glass_shard );
@@ -1315,7 +1315,7 @@ bool trapfunc::lava( const tripoint_bub_ms &p, Creature *c, item * )
         if( z->has_effect( effect_ridden ) ) {
             add_msg( m_bad, _( "Your %s is burned by the lava!" ), z->get_name() );
         }
-        // TODO: MATERIALS use fire resistance
+
         int dam = 30;
         if( z->made_of_any( Creature::cmat_flesh ) ) {
             dam = 50;
@@ -1338,7 +1338,7 @@ bool trapfunc::lava( const tripoint_bub_ms &p, Creature *c, item * )
     return true;
 }
 
-// Don't ask NPCs - they always want to do the first thing that comes to their minds
+
 static bool query_for_item( const Character *pl, const itype_id &itemname, const char *que )
 {
     return pl->has_amount( itemname, 1 ) && ( !pl->is_avatar() || query_yn( que ) );
@@ -1353,11 +1353,11 @@ static tripoint_bub_ms random_neighbor( tripoint_bub_ms center )
 
 static bool sinkhole_safety_roll( Character &you, const itype_id &itemname, const int diff )
 {
-    ///\EFFECT_STR increases chance to attach grapnel, bullwhip, or rope when falling into a sinkhole
 
-    ///\EFFECT_DEX increases chance to attach grapnel, bullwhip, or rope when falling into a sinkhole
 
-    ///\EFFECT_THROW increases chance to attach grapnel, bullwhip, or rope when falling into a sinkhole
+
+
+
     const int throwing_skill_level = round( you.get_skill_level( skill_throw ) );
     const int roll = rng( throwing_skill_level, throwing_skill_level + you.get_str() + you.get_dex() );
     map &here = get_map();
@@ -1393,7 +1393,7 @@ static bool sinkhole_safety_roll( Character &you, const itype_id &itemname, cons
 
 bool trapfunc::sinkhole( const tripoint_bub_ms &p, Creature *c, item *i )
 {
-    // tiny creatures don't trigger the sinkhole to collapse
+
     if( c == nullptr || c->get_size() == creature_size::tiny ) {
         return false;
     }
@@ -1442,7 +1442,7 @@ bool trapfunc::temple_flood( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // Monsters and npcs are completely ignored here, should they?
+
     if( c->is_avatar() ) {
         add_msg( m_warning, _( "You step on a loose tile, and water starts to flood the room!" ) );
         tripoint_bub_ms tmp = p;
@@ -1467,7 +1467,7 @@ bool trapfunc::temple_toggle( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
-    // Monsters and npcs are completely ignored here, should they?
+
     if( c->is_avatar() ) {
         add_msg( _( "You hear the grinding of shifting rock." ) );
         map &here = get_map();
@@ -1500,7 +1500,7 @@ bool trapfunc::temple_toggle( const tripoint_bub_ms &p, Creature *c, item * )
             }
         }
 
-        // In case we're completely encircled by walls, replace random wall around the player with floor tile
+
         std::vector<tripoint_bub_ms> blocked_tiles;
         for( const tripoint_bub_ms &pnt : here.points_in_radius( p, 1 ) ) {
             if( here.impassable( pnt ) ) {
@@ -1602,7 +1602,7 @@ bool trapfunc::shadow( const tripoint_bub_ms &p, Creature *c, item * )
         return false;
     }
     map &here = get_map();
-    // Monsters and npcs are completely ignored here, should they?
+
     for( int tries = 0; tries < 10; tries++ ) {
         tripoint_bub_ms monp{ p };
         if( one_in( 2 ) ) {
@@ -1680,7 +1680,7 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
         if( !tr.has_flag( json_flag_UNCONSUMED ) ) {
             here.remove_trap( p );
         }
-        // we remove the trap before casting the spell because otherwise if we teleport we might be elsewhere at the end and p is no longer valid
+
         trap_spell.cast_all_effects( dummy, p );
         trap_spell.make_sound( p, get_player_character() );
         return true;
@@ -1693,7 +1693,7 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
             here.remove_trap( p );
         }
         if( tr.has_flag( json_flag_PROXIMITY ) ) {
-            // remove all traps in 3-3 area area
+
             for( int x = p.x() - 1; x <= p.x() + 1; x++ ) {
                 for( int y = p.y() - 1; y <= p.y() + 1; y++ ) {
                     tripoint_bub_ms pt( x, y, p.z() );
@@ -1703,7 +1703,7 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
                 }
             }
         }
-        // we remove the trap before casting the spell because otherwise if we teleport we might be elsewhere at the end and p is no longer valid
+
         trap_spell.cast_all_effects( dummy, critter->pos_bub() );
         trap_spell.make_sound( p, get_player_character() );
         return true;
@@ -1747,12 +1747,12 @@ bool trapfunc::dummy_trap( const tripoint_bub_ms &, Creature *, item * )
     return true;
 }
 
-/**
- * Takes the name of a trap function and returns a function pointer to it.
- * @param function_name The name of the trapfunc function to find.
- * @return A function object with a pointer to the matched function,
- *         or to trapfunc::none if there is no match.
- */
+
+
+
+
+
+
 const trap_function &trap_function_from_string( const std::string &function_name )
 {
     static const std::unordered_map<std::string, trap_function> funmap = {{

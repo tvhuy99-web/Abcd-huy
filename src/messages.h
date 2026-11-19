@@ -20,13 +20,13 @@ class JsonOut;
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 namespace Messages
 {
 
-// Mute only live screen-reader announcements during unrelated combat.
-// Messages remain in the native log and the game simulation is unchanged.
+
+
 class mute_combat_speech
 {
     public:
@@ -42,10 +42,10 @@ std::vector<std::pair<std::string, std::string>> recent_messages( size_t count )
 bool has_debug_filter( debugmode::debug_filter type );
 void add_msg( std::string msg );
 void add_msg( const game_message_params &params, std::string msg );
-// Log-only: append to the message log without speaking. For warnings
-// already spoken live through a11y::announce_game_message (status
-// monitor), so the player can re-read them from message history without
-// hearing them twice and without combat mute swallowing them.
+
+
+
+
 void add_msg_silent( const game_message_params &params, std::string msg );
 void clear_messages();
 void deactivate();
@@ -57,7 +57,7 @@ void display_messages( const catacurses::window &ipk_target, int left, int top, 
 void serialize( JsonOut &json );
 void deserialize( const JsonObject &json );
 
-} // namespace Messages
+}
 
 void add_msg( std::string msg );
 template<typename ...Args>
@@ -179,8 +179,8 @@ inline void add_msg_if_player_sees( const Creature &target, const game_message_p
                                    std::forward<Args>( args )... ) );
 }
 
-// This function acts as a marker to clang-tidy to enforce no translations
-// in developer facing debug messages.
+
+
 template <typename T>
 inline T &&clang_tidy_no_translations( T &&t )
 {
@@ -202,8 +202,8 @@ inline T &&clang_tidy_no_translations( T &&t )
 namespace debug_menu
 {
 void log_debug_msg( debugmode::debug_filter type, const std::string &msg );
-} // namespace debug_menu
+}
 
 void modify_msg_with_exclamations( std::string &msg, game_message_type type );
 
-#endif // CATA_SRC_MESSAGES_H
+#endif

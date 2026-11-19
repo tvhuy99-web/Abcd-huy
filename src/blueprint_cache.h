@@ -22,7 +22,7 @@ const std::vector<build_reqs> *find( const std::string &recipe_id );
 void store( const std::string &recipe_id, std::vector<build_reqs> values );
 void persist();
 void clear();
-} // namespace blueprint_cache
+}
 
-#endif // __ANDROID__
-#endif // CATA_SRC_BLUEPRINT_CACHE_H
+#endif
+#endif

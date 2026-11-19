@@ -39,17 +39,17 @@ template<>
 std::string enum_to_string<join_type>( join_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case join_type::mandatory: return "mandatory";
         case join_type::available: return "available";
-        // *INDENT-ON*
+
         case join_type::last:
             break;
     }
     cata_fatal( "Invalid join_type" );
 }
 
-} // namespace io
+}
 
 void mutable_overmap_terrain_join::finalize( const std::string &context,
         const std::unordered_map<std::string, mutable_overmap_join *> &joins )
@@ -121,8 +121,8 @@ mutable_overmap_phase_remainder::can_place(
         if( ter_join.type == join_type::available ) {
             continue;
         }
-        // Verify that the remaining joins lead to
-        // suitable locations
+
+
         tripoint_om_omt neighbour = pos_d.p + displace( pos_d.dir );
         if( !overmap::inbounds( neighbour ) ) {
             return std::nullopt;
@@ -422,15 +422,15 @@ cata::views::transform<std::vector<std::pair<rel_pos_dir, const mutable_overmap_
     } );
 }
 
-// When building a mutable overmap special we maintain a collection of
-// unresolved joins.  We need to be able to index that collection in
-// various ways, so it gets its own struct to maintain the relevant invariants.
+
+
+
 
 void joins_tracker::consistency_check() const
 {
-#if 0 // Enable this to check the class invariants, at the cost of more runtime
-    // verify that there are no positions in common between the
-    // resolved and postponed lists
+#if 0
+
+
     for( const join &j : postponed ) {
         auto j_pos = j.where.p;
         if( unresolved.any_at( j_pos ) ) {
@@ -507,17 +507,17 @@ void joins_tracker::add_joins_for(
             erase_unresolved( this_side );
             if( !avoid.count( this_side ) ) {
                 used.emplace_back( other_side, other_side_join->join->id );
-                // Because of the existence of alternative joins, we don't
-                // simply add this_side_join here, we add the opposite of
-                // the opposite that was actually present (this saves us
-                // from heaving to search through the alternates to find
-                // which one actually matched).
+
+
+
+
+
                 used.emplace_back( this_side, other_side_join->join->opposite_id );
             }
         } else {
-            // If there were postponed joins pointing into this point,
-            // so we need to un-postpone them because it might now be
-            // possible to satisfy them.
+
+
+
             restore_postponed_at( other_side.p );
             if( this_side_join.type == join_type::mandatory ) {
                 if( !overmap::inbounds( other_side.p ) ) {
@@ -657,7 +657,7 @@ void mutable_overmap_special_data::finalize( const std::string &context,
         }
         auto opposite_it = joins.find( join.opposite_id );
         if( opposite_it == joins.end() ) {
-            // Error reported later in check()
+
             continue;
         }
         join.opposite = opposite_it->second;
@@ -766,18 +766,18 @@ std::vector<overmap_special_locations> mutable_overmap_special_data::required_lo
 int mutable_overmap_special_data::score_rotation_at( const overmap &, const tripoint_om_omt &,
         om_direction::type ) const
 {
-    // TODO: worry about connections for mutable specials
-    // For now we just allow all rotations, but will be restricted by
-    // can_place_special
+
+
+
     return 0;
 }
 
-// Returns a list of the points placed and a list of the joins used
+
 special_placement_result mutable_overmap_special_data::place(
-    overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool /*blob*/,
+    overmap &om, const tripoint_om_omt &origin, om_direction::type dir, bool ,
     const city &cit, bool must_be_unexplored ) const
 {
-    // TODO: respect must_be_unexplored
+
     std::vector<tripoint_om_omt> result;
 
     auto it = overmaps.find( root );
@@ -795,12 +795,12 @@ special_placement_result mutable_overmap_special_data::place(
 
     std::vector<placed_connection> connections_placed;
 
-    // This is for debugging only, it tracks a human-readable description
-    // of what happened to be put in the debugmsg in the event of failure.
+
+
     std::vector<std::string> descriptions;
 
-    // Helper function to add a particular mutable_overmap_terrain at a
-    // particular place.
+
+
     auto add_ter = [&](
                        const mutable_overmap_terrain & ter, const tripoint_om_omt & pos,
     om_direction::type rot, const std::vector<om_pos_dir> &suppressed_joins ) {
@@ -816,14 +816,14 @@ special_placement_result mutable_overmap_special_data::place(
                 basecamp *temp_camp = *bcp;
                 temp_camp->set_owner( ter.camp_owner.value() );
                 temp_camp->set_name( ter.camp_name.translated() );
-                // FIXME? Camp types are raw strings! Not ideal.
+
                 temp_camp->define_camp( camp_loc, "faction_base_bare_bones_NPC_camp_0", false );
             }
         }
         unresolved.add_joins_for( ter, pos, rot, suppressed_joins );
         result.push_back( pos );
 
-        // Accumulate connections to be dealt with later
+
         for( const std::pair<const cube_direction, mutable_special_connection> &p :
              ter.connections ) {
             cube_direction base_dir = p.first;
@@ -872,8 +872,8 @@ special_placement_result mutable_overmap_special_data::place(
     }
 
     if( unresolved.any_postponed() ) {
-        // This is an error in the JSON; extract some useful info to help
-        // the user debug it
+
+
         unresolved.restore_postponed();
         tripoint_om_omt p = unresolved.pick_top_priority();
 
@@ -897,8 +897,8 @@ special_placement_result mutable_overmap_special_data::place(
                 joins, p.to_string(), parent_id.str() ) );
     }
 
-    // Deal with connections
-    // TODO: JSONification of logic + don't treat non roads like roads + deduplicate with fixed data
+
+
     for( const placed_connection &elem : connections_placed ) {
         const tripoint_om_omt &pos = elem.where.p;
         cube_direction connection_dir = elem.where.dir;
@@ -919,9 +919,9 @@ special_placement_result mutable_overmap_special_data::place(
 void mutable_overmap_special_data::load( const JsonObject &jo, bool was_loaded )
 {
     optional( jo, was_loaded, "check_for_locations", check_for_locations );
-    // this has poor copy-from/overwrite support...
-    // It pushes to check_for_locations, and so if "check_for_locations" is not specified
-    // then it will push to the old data, extending instead of overwriting.
+
+
+
     if( jo.has_array( "check_for_locations_area" ) ) {
         JsonArray jar = jo.get_array( "check_for_locations_area" );
         while( jar.has_more() ) {

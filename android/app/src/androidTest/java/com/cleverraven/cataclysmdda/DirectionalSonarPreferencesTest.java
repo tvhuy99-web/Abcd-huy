@@ -15,7 +15,7 @@ import java.util.Map;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/** Independently saved creature and item sonar, with legacy preference migration. */
+
 @RunWith(AndroidJUnit4.class)
 public final class DirectionalSonarPreferencesTest {
     @Test public void legacySingleSwitchMigratesWithoutChangingAnExistingChoice() {

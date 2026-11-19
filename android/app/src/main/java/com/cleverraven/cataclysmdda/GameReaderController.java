@@ -25,15 +25,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** Main-looper presentation/input owner. Native callbacks only enqueue intents. */
+
 public final class GameReaderController implements AutoCloseable, ReaderGestureSurface.Listener {
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
-    // Distinguish notifications received before a deliberate gesture from
-    // the feedback caused by the new action, including posted UI callbacks.
+
+
     private final AtomicLong speechActionEpoch = new AtomicLong();
-    // Reject trip-start progress delayed until after a stop or completed trip.
-    // User interaction creates a new epoch and permits a new journey.
+
+
     private long lastAutodriveTerminalActionEpoch = -1;
     private static final int HUB_PAGE_SIZE = 30;
     private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
@@ -56,8 +56,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final String GESTURE_READER_OFF_KEY = "gesture-reader-off";
     private boolean readerOffAfterAnnouncement;
     private boolean announceReaderEnabledAfterInit;
-    // A saved TTS configuration must be announced only after the replacement
-    // engine is READY, not through the previous voice or a dropped init request.
+
+
     private boolean announceTtsSavedAfterInit;
     private final Runnable finishReaderOffGesture = () -> {
         if (!readerOffAfterAnnouncement) { return; }
@@ -65,11 +65,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         applyReaderGestureEnabled(false);
     };
     private final LinkedHashMap<Long, Long> pendingIntentTimes = new LinkedHashMap<>();
-    // Native actions invalidate their snapshot briefly. Messages arriving in
-    // this gap must be read after the next snapshot instead of disappearing.
-    // A native action can temporarily hide the world snapshot. Retain all
-    // game events until the next stable screen instead of dropping the ninth
-    // message (or deleting a message after an arbitrary fifteen seconds).
+
+
+
+
+
     private final ArrayDeque<BufferedGameMessage> pendingGameMessages =
             new ArrayDeque<>();
 
@@ -91,10 +91,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final String AUTODRIVE_END_PREFIX = "A11Y_AUTODRIVE_END:";
     private static final String AREA_PREFIX = "A11Y_AREA:";
 
-    /** Manual and autonomous driving share this speech policy.
-     *  User queries, explicit control results and genuine hazard/area
-     *  changes pass. Ordinary turn-by-turn movement remains silent.
-     */
+
+
+
+
     static boolean allowedDuringDriving(String message, int priority) {
         if (message == null) { return false; }
         return priority >= ReaderSpeechQueue.URGENT
@@ -119,8 +119,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 && !oldState.equals(state);
     }
 
-    // Do not repeat a menu title already contained in its first item.
-    // Preserve position, current value and disabled reason as originally read.
+
+
     static String menuEntrySpeech(String introduction, String entry) {
         String title = introduction == null ? "" : introduction.trim();
         String item = entry == null ? "" : entry.trim();
@@ -134,28 +134,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void replayBufferedGameMessages() {
         while (!pendingGameMessages.isEmpty()) {
-            // A quick-shot failure can originate in a transient targeting
-            // frame. Speak it only after returning to the world, so the
-            // reader's setContext() cannot cancel the warning immediately.
+
+
+
             BufferedGameMessage first = pendingGameMessages.peekFirst();
             if (first.text.startsWith(COMBAT_ALERT_PREFIX)
                     && (snapshot == null || !"DEFAULTMODE".equals(snapshot.category))) {
                 return;
             }
             BufferedGameMessage buffered = pendingGameMessages.removeFirst();
-            // Game events are FIFO and survive temporary screen transitions.
-            // Do not evict an older message because a newer one arrived.
+
+
             announceGameMessage(buffered.text, buffered.priority, true);
         }
     }
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
     private ReaderSnapshot snapshot;
-    // Loading screens do not publish semantic snapshots. Keep their last
-    // visible status available to repeat, even after the main menu clears.
+
+
     private String lastLoadingStatus = "";
-    // A native recap accompanies every screen, including a freshly loaded
-    // inventory. Cache it for two-finger double-tap without visiting the
-    // world first; the game message log itself is never changed here.
+
+
+
     private String lastRecentMessages = "";
     private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
@@ -164,15 +164,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String formContext = "";
     private long formRequest;
     private String focus = "";
-    // Switching a nearby category speaks its name/count first. The first
-    // right swipe then reads item one, instead of silently skipping it.
+
+
     private boolean nearbyFirstItemPending;
     private boolean craftingNavigationPending;
-    // Only the requested comprehensive menu appears as an Android overlay;
-    // routine gameplay keeps the transparent, dashboard-free surface.
+
+
     private boolean comprehensiveMenu;
-    // Hub commands must be activated as their own action, never reinterpreted
-    // as a world double-tap that pauses the car.
+
+
     private boolean activatingHubCommand;
     private int hubSection = GameActionHub.ROOT;
     private int hubIndex;
@@ -181,40 +181,40 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean choosingGesture;
     private GameActionHub.Entry bindingItem;
     private int gestureChoice;
-    // A long press opens these two accessible actions before gesture setup.
+
     private boolean choosingHubAction;
     private GameActionHub.Entry hubActionItem;
     private int hubActionChoice;
-    // Only rendered when SDL is showing a native debug message.
+
     private String debugReport;
     private int debugFocus;
     private boolean debugResponsePending;
-    // One spoken/TalkBack level at a time, independent of the engine's
-    // visual expansion state. Parent IDs are supplied by semantic snapshots.
-    // Global contextual command drawer: native commands stay published and validated,
-    // but never interrupt the primary list of items, answers or form fields.
+
+
+
+
     private boolean commandPaletteOpen;
-    // A read-only local overlay. Each entry is one focus, never a game action.
+
     private boolean gestureGuideOpen;
     private int gestureGuideIndex;
     private List<String> gestureGuideRows = new ArrayList<>();
     private int travelContextDrawerState;
-    // A hold exposes every original aim/cursor command; the default is eight directions.
+
     private boolean targetingOriginalControls;
-    // Local to the accessible world. Custom map bindings remain untouched.
+
     private boolean combatMode;
     private boolean vehicleMode;
-    // ACT_AUTODRIVE uses the existing Drive interface. Native pathfinding
-    // owns movement while the four straight one-finger swipes are disabled.
+
+
     private boolean autonomousDriveTrip;
     private boolean autonomousDriveCancelRequested;
-    // Map gestures stay locked until the native driver has actually let go.
+
     private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
     private String vehicleHeadingBeforeCommand = "";
     private int pendingVehicleHeadingSnapshots;
-    // Preserve the last real engine state across transient ignition/activity
-    // screens. Compare only snapshots belonging to the same vehicle.
+
+
     private String observedEngineVehicle = "";
     private String observedEngineState = "";
     private String commandPaletteReturnFocus = "";
@@ -222,19 +222,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String readerLayerParent = "";
     private String pendingReaderLayer = "";
     private int pendingReaderLayerRevisions;
-    // Read the correct selected-row document after the game thread has
-    // acknowledged its focus. Never speak the previous row's details.
+
+
     private String pendingLinkedDetail = "";
     private String pendingLinkedDetailContext = "";
-    // A native read-only item request is scoped to the currently focused
-    // row and screen. Long UTF-8 descriptions are assembled before entering
-    // the bounded speech queue; stale replies must not name another item.
+
+
+
     private String pendingItemDetailNode = "";
     private String pendingItemDetailContext = "";
     private StringBuilder pendingItemDetailParts;
-    // Inventory container picker: all edits stay local until the parent
-    // pocket receives one atomic native commit. 0=outer, 1=hold menu,
-    // 2=pockets, 3=contents.
+
+
+
     private int pocketStage;
     private int pocketMenuChoice;
     private String pocketContainerId = "";
@@ -242,8 +242,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String pocketReturnParent = "";
     private String pocketContext = "";
     private final LinkedHashMap<String, Integer> pocketDrafts = new LinkedHashMap<>();
-    // A native modal may temporarily cover a parent screen. Frame identity
-    // survives that push/pop, so return to the last visited item, not item 1.
+
+
     private final LinkedHashMap<String, String> savedScreenFocus = new LinkedHashMap<>();
     private boolean foreground;
     private boolean windowFocused;
@@ -255,15 +255,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastPerformanceProfile;
     private volatile long presentationEpoch;
     private long lastWorldBusyNotice;
-    // Travel controls are a local two-button reader panel, with a third
-    // explicit ignore-warning option only when native safe mode blocked the
-    // route. The native game thread exclusively owns route changes.
+
+
+
     private int travelChoice;
     private int announcedTravelState;
-    // Automatic travel does not necessarily publish a new semantic snapshot
-    // on each native step. Poll only the tiny JNI atomic state (never game
-    // data) so Pause/Cancel become visible immediately, even after starting
-    // from the overmap or observation screen. Do not reannounce steady state.
+
+
+
+
     private final Runnable travelStatePoll = new Runnable() {
         @Override
         public void run() {
@@ -280,19 +280,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         render();
                     }
                     if (autonomousDriveTrip || vehicleMode) {
-                        // The native autopilot reports a genuine no-route
-                        // warning once. Never open or narrate a modal
-                        // Resume/Cancel panel while in ordinary Drive.
-                        // User gestures, including the action hub, remain
-                        // active and can read the status on request.
+
+
+
+
+
                     } else if (state != 0) {
                         feedback(travelStatus(state) + ". " + travelSpoken(state));
                     } else if (snapshot != null
                             && ("DEFAULTMODE".equals(snapshot.category)
                                 || "activity".equals(snapshot.category))) {
-                        // Modal questions have their own one-shot original
-                        // announcement. A travel-state transition must not
-                        // interrupt it with an unrelated focus utterance.
+
+
+
                         readCurrent();
                     }
                 }
@@ -300,18 +300,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             handler.postDelayed(this, 200);
         }
     };
-    // One short-lived *gesture*, never a native movement backlog. When a
-    // swipe arrives during the previous turn, try its latest direction once
-    // after the next live world publication, then discard it. Native safety,
-    // context and movement permissions remain authoritative.
+
+
+
+
     private String pendingWorldDirection = "";
     private String pendingWorldContext = "";
     private long pendingWorldRevision;
     private long pendingWorldSince;
     private boolean retryingWorldDirection;
-    // The native one-step gate opens only on the next game input wait.
-    // Poll this tiny thread-safe flag only while ONE gesture is pending;
-    // never queue more than the most recent gesture or cross a screen.
+
+
+
     private final Runnable pendingWorldRetryPoll = this::retryPendingWorldDirection;
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
@@ -334,9 +334,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         activity.getString(R.string.a11yReaderVoiceRecoveredDefault));
             }
         });
-        // Optional cues (R21.2): fired by the engine at the same points
-        // that produce spoken outcomes/warnings, plus locally for intent
-        // rejection receipts. A cue failure is said out loud once.
+
+
+
         cues = new ReaderCuePlayer(activity, preferences, () -> {
             if (!closed) {
                 feedback(activity.getString(R.string.a11yCueUnavailable));
@@ -344,9 +344,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         });
         sonar = new AlignmentSonarPlayer(activity);
         documentReader = new ReaderDocumentReader(activity);
-        // Document position survives interruptions (R04.4): the queue
-        // only reports whether the current paragraph finished or was cut
-        // off; the document reader decides what Continue replays.
+
+
+
         speech.setCompletionListener(new ReaderSpeechQueue.CompletionListener() {
             @Override
             public void onFinished(String key) {
@@ -371,11 +371,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root = new ReaderGestureSurface(activity, this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setClickable(true);
-        // Keep the engine and gesture bridge, never draw the old reader dashboard.
+
         root.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         root.setPadding(0, 0, 0, 0);
         status = new TextView(activity);
-        // Off-screen state holders, not visible labels or control buttons.
+
         ScrollView scroll = new ScrollView(activity);
         scroll.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         rows = new LinearLayout(activity);
@@ -438,11 +438,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         updateNativeState(true);
     }
 
-    /** Apply a confirmed TTS save immediately when returning from Settings.
-     *  onResume() alone only initializes a non-ready queue; the previous
-     *  engine normally stays READY through the settings Activity and would
-     *  otherwise keep its old voice, rate, pitch and volume.
-     */
+
+
+
+
+
     public void applySavedTtsSettings() {
         if (closed) { return; }
         final boolean enabled = preferences.isEnabled();
@@ -453,9 +453,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root.cancelGesture();
         root.setVisibility(enabled ? View.VISIBLE : View.GONE);
         if (enabled) {
-            // Force a new Android TextToSpeech engine even if the previous
-            // instance was already READY. initialize() re-reads every
-            // persisted option and resets the old speech queue.
+
+
+
             speech.initialize(preferences);
         } else {
             sonar.setWorldActive(false);
@@ -471,10 +471,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         sonar.setWorldActive(false);
         presentationEpoch++;
         root.cancelGesture();
-        // Lifecycle boundary (R20.3): not a plain stop — the queue also
-        // forgets its last utterance, its context and any pending TTS
-        // retry, so nothing queued or repeatable from this foreground
-        // session can be spoken after a later resume.
+
+
+
+
         speech.clearForLifecycle();
         pendingGameMessages.clear();
         documentReader.clear();
@@ -506,10 +506,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (!focused) {
             sonar.setWorldActive(false);
             root.cancelGesture();
-            // Losing window focus (lock screen, call, system dialog) is
-            // the same speech boundary as onPause (R20.3): pending and
-            // repeatable speech from before it must not resume playing
-            // when focus returns; the republished snapshot speaks fresh.
+
+
+
+
             speech.clearForLifecycle();
             pendingGameMessages.clear();
         }
@@ -568,14 +568,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             + " status=" + code + " elapsed_ms="
                             + (since == null ? "unknown"
                             : (SystemClock.elapsedRealtime() - since)));
-                    // Receipt outcomes feed the diagnostics counters
-                    // (R21.4): codes only, never the intent's contents.
+
+
                     ReaderDiagnostics.get().count("receipt_" + code);
-                    // A rejection for an already closed native screen must
-                    // never interrupt speech on a *different* interface.
-                    // This applies to every reader adapter, not just skill
-                    // headings. Do not hide a live rejection on the current
-                    // screen or retry a potentially consequential command.
+
+
+
+
+
                     if (requestId != 0 && ("stale".equals(code)
                             || "unsupported".equals(code) || "disabled".equals(code))) {
                         String receiptContext = object.optString("session") + ":"
@@ -590,8 +590,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                     if ("invalid_value".equals(code) && formRequest != 0
                             && formReceiptMatches(object)) {
-                        // A form draft value was rejected on the game thread
-                        // (R02.4); the applied value was never touched.
+
+
                         formRequest = 0;
                         playRejectedCue();
                         feedback(activity.getString(R.string.a11yEditorInvalid));
@@ -618,9 +618,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             : "unsupported".equals(code) ? R.string.a11yReaderUnsupported
                             : R.string.a11yReaderStale;
                     if (editor != null && receiptMatches(object)) { editorRequest = 0; }
-                    // A rejected intent gets the rejected cue (R21.2)
-                    // alongside its spoken receipt; both say the same
-                    // thing — nothing was performed.
+
+
+
                     playRejectedCue();
                     feedback(activity.getString(label));
                     return;
@@ -686,12 +686,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "activity".equals(next.category)
                         || "overmap".equals(next.category)
                         || "OPTIONS".equals(next.category)
-                        // Character creation was never re-read when
-                        // the selection changed, so +/-1 adjustments were
-                        // silent on the Java side (the C++ announce is the
-                        // other channel; both are kept, they say different
-                        // things). The same gap hid
-                        // advanced-inventory and armor-layer updates.
+
+
+
+
+
+
                         || "CHARACTER_CREATION".equals(next.category)
                         || next.category.startsWith("character-creator-step-")
                         || "advanced-inventory".equals(next.category)
@@ -773,12 +773,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || "active-world-mods".equals(next.category)
                             || "world-options".equals(next.category)
                             || "OPTIONS".equals(next.category)
-                            // The selected-flag loop above
-                            // cannot see a +/-1 or command that only changes
-                            // the focused row's value (points left, sort or
-                            // filter state, armor position), so re-read the
-                            // focused row when its value/detail changes, the
-                            // same way the world-generation screens do.
+
+
+
+
+
+
                             || "CHARACTER_CREATION".equals(next.category)
                             || next.category.startsWith("character-creator-step-")
                             || "advanced-inventory".equals(next.category)
@@ -807,10 +807,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         selectionChanged = true;
                     }
                 }
-                // Native menus may visually keep the parent tabs in place,
-                // but their semantic snapshot now publishes only the active
-                // layer. Switching between tab and child must use the new
-                // snapshot's first item rather than an unrelated old sibling.
+
+
+
+
                 boolean nativeLayerChanged = !changedContext
                         && "MAIN_MENU".equals(next.category) && snapshot != null
                         && !snapshot.nodes.isEmpty() && !next.nodes.isEmpty()
@@ -825,8 +825,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (pocketStage != 0 &&
                         (changedContext || next.find(pocketContainerId) == null
                          || (pocketStage == 3 && next.find(pocketCurrentId) == null))) {
-                    // A different native screen or disappearing container
-                    // invalidates the entire local draft without committing.
+
+
                     pocketStage = 0;
                     pocketCurrentId = "";
                     pocketContainerId = "";
@@ -840,9 +840,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || !next.focus.equals(snapshot.focus)
                             || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
-                // The game still runs ACT_AUTODRIVE, but publishes its reader
-                // as DEFAULTMODE; the semantic marker identifies the route,
-                // not the screen type. Keep the existing Drive gestures.
+
+
+
                 final boolean nativeAutodrive =
                         ("activity".equals(next.category) || "DEFAULTMODE".equals(next.category))
                         && next.find("activity:autodrive") != null;
@@ -854,13 +854,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (!nativeAutodrive && autonomousDriveTrip
                         && !"activity".equals(next.category)
                         && rawNativeTravelState() == 0) {
-                    // World/activity snapshots can alternate during an
-                    // active trip; retain Drive until native ends the route.
+
+
                     autonomousDriveTrip = false;
                     autonomousDriveCancelRequested = false;
                 }
-                // A vehicle may disappear or the character may dismount between
-                // snapshots. Never leave a stale driving mode armed on foot.
+
+
                 if ("DEFAULTMODE".equals(next.category)
                         && next.find("reader:vehicle:seat") == null && !autonomousDriveTrip) {
                     vehicleMode = false;
@@ -881,9 +881,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         });
                     }
                 }
-                // Actual engine state survives transient ignition/activity
-                // screens. An ignition may take multiple turns, so comparing
-                // only adjacent world snapshots would miss its success.
+
+
+
                 if ((vehicleMode || autonomousDriveTravelActive())
                         && ("DEFAULTMODE".equals(next.category)
                             || "activity".equals(next.category))) {
@@ -904,9 +904,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 if (pendingVehicleHeadingReport && "DEFAULTMODE".equals(next.category)) {
                     ReaderSnapshot.Node heading = next.find("reader:vehicle:heading");
-                    // Only the FIRST sentence is the actual body direction.
-                    // A changed warning suffix is not evidence that the
-                    // vehicle rotated. Physics may update a later snapshot.
+
+
+
                     String actualCompass = heading == null ? ""
                             : vehicleCompass(heading.detail);
                     if (!actualCompass.isEmpty()
@@ -920,20 +920,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             }
                         });
                     } else if (++pendingVehicleHeadingSnapshots >= 8) {
-                        // A rejected turn already produced a native warning.
-                        // Never read the old compass as a successful turn.
+
+
                         pendingVehicleHeadingReport = false;
                         vehicleHeadingBeforeCommand = "";
                     }
                 }
-                // Every native snapshot publishes the current game message
-                // history, even when the first screen after load is inventory.
-                // An empty history must clear the cache, not replay stale
-                // notifications from a previous snapshot.
+
+
+
+
                 if (object.has("recentMessages")) {
                     lastRecentMessages = object.optString("recentMessages");
                 } else {
-                    // Compatibility with older native snapshots.
+
                     ReaderSnapshot.Node recentMessages = next.find("world:messages");
                     if (recentMessages != null) {
                         lastRecentMessages = recentMessages.detail;
@@ -979,9 +979,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         pendingReaderLayer = "";
                         pendingReaderLayerRevisions = 0;
                     } else if (parent == null || ++pendingReaderLayerRevisions > 8) {
-                        // Publication may race ahead of the engine's actual
-                        // expand/tab intent. Never drop it after one stale
-                        // snapshot, but bound the pending focus request.
+
+
+
                         pendingReaderLayer = "";
                         pendingReaderLayerRevisions = 0;
                     }
@@ -998,7 +998,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus)
                          || TARGET_TOGGLE_NODE.equals(focus)
                          || TRAVEL_STATUS_NODE.equals(focus))) {
-                    // A screen update must not steal focus from an open command drawer.
+
                     readerLayerParent = "";
                 } else if (nativeLayerChanged) {
                     focus = next.find(next.focus) != null ? next.focus
@@ -1006,14 +1006,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (selectionChanged) {
                     focus = selectedItemFocus;
                 } else if (craftingNavigationCompleted) {
-                    // Category and page gestures must start on the selected
-                    // recipe of the NEW native list, not an old details field.
+
+
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                     craftingNavigationPending = false;
                 } else if (nearbyCategoryChanged) {
-                    // Even if the old target also exists in the new category
-                    // (notably when switching to All), start at item one.
+
+
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 } else if (changedContext) {
@@ -1027,22 +1027,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 || TRAVEL_STATUS_NODE.equals(focus)))
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
-                    // Changing a surroundings page always focuses its native
-                    // first/last entry. Other screens keep their usual
-                    // ancestor/sibling fallback.
+
+
+
                     focus = "surroundings".equals(next.category)
                             && next.find(next.focus) != null ? next.focus
                             : resolveFocusFallback(previousSnapshot, previous, next);
                 }
-                // The engine may initially focus a hidden command. Start on
-                // primary content instead of reading the long command tail.
+
+
                 ReaderSnapshot.Node focusedNode = next.find(focus);
                 if (!commandPaletteOpen && focusedNode != null
                         && isAuxiliaryCommand(focusedNode)
-                        // A focused direction command in a minigame
-                        // is a real control, not the command tail: keep the
-                        // focus there so the player can double-tap again to
-                        // keep moving in the same direction.
+
+
+
+
                         && !(isMinigameCategory(next.category)
                                 && isDirectionCommand(focusedNode))) {
                     List<ReaderSnapshot.Node> primary = visibleNodes();
@@ -1050,17 +1050,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         focus = primary.get(0).id;
                     }
                 }
-                // Re-entering targeting must start at the simplified eight
-                // directions, even if an old aiming cursor was remembered
-                // or a native selected-target event changed the focus.
+
+
+
                 if ("targeting".equals(next.category)
                         && next.find("target:fire-direction:0") != null
                         && !targetingOriginalControls
                         && !focus.startsWith("target:fire-direction:")) {
                     focus = "target:fire-direction:0";
                 }
-                // Start on the first real character fact rather than a tab
-                // that contains no information in the flattened reader list.
+
+
                 if ("player_display".equals(next.category) && !commandPaletteOpen) {
                     List<ReaderSnapshot.Node> readable = visibleNodes();
                     if (!readable.isEmpty()) {
@@ -1076,33 +1076,33 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 ReaderSnapshot.Node currentFocus = next.find(focus);
                 if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
-                    // The engine may open a new tree branch directly, or
-                    // select a new child after a modal changes state.
-                    // Inventory pocket browsing is the exception: swiping
-                    // onto a pocket-content row must not trap the reader
-                    // inside that pocket's own child layer.
+
+
+
+
+
                     if (!isFlattenedPocketEntry(currentFocus)) {
                         readerLayerParent = currentFocus.parentId;
                     }
                 }
                 if (changedContext) {
-                    // The game context now determines the gesture focus.
-                    // A mode change kills any gesture still in flight
-                    // (R05.3): the surface owner string also changes with
-                    // the context, and cancelling here makes the kill
-                    // explicit instead of relying on that check alone.
+
+
+
+
+
                     root.cancelGesture();
                     editor = null;
                     editorRequest = 0;
                     formRequest = 0;
-                    // Document sessions are per screen context (R04.4);
-                    // the saved position is kept for a later visit.
+
+
                     documentReader.clear();
                 }
-                // Opening a recipe detail pane does not change the native
-                // "crafting" context. Detect the new intro node explicitly
-                // so its actual description speaks without a two-finger tap.
-                // Returning from the batch-size chooser must stay silent.
+
+
+
+
                 boolean enteredCraftRecipeDetail = "crafting".equals(next.category)
                         && next.find("craft:detail:intro") != null
                         && (previousSnapshot == null
@@ -1119,8 +1119,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && debugReport == null);
                 if (comprehensiveMenu) {
                     if (!worldView) {
-                        // A native modal supersedes the action hub; never
-                        // keep stale commands over a different game screen.
+
+
                         comprehensiveMenu = false;
                         choosingGesture = false;
                         bindingItem = null;
@@ -1131,19 +1131,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         return;
                     }
                 }
-                // Ordinary floor-to-floor footsteps are silent. A newly
-                // entered notable tile speaks its observed objects or hazards.
-                // Position matters: two adjacent floor tiles holding the same
-                // item must each announce when the avatar enters them.
+
+
+
+
                 ReaderSnapshot.Node previousPosition = previousSnapshot == null ? null
                         : previousSnapshot.find("world:tile_position");
                 ReaderSnapshot.Node nextPosition = next.find("world:tile_position");
                 boolean steppedToAnotherTile = previousPosition != null && nextPosition != null
                         && !previousPosition.value.equals(nextPosition.value);
-                // Driving is silent in BOTH Automatic and Manual mode.
-                // The occupied vehicle and roadside terrain are refreshed
-                // every tick, but are not new speech events. Genuine hazard
-                // warnings still enter through the native message channel.
+
+
+
+
                 boolean newlyNoteworthy = worldView && !vehicleMode && previousTile != null
                         && "alert".equals(nextTile.role)
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
@@ -1161,9 +1161,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                     return;
                 }
-                // Autonomous Explore Places stays in the normal, transparent
-                // Drive view. Travel status changes may be consulted through
-                // gestures but must not hijack focus or display a modal.
+
+
+
                 announcedTravelState = activeTravel;
                 render();
                 if (worldView) {
@@ -1178,12 +1178,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             + " ui_update_ms=" + (SystemClock.elapsedRealtime() - parsedAt)
                             + " nodes=" + next.nodes.size());
                 }
-                // A summary that changed while the context and the
-                // focus stayed the same is new information (a minigame move,
-                // win or loss; a new Source/Destination; a new armor tab).
-                // Only read it when it really changed, so a repeatedly
-                // published game-over summary is spoken once, and never
-                // while a document or the command palette owns the swipes.
+
+
+
+
+
+
                 boolean summaryChanged = !changedContext && previousSnapshot != null
                         && readsSummaryOnChange(next.category)
                         && !next.summary.trim().isEmpty()
@@ -1194,9 +1194,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredCraftRecipeDetail
                         && next.find("craft:detail:name") != null) {
-                    // Speak name + actual description exactly once on entry.
-                    // Keep the name focused, so normal left/right swipes,
-                    // Cancel, quantity, and Craft remain unchanged.
+
+
+
                     ReaderSnapshot.Node title = next.find("craft:detail:name");
                     ReaderSnapshot.Node intro = next.find("craft:detail:intro");
                     StringBuilder introduction = new StringBuilder(nodeText(title, false));
@@ -1210,8 +1210,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (enteredMenu && "SCROLLABLE_TEXT".equals(next.category)
                         && next.find(focus) != null
                         && "document".equals(next.find(focus).role)) {
-                    // Narrative screens such as "Your followers" should not
-                    // speak only their title and wait for a hidden activation.
+
+
                     ReaderSnapshot.Node document = next.find(focus);
                     speakDocument(next.title + ". " + documentReader.open(
                             next.contextKey(), document.id, document.detail));
@@ -1220,37 +1220,37 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     feedback(next.summary.trim() + ". " + nodeText(next.find(focus), false));
                 } else if ("surroundings".equals(next.category)
                         && (enteredMenu || nearbyCategoryChanged)) {
-                    // Announce the active category and its *total* number
-                    // of entries once, not the first item's name. Horizontal
-                    // browsing speaks entries with direction and distance.
+
+
+
                     feedback((enteredMenu ? next.title + ". " : "") + next.summary);
                 } else if (enteredMenu && "player_display".equals(next.category)
                         && next.find(focus) != null) {
-                    // Speak the first real character fact in full on entry.
+
                     readCurrent();
                 } else if (enteredMenu && next.find(focus) != null) {
-                    // Yes/No questions carry their own text. Speak it once
-                    // on entering the modal, then only the actual choice
-                    // and position for subsequent swipes; never prepend the
-                    // generic "Dialog" label or a keyboard case hint.
+
+
+
+
                     boolean yesNo = "YESNO".equals(next.category)
                             || "YESNOQUIT".equals(next.category);
                     String introduction = yesNo ? next.summary.trim() : next.title;
-                    // Places intentionally starts speaking at the first actual
-                    // destination: no title, preamble, or item counter.
+
+
                     if (next.category.startsWith("character-creator-step-")
                             || "CHARACTER_CREATION".equals(next.category)) {
-                        // A creator step has a deliberately short introduction;
-                        // the first choice is read when the player browses it.
-                        // On the summary tab (CHARACTER_CREATION)
-                        // the snapshot.summary ("Character: … Scenario: …
-                        // Profession: …") was never spoken on entry because
-                        // only the title was read. The C++ side currently
-                        // appends the summary to the title as a bridge, so
-                        // speak it as well only when the title does not
-                        // already contain it: the line is heard exactly
-                        // once either way, and stays heard if the C++
-                        // bridge is ever removed.
+
+
+
+
+
+
+
+
+
+
+
                         String creatorIntroduction = introduction;
                         if ("CHARACTER_CREATION".equals(next.category)
                                 && !next.summary.trim().isEmpty()
@@ -1269,18 +1269,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (selectionChanged) {
                     readCurrent();
                 } else if (summaryChanged) {
-                    // The summary itself is the
-                    // feedback for this update; reading the focused row
-                    // instead would repeat its old label. Blocked moves and
-                    // level wins keep their own C++ announces, which say
-                    // something different and arrive first.
+
+
+
+
+
                     feedback(next.summary.trim());
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
                     readCurrent();
                 }
-                // A requested linked document must match the selection on
-                // the newly published native snapshot. Do not read a previous
-                // mission/recipe after a fast swipe followed by two fingers.
+
+
+
                 if (!pendingLinkedDetail.isEmpty() && snapshot != null
                         && pendingLinkedDetailContext.equals(snapshot.contextKey())
                         && pendingLinkedDetail.equals(focus)) {
@@ -1311,9 +1311,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void announceGameMessage(String text, int priority, boolean immediate) {
-        // Framed long documents are assembled on the UI thread, before they
-        // enter ReaderSpeechQueue (MAX_PENDING=8). Never silently discard
-        // early chunks when a long book/item description is requested.
+
+
+
         if (text == null || text.trim().isEmpty()
                 || (text.length() > 16000 && !text.startsWith("A11Y_DETAIL:"))) {
             return;
@@ -1339,9 +1339,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 : autodriveEnd ? message.substring(AUTODRIVE_END_PREFIX.length())
                 : areaChange ? message.substring(AREA_PREFIX.length())
                 : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
-        // During movement, generating a new map area can emit this repeatedly.
-        // Keep the actual map generation and all other gameplay messages;
-        // do not let this one sentence enter the buffered or spoken FIFO.
+
+
+
         if ("Đang tạo khu vực bản đồ mới. Vui lòng chờ.".equals(spokenMessage)
                 || "Generating a new map area. Please wait.".equals(spokenMessage)) {
             SessionDebugLog.event("MAPGEN_SPEECH_SUPPRESSED", "movement_mapgen_notice");
@@ -1349,8 +1349,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
-        // Native callbacks can be posted just before the next touch. The
-        // previous item's message must not reappear after the new gesture.
+
+
         final long receivedActionEpoch = speechActionEpoch.get();
         Runnable deliver = () -> {
             if (receivedActionEpoch != speechActionEpoch.get()) {
@@ -1360,10 +1360,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
                 return;
             }
-            // A moving car must be as quiet as walking on an empty floor,
-            // regardless of whether Manual or Automatic is selected. Only
-            // real urgent game warnings are spoken without being requested;
-            // gesture-initiated scans and details still work on demand.
+
+
+
+
             if (snapshot != null &&
                     ((vehicleMode && "DEFAULTMODE".equals(snapshot.category))
                      || (travelState() != 0 && "activity".equals(snapshot.category)))
@@ -1415,19 +1415,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             if (!loading && (snapshot == null
                     || (combatAlert && !"DEFAULTMODE".equals(snapshot.category)))) {
-                // A combat failure produced in targeting must wait until
-                // the world reappears before speaking. Do not lose it to
-                // the immediate modal-to-world context change.
-                // An action intentionally publishes an inactive snapshot
-                // while the native command executes. In the supplied log,
-                // "Nothing to open here" arrived in exactly this gap.
+
+
+
+
+
+
                 pendingGameMessages.addLast(new BufferedGameMessage(message, priority));
                 SessionDebugLog.event("GAME_MESSAGE_BUFFERED", "text=" + message);
                 return;
             }
             if (loading) {
-                // This is a temporary progress notification, not a game node.
-                // It must be audible precisely when the old screen is inactive.
+
+
                 lastLoadingStatus = spokenMessage;
                         String statusText = activity.getString(R.string.a11yLoadingStatus, spokenMessage);
                 if (usesTouchExploration()) {
@@ -1446,30 +1446,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
             } else if (userQuery) {
-                // The user explicitly requested current location: speak now
-                // and replace an older query instead of queuing stale places.
+
+
                 speech.focus("user-requested-location", spokenMessage);
             } else if (areaChange) {
-                // Low-priority, short-lived and coalesced by a stable key.
-                // Never queue a backlog of map areas after fast driving.
+
+
                 speech.say("driving-named-area", spokenMessage,
                         ReaderSpeechQueue.INFORMATION, 6000L);
             } else if (requestedDetail) {
-                // Two fingers request speech, not a new navigation mode.
-                // ReaderSpeechQueue chunks this ONE request internally,
-                // so the whole item description can be heard without
-                // changing the focused row or requiring an extra Back.
+
+
+
+
                 speakInlineDetail(spokenMessage);
             } else if (extendedScan) {
-                // Reading sixteen unrestricted map cells may outlive the
-                // eight-second event TTL; use the document-length channel.
+
+
                 speech.say("world-scan:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
                         spokenMessage, ReaderSpeechQueue.LONG_TEXT);
             } else {
-                // Native game announcements are read in strict arrival order
-                // by ReaderSpeechQueue. No newer hit, sound, status or
-                // reload message may interrupt an older game announcement.
-                // The priority value is retained only for diagnostics.
+
+
+
+
                 final int messageLevel = level == ReaderSpeechQueue.URGENT
                         ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.GAME_EVENT;
                 SessionDebugLog.event("GAME_MESSAGE_POLICY", "priority=" + messageLevel
@@ -1479,16 +1479,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
         };
         if (immediate) {
-            // Snapshot callbacks already run on the UI looper. Replaying an
-            // older buffered event by posting a SECOND runnable lets a new
-            // native event overtake it. Dispatch synchronously to the FIFO.
+
+
+
             deliver.run();
         } else {
             handler.post(deliver);
         }
     }
 
-    /** Per-ray native callback; only the UI looper touches SoundPool. */
+
     public void onDirectionalSonarTargets(int[] creatures, int[] items) {
         handler.post(() -> {
             if (closed) {
@@ -1504,18 +1504,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         });
     }
 
-    /** A rejected intent: counted, then cued (R21.2/R21.4). */
+
     private void playRejectedCue() {
         ReaderDiagnostics.get().count("cue_rejected");
         cues.play(ReaderCuePlayer.REJECTED);
     }
 
-    /**
-     * Cue entry point from the engine (R21.2), called through
-     * CataclysmDDA.onAccessibilityCue. The name is one of the internal
-     * ReaderCuePlayer literals; the cue duplicates a signal that is
-     * also spoken, and the player itself checks the user's opt-in.
-     */
+
+
+
+
+
+
     public void onGameCue(String name) {
         if (closed || !foreground || !preferences.isEnabled() || name == null) {
             return;
@@ -1536,12 +1536,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 + ":" + object.optString("generation"));
     }
 
-    /**
-     * Where focus goes when the focused node disappears from a new snapshot
-     * of the same screen: nearest surviving ancestor in the tree, then the
-     * nearest surviving sibling under the same parent, then the snapshot
-     * default (R02.1).
-     */
+
+
+
+
+
+
     private static String resolveFocusFallback(ReaderSnapshot oldSnapshot, String oldFocus,
                                                ReaderSnapshot next) {
         if (oldSnapshot != null) {
@@ -1574,12 +1574,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private String nodeText(ReaderSnapshot.Node node, boolean includeDetail) {
         StringBuilder text = new StringBuilder(node.label);
-        // A semantic value identical to its label adds no information.
+
         if (!node.value.isEmpty() && !node.value.equals(node.label)) {
             text.append(". ").append(node.value);
         }
-        // Inventory quantity rows already say how many are selected. Adding
-        // "checked/unchecked" repeats the same fact on every swipe.
+
+
         boolean quantityRow = snapshot != null && "inventory".equals(snapshot.category)
                 && "checkbox".equals(node.role) && !node.fieldType.isEmpty();
         if (!quantityRow) {
@@ -1588,30 +1588,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 text.append(". ").append(activity.getString(R.string.a11yUnchecked));
             }
         }
-        // Selection is already represented by focus. Do not say "selected"
-        // on every swipe; the full state is still available on Detail.
+
+
         if (includeDetail && node.selected) {
             text.append(". ").append(activity.getString(R.string.a11ySelected));
         }
-        // Read the position on every focus move, not only on Detail.
-        // Nearby entries may have the same label (e.g. two distinct doors),
-        // and their 1/2, 2/2 markers prevent an endless-list impression.
+
+
+
         int spokenPosition = node.position;
         int spokenTotal = node.total;
-        // Minigame snapshots assign position/total over every
-        // node, including commands hidden behind long press, so the C++
-        // numbers count rows the player can never swipe to. Recompute
-        // from the swipe list instead, so the spoken position always
-        // matches what swiping reaches (status rows plus the direction
-        // commands now kept in the list).
+
+
+
+
+
+
         boolean minigamePositions = snapshot != null
                 && isMinigameCategory(snapshot.category);
         if (minigamePositions) {
             spokenPosition = 0;
             spokenTotal = 0;
         }
-        // Speak positions within the correct axis: main items horizontally,
-        // pocket entries vertically inside the selected top-level item.
+
+
         boolean inventoryPositions = flattenedInventoryBrowse();
         boolean characterDetailPositions = snapshot != null
                 && "player_display".equals(snapshot.category);
@@ -1640,8 +1640,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
             }
         }
-        // Expose the actual control type, in addition to the value and position.
-        // The live world cursor is descriptive, not a menu button.
+
+
         int roleLabel = 0;
         if (!"DEFAULTMODE".equals(snapshot == null ? "" : snapshot.category)) {
             if ("checkbox".equals(node.role)) {
@@ -1666,8 +1666,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             text.append(". ").append(node.disabledReason.isEmpty()
                     ? activity.getString(R.string.a11yReaderDisabledEntry) : node.disabledReason);
         }
-        // Tree state (R02.1): position/total already count the sibling set
-        // for tree nodes, so only the level and the expansion state are new.
+
+
         if (node.depth >= 0 && node.hasChildren) {
             text.append(". ").append(activity.getString(node.expanded
                     ? R.string.a11yTreeExpanded : R.string.a11yTreeCollapsed));
@@ -1675,8 +1675,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (includeDetail && node.depth >= 0) {
             text.append(". ").append(activity.getString(R.string.a11yTreeLevel, node.depth + 1));
         }
-        // Table row (R02.2): read the cells under their column headers. A
-        // cell that repeats the row label or is empty adds nothing.
+
+
         if (!node.tableId.isEmpty() && snapshot != null) {
             ReaderSnapshot.Table table = snapshot.table(node.tableId);
             for (ReaderSnapshot.Cell cell : node.cells) {
@@ -1692,8 +1692,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (!unit.isEmpty()) { text.append(' ').append(unit); }
             }
         }
-        // Form state (R02.3): a pending draft and a field error are always
-        // spoken; the choice list is detail-only.
+
+
         if (node.hasDraft) {
             text.append(". ").append(activity.getString(R.string.a11yFormDraftValue,
                     displayRawValue(node, node.draftValue)));
@@ -1711,8 +1711,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             text.append(". ").append(activity.getString(R.string.a11yFormChoices,
                     choices.toString()));
         }
-        // Numeric domain (R04.2): the range and step are detail-level
-        // facts of a field, spoken on request, not on every focus move.
+
+
         if (includeDetail && node.hasFieldRange) {
             text.append(". ").append(activity.getString(R.string.a11yEditorRange,
                     displayRawValue(node, formatRawNumber(node.fieldMin)),
@@ -1737,7 +1737,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
-    /** Display text for a raw form value: the choice label when there is one. */
+
     private static String displayRawValue(ReaderSnapshot.Node node, String raw) {
         ReaderSnapshot.Choice choice = node.choiceFor(raw);
         return choice != null && !choice.label.isEmpty() ? choice.label : raw;
@@ -1774,42 +1774,42 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return null;
     }
 
-    /** Minigame screens: their screen_scope category is the
-     * game id, not an input-context id. */
+
+
     private static boolean isMinigameCategory(String category) {
         return "robot-finds-kitten".equals(category) || "snake".equals(category)
                 || "sokoban".equals(category) || "lightson".equals(category);
     }
 
-    /**
-     * Screens whose summary is the event itself: a minigame
-     * summary changes after every move and on win/lose, an
-     * advanced-inventory summary carries the new Source/Destination,
-     * and an armor-layers summary is the new tab name. Other screens
-     * keep their existing behaviour: the calendar summary would repeat
-     * the old/new date already spoken from the focused row's value,
-     * and dialogue already announces the spoken line as a game event.
-     */
+
+
+
+
+
+
+
+
+
     private static boolean readsSummaryOnChange(String category) {
         return isMinigameCategory(category)
                 || "advanced-inventory".equals(category)
                 || "armor-layers".equals(category);
     }
 
-    /** Only auxiliary screen controls go into the hold menu, never dialogue choices. */
+
     private static boolean isAuxiliaryCommand(ReaderSnapshot.Node node) {
         return "command".equals(node.role) || node.id.startsWith("group:")
                 || node.id.startsWith("action:") || node.id.startsWith("category:")
                 || "filter".equals(node.id) || "filter:clear".equals(node.id);
     }
 
-    /**
-     * A direction command of a minigame (node id is the action
-     * id from a11y::command_snapshot, e.g. "UP"). Directions are the
-     * controls the player uses on every move, so in minigames they stay
-     * in the swipe list instead of hiding behind long press. Every other
-     * auxiliary command still hides behind long press.
-     */
+
+
+
+
+
+
+
     private static boolean isDirectionCommand(ReaderSnapshot.Node node) {
         if (!"command".equals(node.role)) { return false; }
         switch (node.id) {
@@ -1856,7 +1856,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private String pocketItemSpeech(ReaderSnapshot.Node node, int position, int total) {
         if (!pocketAllowsSelection()) {
-            // Ordinary Inventory is a read-only browse, not a pickup draft.
+
             String detail = node.detail.isEmpty() || node.detail.equals(node.label)
                     ? "" : ". " + node.detail;
             return node.label + detail + ". "
@@ -1924,16 +1924,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (announce) { readCurrent(); }
     }
 
-    /**
-     * Cancelling item selection goes back one level, to the
-     * pocket list (stage 2), instead of leaving the picker entirely,
-     * so the player can pick another pocket without reopening from the
-     * start. Only when there is a list to return to: with a single
-     * pocket the list would immediately reopen the same pocket, so
-     * exiting is still the right outcome. Uncommitted amounts for the
-     * abandoned pocket are dropped, like a full reset. Back uses the
-     * same rollback as Cancel.
-     */
+
+
+
+
+
+
+
+
+
+
     private void cancelPocketPicker() {
         if (pocketStage == 3 && pocketNodes(pocketContainerId).size() > 1) {
             String pocket = pocketCurrentId;
@@ -2076,9 +2076,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             resetPocketPicker(true);
             return;
         }
-        // The native inbox validates every entry and its live item/pocket
-        // before applying any part of this batch. No item is moved here;
-        // ordinary outer CONFIRM still performs the pickup.
+
+
+
         String previous = focus;
         focus = pocketCurrentId;
         long request = send("set_value", payload.toString());
@@ -2116,9 +2116,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             ReaderSnapshot.Node item = snapshot == null ? null : snapshot.find(focus);
             if (item == null) { return; }
             if (!pocketAllowsSelection()) {
-                // Inventory pocket entries publish an activate action only
-                // when their live item_location can open the normal item menu.
-                // Other contexts remain informational as before.
+
+
+
                 if (item.enabled && item.actions.contains("activate")) {
                     send("activate", "");
                 } else {
@@ -2136,15 +2136,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /**
-     * Double-tap on a flat-browsed pickup pocket row. A single unit
-     * toggles at once; a stack opens the quantity editor. Both commit
-     * immediately to the parent "pocket:" row, exactly like a top-level
-     * pickup row commits to its own row, and unlike the staged picker,
-     * which holds drafts until Confirm. The refreshed snapshot re-reads
-     * this row with its new amount (the int field's appliedValue
-     * changed), so no extra announcement is needed here.
-     */
+
+
+
+
+
+
+
+
+
     private void activateFlatPickupPocketEntry(ReaderSnapshot.Node item) {
         ReaderSnapshot.Node pocket = pickupPocketParent(item);
         if (pocket == null) {
@@ -2158,10 +2158,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** Commit one flat pickup pocket row through its parent pocket.
-     *  The native inbox validates the entry against the live pocket
-     *  before applying it; entries not mentioned keep their amounts,
-     *  so a single-row payload never disturbs other selections. */
+
+
+
+
     private void commitFlatPickupAmount(ReaderSnapshot.Node item, ReaderSnapshot.Node pocket,
             int amount) {
         if (snapshot == null || amount < 0 || amount > item.fieldMax) {
@@ -2177,12 +2177,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** Quantity editor for a flat-browsed pickup pocket row. It mirrors
-     *  the staged picker's editor (immediate commit, TalkBack number
-     *  entry by design) but submits to the parent "pocket:" row, the
-     *  only node the native side accepts a pocket set_value on. The
-     *  parent is re-resolved from the fresh snapshot on submit, never
-     *  kept from when the editor opened. */
+
+
+
+
+
+
     private void openFlatPickupQuantityEditor(ReaderSnapshot.Node item) {
         final String itemId = item.id;
         formContext = snapshot.contextKey();
@@ -2244,8 +2244,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (pocketStage == 3 && POCKET_CONFIRM_NODE.equals(focus)) {
                 index = choices.size();
             } else if (pocketStage == 3 && POCKET_CANCEL_NODE.equals(focus)) {
-                // Read-only pockets have no Confirm row. Their Cancel row
-                // follows the items immediately, not an invisible button.
+
+
                 index = choices.size() + (pocketAllowsSelection() ? 1 : 0);
             } else {
                 for (int i = 0; i < choices.size(); i++) {
@@ -2347,8 +2347,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void openGlobalContextActions() {
         if (snapshot == null || gestureGuideOpen) { return; }
-        // Every native semantic screen gets at least the guide row, even
-        // if its adapter currently publishes no extra commands.
+
+
         List<ReaderSnapshot.Node> commands = contextualCommands();
         if (directWorldGesturesEnabled()) {
             CataclysmDDA.nativeCancelPendingWorldSteps();
@@ -2380,41 +2380,41 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             if ("targeting".equals(snapshot.category) &&
                     snapshot.find("target:fire-direction:0") != null) {
-                // Preserve the former long-press toggle, now first accessible
-                // as an action alongside the final gesture-help item.
+
+
                 result.add(ReaderSnapshot.Node.localCommand(TARGET_TOGGLE_NODE,
                         activity.getString(targetingOriginalControls
                                 ? R.string.a11yTargetDirections
                                 : R.string.a11yTargetOriginalControls)));
             }
-            // Always the final action. No native node or saved binding
-            // can replace this local-only, read-only help entry.
+
+
             result.add(ReaderSnapshot.Node.gestureGuide(
                     activity.getString(R.string.a11yGestureGuideTitle)));
         }
         return result;
     }
 
-    /** True while inventory items use distinct horizontal and vertical axes: the
-     *  pocket picker is closed and no tree layer is entered. */
+
+
     private boolean flattenedInventoryBrowse() {
         return snapshot != null && "inventory".equals(snapshot.category)
                 && pocketStage == 0 && readerLayerParent.isEmpty() && !commandPaletteOpen;
     }
 
-    /** A pocket-content row reached by flat inventory browsing: its
-     *  parent is a "pocket:" status row, never a list of its own. */
+
+
     private boolean isFlattenedPocketEntry(ReaderSnapshot.Node node) {
         return node != null && node.id.startsWith("pocket-entry:")
                 && (!"checkbox".equals(node.role) || pickupPocketParent(node) != null)
                 && flattenedInventoryBrowse();
     }
 
-    /** The "pocket:" parent of a pickup pocket-entry row, or null.
-     *  Only pickup publishes checkbox pocket rows, and only there does
-     *  the parent accept the atomic set_value commit that selects
-     *  pocket contents. Ordinary-inventory pocket rows are buttons
-     *  whose parent has no set_value action, so they never match. */
+
+
+
+
+
     private ReaderSnapshot.Node pickupPocketParent(ReaderSnapshot.Node node) {
         if (snapshot == null || node == null || !node.id.startsWith("pocket-entry:")) {
             return null;
@@ -2424,23 +2424,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 && parent.actions.contains("set_value") ? parent : null;
     }
 
-    /** A pickup pocket-content row in the flat swipe list: a checkbox
-     *  "pocket-entry:" row whose parent "pocket:" row accepts the
-     *  atomic set_value commit. Unlike the staged picker's drafts,
-     *  which are committed together on Confirm, a flat row commits
-     *  immediately on double-tap, exactly like a top-level pickup row. */
+
+
+
+
+
     private boolean isFlatPickupPocketEntry(ReaderSnapshot.Node node) {
         return node != null && "checkbox".equals(node.role)
                 && pickupPocketParent(node) != null && flattenedInventoryBrowse();
     }
 
-    /** Pocket contents of one inventory item, flattened in snapshot
-     *  order: every "pocket-entry:" descendant of the item, across all
-     *  of its pockets and nested containers, skipping the "pocket:"
-     *  status rows themselves. A pickup checkbox row joins the list
-     *  only when its parent "pocket:" row accepts the atomic set_value
-     *  commit, so double-tap can select it; any other checkbox row
-     *  stays out, and the staged picker itself is untouched. */
+
+
+
+
+
+
+
     private List<ReaderSnapshot.Node> flattenedPocketContents(String itemId) {
         ArrayList<ReaderSnapshot.Node> contents = new ArrayList<>();
         if (snapshot == null) { return contents; }
@@ -2461,7 +2461,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return contents;
     }
 
-    /** Resolve a vertically focused pocket entry back to its root item. */
+
     private ReaderSnapshot.Node inventoryRootItem(ReaderSnapshot.Node node) {
         if (snapshot == null) { return null; }
         for (int steps = 0; node != null && !node.parentId.isEmpty()
@@ -2472,9 +2472,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 && node.id.startsWith("item:") ? node : null;
     }
 
-    /** Horizontal swipes visit top-level inventory/pickup rows; vertical
-     *  swipes visit the focused container's contents, including nested
-     *  pockets. Double-tap continues to select or open the quantity editor. */
+
+
+
     @Override
     public boolean handleInventoryAxisSwipe(int horizontal, int vertical) {
         if (!flattenedInventoryBrowse() || comprehensiveMenu || editor != null
@@ -2517,7 +2517,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (snapshot == null) { return result; }
         if (commandPaletteOpen) { return contextualCommands(); }
         for (ReaderSnapshot.Node node : snapshot.nodes) {
-            // Group 2 capability markers must not appear as world rows.
+
             if (node.id.startsWith("reader:nearby:available:")
                     || "activity:autodrive".equals(node.id)) { continue; }
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
@@ -2529,23 +2529,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     && !"target:auto-reload".equals(node.id));
             return result;
         }
-        // Look-around is itself a cursor-control dialog. Hiding every
-        // command behind long press leaves only the read-only cursor and
-        // makes every swipe repeat "1 of 36". Keep its controls navigable,
-        // especially its dedicated return-to-map action.
+
+
+
+
         if ("look-around".equals(snapshot.category)) { return result; }
-        // Command-only screens keep their complete list. A mixed screen
-        // announces primary content first and moves all commands to long press.
+
+
         boolean containsContent = false;
         for (ReaderSnapshot.Node node : result) {
             if (!isAuxiliaryCommand(node)) { containsContent = true; break; }
         }
         if (containsContent) {
-            // In minigames the direction commands are the
-            // controls the player uses on every move; keep them in the
-            // swipe list (double-tap to move) instead of hiding them
-            // behind long press. Every other command stays behind
-            // long press, as on every other mixed screen.
+
+
+
+
+
             if (isMinigameCategory(snapshot.category)) {
                 result.removeIf(node -> isAuxiliaryCommand(node) && !isDirectionCommand(node));
             } else {
@@ -2556,16 +2556,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 || "inventory".equals(snapshot.category)
                 || "zones".equals(snapshot.category)
                 || "surroundings".equals(snapshot.category)) {
-            // Content-first screens must not become a command palette during
-            // an empty/early snapshot. Native adapters publish an explicit
-            // empty-state item; auxiliary commands stay behind long press.
+
+
+
             result.clear();
         }
         if ("player_display".equals(snapshot.category)) {
-            // All character facts exist as independent documents and rows.
-            // The tab selectors and skill-group headings provide no new
-            // facts or useful actions in this flattened reader list.
-            // Keep the original native tabs and context commands intact.
+
+
+
+
             result.removeIf(node -> "tab".equals(node.role)
                     || node.id.startsWith("pd:skill:category:")
                     || ("status".equals(node.role)
@@ -2582,20 +2582,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (closed) { return; }
         if (gestureGuideOpen) { closeGestureGuide(); return; }
         if (debugReport != null || editor != null || snapshot == null) {
-            // Safe fallback for debug prompts, text fields and loading
-            // screens that do not own a native contextual action list.
+
+
             openGestureGuide();
             return;
         }
         if (pocketStage != 0) {
-            // Never discard a pending item/pocket draft just to read help.
+
             openGestureGuide();
             return;
         }
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             if (choosingGesture || choosingHubAction) {
-                // An item-picker submenu does not have another action drawer.
+
                 openGestureGuide();
             } else {
                 showHubActionChoices();
@@ -2607,8 +2607,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (autonomousDriveTravelActive()) {
-            // The same native menu exists while ACT_AUTODRIVE owns gameplay.
-            // It already ends with the context-sensitive gesture guide.
+
+
             if (snapshot.find("control_vehicle") != null) {
                 requestAutonomousRead("control_vehicle");
             } else {
@@ -2617,11 +2617,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (vehicleMode && directWorldGesturesEnabled()) {
-            // Drive-mode hold opens the real native vehicle interaction menu,
-            // not the global action hub or an extra simulated overlay.
+
+
             if (!vehicleDriverReady()) {
-                // A passenger still needs help even though driving controls
-                // are unavailable. Never bypass the native driver gate.
+
+
                 openGlobalContextActions();
                 return;
             }
@@ -2635,15 +2635,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (combatMode && directWorldGesturesEnabled()) {
-            // Long press opens the existing combat menu with the aiming
-            // mode switch as its first row, not an extra modal overlay.
+
+
             openHubSection(GameActionHub.COMBAT);
             return;
         }
         if (snapshot != null && "targeting".equals(snapshot.category)
                 && snapshot.find("target:fire-direction:0") != null) {
-            // Former hold-to-toggle is retained as the first local action;
-            // gesture help is added after the original actions.
+
+
             openGlobalContextActions();
             return;
         }
@@ -2652,10 +2652,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             openGlobalContextActions();
             return;
         }
-        // Map holds now open the same contextual drawer as native menus;
-        // the guide is its final item and never triggers a movement step.
-        // Long-press on an inventory item opens a local action list with
-        // "Open pocket", leaving double-tap reserved for selecting the item.
+
+
+
+
         ReaderSnapshot.Node focused = snapshot.find(focus);
         if ("inventory".equals(snapshot.category) && focused != null
                 && ("checkbox".equals(focused.role) || "button".equals(focused.role))
@@ -2694,10 +2694,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void openGestureGuide() {
-        // The final help row of the combat menu must explain actual COMBAT
-        // gestures, not the left/right navigation of the menu that opened
-        // it. Keep ordinary menu help for other sections and submenus.
-        // This remains a read-only local guide; opening it never attacks.
+
+
+
+
         boolean guideForCombat = combatMode && comprehensiveMenu
                 && hubSection == GameActionHub.COMBAT && !choosingGesture
                 && !choosingHubAction && snapshot != null
@@ -2733,8 +2733,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void renderGuideButton() {
-        // Native text fields and other widgets may consume the long hold.
-        // An explicit final action makes help available with TalkBack too.
+
+
         Button guide = new Button(activity);
         guide.setText(R.string.a11yGestureGuideTitle);
         guide.setOnClickListener(view -> openGestureGuide());
@@ -2775,7 +2775,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             row.setOnClickListener(view -> {
                 if (!gestureGuideOpen) { return; }
                 gestureGuideIndex = index;
-                // A double tap on help NEVER triggers the listed action.
+
                 readCurrent();
             });
             rows.addView(row);
@@ -2806,7 +2806,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return true;
     }
 
-    /** Close one child layer, or defer to its owning native modal. */
+
     private boolean backReaderLayer() {
         if (!readerLayerParent.isEmpty() && snapshot != null) {
             ReaderSnapshot.Node parent = snapshot.find(readerLayerParent);
@@ -2894,7 +2894,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private boolean walkingTravelPanelActive() {
-        // The automatic car owns the Drive gestures, not the walking trip UI.
+
         return !autonomousDriveTrip && !vehicleMode && travelState() != 0;
     }
 
@@ -2920,8 +2920,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     : index == 1 ? R.string.a11yTravelResume
                     : R.string.a11yTravelCancel;
         }
-        // Obstacle-blocked auto driving does not expose Ignore. Only a
-        // deliberate retry when the path has cleared, or Cancel, is safe.
+
+
         return index == 0 ? (state == 2 || state == 4
                 ? R.string.a11yTravelResume : R.string.a11yTravelPause)
                 : R.string.a11yTravelCancel;
@@ -2953,9 +2953,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 SessionDebugLog.event("TRAVEL_CONTROL",
                         "command=" + command + " from_state=" + state);
                 if (command == 3 && autonomousDriveTrip) {
-                    // Cancel in the trip panel has the same meaning as
-                    // switching Drive -> Map. Native releases controls only
-                    // after the actual car has finished braking.
+
+
+
                     autonomousDriveCancelRequested = true;
                     vehicleMode = false;
                     combatMode = false;
@@ -3060,7 +3060,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             renderGuideButton();
             return;
         }
-        // Native text entry is still needed for character names and game fields.
+
         if (editor != null) {
             root.setBackgroundColor(0xff161616);
             rows.addView(editor.getView());
@@ -3077,14 +3077,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (walkingTravelPanelActive()
                    && snapshot != null && !"overmap".equals(snapshot.category)
                    && !"look-around".equals(snapshot.category)) {
-            // Walking auto-travel retains its older controls. The Explore
-            // Places vehicle never renders this full-screen panel.
+
+
             root.setBackgroundColor(0xff161616);
             renderTravelPanel(travelState());
         } else {
             root.setBackgroundColor(android.graphics.Color.TRANSPARENT);
-            // Touch exploration lets TalkBack intercept multi-finger gestures.
-            // Offer the same actions as explicit native accessibility buttons.
+
+
             if (usesTouchExploration() && snapshot != null && !directWorldGesturesEnabled()) {
                 Button commands = new Button(activity);
                 commands.setText(R.string.a11yContextCommands);
@@ -3110,12 +3110,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /**
-     * A recognized gesture is a hard speech boundary. Passive game events
-     * keep their original FIFO while the user does nothing; a new action
-     * immediately interrupts the current utterance and discards the old
-     * action's pending messages. Its new feedback can speak right away.
-     */
+
+
+
+
+
+
     @Override
     public void onUserAction() {
         if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
@@ -3164,9 +3164,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void pauseOrResumeAutonomousDrive() {
         if (!autonomousDriveTravelActive()) { return; }
         int state = travelState();
-        // A double-tap may request a retry for either a paused route or
-        // an enemy warning. Native safe mode still decides if it is safe;
-        // this gesture never issues the unsafe Ignore command.
+
+
+
         int command = state == 1 ? 1
                 : (state == 2 || state == 3 || state == 4 ? 2 : 0);
         if (command == 0) { return; }
@@ -3198,10 +3198,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     + ":" + (hubActionItem == null ? "" : hubActionItem.shortcutTarget())
                     + (editor == null ? "" : ":editor:" + editor.contextKey());
         }
-        // A snapshot revision is not a new input screen. Keep gestures
-        // alive when the same native session/frame/generation merely
-        // republishes its contents, but invalidate across modal/lifecycle
-        // boundaries and across opening or closing a local editor.
+
+
+
+
         if (snapshot != null) {
             return presentationEpoch + ":screen:" + snapshot.session + ":"
                     + snapshot.frame + ":" + snapshot.generation
@@ -3257,9 +3257,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { editor.navigate(delta); return; }
         if (snapshot == null && !comprehensiveMenu) {
-            // Native loading screens do not publish a focusable list.
-            // A swipe here is a request for the latest loading status,
-            // not a silent attempt to navigate the old menu.
+
+
+
             readCurrent();
             return;
         }
@@ -3289,12 +3289,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             readCurrent();
             return;
         }
-        // Once a long document is open, ordinary left/right and up/down
-        // navigation advances the document itself, not the single parent
-        // item. Back returns to that parent list without closing the screen.
+
+
+
         if (documentReader.isOpen() && !commandPaletteOpen) {
-            // Replace the still-playing full document when the player asks
-            // to navigate a paragraph, rather than queueing speech behind it.
+
+
             speech.stop();
             speakDocument(delta > 0 ? documentReader.nextParagraph()
                     : documentReader.previousParagraph());
@@ -3302,9 +3302,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
         if (filtered.isEmpty()) { return; }
-        // The recipe list and the detail documents share one native snapshot,
-        // but one-finger LEFT/RIGHT means recipes ONLY. Never wrap from the
-        // first recipe to "Crafting conditions"/tool requirements at the end.
+
+
+
         if ("crafting".equals(snapshot.category) && !commandPaletteOpen) {
             List<ReaderSnapshot.Node> recipeNodes = new ArrayList<>();
             for (ReaderSnapshot.Node node : filtered) {
@@ -3328,12 +3328,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 int nextRecipe = recipeIndex + (delta > 0 ? 1 : -1);
                 if (nextRecipe >= recipeNodes.size()) {
                     if (craftingCommand("craft:page:next")) { return; }
-                    readCurrent(); // Already at the last recipe.
+                    readCurrent();
                     return;
                 }
                 if (nextRecipe < 0) {
                     if (craftingCommand("craft:page:previous")) { return; }
-                    readCurrent(); // Already at the first recipe.
+                    readCurrent();
                     return;
                 }
                 focus = recipeNodes.get(nextRecipe).id;
@@ -3343,9 +3343,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
-        // Surroundings uses 80-row native pages to bound snapshot size.
-        // Left/right advance across a page boundary without making the
-        // player navigate artificial "Next page" list items.
+
+
+
         if ("surroundings".equals(snapshot.category) && !commandPaletteOpen) {
             if (delta > 0 && index() == filtered.size() - 1
                     && surroundingsCommand("nearby:page:next")) {
@@ -3356,13 +3356,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
-        // All spoken lists wrap both ways: end -> first, first -> end.
-        // This also applies to the contextual command drawer and nested lists.
+
+
         int selected = Math.floorMod(index() + delta, filtered.size());
         focus = filtered.get(selected).id;
         render();
-        // Command focus changes are local: native command scopes do not
-        // handle focus intents and would report unsupported for every swipe.
+
+
         if (!GESTURE_GUIDE_NODE.equals(focus) && !TARGET_TOGGLE_NODE.equals(focus)
                 && !TRAVEL_STATUS_NODE.equals(focus)
                 && !isAuxiliaryCommand(filtered.get(selected))) {
@@ -3371,18 +3371,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
-    // A stacked item row in inventory/pickup is an immediate quantity
-    // picker, not a setting: a one-finger vertical swipe browses to the
-    // next/previous item, like every other row, instead of changing the
-    // chosen amount. The amount is chosen by double-tapping the row,
-    // which opens the quantity editor (openFormEditor's quickQuantity
-    // path). The same node shape elsewhere keeps swipe-to-adjust: real
-    // sliders use role "slider" (world generation) or carry an "apply"
-    // action (options, safemode, smart controller, auto-pickup), and the
-    // standalone number-input popup lives in the NUMBER_INPUT category.
-    // Published shape (inventory_ui.cpp quantity form, handle_action.cpp
-    // pickup-here): role "checkbox", int field, range 0..available,
-    // step 1, set_value without apply, only when available > 1.
+
+
+
+
+
+
+
+
+
+
+
+
     private boolean isItemQuantityRow(ReaderSnapshot.Node node) {
         return "checkbox".equals(node.role)
                 && "int".equals(node.fieldType) && node.hasFieldRange
@@ -3400,11 +3400,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderSnapshot.Node node = snapshot.find(focus);
         if (node == null || !node.enabled) { return false; }
 
-        // Stacked item rows are browsed, not adjusted: the vertical
-        // swipe falls through to navigation in ReaderGestureSurface.
+
+
         if (isItemQuantityRow(node)) { return false; }
 
-        // These are the same semantic choices used by game settings pages.
+
         if ("choice".equals(node.fieldType) && node.actions.contains("select_choice")
                 && !node.choices.isEmpty()) {
             int current = -1;
@@ -3420,8 +3420,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return true;
         }
 
-        // Only a declared numeric form range with a positive step may be
-        // adjusted. No guessing units, bounds or text-field semantics.
+
+
         if (!("int".equals(node.fieldType) || "float".equals(node.fieldType))
                 || !node.actions.contains("set_value") || !node.hasFieldRange
                 || !(node.fieldStep > 0) || !Double.isFinite(node.fieldStep)
@@ -3441,7 +3441,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if ("int".equals(node.fieldType)) {
                 candidate = candidate.stripTrailingZeros();
                 if (candidate.scale() > 0) {
-                    // Never submit a fractional draft to an integer field.
+
                     readCurrent();
                     return true;
                 }
@@ -3453,8 +3453,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return true;
     }
 
-    // Only the first six character-creation tabs opt in to step gestures.
-    // The summary tab and all unrelated menus keep their existing controls.
+
+
     private boolean isCreatorMainStep() {
         return snapshot != null
                 && snapshot.category.startsWith("character-creator-step-");
@@ -3492,19 +3492,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return false;
         }
         if (horizontal != 0) {
-            // The native calendar adjusts the currently highlighted
-            // day/hour in response to its existing LEFT/RIGHT actions.
+
+
             return creatorCalendarAction(horizontal > 0 ? "RIGHT" : "LEFT");
         }
         if (vertical != 0) {
-            // Only day and hour are published in the concise creator calendar.
+
             navigate(vertical > 0 ? 1 : -1);
             return true;
         }
         return false;
     }
 
-    /** Use native crafting commands, never synthesize a recipe selection. */
+
     private boolean craftingCommand(String id) {
         if (snapshot == null || !"crafting".equals(snapshot.category)) { return false; }
         ReaderSnapshot.Node node = snapshot.find(id);
@@ -3547,16 +3547,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderSnapshot.Node selected = snapshot.find(focus);
         if (selected != null && ("number".equals(selected.role)
                 || !selected.fieldType.isEmpty())) {
-            // Numeric and choice fields keep their existing editing gestures.
+
             return false;
         }
         return craftingCommand(vertical < 0 ? "LEFT" : "RIGHT");
     }
 
-    /** Category and page controls are never targets; send a native,
-     * scope-bound activation while preserving the player's current focus.
-     * The engine returns an updated list and is the only owner of routing.
-     */
+
+
+
+
     private boolean surroundingsCommand(String id) {
         if (snapshot == null || !"surroundings".equals(snapshot.category)) {
             return false;
@@ -3581,23 +3581,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return false;
         }
         if (vertical != 0) {
-            // One finger up = next category; down = previous, wrapping
-            // through All, Creatures/NPCs, Places/Environment, and Items.
+
+
             return surroundingsCommand(vertical < 0
                     ? "nearby:filter:next" : "nearby:filter:previous");
         }
         if (horizontal != 0) {
-            // The category heading was read on entry. The first right
-            // swipe reads item one, then later swipes move to item two.
-            // Left immediately wraps to the last item in the category.
+
+
+
             if (horizontal > 0 && nearbyFirstItemPending) {
                 nearbyFirstItemPending = false;
                 readCurrent();
                 return true;
             }
             nearbyFirstItemPending = false;
-            // Fixed left/right focus order, independent of movement or
-            // user-configured swipe actions on unrelated screens.
+
+
             navigate(horizontal > 0 ? 1 : -1);
             return true;
         }
@@ -3644,15 +3644,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (walkingTravelPanelActive()) { activateTravel(); return; }
         if (snapshot == null || directWorldGesturesEnabled()) { return; }
-        // Two fingers up advances the multi-selection/attribute/trait/skill
-        // tabs, instead of confirming whichever row happens to be focused.
-        // On the first two tabs, confirmation still activates the row and
-        // native code advances only after a valid single choice.
+
+
+
+
         if (isCreatorMultiChoiceStep() && creatorStepAction("NEXT_TAB")) { return; }
         if (creatorCalendarAction("CALENDAR_DONE")) { return; }
-        // Summary publishes native command IDs, not UILIST action: IDs.
-        // Two fingers up must invoke the same native NEXT_TAB validation
-        // and Yes/No completion prompt as the visible Finish control.
+
+
+
         if ("CHARACTER_CREATION".equals(snapshot.category)) {
             ReaderSnapshot.Node finish = snapshot.find("NEXT_TAB");
             if (finish != null && finish.enabled && finish.actions.contains("activate")) {
@@ -3663,11 +3663,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
-        // The crafting detail pane owns its own explicit Craft action.
-        // Confirm must commit its selected quantity through that action,
-        // never the generic CRAFTING/CONFIRM command from the command tail.
+
+
+
         if ("crafting".equals(snapshot.category)) {
-            // Number-choice screen is not a craft confirmation screen.
+
             if (snapshot.find("craft:detail:qty:current") != null) {
                 feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
                 return;
@@ -3687,7 +3687,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         ReaderSnapshot.Node chosen = snapshot.find(focus);
         if (chosen == null) { return; }
-        // Native explicit approval takes priority over the focused "No" option.
+
         if ("YESNO".equals(snapshot.category) || "YESNOQUIT".equals(snapshot.category)) {
             for (ReaderSnapshot.Node candidate : snapshot.nodes) {
                 String label = candidate.label.trim().toLowerCase(Locale.ROOT);
@@ -3719,8 +3719,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
-        // A list selection is the only safe implicit confirmation. Never
-        // fire arbitrary world commands or status/document nodes.
+
+
         if (chosen.enabled && chosen.actions.contains("activate")
                 && ("listitem".equals(chosen.role)
                     || chosen.id.startsWith("option:")
@@ -3740,7 +3740,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void practiceMovementDirection(int dx, int dy) {
-        // The former training panel no longer exists.
+
     }
 
     static int directionBit(int dx, int dy) {
@@ -3763,8 +3763,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private boolean worldStepAllowed() {
-        // Two-finger combat moves pass through the same native walking
-        // gate, with the normal activity, vehicle and travel safety checks.
+
+
         return directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
                 && !vehicleReleasePending && !vehicleDriverReady()
                 && hasCardinalDirections(snapshot);
@@ -3772,8 +3772,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean worldMovementEnabled() {
-        // One finger attacks during combat; two fingers move. Outside
-        // combat, the original one-finger map movement is unchanged.
+
+
         return !combatMode && !vehicleMode && !autonomousDriveTrip
                 && worldStepAllowed();
     }
@@ -3808,8 +3808,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return state != null && state.enabled;
     }
 
-    /** Use only actions published by the current native world frame. A
-     * passenger cannot command the vehicle, even with stale Android focus. */
+
+
     private static String vehicleCompass(String description) {
         if (description == null) { return ""; }
         int end = description.indexOf('.');
@@ -3834,8 +3834,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             pendingVehicleHeadingSnapshots = 0;
             pendingVehicleHeadingReport = true;
         }
-        // Native pause/resume now announces the actual result. A queued
-        // speed-only report would hide whether driving is paused.
+
+
         requestLiveWorldCommand(id);
         if ("reader:vehicle:brake".equals(id)) {
             feedback(activity.getString(R.string.a11yDriveBraking));
@@ -3856,8 +3856,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** In Drive, all four two-finger directions scan 30 tiles relative
-     * to the car's physical heading. One-finger bent gestures own car status. */
+
+
     @Override
     public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
         if (!vehicleMode || (!directWorldGesturesEnabled()
@@ -3869,9 +3869,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public boolean handleCustomGesture(String gestureId) {
         if (autonomousDriveTravelActive()) {
-            // Only these four straight one-finger inputs are disabled.
-            // All read-only inspection, horn, emergency brake and other
-            // non-directional gestures continue to have useful effects.
+
+
+
             switch (gestureId) {
                 case "swipe_up":
                 case "swipe_down":
@@ -3898,10 +3898,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     requestAutonomousRead("reader:vehicle:horn");
                     return true;
                 default:
-                    // Three-finger saved gestures remain available for
-                    // browsing the hub and reading information. Do not let
-                    // saved movement or control actions steal steering from
-                    // the autonomous pathfinder.
+
+
+
+
                     if (gestureId.startsWith("swipe_3_")) {
                         String target = gestureBindings.targetFor(gestureId);
                         if (target != null && (target.startsWith("hub:group:")
@@ -3923,14 +3923,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
             }
         }
-        // While physical brakes are settling, neither combat actions nor
-        // saved map bindings may escape through a stale Android mode.
+
+
         if (vehicleReleasePending && directWorldGesturesEnabled()) {
             return true;
         }
         if (vehicleMode && directWorldGesturesEnabled()) {
-            // The native game still handles acceleration, direction and
-            // steering physics. Map/Combat bindings cannot override these.
+
+
             switch (gestureId) {
                 case "swipe_up":
                     requestVehicleAction("reader:vehicle:forward");
@@ -3973,14 +3973,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 default:
                     // Do not fall through to saved map or combat bindings
-                    // while the avatar is driving. An unrecognized swipe
-                    // must never activate another gameplay action.
+
+
                     return true;
             }
         }
         if (combatMode && directWorldGesturesEnabled()) {
-            // Old three-finger movement is disabled during combat.
-            // On the normal map, saved three-finger shortcuts still work.
+
+
             switch (gestureId) {
                 case "swipe_3_up":
                 case "swipe_3_down":
@@ -3989,10 +3989,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 default: break;
             }
-            // Eight directional strokes use native gameplay. Gun swipes
-            // fire; unarmed or melee swipes use the matching regular move
-            // key (including the game's bump-to-attack and interactions).
-            // Bent strokes retain the four diagonals.
+
+
+
+
             int direction = -1;
             switch (gestureId) {
                 case "swipe_up": direction = 0; break;
@@ -4024,14 +4024,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
         }
         if (!directWorldGesturesEnabled() || ReaderGestureBindings.isReserved(gestureId)) {
-            // A fixed control is never replaced by a persisted binding.
+
             return false;
         }
         String target = gestureBindings.targetFor(gestureId);
         SessionDebugLog.event("GESTURE_BINDING", "gesture=" + gestureId
                 + " target=" + target);
         if (target == null) { return false; }
-        // Assignments override the built-in gesture only in the live world.
+
         // Do not fall through to the default action on stale/unavailable nodes.
         executeShortcutTarget(target);
         return true;
@@ -4067,7 +4067,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
             } catch (NumberFormatException ignored) {
-                // Unknown old custom binding: do not execute an unrelated command.
+
             }
         } else if ("hub:directions".equals(target)) {
             openHubSection(GameActionHub.DIRECTIONS);
@@ -4123,8 +4123,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("GESTURE_ACTION", "scan dx=" + dx + " dy=" + dy);
         if (Math.abs(dx) + Math.abs(dy) != 1) { return; }
         if (combatMode && directWorldGesturesEnabled()) {
-            // Two fingers now move cardinally using the ordinary
-            // native walk action. They never fire a weapon.
+
+
             moveInCombat(dx, dy);
             return;
         }
@@ -4133,8 +4133,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 feedback(activity.getString(R.string.a11yDriveNotReady));
                 return;
             }
-            // Native maps the four relative directions to the vehicle's
-            // real heading, including diagonal orientations.
+
+
             String relative = dy < 0 ? "front" : dy > 0 ? "back"
                     : dx < 0 ? "left" : "right";
             if (autonomousDriveTravelActive()) {
@@ -4167,9 +4167,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (count == 1) { detail(); return; }
         if (count == 2) {
-            // Re-read the latest native message-history recap from any
-            // screen, including the first inventory screen after loading.
-            // No new game notification is created.
+
+
+
             String spoken = lastRecentMessages;
             if (spoken.isEmpty()) {
                 spoken = activity.getString(R.string.a11yHubNoMessages);
@@ -4209,9 +4209,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void toggleCombatMode() {
         if (autonomousDriveTravelActive()) {
-            // Drive -> Map is an explicit Cancel, not the regular mode
-            // cycle. Let the game-thread actor brake and discard its route;
-            // do not send the ordinary release-before-cancel input.
+
+
+
             try {
                 if (!CataclysmDDA.nativeTravelControl(3)) {
                     feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
@@ -4231,27 +4231,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (!directWorldGesturesEnabled()) { return; }
         if (snapshot.find("reader:vehicle:seat") != null) {
-            // On board: Map -> Combat -> Drive -> Map. A seat alone is
-            // sufficient to offer Drive for inspection; the native driver
-            // gate still refuses any control from a passenger.
+
+
+
             int nextMode = combatMode ? 2 : vehicleMode ? 0 : 1;
-            // Cancel previously queued directions BEFORE queuing the brake,
-            // otherwise the mode-switch cancellation would discard the
-            // emergency stop together with stale world inputs.
+
+
+
             CataclysmDDA.nativeCancelPendingWorldSteps();
             clearPendingWorldDirection();
             root.cancelGesture();
             if (vehicleMode && nextMode != 2) {
-                // Do not only brake on Android: native must release the
-                // driver's controls AFTER momentum has fallen to zero.
+
+
                 vehicleReleasePending = vehicleDriverReady();
                 if (vehicleReleasePending) {
                     requestLiveWorldCommand("reader:vehicle:release");
                 }
             } else if (nextMode == 2) {
-                // Native entry performs the normal control/ignition checks.
-                // It also cancels any pending native release if Drive is
-                // reselected before the car finishes stopping.
+
+
+
                 vehicleReleasePending = false;
                 requestLiveWorldCommand("reader:vehicle:begin");
             }
@@ -4263,8 +4263,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode
                     + " releasing=" + vehicleReleasePending);
-            // Never announce that Map is ready while native brakes are
-            // still settling and the avatar still controls the vehicle.
+
+
             feedback(activity.getString(vehicleReleasePending && nextMode == 0
                     ? R.string.a11yDriveBraking
                     : nextMode == 0 ? R.string.a11yMapMode
@@ -4295,7 +4295,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         SessionDebugLog.event("COMBAT_ACTION", "read_wielded_weapon");
-        // Reading the current item and ammunition costs no game turn.
+
         feedback(node.detail);
     }
 
@@ -4328,14 +4328,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (usesTouchExploration()) {
             feedback(spoken);
         } else {
-            // Read the entire current snapshot without spending a game turn.
+
             speech.say("world-character-detail", spoken, ReaderSpeechQueue.LONG_TEXT);
         }
     }
 
     @Override
     public void openActionMenu() {
-        // Two fingers, three taps: the approved 16-section action hub.
+
         showComprehensiveMenu();
     }
 
@@ -4358,8 +4358,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             clearPendingWorldDirection();
             return;
         }
-        // Publishing a snapshot does NOT mean the native game loop is ready.
-        // Wait for both a new world frame and the authoritative input gate.
+
+
         if (snapshot.revision <= pendingWorldRevision) {
             schedulePendingWorldRetry();
             return;
@@ -4384,8 +4384,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 SessionDebugLog.event("WORLD_STEP_RETRIED", "direction=" + direction);
                 clearPendingWorldDirection();
             } else {
-                // The game thread can close the gate after our ready probe.
-                // Keep the same latest swipe for the next bounded attempt.
+
+
                 schedulePendingWorldRetry();
             }
         } finally {
@@ -4416,9 +4416,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(activity.getString(R.string.a11yFastMovementUnavailable));
             return;
         }
-        // Deliberately no movement distance, speed or step count override:
-        // use the same direction command, native safety checks and retry
-        // semantics as an ordinary world-map swipe.
+
+
+
         dispatchWorldMovement(dx, dy);
     }
 
@@ -4432,7 +4432,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         String previous = focus;
         focus = action;
         send("activate", "");
-        // Leave the reading cursor on the tile for an explicit long press.
+
         focus = previous;
     }
 
@@ -4441,7 +4441,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("ACTION", "activate focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (gestureGuideOpen) {
-            // Read again without executing a potentially unsafe command.
+
             readCurrent();
             return;
         }
@@ -4464,21 +4464,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections));
             return;
         }
-        // The hub is a menu, even when a driving mode remains active.
-        // Prioritise its selected command over the world pause gesture.
+
+
         if (comprehensiveMenu) {
             if (choosingHubAction) { applyHubActionChoice(); }
             else if (choosingGesture) { applyGestureChoice(); }
             else { activateHub(); }
             return;
         }
-        // The native destination actor, not a separate UI panel, owns
-        // fully autonomous Pause/Resume. Preserve this gesture in Drive.
+
+
         if (!activatingHubCommand && autonomousDriveTravelActive()) {
             pauseOrResumeAutonomousDrive();
             return;
         }
-        // World double tap becomes Pause/Resume only when Drive is active.
+
         if (!activatingHubCommand && vehicleMode && directWorldGesturesEnabled()) {
             requestVehicleAction("reader:vehicle:pause");
             return;
@@ -4497,18 +4497,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
         if (!node.enabled) { feedback(nodeText(node, true)); return; }
-        // Command group headers (R04.3) are browsing landmarks only:
-        // activating one reads it, it never sends an intent.
+
+
         if (node.id.startsWith("group:")) {
             feedback(activity.getString(R.string.a11yCommandGroup) + ". " + node.label);
             return;
         }
-        // Enter the child list, not an interleaved parent+children tree.
-        // Native expansion remains validated by the game before entry.
-        // Inventory rows may expose read-only pocket details as tree children.
-        // Double-tap must still select the item (or open its quantity picker),
-        // not trap the reader inside a non-activatable pocket-status list.
-        // Other expandable nodes keep their normal nested navigation.
+
+
+
+
+
+
         final boolean actionableItem = node.id.startsWith("item:")
                 && node.actions.contains("activate");
         if (node.hasChildren && !actionableItem) {
@@ -4520,26 +4520,26 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
-        // A tab can have *no published children yet* when it is inactive,
-        // so its hasChildren flag may be false. Remember the requested tab
-        // before native activates it, then enter its first newly published
-        // child in onSnapshot().
+
+
+
+
         if ("tab".equals(node.role) && node.actions.contains("activate")) {
             pendingReaderLayer = node.id;
             pendingReaderLayerRevisions = 0;
         }
-        // A pickup pocket-content row reached by flat browsing is a real
-        // selectable row, not a staged-picker draft: double-tap marks it
-        // for pickup through the same atomic parent-pocket commit the
-        // staged picker uses. A single unit toggles at once; a stack
-        // opens the quantity editor, which commits to the parent pocket
-        // on submit. The staged picker itself is untouched.
+
+
+
+
+
+
         if (isFlatPickupPocketEntry(node)) {
             activateFlatPickupPocketEntry(node);
             return;
         }
-        // Form fields (R02.3): choosing or toggling only writes a draft on
-        // the engine side; the separate Apply control commits it.
+
+
         if (!node.fieldType.isEmpty()) {
             if ("choice".equals(node.fieldType) && node.actions.contains("select_choice")
                     && !node.choices.isEmpty()) {
@@ -4567,17 +4567,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if ("document".equals(node.role) || "world:here".equals(node.id)) {
-            // Long documents are read in paragraphs with a resumable
-            // session position (R04.4), not as one whole-text utterance.
+
+
             speakDocument(documentReader.open(snapshot.contextKey(), node.id, node.detail));
             return;
         }
-        // Every native screen publishes the actions its nodes actually
-        // support. A status/heading with only "focus" is informative, not
-        // clickable: never send an invalid activate which the game would
-        // report as "stale" ("Choose the item again"). This applies equally
-        // to skill-category headings, inventory pocket states, tables,
-        // journals, health readouts and all other screen adapters.
+
+
+
+
+
+
         if (!node.actions.contains("activate")) {
             feedback(nodeText(node, true));
             return;
@@ -4588,8 +4588,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void openEditor(ReaderSnapshot.Node node) {
         editorContext = snapshot.contextKey();
         editorRequest = 0;
-        // Number popups publish their edit step (and no range) through the
-        // form contract since R04.2; text fields keep the plain editor.
+
+
         editor = new ReaderTextEditor(activity, node.value, "number".equals(node.role),
                 "int".equals(node.fieldType), null, null,
                 node.fieldStep > 0 ? node.fieldStep : null,
@@ -4598,9 +4598,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     public void speak(String text) { feedback(text); }
                     @Override
                     public void submit(String text) {
-                        // A callback of an editor that was already closed
-                        // must not mint a fresh intent (R03.2); the views
-                        // are gone by then, this is the explicit guard.
+
+
+
                         if (editor != null && editorRequest == 0) {
                             editorRequest = send("set_text", text);
                         }
@@ -4619,13 +4619,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         feedback(activity.getString(R.string.a11yEditorInstructions));
     }
 
-    /**
-     * Standard fields retain the draft/Apply contract. A checkbox exposing
-     * a bounded integer set_value action without Apply is an explicit
-     * immediate item-quantity picker: each chosen number commits the amount,
-     * closes this panel, and returns to the original item list. The final
-     * inventory CONFIRM remains a separate action.
-     */
+
+
+
+
+
+
+
     private void openFormEditor(ReaderSnapshot.Node node) {
         final boolean quickQuantity = "checkbox".equals(node.role)
                 && "int".equals(node.fieldType) && node.hasFieldRange
@@ -4634,10 +4634,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         formContext = snapshot.contextKey();
         formRequest = 0;
         final String nodeId = node.id;
-        // The field's published domain reaches the editor (R04.2): the
-        // user hears the range/step and an invalid draft is refused with
-        // its specific reason before any intent is sent; the engine
-        // re-validates at its gate regardless.
+
+
+
+
         editor = new ReaderTextEditor(activity, node.effectiveRawValue(),
                 "int".equals(node.fieldType) || "float".equals(node.fieldType),
                 "int".equals(node.fieldType),
@@ -4674,15 +4674,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private long send(String action, String value) {
         ReaderSnapshot owner = snapshot;
-        // The closed check is explicit, not implied by the lifecycle flags:
-        // after close() no intent of this controller may reach the game,
-        // even if a stray lifecycle callback ran first (R03.4).
+
+
+
         if (closed || owner == null || !foreground || !windowFocused || lastSuspended) { return 0; }
-        // Universal semantic action gate. Every active native adapter owns
-        // the complete set of permitted actions for its current nodes. A
-        // reader heading, status, table cell or disabled command must never
-        // be sent as "activate" simply because Android received a tap.
-        // Cancel is a screen action and deliberately has no node binding.
+
+
+
+
+
         if (!"cancel".equals(action)) {
             ReaderSnapshot.Node target = owner.find(focus);
             if (target == null || !target.enabled && !"focus".equals(action)
@@ -4696,8 +4696,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         final long request = REQUEST_SEQUENCE.incrementAndGet();
         long begun = SystemClock.elapsedRealtime();
-        // Text and number editors can contain user-authored/private values;
-        // record action metadata, not the typed contents.
+
+
         SessionDebugLog.event("INTENT", "id=" + request + " screen="
                 + owner.category + " node=" + focus + " action=" + action
                 + " value=" + ("focus".equals(action) || "activate".equals(action)
@@ -4708,9 +4708,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 SessionDebugLog.event("INTENT_RESULT", "id=" + request
                         + " accepted=false elapsed_ms="
                         + (SystemClock.elapsedRealtime() - begun));
-                // Focus intents are re-sent on every navigation and race
-                // screen changes routinely; a rejected one is dropped
-                // silently instead of announcing a stale entry (R03.1).
+
+
+
                 final boolean walking = "activate".equals(action)
                         && "DEFAULTMODE".equals(owner.category)
                         && !comprehensiveMenu && ("UP".equals(focus) || "DOWN".equals(focus)
@@ -4718,9 +4718,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "LEFTUP".equals(focus) || "LEFTDOWN".equals(focus)
                         || "RIGHTUP".equals(focus) || "RIGHTDOWN".equals(focus));
                 if (walking) {
-                    // Preserve at most the newest swipe for one bounded
-                    // retry after the next native world snapshot. Never
-                    // queue multiple steps, and never cross screen owners.
+
+
+
                     SessionDebugLog.event("WORLD_STEP_BUSY", "request=" + request);
                     final long now = SystemClock.elapsedRealtime();
                     if (!retryingWorldDirection && worldStepAllowed()) {
@@ -4772,10 +4772,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (hubSection == 1) {
             return R.string.a11yHubNearbyNoActions;
         }
-        // A search that matches nothing says so explicitly
-        // instead of the generic "no available entries", so the player
-        // knows to change the keyword. The string already exists in
-        // values/a11y_reader.xml (EN) and values-vi (VI).
+
+
+
+
         if (hubSection == GameActionHub.SEARCH && !hubQuery.trim().isEmpty()) {
             return R.string.a11yHubNoMatches;
         }
@@ -4785,12 +4785,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private List<GameActionHub.Entry> hubEntries() {
         List<GameActionHub.Entry> result =
                 GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
-        // Hide combat-only mode switching outside the live combat controls.
+
         if (!combatMode) {
             result.removeIf(entry -> "reader:combat:aim-toggle".equals(entry.node));
         }
-        // Append the guide after all original actions in every hub section,
-        // including Combat, without changing any existing action index.
+
+
         result.add(new GameActionHub.Entry(
                 activity.getString(R.string.a11yGestureGuideTitle), "",
                 GameActionHub.OPEN_GESTURE_GUIDE, 0));
@@ -4825,7 +4825,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return activity.getString(ReaderGestureBindings.CUSTOM_LABELS[index]);
     }
 
-    /** Only render this full-screen layer while the hub is explicitly open. */
+
     private void renderHub() {
         boolean binding = choosingGesture && bindingItem != null;
         String heading = choosingHubAction && hubActionItem != null
@@ -4928,13 +4928,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             rows.addView(next);
         }
         if (binding || choosingHubAction) {
-            // The gesture assignment/favorite picker itself is also a
-            // screen. Its existing choices stay unchanged, help goes last.
+
+
             renderGuideButton();
         }
     }
 
-    /** Opening the menu starts at Favorites; Search is the last root entry. */
+
     public void showComprehensiveMenu() {
         if (comprehensiveMenu || debugReport != null
                 || (!directWorldGesturesEnabled() && !autonomousDriveTravelActive()
@@ -4942,9 +4942,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         root.cancelGesture();
-        // The hub lives only in Java, so opening it would not otherwise
-        // invalidate the native DEFAULTMODE token. Prevent older swipes
-        // from moving the character after this explicit mode change.
+
+
+
         try {
             final int discarded = CataclysmDDA.nativeCancelPendingWorldSteps();
             if (discarded != 0) {
@@ -5023,8 +5023,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         String target = entry.shortcutTarget();
         int choice = hubActionChoice;
         if (choice == 2) {
-            // Preserve the original two item actions and the selected hub
-            // row while viewing the final, read-only help entry.
+
+
             openGestureGuide();
             return;
         }
@@ -5040,7 +5040,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         String label = entry.label;
-        // Strip the non-interactive availability suffix from saved favorites.
+
         String unavailable = " (" + activity.getString(R.string.a11yHubFavoriteUnavailable) + ")";
         if (label.endsWith(unavailable)) {
             label = label.substring(0, label.length() - unavailable.length());
@@ -5097,7 +5097,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return activity.getString(GameActionHub.TITLES[section]);
                 }
             } catch (NumberFormatException ignored) {
-                // Stale custom gesture target.
+
             }
         }
         if ("hub:directions".equals(target)) {
@@ -5311,8 +5311,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (snapshot != null && "player_display".equals(snapshot.category)
                 && !commandPaletteOpen) {
-            // One swipe reads the entire character fact. Focus-priority
-            // speech chunks long text and cancels it on the next swipe.
+
+
             String full = nodeText(node, true);
             if (usesTouchExploration()) {
                 announceAccessibility(full);
@@ -5321,9 +5321,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
-        // This row's visible text is the actual full recipe detail.
-        // Read it as long-form speech on ordinary focus, with no tap or
-        // special two-finger action required.
+
+
+
         if (snapshot != null && "crafting".equals(snapshot.category)
                 && "craft:detail:intro".equals(node.id)) {
             speakInlineDetail(node.detail.isEmpty() ? node.label : node.detail);
@@ -5337,14 +5337,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /**
-     * A selected recipe, construction, mission or faction row often has its
-     * original long description in a separate read-only document node.
-     * Two-finger Detail reads those documents directly, without activating
-     * the row or opening another modal. The native screen already updates
-     * them for the current selection, so no second gameplay implementation
-     * or speculative data is needed here.
-     */
+
+
+
+
+
+
+
+
     private boolean readLinkedDetails(ReaderSnapshot.Node selected) {
         if (snapshot == null || selected == null) { return false; }
         String category = snapshot.category;
@@ -5371,9 +5371,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             prefix = "diary:entry";
         }
         if (prefix.isEmpty()) { return false; }
-        // These document nodes describe only the engine's CURRENT selection,
-        // not all visible rows. A local Android swipe can arrive ahead of
-        // native focus synchronization; defer until its own row is selected.
+
+
+
         if (!selected.selected || !id.equals(snapshot.focus)) {
             pendingLinkedDetail = id;
             pendingLinkedDetailContext = snapshot.contextKey();
@@ -5394,11 +5394,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             full.append(document.label).append(".\n").append(document.detail);
         }
         if (full.length() == 0) { return false; }
-        // Begin with the focused row identity and its concise state, then
-        // speak all accompanying native detail documents in order.
+
+
         full.insert(0, nodeText(selected, true) + "\n\n");
-        // Keep the selected row active. These facts belong to the current
-        // row, not to a nested document screen that hijacks left/right swipes.
+
+
         speakInlineDetail(full.toString());
         return true;
     }
@@ -5428,9 +5428,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (choosingGesture || choosingHubAction) {
                 readCurrent();
             } else {
-                // A two-finger Detail request reads the selected hub entry
-                // in place. Its gesture/favorite action menu belongs only
-                // to long press, not to the information gesture.
+
+
+
                 List<GameActionHub.Entry> entries = hubEntries();
                 if (entries.isEmpty()) {
                     feedback(activity.getString(hubEmptyLabel()));
@@ -5456,10 +5456,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(travelDetailSpeech(travelState()));
             return;
         }
-        // The pocket chooser has synthetic controls that are not native
-        // nodes. Speak the actual focused control, not the underlying
-        // container item, while still allowing real pocket/item rows to
-        // use their full native detail request.
+
+
+
+
         if (pocketStage == 1 || (pocketStage == 3 &&
                 (POCKET_CONFIRM_NODE.equals(focus) || POCKET_CANCEL_NODE.equals(focus)))) {
             feedback(pocketChoiceSpeech());
@@ -5467,8 +5467,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) {
-            // Native item information is fetched only on explicit request.
-            // This also works for read-only/disabled items and pocket rows.
+
+
             if (node.actions.contains("read_detail")) {
                 pendingItemDetailNode = node.id;
                 pendingItemDetailContext = snapshot.contextKey();
@@ -5480,17 +5480,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             if (readLinkedDetails(node)) { return; }
-            // Detail on a document node speaks its original content without
-            // entering document-navigation mode. Explicit document-reader
-            // commands elsewhere still provide paragraph navigation.
+
+
+
             if ("document".equals(node.role) && !node.detail.isEmpty()) {
                 speakInlineDetail(node.detail);
                 return;
             }
             String information = nodeText(node, true);
-            // Double-tap on an inventory item is reserved for selecting it.
-            // Keep its informational pocket nodes accessible through Detail,
-            // rather than requiring a visit to a read-only child list.
+
+
+
             if (node.id.startsWith("item:") && node.hasChildren) {
                 for (ReaderSnapshot.Node child : snapshot.nodes) {
                     if (node.id.equals(child.parentId) && child.id.startsWith("pocket:")) {
@@ -5498,8 +5498,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 }
             }
-            // Yes/No choices carry the original question in node.detail,
-            // so do not prepend snapshot.summary a second time.
+
+
             if (!node.detail.isEmpty() || information.length() > 320) {
                 speakInlineDetail(information);
             } else {
@@ -5525,12 +5525,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /**
-     * Spoken, on-demand facts are not a separate screen. A single long
-     * request is split into safe TTS chunks by ReaderSpeechQueue; the next
-     * focus swipe interrupts it and navigates the original list normally.
-     * Only explicit document-reading actions open ReaderDocumentReader.
-     */
+
+
+
+
+
+
     private void speakInlineDetail(String text) {
         text = ReaderSpokenText.clean(text);
         if (text.isEmpty()) { return; }
@@ -5542,8 +5542,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** Document speech stays at LONG_TEXT priority: warnings may cut it
-     *  off, and the document reader then resumes at the same paragraph. */
+
+
     private void speakDocument(String text) {
         text = ReaderSpokenText.clean(text);
         if (text.isEmpty()) { return; }
@@ -5556,14 +5556,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void stopSpeech() {
-        // A single tap is the reader's speech control. While
-        // something is speaking (or still queued) it stops it, as before.
-        // When the queue is idle, the same tap resumes the last utterance
-        // from the chunk where it was cut off (ReaderSpeechQueue.resume(),
-        // which falls back to repeating from the start when nothing was
-        // cut off mid-utterance). The speaking/pending check comes from
-        // the queue's own stats so a resume attempt can never discard
-        // speech that is still waiting to be spoken.
+
+
+
+
+
+
+
+
         ReaderSpeechQueue.Stats stats = speech.snapshotStats();
         if (stats.speaking || stats.pending > 0) {
             speech.stop();
@@ -5580,7 +5580,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.cancelInput(); return; }
         if (pocketStage != 0) {
-            cancelPocketPicker(); // Back has the same rollback as Cancel.
+            cancelPocketPicker();
             return;
         }
         if (commandPaletteOpen) { closeContextActions(); return; }
@@ -5606,21 +5606,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (autonomousDriveTrip && rawNativeTravelState() != 0) {
-            // Android Back cancels the full destination on the native game
-            // thread; it must never activate a hidden Continue/Cancel row.
+
+
             travelChoice = 1;
             activateTravel();
             return;
         }
         if (walkingTravelPanelActive()) {
             if (travelState() == 4) {
-                // Android/system Back must provide a reliable escape from
-                // the autonomous blocked-route UI. The native actor
-                // cancels and brakes on the game thread, even at 0 moves.
+
+
+
                 travelChoice = travelChoiceCount(travelState()) - 1;
                 activateTravel();
             } else {
-                // Walking travel still preserves its explicit cancel choice.
+
                 travelChoice = travelChoiceCount(travelState()) - 1;
                 render();
                 readCurrent();
@@ -5634,13 +5634,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (backReaderLayer()) { return; }
-        // On a creator step, two fingers down or Back returns to the
-        // previous step. Nested value/variant lists are different contexts:
-        // their Back is the ordinary cancel, returning to their parent tab.
+
+
+
         if (creatorStepAction("PREV_TAB")) { return; }
-        // Summary is the seventh creator step. Its command snapshot uses
-        // plain action IDs rather than action: prefixes; Back must return
-        // to skills instead of invoking the global Quit confirmation.
+
+
+
         if (snapshot != null && "CHARACTER_CREATION".equals(snapshot.category)) {
             ReaderSnapshot.Node previousTab = snapshot.find("PREV_TAB");
             if (previousTab != null && previousTab.enabled
@@ -5653,8 +5653,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
         }
         if (snapshot != null) {
-            // A mandatory Yes/No dialog may have no registered Cancel.
-            // Treat Back as the native No response, never as Yes.
+
+
             if ("YESNO".equals(snapshot.category)) {
                 ReaderSnapshot.Node no = snapshot.find("option:1");
                 if (no != null && no.enabled && no.actions.contains("activate")) {
@@ -5665,7 +5665,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
             }
-            // Informational popups sometimes expose Continue but no Quit.
+
             ReaderSnapshot.Node continueNode = snapshot.find("continue");
             if (continueNode != null && continueNode.enabled
                     && continueNode.actions.contains("activate")) {
@@ -5679,10 +5679,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /**
-     * SDL error screens are independent of native game accessibility snapshots.
-     * Read a short introduction first; navigating to the report reads it all.
-     */
+
+
+
+
     public void showDebugPrompt(String report) {
         SessionDebugLog.event("DEBUG_PROMPT", report);
         if (closed || report == null || report.isEmpty() || !preferences.isEnabled()) {
@@ -5724,10 +5724,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
-    /** A fixed shortcut only outside the world map; TalkBack owns its gestures. */
+
     public boolean canToggleReaderOutsideWorld() {
-        // Check screen identity rather than TTS readiness. A failed engine
-        // must not turn the map's character-details gesture into a toggle.
+
+
         boolean worldMap = snapshot != null && snapshot.find("world:here") != null
                 && snapshot.find("reader:coordinates") != null
                 && !comprehensiveMenu && !commandPaletteOpen && editor == null
@@ -5746,7 +5746,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             applyReaderGestureEnabled(false);
             return;
         }
-        // Let the confirmation finish before shutting down its own TTS engine.
+
         speech.stop();
         readerOffAfterAnnouncement = true;
         speech.say(GESTURE_READER_OFF_KEY,

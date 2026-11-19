@@ -12,9 +12,9 @@
 
 class item_location;
 
-/*
- * Talker wrapper class for item.
- */
+
+
+
 class talker_item_const: public const_talker_cloner<talker_item_const>
 {
     public:
@@ -30,7 +30,7 @@ class talker_item_const: public const_talker_cloner<talker_item_const>
             return me_it_const;
         }
 
-        // identity and location
+
         std::string disp_name() const override;
         std::string get_name() const override;
         int posx( const map &here ) const override;
@@ -78,7 +78,7 @@ class talker_item: public talker_item_const, public talker_cloner<talker_item>
         talker_item &operator=( talker_item && ) = delete;
         ~talker_item() override = default;
 
-        // underlying element accessor functions
+
         item_location *get_item() override {
             return me_it;
         }
@@ -97,4 +97,4 @@ class talker_item: public talker_item_const, public talker_cloner<talker_item>
     private:
         item_location *me_it{};
 };
-#endif // CATA_SRC_TALKER_ITEM_H
+#endif

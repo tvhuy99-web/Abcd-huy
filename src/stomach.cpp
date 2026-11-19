@@ -29,7 +29,7 @@ void nutrients::min_in_place( const nutrients &r )
         } else {
             auto our_vit = vitamins_.find( vit );
             if( our_vit != vitamins_.end() ) {
-                // We must be finalized because we're calling vitamin::all()
+
                 our_vit->second = std::min( std::get<int>( our_vit->second ), other );
             }
         }
@@ -44,7 +44,7 @@ void nutrients::max_in_place( const nutrients &r )
         int other = r.get_vitamin( vit );
         if( other != 0 ) {
             std::variant<int, vitamin_units::mass> &val = vitamins_[vit];
-            // We must be finalized because we're calling vitamin::all()
+
             val = std::max( std::get<int>( val ), other );
         }
     }
@@ -149,7 +149,7 @@ void nutrients::ensure_positive()
 {
     calories = std::max<int64_t>( calories, 0 );
     for( const std::pair<const vitamin_id, int> &vit : vitamins() ) {
-        // clear all consumed vitamins
+
         if( vit.second <= 0 ) {
             remove_vitamin( vit.first );
         }
@@ -161,8 +161,8 @@ bool nutrients::operator==( const nutrients &r ) const
     if( kcal() != r.kcal() ) {
         return false;
     }
-    // Can't just use vitamins == r.vitamins, because there might be zero
-    // entries in the map, which need to compare equal to missing entries.
+
+
     for( const std::pair<const vitamin_id, vitamin> &vit_pair : vitamin::all() ) {
         const vitamin_id &vit = vit_pair.first;
         if( get_vitamin( vit ) != r.get_vitamin( vit ) ) {
@@ -252,7 +252,7 @@ nutrients &nutrients::operator*=( double r )
             continue;
         }
         bool negative = std::get<int>( here ) < 0;
-        // truncates, but always keep at least 1 (for e.g. allergies)
+
         int val = static_cast<int>( std::get<int>( here ) * r );
         if( val == 0 ) {
             val = negative ? -1 : 1;
@@ -289,7 +289,7 @@ void nutrients::deserialize( const JsonObject &jo )
     std::map<vitamin_id, int> vit_map;
     jo.read( "vitamins", vit_map );
     for( auto &vit : vit_map ) {
-        //rebuild vitamins_
+
         set_vitamin( vit.first, vit.second );
     }
 }
@@ -342,7 +342,7 @@ void stomach_contents::deserialize( const JsonObject &jo )
     contents = string_to_ml( str );
     jo.read( "last_ate", last_ate );
 
-    // the next chunk deletes obsoleted vitamins
+
     const auto predicate = []( const std::pair<vitamin_id, int> &pair ) {
         if( !pair.first.is_valid() ) {
             DebugLog( D_WARNING, DC_ALL )
@@ -403,34 +403,34 @@ food_summary stomach_contents::digest( const Character &owner, const needs_rates
     food_summary digested;
     stomach_digest_rates rates = get_digest_rates( metabolic_rates, owner );
 
-    // Digest water, but no more than in stomach.
+
     digested.water = std::min( water, rates.water * five_mins );
     water -= digested.water;
 
-    // If no half-hour intervals have passed, we only process water, so bail out early.
+
     if( half_hours == 0 ) {
         return digested;
     }
 
-    // Digest solids, but no more than in stomach.
+
     digested.solids = std::min( contents, rates.solids * half_hours );
     contents -= digested.solids;
 
-    // Digest kCal -- use min_kcal by default, but no more than what's in stomach,
-    // and no less than percentage_kcal of what's in stomach.
+
+
     int kcal_fraction = std::lround( nutr.kcal() * rates.percent_kcal );
     digested.nutr.calories = half_hours * clamp<int64_t>( rates.min_calories, kcal_fraction * 1000,
                              nutr.calories );
 
-    // Digest vitamins just like we did kCal, but we need to do one at a time.
+
     for( const std::pair<const vitamin_id, int> &vit : nutr.vitamins() ) {
         if( vit.first->type() != vitamin_type::DRUG ) {
             int vit_fraction = std::lround( vit.second * rates.percent_vitamin );
             digested.nutr.set_vitamin( vit.first, half_hours * clamp( rates.min_vitamin, vit_fraction,
                                        vit.second ) );
         }
-        // drug vitamins are absorbed to the blood instantly after the first stomach step.
-        // this makes the drug vitamins easier to balance (no need to account for slow trickle-ing in of the drug)
+
+
         else if( vit.first->type() == vitamin_type::DRUG && stomach ) {
             digested.nutr.set_vitamin( vit.first, vit.second );
         }
@@ -452,20 +452,20 @@ stomach_digest_rates stomach_contents::get_digest_rates( const needs_rates &meta
 {
     stomach_digest_rates rates;
     if( stomach ) {
-        // The stomach is focused on passing material on to the guts.
-        // 3 hours to empty in 30 minute increments
+
+
         rates.solids = capacity( owner ) / 6;
-        rates.water = 250_ml; // Water is special, passes very quickly, in 5 minute intervals
+        rates.water = 250_ml;
         rates.min_vitamin = 1;
         rates.percent_vitamin = 1.0f / 6.0f;
         rates.min_calories = 5000;
         rates.percent_kcal = 1.0f / 6.0f;
     } else {
-        // The guts are focused on absorption into the body, we don't care about passing rates.
-        // Solids rate doesn't do anything impactful here so just make it big enough to avoid overflow.
+
+
         rates.solids = 250_ml;
         rates.water = 250_ml;
-        // Explicitly floor it, because casting it to an int will do so anyways
+
         rates.min_calories = std::floor( metabolic_rates.kcal / 24.0 * metabolic_rates.hunger * 1000 );
         rates.percent_kcal = 0.05f * metabolic_rates.hunger;
         rates.min_vitamin = std::round( 100.0 / 24.0 * metabolic_rates.hunger );
@@ -485,7 +485,7 @@ void stomach_contents::mod_calories( int kcal )
 
 void stomach_contents::mod_nutr( int nutr )
 {
-    // nutr is legacy type code, this function simply converts old nutrition to new kcal
+
     mod_calories( -1 * std::round( nutr * base_metabolic_rate / ( 12 * 24 ) ) );
 }
 
@@ -530,7 +530,7 @@ time_duration stomach_contents::time_since_ate() const
     return calendar::turn - last_ate;
 }
 
-// sets default stomach contents when starting the game
+
 void Character::initialize_stomach_contents()
 {
     stomach = stomach_contents( 2500_ml, true );

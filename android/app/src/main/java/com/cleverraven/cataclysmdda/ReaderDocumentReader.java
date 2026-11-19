@@ -9,19 +9,19 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Session reader for long document nodes (R04.4).
- *
- * A document node carries its whole text in one snapshot field; the game
- * side stays unchanged. This class owns the reading position on the
- * Java side: the text is split into paragraphs once per session
- * (blank-line separated, over-long paragraphs split by sentence), and
- * the position is the paragraph most recently started. Interruption by
- * higher-priority speech never moves the position and never restarts
- * the document. Reading positions live only for the session (in memory,
- * keyed by screen context + node id) and are dropped when the screen
- * context changes.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class ReaderDocumentReader {
     private static final Locale VIETNAMESE = new Locale("vi", "VN");
     private static final int MAX_PARAGRAPH_CHARS = 700;
@@ -42,23 +42,23 @@ public final class ReaderDocumentReader {
 
     public boolean isOpen() { return open; }
 
-    /** Speech key used for every paragraph of the current document. */
+
     public String speechKey() { return "document:" + sessionKey; }
 
     private String string(int id) { return activity.getString(id); }
 
-    /** Opens (or re-opens) a document and returns the paragraph to speak. */
+
     public String open(String contextKey, String nodeId, String text) {
         String key = contextKey + ":" + nodeId;
         String safeText = text == null ? "" : text;
-        // Re-split not only for a new document but also when this
-        // document's text changed under the same key, or when the live
-        // paragraphs were dropped by clear() at a lifecycle boundary
-        // (R21.1): before this, re-opening the same document after a
-        // pause/resume found an empty paragraph list and reported the
-        // end of the document, and a filter change in the message log
-        // kept reading the pre-filter text. The saved position is kept
-        // and clamped into the new text, never restarted from zero.
+
+
+
+
+
+
+
+
         if (!key.equals(sessionKey) || paragraphs.isEmpty() || !safeText.equals(sourceText)) {
             savePosition();
             boolean sameKey = key.equals(sessionKey);
@@ -75,7 +75,7 @@ public final class ReaderDocumentReader {
         return paragraphSpeech();
     }
 
-    /** Drops the live session (screen context changed, pause, close). */
+
     public void clear() {
         savePosition();
         open = false;

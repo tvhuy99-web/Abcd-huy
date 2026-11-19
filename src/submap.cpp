@@ -43,7 +43,7 @@ void submap::clear_fields( const point_sm_ms &p )
 
 static const std::string COSMETICS_GRAFFITI( "GRAFFITI" );
 static const std::string COSMETICS_SIGNAGE( "SIGNAGE" );
-// Handle GCC warning: 'warning: returning reference to temporary'
+
 static const std::string STRING_EMPTY;
 
 namespace
@@ -52,7 +52,7 @@ struct cosmetic_find_result {
     bool result = false;
     int ndx = 0;
 };
-} // namespace
+}
 static cosmetic_find_result make_result( bool b, int ndx )
 {
     cosmetic_find_result result;
@@ -88,7 +88,7 @@ const std::string &submap::get_graffiti( const point_sm_ms &p ) const
 void submap::set_graffiti( const point_sm_ms &p, const std::string &new_graffiti )
 {
     ensure_nonuniform();
-    // Find signage at p if available
+
     const cosmetic_find_result fresult = find_cosmetic( cosmetics, p, COSMETICS_GRAFFITI );
     if( fresult.result ) {
         cosmetics[ fresult.ndx ].str = new_graffiti;
@@ -128,7 +128,7 @@ std::string submap::get_signage( const point_sm_ms &p ) const
 void submap::set_signage( const point_sm_ms &p, const std::string &s )
 {
     ensure_nonuniform();
-    // Find signage at p if available
+
     const cosmetic_find_result fresult = find_cosmetic( cosmetics, p, COSMETICS_SIGNAGE );
     if( fresult.result ) {
         cosmetics[ fresult.ndx ].str = s;
@@ -153,8 +153,8 @@ bool submap::has_computer( const point_sm_ms &p ) const
 
 const computer *submap::get_computer( const point_sm_ms &p ) const
 {
-    // the returned object will not get modified (should not, at least), so we
-    // don't yet need to update to std::map
+
+
     const auto it = computers.find( p );
     if( it != computers.end() ) {
         return &it->second;
@@ -220,14 +220,14 @@ void submap::rotate( int turns )
     };
 
     if( turns == 2 ) {
-        // Swap horizontal stripes.
+
         for( int j = 0, je = SEEY / 2; j < je; ++j ) {
             for( int i = j, ie = SEEX - j; i < ie; ++i ) {
                 m->swap_soa_tile( { i, j }, rotate_point( { i, j } ) );
             }
         }
-        // Swap vertical stripes so that they don't overlap with
-        // the already swapped horizontals.
+
+
         for( int i = 0, ie = SEEX / 2; i < ie; ++i ) {
             for( int j = i + 1, je = SEEY - i - 1; j < je; ++j ) {
                 m->swap_soa_tile( { i, j }, rotate_point( { i, j } ) );
@@ -238,8 +238,8 @@ void submap::rotate( int turns )
             for( int i = j, ie = SEEX - j - 1; i < ie; ++i ) {
                 point_sm_ms p = point_sm_ms{ i, j };
                 point_sm_ms pp = p;
-                // three swaps are enough to perform the circular shift of four elements:
-                // 0123 -> 3120 -> 3102 -> 3012
+
+
                 for( int k = 0; k < 3; ++k ) {
                     p = pp;
                     pp = rotate_point_ccw( pp );
@@ -263,10 +263,10 @@ void submap::rotate( int turns )
         const point_sm_ms new_pos = rotate_point( elem->pos );
 
         elem->pos = new_pos;
-        // turn the steering wheel, vehicle::turn does not actually
-        // move the vehicle.
+
+
         elem->turn( turns * 90_degrees );
-        // The facing direction and recalculate the positions of the parts
+
         elem->face = tileray( elem->turn_dir );
         elem->precalc_mounts( 0, elem->turn_dir, elem->pivot_anchor[0] );
     }
@@ -347,8 +347,8 @@ void submap::revert_submap( submap &sr )
             }
         }
     }
-    // copy cosmetics to new submap
-    // since their positions are stored in point_sm_ms, cosmetics do not require location updates.
+
+
     cosmetics = sr.cosmetics;
 }
 
@@ -374,8 +374,8 @@ void submap::update_lum_rem( const point_sm_ms &p, const item &i )
         return;
     }
 
-    // Have to scan through all items to be sure removing i will actually lower
-    // the count below 255.
+
+
     int count = 0;
     for( const item &it : m->itm[p.x()][p.y()] ) {
         if( it.is_emissive() ) {
@@ -417,7 +417,7 @@ void submap::merge_submaps( submap *copy_from, bool copy_from_is_overlay )
                 if( !this->m->fld[x][y].find_field( it->first, false ) ) {
                     this->m->fld[x][y].add_field( it->first, it->second.get_field_intensity(),
                                                   it->second.get_field_age() );
-                } else if( copy_from_is_overlay ) { // Modify the field to match
+                } else if( copy_from_is_overlay ) {
                     field_entry *fld = this->m->fld[x][y].find_field( it->first, false );
                     fld->set_field_intensity( it->second.get_field_intensity() );
                     fld->set_field_age( it->second.get_field_age() );
@@ -458,7 +458,7 @@ void submap::merge_submaps( submap *copy_from, bool copy_from_is_overlay )
         }
     }
 
-    // Active items from copy_from are re-registered during item copy above.
+
 
     if( copy_from->last_touched > this->last_touched ) {
         this->last_touched = copy_from->last_touched;
@@ -471,7 +471,7 @@ void submap::merge_submaps( submap *copy_from, bool copy_from_is_overlay )
     for( const auto &vehicle : copy_from->vehicles ) {
         this->vehicles.emplace_back( vehicle.get() );
     }
-    // Can't let that submap delete the vehicles when it's destroyed
+
     copy_from->vehicles.clear();
 
     if( !copy_from->partial_constructions.empty() ) {

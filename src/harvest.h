@@ -29,27 +29,27 @@ class harvest_drop_type
         const harvest_drop_type_id &getId() {
             return id;
         }
-        // Get skills required for harvesting rolls
+
         const std::vector<skill_id> &get_harvest_skills() const {
             return harvest_skills;
         }
-        // Is the associated harvest drop an item group?
+
         bool is_item_group() const {
             return is_group_;
         }
-        // Is the associated harvest drop a single itype?
+
         bool is_itype() const {
             return !is_group_;
         }
-        // Should the associated drop only spawn on dissection?
+
         bool dissect_only() const {
             return dissect_only_;
         }
-        // Message to display for the associated drop when field dressing
+
         translation field_dress_msg( bool succeeded ) const;
-        // Message to display for the associated drop when doing quick/full butchery
+
         translation butcher_msg( bool succeeded ) const;
-        // Message to display when failed to dissect the associated drop
+
         translation dissect_msg( bool succeeded ) const;
 
     private:
@@ -69,13 +69,13 @@ class harvest_drop_type
         friend struct mod_tracker;
 };
 
-// Could be reused for butchery
+
 struct harvest_entry {
-    // drop can be either an itype_id or a group id
+
     std::string drop = "null";
     std::pair<float, float> base_num = { 1.0f, 1.0f };
-    // This is multiplied by survival and added to the above
-    // TODO: Make it a map: skill->scaling
+
+
     std::pair<float, float> scale_num = { 0.0f, 0.0f };
 
     int max = 1000;
@@ -91,7 +91,7 @@ struct harvest_entry {
     void load( const JsonObject &jo );
     void deserialize( const JsonObject &jo );
 
-    // only compares mandatory members for reader identity checks
+
     bool operator==( const harvest_entry &rhs ) const;
 };
 
@@ -119,10 +119,10 @@ class harvest_list
 
         bool has_entry_type( const harvest_drop_type_id &type ) const;
 
-        /**
-         * Returns a set of cached, translated names of the items this harvest entry could produce.
-         * Filled in at finalization and not valid before that stage.
-         */
+
+
+
+
         const std::set<std::string> &names() const {
             return names_;
         }
@@ -138,13 +138,13 @@ class harvest_list
         std::vector<harvest_entry>::const_reverse_iterator rbegin() const;
         std::vector<harvest_entry>::const_reverse_iterator rend() const;
 
-        /** Fills out the set of cached names. */
+
         static void finalize_all();
         void finalize();
 
-        /** Check consistency of all loaded harvest data */
+
         static void check_consistency();
-        /** Reset all loaded harvest data */
+
         static void reset();
 
         bool was_loaded = false;
@@ -160,4 +160,4 @@ class harvest_list
 
 };
 
-#endif // CATA_SRC_HARVEST_H
+#endif

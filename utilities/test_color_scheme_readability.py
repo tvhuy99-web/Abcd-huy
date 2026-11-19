@@ -18,7 +18,7 @@ def rgb_as_int(rgb1, rgb2):
     return rgb(n_rgb1, n_rgb2)
 
 
-# https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio
+
 def rgb(rgb1, rgb2):
     for r, g, b in (rgb1, rgb2):
         if not 0.0 <= r <= 1.0:
@@ -39,7 +39,7 @@ def rgb(rgb1, rgb2):
     return round(contrast, 3)
 
 
-# https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+
 def _relative_luminance(r, g, b):
     r = _linearize(r)
     g = _linearize(g)

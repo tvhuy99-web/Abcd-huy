@@ -14,7 +14,7 @@
 #include "cuboid_rectangle.h"
 #include "level_cache.h"
 #include "lightmap.h"
-#include "line.h" // For rl_dist.
+#include "line.h"
 #include "map.h"
 #include "map_scale_constants.h"
 #include "mdarray.h"
@@ -22,7 +22,7 @@
 #include "rng.h"
 #include "shadowcasting.h"
 
-// Constants setting the ratio of set to unset tiles.
+
 static constexpr unsigned int NUMERATOR = 1;
 static constexpr unsigned int DENOMINATOR = 10;
 
@@ -55,15 +55,15 @@ static void oldCastLight(
                 break;
             }
 
-            //check if it's within the visible area and mark visible if so
+
             if( rl_dist( tripoint::zero, delta ) <= radius ) {
                 output_cache[current.x][current.y] = VISIBILITY_FULL;
             }
 
             if( blocked ) {
-                //previous cell was a blocking one
+
                 if( input_array[current.x][current.y] == LIGHT_TRANSPARENCY_SOLID ) {
-                    //hit a wall
+
                     newStart = rightSlope;
                 } else {
                     blocked = false;
@@ -72,7 +72,7 @@ static void oldCastLight(
             } else {
                 if( input_array[current.x][current.y] == LIGHT_TRANSPARENCY_SOLID &&
                     distance < radius ) {
-                    //hit a wall within sight line
+
                     blocked = true;
                     oldCastLight( output_cache, input_array, xx, xy, yx, yy,
                                   offsetX, offsetY, offsetDistance,  distance + 1, start, leftSlope );
@@ -83,9 +83,9 @@ static void oldCastLight(
     }
 }
 
-/*
- * This is checking whether bresenham visibility checks match shadowcasting (they don't).
- */
+
+
+
 static bool bresenham_visibility_check(
     const point_bub_ms &offset, const point_bub_ms &p,
     const cata::mdarray<float, point_bub_ms> &transparency_cache )
@@ -111,13 +111,13 @@ static void randomly_fill_transparency(
     cata::mdarray<float, point_bub_ms> &transparency_cache,
     const unsigned int numerator = NUMERATOR, const unsigned int denominator = DENOMINATOR )
 {
-    // Construct a rng that produces integers in a range selected to provide the probability
-    // we want, i.e. if we want 1/4 tiles to be set, produce numbers in the range 0-3,
-    // with 0 indicating the bit is set.
+
+
+
     std::uniform_int_distribution<unsigned int> distribution( 0, denominator );
     auto rng = [&distribution] { return distribution( rng_get_engine() ); };
 
-    // Initialize the transparency value of each square to a random value.
+
     transparency_cache.fill_from_callable( [numerator, &rng]() {
         if( rng() < numerator ) {
             return LIGHT_TRANSPARENCY_SOLID;
@@ -144,7 +144,7 @@ static bool grids_are_equivalent(
 {
     for( int x = 0; x < MAPSIZE * SEEX; ++x ) {
         for( int y = 0; y < MAPSIZE * SEEY; ++y ) {
-            // Check that both agree on the outcome, but not necessarily the same values.
+
             if( is_nonzero( control[x][y] ) != is_nonzero( experiment[x][y] ) ) {
                 return false;
             }
@@ -172,21 +172,21 @@ static void print_grid_comparison(
 
             if( shadowcasting_disagrees && bresenham_disagrees ) {
                 if( is_nonzero( experiment[x][y] ) ) {
-                    output = 'R'; // Old shadowcasting and bresenham can't see.
+                    output = 'R';
                 } else {
-                    output = 'N'; // New shadowcasting can't see.
+                    output = 'N';
                 }
             } else if( shadowcasting_disagrees ) {
                 if( is_nonzero( control[x][y] ) ) {
-                    output = 'C'; // New shadowcasting & bresenham can't see.
+                    output = 'C';
                 } else {
-                    output = 'O'; // Old shadowcasting can't see.
+                    output = 'O';
                 }
             } else if( bresenham_disagrees ) {
                 if( is_nonzero( experiment[x][y] ) ) {
-                    output = 'B'; // Bresenham can't see it.
+                    output = 'B';
                 } else {
-                    output = 'S'; // Shadowcasting can't see it.
+                    output = 'S';
                 }
             }
             if( transparency_cache[x][y] == LIGHT_TRANSPARENCY_SOLID ) {
@@ -238,7 +238,7 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     const std::chrono::high_resolution_clock::time_point start1 =
         std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
-        // First the control algorithm.
+
         oldCastLight( seen_squares_control, transparency_cache, 0, 1, 1, 0, offset.x(), offset.y(), 0 );
         oldCastLight( seen_squares_control, transparency_cache, 1, 0, 0, 1, offset.x(), offset.y(), 0 );
 
@@ -257,7 +257,7 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     const std::chrono::high_resolution_clock::time_point start2 =
         std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
-        // Then the current algorithm.
+
         castLightAll<float, float, sight_calc, sight_check, update_light, accumulate_transparency>(
             seen_squares_experiment, transparency_cache, offset );
     }
@@ -278,7 +278,7 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     bool passed = grids_are_equivalent( seen_squares_control, seen_squares_experiment );
     for( int x = 0; test_bresenham && passed && x < MAPSIZE * SEEX; ++x ) {
         for( int y = 0; y < MAPSIZE * SEEX; ++y ) {
-            // Check that both agree on the outcome, but not necessarily the same values.
+
             if( bresenham_visibility_check( offset, point_bub_ms( x, y ), transparency_cache ) !=
                 ( seen_squares_experiment[x][y] > LIGHT_TRANSPARENCY_SOLID ) ) {
                 passed = false;
@@ -328,7 +328,7 @@ static void shadowcasting_float_quad(
     const std::chrono::high_resolution_clock::time_point start2 =
         std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
-        // Then the current algorithm.
+
         castLightAll<float, float, sight_calc, sight_check, update_light,
                      accumulate_transparency>(
                          lit_squares_float, transparency_cache, offset );
@@ -412,8 +412,8 @@ static void shadowcasting_3d_benchmark( const int iterations )
     }
     do_3d_benchmark( transparency_caches, iterations );
 
-    // Flat plain
-    // TODO: add roofs
+
+
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         float value_to_set = LIGHT_TRANSPARENCY_SOLID;
         if( z < 0 ) {
@@ -425,7 +425,7 @@ static void shadowcasting_3d_benchmark( const int iterations )
     }
     do_3d_benchmark( transparency_caches, iterations );
 
-    // Add some obstacles, a ring at distance 5
+
     cata::mdarray<float, point_bub_ms> &ground_level = transparency_cache[OVERMAP_DEPTH];
     ground_level[60][65] = LIGHT_TRANSPARENCY_SOLID;
     ground_level[63][63] = LIGHT_TRANSPARENCY_SOLID;
@@ -454,7 +454,7 @@ static void shadowcasting_3d_2d( const int iterations )
     const std::chrono::high_resolution_clock::time_point start1 =
         std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
-        // First the control algorithm.
+
         castLightAll<float, float, sight_calc, sight_check, update_light, accumulate_transparency>(
             seen_squares_control, transparency_cache, offset.xy() );
     }
@@ -466,7 +466,7 @@ static void shadowcasting_3d_2d( const int iterations )
     array_of_grids_of<float> seen_caches;
     array_of_grids_of<const bool> floor_caches;
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-        // TODO: Give some more proper values here
+
         transparency_caches[z + OVERMAP_DEPTH] = &transparency_cache;
         seen_caches[z + OVERMAP_DEPTH] = &seen_squares_experiment;
         floor_caches[z + OVERMAP_DEPTH] = &floor_cache;
@@ -475,7 +475,7 @@ static void shadowcasting_3d_2d( const int iterations )
     const std::chrono::high_resolution_clock::time_point start2 =
         std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
-        // Then the newer algorithm.
+
         cast_zlight<float, sight_calc, sight_check, accumulate_transparency>(
             seen_caches, transparency_caches, floor_caches, origin, 0, 1.0 );
     }
@@ -504,8 +504,8 @@ static void shadowcasting_3d_2d( const int iterations )
     REQUIRE( passed );
 }
 
-// T, O and V are 'T'ransparent, 'O'paque and 'V'isible.
-// X marks the player location, which is not set to visible by this algorithm.
+
+
 static constexpr float T = LIGHT_TRANSPARENCY_OPEN_AIR;
 static constexpr float O = LIGHT_TRANSPARENCY_SOLID;
 static constexpr float V = LIGHT_TRANSPARENCY_OPEN_AIR;
@@ -523,7 +523,7 @@ struct grid_overlay {
     float default_value;
     bool default_floor = true;
 
-    // origin_offset is specified as the coordinates of the "camera" within the overlay.
+
     grid_overlay( const point &origin_offset, const float default_value ) {
         this->offset = ORIGIN.raw() - origin_offset;
         this->default_value = default_value;
@@ -571,12 +571,12 @@ struct grid_overlay {
     }
 };
 
-} // namespace
+}
 
 static void run_spot_check( const grid_overlay &test_case, const grid_overlay &expected,
                             bool fov_3d )
 {
-    // Reminder to not trigger 2D shadowcasting on 3D use cases.
+
     if( !fov_3d ) {
         REQUIRE( test_case.depth() == 1 );
     }
@@ -925,18 +925,18 @@ TEST_CASE( "shadowcasting_transparent_floors", "[shadowcasting]" )
     run_spot_check( test_case, expected_results, true );
 }
 
-// From origin looking out, we should check every combination of 2x2 transparent and opaque patterns.
-// T T  O O
-// T T  O O
-//
-// T T  T T  O T  T O
-// O T  T O  T T  T T
-//
-// T T  O T  T O  O T  T O  O O
-// O O  O T  O T  T O  T O  T T
-//
-// O T  T O  O O  O O
-// O O  O O  O T  T O
+
+
+
+
+
+
+
+
+
+
+
+
 
 TEST_CASE( "shadowcasting_floating_wall", "[shadowcasting]" )
 {
@@ -1104,7 +1104,7 @@ TEST_CASE( "shadowcasting_floating_wall", "[shadowcasting]" )
     run_spot_check( test_case, expected_results, true );
 }
 
-// Some random edge cases aren't matching.
+
 TEST_CASE( "shadowcasting_runoff", "[.]" )
 {
     shadowcasting_runoff( 1 );
@@ -1153,7 +1153,7 @@ TEST_CASE( "trig_dist_lut_matches_sqrt", "[shadowcasting]" )
     }
 }
 
-// I'm not sure this will ever work.
+
 TEST_CASE( "bresenham_vs_shadowcasting", "[.]" )
 {
     shadowcasting_runoff( 1, true );

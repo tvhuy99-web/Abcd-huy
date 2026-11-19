@@ -27,4 +27,4 @@ class live_view
         std::unique_ptr<ui_adaptor> ui;
 };
 
-#endif // CATA_SRC_LIVE_VIEW_H
+#endif

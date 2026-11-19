@@ -25,7 +25,7 @@ using mat_burn_products = std::vector<std::pair<itype_id, float>>;
 using material_list = std::vector<material_type>;
 using material_id_list = std::vector<material_id>;
 
-// values for how breathable a material is
+
 enum class breathability_rating : int {
     IMPERMEABLE = 0,
     POOR,
@@ -57,7 +57,7 @@ struct fuel_explosion_data {
 
 struct fuel_data {
     public:
-        /** Energy of the fuel per litre */
+
         units::energy energy = 0_J;
         fuel_explosion_data explosion_data;
         std::string pump_terrain = "t_null";
@@ -77,29 +77,29 @@ class material_type
 
     private:
         translation _name;
-        std::optional<itype_id> _salvaged_into; // this material turns into this item when salvaged
-        itype_id _repaired_with = itype_id( "null" ); // this material can be repaired with this item
-        resistances _resistances; // negative integers means susceptibility
-        std::vector<damage_type_id> _res_was_loaded;  // for checking mandatory resistances
-        int _chip_resist = 0;                         // Resistance to physical damage of the item itself
-        float _density = 1;                             // relative to "powder", which is 1
-        // ability of a fabric to allow moisture vapor to be transmitted through the material
+        std::optional<itype_id> _salvaged_into;
+        itype_id _repaired_with = itype_id( "null" );
+        resistances _resistances;
+        std::vector<damage_type_id> _res_was_loaded;
+        int _chip_resist = 0;
+        float _density = 1;
+
         breathability_rating _breathability = breathability_rating::IMPERMEABLE;
-        // How resistant this material is to wind as a percentage - 0 to 100
+
         std::optional<int> _wind_resist;
         float _specific_heat_liquid = 4.186f;
         float _specific_heat_solid = 2.108f;
         float _latent_heat = 334.0f;
-        float _freeze_point = 0; // Celsius
+        float _freeze_point = 0;
         bool _rotting = false;
         bool _soft = false;
         bool _uncomfortable = false;
-        bool _conductive = false; // If this material conducts electricity
+        bool _conductive = false;
 
-        // the thickness that sheets of this material come in, anything that uses it should be a multiple of this
+
         float _sheet_thickness = 0.0f;
 
-        // the skill needed to repair this type of material
+
         int _repair_difficulty = 10;
 
         translation _bash_dmg_verb;
@@ -112,7 +112,7 @@ class material_type
 
         fuel_data fuel;
 
-        //Burn products defined in JSON as "burn_products": [ [ "X", float efficiency ], [ "Y", float efficiency ] ]
+
         mat_burn_products _burn_products;
 
     public:
@@ -125,17 +125,17 @@ class material_type
 
         material_id ident() const;
         std::string name() const;
-        /**
-         * @returns An empty optional if this material can not be
-         * salvaged into any items (e.g. for powder, liquids).
-         * Or a valid id of the item type that this can be salvaged
-         * into (e.g. clothes made of material leather can be salvaged
-         * into leather patches).
-         */
+
+
+
+
+
+
+
         std::optional<itype_id> salvaged_into() const;
         itype_id repaired_with() const;
         float resist( const damage_type_id &dmg_type ) const;
-        // whether this material has an explicitly defined resistance for the specified damage type
+
         bool has_dedicated_resist( const damage_type_id &dmg_type ) const;
         std::string bash_dmg_verb() const;
         std::string cut_dmg_verb() const;
@@ -153,7 +153,7 @@ class material_type
         bool is_valid_thickness( float thickness ) const;
         float thickness_multiple() const;
 
-        // converts from the breathability enum to a fixed integer value from 0-100
+
         static int breathability_to_rating( breathability_rating breathability );
         int breathability() const;
         std::optional<int> wind_resist() const;
@@ -182,6 +182,6 @@ void reset();
 material_list get_all();
 const std::set<material_id> &get_rotting();
 
-} // namespace materials
+}
 
-#endif // CATA_SRC_MATERIAL_H
+#endif

@@ -66,14 +66,14 @@ class StatusMonitorHistory(unittest.TestCase):
 
     def test_silent_write_never_speaks(self):
         body = add_msg_silent_body()
-        # The log write reuses add_msg_string, which appends to the deque
-        # and returns the message for announce_message() to speak; the
-        # silent variant must discard that return instead of speaking it.
+
+
+
         self.assertIn("player_messages.add_msg_string( std::move( msg ), params )", body)
         self.assertNotIn("announce_message", body)
 
     def test_plain_add_msg_still_speaks(self):
-        # No regression: the normal channel still announces every message.
+
         impl = (SRC / "messages.cpp").read_text("utf-8")
         self.assertIn(
             "announce_message( player_messages.add_msg_string( std::move( msg ) ) );",
@@ -88,48 +88,48 @@ class StatusMonitorHistory(unittest.TestCase):
         body = announce_message_body()
         self.assertIn("message->type == m_debug", body)
         self.assertIn("muted_combat_speech_depth > 0", body)
-        # Urgency on the normal channel comes from the message type.
+
         self.assertIn("message->type == m_bad", body)
         self.assertIn("message->type == m_warning", body)
         self.assertIn("message->type == m_critical", body)
 
     def test_monitor_keeps_direct_live_announcement(self):
         body = monitor_body()
-        # Live speech is unchanged and still carries the monitor's own
-        # urgency flag, which also fires the danger cue for urgent
-        # warnings. This call never consults combat mute.
+
+
+
         self.assertIn("announce_game_message( message, urgent );", body)
 
     def test_monitor_logs_same_warning_silently(self):
         body = monitor_body()
-        # The exact spoken text is logged, so the recap re-reads what
-        # was actually heard. Urgent warnings log as m_warning, the rest
-        # as m_info -- mirroring the types announce_message treats as
-        # urgent on the normal channel.
+
+
+
+
         self.assertIn(
             "Messages::add_msg_silent( urgent ? m_warning : m_info, message );", body
         )
-        # Silent write follows the live announcement in the same block.
+
         self.assertLess(
             body.index("announce_game_message( message, urgent );"),
             body.index("Messages::add_msg_silent("),
         )
-        # A plain add_msg here would speak the warning a second time.
+
         self.assertNotIn("Messages::add_msg(", body)
 
     def test_monitor_log_write_gated_on_reader_enabled(self):
         body = monitor_body()
-        # The monitor returns early when the reader is disabled or
-        # suspended, so the silent write must sit behind that guard --
-        # no log entries for sighted play or while the reader is off.
+
+
+
         guard = body.index("if( !enabled() || suspended() )")
         silent = body.index("Messages::add_msg_silent(")
         self.assertLess(guard, silent)
 
     def test_silent_entries_reach_double_tap_history(self):
-        # Chain: add_msg_string appends to the log deque, recent_messages
-        # reads that deque, and the world snapshot publishes it as the
-        # node the double-tap recap reads.
+
+
+
         impl = (SRC / "messages.cpp").read_text("utf-8")
         self.assertIn("messages.emplace_back( m );", impl)
         world = (SRC / "a11y_world.cpp").read_text("utf-8")

@@ -40,7 +40,7 @@ struct ass_op {
     std::string_view symbol;
     bool needs_mhs;
     binary_op::f_t f;
-    bool unaryone = false; // FIXME: hack...
+    bool unaryone = false;
 };
 using pass_op = ass_op const *;
 
@@ -167,7 +167,7 @@ struct thingie {
     template <class U>
     explicit thingie( U u ) : data( std::in_place_type<U>, std::forward<U>( u ) ) {}
     template <class T, class... Args>
-    explicit thingie( std::in_place_type_t<T> /*t*/, Args &&...args )
+    explicit thingie( std::in_place_type_t<T> , Args &&...args )
         : data( std::in_place_type<T>, std::forward<Args>( args )... ) {}
 
     constexpr double eval( dialogue &d ) const;
@@ -202,7 +202,7 @@ constexpr double thingie::eval( const_dialogue const &d ) const
         {
             return v;
         },
-        []( ass_oper const & /* v */ ) -> double
+        []( ass_oper const & ) -> double
         {
             throw math::runtime_error( "Cannot use assignment operators from eval context" );
             return 0.0;
@@ -246,12 +246,12 @@ constexpr bool operator>( op_t const &lhs, paren const &rhs )
 
 namespace math_opers
 {
-constexpr double neg( double /* zero */, double r )
+constexpr double neg( double , double r )
 {
     return -r;
 }
 
-constexpr double pos( double /* zero */, double r )
+constexpr double pos( double , double r )
 {
     return r;
 }
@@ -316,12 +316,12 @@ inline double neq( double l, double r )
     return static_cast<double>( l != r );
 }
 
-inline double b_neg( double /* zero */, double r )
+inline double b_neg( double , double r )
 {
     return static_cast<double>( float_equals( r, 0 ) );
 }
 
-} // namespace math_opers
+}
 
 constexpr binary_op assignment_op{ "", -10, binary_op::associativity::left };
 
@@ -360,4 +360,4 @@ constexpr std::array<ass_op, 8> ass_ops{
     ass_op{ "--", true, math_opers::sub, true },
 };
 
-#endif // CATA_SRC_MATH_PARSER_IMPL_H
+#endif

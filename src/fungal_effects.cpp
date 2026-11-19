@@ -67,20 +67,20 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
             add_msg_if_player_sees( p, _( "The %s is covered in tiny spores!" ), critter.name() );
         }
         if( !critter.make_fungus() ) {
-            // Don't insta-kill non-fungables. Jabberwocks, for example
+
             critter.add_effect( effect_stunned, rng( 1_turns, 3_turns ) );
             critter.apply_damage( origin, bodypart_id( "torso" ), rng( 25, 50 ) );
         }
     } else if( player_character.pos_bub() == p ) {
-        // TODO: Make this accept NPCs when they understand fungals
-        ///\EFFECT_DEX increases chance of knocking fungal spores away with your TAIL_CATTLE
-        ///\EFFECT_MELEE increases chance of knocking fungal sports away with your TAIL_CATTLE
+
+
+
         if( player_character.has_trait( trait_TAIL_CATTLE ) &&
             one_in( 20 - player_character.get_dex() - player_character.get_skill_level( skill_melee ) ) ) {
             add_msg( _( "The spores land on you, but you quickly swat them off with your tail!" ) );
             return;
         }
-        // Spores hit the player--is there any hope?
+
         bool hit = false;
         hit |= one_in( 4 ) &&
                player_character.add_env_effect( effect_spores, bodypart_id( "head" ), 3, 9_minutes,
@@ -103,7 +103,7 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
         if( hit ) {
             add_msg( m_warning, _( "You're covered in tiny spores!" ) );
         }
-    } else if( g->num_creatures() < 250 && x_in_y( spore_chance, 1.0 ) ) { // Spawn a spore
+    } else if( g->num_creatures() < 250 && x_in_y( spore_chance, 1.0 ) ) {
         if( monster *const spore = g->place_critter_at( mon_spore, p ) ) {
             monster *origin_mon = dynamic_cast<monster *>( origin );
             if( origin_mon != nullptr ) {
@@ -148,7 +148,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
 {
     map &here = get_map();
     bool converted = false;
-    // Terrain conversion
+
     if( here.has_flag_ter( ter_furn_flag::TFLAG_DIGGABLE, p ) ) {
         if( x_in_y( growth * 10, 100 ) ) {
             here.ter_set( p, ter_t_fungus );
@@ -187,7 +187,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
     } else if( here.has_flag( ter_furn_flag::TFLAG_YOUNG, p ) ) {
         if( x_in_y( growth * 10, 500 ) ) {
             if( here.get_field_intensity( p, fd_fungal_haze ) != 0 ) {
-                if( x_in_y( growth * 10, 800 ) ) { // young trees are vulnerable
+                if( x_in_y( growth * 10, 800 ) ) {
                     here.ter_set( p, ter_t_fungus );
                     if( g->place_critter_at( mon_fungal_blossom, p ) ) {
                         add_msg_if_player_sees( p, m_warning, _( "The young tree blooms forth into a fungal blossom!" ) );
@@ -223,7 +223,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
             converted = true;
         }
     }
-    // Furniture conversion
+
     if( converted ) {
         if( here.has_flag( ter_furn_flag::TFLAG_FLOWER, p ) ) {
             here.furn_set( p, furn_f_flower_fungal );
@@ -234,8 +234,8 @@ void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int
                 here.furn_set( p, furn_f_fungal_clump );
             }
         } else if( here.has_flag( ter_furn_flag::TFLAG_PLANT, p ) ) {
-            // Replace the (already existing) seed
-            // Can't use item_stack::only_item() since there might be fertilizer
+
+
             map_stack items = here.i_at( p );
             const map_stack::iterator seed = std::find_if( items.begin(), items.end(), []( const item & it ) {
                 return it.is_seed();
@@ -266,14 +266,14 @@ void fungal_effects::spread_fungus( const tripoint_bub_ms &p )
     if( !here.has_flag_ter( ter_furn_flag::TFLAG_FUNGUS, p ) ) {
         spread_fungus_one_tile( p, growth );
     } else {
-        // Everything is already fungus
+
         if( growth == 9 ) {
             return;
         }
         for( const tripoint_bub_ms &dest : here.points_in_radius( p, 1 ) ) {
-            // One spread on average
+
             if( !here.has_flag( ter_furn_flag::TFLAG_FUNGUS, dest ) && one_in( 9 - growth ) ) {
-                //growth chance is 100 in X simplified
+
                 spread_fungus_one_tile( dest, 10 );
             }
         }

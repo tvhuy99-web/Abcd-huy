@@ -8,4 +8,4 @@ class style_picker
         void show();
 };
 
-#endif // CATA_SRC_UI_STYLE_PICKER_H
+#endif

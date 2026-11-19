@@ -15,8 +15,8 @@
 #include <zstd/common/mem.h>
 #include <zstd/common/xxhash.h>
 
-// This is a c++ utility written like a oneshot python script.
-// Do not consider code here to exemplify best practices.
+
+
 
 std::string_view kZzipExt{ ".zzip" };
 std::string_view kMapMemoryExt{ ".mm1" };
@@ -103,7 +103,7 @@ get_world_root_and_relative_content_path(
 
     std::filesystem::path world_root = absolute_content;
 
-    // Walk the path looking for worldoptions.json.
+
     while( world_root.has_relative_path() &&
            !std::filesystem::exists( world_root / "worldoptions.json", ec ) && !ec ) {
         world_root = world_root.parent_path();
@@ -152,7 +152,7 @@ struct ExnPtr {
 
     [[noreturn]] void throw_exception() {
         ep->throw_exception();
-        // Some compiler's can't figure out the [[noreturn]] on Exn::throw_exception()
+
 #if defined(__GNUC__) || defined(__clang__)
         __builtin_unreachable();
 #elif defined(_MSC_VER)
@@ -184,13 +184,13 @@ struct ZzipStream {
             zzip_contents{ zzip_contents }, base{ zzip_contents.data() } {
             size_t remaining_len = zzip_contents.size();
 
-            // Skip the zzip header.
+
             if( !ZSTD_isSkippableFrame( base, remaining_len ) ) {
                 err = ZzipError( zzip_path, 0, "Zzip does not start with skippable frame." );
                 return;
             }
 
-            // The first frame of a zzip should be a skippable frame of two 64 bit ints
+
             ZSTD_FrameHeader header;
             size_t error_code = ZSTD_getFrameHeader( &header, base, remaining_len );
             if( ZSTD_isError( error_code ) ||
@@ -263,8 +263,8 @@ struct ZzipStream {
                     continue;
                 }
 
-                // At this point we should have read the filename and compressed frame checksums.
-                // If either is missing, the end of the zzip is corrupt.
+
+
                 if( filename.empty() || checksum == 0 ) {
                     RETURN_ERROR( ZzipError( zzip_path, offset, "Entry metadata missing." ) );
                 }
@@ -345,7 +345,7 @@ static int decompress_to( std::filesystem::path const &zzip_path,
         }
     }
 
-    // Iterate through the zstd frames indexing each file as we get to it.
+
 
     std::map<std::string, ZzipEntry> entry_map;
 
@@ -471,23 +471,23 @@ static int compress_to( std::filesystem::path const &zzip_path,
 
     size_t write_offset = after_last_entry_ptr - zzip_contents.data();
 
-    // We have to add the `in` bit to avoid truncating the file, if it exists
-    // But if it does not exist, we must omit it to create a new file.
-    // Who designed this api.
+
+
+
     std::ofstream zip{ zzip_path, zzip_exists ? std::ios::binary | std::ios::in : std::ios::binary};
     if( !zip ) {
         throw std::runtime_error( zzip_path_string + ": Unable to open zzip for writing." );
     }
 
-    // We are invalidating the current footer but may not overwrite it,
-    // so overwrite the header instead.
-    // This has the advantage of also working for freshly created zzips.
+
+
+
     std::vector<char> buf;
     buf.resize( ZSTD_SKIPPABLEHEADERSIZE + 2 * sizeof( uint64_t ) );
 
     std::array<uint64_t, 2> dummy{ 0, 0 };
     MEM_writeLE64( &dummy[1], XXH64( nullptr, 0,
-                                     kCheckumSeed ) + 1 ); // Write an intentionally incorrect checksum.
+                                     kCheckumSeed ) + 1 );
     size_t header_size = ZSTD_writeSkippableFrame(
                              buf.data(),
                              buf.size(),
@@ -500,14 +500,14 @@ static int compress_to( std::filesystem::path const &zzip_path,
     }
     zip.write( buf.data(), header_size );
 
-    // Fast forward to where we need to write the new entry.
+
     if( write_offset == 0 ) {
-        // Brand new zzip, skip to after the header.
+
         write_offset = header_size;
     }
     zip.seekp( write_offset );
 
-    // Compress the file.
+
     size_t compress_bound = ZSTD_compressBound( input_contents.size() );
     buf.resize( compress_bound );
     size_t file_frame_size = ZSTD_compress2(
@@ -521,7 +521,7 @@ static int compress_to( std::filesystem::path const &zzip_path,
         throw ZstdError( input_file, 0, file_frame_size, "Failed to compress input file." );
     }
     buf.resize( file_frame_size );
-    // Write the filename frame
+
     {
         std::string filename_string = archive_filename.generic_u8string();
         std::vector<char> buf2;
@@ -540,7 +540,7 @@ static int compress_to( std::filesystem::path const &zzip_path,
         zip.write( buf2.data(), filename_header_size );
     }
 
-    // Then the checksum frame.
+
     {
         uint64_t checksum = XXH64( buf.data(), buf.size(), kCheckumSeed );
         std::vector<char> buf2;
@@ -556,7 +556,7 @@ static int compress_to( std::filesystem::path const &zzip_path,
                                       );
         zip.write( buf2.data(), checksum_header_size );
     }
-    // And finally the compressed file.
+
     zip.write( buf.data(), buf.size() );
 
     return 0;
@@ -595,23 +595,23 @@ static int handle_file_contextual( std::filesystem::path const &input_file )
     }();
 
     if( parts.back().extension() == kZzipExt ) {
-        // Currently only support maps/, overmaps/, char.mm1/, and char.sav.zzip
+
         if( parts.size() > 2 ) {
             throw IDK( input_file );
         }
 
         std::filesystem::path world_relative_output_folder;
         if( parts[0] == kMapsFolder ) {
-            // maps/x.y.z.zzip[a.b.c.map] -> maps/x.y.z/a.b.c.map
+
             world_relative_output_folder = relative_input;
             world_relative_output_folder.replace_extension( "" );
         }
         if( parts[0] == kOvermapsFolder ) {
-            // overmaps/o.x.y.zzip[o.x.y] -> o.x.y
+
             world_relative_output_folder = "";
         }
         if( parts[0].extension() == kMapMemoryExt ) {
-            // char.mm1/char.*.zzip[a.b.c.mmr] -> char.mm1/a.b.c.mmr
+
             world_relative_output_folder = parts[0];
         }
 
@@ -626,7 +626,7 @@ static int handle_file_contextual( std::filesystem::path const &input_file )
         if( parts.size() != 3 || parts[2].extension() != ".map" ) {
             throw IDK( input_file );
         }
-        // maps/x.y.z/a.b.c.map -> maps/x.y.z.zzip[a.b.c.map]
+
         entry_key = parts[2];
         world_relative_zzip = kMapsFolder / parts[1];
     }
@@ -634,9 +634,9 @@ static int handle_file_contextual( std::filesystem::path const &input_file )
         if( parts.size() != 2 || parts[1].extension() != ".mmr" ) {
             throw IDK( input_file );
         }
-        // char.mm1/a.b.c.mmr -> char.mm1/char.mm1.cold.zzip[a.b.c.mmr]
+
         entry_key = parts[1];
-        // We have to break this up to not mutate parts[0] in an undefined order by calling .concat
+
         world_relative_zzip = parts[0];
         world_relative_zzip /= parts[0];
         world_relative_zzip += ".cold";
@@ -645,12 +645,12 @@ static int handle_file_contextual( std::filesystem::path const &input_file )
         throw IDK( input_file );
     }
     if( parts[0].extension() == kSavExt ) {
-        // char.sav -> char.sav.zzip[char.sav]
+
         entry_key = parts[0];
         world_relative_zzip = parts[0];
     }
     if( parts[0].generic_u8string().find( "o." ) == 0 ) {
-        // o.x.y -> overmaps/o.x.y.zzip[o.x.y]
+
         entry_key = parts[0];
         world_relative_zzip = kOvermapsFolder / parts[0];
     }
@@ -667,10 +667,10 @@ static int handle_file_contextual( std::filesystem::path const &input_file )
 int main( int argc, char **argv )
 {
     if( argc == 2 ) {
-        // If there's exactly one argument, it's 'something' that we need to deal with.
-        // For example someone drag and dropping something onto the binary.
-        // Use heuristics to figure out what to do.
-        // For now we only support files, not folders.
+
+
+
+
         std::filesystem::path input_file{ argv[1] };
         try {
             if( !std::filesystem::is_regular_file( input_file ) ) {

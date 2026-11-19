@@ -66,4 +66,4 @@ class body_part_set
         void deserialize( const JsonValue &s );
 };
 
-#endif // CATA_SRC_BODY_PART_SET_H
+#endif

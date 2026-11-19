@@ -13,18 +13,18 @@ class JsonOut;
 namespace debugmode
 {
 enum debug_filter : int;
-}  // namespace debugmode
+}
 struct game_message_params;
 
 namespace catacurses
 {
 class window;
-}  // namespace catacurses
+}
 
-/**
- * For unit testing we just store all messages so they can be dumped in the
- * event of a test failure.
- */
+
+
+
+
 
 static std::vector<std::pair<std::string, std::string>> messages;
 
@@ -46,13 +46,13 @@ void Messages::add_msg( const game_message_params &, std::string m )
 {
     add_msg( std::move( m ) );
 }
-// The full game implements silent announcements and combat speech muting.
-// Test builds deliberately replace messages.cpp with this file, so every
-// non-inline Messages API must also be provided here for the linker.
+
+
+
 void Messages::add_msg_silent( const game_message_params &params, std::string m )
 {
-    // Qualify the call: MSVC otherwise considers both this namespace and
-    // the global add_msg overload through argument-dependent lookup.
+
+
     Messages::add_msg( params, std::move( m ) );
 }
 Messages::mute_combat_speech::mute_combat_speech( bool ) : muted( false )

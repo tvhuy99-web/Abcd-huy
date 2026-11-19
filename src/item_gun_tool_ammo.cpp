@@ -125,22 +125,22 @@ static constexpr float MIN_LINK_EFFICIENCY = 0.001f;
 item &null_item_reference()
 {
     static item result{};
-    // reset it, in case a previous caller has changed it
+
     result = item();
     return result;
 }
 
-// Resolve firing entries for a mode. Base-gun modes are required to have
-// explicit entries (see Item_factory::check_definitions), so a missing
-// entry here means the mode came from a gunmod (mode_modifier) and
-// inherits DEFAULT cost.
+
+
+
+
 static const std::vector<pocket_consumption_entry> *resolve_firing_entries(
     const item &host, const gun_mode_id &mode )
 {
     const firing_requirement_set &set = host.type->firing_requirements;
-    // Cost comes from the item owning the winning mode-def: a gunmod owning a
-    // mode supplies its cost, else inherits host DEFAULT. host[M] is read only
-    // for host-owned modes, so a same-id override never splits def from cost.
+
+
+
     bool mod_owns = false;
     if( host.is_gun() ) {
         for( const item *mod : host.gunmods() ) {
@@ -150,14 +150,14 @@ static const std::vector<pocket_consumption_entry> *resolve_firing_entries(
             if( !mod->type->gunmod->mode_modifier.count( mode ) ) {
                 continue;
             }
-            // mode_modifier owns the mode; gunmod->firing_requirements (key
-            // "mode_firing_requirements") carries its per-pocket cost.
+
+
             const firing_requirement_set &ms = mod->type->gunmod->firing_requirements;
             const std::vector<pocket_consumption_entry> *me = ms.for_mode( mode );
             if( me != nullptr && !me->empty() ) {
                 return me;
             }
-            mod_owns = true; // owns the mode but gave no cost: inherit host DEFAULT
+            mod_owns = true;
             break;
         }
     }
@@ -167,15 +167,15 @@ static const std::vector<pocket_consumption_entry> *resolve_firing_entries(
             return entries;
         }
         if( host.type->gun && host.type->gun->modes.count( mode ) ) {
-            return nullptr; // base gun mode without explicit entry: validation failure
+            return nullptr;
         }
     }
     return set.for_mode( gun_mode_DEFAULT );
 }
 
-// Per-mode feasibility for multimag. Local pocket stock is non-fungible
-// across pocket ids; only the external pool (cable + UPS + bionic) is
-// shared, and it's usable only by battery-flavored entries.
+
+
+
 static int feasible_uses( const item &host,
                           const std::vector<pocket_consumption_entry> &entries,
                           int requested, int external_pool )
@@ -204,8 +204,8 @@ static int feasible_uses( const item &host,
         return std::min( requested, n_max );
     }
 
-    // Pool need(n) = sum_{i past breakpoint} (n*qty_i - stock_i) is
-    // piecewise linear; walk breakpoints in ascending stock_i / qty_i order.
+
+
     std::sort( battery.begin(), battery.end(),
     []( const battery_entry & a, const battery_entry & b ) {
         return static_cast<int64_t>( a.stock ) * b.qty <
@@ -268,12 +268,12 @@ item &item::ammo_set( const itype_id &ammo, int qty )
     }
     const ammotype &ammo_type = ammo->ammo->type;
     if( qty < 0 ) {
-        // completely fill an integral or existing magazine
-        //if( magazine_current() ) then we need capacity of the magazine instead of the item maybe?
+
+
         if( magazine_integral() || magazine_current() ) {
             qty = ammo_capacity( ammo_type );
 
-            // else try to add a magazine using default ammo count property if set
+
         } else if( !magazine_default( true ).is_null() ) {
             item mag( magazine_default( true ) );
             if( mag.type->magazine->count > 0 ) {
@@ -289,7 +289,7 @@ item &item::ammo_set( const itype_id &ammo, int qty )
         return *this;
     }
 
-    // handle reloadable tools and guns with no specific ammo type as special case
+
     if( ammo.is_null() && ammo_types().empty() ) {
         if( magazine_integral() ) {
             if( is_tool() ) {
@@ -302,7 +302,7 @@ item &item::ammo_set( const itype_id &ammo, int qty )
         return *this;
     }
 
-    // check ammo is valid for the item
+
     std::set<itype_id> mags = magazine_compatible();
     if( ammo_types().count( ammo_type ) == 0 && !( magazine_current() &&
             magazine_current()->ammo_types().count( ammo_type ) ) &&
@@ -332,7 +332,7 @@ item &item::ammo_set( const itype_id &ammo, int qty )
             }
 
             item mag_item( mag );
-            // if default magazine too small fetch instead closest available match
+
             if( mag_item.ammo_capacity( ammo_type ) < qty ) {
                 std::vector<item> opts;
                 for( const itype_id &mag_type : mags ) {
@@ -379,9 +379,9 @@ item &item::ammo_set( const itype_id &ammo, int qty )
 item &item::ammo_unset()
 {
     if( !is_tool() && !is_gun() && !is_magazine() ) {
-        // do nothing
+
     } else if( is_magazine() ) {
-        if( is_money() ) { // charges are set wrong on cash cards.
+        if( is_money() ) {
             charges = 0;
         }
         contents.clear_magazines();
@@ -397,21 +397,21 @@ item &item::ammo_unset()
     return *this;
 }
 
-/*
- * 0 based lookup table of accuracy - monster defense converted into number of hits per 10000
- * attacks
- * data painstakingly looked up at http://onlinestatbook.com/2/calculators/normal_dist.html
- */
+
+
+
+
+
 static constexpr std::array<double, 41> hits_by_accuracy = {
-    0,    1,   2,   3,   7, // -20 to -16
-    13,   26,  47,   82,  139, // -15 to -11
-    228,   359,  548,  808, 1151, // -10 to -6
-    1587, 2119, 2743, 3446, 4207, // -5 to -1
-    5000,  // 0
-    5793, 6554, 7257, 7881, 8413, // 1 to 5
-    8849, 9192, 9452, 9641, 9772, // 6 to 10
-    9861, 9918, 9953, 9974, 9987, // 11 to 15
-    9993, 9997, 9998, 9999, 10000 // 16 to 20
+    0,    1,   2,   3,   7,
+    13,   26,  47,   82,  139,
+    228,   359,  548,  808, 1151,
+    1587, 2119, 2743, 3446, 4207,
+    5000,
+    5793, 6554, 7257, 7881, 8413,
+    8849, 9192, 9452, 9641, 9772,
+    9861, 9918, 9953, 9974, 9987,
+    9993, 9997, 9998, 9999, 10000
 };
 
 double item::effective_dps( const Character &guy, Creature &mon ) const
@@ -425,13 +425,13 @@ double item::effective_dps( const Character &guy, Creature &mon ) const
     const int rng_mean = std::max( std::min( static_cast<int>( base_hit - mon_defense ), 20 ),
                                    -20 ) + 20;
     double num_all_hits = hits_by_accuracy[ rng_mean ];
-    /* critical hits have two chances to occur: triple critical hits happen much less frequently,
-     * and double critical hits can only occur if a hit roll is more than 1.5 * monster dodge.
-     * Not the hit roll used to determine the attack, another one.
-     * the way the math works, some percentage of the total hits are eligible to be double
-     * critical hits, and the rest are eligible to be triple critical hits, but in each case,
-     * only some small percent of them actually become critical hits.
-     */
+
+
+
+
+
+
+
     const int rng_high_mean = std::max( std::min( static_cast<int>( base_hit - 1.5 * mon_dodge ),
                                         20 ), -20 ) + 20;
     double num_high_hits = hits_by_accuracy[ rng_high_mean ] * num_all_hits / hit_trials;
@@ -440,15 +440,15 @@ double item::effective_dps( const Character &guy, Creature &mon ) const
     double num_low_hits = std::max( 0.0, num_all_hits - num_high_hits );
 
     double moves_per_attack = guy.attack_speed( *this );
-    // attacks that miss do no damage but take time
+
     double total_moves = ( hit_trials - num_all_hits ) * moves_per_attack;
     double total_damage = 0.0;
     double num_crits = std::min( num_low_hits * crit_chance + num_high_hits * double_crit_chance,
                                  num_all_hits );
-    // critical hits are counted separately
+
     double num_hits = num_all_hits - num_crits;
-    // sum average damage past armor and return the number of moves required to achieve
-    // that damage
+
+
     const auto calc_effective_damage = [ &, moves_per_attack]( const double num_strikes,
     const bool crit, const Character & guy, Creature & mon ) {
         bodypart_id bp = bodypart_id( "torso" );
@@ -459,7 +459,7 @@ double item::effective_dps( const Character &guy, Creature &mon ) const
                              sub_bodypart_str_id::NULL_ID(), &mon, bp );
         damage_instance dealt_damage = base_damage;
         dealt_damage = guy.modify_damage_dealt_with_enchantments( dealt_damage );
-        // TODO: Modify DPS calculation to consider weakpoints.
+
         resistances r = resistances( *static_cast<monster *>( temp_mon ) );
         for( damage_unit &dmg_unit : dealt_damage.damage_units ) {
             dmg_unit.amount -= std::min( r.get_effective_resist( dmg_unit ), dmg_unit.amount );
@@ -488,7 +488,7 @@ double item::effective_dps( const Character &guy, Creature &mon ) const
             for( damage_unit &dmg_unit : dealt_rs_damage.damage_units ) {
                 dmg_unit.damage_multiplier *= 0.66;
             }
-            // TODO: Modify DPS calculation to consider weakpoints.
+
             resistances rs_r = resistances( *static_cast<monster *>( temp_rs_mon ) );
             for( damage_unit &dmg_unit : dealt_rs_damage.damage_units ) {
                 dmg_unit.amount -= std::min( rs_r.get_effective_resist( dmg_unit ), dmg_unit.amount );
@@ -527,7 +527,7 @@ struct dps_comp_data {
     bool display;
     bool evaluate;
 };
-} // namespace
+}
 
 static const std::vector<std::pair<translation, dps_comp_data>> dps_comp_monsters = {
     { to_translation( "Best" ), { pseudo_debug_mon, true, false } },
@@ -608,9 +608,9 @@ int item::get_free_mod_locations( const gunmod_location &location ) const
 int item::on_wield_cost( const Character &you ) const
 {
     int mv = 0;
-    // weapons with bayonet/bipod or other generic "unhandiness"
+
     if( has_flag( flag_SLOW_WIELD ) && !is_gunmod() ) {
-        float d = 32.0f; // arbitrary linear scaling factor
+        float d = 32.0f;
         if( is_gun() ) {
             d /= std::max( you.get_skill_level( gun_skill() ), 1.0f );
         } else if( is_melee() ) {
@@ -618,13 +618,13 @@ int item::on_wield_cost( const Character &you ) const
         }
 
         int penalty = get_var( "volume", volume() / 250_ml ) * d;
-        // arbitrary no more than 7 second of penalty
+
         mv += std::min( penalty, 700 );
     }
 
-    // firearms with a folding stock or tool/melee without collapse/retract iuse
+
     if( has_flag( flag_NEEDS_UNFOLD ) && !is_gunmod() ) {
-        int penalty = 50; // 200-300 for guns, 50-150 for melee, 50 as fallback
+        int penalty = 50;
         if( is_gun() ) {
             penalty = std::max( 0, 300 - static_cast<int>( you.get_skill_level( gun_skill() ) * 10 ) );
         } else if( is_melee() ) {
@@ -645,7 +645,7 @@ void item::on_wield( Character &you, bool combat )
 
     msg = _( "You wield your %s." );
 
-    // if game is loaded - don't want ownership assigned during char creation
+
     if( get_player_character().getID().is_valid() ) {
         handle_pickup_ownership( you );
     }
@@ -655,7 +655,7 @@ void item::on_wield( Character &you, bool combat )
         you.martial_arts_data->martialart_use_message( you );
     }
 
-    // Update encumbrance and discomfort in case we were wearing it
+
     you.flag_encumbrance();
     you.calc_discomfort();
     you.on_item_acquire( item_location( you, this ) );
@@ -663,18 +663,18 @@ void item::on_wield( Character &you, bool combat )
 
 std::string item::dirt_symbol() const
 {
-    // these symbols are unicode square characters of different heights, representing a rough
-    // estimation of fouling in a gun. This appears instead of "faulty" since most guns will
-    // have some level of fouling in them, and usually it is not a big deal.
+
+
+
     switch( static_cast<int>( get_var( "dirt", 0 ) / 2000 ) ) {
-        // *INDENT-OFF*
+
         case 1:  return "<color_white>\u2581</color>";
         case 2:  return "<color_light_gray>\u2583</color>";
         case 3:  return "<color_light_gray>\u2585</color>";
         case 4:  return "<color_dark_gray>\u2587</color>";
         case 5:  return "<color_brown>\u2588</color>";
         default: return "";
-        // *INDENT-ON*
+
     }
 }
 
@@ -721,14 +721,14 @@ units::length item::barrel_length() const
     if( is_gun() ) {
         units::length l = type->gun->barrel_length;
         for( const item *mod : mods() ) {
-            // if a gun has a barrel length specifying mod then use that length for sure
+
             if( !mod->is_gun() && mod->type->gunmod->barrel_length > 0_mm ) {
                 l = mod->type->gunmod->barrel_length;
-                // if we find an explicit barrel mod then use that and quit the loop
+
                 break;
             }
         }
-        // if we've sawn off the barrel reduce the damage
+
         if( gunmod_find( itype_barrel_small ) ) {
             l = l - sawn_off_reduction();
         }
@@ -753,15 +753,15 @@ int item::damage_melee( const damage_type_id &dt ) const
         return 0;
     }
 
-    // effectiveness is reduced by 10% per damage level
+
     int res = 0;
     if( type->melee.damage_map.count( dt ) > 0 ) {
         res = type->melee.damage_map.at( dt );
     }
     res = damage_adjusted_melee_weapon_damage( res, dt );
 
-    // apply type specific flags
-    // FIXME: Hardcoded damage types
+
+
     if( dt == damage_bash && has_flag( flag_REDUCED_BASHING ) ) {
         res *= 0.5;
     }
@@ -769,7 +769,7 @@ int item::damage_melee( const damage_type_id &dt ) const
         res *= 1.3;
     }
 
-    // consider any attached bayonets
+
     if( is_gun() ) {
         std::vector<int> opts = { res };
         for( const item *mod : gunmods() ) {
@@ -786,7 +786,7 @@ int item::damage_melee( const damage_type_id &dt ) const
 
 damage_instance item::base_damage_melee() const
 {
-    // TODO: Caching
+
     damage_instance ret;
     for( const damage_type &dt : damage_type::get_all() ) {
         int dam = damage_melee( dt.id );
@@ -800,21 +800,21 @@ damage_instance item::base_damage_melee() const
 
 damage_instance item::base_damage_thrown() const
 {
-    // TODO: Create a separate cache for individual items (for modifiers like diamond etc.)
+
     return type->thrown_damage;
 }
 
 static int vert_reach_range( int horizontal_range )
 {
-    // Some future proofing. If you're debugging this fatal I hope you're the one that changed it!
+
     const int vertical_tile_math = trig_dist( tripoint::zero, tripoint::above );
     if( vertical_tile_math > 1 ) {
         cata_fatal( "function expects vertical range of one due to hardcoded modifier" );
     }
 
-    // Future vertical distance.
+
     const int that_hardcoded_modifier = 4;
-    // Purposeful integer math, remainder is discarded. e.g. 3 / 4 = 0, not 0.75. Only integers are kept.
+
     const int vert_res = horizontal_range / that_hardcoded_modifier;
     return vert_res;
 }
@@ -831,7 +831,7 @@ std::pair<int, int> item::reach_range( const Character &guy ) const
                                              enchant_vals::mod::MELEE_RANGE_MODIFIER ) ) );
     }
 
-    // for guns consider any attached gunmods
+
     if( is_gun() && !is_gunmod() ) {
         for( const std::pair<const gun_mode_id, gun_mode> &m : gun_all_modes() ) {
             if( guy.is_npc() && m.second.flags.count( "NPC_AVOID" ) ) {
@@ -1034,15 +1034,15 @@ bool item::is_melee( const damage_type_id &dt ) const
 
 bool item::is_fuel() const
 {
-    // A fuel is made of only one material
+
     if( type->materials.size() != 1 ) {
         return false;
     }
-    // and this material has to produce energy
+
     if( get_base_material().get_fuel_data().energy <= 0_J ) {
         return false;
     }
-    // and it needs to be have consumable charges
+
     return count_by_charges();
 }
 
@@ -1053,7 +1053,7 @@ bool item::is_toolmod() const
 
 units::energy item::fuel_energy() const
 {
-    // The odd units and division are to avoid integer rounding errors.
+
     return get_base_material().get_fuel_data().energy * units::to_milliliter( base_volume() ) / 1000;
 }
 
@@ -1075,7 +1075,7 @@ bool item::allows_speedloader( const itype_id &speedloader_id ) const
 bool item::can_reload_with( const item &ammo, bool now ) const
 {
     if( has_flag( flag_NO_RELOAD ) && !has_flag( flag_VEHICLE ) ) {
-        return false; // turrets ignore NO_RELOAD flag
+        return false;
     }
 
     if( now && ammo.is_magazine() && !ammo.empty() ) {
@@ -1083,9 +1083,9 @@ bool item::can_reload_with( const item &ammo, bool now ) const
         const bool tool_match = is_tool() && type->tool->ammo_id.count( loaded_at );
         const bool gun_match = !is_tool() && ammo_types().count( loaded_at );
         if( !tool_match && !gun_match ) {
-            // Sibling MAGAZINE_WELLs may take auxiliary ammotypes outside the
-            // host's declared `ammo` field. Accept if any well's allowed mags
-            // have a MAGAZINE pocket restricted to this ammo type.
+
+
+
             bool well_match = false;
             for( const item_pocket *p : contents.get_all_reloadable_pockets() ) {
                 if( !p->is_type( pocket_type::MAGAZINE_WELL ) ) {
@@ -1116,7 +1116,7 @@ bool item::can_reload_with( const item &ammo, bool now ) const
         }
     }
 
-    // Check if the item is in general compatible with any reloadable pocket.
+
     return contents.can_reload_with( ammo, now );
 }
 
@@ -1140,8 +1140,8 @@ gun_type_type item::gun_type() const
     if( !is_gun() ) {
         return gun_type_type( std::string() );
     }
-    // TODO: move to JSON and remove extraction of this from "GUN" (via skill id)
-    //and from "GUNMOD" (via "mod_targets") in lang/extract_json_strings.py
+
+
     if( gun_skill() == skill_archery ) {
         if( ammo_types().count( ammo_bolt ) || typeId() == itype_bullet_crossbow ) {
             return gun_type_type( translate_marker_context( "gun_type_type", "crossbow" ) );
@@ -1178,10 +1178,10 @@ int item::min_cycle_recoil() const
         return 0;
     }
     int to_cycle = type->gun->min_cycle_recoil;
-    // This should only be used for one mod or it'll mess things up
-    // TODO: maybe generalize this so you can have mods for hot loads or whatever
+
+
     for( const item *mod : gunmods() ) {
-        // this value defaults to -1
+
         if( mod->type->gunmod->overwrite_min_cycle_recoil > 0 ) {
             to_cycle = mod->type->gunmod->overwrite_min_cycle_recoil;
         }
@@ -1208,9 +1208,9 @@ int item::gun_dispersion( bool with_ammo, bool with_scaling ) const
         return dispersion_sum;
     }
 
-    // Dividing dispersion by 15 temporarily as a gross adjustment,
-    // will bake that adjustment into individual gun definitions in the future.
-    // Absolute minimum gun dispersion is 1.
+
+
+
     double divider = get_option< float >( "GUN_DISPERSION_DIVIDER" );
     dispersion_sum = std::max( static_cast<int>( std::round( dispersion_sum / divider ) ), 1 );
 
@@ -1263,7 +1263,7 @@ damage_instance item::gun_damage( bool with_ammo, bool shot ) const
     }
 
     if( damage() > 0 ) {
-        // TODO: This isn't a good solution for multi-damage guns/ammos
+
         for( damage_unit &du : ret ) {
             if( du.amount <= 1.0 ) {
                 continue;
@@ -1291,7 +1291,7 @@ damage_instance item::gun_damage( itype_id ammo ) const
     ret.add( ammo->ammo->damage.di_considering_length( bl ) );
 
     if( damage() > 0 ) {
-        // TODO: This isn't a good solution for multi-damage guns/ammos
+
         for( damage_unit &du : ret ) {
             if( du.amount <= 1.0 ) {
                 continue;
@@ -1319,9 +1319,9 @@ int item::gun_recoil( const Character &p, bool bipod, bool ideal_strength ) cons
         return 0;
     }
 
-    ///\ARM_STR improves the handling of heavier weapons
-    // we consider only base weight to avoid exploits
-    // now we need to add weight of receiver
+
+
+
     double wt = ideal_strength ? gun_base_weight() / 333.0_gram : std::min( gun_base_weight(),
                 p.get_arm_str() * 333_gram ) / 333.0_gram;
 
@@ -1332,10 +1332,10 @@ int item::gun_recoil( const Character &p, bool bipod, bool ideal_strength ) cons
         }
     }
 
-    // rescale from JSON units which are intentionally specified as integral values
+
     handling /= 10;
 
-    // algorithm is biased so heavier weapons benefit more from improved handling
+
     handling = std::pow( wt, 0.8 ) * std::pow( handling, 1.2 );
 
     int qty = type->gun->recoil;
@@ -1343,7 +1343,7 @@ int item::gun_recoil( const Character &p, bool bipod, bool ideal_strength ) cons
         qty += ammo_data()->ammo->recoil;
     }
 
-    // handling could be either a bonus or penalty dependent upon installed mods
+
     if( handling > 1.0 ) {
         return qty / handling;
     } else {
@@ -1393,7 +1393,7 @@ int item::gun_range( const Character *p ) const
         return 0;
     }
 
-    // Reduce bow range until player has twice minimum required strength
+
     if( has_flag( flag_STR_DRAW ) ) {
         ret += std::max( 0.0, ( p->get_str() - get_min_str() ) * 0.5 );
     }
@@ -1421,7 +1421,7 @@ int item::shots_remaining( const map &here, const Character *carrier ) const
                          + available_bionic_charges( carrier );
         return feasible_uses( *this, *entries, INT_MAX, pool );
     }
-    int ret = 1000; // Arbitrary large number for things that do not require ammo.
+    int ret = 1000;
     if( ammo_required() ) {
         ret = std::min( ammo_remaining_linked( here,  carrier ) / ammo_required(), ret );
     }
@@ -1444,14 +1444,14 @@ int item::ammo_remaining( const map &here, const std::set<ammotype> &ammo, const
 
     int ret = 0;
 
-    // Sum ammo across every loaded MAGAZINE_WELL pocket.
-    // TODO(multimag): aggregate; per-well callers use the indexed overload.
+
+
     for( const item *mag : magazines_current() ) {
         ret += mag->ammo_remaining( );
     }
 
-    // Integral MAGAZINE pockets sitting alongside wells (multimag).
-    // is_magazine() hosts are covered by the dedicated branch below.
+
+
     if( !is_magazine() ) {
         for( const item_pocket *p : get_pockets( []( const item_pocket & q ) {
         return q.is_type( pocket_type::MAGAZINE );
@@ -1471,7 +1471,7 @@ int item::ammo_remaining( const map &here, const std::set<ammotype> &ammo, const
         }
     }
 
-    // Cable connections
+
     if( include_linked && link_length() >= 0 && link().efficiency >= MIN_LINK_EFFICIENCY ) {
         if( link().t_veh ) {
             ret += link().t_veh->connected_battery_power_level( here ).first;
@@ -1483,12 +1483,12 @@ int item::ammo_remaining( const map &here, const std::set<ammotype> &ammo, const
         }
     }
 
-    // Non ammo using item that uses charges
+
     if( ammo.empty() ) {
         ret += charges;
     }
 
-    // Magazines and integral magazines on their own
+
     if( is_magazine() ) {
         for( const item *e : contents.all_items_top( pocket_type::MAGAZINE ) ) {
             if( e->is_ammo() ) {
@@ -1497,7 +1497,7 @@ int item::ammo_remaining( const map &here, const std::set<ammotype> &ammo, const
         }
     }
 
-    // Handle non-magazines with ammo_restriction in a CONTAINER type pocket (like quivers)
+
     if( magazines_current().empty() && !is_magazine() && !ammo.empty() ) {
         for( const item *e : contents.all_items_top( pocket_type::CONTAINER ) ) {
             if( e->is_ammo() && ammo.find( e->ammo_type() ) != ammo.end() ) {
@@ -1506,8 +1506,8 @@ int item::ammo_remaining( const map &here, const std::set<ammotype> &ammo, const
         }
     }
 
-    // UPS/bionic power can replace ammo requirement.
-    // Only for tools. Guns should always use energy_drain for electricity use.
+
+
     if( is_tool_with_carrier ) {
         if( has_flag( flag_USES_BIONIC_POWER ) ) {
             ret += units::to_kilojoule( carrier->get_power_level() );
@@ -1528,7 +1528,7 @@ int item::ammo_remaining_linked( const map &here, const Character *carrier ) con
 int item::ammo_remaining( const Character *carrier ) const
 {
     std::set<ammotype> ammo = ammo_types();
-    return ammo_remaining( get_map(), ammo, carrier, false ); // get_map() is a dummy parameter here.
+    return ammo_remaining( get_map(), ammo, carrier, false );
 }
 
 int item::ammo_remaining_linked( const map &here ) const
@@ -1561,14 +1561,14 @@ bool item::is_chargeable() const
     if( !uses_energy() ) {
         return false;
     }
-    // Bionic-powered items have ammo_capacity tied to player bionic storage,
-    // so they can't actually receive charge unless they also carry a magazine.
+
+
     if( has_flag( flag_USES_BIONIC_POWER ) && magazines_current().empty() ) {
         return false;
     }
-    // Compare battery-flavored stock vs battery-flavored capacity so a
-    // mixed projectile + battery multimag tool doesn't read full just
-    // because its non-battery wells are loaded.
+
+
+
     int battery_charges = 0;
     int battery_capacity = 0;
     for( const item *mag : magazines_current() ) {
@@ -1593,8 +1593,8 @@ units::energy item::energy_remaining( const Character *carrier, bool ignoreExter
 {
     units::energy ret = 0_kJ;
 
-    // Sum across every loaded MAGAZINE_WELL; mixed projectile+battery
-    // multimag items would otherwise read only the first well's energy.
+
+
     for( const item *mag : magazines_current() ) {
         if( mag ) {
             ret += mag->energy_remaining( carrier );
@@ -1603,23 +1603,23 @@ units::energy item::energy_remaining( const Character *carrier, bool ignoreExter
 
     if( !ignoreExternalSources ) {
 
-        // Future energy based batteries
+
         if( is_vehicle_battery() ) {
             ret += energy;
         }
 
-        // Power from bionic
+
         if( carrier != nullptr && has_flag( flag_USES_BIONIC_POWER ) ) {
             ret += carrier->get_power_level();
         }
 
-        // Extra power from UPS
+
         if( carrier != nullptr && has_flag( flag_USE_UPS ) ) {
             ret += carrier->available_ups();
         }
     };
 
-    // Battery(ammo) contained within
+
     if( is_magazine() ) {
         ret += energy;
         for( const item *e : contents.all_items_top( pocket_type::MAGAZINE ) ) {
@@ -1638,12 +1638,12 @@ int item::remaining_ammo_capacity() const
         return 0;
     }
 
-    // First-loaded-mag fallback; per-pocket callers use the dedicated overload.
+
     if( const item *mag = magazine_current() ) {
         return mag->remaining_ammo_capacity();
     }
 
-    // Integral mag: ammo_remaining() excludes MAGAZINE_WELL here.
+
     const itype *loaded_ammo = ammo_data();
     if( loaded_ammo == nullptr ) {
         loaded_ammo = item::find_type( ammo_default() );
@@ -1651,12 +1651,12 @@ int item::remaining_ammo_capacity() const
     if( !loaded_ammo || !loaded_ammo->ammo ) {
         return 0;
     }
-    // Clamp: a capacity-shrinking mod can leave an integral pocket overfilled.
+
     return std::max( 0, ammo_capacity( loaded_ammo->ammo->type ) - ammo_remaining( ) );
 }
 
-// Returns the MAGAZINE_WELL pocket at well_idx in contents, or nullptr if
-// out of range or the pocket at that index is not a MAGAZINE_WELL.
+
+
 static const item_pocket *well_pocket_at( const item &it, int well_idx )
 {
     if( well_idx < 0 ) {
@@ -1725,16 +1725,16 @@ int item::ammo_capacity( const ammotype &ammo, bool include_linked ) const
         return link().t_veh ? link().t_veh->connected_battery_power_level( here ).second : 0;
     }
 
-    // Route per-ammotype lookup through the matching pocket; magazine_current()
-    // returns the first loaded mag regardless of ammotype and misreports here.
+
+
     if( const item_pocket *p = pocket_for_ammo( ammo ) ) {
         if( p->is_type( pocket_type::MAGAZINE_WELL ) ) {
             if( const item *mag = p->magazine_current() ) {
                 return mag->ammo_capacity( ammo );
             }
-            // Multimag hosts surface the default mag's capacity for unloaded
-            // wells so item info shows the projected per-well number. Single-
-            // well guns keep returning 0 so "is this loaded?" stays correct.
+
+
+
             if( uses_firing_requirements() ) {
                 const itype_id default_mag = p->magazine_default();
                 if( !default_mag.is_null() && default_mag->magazine ) {
@@ -1746,7 +1746,7 @@ int item::ammo_capacity( const ammotype &ammo, bool include_linked ) const
                                        ? p->get_pocket_data()->ammo_restriction
                                        : std::map<ammotype, int> {};
             if( restrictions.find( ammo ) != restrictions.end() ) {
-                // pocket-level applies any installed capacity_mods scaling
+
                 return p->ammo_capacity( ammo );
             }
         }
@@ -1857,7 +1857,7 @@ int item::ammo_consume( int qty, map &here, const tripoint_bub_ms &pos, Characte
         }
     }
 
-    // Consume power from appliances/vehicles connected with cables
+
     if( has_link_data() ) {
         if( link().t_veh && link().efficiency >= MIN_LINK_EFFICIENCY ) {
             qty = link().t_veh->discharge_battery( here, qty, true );
@@ -1869,7 +1869,7 @@ int item::ammo_consume( int qty, map &here, const tripoint_bub_ms &pos, Characte
         }
     }
 
-    // Consume charges loaded in the item or its magazines
+
     if( is_magazine() || uses_magazine() ) {
         qty -= contents.ammo_consume( qty, &here, pos );
         if( ammo_capacity( ammo_battery ) == 0 && carrier != nullptr ) {
@@ -1877,14 +1877,14 @@ int item::ammo_consume( int qty, map &here, const tripoint_bub_ms &pos, Characte
         }
     }
 
-    // Dirty fix: activating a container of meds leads here, and used to use up all of the charges.
+
     if( is_medication() && charges > 1 ) {
         int charg_used = std::min( charges, qty );
         charges -= charg_used;
         qty -= charg_used;
     }
 
-    // Some weird internal non-item charges (used by grenades)
+
     if( is_tool() && type->tool->ammo_id.empty() ) {
         int charg_used = std::min( charges, qty );
         charges -= charg_used;
@@ -1893,8 +1893,8 @@ int item::ammo_consume( int qty, map &here, const tripoint_bub_ms &pos, Characte
 
     bool is_off_grid_powered = has_flag( flag_USE_UPS ) || has_flag( flag_USES_BIONIC_POWER );
 
-    // Modded tools can consume UPS/bionic energy instead of ammo.
-    // Guns handle energy in energy_consume()
+
+
     if( is_tool_with_carrier && is_off_grid_powered ) {
         units::energy wanted_energy = units::from_kilojoule( static_cast<std::int64_t>( qty ) );
 
@@ -1908,8 +1908,8 @@ int item::ammo_consume( int qty, map &here, const tripoint_bub_ms &pos, Characte
             wanted_energy -= bio_used;
         }
 
-        // It is possible for this to cause rounding error due to different precision of energy
-        // But that can happen only if there was not enough ammo and you shouldn't be able to use without sufficient ammo
+
+
         qty = units::to_kilojoule( wanted_energy );
     }
     return wanted_qty - qty;
@@ -1933,17 +1933,17 @@ units::energy item::energy_consume( units::energy qty, map *here, const tripoint
 
     const units::energy wanted_energy = qty;
 
-    // Consume battery(ammo) and other fuel (if allowed)
+
     if( is_battery() || fuel_efficiency >= 0 ) {
         int consumed_kj = contents.ammo_consume( units::to_kilojoule( qty ), here, pos, fuel_efficiency );
         qty -= units::from_kilojoule( static_cast<std::int64_t>( consumed_kj ) );
-        // Either we're out of juice or truncating the value above means we didn't drain quite enough.
-        // In the latter case at least this will bump up energy enough to satisfy the remainder,
-        // if not it will drain the item all the way.
-        // TODO: reconsider what happens with fuel burning, right now this stashes
-        // the remainder of energy from burning the fuel in the item in question,
-        // which potentially allows it to burn less fuel next time.
-        // Do we want an implicit 1kJ battery in the generator to smooth things out?
+
+
+
+
+
+
+
         if( qty > energy ) {
             int64_t residual_drain = contents.ammo_consume( 1, here, pos, fuel_efficiency );
             energy += units::from_kilojoule( residual_drain );
@@ -1957,17 +1957,17 @@ units::energy item::energy_consume( units::energy qty, map *here, const tripoint
         }
     }
 
-    // Consume energy from contained magazine
+
     if( magazine_current() ) {
         qty -= magazine_current()->energy_consume( qty, here, pos, carrier );
     }
 
-    // Consume UPS energy from various sources
+
     if( carrier != nullptr && has_flag( flag_USE_UPS ) ) {
         qty -= carrier->consume_ups( qty );
     }
 
-    // Consume bio energy
+
     if( carrier != nullptr && has_flag( flag_USES_BIONIC_POWER ) ) {
         units::energy bio_used = std::min( carrier->get_power_level(), qty );
         carrier->mod_power_level( -bio_used );
@@ -1991,8 +1991,8 @@ bool item::has_ammo() const
     if( mag ) {
         return mag->has_ammo();
     }
-    // Multimag gun identity is anchored to the projectile pocket; never
-    // borrow sibling-pocket ammo (e.g. battery wells) when it is empty.
+
+
     if( uses_firing_requirements() && is_gun() ) {
         return false;
     }
@@ -2089,8 +2089,8 @@ const item &item::loaded_ammo() const
 {
     const item *mag = ammo_identity_mag();
     if( mag ) {
-        // Integral MAGAZINE primary returns the bare ammo item itself, not
-        // a containing magazine; recursing on bare ammo lands at null.
+
+
         if( mag->is_ammo() ) {
             return *mag;
         }
@@ -2177,7 +2177,7 @@ std::string item::print_ammo( ammotype at, const item *gun ) const
         return _( "energy" );
     }
 
-    // for magazines if we have a gun in mind display damage as well
+
     if( type->magazine ) {
         if( gun ) {
             return enumerate_as_string( type->magazine->cached_ammos[at],
@@ -2262,7 +2262,7 @@ bool item::uses_magazine() const
 
 itype_id item::magazine_default( bool conversion ) const
 {
-    // consider modded ammo types
+
     itype_id ammo;
     if( conversion && ( ammo = ammo_default(), !ammo.is_null() ) ) {
         for( const itype_id &mag : contents.magazine_compatible() ) {
@@ -2273,7 +2273,7 @@ itype_id item::magazine_default( bool conversion ) const
         }
     }
 
-    // otherwise return the default
+
     return contents.magazine_default();
 }
 
@@ -2384,9 +2384,9 @@ int item::ammo_remaining_in_pocket( const std::string &id ) const
         return mag ? mag->ammo_remaining( ) : 0;
     }
     if( p->is_type( pocket_type::MAGAZINE ) ) {
-        // Exclude spent casings - cycle_action force-inserts them into
-        // the integral pocket after a shot, and they shouldn't count as
-        // loaded ammo for feasibility / display.
+
+
+
         int total = 0;
         for( const item *e : p->all_items_top() ) {
             if( e->has_flag( flag_CASING ) ) {
@@ -2407,7 +2407,7 @@ int item::ammo_consume_in_pocket( const std::string &id, int qty, map &here,
 
 bool item::uses_firing_requirements() const
 {
-    // itype-level firing_requirements is the item's own consumption, empty for a bare gunmod.
+
     return type && !type->firing_requirements.empty();
 }
 
@@ -2419,8 +2419,8 @@ bool item::needs_charges_to_use() const
 
 const item_pocket *item::primary_ammo_pocket() const
 {
-    // MAGAZINE pockets count too: the schema accepts integral-mag items as
-    // multimag primaries (e.g. integral cartridge well + battery well).
+
+
     const std::vector<const item_pocket *> wells = get_pockets(
     []( const item_pocket & p ) {
         return p.is_type( pocket_type::MAGAZINE_WELL ) ||
@@ -2536,8 +2536,8 @@ const item *item::ammo_identity_mag() const
         if( p->is_type( pocket_type::MAGAZINE_WELL ) ) {
             return p->magazine_current();
         }
-        // Integral MAGAZINE pocket: the ammo itself drives identity.
-        // cycle_action leaves spent casings in the pocket; skip them.
+
+
         for( const item *e : p->all_items_top() ) {
             if( e->has_flag( flag_CASING ) ) {
                 continue;
@@ -2622,11 +2622,11 @@ static std::string format_entry_name( const item &host, const pocket_consumption
         if( !display.empty() ) {
             return display;
         }
-        // is_null compares to NULL_ID ("null"); the generic optional()
-        // JSON loader resets string_id fields to default-constructed
-        // empty string when the JSON field is absent, which slips past
-        // is_null. Treat empty the same as null so we don't deref a
-        // missing itype.
+
+
+
+
+
         if( !pd->default_magazine.is_null() && !pd->default_magazine.is_empty() &&
             pd->default_magazine->magazine ) {
             const itype_id &default_ammo = pd->default_magazine->magazine->default_ammo;
@@ -2690,8 +2690,8 @@ int item::expected_cost_per_use( const std::string &method ) const
 {
     const int scale = method_scale( type, method );
     if( !uses_firing_requirements() ) {
-        // ammo_required() already routes guns to ammo_to_fire and tools to
-        // charges_per_use, so it's the right scalar for both legacy paths.
+
+
         return ammo_required() * scale;
     }
     const std::vector<pocket_consumption_entry> *entries =
@@ -2762,7 +2762,7 @@ int item::tool_uses_remaining_local() const
     if( entries == nullptr || entries->empty() ) {
         return 0;
     }
-    return feasible_uses( *this, *entries, INT_MAX, /*external_pool=*/0 );
+    return feasible_uses( *this, *entries, INT_MAX, 0 );
 }
 
 int item::feasible_tool_uses( int external_pool ) const
@@ -2780,11 +2780,11 @@ int item::feasible_tool_uses( int external_pool ) const
 
 namespace
 {
-// Multimag drain in cable -> local -> UPS -> bionic order; applies
-// external deltas exactly once. Returns shots / uses actually consumed.
-// TODO(multimag): cable-before-local order can misallocate when 2+ battery
-// pockets share cable and have mixed local stocks. Drain local first per
-// pocket, then bill external for the residual.
+
+
+
+
+
 int multimag_drain( item &host, const std::vector<pocket_consumption_entry> &entries,
                     int requested, map &here, const tripoint_bub_ms &pos,
                     Character *carrier )
@@ -2854,7 +2854,7 @@ int multimag_drain( item &host, const std::vector<pocket_consumption_entry> &ent
     }
     return allowed;
 }
-} // namespace
+}
 
 int item::consume_shots( const gun_mode_id &mode, int shots, map &here,
                          const tripoint_bub_ms &pos, Character *carrier )
@@ -2880,7 +2880,7 @@ int item::consume_shots( const gun_mode_id &mode, int shots, map &here,
         }
         return multimag_drain( *this, *entries, shots, here, pos, carrier );
     }
-    // Legacy path: ammo_consume + energy_consume per shot.
+
     const int required_ammo = ammo_required() * shots;
     const units::energy required_energy = get_gun_energy_drain() * shots;
     if( required_ammo > 0 ) {
@@ -2914,7 +2914,7 @@ int item::consume_tool_uses( int uses, map &here, const tripoint_bub_ms &pos,
         }
         return multimag_drain( *this, *entries, uses, here, pos, carrier );
     }
-    // Legacy path: ammo_consume(charges_to_use * uses).
+
     const int per_use = type ? type->charges_to_use() : 0;
     if( per_use <= 0 ) {
         return uses;
@@ -2961,9 +2961,9 @@ int item::effective_qty( const pocket_consumption_entry &e ) const
                     + static_cast<double>( modifier_int )
                     + units::to_kilojoule( modifier_energy );
 
-    // Explicit per-pocket overrides from installed mods (gunmod or toolmod, both
-    // through the mod slot). Order-independent: the smallest `set` replaces the
-    // resolved value, then the product of all `multiply` scales it.
+
+
+
     bool has_set = false;
     int min_set = 0;
     float mod_multiply = 1.0f;
@@ -3098,8 +3098,8 @@ ret_val<void> item::is_gunmod_compatible( const item &mod ) const
     } else if( mod.typeId() == itype_arredondo_chute ) {
         return ret_val<void>::make_failure( _( "chute needs modification before attaching" ) );
 
-        // Acceptable_ammo check is kinda weird now, if it is passed, checks after it will be ignored.
-        // Moved it here as a workaround.
+
+
     } else if( !mod.type->mod->acceptable_ammo.empty() ) {
         bool compat_ammo = false;
         for( const ammotype &at : mod.type->mod->acceptable_ammo ) {
@@ -3143,10 +3143,10 @@ std::map<gun_mode_id, gun_mode> item::gun_all_modes() const
 
     for( const item *e : opts ) {
 
-        // handle base item plus any auxiliary gunmods
+
         if( e->is_gun() ) {
             for( const std::pair<const gun_mode_id, gun_modifier_data> &m : e->type->gun->modes ) {
-                // prefix attached gunmods, e.g. M203_DEFAULT to avoid index key collisions
+
                 std::string prefix = e->is_gunmod() ? ( std::string( e->typeId() ) += "_" ) : "";
                 std::transform( prefix.begin(), prefix.end(), prefix.begin(),
                                 static_cast<int( * )( int )>( toupper ) );
@@ -3158,14 +3158,14 @@ std::map<gun_mode_id, gun_mode> item::gun_all_modes() const
                              qty, m.second.flags() ) );
             }
 
-            // non-auxiliary gunmods may provide additional modes for the base item
+
         } else if( e->is_gunmod() ) {
             for( const std::pair<const gun_mode_id, gun_modifier_data> &m : e->type->gunmod->mode_modifier ) {
-                //checks for melee gunmod, points to gunmod
+
                 if( m.first == gun_mode_REACH ) {
                     res.emplace( m.first, gun_mode { m.second.name(), const_cast<item *>( e ),
                                                      m.second.qty(), m.second.flags() } );
-                    //otherwise points to the parent gun, not the gunmod
+
                 } else {
                     res.emplace( m.first, gun_mode { m.second.name(), const_cast<item *>( this ),
                                                      m.second.qty(), m.second.flags() } );
@@ -3174,8 +3174,8 @@ std::map<gun_mode_id, gun_mode> item::gun_all_modes() const
         }
     }
 
-    // hide_modes is a global, id-based kill switch applied to the final merged
-    // set: a hidden id is removed regardless of which item contributed it.
+
+
     for( const item *e : gunmods() ) {
         if( e->type != nullptr && e->type->gunmod ) {
             for( const gun_mode_id &h : e->type->gunmod->hide_modes ) {
@@ -3217,7 +3217,7 @@ bool item::firing_mode_blocked( const gun_mode_id &mode ) const
     if( !is_gun() ) {
         return false;
     }
-    // A mode a gunmod hides must not fire even when other modes survive.
+
     for( const item *mod : gunmods() ) {
         if( mod->type && mod->type->gunmod && mod->type->gunmod->hide_modes.count( mode ) ) {
             return true;
@@ -3225,10 +3225,10 @@ bool item::firing_mode_blocked( const gun_mode_id &mode ) const
     }
     const std::map<gun_mode_id, gun_mode> modes = gun_all_modes();
     if( modes.empty() ) {
-        return true; // every mode hidden by a gunmod: gun is unfireable
+        return true;
     }
-    // Aux gunmod modes target the aux item, not this host; billing them here
-    // would drain the parent's pockets, so block.
+
+
     const auto it = modes.find( mode );
     if( it != modes.end() && it->second.target != this && uses_firing_requirements() ) {
         return true;
@@ -3254,7 +3254,7 @@ void item::gun_cycle_mode()
     const gun_mode_id cur = gun_get_mode_id();
     const std::map<gun_mode_id, gun_mode> modes = gun_all_modes();
     if( modes.empty() ) {
-        return; // every mode hidden: nothing to cycle to
+        return;
     }
 
     for( auto iter = modes.begin(); iter != modes.end(); ++iter ) {
@@ -3301,10 +3301,10 @@ void item::reload_option::qty( int val )
 {
     item_pocket *integral_pocket = nullptr;
     if( pocket_index >= 0 ) {
-        // MAGAZINE_WELL targeted reload swaps one magazine. Integral
-        // MAGAZINE targeted reload loads loose ammo and follows the
-        // general capacity math below, scoped to that pocket so sibling
-        // wells do not poison the count on multimag hosts.
+
+
+
+
         const std::vector<item_pocket *> pockets = target->get_pockets(
         []( const item_pocket & ) {
             return true;
@@ -3321,7 +3321,7 @@ void item::reload_option::qty( int val )
     bool ammo_in_container = ammo->is_ammo_container();
     bool ammo_in_liquid_container = ammo->is_watertight_container();
     item &ammo_obj = ( ammo_in_container || ammo_in_liquid_container ) ?
-                     // this is probably not the right way to do this. there is no guarantee whatsoever that ammo_obj will be an ammo
+
                      *ammo->contents.all_items_top( pocket_type::CONTAINER ).front() : *ammo;
 
     if( ( ammo_in_container && !ammo_obj.is_ammo() ) ||
@@ -3330,8 +3330,8 @@ void item::reload_option::qty( int val )
         return;
     }
 
-    // Checking ammo capacity implicitly limits guns with removable magazines to capacity 0.
-    // This gets rounded up to 1 later.
+
+
     int remaining_capacity;
     if( integral_pocket != nullptr ) {
         remaining_capacity = ammo_obj.is_ammo()
@@ -3356,11 +3356,11 @@ void item::reload_option::qty( int val )
     } else {
         available_ammo = ammo_by_charges ? ammo_obj.charges : ammo_obj.count();
     }
-    // constrain by available ammo, target capacity and other external factors (max_qty)
-    // @ref max_qty is currently set when reloading ammo belts and limits to available linkages
+
+
     qty_ = std::min( { val, available_ammo, remaining_capacity, max_qty } );
 
-    // always expect to reload at least one charge
+
     qty_ = std::max( qty_, 1 );
 
 }
@@ -3397,7 +3397,7 @@ bool item::reload( Character &u, item_location ammo, int qty, int pocket_index )
         return false;
     }
 
-    // Targeted reload: MAGAZINE_WELL swap, or loose ammo into integral MAGAZINE.
+
     if( pocket_index >= 0 ) {
         std::vector<item_pocket *> all_pockets = get_pockets(
         []( const item_pocket & ) {
@@ -3415,8 +3415,8 @@ bool item::reload( Character &u, item_location ammo, int qty, int pocket_index )
             return false;
         }
         if( integral_magazine ) {
-            // Eject casings before the compatibility gate; a spent shell
-            // fills the pocket and would make can_reload_with refuse.
+
+
             casings_handle( [&u]( item & e ) {
                 return u.i_add_or_drop( e );
             } );
@@ -3469,7 +3469,7 @@ bool item::reload( Character &u, item_location ammo, int qty, int pocket_index )
 
         ret_val<item *> ins = target_pocket->insert_item( *ammo );
         if( !ins.success() ) {
-            // Restore the ejected magazine on failure.
+
             if( !magazine_removed.is_null() ) {
                 target_pocket->insert_item( magazine_removed );
             }
@@ -3491,11 +3491,11 @@ bool item::reload( Character &u, item_location ammo, int qty, int pocket_index )
 
     bool ammo_from_map = !ammo.held_by( u );
     if( ammo->has_flag( flag_SPEEDLOADER ) || ammo->has_flag( flag_SPEEDLOADER_CLIP ) ) {
-        // if the thing passed in is a speed loader, we want the ammo
+
         ammo = item_location( ammo, &ammo->first_ammo() );
     }
 
-    // limit quantity of ammo loaded to remaining capacity
+
     int limit = 0;
     if( is_watertight_container() && ammo->made_of_from_type( phase_id::LIQUID ) ) {
         limit = get_remaining_capacity_for_liquid( *ammo );
@@ -3526,7 +3526,7 @@ bool item::reload( Character &u, item_location ammo, int qty, int pocket_index )
         ammo->charges -= qty;
 
         if( ammo->ammo_type() == ammo_plutonium ) {
-            // any excess is wasted rather than overfilling the item
+
             item_copy.charges = std::min( qty * PLUTONIUM_CHARGES, ammo_capacity( ammo_plutonium ) );
         } else {
             item_copy.charges = qty;
@@ -3544,12 +3544,12 @@ bool item::reload( Character &u, item_location ammo, int qty, int pocket_index )
     } else {
         item magazine_removed;
         bool allow_wield = false;
-        // if we already have a magazine loaded prompt to eject it
+
         if( magazine_current() ) {
-            // we don't want to replace wielded `ammo` with ejected magazine
-            // as it will invalidate `ammo`. Also keep wielding the item being reloaded.
+
+
             allow_wield = ( !u.is_wielding( *ammo ) && !u.is_wielding( *this ) );
-            // Defer placing the magazine into inventory until new magazine is installed.
+
             magazine_removed = *magazine_current();
             item_location( u, this ).remove_item( *magazine_current() );
         }
@@ -3586,11 +3586,11 @@ bool item::detonate( const tripoint_bub_ms &p, std::vector<item> &drops )
         int charges_remaining = charges;
         const int rounds_exploded = rng( 1, charges_remaining / 2 );
         if( type->ammo->special_cookoff ) {
-            // If it has a special effect just trigger it.
+
             apply_ammo_effects( nullptr, p, type->ammo->ammo_effects, 1 );
         }
         if( type->ammo->cookoff ) {
-            // If ammo type can burn, then create an explosion proportional to quantity.
+
             float power = 3.0f * std::pow( rounds_exploded / 25.0f, 0.25f );
             explosion_handler::explosion( nullptr, p, power, 0.0f, false, 0 );
         }
@@ -3683,7 +3683,7 @@ ret_val<void> item::link_to( const optional_vpart_position &first_linked_vp,
     if( !first_linked_vp || !second_linked_vp ) {
         return ret_val<void>::make_failure();
     }
-    // Link up the second vehicle first so, if it's a tow cable, the first vehicle will tow the second.
+
     ret_val<void> result = link_to( second_linked_vp->vehicle(), second_linked_vp->mount_pos(),
                                     link_type );
     if( !result.success() ) {
@@ -3700,7 +3700,7 @@ ret_val<void> item::link_to( vehicle &veh, const point_rel_ms &mount, link_state
         return ret_val<void>::make_failure( _( "The %s doesn't have a cable!" ), type_name() );
     }
 
-    // First, check if the desired link is actually possible.
+
 
     if( link_type == link_state::vehicle_tow ) {
         if( veh.has_tow_attached() || veh.is_towed() || veh.is_towing() ) {
@@ -3736,20 +3736,20 @@ ret_val<void> item::link_to( vehicle &veh, const point_rel_ms &mount, link_state
     bool bio_link = link_has_states( link_state::no_link, link_state::bio_cable );
     if( bio_link || has_no_links() ) {
 
-        // No link exists, so start a new link to a vehicle/appliance.
+
 
         link().source = bio_link ? link_state::bio_cable : link_state::no_link;
         link().target = link_type;
         link().t_veh = veh.get_safe_reference();
         link().t_abs_pos = link().t_veh->pos_abs();
         link().t_mount = mount;
-        link().s_abs_pos = tripoint_abs_ms::min; // Forces item to check length during process_link
+        link().s_abs_pos = tripoint_abs_ms::min;
 
         update_link_traits();
         return ret_val<void>::make_success();
     }
 
-    // There's already a link, so connect the previous vehicle/appliance to the new one.
+
 
     if( !link_has_state( link_state::no_link ) ) {
         debugmsg( "Failed to connect the %s, both ends are already connected!", tname() );
@@ -3769,7 +3769,7 @@ ret_val<void> item::link_to( vehicle &veh, const point_rel_ms &mount, link_state
         return ret_val<void>::make_failure( _( "You cannot connect the %s to itself." ), prev_veh->name );
     }
 
-    // Prepare target tripoints for the cable parts that'll be added to the selected/previous vehicles
+
     const std::pair<tripoint_abs_ms, tripoint_abs_ms> prev_part_target = std::make_pair(
                 veh.pos_abs() + veh.coord_translate( mount ),
                 veh.pos_abs() );
@@ -3832,14 +3832,14 @@ ret_val<void> item::link_to( vehicle &veh, const point_rel_ms &mount, link_state
 
     if( link_type == link_state::vehicle_tow ) {
         if( link().source == link_state::vehicle_tow ) {
-            veh.tow_data.set_towing( prev_veh, &veh ); // Previous vehicle is towing.
+            veh.tow_data.set_towing( prev_veh, &veh );
         } else {
-            veh.tow_data.set_towing( &veh, prev_veh ); // Previous vehicle is being towed.
+            veh.tow_data.set_towing( &veh, prev_veh );
         }
     }
 
     if( typeId() != itype_power_cord ) {
-        // Remove linked_flag from attached parts - the just-added cable vehicle parts do the same thing.
+
         reset_link();
     }
     //~ %1$s - first vehicle name, %2$s - second vehicle name - %3$s - cable name,
@@ -3857,7 +3857,7 @@ void item::update_link_traits()
                                     ( get_use( "link_up" )->get_actor_ptr() );
     link().max_length = it_actor->cable_length == -1 ? type->maximum_charges() : it_actor->cable_length;
     link().efficiency = it_actor->efficiency < MIN_LINK_EFFICIENCY ? 0.0f : it_actor->efficiency;
-    // reset s_abs_pos to force a length check in process_link
+
     link().s_abs_pos = tripoint_abs_ms::min;
     link().last_processed = calendar::turn;
 
@@ -3875,8 +3875,8 @@ void item::update_link_traits()
 
     if( link().efficiency >= MIN_LINK_EFFICIENCY ) {
         link().charge_rate = it_actor->charge_rate.value();
-        // Convert charge_rate to how long it takes to charge 1 kW, the unit batteries use.
-        // 0 means batteries won't be charged, but it can still provide power to devices unless efficiency is also 0.
+
+
         if( it_actor->charge_rate != 0_W ) {
             double charge_rate = std::floor( 1000000.0 / abs( it_actor->charge_rate.value() ) + 0.5 );
             link().charge_interval = std::max( 1, static_cast<int>( charge_rate ) );
@@ -3912,7 +3912,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
 
     const bool is_cable_item = has_flag( flag_CABLE_SPOOL );
 
-    // Handle links to items in the inventory.
+
     if( link().source == link_state::solarpack ) {
         if( carrier == nullptr || !carrier->worn_with_flag( flag_SOLARPACK_ON ) ) {
             add_msg_if_player_sees( pos, m_bad, _( "The %s has come loose from the solar pack." ),
@@ -3931,7 +3931,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
             return false;
         }
     }
-    // Certain cable states should skip processing and also become inactive if dropped.
+
     if( ( link().target == link_state::no_link && link().source != link_state::vehicle_tow ) ||
         link().target == link_state::bio_cable ) {
         if( carrier == nullptr ) {
@@ -3942,8 +3942,8 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
 
     const bool last_t_abs_pos_is_oob = !here.inbounds( link().t_abs_pos );
 
-    // Lambda function for checking if a cable has been stretched too long, resetting it if so.
-    // @return True if the cable is disconnected.
+
+
     const auto check_length = [this, carrier, pos, last_t_abs_pos_is_oob, is_cable_item]() {
         if( debug_mode ) {
             add_msg_debug( debugmode::DF_IUSE, "%s linked to %s%s, length %d/%d", type_name(),
@@ -3965,7 +3965,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         return false;
     };
 
-    // check if the item moved since last length check
+
     bool length_check_needed = false;
     const tripoint_abs_ms abs_pos = here.get_abs( pos );
     if( link().s_abs_pos != abs_pos ) {
@@ -3973,14 +3973,14 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         length_check_needed = true;
     }
 
-    // Re-establish vehicle pointer if it got lost or if this item just got loaded.
+
     if( !link().t_veh ) {
         vehicle *found_veh = vehicle::find_vehicle( here, link().t_abs_pos );
         if( !found_veh ) {
             if( last_t_abs_pos_is_oob ) {
-                // Target is outside the reality bubble -- its submap is probably
-                // just unloaded. Skip processing this turn; the cable will
-                // reconnect when the target submap loads back in.
+
+
+
                 return false;
             }
             return reset_link( true, carrier, -2, true, pos );
@@ -3992,11 +3992,11 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         link().t_veh = found_veh->get_safe_reference();
     }
 
-    // Regular pointers are faster, so make one now that we know the reference is valid.
+
     vehicle *t_veh = link().t_veh.get();
 
-    // We should skip processing if the last saved target point is out of bounds, since vehicles give innacurate absolute coordinates when out of bounds.
-    // However, if the linked vehicle is moving fast enough, we should always do processing to avoid erroneously skipping linked items riding inside of it.
+
+
     if( last_t_abs_pos_is_oob && t_veh->velocity < HALF_MAPSIZE_X * 400 ) {
         if( !length_check_needed ) {
             return false;
@@ -4009,7 +4009,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         return false;
     }
 
-    // Find the vp_part index the cable is linked to.
+
     int link_vp_index = -1;
     if( link().target == link_state::vehicle_port ) {
         for( int idx : t_veh->cable_ports ) {
@@ -4026,7 +4026,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
             }
         }
         if( link_vp_index == -1 ) {
-            // Check cable_ports, since that includes appliances
+
             for( int idx : t_veh->cable_ports ) {
                 if( t_veh->part( idx ).mount == link().t_mount ) {
                     link_vp_index = idx;
@@ -4038,7 +4038,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         link_vp_index = t_veh->part_at( t_veh->coord_translate( link().t_mount ) );
     }
     if( link_vp_index == -1 ) {
-        // The part with cable ports was lost, so disconnect the cable.
+
         return reset_link( true, carrier, -2, true, pos );
     }
 
@@ -4052,7 +4052,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
     int turns_elapsed = to_turns<int>( calendar::turn - link().last_processed );
     link().last_processed = calendar::turn;
 
-    // Set the new absolute position to the vehicle's origin.
+
     tripoint_abs_ms new_t_abs_pos = t_veh->pos_abs();;
     tripoint_bub_ms t_veh_bub_pos = here.get_bub( new_t_abs_pos );;
     if( link().t_abs_pos != new_t_abs_pos ) {
@@ -4060,7 +4060,7 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         length_check_needed = true;
     }
 
-    // If either of the link's connected sides moved, check the cable's length.
+
     if( length_check_needed ) {
         link().length = rl_dist( pos, t_veh_bub_pos + t_veh->part( link_vp_index ).precalc[0].raw() );
         if( check_length() ) {
@@ -4068,22 +4068,22 @@ bool item::process_link( map &here, Character *carrier, const tripoint_bub_ms &p
         }
     }
 
-    // Extra behaviors for the cabled item.
+
     if( !is_cable_item ) {
         int power_draw = 0;
 
         if( link().efficiency < MIN_LINK_EFFICIENCY ) {
             return false;
         }
-        // Recharge or charge linked batteries
+
         power_draw -= charge_linked_batteries( *t_veh, turns_elapsed );
 
-        // Tool power draw display
+
         if( active && type->tool && type->tool->power_draw > 0_W ) {
             power_draw -= type->tool->power_draw.value();
         }
 
-        // Send total power draw to the vehicle so it can be displayed.
+
         if( power_draw != 0 ) {
             t_veh->linked_item_epower_this_turn += units::from_milliwatt( power_draw );
         }
@@ -4103,8 +4103,8 @@ int item::charge_linked_batteries( vehicle &linked_veh, int turns_elapsed )
         return 0;
     }
 
-    // Find a battery-flavored magazine to charge; on multimag items only
-    // the battery well is meaningful here.
+
+
     item *parent_mag = nullptr;
     for( item *mag : magazines_current() ) {
         if( mag && mag->ammo_capacity( ammo_battery ) > 0 ) {
@@ -4126,17 +4126,17 @@ int item::charge_linked_batteries( vehicle &linked_veh, int turns_elapsed )
     if( power_in ? battery_charges >= battery_capacity : battery_charges <= 0 ) {
         return 0;
     }
-    // Direct receiver for ammo_set so multimag items don't add charges to
-    // the wrong well.
+
+
     item *charge_target = parent_mag ? parent_mag : this;
 
-    // Normally efficiency is the chance to get a charge every charge_interval, but if we're catching up from
-    // time spent outside the reality bubble it should be applied as a percentage of the total instead.
+
+
     bool short_time_passed = turns_elapsed <= link().charge_interval;
 
     if( turns_elapsed < 1 || ( short_time_passed &&
                                !calendar::once_every( time_duration::from_turns( link().charge_interval ) ) ) ) {
-        // Too early to get any charge
+
         return link().charge_rate;
     }
 
@@ -4144,28 +4144,28 @@ int item::charge_linked_batteries( vehicle &linked_veh, int turns_elapsed )
         int available_charges = linked_veh.connected_battery_power_level( here ).first;
         int wanted_charges = battery_capacity - battery_charges;
 
-        // Nothing to charge or nothing to charge with
+
         if( wanted_charges == 0 || available_charges == 0 ) {
             return link().charge_rate;
         }
 
         if( short_time_passed ) {
-            // Single charge - subtract one from source, roll against efficiency to add one to destination
+
             int deficit = linked_veh.discharge_battery( here, 1, true );
             if( deficit == 0 && rng_float( 0.0, 1.0 ) <= link().efficiency ) {
                 charge_target->ammo_set( itype_battery, charge_target->ammo_remaining() + 1 );
             }
         } else {
-            // Multiple charges - get minimum from available charges, possible transfer in given time and
-            // amount of charges destination needs to charge itself to full with given efficiency.
-            // Subtract that value from the source and after reduction by efficiency add it to the destination.
+
+
+
             int possible_transfer =
                 static_cast<int>( turns_elapsed * 1.0f / link().charge_interval );
             int required_charges = static_cast<int>( wanted_charges / link().efficiency );
             int spent_charges = std::min( { possible_transfer, available_charges, required_charges } );
             int deficit = linked_veh.discharge_battery( here, spent_charges, true );
             int actual_spent = spent_charges - deficit;
-            // Avoid rounding error on full charge
+
             int received_charges = actual_spent >= required_charges
                                    ? wanted_charges
                                    : static_cast<int>( actual_spent * link().efficiency );
@@ -4178,41 +4178,41 @@ int item::charge_linked_batteries( vehicle &linked_veh, int turns_elapsed )
         int available_charges = battery_charges;
         int wanted_charges = bat_capacity - bat_remaining;
 
-        // Nothing to charge or nothing to charge with
+
         if( wanted_charges == 0 || available_charges == 0 ) {
             return link().charge_rate;
         }
 
         if( short_time_passed ) {
-            // Single charge - subtract one from source, roll against efficiency to add one to destination
+
             charge_target->ammo_set( itype_battery, charge_target->ammo_remaining() - 1 );
             if( rng_float( 0.0, 1.0 ) <= link().efficiency ) {
                 int surplus = linked_veh.charge_battery( here, 1, true );
                 if( surplus != 0 ) {
-                    // Battery couldn't accept the charge, refund it
+
                     charge_target->ammo_set( itype_battery, charge_target->ammo_remaining() + 1 );
                 }
             }
         } else {
-            // Multiple charges - get minimum from available charges, possible transfer in given time and
-            // amount of charges destination needs to charge itself to full with given efficiency.
-            // Subtract that value from the source and after reduction by efficiency add it to the destination.
+
+
+
             int possible_transfer =
                 static_cast<int>( turns_elapsed * 1.0f / link().charge_interval );
             int required_charges = static_cast<int>( wanted_charges / link().efficiency );
             int spent_charges = std::min( { possible_transfer, available_charges, required_charges } );
-            // Avoid rounding error on full charge
+
             int received_charges = spent_charges == required_charges
                                    ? wanted_charges
                                    : static_cast<int>( spent_charges * link().efficiency );
 
             int surplus = linked_veh.charge_battery( here, received_charges, true );
             int actual_received = received_charges - surplus;
-            // Only deduct from source what was actually accepted (accounting for efficiency)
+
             int actual_spent = actual_received == wanted_charges
                                ? required_charges
                                : static_cast<int>( actual_received / link().efficiency );
-            // Ensure we don't spend more than planned
+
             actual_spent = std::min( actual_spent, spent_charges );
 
             charge_target->ammo_set( itype_battery,
@@ -4229,14 +4229,14 @@ bool item::reset_link( bool unspool_if_too_long, Character *p, int vpart_index,
         return has_flag( flag_NO_DROP );
     }
     if( unspool_if_too_long && link_has_state( link_state::needs_reeling ) ) {
-        // Cables that need reeling should be reset with a reel_cable_activity_actor instead.
+
         return false;
     }
 
     if( vpart_index != -2 && link().t_veh ) {
         if( vpart_index == -1 ) {
             vehicle *t_veh = link().t_veh.get();
-            // Find the vp_part index the cable is linked to.
+
             if( link().target == link_state::vehicle_port ) {
                 for( int idx : t_veh->cable_ports ) {
                     if( t_veh->part( idx ).mount == link().t_mount ) {
@@ -4270,7 +4270,7 @@ bool item::reset_link( bool unspool_if_too_long, Character *p, int vpart_index,
     }
 
     if( unspool_if_too_long && link().length > LINK_RESPOOL_THRESHOLD ) {
-        // Cables that are too long need to be manually rewound before reuse.
+
         link().source = link_state::needs_reeling;
         return false;
     }
@@ -4281,13 +4281,13 @@ bool item::reset_link( bool unspool_if_too_long, Character *p, int vpart_index,
 
     link_.reset();
     if( !cables().empty() ) {
-        // If there are extensions, keep link active to maintain max_length.
+
         update_link_traits();
     }
     return has_flag( flag_NO_DROP );
 }
 
-bool item::process_linked_item( Character *carrier, const tripoint_bub_ms & /*pos*/,
+bool item::process_linked_item( Character *carrier, const tripoint_bub_ms & ,
                                 const link_state required_state )
 {
     if( carrier == nullptr ) {
@@ -4322,13 +4322,13 @@ bool item::process_tool( Character *carrier, const tripoint_bub_ms &pos )
 {
     map &here = get_map();
 
-    // FIXME: remove this once power armors don't need to be TOOL_ARMOR anymore
+
     if( is_power_armor() && carrier && carrier->can_interface_armor() && carrier->has_power() ) {
         return false;
     }
 
     if( uses_firing_requirements() ) {
-        // Per-turn drain throttled by turns_per_charge; shut down when empty.
+
         if( tool_uses_remaining( here, carrier ) == 0 ) {
             if( carrier ) {
                 carrier->add_msg_if_player( m_info, _( "The %s ran out of charge!" ), tname() );
@@ -4351,7 +4351,7 @@ bool item::process_tool( Character *carrier, const tripoint_bub_ms &pos )
         return destroy && charges_used > 0;
     }
 
-    // if insufficient available charges shutdown the tool
+
     if( ( type->tool->power_draw > 0_W || type->tool->turns_per_charge > 0 ) &&
         ( ( uses_energy() && energy_remaining( carrier ) < energy_per_second() ) ||
           ( !uses_energy() && ammo_remaining_linked( here, carrier ) == 0 ) ) ) {
@@ -4372,7 +4372,7 @@ bool item::process_tool( Character *carrier, const tripoint_bub_ms &pos )
     if( energy_remaining( carrier ) > 0_J ) {
         energy_consume( energy_per_second(), pos, carrier );
     } else {
-        // Non-electrical charge consumption.
+
         int charges_to_use = 0;
         if( type->tool->turns_per_charge > 0 &&
             to_turn<int>( calendar::turn ) % type->tool->turns_per_charge == 0 ) {
@@ -4384,9 +4384,9 @@ bool item::process_tool( Character *carrier, const tripoint_bub_ms &pos )
         }
     }
 
-    // FIXME: some iuse functions return 1+ expecting to be destroyed (molotovs), others
-    // to use charges, and others just because?
-    // allow some items to opt into requesting destruction
+
+
+
     const int charges_used = type->tick( carrier, *this, pos );
     const bool destroy = has_flag( flag_DESTROY_ON_CHARGE_USE );
     if( !destroy && charges_used > 0 ) {
@@ -4397,8 +4397,8 @@ bool item::process_tool( Character *carrier, const tripoint_bub_ms &pos )
 
 bool item::process_blackpowder_fouling( Character *carrier )
 {
-    // Rust is deterministic. At a total modifier of 1 (the max): 12 hours for first rust, then 24 (36 total), then 36 (72 total) and finally 48 (120 hours to go to XX)
-    // this speeds up by the amount the gun is dirty, 2-6x as fast depending on dirt level. At minimum dirt, the modifier is 0.3x the speed of the above mentioned figures.
+
+
     set_var( "rust_timer", get_var( "rust_timer", 0 ) + std::min( 0.3 + get_var( "dirt", 0 ) / 200,
              1.0 ) );
     double time_mult = 1.0 + ( 4.0 * static_cast<double>( damage() ) ) / static_cast<double>
@@ -4454,8 +4454,8 @@ bool item::is_reloadable() const
 {
     if( ( has_flag( flag_NO_RELOAD ) && !has_flag( flag_VEHICLE ) ) ||
         ( is_gun() && !ammo_default() ) ) {
-        // turrets ignore NO_RELOAD flag
-        // don't show guns without default ammo defined in reload ui
+
+
         return false;
     }
 
@@ -4465,13 +4465,13 @@ bool item::is_reloadable() const
                 return true;
             }
         } else if( pocket->is_type( pocket_type::MAGAZINE ) ) {
-            // Parent aggregate stays correct when the integral mag is full
-            // of casings (not counted against ammo_remaining()).
+
+
             if( remaining_ammo_capacity() > 0 ) {
                 return true;
             }
         } else if( pocket->is_type( pocket_type::CONTAINER ) ) {
-            // Container pockets are reloadable only if they are watertight, not full and do not contain non-liquid item
+
             if( pocket->full( false ) || !pocket->watertight() ) {
                 continue;
             }
@@ -4536,7 +4536,7 @@ int item::get_min_str() const
     const Character &p = get_player_character();
     if( type->gun ) {
         int min_str = type->min_str;
-        // we really need some better check for bows than its skill
+
         if( type->gun->skill_used == skill_archery ) {
             min_str -= p.get_proficiency_bonus( "archery", proficiency_bonus_type::strength );
         }

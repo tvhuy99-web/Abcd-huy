@@ -56,7 +56,7 @@ TEST_CASE( "map_coordinate_conversion_functions" )
                                            tripoint_rel_ms::below );
     int z = GENERATE( 0, 1, -1, OVERMAP_HEIGHT, -OVERMAP_DEPTH );
 
-    // Make sure we're not in the 'easy' case where abs_sub is zero
+
     if( here.get_abs_sub().x() == 0 ) {
         here.shift( point_rel_sm::east );
     }
@@ -82,7 +82,7 @@ TEST_CASE( "map_coordinate_conversion_functions" )
     CAPTURE( test_point );
     CAPTURE( test_abs );
 
-    // Verify round-tripping
+
     CHECK( here.get_abs( here.get_bub( test_abs ) ) == test_abs );
     CHECK( here.get_bub( here.get_abs( test_point ) ) == test_point );
 }
@@ -111,10 +111,10 @@ TEST_CASE( "destroy_grabbed_furniture" )
 
 TEST_CASE( "map_bounds_checking" )
 {
-    // FIXME: There are issues with vehicle caching between maps, because
-    // vehicles are stored in the global MAPBUFFER which all maps refer to.  To
-    // work around the problem we clear the map of vehicles, but this is an
-    // inelegant solution.
+
+
+
+
     clear_map_without_vision();
     map m;
     tripoint_abs_sm point_away_from_real_map( get_map().get_abs_sub() + point( MAPSIZE_X, 0 ) );
@@ -171,7 +171,7 @@ TEST_CASE( "map_points_in_radius_with_center_outside_map", "[map]" )
     SECTION( "center past the low x edge by less than the radius" ) {
         const tripoint_bub_ms center( -2, 20, 0 );
         const std::vector<tripoint_bub_ms> visited = points_in_radius_of( here, center, radius );
-        // x in [0, 4], y in [14, 26]
+
         CHECK( visited.size() == 5 * 13 );
         for( const tripoint_bub_ms &p : visited ) {
             CAPTURE( p );
@@ -183,15 +183,15 @@ TEST_CASE( "map_points_in_radius_with_center_outside_map", "[map]" )
 
 TEST_CASE( "tinymap_bounds_checking" )
 {
-    // FIXME: There are issues with vehicle caching between maps, because
-    // vehicles are stored in the global MAPBUFFER which all maps refer to.  To
-    // work around the problem we clear the map of vehicles, but this is an
-    // inelegant solution.
+
+
+
+
     clear_map_without_vision();
     tinymap m;
     tripoint_abs_sm point_away_from_real_map( get_map().get_abs_sub() + point( MAPSIZE_X, 0 ) );
     m.load( project_to<coords::omt>( point_away_from_real_map + point::east ),
-            false ); // Add submap to ensure to OMT lies beyond the reality bubble
+            false );
     for( int x = -1; x <= SEEX * 2; ++x ) {
         for( int y = -1; y <= SEEY * 2; ++y ) {
             for( int z = -OVERMAP_DEPTH - 1; z <= OVERMAP_HEIGHT + 1; ++z ) {
@@ -234,9 +234,9 @@ void map::check_submap_active_item_consistency()
 
 TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
 {
-    // Regression test for the situation where game::place_player would misuse
-    // map::shift if the resulting shift exceeded a single submap, leading to a
-    // broken active item cache.
+
+
+
     g->place_player( tripoint_bub_ms::zero );
     get_map().check_submap_active_item_consistency();
 }
@@ -249,9 +249,9 @@ TEST_CASE( "active_item_cache_does_not_duplicate_items_after_index_invalidation"
     REQUIRE( survivor.needs_processing() );
     REQUIRE( cache.add( survivor, point_rel_ms::zero ) );
 
-    // Removing an expired item invalidates the lookup index.
-    // The surviving item is still in the cache, so adding it again must rebuild the index instead of creating a duplicate.
-    // Repeat for more than one processing interval so duplicates would also be visible in get_for_processing().
+
+
+
     const int invalidations = survivor.processing_speed() + 1;
     for( int i = 0; i < invalidations; ++i ) {
         auto temporary = std::make_unique<item>( itype_disinfectant );
@@ -398,8 +398,8 @@ TEST_CASE( "active_monster_drops", "[active_item][map]" )
         dropped_cookie.set_relative_rot( 10 );
         REQUIRE( dropped_cookie.has_rotten_away() );
         calendar::turn += time_duration::from_seconds( cookie.processing_speed() + 1 );
-        here.process_items(); // only corpse is scheduled here
-        here.process_items(); // only cookie is scheduled here
+        here.process_items();
+        here.process_items();
     }
     CHECK( dropped_bag.empty() );
 }

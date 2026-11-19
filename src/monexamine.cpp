@@ -149,8 +149,8 @@ void swap( monster &z )
     Character &player_character = get_player_character();
     player_character.mod_moves( -to_moves<int>( 1_seconds ) * 1.5 );
 
-    ///\EFFECT_STR increases chance to successfully swap positions with your pet
-    ///\EFFECT_DEX increases chance to successfully swap positions with your pet
+
+
     if( !one_in( ( player_character.get_str() + player_character.get_dex() ) / 6 ) ) {
         bool t = z.has_effect( effect_tied );
         if( t ) {
@@ -174,13 +174,13 @@ void push( monster &z )
     Character &player_character = get_player_character();
     player_character.mod_moves( -to_moves<int>( 1_seconds ) * 0.3 );
 
-    ///\EFFECT_STR increases chance to successfully push your pet
+
     if( one_in( player_character.get_str() ) ) {
         add_msg( _( "You pushed the %s, but it resisted." ), pet_name );
         return;
     }
 
-    // Attempt to double the vector between the player and monster
+
     const tripoint_rel_ms delta = z.pos_bub() - player_character.pos_bub();
     if( z.move_to( z.pos_bub() + delta.xy() ) ) {
         add_msg( _( "You pushed the %s." ), pet_name );
@@ -233,7 +233,7 @@ void attach_bag_to( monster &z )
     add_msg( _( "You mount the %1$s on your %2$s." ), it.display_name(), pet_name );
     player_character.i_rem( &it );
     z.add_effect( effect_has_bag, 1_turns, true );
-    // Update encumbrance in case we were wearing it
+
     player_character.flag_encumbrance();
     player_character.mod_moves( -to_moves<int>( 2_seconds ) );
 }
@@ -307,14 +307,14 @@ bool give_items_to( monster &z )
             to_move.insert( to_move.end(), itq );
         }
     }
-    // Quit if there is nothing to add
+
     if( to_move.empty() ) {
         add_msg( _( "Never mind." ) );
         return true;
     }
     z.add_effect( effect_controlled, 5_turns );
     player_character.drop( to_move, z.pos_bub(), true );
-    // Print an appropriate message for the inserted item or items
+
     if( to_move.size() > 1 ) {
         add_msg( _( "You put %1$s items in the %2$s on your %3$s." ), to_move.size(), storage.tname(),
                  pet_name );
@@ -324,7 +324,7 @@ bool give_items_to( monster &z )
         //~ %1$s - item name, %2$s - storage item name, %3$s - pet name
         add_msg( _( "You put the %1$s in the %2$s on your %3$s." ), it.tname(), storage.tname(), pet_name );
     }
-    // Return success if all items were inserted
+
     return to_move.size() == items.size();
 }
 
@@ -363,7 +363,7 @@ bool add_armor( monster &z )
              pet_name );
     loc.remove_item();
     z.add_effect( effect_monster_armor, 1_turns, true );
-    // TODO: armoring a horse takes a lot longer than 2 seconds. This should be a long action.
+
     get_player_character().mod_moves( -to_moves<int>( 2_seconds ) );
     return true;
 }
@@ -383,7 +383,7 @@ void remove_armor( monster &z )
         add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), z.armor_item->display_name(),
                  pet_name );
         z.armor_item.reset();
-        // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
+
         get_player_character().mod_moves( -to_moves<int>( 2_seconds ) );
     } else {
         add_msg( m_bad, _( "Your %1$s isn't wearing armor!" ), pet_name );
@@ -470,7 +470,7 @@ void untie_pet( monster &z )
     }
     z.remove_effect( effect_tied );
     if( !z.has_effect( effect_leashed ) ) {
-        // migration code dealing with animals tied before leashing was introduced
+
         z.add_effect( effect_leashed, 1_turns, true );
     }
     add_msg( _( "You untie your %s." ), z.get_name() );
@@ -495,15 +495,15 @@ void stop_leading( monster &z )
         return;
     }
     z.remove_effect( effect_led_by_leash );
-    // The pet may or may not stop following so don't print that here
+
     add_msg( _( "You release the %s's leash." ), z.get_name() );
 }
 
-/*
- * Manages the milking and milking cool down of monsters.
- * Milked item uses starting_ammo, where ammo type is the milked item
- * and amount the times per day you can milk the monster.
- */
+
+
+
+
+
 void milk_source( monster &source_mon )
 {
     map &here = get_map();
@@ -516,13 +516,13 @@ void milk_source( monster &source_mon )
     }
 
     else if( milkable_ammo->second > 0 ) {
-        // This could be expanded upon by taking species and actor skills into consideration.
+
         const int moves_per_unit = to_moves<int>( time_duration::from_minutes( 1.0 / 2 ) );
         int moves = milkable_ammo->second * moves_per_unit;
         tripoint_abs_ms coords;
         Character &player_character = get_player_character();
         coords = source_mon.pos_abs();
-        // pin the cow in place if it isn't already
+
         bool temp_tie = !source_mon.has_effect( effect_tied );
         if( temp_tie ) {
             source_mon.add_effect( effect_tied, 1_turns, true );
@@ -559,7 +559,7 @@ void milk_source( monster &source_mon )
                 }
                 break;
 
-            // None of these should happen
+
             case LD_NULL:
             case LD_CONSUME:
             case LD_GROUND:
@@ -583,10 +583,10 @@ void shear_animal( monster &z )
         add_msg( _( "You don't have a shearing tool." ) );
     }
 
-    // was monster already tied before shearing
+
     const bool monster_tied = z.has_effect( effect_tied );
 
-    // tie the critter so it doesn't move while being sheared
+
     if( !monster_tied ) {
         z.add_effect( effect_tied, 1_turns, true );
     }
@@ -603,7 +603,7 @@ void remove_battery( monster &z )
 void insert_battery( monster &z )
 {
     if( z.battery_item ) {
-        // already has a battery, shouldn't be called with one, but just in case.
+
         return;
     }
     Character &player_character = get_player_character();
@@ -631,7 +631,7 @@ void insert_battery( monster &z )
     bat_item.remove_item();
 }
 
-} // namespace
+}
 
 bool Character::can_mount( const monster &critter ) const
 {

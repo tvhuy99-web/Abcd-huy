@@ -49,16 +49,16 @@ namespace
 
 generic_factory<weakpoints> weakpoints_factory( "weakpoint sets" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const weakpoints &string_id<weakpoints>::obj() const
 {
     return weakpoints_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<weakpoints>::is_valid() const
 {
@@ -158,8 +158,8 @@ bool weakpoint_families::practice_kill( Character &learner ) const
 
 bool weakpoint_families::practice_dissect( Character &learner ) const
 {
-    // Proficiency experience is capped at 1000 seconds (~16 minutes), so we split it into two
-    // instances. This should be refactored when butchering becomes an `activity_actor`.
+
+
     bool p1 = practice( learner, time_duration::from_minutes( 15 ) );
     bool p2 = practice( learner, time_duration::from_minutes( 15 ) );
     bool learned = p1 || p2;
@@ -204,14 +204,14 @@ void weakpoint_families::load( const JsonArray &ja )
 
 void weakpoint_families::deserialize( const JsonValue &jv )
 {
-    // the load function extends, which is kinda gross, but fine
+
     clear();
     load( jv.get_array() );
 }
 
 bool weakpoint_families::handle_extend( const JsonValue &jv )
 {
-    // the load function extends, which is fine I guess
+
     load( jv.get_array() );
     return true;
 }
@@ -253,12 +253,12 @@ void weakpoint_difficulty::load( const JsonObject &jo )
     using attack_type = weakpoint_attack::attack_type;
     float default_value = difficulty[static_cast<int>( attack_type::NONE )];
     float all = jo.get_float( "all", default_value );
-    // Determine default values
+
     float bash;
     float cut;
     float stab;
     float ranged = all;
-    // Support either "melee" shorthand or "broad"/"point" shorthand.
+
     if( jo.has_float( "melee" ) ) {
         float melee = jo.get_float( "melee", all );
         bash = melee;
@@ -272,7 +272,7 @@ void weakpoint_difficulty::load( const JsonObject &jo )
         stab = point;
         ranged = point;
     }
-    // Load the values
+
     difficulty[static_cast<int>( attack_type::NONE )] = all;
     difficulty[static_cast<int>( attack_type::MELEE_BASH )] = jo.get_float( "bash", bash );
     difficulty[static_cast<int>( attack_type::MELEE_CUT )] = jo.get_float( "cut", cut );
@@ -295,13 +295,13 @@ std::string weakpoint_effect::get_message() const
 void weakpoint_effect::apply_to( Creature &target, int total_damage,
                                  const weakpoint_attack &attack ) const
 {
-    // Check if damage is within required bounds
+
     float percent_hp = 100.0f * static_cast<float>( total_damage ) / target.get_hp_max();
     percent_hp = std::min( 100.0f, percent_hp );
     if( percent_hp < damage_required.first || damage_required.second < percent_hp ) {
         return;
     }
-    // Roll for chance.
+
     if( !( rng_float( 0.0f, 100.f ) < chance ) ) {
         return;
     }
@@ -359,7 +359,7 @@ weakpoint_attack::type_of_melee_attack( const damage_instance &damage )
             primary_amount = du.amount;
         }
     }
-    // FIXME: Hardcoded damage types
+
     if( primary == damage_bash ) {
         return attack_type::MELEE_BASH;
     } else if( primary == damage_cut ) {
@@ -372,12 +372,12 @@ weakpoint_attack::type_of_melee_attack( const damage_instance &damage )
 
 void weakpoint_attack::compute_wp_skill()
 {
-    // Check if there's no source.
+
     if( source == nullptr ) {
         wp_skill = 0.0f;
         return;
     }
-    // Compute the base attacker skill.
+
     float attacker_skill = 0.0f;
     const monster *mon_att = source->as_monster();
     const Character *chr_att = source->as_character();
@@ -400,13 +400,13 @@ void weakpoint_attack::compute_wp_skill()
                 break;
         }
     }
-    // Compute the proficiency skill.
+
     float proficiency_skill = 0.0f;
     const monster *mon_tar = target->as_monster();
     if( chr_att != nullptr && mon_tar != nullptr ) {
         proficiency_skill = mon_tar->type->families.modifier( *chr_att );
     }
-    // Combine attacker skill and proficiency boni.
+
     wp_skill = attacker_skill + proficiency_skill;
 }
 
@@ -425,7 +425,7 @@ void weakpoint::load( const JsonObject &jo )
     optional( jo, false, "name", name );
     optional( jo, false, "coverage", coverage, numeric_bound_reader{0.0f, 100.0f}, 100.f );
     optional( jo, false, "is_good", is_good, true );
-    // ???
+
     if( is_good ) {
         optional( jo, false, "is_head", is_head, false );
     }
@@ -435,7 +435,7 @@ void weakpoint::load( const JsonObject &jo )
     optional( jo, false, "crit_mult", crit_mult, generic_map_reader<damage_type_id, float> {},
               damage_mult );
 
-    // FIXME: read conditions with optional
+
     if( jo.has_member( "condition" ) ) {
         read_condition( jo, "condition", condition, false );
         has_condition = true;
@@ -516,7 +516,7 @@ void weakpoint::apply_effects( Creature &target, int total_damage,
 
 float weakpoint::hit_chance( const weakpoint_attack &attack ) const
 {
-    // Evaluate condition
+
     if( has_condition ) {
         dialogue d( attack.source == nullptr ? nullptr : get_talker_for( *attack.source ),
                     get_talker_for( *attack.target ) );
@@ -526,14 +526,14 @@ float weakpoint::hit_chance( const weakpoint_attack &attack ) const
         }
     }
 
-    // Retrieve multipliers.
+
     float constant_mult = coverage_mult.of( attack );
     float diff;
     float difficulty_mult;
     float final_coverage;
     if( is_good ) {
-        // Probability of a sample from a normal distribution centered on `skill` with `SD = 2`
-        // exceeding the difficulty.
+
+
         diff = attack.wp_skill - difficulty.of( attack );
         difficulty_mult = 0.5f * ( 1.0f + erf( diff / ( 2.0f * sqrt( 2.0f ) ) ) );
         if( attack.source && attack.source->as_character() ) {
@@ -543,7 +543,7 @@ float weakpoint::hit_chance( const weakpoint_attack &attack ) const
             final_coverage = coverage;
         }
     } else {
-        // Use erfc if the wp does not benefit the attacker.
+
         diff = attack.wp_skill - std::max( difficulty.of( attack ) + 10.0f, 10.0f );
         difficulty_mult = std::max( 0.5f * erfc( diff / ( 2.0f * sqrt( 2.0f ) ) ), 0.1f );
         final_coverage = coverage;
@@ -552,15 +552,15 @@ float weakpoint::hit_chance( const weakpoint_attack &attack ) const
     return constant_mult * difficulty_mult * final_coverage;
 }
 
-// Reweighs the probability distribution of hitting a weakpoint.
-//
-// The value returned is the probability of sampling at least one value less than `base`
-// from `rolls` uniform distributions over [0, 1].
-//
-// For hard to hit weak points, this multiplies their hit chance by `rolls`. A 1% base
-// combined with 5 rolls has a 4.9% weight. However, even at high `rolls`, the attacker
-// still has a chance of hitting armor. A 75% chance of not hitting a weak point becomes
-// a 23.7% chance with 5 rolls.
+
+
+
+
+
+
+
+
+
 static float reweigh( float base, float rolls )
 {
     return 1.0f - pow( 1.0f - base, rolls );
@@ -574,9 +574,9 @@ const weakpoint *weakpoints::select_weakpoint( const weakpoint_attack &attack ) 
                    attack.weapon == nullptr ? "nullptr" : attack.weapon->type_name(),
                    attack.wp_skill, attack.accuracy );
     float rolls = std::max( 1.0f, 1.0f + attack.wp_skill / 2.5f );
-    // The base probability of hitting a more preferable weak point.
+
     float base = 0.0f;
-    // The reweighed probability of hitting a more preferable weak point.
+
     float reweighed = 0.0f;
     float idx = rng_float( 0.0f, 100.0f );
     for( const weakpoint &weakpoint : weakpoint_list ) {
@@ -655,7 +655,7 @@ bool weakpoints_reader::do_delete( const JsonObject &jo, const std::string_view 
     }
     weakpoints tmp;
     tmp.deserialize( jo.get_member( name ) );
-    // deferred delete for weakpoints from sets
+
     for( const weakpoint &del : tmp.weakpoint_list ) {
         deleted.emplace( del.id );
     }
@@ -674,7 +674,7 @@ void weakpoints::load( const JsonArray &ja )
             continue;
         }
 
-        // Ensure that every weakpoint has a unique ID
+
         auto it = std::find_if( weakpoint_list.begin(), weakpoint_list.end(),
         [&]( const weakpoint & wp ) {
             return wp.id == tmp.id;
@@ -685,7 +685,7 @@ void weakpoints::load( const JsonArray &ja )
 
         weakpoint_list.push_back( std::move( tmp ) );
     }
-    // Prioritizes weakpoints based on their coverage.
+
     std::sort( weakpoint_list.begin(), weakpoint_list.end(),
     []( const weakpoint & a, const weakpoint & b ) {
         return a.coverage < b.coverage;

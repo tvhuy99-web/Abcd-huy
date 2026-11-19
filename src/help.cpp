@@ -89,7 +89,7 @@ void help_data::load( const JsonObject &jo, const std::string &src )
             } else if( jobj.has_string( "separator" ) ) {
                 auto it = category.paragraphs.emplace_back( no_translation( jobj.get_string( "separator" ) ),
                           MM_SEPARATOR );
-                // Verify color now bc later the debugmsg would cause an ImGui CTD, don't use color_from_string's debugmsg though bc that will be useless context wise
+
                 if( color_from_string( it.first.translated(), report_color_error::no ) == c_unset ) {
                     jobj.throw_error_at( "separator", "Can't parse color" );
                 }
@@ -120,7 +120,7 @@ bool help_window::is_space_for_two_cat()
                 longest = cat_x;
             }
         }
-        two_column_min_width = ( 2 * longest ) + 20.0f; // Guarentee some padding
+        two_column_min_width = ( 2 * longest ) + 20.0f;
     }
     return ImGui::GetContentRegionAvail().x > *two_column_min_width;
 }
@@ -132,18 +132,18 @@ help_window::help_window() : cataimgui::window( "help",
     ctxt = input_context( "DISPLAY_HELP", keyboard_mode::keychar );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "CONFIRM" );
-    // Mouse selection for ImTui ( ImGui mouse selection is handled in draw_controls() )
+
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
-    // Generated shortcuts
+
     ctxt.register_action( "ANY_INPUT" );
-    // Switching between category options and scrolling open category
+
     ctxt.register_action( "PAGE_UP" );
     ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "HOME" );
     ctxt.register_action( "END" );
     ctxt.register_updown();
-    // Switching between category options and open categories
+
     ctxt.register_leftright();
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "NEXT_TAB" );
@@ -161,13 +161,13 @@ void help_window::draw_controls()
 {
 
 #if defined(TILES)
-    // Retrieve captured mouse clicks
+
     if( ImGui::IsMouseReleased( ImGuiMouseButton_Left ) ) {
         imgui_action = "SELECT";
     } else if( ImGui::IsMouseReleased( ImGuiMouseButton_Right ) ) {
         imgui_action = "QUIT";
     }
-#endif // TILES
+#endif
 
     if( !has_selected_category ) {
         draw_category_selection();
@@ -190,7 +190,7 @@ void help_window::draw_category_selection()
         }
     } else {
         format_title();
-        // Split the categories in half
+
         if( ImGui::BeginTable( "Category Options", 2, ImGuiTableFlags_None ) ) {
             ImGui::TableSetupColumn( "Left Column" );
             ImGui::TableSetupColumn( "Right Column" );
@@ -280,12 +280,12 @@ void help_window::draw_category()
                     break;
                 case MM_MONOFONT:
                     cataimgui::PushMonoFont();
-                    //TODO: Try messing with ImGuiStyleVar_ItemSpacing etc again to remove the y spacing
+
                     cataimgui::draw_colored_text( translated_paragraph.first, c_white, get_wrap_width() );
                     ImGui::PopFont();
                     break;
                 case MM_SEPARATOR: {
-                    // Can't verify here bc the debugmsg would cause an ImGui CTD
+
                     nc_color separator_color = color_from_string( translated_paragraph.first, report_color_error::no );
                     if( separator_color == c_unset ) {
                         separator_color = cat.color;
@@ -323,49 +323,49 @@ void help_window::show()
 {
     const std::map<const int, const help_category> &cats = data.get_help_categories();
 
-    // Reader adapter (R19.2). Structure of the original screen, verified
-    // against this file and data/core/help.json (+ mod help files):
-    // - Topics ARE the "categories": help_data loads a flat, order-keyed
-    //   map of help_category (name + paragraphs) from JSON type "help".
-    //   There is no grouping level above them, no search field and no
-    //   links inside a topic: paragraphs carry only color tags and
-    //   monospaced diagrams. Navigation is exactly the two loops below:
-    //   the selection loop (per-topic alphabet hotkeys assigned in the
-    //   constructor, SELECT/CONFIRM opens, QUIT leaves the window) and the
-    //   topic loop (UP/DOWN/HOME/END/PAGE scroll, LEFT/PREV_TAB and
-    //   RIGHT/NEXT_TAB jump to the wrap-around neighbour topic,
-    //   CONFIRM/QUIT returns to the selection loop, and a footer
-    //   SELECT/CONFIRM jumps to the hovered neighbour). Opening a topic
-    //   only marks it read in help_data (per-session set) and swaps the
-    //   translated paragraphs; it never costs a turn or touches the game.
-    //
-    // Audit of the pre-existing screen_reader mode (the SCREEN_READER_MODE
-    // option, read once into the screen_reader member): it changes ONLY
-    // how this window draws, for an EXTERNAL screen reader scraping the
-    // curses/ImTui text (the option text names orca on curses). Its four
-    // effects here are: read topics get a "(read) " prefix in
-    // draw_category_option() (otherwise read state is color-only), and
-    // format_title()/format_subtitle()/format_footer() drop their
-    // box-drawing art, the footer becoming the sentence "Previous
-    // category: %s. Next category: %s". It publishes nothing, has no
-    // navigation model and cannot expose topic text as a document, so it
-    // is NOT equivalent to this adapter and the adapter is not gated on
-    // it. It is left fully in place: the two do not conflict (the adapter
-    // builds nodes from the same help_data/translated_paragraphs the draw
-    // code uses, never from drawn text), and where they overlap the
-    // adapter carries the same facts structurally -- read state as the
-    // topic row's status cell instead of the "(read) " prefix, and the
-    // prev/next names in the topic summary in the footer's own words.
-    //
-    // Because the original UI has no search, the topic filter below is a
-    // reader-only presentation filter (the same lcmatch the keybinding
-    // menu's filter uses): it only changes which rows are published, it
-    // never alters help_data, and its node detail says so. Focus on any
-    // node is observation-only; "activate" on a topic row only sets
-    // selected_option and returns CONFIRM so the selection loop itself
-    // opens the topic (swap_translated_paragraphs + mark_read included),
-    // the neighbour/back nodes return the topic loop's own LEFT/RIGHT/
-    // QUIT actions, and returning lands on the topic row last opened.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     std::string reader_filter;
     std::optional<std::string> reader_filter_draft;
     int reader_last_topic = -1;
@@ -393,8 +393,8 @@ void help_window::show()
             return std::nullopt;
         }
         if( intent.node == "help:no_results" || intent.node == "help:document" ) {
-            // Reading a document is Java-side (ReaderDocumentReader);
-            // neither node carries a game-side effect.
+
+
             if( intent.action == "focus" || intent.action == "activate" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -406,9 +406,9 @@ void help_window::show()
                 return std::string( "TIMEOUT" );
             }
             if( intent.action == "activate" ) {
-                // The topic loop's own actions: LEFT/RIGHT move between
-                // neighbour topics (marking them read), QUIT returns to
-                // the topic list, exactly like the footer controls.
+
+
+
                 if( intent.node == "help:nav:prev" ) {
                     return std::string( "LEFT" );
                 }
@@ -433,8 +433,8 @@ void help_window::show()
                 return std::nullopt;
             }
             if( intent.action == "read_detail" ) {
-                // Reproduce the game's translated help paragraphs, including
-                // character-aware tag substitution, without opening a topic.
+
+
                 const help_category &category = cats.at( option );
                 Character &viewer = get_player_character();
                 std::string document = remove_color_tags( category.name.translated() );
@@ -453,8 +453,8 @@ void help_window::show()
                 return std::string( "TIMEOUT" );
             }
             if( intent.action == "focus" ) {
-                // Browsing must not arm the selection loop's CONFIRM
-                // branch, so selected_option is left untouched.
+
+
                 return std::string( "TIMEOUT" );
             }
             selected_option = option;
@@ -541,11 +541,11 @@ void help_window::show()
                 ( reader_filter.empty() ||
                   lcmatch( remove_color_tags( cats.at( reader_last_topic ).name.translated() ),
                            reader_filter ) ) ) {
-                // Back from a topic returns to that topic's row.
+
                 snapshot.focus = "help:topic:" + std::to_string( reader_last_topic );
             } else if( shown > 0 ) {
-                // The first published row is the first category in map
-                // order that passed the filter.
+
+
                 for( const auto &cat : cats ) {
                     if( reader_filter.empty() ||
                         lcmatch( remove_color_tags( cat.second.name.translated() ),
@@ -565,17 +565,17 @@ void help_window::show()
                 data.get_help_category( previous_option( loaded_option ) ).name.translated();
             const std::string next_cat_name =
                 data.get_help_category( next_option( loaded_option ) ).name.translated();
-            // The same sentence the screen_reader footer draws.
+
             snapshot.summary = string_format(
                                    _( "Previous category: %s. Next category: %s" ),
                                    remove_color_tags( prev_cat_name ),
                                    remove_color_tags( next_cat_name ) );
-            // The document is the topic's own translated paragraphs --
-            // the exact strings draw_category() renders (after
-            // swap_translated_paragraphs() ran parse_tags on them).
-            // MM_SEPARATOR paragraphs are skipped: their stored string
-            // is a color name for the drawn rule, not text. Subtitles
-            // and monospaced diagrams stay as paragraphs of the text.
+
+
+
+
+
+
             std::string document_text;
             for( const std::pair<std::string, message_modifier> &paragraph :
                  translated_paragraphs ) {

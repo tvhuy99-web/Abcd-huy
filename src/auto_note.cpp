@@ -250,8 +250,8 @@ auto_note_manager_gui::auto_note_manager_gui()
     const auto_note_settings &settings = get_auto_notes_settings();
 
     for( const map_extra &extra : MapExtras::mapExtraFactory().get_all() ) {
-        // Ignore all extras that have autonote disabled in the JSON.
-        // This filters out lots of extras users shouldn't see (like "normal")
+
+
         if( extra.visibility == map_extra_visibility::none ) {
             continue;
         }
@@ -317,10 +317,10 @@ void auto_note_manager_gui::show()
     } );
     ui.mark_resize();
 
-    // ===========================================================================
-    // If the display cache contains no entries, the player might not have discovered any of
-    // the map extras. In this case, we switch to a special state that alerts the user of this
-    // in order to avoid confusion a completely empty GUI might normally create.
+
+
+
+
     bool bCharacter = true;
     const bool char_emptyMode = char_displayCache.empty();
     const bool global_emptyMode = global_displayCache.empty();
@@ -345,9 +345,9 @@ void auto_note_manager_gui::show()
         ctxt.register_action( "CHANGE_MAPEXTRA_CHARACTER" );
     }
 
-    // Keep one reader row per discovered map extra in the active tab.
-    // Browsing only changes the highlighted row; activation goes through
-    // the native CONFIRM action and the existing save/discard prompt.
+
+
+
     a11y::screen_scope reader( &ctxt, "auto-notes-manager",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         if( intent.node == "autonotes:enabled" ) {
@@ -376,7 +376,7 @@ void auto_note_manager_gui::show()
     } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        // == Draw border
+
         draw_border( w_border, BORDER_COLOR, _( "Auto notes manager" ) );
         wattron( w_border, c_light_gray );
         mvwaddch( w_border, point( 0, iHeaderHeight - 1 ), LINE_XXXO );
@@ -386,13 +386,13 @@ void auto_note_manager_gui::show()
         wattroff( w_border, c_light_gray );
         wnoutrefresh( w_border );
 
-        // == Draw header
+
         int tmpx = 0;
         tmpx += shortcut_print( w_header, point( tmpx, 0 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
         tmpx += shortcut_print( w_header, point( tmpx, 0 ), c_white, c_light_green, _( "<D>isable" ) ) + 2;
         shortcut_print( w_header, point( tmpx, 0 ), c_white, c_light_green, _( "<Enter> - Toggle" ) );
 
-        // Draw horizontal line and corner pieces of the table
+
         wattron( w_header, c_light_gray );
         mvwhline( w_header, point( 0, iHeaderHeight - 2 ), LINE_OXOX, 78 );
         mvwaddch( w_header, point( 51, iHeaderHeight - 2 ), LINE_OXXX );
@@ -412,7 +412,7 @@ void auto_note_manager_gui::show()
 
         wnoutrefresh( w_header );
 
-        // TODO: Show info about custom symbols (hotkey, hint, state)
+
         std::string header_info_custom_symbols = string_format( _( "<color_light_green>%1$s</color> %2$s" ),
                 ctxt.get_desc( "CHANGE_MAPEXTRA_CHARACTER" ), _( "Change a symbol for map extra" ) );
         // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -438,7 +438,7 @@ void auto_note_manager_gui::show()
         shortcut_print( w_header, point( currentX, 0 ), c_white, c_light_green,
                         _( "<Tab> to change pages." ) );
 
-        // Clear table
+
         mvwrectf( w, point::zero, c_black, ' ', 79, iContentHeight );
         mvwvline( w, point( 51, 0 ), c_light_gray, LINE_XOXO, iContentHeight );
         mvwvline( w, point( 60, 0 ), c_light_gray, LINE_XOXO, iContentHeight );
@@ -483,13 +483,13 @@ void auto_note_manager_gui::show()
 
                 wprintz( w, lineColor, "%s", cacheEntry.first.name() );
 
-                // Print the character this map extra is indicated by on the map
+
                 mvwprintz( w, point( 55, i - startPosition ), charColor, "%s", displayChar );
                 if( has_custom_symbol ) {
                     mvwprintz( w, point( 56, i - startPosition ), c_white, "*" );
                 }
-                // Since yes is longer than no, we need to clear the space for the status string before
-                // displaying the current text. Otherwise artifacts might occur.
+
+
                 mvwprintz( w, point( 64, i - startPosition ), statusColor, "     " );
                 mvwprintz( w, point( 64, i - startPosition ), statusColor, "%s", statusString );
             }
@@ -557,7 +557,7 @@ void auto_note_manager_gui::show()
 
         const std::string action = ctxt.handle_input();
 
-        // Actions that also work with no items to display
+
         if( action == "SWITCH_AUTO_NOTE_OPTION" ) {
             get_options().get_option( "AUTO_NOTES_MAP_EXTRAS" ).setNext();
             get_options().save();
@@ -615,7 +615,7 @@ void auto_note_manager_gui::show()
                         }
                         i++;
                     }
-                    // Default note color is the last one
+
                     const nc_color color_default = c_yellow;
                     const color_manager &colors = get_all_colors();
                     const std::string color_default_name = colors.get_name( color_default );
@@ -629,7 +629,7 @@ void auto_note_manager_gui::show()
                         auto iter = note_color_names.begin();
                         std::advance( iter, ui_colors.ret );
 
-                        // selected color
+
                         custom_symbol_color = colors.get_name( iter->second.color );
                     }
 
@@ -683,7 +683,7 @@ void auto_note_manager_gui::show()
         }
     }
 }
-} // namespace auto_notes
+}
 
 auto_notes::auto_note_settings &get_auto_notes_settings()
 {

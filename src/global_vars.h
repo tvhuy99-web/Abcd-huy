@@ -11,7 +11,7 @@ class global_variables
     public:
         using impl_t = std::unordered_map<std::string, diag_value>;
 
-        // Methods for setting/getting misc key/value pairs.
+
         void set_global_value( const std::string &key, diag_value value ) {
             global_values[ key ] = std::move( value );
         }
@@ -70,4 +70,4 @@ class global_variables
 };
 global_variables &get_globals();
 
-#endif // CATA_SRC_GLOBAL_VARS_H
+#endif

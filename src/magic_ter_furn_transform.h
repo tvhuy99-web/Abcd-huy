@@ -14,8 +14,8 @@ class Creature;
 class JsonObject;
 struct tripoint;
 
-// this is a small class that contains the "results" of a terrain transform.
-// T can be either ter_str_id, furn_str_id, trap_str_id, or field_type_id
+
+
 template<class T>
 class ter_furn_data
 {
@@ -90,4 +90,4 @@ class ter_furn_transform
         bool is_valid() const;
 };
 
-#endif // CATA_SRC_MAGIC_TER_FURN_TRANSFORM_H
+#endif

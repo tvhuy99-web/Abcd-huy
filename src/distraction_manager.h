@@ -11,8 +11,8 @@ class distraction_manager_gui
         void show();
 };
 
-} // namespace distraction_manager
+}
 
 distraction_manager::distraction_manager_gui &get_distraction_manager();
 
-#endif // CATA_SRC_DISTRACTION_MANAGER_H
+#endif

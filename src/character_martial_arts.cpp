@@ -117,7 +117,7 @@ void character_martial_arts::clear_styles()
 
 void character_martial_arts::selected_style_check()
 {
-    // check if player knows current style naturally, otherwise drop them back to style_none
+
     if( style_selected != style_none && style_selected != style_kicks ) {
         bool has_style = false;
         for( const matype_id &elem : ma_styles ) {

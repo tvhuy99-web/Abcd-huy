@@ -22,4 +22,4 @@ std::optional<std::size_t> selected_quantity( const std::string_view text,
     return value;
 }
 
-} // namespace a11y
+}

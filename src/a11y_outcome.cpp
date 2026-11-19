@@ -11,9 +11,9 @@ namespace a11y
 {
 namespace
 {
-// Game thread only, like the rest of the reader's game-side state.
+
 action_outcome last_outcome;
-} // namespace
+}
 
 void record_action_outcome( action_outcome_kind kind, std::string detail )
 {
@@ -27,12 +27,12 @@ void record_action_outcome( action_outcome_kind kind, std::string detail )
     last_outcome = std::move( outcome );
     if( kind == action_outcome_kind::blocked ||
         kind == action_outcome_kind::safe_mode_blocked ) {
-        // World snapshots keep this outcome for later review, but routine
-        // world refreshes are intentionally silent. Announce each blocked
-        // attempt immediately, even when the player has not moved or the
-        // game turn did not advance. Do not announce successful steps.
-        // The name is supplied by the movement engine after it has
-        // classified the perceived obstacle (never by a hidden-map scan).
+
+
+
+
+
+
         android::announce( describe_action_outcome( last_outcome ), 3 );
         android::cue( "blocked" );
     }
@@ -74,4 +74,4 @@ std::string describe_action_outcome( const action_outcome &outcome )
     }
     return std::string();
 }
-} // namespace a11y
+}

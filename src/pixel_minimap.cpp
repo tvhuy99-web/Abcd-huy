@@ -37,12 +37,12 @@ namespace
 
 const point total_tiles_count = { MAX_VIEW_DISTANCE * 2 + 1, MAX_VIEW_DISTANCE * 2 + 1 };
 
-// Enemy-beacon flicker sweeps brightness between these two percentages.
+
 constexpr int beacon_flicker_dim = 25;
 constexpr int beacon_flicker_full = 100;
-// Milliseconds contributed by one unit of the beacon_blink_interval setting.
+
 constexpr int beacon_blink_ms_per_step = 200;
-// Edge pixels of the beacon diamond are darkened by this divisor to outline it.
+
 constexpr int beacon_edge_divisor = 3;
 
 point get_pixel_size( const point &tile_size, pixel_minimap_mode mode )
@@ -61,7 +61,7 @@ point get_pixel_size( const point &tile_size, pixel_minimap_mode mode )
     cata_fatal( "Invalid pixel_minimap_mode %d", static_cast<int>( mode ) );
 }
 
-/// Returns a number in range [0..1]. The range lasts for @param phase_length_ms (milliseconds).
+
 float get_animation_phase( int phase_length_ms )
 {
     if( phase_length_ms == 0 ) {
@@ -91,7 +91,7 @@ SDL_Color get_critter_color( Creature *critter, int flicker, int mixture )
     SDL_Color result = curses_color_to_SDL( critter->symbol_color() );
 
     if( const monster *m = dynamic_cast<monster *>( critter ) ) {
-        //faction status (attacking or tracking) determines if red highlights get applied to creature
+
         const monster_attitude matt = m->attitude( &get_player_character() );
 
         if( ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) &&
@@ -104,7 +104,7 @@ SDL_Color get_critter_color( Creature *critter, int flicker, int mixture )
     return result;
 }
 
-} // namespace
+}
 
 pixel_minimap::pixel_minimap( const SDL_Renderer_Ptr &renderer,
                               const GeometryRenderer_Ptr &geometry ) :
@@ -163,7 +163,7 @@ void pixel_minimap::build_batches( const tripoint_bub_ms &center )
     const bool nv_goggle = get_player_character().get_vision_modes()[NV_GOGGLES];
     creature_tracker &creatures = get_creature_tracker();
 
-    // Full blink period in milliseconds; default is 2000.
+
     const int indicator_length = settings.beacon_blink_interval * beacon_blink_ms_per_step;
 
     int flicker = beacon_flicker_full;
@@ -179,14 +179,14 @@ void pixel_minimap::build_batches( const tripoint_bub_ms &center )
 
     const point_rel_ms start( center.x() - total_tiles_count.x / 2,
                               center.y() - total_tiles_count.y / 2 );
-    // Scaled so beacons keep their proportion to the map under scale_to_fit.
+
     const point beacon_size = {
         std::max( static_cast<int>( projector->get_tile_size().x *tf_.scale_x *
                                     settings.beacon_size / 2 ), 2 ),
         std::max( static_cast<int>( projector->get_tile_size().y *tf_.scale_y *
                                     settings.beacon_size / 2 ), 2 )
     };
-    // A constant size, or the fractional pitch lands as a mix of sizes and bands.
+
     const bool fills_cell = pixel_size == projector->get_tile_size();
     const int fixed_w = std::max( 1, static_cast<int>( std::lround( pixel_size.x * tf_.scale_x ) ) );
     const int fixed_h = std::max( 1, static_cast<int>( std::lround( pixel_size.y * tf_.scale_y ) ) );
@@ -195,12 +195,12 @@ void pixel_minimap::build_batches( const tripoint_bub_ms &center )
         for( int x = 0; x < total_tiles_count.x; x++ ) {
             const tripoint_bub_ms p = start + tripoint_bub_ms( x, y, center.z() );
             if( !m.inbounds( p ) ) {
-                // p might be out-of-bounds when peeking at submap boundary. Example: center=(64,59,-5), start=(4,-1) -> p=(4,-1,-5)
+
                 continue;
             }
             const lit_level lighting = access_cache.visibility_cache[p.x()][p.y()];
             if( lighting == lit_level::BLANK || lighting == lit_level::DARK ) {
-                // TODO: Map memory?
+
                 continue;
             }
 
@@ -253,8 +253,8 @@ void pixel_minimap::present()
     if( had_clip ) {
         RenderGetClipRect( renderer, &prior_clip );
     }
-    // A caller may already be clipping to something narrower than the
-    // minimap rect, so draw within both.
+
+
     SDL_Rect clip = tf_.dest_rect;
     if( had_clip && !GetRectIntersection( prior_clip, tf_.dest_rect, clip ) ) {
         return;
@@ -309,4 +309,4 @@ const
     cata_fatal( "Invalid pixel_minimap_type %d", static_cast<int>( type ) );
 }
 
-#endif // TILES
+#endif

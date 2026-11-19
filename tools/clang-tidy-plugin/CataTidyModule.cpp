@@ -57,8 +57,8 @@ class CataModule : public ClangTidyModule
 {
     public:
         void addCheckFactories( ClangTidyCheckFactories &CheckFactories ) override {
-            // Sanity check the clang version to verify that we're loaded into
-            // the same version we linked against
+
+
 
             std::string RuntimeVersion = getClangFullVersion();
             if( !llvm::StringRef( RuntimeVersion ).contains( "clang version " CLANG_VERSION_STRING ) ) {
@@ -118,14 +118,14 @@ class CataModule : public ClangTidyModule
         }
 };
 
-} // namespace cata
+}
 
-// Register the MiscTidyModule using this statically initialized variable.
+
 // NOLINTNEXTLINE(cata-unused-statics)
 static ClangTidyModuleRegistry::Add<cata::CataModule>
 X( "cata-module", "Adds Cataclysm-DDA checks." );
 
-} // namespace clang::tidy
+}
 
 #if defined( CATA_CLANG_TIDY_EXECUTABLE )
 int main( int argc, const char **argv )

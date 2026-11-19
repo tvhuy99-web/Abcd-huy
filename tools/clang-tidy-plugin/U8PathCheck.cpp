@@ -10,7 +10,7 @@ namespace clang::tidy::cata
 
 void U8PathCheck::registerMatchers( MatchFinder *Finder )
 {
-    // (::.*)? matches ::__cxx11 from glibcxx
+
     auto declIsPath = matchesName( "^::(std|ghc)::filesystem(::.*)?::path$" );
 
     auto notInFsNamespace =
@@ -23,9 +23,9 @@ void U8PathCheck::registerMatchers( MatchFinder *Finder )
     auto pathConversionConstructorDecl =
         cxxConstructorDecl(
             ofClass( declIsPath ),
-            // Default construction
+
             unless( parameterCountIs( 0 ) ),
-            // Copy/move construction
+
             unless( allOf( parameterCountIs( 1 ), firstParamIsPath ) )
         );
 
@@ -54,12 +54,12 @@ void U8PathCheck::registerMatchers( MatchFinder *Finder )
             callee( pathConvertModifyOperatorDecl ),
             anyOf(
                 allOf(
-                    // lhs OP rhs
+
                     cxxOperatorCallExpr(),
                     hasArgument( 1, expr().bind( "operatorCallArg" ) )
                 ),
                 allOf(
-                    // lhs.operator OP( rhs )
+
                     cxxMemberCallExpr(),
                     hasArgument( 0, expr().bind( "operatorCallArg" ) )
                 )
@@ -78,7 +78,7 @@ void U8PathCheck::registerMatchers( MatchFinder *Finder )
     Finder->addMatcher(
         declRefExpr(
             declRefExpr( to( pathConvertModifyOperatorDecl ) ).bind( "operatorRefExpr" ),
-            // Do not match `OP` in `lhs OP rhs`
+
             unless( hasParent( expr( hasParent( cxxOperatorCallExpr( callee( expr( has( declRefExpr(
                                          equalsBoundNode( "operatorRefExpr" ) ) ) ) ) ) ) ) ) ),
             notInFsNamespace
@@ -141,4 +141,4 @@ void U8PathCheck::check( const MatchFinder::MatchResult &Result )
     diag( diagRange.getBegin(), diagMessage ) << diagRange;
 }
 
-} // namespace clang::tidy::cata
+}

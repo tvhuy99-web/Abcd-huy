@@ -19,7 +19,7 @@ namespace clang
 {
 class LangOptions;
 class TargetInfo;
-}  // namespace clang
+}
 
 using namespace clang::ast_matchers;
 
@@ -40,8 +40,8 @@ void TextStyleCheck::registerMatchers( MatchFinder *Finder )
     Finder->addMatcher(
         stringLiteral(
             anyOf(
-                // check if the literal is used in string concat.
-                // todo: check the side of the literal
+
+
                 hasAncestor(
                     cxxOperatorCallExpr(
                         anyOf(
@@ -53,7 +53,7 @@ void TextStyleCheck::registerMatchers( MatchFinder *Finder )
                 ),
                 anything()
             ),
-            // specifically ignore mapgen strings
+
             unless(
                 hasAncestor(
                     callExpr(
@@ -65,7 +65,7 @@ void TextStyleCheck::registerMatchers( MatchFinder *Finder )
                     )
                 )
             ),
-            // __func__, etc
+
             unless( hasAncestor( predefinedExpr() ) )
         ).bind( "str" ),
         this
@@ -92,17 +92,17 @@ void TextStyleCheck::check( const MatchFinder::MatchResult &Result )
         }
     }
 
-    // ignore wide/u16/u32 strings
+
     if( ( text.isWide() || text.isUTF16() || text.isUTF32() ) || text.getCharByteWidth() != 1 ) {
         return;
     }
 
-    // disable fix-its for utf8 strings to avoid removing the u8 prefix
+
     bool fixit = !text.isUTF8();
     for( size_t i = 0; fixit && i < text.getNumConcatenated(); ++i ) {
         const SourceLocation &loc = text.getStrTokenLoc( i );
         if( !loc.isMacroID() && SrcMgr.getCharacterData( loc )[0] == 'R' ) {
-            // disable fix-its for raw strings to avoid removing the R prefix
+
             fixit = false;
         }
     }
@@ -117,7 +117,7 @@ void TextStyleCheck::check( const MatchFinder::MatchResult &Result )
     const auto text_style_check_callback =
         [this, fixit, location]
         ( const text_style_fix type, const std::string & msg,
-          const StringLiteralIterator & /*beg*/, const StringLiteralIterator & /*end*/,
+          const StringLiteralIterator & , const StringLiteralIterator & ,
           const StringLiteralIterator & at,
           const StringLiteralIterator & from, const StringLiteralIterator & to,
           const std::string & fix
@@ -148,10 +148,10 @@ void TextStyleCheck::check( const MatchFinder::MatchResult &Result )
     const auto end = StringLiteralIterator::end( text );
     const bool in_concat_expr = Result.Nodes.getNodeAs<CXXOperatorCallExpr>( "concat" ) != nullptr;
     text_style_check<StringLiteralIterator>( beg, end,
-            // treat spaces at the end of strings in concat expressions (+, += or <<) as deliberate
+
             in_concat_expr ? fix_end_of_string_spaces::no : fix_end_of_string_spaces::yes,
             EscapeUnicode ? escape_unicode::yes : escape_unicode::no,
             text_style_check_callback );
 }
 
-} // namespace clang::tidy::cata
+}

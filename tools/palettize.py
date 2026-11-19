@@ -87,8 +87,8 @@ furn_conflicts = {}
 ter_pal = {}
 ter_conflicts = {}
 
-# first pass, go through and find all the existing terrains and furnitures and
-# any conflicts
+
+
 for om_tile in mapgen:
     om_object = om_tile.get("object", {})
     om_furn = om_object.get("furniture", {})
@@ -96,13 +96,13 @@ for om_tile in mapgen:
     om_ter = om_object.get("terrain", {})
     parse_furnter(om_ter, ter_pal, ter_conflicts)
 
-# if there are conflicts, pick the most common version for the palette
+
 if furn_conflicts:
     decide_conflicts(furn_pal, furn_conflicts)
 if ter_conflicts:
     decide_conflicts(ter_pal, ter_conflicts)
 
-# second pass, remove entries in the palette
+
 for om_tile in mapgen:
     om_object = om_tile.get("object", {})
     om_object.setdefault("palettes", [])
@@ -144,6 +144,3 @@ palette_json = [
 
 with open(palette_source, 'w', encoding="utf-8") as palette_file:
     palette_file.write(json.dumps(palette_json, indent=2))
-
-#print("furniture palette {}".format(json.dumps(furn_pal, indent=2)))
-#print("terrain palette {}".format(json.dumps(ter_pal, indent=2)))

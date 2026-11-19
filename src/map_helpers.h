@@ -21,4 +21,4 @@ void clear_map_and_put_player_underground();
 void clear_vehicles( map *target = nullptr );
 void clear_overmaps();
 
-#endif // CATA_CLEAR_MAP_HELPER
+#endif

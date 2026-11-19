@@ -17,18 +17,18 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * One journal per game launch. The user controls all recording with exactly
- * one persistent switch. OFF means no events, measurements, crash logging or
- * native diagnostics, with no auto-enable, auto-pause or hidden exceptions.
- *
- * Every new process discards the preceding launch's active journal. Enabling
- * during a launch starts/appends to only that launch's file, and disabling
- * never destroys data already captured for the current launch. The user
- * explicitly exports it before the next launch if needed.
- *
- * Log files remain local and size-bounded, without automatic uploading.
- */
+
+
+
+
+
+
+
+
+
+
+
+
 public final class SessionDebugLog {
     static final long MAX_BYTES = 5L * 1024 * 1024;
     private static final long KEEP_BYTES = 4L * 1024 * 1024;
@@ -54,16 +54,16 @@ public final class SessionDebugLog {
         }
         File freshJournal = new File(directory, ACTIVE);
 
-        // Never resurrect a previous launch, whether it ended normally or
-        // crashed. Also clean up legacy crash-recovery files on upgrade.
+
+
         if (freshJournal.exists() && !freshJournal.delete()) {
             try (FileOutputStream empty = new FileOutputStream(freshJournal, false)) {
                 empty.flush();
             } catch (IOException error) {
                 Log.e("SessionDebugLog", "Cannot reset previous launch log", error);
-                // A unique fallback prevents accidentally appending to a
-                // previous launch even if deleting/truncating active.txt
-                // failed on this device.
+
+
+
                 freshJournal = new File(directory, "active-" + launchId + ".txt");
             }
         }
@@ -83,7 +83,7 @@ public final class SessionDebugLog {
                     record("FATAL", "thread=" + thread.getName()
                             + " exception=" + Log.getStackTraceString(error));
                 } catch (Throwable ignored) {
-                    // Delegate the original crash, even if journaling fails.
+
                 }
             }
             if (previousHandler != null) {
@@ -110,7 +110,7 @@ public final class SessionDebugLog {
         }
     }
 
-    /** No SharedPreferences lookups, I/O or clock reads when recording is off. */
+
     public static boolean isRecording() {
         SessionDebugLog log = instance;
         return log != null && log.recording && !log.closed;
@@ -135,8 +135,8 @@ public final class SessionDebugLog {
             if (log == null || log.closed || log.recording == enabled) {
                 return;
             }
-            // The switch is authoritative. No native perf auto-pause may
-            // change it. On OFF the guard takes effect before any later I/O.
+
+
             log.recording = enabled;
             context.getApplicationContext().getSharedPreferences(
                     PREFS, Context.MODE_PRIVATE).edit()
@@ -149,7 +149,7 @@ public final class SessionDebugLog {
         }
     }
 
-    /** Only the current launch. Exporting after OFF remains possible. */
+
     public static byte[] snapshot(Context context) {
         start(context);
         synchronized (LOCK) {
@@ -175,7 +175,7 @@ public final class SessionDebugLog {
         }
     }
 
-    /** Quit never writes while OFF. The next launch resets the file. */
+
     public static void finishNormally() {
         synchronized (LOCK) {
             SessionDebugLog log = instance;
@@ -198,7 +198,7 @@ public final class SessionDebugLog {
         }
     }
 
-    /** Caller must hold LOCK and have already checked recording. */
+
     private void recordLocked(String category, String detail) {
         if (!recording || closed) { return; }
         String data = detail == null ? "" : detail;

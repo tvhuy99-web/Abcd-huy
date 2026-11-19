@@ -55,4 +55,4 @@ void UseMdarrayCheck::check( const MatchFinder::MatchResult &Result )
     CheckDecl( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

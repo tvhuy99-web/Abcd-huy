@@ -50,7 +50,7 @@ extern const bodypart_str_id body_part_foot_l;
 extern const bodypart_str_id body_part_leg_r;
 extern const bodypart_str_id body_part_foot_r;
 
-// The order is important ; pldata.h has to be in the same order
+
 enum body_part : int {
     bp_torso = 0,
     bp_head,
@@ -77,7 +77,7 @@ struct enum_traits<body_part> {
     static constexpr body_part last = body_part::num_bp;
 };
 
-// Drench cache
+
 enum water_tolerance {
     WT_IGNORED = 0,
     WT_NEUTRAL,
@@ -85,10 +85,10 @@ enum water_tolerance {
     NUM_WATER_TOLERANCE
 };
 
-/**
- * Contains all valid @ref body_part values in the order they are
- * defined in. Use this to iterate over them.
- */
+
+
+
+
 constexpr std::array<body_part, 12> all_body_parts = {{
         bp_torso, bp_head, bp_eyes, bp_mouth,
         bp_arm_l, bp_arm_r, bp_hand_l, bp_hand_r,
@@ -148,38 +148,38 @@ struct bp_limb_score {
 
 struct bp_wounds {
     wound_type_id id;
-    // damage type that can apply this specific wound
+
     std::vector<damage_type_id> damage_type;
-    // how much damage one need to deal to apply this wound, min and max
+
     std::pair<int, int> damage_required;
 };
 
 struct bp_onhit_effect {
-    // ID of the effect to apply
+
     efftype_id id;
-    // Apply the effect to the given bodypart, or to the whole character?
+
     bool global = false;
-    // Type of damage that causes the effect - NONE always applies
+
     damage_type_id dtype = damage_type_id::NULL_ID();
-    // Percent of the limb's max HP required for the effect to trigger (or absolute DMG for minor limbs)
+
     int dmg_threshold = 100;
-    // Percent HP / absolute damage triggering a scale tick
+
     float scale_increment = 0.0f;
-    // Percent chance (at damage threshold)
+
     int chance = 100;
-    // Chance scaling for damage above the threshold
+
     float chance_dmg_scaling = 0.0f;
-    // Intensity applied at the damage threshold.
+
     int intensity = 1;
-    // Intensity scaling for damage above the threshold.
+
     float intensity_dmg_scaling = 0.0f;
-    // Duration in turns at the damage threshold.
+
     int duration = 1;
-    // Duration scaling for damage above the threshold.
+
     float duration_dmg_scaling = 0.0f;
-    // Max intensity applied via damage (direct effect addition is exempt)
+
     int max_intensity = INT_MAX;
-    // Max duration applied via damage (direct effect addition is exempt)
+
     int max_duration = INT_MAX;
 
     void load( const JsonObject &jo );
@@ -189,7 +189,7 @@ struct bp_qualities_provided {
 
     quality_id quality;
     int level;
-    // 0-1, if limb HP is below this percentage, it is deactivated
+
     float disable_percent = 0;
 
     void load( const JsonObject &jo );
@@ -197,15 +197,15 @@ struct bp_qualities_provided {
 
 struct body_part_type {
     public:
-        /**
-         * the different types of body parts there are.
-         * this allows for the ability to group limbs or determine a limb of a certain type
-         */
+
+
+
+
 
         std::vector<std::pair<bodypart_str_id, mod_id>> src;
 
-        /** Sub-location of the body part used for encumbrance, coverage and determining protection
-         */
+
+
         std::vector<sub_bodypart_str_id> sub_parts;
 
         std::map<units::mass, int> encumbrance_per_weight;
@@ -214,39 +214,39 @@ struct body_part_type {
         cata::flat_set<json_character_flag> conditional_flags;
 
     private:
-        // limb score values
+
         std::map<limb_score_id, bp_limb_score> limb_scores;
         damage_instance damage;
 
     public:
         bodypart_str_id id;
-        // Legacy "string id"
+
         std::string legacy_id;
-        // "Parent" of this part for damage purposes - main parts are their own "parents"
+
         bodypart_str_id main_part;
-        // "Parent" of this part for connectedness - should be next part towards head.
-        // Head connects to itself.
+
+
         bodypart_str_id connected_to;
-        // A part that has no opposite is its own opposite (that's pretty Zen)
+
         bodypart_str_id opposite_part;
 
-        // A weighted list of limb types. The type with the highest weight is the primary type
+
         std::map<bp_type, float> limbtypes;
 
-        // Limb-specific attacks
+
         std::set<matec_id> techniques;
 
         std::vector<bp_qualities_provided> qualities;
 
-        // Effect to trigger on being winded
+
         efftype_id windage_effect;
-        // Effect to trigger on draining all bionic power
+
         efftype_id no_power_effect;
 
-        // Effects to trigger on getting hit
+
         std::vector<bp_onhit_effect> effects_on_hit;
 
-        // Those are stored untranslated
+
         translation name;
         translation name_multiple;
         translation accusative;
@@ -256,38 +256,38 @@ struct body_part_type {
         translation smash_message;
         translation hp_bar_ui_text;
         translation encumb_text;
-        // Legacy enum "int id"
+
         body_part token = num_bp;
-        /** Size of the body part for melee targeting. */
+
         float hit_size = 0.0f;
-        /**
-         * How hard is it to hit a given body part, assuming "owner" is hit.
-         * Higher number means good hits will veer towards this part,
-         * lower means this part is unlikely to be hit by inaccurate attacks.
-         * Formula is `chance *= pow(hit_roll, hit_difficulty)`
-         */
+
+
+
+
+
+
         float hit_difficulty = 0.0f;
 
-        // Parts with no opposites have BOTH here
+
         side part_side = side::BOTH;
 
-        // Threshold to start encumbrance scaling
+
         int encumbrance_threshold = 0;
-        // Limit of encumbrance, after reaching this point the limb contributes no scores
+
         int encumbrance_limit = 0;
-        // Health at which the limb stops contributing its conditional flags / techs
+
         int health_limit = 0;
 
-        // Minimum BMI to start adding extra encumbrance (only counts the points of BMI that came from fat, ignoring muscle and bone)
+
         int bmi_encumbrance_threshold = 999;
-        // Amount of encumbrance per point of BMI over the threshold
+
         float bmi_encumbrance_scalar = 0;
         float smash_efficiency = 0.5f;
 
-        // if this bodypart is hit, pain amount is multiplied by this
+
         float pain_mod = 1.f;
 
-        //Morale parameters
+
         float hot_morale_mod = 0.0f;
         float cold_morale_mod = 0.0f;
         int squeamish_penalty = 0;
@@ -295,35 +295,35 @@ struct body_part_type {
 
         units::temperature_delta fire_warmth_bonus = 0_C_delta;
 
-        //Innate environmental protection
+
         int env_protection = 0;
 
         int base_hp = 60;
-        // Innate healing rate of the bodypart
+
         int heal_bonus = 0;
         float mend_rate = 1.0f;
 
-        // Ugliness of bodypart, can be mitigated by covering them up
+
         int ugliness = 0;
-        // Ugliness that can't be covered (obviously nonstandard anatomy, even under bulky armor)
+
         int ugliness_mandatory = 0;
 
-        // Intrinsic temperature bonus of the bodypart
+
         units::temperature_delta temp_min = 0_C_delta;
-        // Temperature bonus to apply when not overheated
+
         units::temperature_delta temp_max = 0_C_delta;
         int drench_max = 0;
         int drench_increment = 2;
         float drying_rate = 1.0f;
-        // Wetness morale bonus/malus of the limb
+
         int wet_morale = 0;
         int technique_enc_limit = 50;
 
-        // this is the number of millijoules used per stamina point
+
         int power_efficiency = 0;
 
-        // These limbs should be covered by armor covering this limb (1:1 coverage)
-        // TODO: Coverage/Encumbrance multiplier
+
+
         std::optional<bodypart_str_id> similar_bodypart;
 
         weighted_int_list<bp_wounds> potential_wounds;
@@ -331,13 +331,13 @@ struct body_part_type {
     private:
         int bionic_slots_ = 0;
         bp_type _primary_limb_type = bp_type::num_types;
-        // Protection from various damage types
+
         resistances armor;
 
     public:
         stat_hp_mods hp_mods;
         bool unarmed_bonus = false;
-        // if a limb is vital and at 0 hp, you die.
+
         bool is_vital = false;
         bool is_limb = false;
 
@@ -347,8 +347,8 @@ struct body_part_type {
         bp_type primary_limb_type() const;
         bool has_type( const bp_type &type ) const;
 
-        // return a random sub part from the weighted list of subparts
-        // if secondary is true instead returns a part from only the secondary sublocations
+
+
         sub_bodypart_id random_sub_part( bool secondary ) const;
 
         void load( const JsonObject &jo, std::string_view src );
@@ -358,11 +358,11 @@ struct body_part_type {
         static void load_bp( const JsonObject &jo, const std::string &src );
         static const std::vector<body_part_type> &get_all();
 
-        // Clears all bps
+
         static void reset();
-        // Post-load finalization
+
         static void finalize_all();
-        // Verifies that body parts make sense
+
         static void check_consistency();
 
         float get_limb_score( const limb_score_id &id ) const;
@@ -375,18 +375,18 @@ struct body_part_type {
 
         damage_instance unarmed_damage_instance() const;
         float unarmed_damage( const damage_type_id &dt ) const;
-        // return the total amount of unarmed damage this limb would do
+
         float total_unarmed_damage() const;
         float unarmed_arpen( const damage_type_id &dt ) const;
 
         float damage_resistance( const damage_type_id &dt ) const;
         float damage_resistance( const damage_unit &du ) const;
 
-        // combine matching body part and subbodypart strings together for printing
+
         static std::set<translation, localized_comparator> consolidate( std::vector<sub_bodypart_id>
                 &covered );
 
-        // this version just pairs normal body parts
+
         static std::set<translation, localized_comparator> consolidate( std::vector<bodypart_id>
                 &covered );
 
@@ -399,7 +399,7 @@ struct layer_details {
     int max = 0;
     int total = 0;
 
-    // if the layer is conflicting
+
     bool is_conflicting = false;
 
     std::vector<sub_bodypart_id> covered_sub_parts;
@@ -415,7 +415,7 @@ struct layer_details {
 };
 
 struct encumbrance_data {
-    // value modified in get_final_encumbrance() for final result
+
     int encumbrance = 0;
     int armor_encumbrance = 0;
     int layer_penalty = 0;
@@ -466,11 +466,11 @@ class bodypart
 
         std::vector<wound> wounds;
 
-        // adjust any limb "value" based on how wounded the limb is. scaled to 0-75%
+
         float wound_adjusted_limb_value( float val, const limb_score_id &score ) const;
-        // Same idea as for wounds, though not all scores get this applied. Should be applied after wounds.
+
         float encumb_adjusted_limb_value( const Creature &mon, float val ) const;
-        // If the limb score is affected by a skill, adjust it by the skill's level (used for swimming)
+
         float skill_adjusted_limb_value( float val, int skill ) const;
     public:
         bodypart(): id( bodypart_str_id::NULL_ID() ), mut_drench() {}
@@ -488,18 +488,18 @@ class bodypart
         int get_final_encumbrance( const Creature &mon ) const;
         int get_layer_penalty() const;
         int get_encumbrance_threshold() const;
-        // Check if we're above our encumbrance limit
+
         bool is_limb_overencumbered( const Creature &mon ) const;
         bool has_conditional_flag( const Creature &mon, const json_character_flag &flag ) const;
 
-        // Get our limb attacks
+
         std::set<matec_id> get_limb_techs( const Creature &mon ) const;
 
-        // Get onhit effects
+
         std::vector<bp_onhit_effect> get_onhit_effects( damage_type_id dtype ) const;
 
-        // Get modified limb score as defined in limb_scores.json.
-        // override forces the limb score to be affected by encumbrance/wounds (-1 == no override).
+
+
         float get_limb_score( const Creature &mon, const limb_score_id &score, int skill = -1,
                               int override_encumb = -1,
                               int override_wounds = -1 ) const;
@@ -566,30 +566,30 @@ class bodypart
         void deserialize( const JsonObject &jo );
 };
 
-/** Returns the new id for old token */
+
 const bodypart_str_id &convert_bp( body_part bp );
 
-/** Returns the opposite side. */
+
 side opposite_side( side s );
 
-// identify the index of a body part's "other half", or itself if not
+
 const std::array<size_t, 12> bp_aiOther = {{0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10}};
 
-/** Returns the matching name of the body_part token. */
+
 std::string body_part_name( const bodypart_id &bp, int number = 1 );
 
-/** Returns the matching accusative name of the body_part token, i.e. "Shrapnel hits your X".
- *  These are identical to body_part_name above in English, but not in some other languages. */
+
+
 std::string body_part_name_accusative( const bodypart_id &bp, int number = 1 );
 
-/** Returns the name of the body parts in a context where the name is used as
- * a heading or title e.g. "Left Arm". */
+
+
 std::string body_part_name_as_heading( const bodypart_id &bp, int number );
 
-/** Returns the body part text to be displayed in the HP bar */
+
 std::string body_part_hp_bar_ui_text( const bodypart_id &bp );
 
-/** Returns the matching encumbrance text for a given body_part token. */
+
 std::string encumb_text( const bodypart_id &bp );
 
-#endif // CATA_SRC_BODYPART_H
+#endif

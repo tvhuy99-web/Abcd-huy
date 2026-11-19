@@ -27,7 +27,7 @@ invlet_favorites::invlet_favorites( const std::unordered_map<itype_id, std::stri
 {
     for( const auto &p : map ) {
         if( p.second.empty() ) {
-            // The map gradually accumulates empty lists; remove those here
+
             continue;
         }
         invlets_by_id.insert( p );
@@ -101,15 +101,15 @@ int count_charges_in_list( const itype *type, const map_stack &items )
     return 0;
 }
 
-/**
-* Finds the number of charges of the first item that matches ammotype.
-*
-* @param ammotype   Search target.
-* @param items      Stack of items. Search stops at first match.
-* @param [out] item_type Matching type.
-*
-* @return           Number of charges.
-* */
+
+
+
+
+
+
+
+
+
 int count_charges_in_list( const ammotype *ammotype, const map_stack &items,
                            itype_id &item_type )
 {
@@ -122,13 +122,13 @@ int count_charges_in_list( const ammotype *ammotype, const map_stack &items,
     return 0;
 }
 
-// Helper function to iterate over the intersection of the inventory and a list
-// of items given
+
+
 template<typename F>
 static void for_each_item_in_both(
     const invstack &items, const std::map<const item *, int> &other, const F &f )
 {
-    // Shortcut the logic in the common case where other is empty
+
     if( other.empty() ) {
         return;
     }

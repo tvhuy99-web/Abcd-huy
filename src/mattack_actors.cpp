@@ -109,9 +109,9 @@ std::unique_ptr<mattack_actor> invalid_mattack_actor::clone() const
 
 void leap_actor::load_internal( const JsonObject &obj, const std::string & )
 {
-    // Mandatory:
+
     max_range = obj.get_float( "max_range" );
-    // Optional:
+
     min_range = obj.get_float( "min_range", 1.0f );
     allow_no_target = obj.get_bool( "allow_no_target", false );
     optional( obj, was_loaded, "prefer_leap", prefer_leap, false );
@@ -160,7 +160,7 @@ bool leap_actor::call( monster &z ) const
 
     std::vector<tripoint_bub_ms> options;
     const tripoint_abs_ms target_abs = z.get_dest();
-    // Calculate distance to target
+
     const float best_float = rl_dist( z.pos_abs(), target_abs );
     add_msg_debug( debugmode::DF_MATTACK, "Target distance %.1f", best_float );
     if( best_float < min_consider_range || best_float > max_consider_range ) {
@@ -168,8 +168,8 @@ bool leap_actor::call( monster &z ) const
         return false;
     }
 
-    // We wanted the float for range check
-    // int here will make the jumps more random
+
+
     int best = std::numeric_limits<int>::max();
     if( !allow_no_target && z.attack_target() == nullptr ) {
         add_msg_debug( debugmode::DF_MATTACK, "Leaping without a target disabled" );
@@ -231,7 +231,7 @@ bool leap_actor::call( monster &z ) const
             continue;
         }
         bool blocked_path = false;
-        // check if monster has a clear path to the proposed point
+
         std::vector<tripoint_bub_ms> line = here.find_clear_path( z.pos_bub(), dest );
         for( tripoint_bub_ms &i : line ) {
             if( here.impassable( i ) ) {
@@ -255,15 +255,15 @@ bool leap_actor::call( monster &z ) const
 
     if( options.empty() ) {
         add_msg_debug( debugmode::DF_MATTACK, "No acceptable leap candidates" );
-        return false;    // Nowhere to leap!
+        return false;
     }
 
     z.mod_moves( -move_cost );
     viewer &player_view = get_player_view();
     const tripoint_bub_ms chosen = random_entry( options );
-    bool seen = player_view.sees( here, z ); // We can see them jump...
+    bool seen = player_view.sees( here, z );
     z.setpos( here, chosen );
-    seen |= player_view.sees( here, z ); // ... or we can see them land
+    seen |= player_view.sees( here, z );
     if( seen && get_option<bool>( "LOG_MONSTER_MOVEMENT" ) ) {
         add_msg( message, z.name() );
     }
@@ -309,8 +309,8 @@ bool mon_eoc_actor::call( monster &mon ) const
 
 
     if( !mon.attack_target() && !allow_no_target ) {
-        // this is an attack. there is no reason to attack if there isn't a real target.
-        // Unless we don't need one
+
+
         return false;
     }
     if( has_condition ) {
@@ -368,8 +368,8 @@ bool mon_spellcasting_actor::call( monster &mon ) const
     }
 
     if( !mon.attack_target() && !allow_no_target ) {
-        // this is an attack. there is no reason to attack if there isn't a real target.
-        // Unless we don't need one
+
+
         return false;
     }
 
@@ -395,7 +395,7 @@ bool mon_spellcasting_actor::call( monster &mon ) const
         }
     }
 
-    // Bail out if the target is out of range.
+
     if( !spell_data.self && rl_dist( mon.pos_bub(), target ) > spell_instance.range( mon ) ) {
         return false;
     }
@@ -439,9 +439,9 @@ void grab::load_grab( const JsonObject &jo )
 
 void melee_actor::load_internal( const JsonObject &obj, const std::string & )
 {
-    // Optional:
+
     optional( obj, was_loaded, "damage_max_instance", damage_max_instance,
-              damage_instance( damage_bash, 9 ) ); // FIXME: Hardcoded damage type
+              damage_instance( damage_bash, 9 ) );
     optional( obj, was_loaded, "accuracy", accuracy, INT_MIN );
     optional( obj, was_loaded, "min_mul", min_mul, 0.5f );
     optional( obj, was_loaded, "max_mul", max_mul, 1.0f );
@@ -535,7 +535,7 @@ Creature *melee_actor::find_target( monster &z ) const
         return nullptr;
     }
 
-    if( range == 1 && !z.is_adjacent( target, /*bool allow_z_levels =*/ false ) ) {
+    if( range == 1 && !z.is_adjacent( target, false ) ) {
         return nullptr;
     }
 
@@ -546,7 +546,7 @@ Creature *melee_actor::find_target( monster &z ) const
 
         const int horiz_dist = rl_dist( z.pos_bub().xy(), target->pos_bub().xy() );
 
-        // Little patch until trig_dist updates. Hopefully you aren't reading this in 2030+ :)
+
         const int vert_distance_scale = 4;
         const int vert_dist = std::abs( z.pos_bub().z() - target->pos_bub().z() ) * vert_distance_scale;
 
@@ -555,21 +555,21 @@ Creature *melee_actor::find_target( monster &z ) const
         }
 
         std::vector<tripoint_bub_ms> path = line_to( z.pos_bub(), target->pos_bub(), 0, 0 );
-        path.pop_back(); // Last point is our target
+        path.pop_back();
 
-        // Scaled-down reimplementation of Character::reach_attack() with character-specific values removed.
+
         for( const tripoint_bub_ms &path_point : path ) {
             Creature *collateral_damage = get_creature_tracker().creature_at( path_point );
             if( collateral_damage ) {
-                return nullptr; // Something else in the way, can't attack
+                return nullptr;
             }
-            // All ranged melee specials are considered to be "Spear" type attacks or otherwise capable of passing through thin obstacles
+
             if( here.impassable( path_point ) &&
                 !here.has_flag( ter_furn_flag::TFLAG_THIN_OBSTACLE, path_point ) ) {
-                return nullptr; // Wall or something
+                return nullptr;
             }
         }
-        return target; // Nothing in the way, is in range, we can hit it!
+        return target;
     }
 
     return target;
@@ -579,14 +579,14 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
 {
     map &here = get_map();
     tripoint_bub_ms monster_pos = z.pos_bub( here );
-    // Note that target has the 'aliases' of foe and zz
+
     tripoint_bub_ms target_pos = target->pos_bub( here );
 
-    // Something went wrong
+
     if( !target ) {
         return -1;
     }
-    // Handle some messaging in-grab
+
     game_message_type msg_type = target->is_avatar() ? m_warning : m_info;
     const std::string mon_name = get_player_character().sees( here, monster_pos ) ?
                                  z.disp_name( false, true ) : _( "Something" );
@@ -598,7 +598,7 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
                    "Grab attack targeting bp %s, grab strength %d, pull chance %d", bp_id->name,
                    eff_grab_strength, grab_data.pull_chance );
 
-    // Handle seatbelts and weight limits for pulls/drags TODO: tear you out depending on grab str?
+
     if( grab_data.pull_chance > -1 || grab_data.drag_distance > 0 ) {
         if( target->get_weight() > z.get_weight() * grab_data.pull_weight_ratio ) {
             target->add_msg_player_or_npc( msg_type, grab_data.pull_fail_msg_u, grab_data.pull_fail_msg_npc,
@@ -632,25 +632,25 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
         }
     }
 
-    // Check if we want to animate any of this or just teleport you over
+
     const bool animate = get_option<bool>( "ANIMATIONS" );
 
-    // Let's see if we manage to pull if we are a pull in the first place
+
     if( grab_data.pull_chance > -1 && x_in_y( grab_data.pull_chance, 100 ) ) {
         add_msg_debug( debugmode::DF_MATTACK, "Pull chance roll succeeded" );
 
         int pull_range = std::min( range, rl_dist( monster_pos, target_pos ) + 1 );
         tripoint_bub_ms pt = target_pos;
         while( pull_range > 0 ) {
-            // Recalculate the ray each step
-            // We can't depend on either the target position being constant (obviously),
-            // but neither on z pos staying constant, because we may want to shift the map mid-pull
+
+
+
             const units::angle dir = coord_to_angle( target_pos, monster_pos );
             tileray tdir( dir );
             tdir.advance();
             pt.x() = target_pos.x() + tdir.dx();
             pt.y() = target_pos.y() + tdir.dy();
-            //Cancel the grab if the space is occupied by something
+
             if( !g->is_empty( pt ) ) {
                 break;
             }
@@ -663,16 +663,16 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
                 if( foe->is_avatar() && ( pt.x() < HALF_MAPSIZE_X || pt.y() < HALF_MAPSIZE_Y ||
                                           pt.x() >= HALF_MAPSIZE_X + SEEX || pt.y() >= HALF_MAPSIZE_Y + SEEY ) ) {
                     const tripoint_abs_ms pt_abs = here.get_abs(
-                                                       pt ); // Could have used the result from update_map to shift the value instead.
+                                                       pt );
                     g->update_map( pt.x(), pt.y() );
-                    // update_map invalidates bubble positions on a shift. Refetch invalidated positions.
+
                     pt = here.get_bub( pt_abs );
                     monster_pos = z.pos_bub( here );
                     target_pos = target->pos_bub( here );
                 }
             }
 
-            // Don't try to fall mid pull
+
             target->setpos( here, pt, false );
             target_pos = pt;
             pull_range--;
@@ -683,14 +683,14 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
                 refresh_display();
             }
         }
-        // If we're in a vehicle after being dragged, board us onto it
-        // This prevents us from being run over by our own vehicle if we're dragged out of it
+
+
         if( foe != nullptr && !foe->in_vehicle &&
             here.veh_at( pt ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
             here.board_vehicle( pt, foe );
         }
-        // The monster might drag a target that's not on it's z level
-        // So if they leave them on open air, make them fall
+
+
         target->gravity_check();
         target_pos = target->pos_bub( here );
         here.creature_on_trap( *target );
@@ -698,7 +698,7 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
         target->add_msg_player_or_npc( msg_type, grab_data.pull_msg_u, grab_data.pull_msg_npc, mon_name,
                                        target->disp_name() );
     } else if( grab_data.pull_chance > -1 ) {
-        // We failed the pull chance roll, return false to select a different attack
+
         add_msg_debug( debugmode::DF_MATTACK, "Pull chance roll failed.", grab_data.pull_chance );
         return -1;
     }
@@ -708,30 +708,30 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
             z.add_grab( bp_id.id() );
             add_msg_debug( debugmode::DF_MATTACK, "Added grabbing on %s",
                            bp_id->name );
-            // Add grabbed - permanent, removal handled in try_remove_grab on move/wait
+
             target->add_effect( grab_data.grab_effect, 1_days, bp_id, true, eff_grab_strength );
         } else {
-            // Monsters don't have limb scores, no need to target limbs
+
             target->add_effect( grab_data.grab_effect, 1_days, bodypart_str_id::NULL_ID().id(), true,
                                 eff_grab_strength );
             z.add_effect( effect_grabbing, 1_days, true, 1 );
         }
     }
 
-    // Drag stuff
+
     if( grab_data.drag_distance > 0 ) {
         int distance = grab_data.drag_distance;
         while( distance > 0 ) {
-            // Start with the opposite square
+
             tripoint_bub_ms opposite_square = monster_pos - ( target_pos - monster_pos );
-            // Keep track of our neighbors (no leaping)
+
             std::set<tripoint_bub_ms> neighbors;
             for( const tripoint_bub_ms &trp : here.points_in_radius( monster_pos, 1 ) ) {
                 if( trp != monster_pos && trp != target_pos ) {
                     neighbors.insert( trp );
                 }
             }
-            // Check where we get to consider dragging
+
             std::set<tripoint_bub_ms> candidates;
             for( const tripoint_bub_ms &trp : here.points_in_radius( opposite_square,
                     grab_data.drag_deviation ) ) {
@@ -739,7 +739,7 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
                     candidates.insert( trp );
                 }
             }
-            // Select a random square from the options
+
             std::set<tripoint_bub_ms> intersect;
             std::set_intersection( neighbors.begin(), neighbors.end(), candidates.begin(), candidates.end(),
                                    std::inserter( intersect, intersect.begin() ) );
@@ -749,14 +749,14 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
                 tripoint_bub_ms zpt = monster_pos;
                 z.move_to( target_square, false, false, grab_data.drag_movecost_mod );
                 monster_pos = target_square;
-                if( !g->is_empty( zpt ) ) { //Cancel the grab if the space is occupied by something
+                if( !g->is_empty( zpt ) ) {
                     return 0;
                 }
                 if( target->is_avatar() && ( zpt.x() < HALF_MAPSIZE_X ||
                                              zpt.y() < HALF_MAPSIZE_Y ||
                                              zpt.x() >= HALF_MAPSIZE_X + SEEX || zpt.y() >= HALF_MAPSIZE_Y + SEEY ) ) {
                     g->update_map( zpt.x(), zpt.y() );
-                    // update_map invalidates bubble positions on a shift. Refetch invalidated positions.
+
                     monster_pos = z.pos_bub();
                     target_pos = target->pos_bub( here );
                     zpt = target_pos;
@@ -789,7 +789,7 @@ int melee_actor::do_grab( monster &z, Creature *target, bodypart_id bp_id ) cons
             }
             distance--;
             if( grab_data.drag_grab_break_distance > 0 && foe ) {
-                // Attempt to break the drag if we stepped the appropriate amount of distance
+
                 if( ( grab_data.drag_distance - distance ) % grab_data.drag_grab_break_distance == 0 ) {
                     if( foe->try_remove_grab() ) {
                         return 1;
@@ -809,13 +809,13 @@ std::vector<bodypart_id> melee_actor::pick_bodyparts_hit( const Creature *target
     std::vector<bodypart_id> bodyparts_hit;
     const int attack_amt = rng( attack_amount.first, attack_amount.second );
 
-    // if damage is spread, just grab all possible bodyparts
+
     if( spread_damage ) {
         bodyparts_hit = target->get_all_body_parts();
         return bodyparts_hit;
     }
 
-    // target specific bodyparts, by picking from a list of all possible bpts
+
     if( !body_parts_types.empty() ) {
         weighted_int_list<bodypart_id> potential_bps;
         for( const auto &[bp, weight] : body_parts_types ) {
@@ -833,7 +833,7 @@ std::vector<bodypart_id> melee_actor::pick_bodyparts_hit( const Creature *target
         }
     }
 
-    // if no early return, use default selection
+
     for( int i = 0; i < attack_amt; i++ ) {
         const bodypart_id &bp =
             target->select_body_part( hitsize_min, hitsize_max, attack_upper, hitspread );
@@ -851,9 +851,9 @@ bool melee_actor::call( monster &z ) const
     if( target == nullptr ) {
         return false;
     }
-    // Special bites, grabs and dodge messages do not go through
-    // monster::melee_attack. Silence live speech only for non-avatar victims.
-    // Native messages, damage and status effects remain unchanged.
+
+
+
     Messages::mute_combat_speech unrelated_special_attack( !target->is_avatar() );
 
     if( z.is_underwater() && !target->is_underwater() &&
@@ -874,7 +874,7 @@ bool melee_actor::call( monster &z ) const
     const std::string mon_name = get_player_character().sees( here, z.pos_bub( here ) ) ?
                                  z.disp_name( false, true ) : _( "Something" );
 
-    // Add always-applied self effects
+
     for( const mon_effect_data &eff : self_effects_always ) {
         if( x_in_y( eff.chance, 100 ) ) {
             z.add_effect( eff.id, time_duration::from_turns( rng( eff.duration.first, eff.duration.second ) ),
@@ -884,7 +884,7 @@ bool melee_actor::call( monster &z ) const
         }
     }
 
-    // Dodge check
+
     const int acc = accuracy >= 0 ? accuracy : z.type->melee_skill;
     int hitspread = target->deal_melee_attack( &z, melee::melee_hit_range( acc ) );
     std::vector<bodypart_id> bodyparts_hit = pick_bodyparts_hit( target, hitspread );
@@ -924,13 +924,13 @@ bool melee_actor::call( monster &z ) const
         }
     }
 
-    // We need to do some calculations in the main function - we might mutate bp_hit
-    // But first we need to handle exclusive grabs etc.
+
+
     std::optional<bodypart_id> grabbed_bp_id;
     if( is_grab ) {
-        // grabs do not work with multiple attacks or spread_damage,
-        // so we just pick the first one and work with it
-        // obviously TODO
+
+
+
 
         if( bodyparts_hit.size() > 1 ) {
             debugmsg( "Monster %s tries to grab, but target multiple limbs.  Currently it is not supported, only limb %s will be picked.",
@@ -945,7 +945,7 @@ bool melee_actor::call( monster &z ) const
                        "Grab attack targeting bp %s, grab strength %d, pull chance %d", bp_id->name,
                        eff_grab_strength, grab_data.pull_chance );
 
-        // If we care iterate through grabs one by one, fail if we can't break one
+
         if( target->has_effect_with_flag( json_flag_GRAB ) && grab_data.exclusive_grab ) {
             add_msg_debug( debugmode::DF_MATTACK, "Exclusive grab, begin filtering" );
             map &here = get_map();
@@ -955,7 +955,7 @@ bool melee_actor::call( monster &z ) const
 
             for( const effect &eff : target->get_effects_with_flag( json_flag_GRAB ) ) {
                 monster *grabber = nullptr;
-                // Iterate through the target's surroundings to find the grabber of this grab
+
                 for( const tripoint_bub_ms loc : surrounding ) {
                     monster *mon = creatures.creature_at<monster>( loc );
                     if( mon && mon->has_effect_with_flag( json_flag_GRAB_FILTER ) && mon->attack_target() == target ) {
@@ -966,13 +966,13 @@ bool melee_actor::call( monster &z ) const
                         }
                     }
                 }
-                // Ignore our own grab
+
                 if( grabber == &z ) {
                     add_msg_debug( debugmode::DF_MATTACK, "Grabber %s is the attacker, continue grab filtering",
                                    grabber->name() );
                     continue;
                 }
-                // Roll to remove anybody else's grab on our target
+
                 if( !x_in_y( eff_grab_strength / 2.0f, eff.get_intensity() ) ) {
                     target->add_msg_player_or_npc( msg_type,
                                                    _( "%1s tries to drag you, but something holds you in place!" ),
@@ -986,17 +986,17 @@ bool melee_actor::call( monster &z ) const
             }
         }
 
-        // No second grabs on monsters (exclusive grabs got rolled before this)
+
         if( target->is_monster() && target->has_effect_with_flag( json_flag_GRAB ) ) {
             add_msg_debug( debugmode::DF_MATTACK, "Target monster already grabbed, attack failed silently" );
             return false;
         }
 
-        // Filter out already-grabbed bodyparts (after attempting to remove them, in any case)
-        // Unless we're not actually trying to grab
+
+
         if( target->has_effect_with_flag( json_flag_GRAB, bp_id ) &&
             grab_data.grab_effect != effect_null ) {
-            // Iterate through eligable targets to look for a non-grabbed one, fail if none are found
+
             add_msg_debug( debugmode::DF_MATTACK, "Target bodypart %s already grabbed",
                            bp_id->name );
             for( const bodypart_id bp : target->get_all_eligable_parts( hitsize_min, hitsize_max,
@@ -1012,7 +1012,7 @@ bool melee_actor::call( monster &z ) const
                                    bp->name );
                 }
             }
-            // Couldn't find an eligable limb, fail loudly
+
             if( target->has_effect_with_flag( json_flag_GRAB, bp_id ) ) {
                 target->add_msg_player_or_npc( msg_type, miss_msg_u, miss_msg_npc, mon_name,
                                                body_part_name_accusative( bp_id ) );
@@ -1033,17 +1033,17 @@ bool melee_actor::call( monster &z ) const
         }
     }
 
-    // Damage instance calculation
+
     damage_instance damage = damage_max_instance;
     double multiplier = rng_float( min_mul, max_mul );
     add_msg_debug( debugmode::DF_MATTACK, "Damage multiplier %.1f (range %.1f - %.1f)", multiplier,
                    min_mul, max_mul );
     damage.mult_damage( multiplier );
 
-    // split the damage between all the bodyparts we gonna hit
+
     damage.mult_damage( 1.0 / bodyparts_hit.size() );
 
-    // Block our hit
+
     if( blockable ) {
         for( bodypart_id &bp_id : bodyparts_hit ) {
             target->block_hit( &z, bp_id, damage );
@@ -1052,14 +1052,14 @@ bool melee_actor::call( monster &z ) const
 
     dealt_damage_instance dealt_damage;
     for( bodypart_id &bp_id : bodyparts_hit ) {
-        // Take damage
+
         dealt_damage += target->deal_damage( &z, bp_id, damage );
         dealt_damage.bp_hit = bp_id;
-        // On hit effects
+
         target->on_hit( &here, &z, bp_id );
     }
 
-    // Apply onhit self effects
+
     for( const mon_effect_data &eff : self_effects_onhit ) {
         if( x_in_y( eff.chance, 100 ) ) {
             z.add_effect( eff.id, time_duration::from_turns( rng( eff.duration.first, eff.duration.second ) ),
@@ -1069,7 +1069,7 @@ bool melee_actor::call( monster &z ) const
         }
     }
 
-    // run on_damage() and apply effects
+
     int damage_total = dealt_damage.total_damage();
     add_msg_debug( debugmode::DF_MATTACK, "%s's melee_attack did %d damage", z.name(), damage_total );
     if( damage_total > 0 ) {
@@ -1096,12 +1096,12 @@ bool melee_actor::call( monster &z ) const
         }
     }
 
-    // throw
+
     if( throw_strength > 0 && !( target->has_flag( mon_flag_IMMOBILE ) ||
                                  target->has_effect_with_flag( json_flag_CANNOT_MOVE ) ) ) {
         if( g->fling_creature( target, coord_to_angle( z.pos_bub(), target->pos_bub() ),
                                throw_strength ) ) {
-            // If we successfully fling the target that was grabbing us, remove any grabbed effects on us
+
             if( z.has_flag( json_flag_GRAB ) && target->has_effect_with_flag( json_flag_GRAB_FILTER ) ) {
                 for( const effect &eff : z.get_effects_with_flag( json_flag_GRAB ) ) {
                     z.remove_effect( eff.get_id(), eff.get_bp() );
@@ -1112,20 +1112,20 @@ bool melee_actor::call( monster &z ) const
                                            get_option<bool>( "LOG_MONSTER_ATTACK_MONSTER" ) ? throw_msg_npc : translation(),
                                            mon_name );
 
-            // Items strapped to you may fall off as you hit the ground
-            // when you break out of a grab you have a chance to lose some things from your pockets
-            // that are hanging off your character
+
+
+
             if( target->is_avatar() ) {
                 std::vector<item_pocket *> pd = target->as_character()->worn.grab_drop_pockets();
-                // if we have items that can be pulled off
+
                 if( !pd.empty() ) {
-                    // choose an item to be ripped off
+
                     int index = rng( 0, pd.size() - 1 );
-                    // the chance the monster knocks an item off
+
                     int chance = rng( 0, z.type->melee_sides * z.type->melee_dice );
-                    // the chance the pocket resists
+
                     int sturdiness = rng( 0, pd[index]->get_pocket_data()->ripoff );
-                    // the item is ripped off your character
+
                     if( sturdiness < chance ) {
                         float path_distance = rng_float( 0, 1.0 );
                         tripoint_rel_ms vector = target->pos_bub() - z.pos_bub();
@@ -1139,7 +1139,7 @@ bool melee_actor::call( monster &z ) const
         }
     }
 
-    //run EoCs
+
     for( const effect_on_condition_id &eoc : eoc ) {
         dialogue d( get_talker_for( z ), get_talker_for( target ) );
         write_var_value( var_type::context, "damage", &d, damage_total );
@@ -1179,7 +1179,7 @@ void melee_actor::on_damage( monster &z, Creature &target, dealt_damage_instance
         }
     }
 
-    // Apply ondmg self effects
+
     for( const mon_effect_data &eff : self_effects_ondmg ) {
         if( x_in_y( eff.chance, 100 ) ) {
             z.add_effect( eff.id, time_duration::from_turns( rng( eff.duration.first, eff.duration.second ) ),
@@ -1199,10 +1199,10 @@ bite_actor::bite_actor() = default;
 
 void bite_actor::load_internal( const JsonObject &obj, const std::string &src )
 {
-    // Infection chance is a % (i.e. 5/100)
+
     melee_actor::load_internal( obj, src );
-    // If min hitsize is undefined restrict it to not biting eyes/mouths
-    // Hands are fair game, though
+
+
     if( hitsize_min == -1 ) {
         hitsize_min = 1;
     }
@@ -1215,9 +1215,9 @@ void bite_actor::on_damage( monster &z, Creature &target, dealt_damage_instance 
     add_msg_debug( debugmode::DF_MATTACK, "Bite-type attack, infection chance %d", infection_chance );
     const bodypart_id &hit = dealt.bp_hit;
 
-    // only do bitey things if the limb is fleshy
+
     if( !hit->has_flag( json_flag_BIONIC_LIMB ) ) {
-        // first, do regular zombie infections
+
         if( x_in_y( infection_chance, 100 ) ) {
             if( target.has_effect( effect_bite, hit.id() ) ) {
                 add_msg_debug( debugmode::DF_MATTACK, "Incrementing bitten effect on %s", hit->name );
@@ -1230,7 +1230,7 @@ void bite_actor::on_damage( monster &z, Creature &target, dealt_damage_instance 
                 target.add_effect( effect_bite, 1_turns, hit, true );
             }
         }
-        // Flag only set for zombies in the deadly_bites mod
+
         if( x_in_y( infection_chance, 20 ) ) {
             if( z.has_flag( mon_flag_DEADLY_VIRUS ) && !target.has_effect( effect_zombie_virus ) ) {
                 target.add_effect( effect_zombie_virus, 1_turns, bodypart_str_id::NULL_ID(), true );
@@ -1238,7 +1238,7 @@ void bite_actor::on_damage( monster &z, Creature &target, dealt_damage_instance 
                 target.add_effect( effect_vampire_virus, 1_turns, bodypart_str_id::NULL_ID(), true );
             }
         }
-        // lastly, poison it if we're yucky
+
         if( target.has_trait( trait_TOXICFLESH ) ) {
             z.add_effect( effect_poison, 5_minutes );
             z.add_effect( effect_badpoison, 5_minutes );
@@ -1353,7 +1353,7 @@ bool gun_actor::call( monster &z ) const
     if( z.friendly ) {
         int max_range = get_max_range();
 
-        int hostiles; // hostiles which cannot be engaged without risking friendly fire
+        int hostiles;
         target = z.auto_find_hostile_target( max_range, hostiles );
         if( !target ) {
             if( hostiles > 0 ) {
@@ -1373,7 +1373,7 @@ bool gun_actor::call( monster &z ) const
             if( !target_moving_vehicles ) {
                 return false;
             }
-            untargeted = true; // no living targets, try to find moving car parts
+            untargeted = true;
             const std::set<tripoint_bub_ms> moving_veh_parts = here
                     .get_moving_vehicle_targets( z, get_max_range() );
             if( moving_veh_parts.empty() ) {
@@ -1447,7 +1447,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
         z.add_effect( effect_targeted, time_duration::from_turns( targeting_timeout_extend ) );
     }
     if( laser_lock ) {
-        // To prevent spamming laser locks when the player can tank that stuff somehow
+
         target.add_effect( effect_was_laserlocked, 5_turns );
     }
     return true;
@@ -1500,7 +1500,7 @@ bool gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
     tmp.set_fake( true );
     tmp.set_attitude( z.friendly ? NPCATT_FOLLOW : NPCATT_KILL );
 
-    tmp.recoil = inital_recoil; // set initial recoil
+    tmp.recoil = inital_recoil;
     bool throwing = false;
     for( const auto &pr : fake_skills ) {
         tmp.set_skill_level( pr.first, pr.second );
@@ -1527,12 +1527,12 @@ bool gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
     return true;
 }
 
-void polymorph_special::load_internal( const JsonObject &jo, const std::string &/*src*/ )
+void polymorph_special::load_internal( const JsonObject &jo, const std::string & )
 {
-    // required
+
     mon_id = mtype_id( jo.get_string( "mon_id" ) );
 
-    // optional, default true
+
     optional( jo, was_loaded, "poly_keep_speed", keep_speed, true );
     optional( jo, was_loaded, "poly_keep_hp", keep_hp, true );
     optional( jo, was_loaded, "poly_keep_anger", keep_anger, true );

@@ -38,6 +38,6 @@ void finalize();
 
 const std::vector<construction_category> &get_all();
 
-} // namespace construction_categories
+}
 
-#endif // CATA_SRC_CONSTRUCTION_CATEGORY_H
+#endif

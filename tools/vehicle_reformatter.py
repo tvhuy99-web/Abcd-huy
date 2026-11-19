@@ -27,7 +27,7 @@ def get_data(argsDict, resource_name):
     return resource
 
 
-# stupid stinking Python 2 versus Python 3 syntax
+
 def write_to_json(pathname, data):
     with open(pathname, "w", encoding="utf-8") as fp:
         try:
@@ -50,8 +50,8 @@ def really_add_parts(xpoint, ypoint, xparts, new_parts):
     temp_parts = ""
     for part in y_part["parts"]:
         temp_parts += '"{}"'.format(part)
-        # debug - are we getting the line length test string correct?
-        # print("{}: {}".format(len(temp_parts), temp_parts))
+
+
         if len(temp_parts) > LINE_LIMIT:
             pretty_parts.append(pretty_subparts)
             pretty_subparts = []
@@ -59,8 +59,8 @@ def really_add_parts(xpoint, ypoint, xparts, new_parts):
         temp_parts += ", "
         pretty_subparts.append(part)
     pretty_parts.append(pretty_subparts)
-    # debug - correct list of parts sublists?
-    # print("{}".format(pretty_parts))
+
+
     for subpart_list in pretty_parts:
         if len(subpart_list) > 1:
             rev_part = {"x": xpoint, "y": ypoint, "parts": subpart_list}
@@ -109,7 +109,7 @@ for datafile in argsDict.get("vehicle_sources", []):
     max_x = -122
     vehicles = get_data(argsDict, "vehicle_sources")
     for old_vehicle in vehicles:
-        #print(old_vehicle.get("id"))
+
         new_parts = {}
         for part in old_vehicle.get("parts", []):
             part_x = part.get("x", 0)
@@ -131,15 +131,15 @@ for datafile in argsDict.get("vehicle_sources", []):
                 else:
                     new_parts[part_x][part_y]["parts"].append(part.get("part"))
 
-        # debug - did everything get copied over correctly?
-        # print(json.dumps(new_parts, indent=2))
+
+
         revised_parts = []
         last_center = add_parts(revised_parts, 0, 0, new_parts)
-        # print("last center {}".format(last_center))
+
         for xpoint in range(1, max_x + 1):
             last_center = add_parts(revised_parts, xpoint, last_center,
                                     new_parts)
-            # print("x {}, last center {}".format(xpoint, last_center))
+
         for xpoint in range(-1, min_x - 1, -1):
             last_center = add_parts(revised_parts, xpoint, last_center,
                                     new_parts)

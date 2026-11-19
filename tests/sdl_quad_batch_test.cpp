@@ -24,7 +24,7 @@ Uint32 rgb_of( const SDL_Color &c )
     return ( static_cast<Uint32>( c.r ) << 16 ) | ( static_cast<Uint32>( c.g ) << 8 ) | c.b;
 }
 
-// 8x8 texture: left half opaque white, right half clear.
+
 SDL_Texture_Ptr half_white_texture()
 {
     SDL_Surface_Ptr s = create_surface_32( 8, 8 );
@@ -38,7 +38,7 @@ SDL_Texture_Ptr half_white_texture()
     return t;
 }
 
-} // namespace
+}
 
 TEST_CASE( "quad_batch_interleaves_position_color_and_uv", "[tiles][sdl_font]" )
 {
@@ -129,4 +129,4 @@ TEST_CASE( "text_batch_draws_rects_then_glyphs_modulated_by_vertex_color", "[til
     }
 }
 
-#endif // TILES
+#endif

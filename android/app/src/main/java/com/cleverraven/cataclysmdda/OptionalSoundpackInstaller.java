@@ -18,14 +18,14 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-/**
- * Installs the pinned Bl@ck Edition soundpack once, outside the APK.
- *
- * The archive is pinned to one audited Git commit; no untrusted URL,
- * in-place game data edits, or automatic soundpack replacement are allowed.
- * Downloading and extraction are both streaming, bounded, and cancellable.
- * The repository-root soundpack files are copied into data/sound.
- */
+
+
+
+
+
+
+
+
 public final class OptionalSoundpackInstaller {
     public static final String PACK_DIRECTORY = "Bl@ck Edition soundpack";
     public static final String PACK_ID = "Bl@ck Edition soundpack";
@@ -34,7 +34,7 @@ public final class OptionalSoundpackInstaller {
             "https://codeload.github.com/chronicpayne/Bl-ck-Edition-Soundpack/zip/" + SOURCE_COMMIT;
     private static final String ARCHIVE_FOLDER = "Bl-ck-Edition-Soundpack-";
     private static final long MIB = 1024L * 1024L;
-    // Pinned tree is ~274 MB uncompressed; reserve extra storage for installation.
+
     private static final long MIN_FREE_BYTES = 600L * MIB;
     private static final long MIN_REMAINING_BYTES = 160L * MIB;
     private static final long MAX_COMPRESSED_BYTES = 1000L * MIB;
@@ -61,7 +61,7 @@ public final class OptionalSoundpackInstaller {
     public static boolean isInstalled(File gameRoot) {
         if (gameRoot == null) { return false; }
         File target = destination(gameRoot);
-        // Respect a user-installed copy of this soundpack as well as our download.
+
         File definition = new File(target, "soundpack.txt");
         File effects = new File(target, "effects.json");
         File player = new File(target, "player.json");
@@ -88,7 +88,7 @@ public final class OptionalSoundpackInstaller {
         if (isInstalled(gameRoot)) { return; }
         File destination = destination(gameRoot);
         if (destination.exists()) {
-            // A user-owned partial/custom installation must never be deleted.
+
             throw new IOException("Soundpack directory already exists but is incomplete; "
                     + "please rename that directory before retrying");
         }
@@ -124,8 +124,8 @@ public final class OptionalSoundpackInstaller {
             if (advertised > MAX_COMPRESSED_BYTES) {
                 throw new IOException("Soundpack download exceeds size limit");
             }
-            // GitHub codeload wraps the soundpack in a repository-root directory.
-            // Extract its children only, never directly into the game root.
+
+
             try (InputStream network = new BufferedInputStream(connection.getInputStream());
                  InputStream raw = new FilterInputStream(network) {
                      private long bytes;
@@ -197,7 +197,7 @@ public final class OptionalSoundpackInstaller {
                     }
                     if (relative.endsWith(".ogg") || relative.endsWith(".mp3")
                             || relative.endsWith(".wav")) { audioFiles++; }
-                    zip.closeEntry(); // validates each entry's CRC
+                    zip.closeEntry();
                     long now = SystemClock.elapsedRealtime();
                     if (now - lastReportAt >= 15000 || totalFiles == 1) {
                         compressedBytes = connection.getContentLengthLong();
@@ -272,7 +272,7 @@ public final class OptionalSoundpackInstaller {
 
     private static void removeChildren(File file) throws IOException {
         if (file.isDirectory()) {
-            // This tree was created by the installer; prevent symlink traversal.
+
             File parent = file.getParentFile();
             if (parent != null && !file.getCanonicalFile().equals(
                     new File(parent.getCanonicalFile(), file.getName()))) {

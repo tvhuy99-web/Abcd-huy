@@ -168,8 +168,8 @@ TEST_CASE( "avatar_diving", "[diving]" )
         }
     }
 
-    // Put us back at 0. We shouldn't have to do this but other tests are
-    // making assumptions about what z-level they're on.
+
+
     g->vertical_shift( 0 );
 }
 
@@ -232,7 +232,7 @@ struct swim_result {
     int move_cost = 0;
     int steps = 0;
 };
-} // namespace
+}
 
 static const std::unordered_map<std::string, swimmer_stats> stats_map = {
     {"minimum", { 4, 4 }},
@@ -280,7 +280,7 @@ struct swim_scenario {
                               config.stats_name, config.skills_name, config.gear_name, config.traits_name );
     }
 };
-} // namespace
+}
 
 static int swimming_steps( avatar &swimmer )
 {
@@ -344,7 +344,7 @@ static void configure_swimmer( avatar &swimmer, const move_mode_id move_mode,
         swimmer.add_profession_items();
     }
 
-    swimmer.toggle_trait( trait_DISIMMUNE ); // random diseases can flake the test
+    swimmer.toggle_trait( trait_DISIMMUNE );
     swimmer.set_movement_mode( move_mode );
 }
 
@@ -358,9 +358,9 @@ static swim_result swim( avatar &swimmer, const move_mode_id move_mode,
     return result;
 }
 
-// Combinatorial explosion! Generate all possible combinations of stats, skills, gear, and
-// traits based our our predefined entries (which represent the things that influence swimming
-// in the current logic), and then combine them with each possible move mode.
+
+
+
 static std::vector<swim_scenario> generate_scenarios()
 {
     std::vector<swim_scenario> scenarios;
@@ -383,7 +383,7 @@ static std::vector<swim_scenario> generate_scenarios()
     return scenarios;
 }
 
-// Generate the contents of this map using the "generate swim move cost and distance values" test below.
+
 static std::map<std::string, swim_result> expected_results = {
     {"move: crouch, stats: average, skills: maximum, gear: fins, traits: large paws", swim_result{30, 9000}},
     {"move: crouch, stats: average, skills: maximum, gear: fins, traits: none", swim_result{30, 9000}},
@@ -943,7 +943,7 @@ TEST_CASE( "check_swim_move_cost_and_distance_values", "[swimming][slow]" )
     }
 }
 
-// This "test" is used to generate the expected_results map above.
+
 TEST_CASE( "generate_swim_move_cost_and_distance_values", "[.]" )
 {
     setup_test_lake();
@@ -981,12 +981,12 @@ TEST_CASE( "export_scenario_swim_move_cost_and_distance_values", "[.]" )
     testfile.close();
 }
 
-// This "test" reports the swim cost and distance for all professions,
-// assuming average stats, no traits, and whatever athletics skill and
-// gear is provided by the profession itself. We don't really need to
-// assert anything here (yet) but for informational purposes it is
-// interesting to see the data as a slightly better "gut-check". Our
-// "professional swimmer" doesn't swim very well.
+
+
+
+
+
+
 TEST_CASE( "export_profession_swim_cost_and_distance", "[.]" )
 {
     setup_test_lake();
@@ -1022,7 +1022,7 @@ TEST_CASE( "export_profession_swim_cost_and_distance", "[.]" )
     testfile.close();
 }
 
-// This "test" exports swim move cost and distance data to csv for analysis and review.
+
 TEST_CASE( "export_swim_move_cost_and_distance_data", "[.]" )
 {
     setup_test_lake();

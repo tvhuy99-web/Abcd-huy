@@ -2,11 +2,11 @@ package com.cleverraven.cataclysmdda;
 
 import android.view.MotionEvent;
 
-/** Recognizes an unambiguous simultaneous two-finger downward Back swipe. */
+
 final class TwoFingerBackGesture {
     private TwoFingerBackGesture() { }
 
-    /** Both fingers must travel downward far enough without drifting sideways. */
+
     static boolean isDownSwipe(float dx1, float dy1, float dx2, float dy2,
                                float minimumDistance) {
         return dy1 >= minimumDistance && dy2 >= minimumDistance
@@ -14,7 +14,7 @@ final class TwoFingerBackGesture {
                 && dy2 >= Math.abs(dx2) * 1.35f;
     }
 
-    /** An upward confirmation must be as deliberate as a downward Back swipe. */
+
     static boolean isUpSwipe(float dx1, float dy1, float dx2, float dy2,
                              float minimumDistance) {
         return dy1 <= -minimumDistance && dy2 <= -minimumDistance
@@ -22,9 +22,9 @@ final class TwoFingerBackGesture {
                 && -dy2 >= Math.abs(dx2) * 1.35f;
     }
 
-    /** Both fingers must move horizontally in the same direction.
-     * Vertical back/confirm gestures must never match horizontal crafting.
-     */
+
+
+
     static boolean isLeftSwipe(float dx1, float dy1, float dx2, float dy2,
                                float minimumDistance) {
         return dx1 <= -minimumDistance && dx2 <= -minimumDistance
@@ -39,7 +39,7 @@ final class TwoFingerBackGesture {
                 && dx2 >= Math.abs(dy2) * 1.35f;
     }
 
-    /** The same stable pointer IDs are required for the horizontal gestures. */
+
     static boolean matchesLeft(MotionEvent event, int[] ids, float[] startX,
                                float[] startY, int count, float minimumDistance) {
         if (count != 2 || event.getPointerCount() != 2
@@ -70,7 +70,7 @@ final class TwoFingerBackGesture {
                 event.getY(second) - startY[1], minimumDistance);
     }
 
-    /** The same stable pointer identities are used for both directions. */
+
     static boolean matchesUp(MotionEvent event, int[] ids, float[] startX,
                              float[] startY, int count, float minimumDistance) {
         if (count != 2 || event.getPointerCount() != 2
@@ -86,7 +86,7 @@ final class TwoFingerBackGesture {
                 event.getY(second) - startY[1], minimumDistance);
     }
 
-    /** Inspect both pointers while still present at ACTION_POINTER_UP. */
+
     static boolean matches(MotionEvent event, int[] ids, float[] startX,
                            float[] startY, int count, float minimumDistance) {
         if (count != 2 || event.getPointerCount() != 2

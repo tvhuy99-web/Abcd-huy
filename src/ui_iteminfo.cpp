@@ -107,7 +107,7 @@ void iteminfo_window::execute()
             break;
         }
 
-        // mouse click on x to close leads here
+
         if( !get_is_open() ) {
             break;
         }

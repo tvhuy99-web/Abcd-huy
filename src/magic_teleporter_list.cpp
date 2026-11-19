@@ -55,13 +55,13 @@ void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt,
     known_teleporters.erase( omt_pt );
 }
 
-// returns the first valid teleport location near a teleporter
-// returns map square (global coordinates)
+
+
 static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint_abs_omt &omt_pt )
 {
-    // this is the top left hand square of the global absolute coordinate
-    // of the overmap terrain we want to try to teleport to.
-    // an OMT is (2 * SEEX) * (2 * SEEY) in size
+
+
+
     tinymap checker;
     checker.load( omt_pt, true );
     for( const tripoint_omt_ms &p : checker.points_on_zlevel() ) {
@@ -91,7 +91,7 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
 void teleporter_list::translocate( const std::set<tripoint_bub_ms> &targets )
 {
     if( known_teleporters.empty() ) {
-        // we can't go somewhere if we don't know how to get there!
+
         add_msg( m_bad, _( "No translocator target known." ) );
         return;
     }
@@ -178,7 +178,7 @@ namespace
 class teleporter_callback : public uilist_callback
 {
     private:
-        // to make it easier to get the callback from the known_teleporters
+
         std::map<int, tripoint_abs_omt> index_pairs;
     public:
         explicit teleporter_callback( std::map<int, tripoint_abs_omt> &ip ) : index_pairs( ip ) {}
@@ -196,7 +196,7 @@ class teleporter_callback : public uilist_callback
             }
         }
 };
-} // namespace
+}
 
 std::optional<tripoint_abs_omt> teleporter_list::choose_teleport_location()
 {

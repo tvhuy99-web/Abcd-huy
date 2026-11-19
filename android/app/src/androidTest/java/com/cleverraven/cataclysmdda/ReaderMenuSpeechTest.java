@@ -3,7 +3,7 @@ package com.cleverraven.cataclysmdda;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-/** Announce a menu title once, keeping every fact in the selected row. */
+
 public final class ReaderMenuSpeechTest {
     @Test public void identicalMenuTitleIsNotRepeated() {
         assertEquals("Tải game. Mục 1 trên 3",

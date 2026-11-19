@@ -9,9 +9,9 @@
 namespace
 {
 generic_factory<bash_damage_profile> damage_profile_factory( "bash_damage_profile" );
-} // namespace
+}
 
-// boilerplate
+
 void bash_damage_profile::load_all( const JsonObject &jo, const std::string &src )
 {
     damage_profile_factory.load( jo, src );
@@ -40,7 +40,7 @@ const bash_damage_profile &string_id<bash_damage_profile>::obj() const
 {
     return damage_profile_factory.obj( *this );
 }
-// end boilerplate
+
 
 void bash_damage_profile::load( const JsonObject &jo, const std::string_view )
 {
@@ -63,7 +63,7 @@ void bash_damage_profile::check() const
 void bash_damage_profile::finalize()
 {
     for( const damage_type &dam : damage_type::get_all() ) {
-        // emplace fails if it's already in the map
+
         profile.emplace( dam.id, dam.bash_conversion_factor );
     }
 }
@@ -76,7 +76,7 @@ int bash_damage_profile::damage_from( const std::map<damage_type_id, int> &str, 
             debugmsg( "Damage type %s not included in damage profile?", type.first.str() );
             continue;
         }
-        // finalize ensures any valid damage_type_id is in profile
+
         ret += std::max<int>( 0, ( type.second * profile.at( type.first ) ) - armor );
     }
     return ret;

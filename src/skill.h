@@ -22,11 +22,11 @@ class item;
 class recipe;
 
 struct time_info_t {
-    // Absolute floor on the time taken to attack.
+
     int min_time = 50;
-    // The base or max time taken to attack.
+
     int base_time = 220;
-    // The reduction in time given per skill level.
+
     int time_reduction_per_level = 25;
 };
 
@@ -44,7 +44,7 @@ class Skill
         skill_displayType_id _display_type;
         int _sort_rank;
         std::unordered_map<std::string, int> _companion_skill_practice;
-        // these are not real skills, they depend on context
+
         static std::map<skill_id, Skill> contextual_skills;
         int _companion_combat_rank_factor = 0;
         int _companion_survival_rank_factor = 0;
@@ -57,11 +57,11 @@ class Skill
     public:
         static std::vector<Skill> skills;
         static void load_skill( const JsonObject &jsobj );
-        // For loading old saves that still have integer-based ids.
+
         static skill_id from_legacy_int( int legacy_id );
         static skill_id random_skill();
 
-        // clear skill vector, every skill pointer becomes invalid!
+
         static void reset();
         static void check_consistency();
 
@@ -114,7 +114,7 @@ class Skill
             return this->_ident == b._ident;
         }
         bool operator< ( const Skill &b ) const {
-            return this->_ident < b._ident;    // Only here for the benefit of std::map<Skill,T>
+            return this->_ident < b._ident;
         }
 
         bool operator!=( const Skill &b ) const {
@@ -150,7 +150,7 @@ class SkillLevel
     public:
         SkillLevel() = default;
 
-        // Only used for tests!
+
         bool isTraining() const {
             return _skillisTraining;
         }
@@ -248,7 +248,7 @@ class SkillLevel
         void serialize( JsonOut &json ) const;
         void deserialize( const JsonObject &data );
     private:
-        // Can be used to counter skill rust when enabled over MAX_SKILL
+
         int unadjustedLevel() const {
             return _level;
         }
@@ -280,11 +280,11 @@ class SkillLevelMap : public std::map<skill_id, SkillLevel>
         bool meets_skill_requirements( const std::map<skill_id, int> &req ) const;
         bool meets_skill_requirements( const std::map<skill_id, int> &req,
                                        const item &context ) const;
-        /** Calculates skill difference
-         * @param req Required skills to be compared with.
-         * @param context An item to provide context for contextual skills. Can be null.
-         * @return Difference in skills. Positive numbers - exceeds; negative - lacks; empty map - no difference.
-         */
+
+
+
+
+
         std::map<skill_id, int> compare_skill_requirements(
             const std::map<skill_id, int> &req, const item &context ) const;
         std::map<skill_id, int> compare_skill_requirements(
@@ -319,4 +319,4 @@ class SkillDisplayType
 
 double price_adjustment( int );
 
-#endif // CATA_SRC_SKILL_H
+#endif

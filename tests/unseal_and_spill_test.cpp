@@ -33,7 +33,7 @@
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 
-// *INDENT-OFF*
+
 static const itype_id itype_test_liquid_1ml( "test_liquid_1ml" );
 static const itype_id itype_test_rag("test_rag");
 static const itype_id itype_test_restricted_container_holder( "test_restricted_container_holder" );
@@ -44,7 +44,7 @@ static const itype_id itype_test_watertight_open_sealed_multipocket_container_2x
 static const itype_id itype_test_watertight_open_sealed_multipocket_container_2x250ml( "test_watertight_open_sealed_multipocket_container_2x250ml" );
 
 static const vproto_id vehicle_prototype_test_cargo_space( "test_cargo_space" );
-// *INDENT-ON*
+
 
 namespace
 {
@@ -64,9 +64,9 @@ class enum_tuple
             }
             if( val == enum_t::end && ind > 0 ) {
                 val = enum_t::begin;
-                // *INDENT-OFF*
+
                 increment<( ind > 0 ? ind - 1 : 0 )>();
-                // *INDENT-ON*
+
             }
         }
 
@@ -81,9 +81,9 @@ class enum_tuple
         }
 
         enum_tuple operator++() {
-            // *INDENT-OFF*
+
             increment<std::tuple_size_v<tuple_type> - 1>();
-            // *INDENT-ON*
+
             return *this;
         }
 
@@ -116,15 +116,15 @@ enum class container_location : int {
 
 enum class scenario : int {
     begin,
-    // a single-pocket container holding a liquid
+
     contained_liquid = begin,
-    // a multi-pocket container holding a liquid, inside a single-pocket container
+
     nested_contained_liquid,
-    /*
-    a multi-pocket container with:
-      - another multi-pocket container holding a liquid
-      - a solid item
-    */
+
+
+
+
+
     recursive_multi_pocket,
     end,
 };
@@ -268,8 +268,8 @@ void match( Parent &&parent, Container &&contents,
             bool found = false;
             for( auto it = content_results.begin(); it != content_results.end(); ++it ) {
                 const item_result &content_result = *it;
-                // Assuming all items with the same id are exactly the same for now.
-                // Maybe use notes as unique ids instead?
+
+
                 if( content->typeId() == content_result.id ) {
                     match( content_loc, content_result );
                     item_location container = container_from_parent( parent );
@@ -279,13 +279,13 @@ void match( Parent &&parent, Container &&contents,
                         CHECK( content_result.parent_pocket_sealed == pocket->sealed() );
                     }
                     found = true;
-                    // erase to only match once
+
                     content_results.erase( it );
                     break;
                 }
             }
             INFO( "unexpected result: " << content->typeId().str() );
-            // every item in `contents` should have a match
+
             CHECK( found );
         }
     }
@@ -294,7 +294,7 @@ void match( Parent &&parent, Container &&contents,
         unfound += content_result.id.str() + ", ";
     }
     INFO( unfound );
-    // every element of `content_results` should have a match
+
     CHECK( content_results.empty() );
 }
 
@@ -439,7 +439,7 @@ std::pair<std::optional<item_result>, std::vector<item_result>> scenario_final_s
     switch( cur_scenario ) {
         case scenario::contained_liquid:
             if( !will_spill_outer ) {
-                // no change
+
                 original_location = item_result{
                     itype_test_watertight_open_sealed_container_250ml, false, false,
                     {
@@ -447,13 +447,13 @@ std::pair<std::optional<item_result>, std::vector<item_result>> scenario_final_s
                     }
                 };
             } else if( do_spill ) {
-                // container remains in place, liquid spilled on ground
+
                 original_location = item_result{ itype_test_watertight_open_sealed_container_250ml };
                 ground = { item_result { itype_test_liquid_1ml } };
             }
-            // (will_spill_outer && !do_spill)
+
             else {
-                // container item_location invalidated and put on ground, liquid not spilled
+
                 original_location = std::nullopt;
                 ground = {
                     item_result {
@@ -569,7 +569,7 @@ void test_scenario::run()
 
     std::pair<item_initialization, std::string> scenario_init = scenario_initial_state( cur_scenario );
 
-    // INFO() is scoped, so the message won't be shown if we put in in the switch block.
+
     INFO( scenario_init.second );
     item it = initialize( scenario_init.first );
 
@@ -577,12 +577,12 @@ void test_scenario::run()
     avatar &guy = get_avatar();
     std::string container_loc_str = container_location_to_string( cur_container_loc );
 
-    // INFO() is scoped, so the message won't be shown if we put in in the switch block.
+
     INFO( container_loc_str );
     item_location it_loc = prepare_item( guy, here, it, cur_container_loc );
 
     if( !guy.get_wielded_item() ) {
-        // so the guy does not wield spilled solid items
+
         item rag( itype_test_rag );
         REQUIRE( guy.wield( rag ) );
     }
@@ -591,7 +591,7 @@ void test_scenario::run()
     restore_on_out_of_scope restore_test_mode_spilling(
         test_mode_spilling_action );
 
-    // liquid handling requires player input, so auto-select with player_action instead
+
     switch( cur_player_action ) {
         case player_action::spill_all: {
             player_action_str = "player_action::spill_all";
@@ -608,17 +608,17 @@ void test_scenario::run()
             return;
         }
     }
-    // INFO() is scoped, so the message won't be shown if we put in in the switch block.
+
     INFO( player_action_str );
 
     contents_change_handler handler;
-    // TODO replace with actual activities
+
     unseal_items_containing( handler, it_loc,
                              std::set<itype_id> { itype_test_liquid_1ml, itype_test_solid_1ml } );
     handler.handle_by( guy );
 
-    // check final state
-    // whether the outermost container will spill. inner containers will always spill.
+
+
     bool will_spill_outer = false;
     switch( cur_container_loc ) {
         case container_location::inventory:
@@ -726,7 +726,7 @@ void test_scenario::run()
         REQUIRE( !guy.is_armed() );
     }
 }
-} // namespace
+}
 
 TEST_CASE( "unseal_and_spill" )
 {

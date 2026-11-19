@@ -11,11 +11,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Persistent, one-to-one gameplay shortcut bindings. The latest assignment
- * takes precedence: the displaced target loses its custom binding and
- * automatically falls back to the built-in behavior of the game.
- */
+
+
+
+
+
 final class ReaderGestureBindings {
     private static final String STORE = "internal_reader";
     private static final String KEY = "world_gesture_bindings_v1";
@@ -98,11 +98,11 @@ final class ReaderGestureBindings {
             R.string.a11yBindHold3
     };
 
-    // Fixed live-world gestures, including the combat-mode toggle on a
-    // three-finger triple tap, never enter the customizable picker, and
-    // a saved pre-upgrade assignment is ignored and removed at read time.
-    // Two-finger directional swipes and one-finger double/triple taps are
-    // built into ReaderGestureSurface, not into this configurable array.
+
+
+
+
+
     static boolean isReserved(String gesture) {
         return "swipe_up".equals(gesture) || "swipe_down".equals(gesture)
                 || "swipe_left".equals(gesture) || "swipe_right".equals(gesture)
@@ -149,8 +149,8 @@ final class ReaderGestureBindings {
 
     ReaderGestureBindings(Context context) {
         store = context.getApplicationContext().getSharedPreferences(STORE, Context.MODE_PRIVATE);
-        // Migrate older user maps: an already assigned gesture must never
-        // silently replace its built-in gameplay action after an upgrade.
+
+
         String oldMap = store.getString(KEY, "{}");
         for (String gesture : IDS) {
             if (isReserved(gesture) && oldMap.contains("\"" + gesture + "\"")) {
@@ -215,10 +215,10 @@ final class ReaderGestureBindings {
         return null;
     }
 
-    /**
-     * Assign atomically. Existing binding on this gesture is displaced;
-     * any old custom binding for the target is cleared. No duplicate wins.
-     */
+
+
+
+
     synchronized Assignment assign(String gesture, String target) {
         if (indexOf(gesture) < 0 || isReserved(gesture)
                 || target == null || target.length() > 256 ||

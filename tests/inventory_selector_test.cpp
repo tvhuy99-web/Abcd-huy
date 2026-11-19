@@ -71,7 +71,7 @@ void check_asked_once( const counting_preset &preset )
         CHECK( n == 1 );
     }
 }
-} // namespace
+}
 
 TEST_CASE( "inventory_selector_asks_the_preset_once_per_item", "[inventory][ui]" )
 {

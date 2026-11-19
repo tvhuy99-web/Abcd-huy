@@ -43,7 +43,7 @@ static const skill_id skill_throw( "throw" );
 static const skill_id skill_traps( "traps" );
 static const skill_id skill_unarmed( "unarmed" );
 
-// TODO: a map, for Barry's sake make this a map.
+
 std::vector<Skill> Skill::skills;
 std::map<skill_id, Skill> Skill::contextual_skills;
 
@@ -52,7 +52,7 @@ std::vector<SkillDisplayType> SkillDisplayType::skillTypes;
 static const Skill invalid_skill;
 static const SkillDisplayType invalid_skill_type;
 
-/** @relates string_id */
+
 template<>
 const Skill &string_id<Skill>::obj() const
 {
@@ -70,7 +70,7 @@ const Skill &string_id<Skill>::obj() const
     return invalid_skill;
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<Skill>::is_valid() const
 {
@@ -234,7 +234,7 @@ SkillDisplayType::SkillDisplayType( const skill_displayType_id &ident,
 {
 }
 
-/** @relates string_id */
+
 template<>
 const SkillDisplayType &skill_displayType_id::obj() const
 {
@@ -287,7 +287,7 @@ skill_id Skill::from_legacy_int( const int legacy_id )
         return legacy_skills[legacy_id];
     }
     debugmsg( "legacy skill id %d is invalid", legacy_id );
-    return skills.front().ident(); // return a non-null id because callers might not expect a null-id
+    return skills.front().ident();
 }
 
 skill_id Skill::random_skill()
@@ -315,7 +315,7 @@ bool Skill::can_chr_use( Character &chr ) const
     return true;
 }
 
-// used for the pacifist trait
+
 bool Skill::is_combat_skill() const
 {
     static const std::string combat_skill( "combat_skill" );
@@ -354,25 +354,25 @@ void SkillLevel::train( int amount, float catchup_modifier, float knowledge_modi
         debugmsg( "train() called with negative xp: %d", amount );
         return;
     }
-    // catchup gets faster the higher the level gap gets.
+
     float level_gap = 1.0f * std::max( knowledgeLevel(), 1 ) / std::max( level(), 1 );
     float catchup_amount = amount * catchup_modifier;
     float knowledge_amount = amount * knowledge_modifier;
     if( knowledgeLevel() > level() ) {
         catchup_amount *= level_gap;
     } else if( knowledgeLevel() == level() && _knowledgeExperience > _exercise ) {
-        // when you're in the same level, the catchup starts to slow down.
+
         catchup_amount = amount * std::max( catchup_modifier - 1.0f * _exercise / _knowledgeExperience,
                                             1.0f );
         knowledge_amount = amount * std::max( knowledge_modifier - 0.1f * _exercise / _knowledgeExperience,
                                               1.0f );
     } else {
-        // When your two xp's are equal just do the basic thing.
+
         catchup_amount = amount * 1.0f;
         knowledge_amount = amount * 1.0f;
     }
 
-    // Learning knowledge faster than skill, when you're actually practicing, will generate some annoying problems.
+
     if( knowledge_amount > catchup_amount * 0.9f ) {
         knowledge_amount = catchup_amount * 0.9f;
     }
@@ -404,18 +404,18 @@ void SkillLevel::train( int amount, float catchup_modifier, float knowledge_modi
 void SkillLevel::knowledge_train( int amount, int npc_knowledge )
 {
     float level_gap = 1.0f;
-    // when your _level is the same or 1 level below your knowledge, gain xp at the normal rate.
-    // as your practical skill lags behind your knowledge, it gets harder to contextualize that
-    // theoretical knowledge, and your ability to learn the theory gets slower.
 
-    // The same formula applies to NPCs teaching you, but in that case the level decreases as their knowledge
-    // level exceeds your own.  The best teacher is one who is only somewhat more knowledgeable than you.
+
+
+
+
+
     if( npc_knowledge > 0 ) {
-        // This should later be modified by NPC teaching proficiencies.
+
         level_gap = std::max<float>( npc_knowledge - unadjustedKnowledgeLevel(), 1.0f );
     } else {
-        // Some day this should be affected by json specific to the skill, some skills are more amenable
-        // to book learning.
+
+
         level_gap = std::max<float>( unadjustedKnowledgeLevel() - unadjustedLevel(), 1.0f );
     }
     float level_mult = 2.0f / ( level_gap + 1.0f );
@@ -436,7 +436,7 @@ void SkillLevel::knowledge_train( int amount, int npc_knowledge )
 
 bool SkillLevel::isRusty() const
 {
-    // skill is considered rusty if the practical xp lags knowledge xp by at least 1%
+
     return level() != knowledgeLevel() ||
            _knowledgeExperience - _exercise >= pow( level() + 1, 2U ) * 10;
 }
@@ -444,28 +444,28 @@ bool SkillLevel::isRusty() const
 bool SkillLevel::rust( int rust_resist, float rust_multiplier )
 {
     if( ( calendar::turn - _lastPracticed ) < 24_hours ) {
-        // don't rust within the grace period
+
         return false;
     }
 
     if( unadjustedLevel() >= MAX_SKILL ) {
-        // don't rust any more once you hit the level cap, at least until we have a way to "pause" rust for a while.
+
         return false;
     }
 
     const int level_multiplier = pow( unadjustedLevel() + 1, 2U );
     float level_exp = level_multiplier * 10000.0f;
     if( _rustAccumulator > level_exp * 3 ) {
-        // at this point the numbers ahead will be too small to bother.  Just cap it off.
+
         return false;
     }
 
-    // Future plans: Have rust_slowdown impacted by intelligence and other memory-affecting things
+
     float rust_slowdown = std::max( static_cast<float>( std::sqrt( _rustAccumulator / level_exp ) ),
                                     0.04f );
 
-    // rust amount starts at 4% of a level's xp, run every 24 hours.
-    // Once the accumulated rust exceeds 16% of a level, rust_amount starts to drop.
+
+
     int rust_amount = level_multiplier * rust_multiplier * 16 / rust_slowdown;
 
     if( rust_resist > 0 ) {
@@ -641,8 +641,8 @@ bool SkillLevelMap::meets_skill_requirements( const std::map<skill_id, int> &req
 {
     return std::all_of( req.begin(), req.end(),
     [this, &context]( const std::pair<skill_id, int> &pr ) {
-        // Whether or not you meet skill requirements should be based on your level of theory training,
-        // not practical experience.
+
+
         return get_knowledge_level( pr.first, context ) >= pr.second;
     } );
 }
@@ -679,7 +679,7 @@ int SkillLevelMap::exceeds_recipe_requirements( const recipe &rec ) const
 
 bool SkillLevelMap::theoretical_recipe_requirements( const recipe &rec ) const
 {
-    // Regardless of your current practical skill, do you know the theory of how to make this thing?
+
     if( rec.skill_used && get_knowledge_level( rec.skill_used ) < rec.difficulty ) {
         return false;
     }
@@ -715,8 +715,8 @@ bool SkillLevelMap::has_same_levels_as( const SkillLevelMap &other ) const
     return true;
 }
 
-// Actually take the difference in social skill between the two parties involved
-// Caps at 200% when you are 5 levels ahead, int comparison is handled in npctalk.cpp
+
+
 double price_adjustment( int barter_skill )
 {
     int const skill = std::min( 5, std::abs( barter_skill ) );

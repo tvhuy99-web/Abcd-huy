@@ -4,13 +4,13 @@
 
 #include "translation.h"
 
-// Localized comparison operator, intended for sorting strings when they should
-// be sorted according to the user's locale.
-//
-// For convenience, it also sorts pairs recursively, because a common
-// requirement is to sort some list of objects by their names, and this can be
-// achieved by sorting a list of pairs where the first element of the pair is
-// the translated name.
+
+
+
+
+
+
+
 struct localized_comparator {
     template<typename T, typename U>
     bool operator()( const std::pair<T, U> &l, const std::pair<T, U> &r ) const {
@@ -52,4 +52,4 @@ struct localized_comparator {
 
 constexpr localized_comparator localized_compare{};
 
-#endif // CATA_SRC_LOCALIZED_COMPARATOR_H
+#endif

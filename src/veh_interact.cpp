@@ -110,10 +110,10 @@ static std::string health_color( bool status )
     return status ? "<color_light_green>" : "<color_light_red>";
 }
 
-// Cap JACK requirements to support arbitrarily large vehicles.
-static constexpr units::mass JACK_LIMIT = 8500_kilogram; // 8500kg ( 8.5 metric tonnes )
 
-// cap JACK requirements to support arbitrarily large vehicles
+static constexpr units::mass JACK_LIMIT = 8500_kilogram;
+
+
 static double jack_quality( map &here, const vehicle &veh )
 {
     const units::quantity<double, units::mass::unit_type> mass = std::min( veh.total_mass( here ),
@@ -121,7 +121,7 @@ static double jack_quality( map &here, const vehicle &veh )
     return std::ceil( mass / lifting_quality_to_mass( 1 ) );
 }
 
-/** Can part currently be reloaded with anything? */
+
 static auto can_refill = []( const map &, const vehicle_part &pt )
 {
     return pt.can_reload( );
@@ -163,22 +163,22 @@ std::string enum_to_string<vehicle_action>( vehicle_action stage )
             return "VEHICLE_LAST";
     }
 }
-} // namespace io
+}
 
-// Reader adapter (R15.1/R15.2): veh_interact draws its panes by hand
-// across several nested loops (main, overview part selection, install,
-// repair, remove), so the generic command fallback would publish the
-// commands but never the vehicle itself. This session publishes what
-// the panes show -- a vehicle summary from the same values display_stats
-// prints, the cursor tile and its parts, and a tree of every part
-// grouped by tile -- and, inside the sub-loops, the actual lists those
-// loops step through. Browsing only moves the original cursor or list
-// positions; starting work always goes through the original loops' own
-// CONFIRM handling and requirement checks, and a chosen part is
-// re-resolved against the live vehicle at intent time because the
-// vehicle structure can change while this screen is open. The method
-// definitions live below the install_info_t/remove_info_t definitions,
-// which build() reads.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class veh_interact::reader_session
 {
     public:
@@ -192,15 +192,15 @@ class veh_interact::reader_session
 
         veh_interact &owner;
         mode current_mode = mode::main_mode;
-        // Map of the most recent update(); intent-time cursor moves go
-        // through the same map the loop is using.
+
+
         map *current_map = nullptr;
-        // Bindings of the most recently published snapshot. Part bindings
-        // are shared by the main/select/repair/remove lists: part_index
-        // is the live vehicle part index (the identity re-resolved at
-        // intent time) and list_pos is the row's position in the list
-        // the current mode's loop steps through (overview row, position
-        // in need_repair, or position in parts_here).
+
+
+
+
+
+
         struct part_binding {
             std::string id;
             int part_index;
@@ -276,11 +276,11 @@ void orient_part( map &here, vehicle *veh, const vpart_info &vpinfo, int partnum
                   const std::optional<point_rel_ms> &part_placement )
 {
     avatar &player_character = get_avatar();
-    // Stash offset and set it to the location of the part so look_around will
-    // start there.
+
+
     const tripoint_rel_ms old_view_offset = player_character.view_offset;
     tripoint_bub_ms offset = veh->pos_bub( here );
-    // Appliances are one tile so the part placement there is always point::zero
+
     if( part_placement ) {
         point_rel_ms copied_placement = *part_placement;
         offset = offset + copied_placement;
@@ -298,10 +298,10 @@ void orient_part( map &here, vehicle *veh, const vpart_info &vpinfo, int partnum
             continue;
         }
         delta = ( *chosen - offset ).xy();
-        // atan2 only gives reasonable values when delta is not all zero
+
     } while( delta == point_rel_ms::zero );
 
-    // Restore previous view offsets.
+
     player_character.view_offset = old_view_offset;
 
     units::angle dir = normalize( atan2( delta.raw() ) - veh->face.dir() );
@@ -343,9 +343,9 @@ std::optional<vpart_reference> veh_interact::select_part( map &here, const vehic
     return res;
 }
 
-/**
- * Creates a blank veh_interact window.
- */
+
+
+
 veh_interact::veh_interact( map &here, vehicle &veh, const point_rel_ms &p )
     : cursor_vp_mount( p ), veh( &veh ), main_context( "VEH_INTERACT", keyboard_mode::keycode )
 {
@@ -379,7 +379,7 @@ veh_interact::veh_interact( map &here, vehicle &veh, const point_rel_ms &p )
 
     count_durability();
     cache_tool_availability();
-    // Initialize info of selected parts
+
     move_cursor( here, point_rel_ms::zero );
     reader = std::make_unique<reader_session>( *this );
 }
@@ -388,10 +388,10 @@ veh_interact::~veh_interact() = default;
 
 void veh_interact::allocate_windows()
 {
-    // grid window
+
     const point grid( point::south_east );
-    const int grid_w = TERMX - 2; // exterior borders take 2
-    const int grid_h = TERMY - 2; // exterior borders take 2
+    const int grid_w = TERMX - 2;
+    const int grid_h = TERMY - 2;
 
     const int mode_h  = 1;
     const int name_h  = 1;
@@ -419,7 +419,7 @@ void veh_interact::allocate_windows()
     const int details_h = 7;
     const int details_w = grid.x + grid_w - details_x;
 
-    // make the windows
+
     w_border = catacurses::newwin( TERMY, TERMX, point::zero );
     w_mode  = catacurses::newwin( mode_h,    grid_w, grid );
     w_msg   = catacurses::newwin( page_size, pane_w, point( msg_x, pane_y ) );
@@ -440,7 +440,7 @@ bool veh_interact::format_reqs( std::string &msg, const requirement_data &reqs,
 {
     Character &player_character = get_player_character();
     const temp_crafting_inventory &inv = player_character.crafting_inventory();
-    // no inventory-backed item or power changes while the text is built, so query caches hold
+
     temp_crafting_inventory::query_cache_scope cache_scope;
     bool ok = reqs.can_make_with_inventory( &player_character, inv, is_crafting_component, 1,
                                             craft_flags::none, false );
@@ -491,9 +491,9 @@ struct veh_interact::remove_info_t {
 namespace
 {
 
-// Verbal equivalent of the condition the panes show only as a damage
-// symbol and a color. Uses the same damage fraction and the same bands
-// and words count_durability() applies to the vehicle as a whole.
+
+
+
 std::string reader_part_condition( const vehicle_part &pt )
 {
     if( pt.is_broken() ) {
@@ -515,10 +515,10 @@ std::string reader_part_condition( const vehicle_part &pt )
     return _( "destroyed" );
 }
 
-// Position of a tile in the vehicle's own frame, relative to the
-// reference part (part 0, the same origin the coordinate translation
-// uses). In that frame +x is toward the front of the vehicle and +y is
-// to its right (see the mount documentation in vehicle.h).
+
+
+
+
 std::string reader_tile_words( const vehicle &veh, const point_rel_ms &mount )
 {
     const point_rel_ms origin = veh.part( 0 ).mount;
@@ -566,11 +566,11 @@ std::string reader_category_name( const std::string &key )
     return key;
 }
 
-// The per-category figures the overview's details callbacks print on
-// the part's row, as text: engine fuel and faults, tank contents and
-// quantity, battery capacity and charge, turret/reactor ammunition
-// (including the per-pocket state of a multi-magazine turret), and the
-// crew member on a seat.
+
+
+
+
+
 std::string reader_part_data( vehicle &veh, const vehicle_part &pt, const std::string &key )
 {
     std::string data;
@@ -644,9 +644,9 @@ std::string reader_part_data( vehicle &veh, const vehicle_part &pt, const std::s
     return data;
 }
 
-// Contents of one cargo part, in the same terms the advanced inventory
-// shows them: the stored items by display name (capped, with the exact
-// remainder counted) and the used/total volume print_part_list shows.
+
+
+
 std::string reader_cargo_data( const vehicle &veh, const vehicle_part &pt )
 {
     const vehicle_stack vs = veh.get_items( pt );
@@ -678,7 +678,7 @@ std::string reader_cargo_data( const vehicle &veh, const vehicle_part &pt )
     return data;
 }
 
-} // namespace
+}
 
 veh_interact::reader_session::reader_session( veh_interact &owner ) :
     owner( owner ),
@@ -708,9 +708,9 @@ std::optional<std::string> veh_interact::reader_session::handle(
         if( intent.action != "focus" && intent.action != "activate" ) {
             return std::nullopt;
         }
-        // Focusing a tile only moves the original cursor there (the
-        // same transform overview() uses to sync the cursor to a part);
-        // it starts no task and moves no vehicle.
+
+
+
         if( current_mode == mode::main_mode && current_map != nullptr ) {
             for( const part_binding &part : part_bindings ) {
                 const vehicle_part &pt = veh.part( part.part_index );
@@ -730,9 +730,9 @@ std::optional<std::string> veh_interact::reader_session::handle(
         if( intent.action != "focus" && intent.action != "activate" ) {
             return std::nullopt;
         }
-        // Re-resolve the part against the live vehicle: if the part is
-        // gone, the intent names nothing the current screen offers and
-        // falls through to the dispatcher as unhandled.
+
+
+
         bool found = false;
         for( const vpart_reference &vpr : veh.get_all_parts() ) {
             if( static_cast<int>( vpr.part_index() ) == binding.part_index ) {
@@ -780,9 +780,9 @@ std::optional<std::string> veh_interact::reader_session::handle(
         if( !owner.install_info ) {
             return std::nullopt;
         }
-        // Re-resolve the candidate in the current tab list: the list is
-        // rebuilt per tile and per tab, so a stale row must not confirm
-        // whatever happens to sit at the old position.
+
+
+
         const std::vector<const vpart_info *> &list = owner.install_info->tab_vparts;
         const auto it = std::find( list.begin(), list.end(), binding.info );
         if( it == list.end() ) {
@@ -818,9 +818,9 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
     snapshot.nodes.clear();
 
     if( current_mode == mode::main_mode || current_mode == mode::select_part ) {
-        // Group the overview rows by tile, as the grid groups them
-        // spatially; the overview's functional category travels in each
-        // row's detail.
+
+
+
         std::map<std::pair<int, int>, std::vector<int>> rows_by_tile;
         for( int row = 0; row < static_cast<int>( owner.overview_opts.size() ); ++row ) {
             const vehicle_part &pt = *owner.overview_opts[row].part;
@@ -845,9 +845,9 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                 const vehicle_part &pt = *opt.part;
                 const int part_index = veh.index_of_part( &pt );
                 a11y::semantic_node node;
-                // A part can appear in two overview groups (a turret
-                // that is also a tank); the row number keeps node IDs
-                // unique, and the binding still resolves by part index.
+
+
+
                 node.id = "vehicle:part:" + std::to_string( row ) + ":" +
                           std::to_string( part_index );
                 node.role = "listitem";
@@ -882,7 +882,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
     }
 
     if( current_mode == mode::main_mode ) {
-        // Vehicle summary, from the same values display_stats prints.
+
         units::volume total_cargo = 0_ml;
         units::volume free_cargo = 0_ml;
         for( const vpart_reference &vpr : veh.get_any_parts( VPFLAG_CARGO ) ) {
@@ -923,7 +923,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             snapshot.focus = "vehicle:message";
         }
 
-        // The cursor tile and the parts on it: the w_parts pane.
+
         {
             a11y::semantic_node node;
             node.id = "vehicle:cursor";
@@ -1039,9 +1039,9 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             node.selected = static_cast<int>( i ) == info.pos;
             if( node.selected ) {
                 snapshot.focus = node.id;
-                // The loop has already computed this candidate's
-                // requirements into msg; recomputing also yields the
-                // installable flag the loop itself gates CONFIRM on.
+
+
+
                 const bool ok = owner.update_part_requirements( here );
                 node.enabled = ok;
                 if( !ok ) {
@@ -1089,8 +1089,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
         }
     } else if( current_mode == mode::remove && owner.remove_info ) {
         snapshot.summary = title;
-        // can_remove_part reports its refusal through msg; preserve
-        // whatever message the loop had so the pane is unchanged.
+
+
         const std::optional<std::string> saved_msg = owner.msg;
         for( size_t i = 0; i < owner.parts_here.size(); ++i ) {
             const int part_index = owner.parts_here[i];
@@ -1123,8 +1123,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
     snapshot.nodes.insert( snapshot.nodes.end(),
                            std::make_move_iterator( commands.begin() ),
                            std::make_move_iterator( commands.end() ) );
-    // Flat positions for ordinary nodes; tree nodes count their sibling
-    // set under the same parent (R02.1).
+
+
     for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
         snapshot.nodes[i].position = static_cast<int>( i ) + 1;
         snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
@@ -1181,8 +1181,8 @@ shared_ptr_fast<ui_adaptor> veh_interact::create_or_get_ui_adaptor( map &here )
                 const int height = catacurses::getmaxy( w_msg );
                 const int width = catacurses::getmaxx( w_msg ) - 2;
 
-                // the following contraption is splitting buffer into separate lines for scrolling
-                // since earlier code relies on msg already being folded
+
+
                 std::vector<std::string> buffer;
                 std::istringstream msg_stream( msg.value() );
                 while( !msg_stream.eof() ) {
@@ -1290,11 +1290,11 @@ void veh_interact::do_main_loop( map &here )
         } else if( action == "SIPHON" ) {
             if( veh->handle_potential_theft( player_character ) ) {
                 do_siphon( here );
-                // Siphoning may have started a player activity. If so, we should close the
-                // vehicle dialog and continue with the activity.
+
+
                 finish = !player_character.activity.is_null();
                 if( !finish ) {
-                    // it's possible we just invalidated our crafting inventory
+
                     cache_tool_availability();
                     move_cursor( here, point_rel_ms::zero );
                 }
@@ -1370,20 +1370,20 @@ void veh_interact::cache_tool_availability_update_lifting( const tripoint_bub_ms
     max_lift = get_player_character().best_nearby_lifting_assist( world_cursor_pos );
 }
 
-/**
- * Checks if the player is able to perform some command, and returns a nonzero
- * error code if they are unable to perform it. The return from this function
- * should be passed into the various do_whatever functions further down.
- * @param mode The command the player is trying to perform (i.e. 'r' for repair).
- * @return CAN_DO if the player has everything they need,
- *         INVALID_TARGET if the command can't target that square,
- *         LACK_TOOLS if the player lacks tools,
- *         NOT_FREE if something else obstructs the action,
- *         LACK_SKILL if the player's skill isn't high enough,
- *         LOW_MORALE if the player's morale is too low while trying to perform
- *             an action requiring a minimum morale,
- *         UNKNOWN_TASK if the requested operation is unrecognized.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
 {
     bool enough_morale = true;
@@ -1398,7 +1398,7 @@ task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
         case VEHICLE_INSTALL:
             enough_morale = player_character.has_morale_to_craft();
             valid_target = !can_mount.empty();
-            //tool checks processed later
+
             enough_light = player_character.fine_detail_vision_mod() <= 4;
             has_tools = true;
             break;
@@ -1406,7 +1406,7 @@ task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
         case VEHICLE_REPAIR:
             enough_morale = player_character.has_morale_to_craft();
             valid_target = !need_repair.empty() && cpart >= 0;
-            // checked later
+
             has_tools = true;
             enough_light = player_character.fine_detail_vision_mod() <= 4;
             break;
@@ -1422,7 +1422,7 @@ task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
                 }
             } );
             enough_light = player_character.fine_detail_vision_mod() <= 4;
-            // checked later
+
             has_tools = true;
         }
         break;
@@ -1439,7 +1439,7 @@ task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
             valid_target = cpart >= 0;
             part_free = parts_here.size() > 1 ||
                         ( cpart >= 0 && veh->can_unmount( veh->part( cpart ) ).success() );
-            //tool and skill checks processed later
+
             has_tools = true;
             has_skill = true;
             enough_light = player_character.fine_detail_vision_mod() <= 4;
@@ -1480,7 +1480,7 @@ task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
         case VEHICLE_SHAPE:
         // intentional fall-through
         case VEHICLE_RELABEL:
-            // relabel
+
             valid_target = cpart >= 0;
             has_tools = true;
             break;
@@ -1506,7 +1506,7 @@ task_reason veh_interact::cant_do( const map &here, vehicle_action mode )
     if( !part_free ) {
         return task_reason::NOT_FREE;
     }
-    // TODO: that is always false!
+
     if( !has_skill ) {
         return task_reason::LACK_SKILL;
     }
@@ -1570,7 +1570,7 @@ bool veh_interact::update_part_requirements( map &here )
     }
 
     bool is_engine = sel_vpart_info->has_flag( "ENGINE" );
-    //count current engines, some engines don't require higher skill
+
     int engines = 0;
     int dif_eng = 0;
     if( is_engine && sel_vpart_info->has_flag( "E_HIGHER_SKILL" ) ) {
@@ -1588,14 +1588,14 @@ bool veh_interact::update_part_requirements( map &here )
         for( const int p : veh->steering ) {
             const vehicle_part &vp = veh->part( p );
             if( !vp.info().has_flag( "TRACKED" ) ) {
-                // tracked parts don't contribute to axle complexity
+
                 axles.insert( vp.mount.x() );
             }
         }
 
         if( !axles.empty() && axles.count( -cursor_vp_mount.x() ) == 0 ) {
-            // Installing more than one steerable axle is hard
-            // (but adding a wheel to an existing axle isn't)
+
+
             dif_steering = axles.size() + 5;
         }
     }
@@ -1655,11 +1655,11 @@ bool veh_interact::update_part_requirements( map &here )
     return ok || player_character.has_trait( trait_DEBUG_HS );
 }
 
-/**
- * Moves list of fuels up or down.
- * @param delta -1 if moving up,
- *              1 if moving down
- */
+
+
+
+
+
 void veh_interact::move_fuel_cursor( map &here, int delta )
 {
     int max_fuel_indicators = static_cast<int>( veh->get_printable_fuel_types( here ).size() );
@@ -1689,7 +1689,7 @@ void veh_interact::do_install( map &here )
                 install_info ) );
     install_info = std::make_unique<install_info_t>();
 
-    std::string filter; // The user specified filter
+    std::string filter;
     std::vector<vpart_category> &tab_list = install_info->tab_list = {};
     std::vector <std::function<bool( const vpart_info * )>> tab_filters;
 
@@ -1719,11 +1719,11 @@ void veh_interact::do_install( map &here )
     std::vector<const vpart_info *> &tab_vparts = install_info->tab_vparts;
 
     while( true ) {
-        tab = ( tab + tab_list.size() ) % tab_list.size(); // handle tabs rolling under/over
+        tab = ( tab + tab_list.size() ) % tab_list.size();
         tab_vparts.clear();
         std::copy_if( can_mount.begin(), can_mount.end(), std::back_inserter( tab_vparts ),
                       tab_filters[tab] );
-        // tab_vparts can be empty or pos out of bounds
+
         sel_vpart_info = pos >= 0 && pos < static_cast<int>( tab_vparts.size() )
                          ? tab_vparts[pos] : nullptr;
 
@@ -1742,7 +1742,7 @@ void veh_interact::do_install( map &here )
             popup.set_max_input_length( 100 );
 
             filter = popup.query();
-            tab = tab_filters.size() - 1; // Move to the user filter tab.
+            tab = tab_filters.size() - 1;
             pos = 0;
         } else if( action == "REPAIR" ) {
             filter.clear();
@@ -1765,9 +1765,9 @@ void veh_interact::do_install( map &here )
                 default:
                     break;
             }
-            // Modifying a vehicle with rotors will make in not flightworthy
-            // (until we've got a better model)
-            // It can only be the player doing this - an npc won't work well with query_yn
+
+
+
             if( veh->would_install_prevent_flyable( *sel_vpart_info, player_character ) ) {
                 if( query_yn(
                         _( "Installing this part will mean that this vehicle is no longer "
@@ -1800,7 +1800,7 @@ void veh_interact::do_install( map &here )
             w_msg_scroll_offset--;
         } else {
             move_in_list( pos, action, tab_vparts.size(), 2 );
-            pos = std::max( pos, 0 ); // move_in_list sets pos to -1 when moving up in empty list
+            pos = std::max( pos, 0 );
         }
     }
 }
@@ -1818,7 +1818,7 @@ bool veh_interact::move_in_list( int &pos, const std::string &action, const int 
     } else if( action == "DOWN" ) {
         pos++;
     } else {
-        // Anything else -> no movement
+
         return false;
     }
     if( pos < 0 ) {
@@ -1882,7 +1882,7 @@ void veh_interact::do_repair( map &here )
 
         std::string nmsg;
 
-        // this will always be set, but the gcc thinks that sometimes it won't be
+
         bool ok = true;
         if( pt.is_broken() ) {
             ok = format_reqs( nmsg, vp.install_requirements(), vp.install_skills,
@@ -1940,9 +1940,9 @@ void veh_interact::do_repair( map &here )
         const std::string action = main_context.handle_input();
         msg.reset();
         if( ( action == "REPAIR" || action == "CONFIRM" ) && ok ) {
-            // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
+
             if( would_prevent_flying ) {
-                // It can only be the player doing this - an npc won't work well with query_yn
+
                 if( query_yn(
                         _( "Repairing this part will mean that this vehicle is no longer flightworthy.  Continue?" ) ) ) {
                     veh->set_flyable( false );
@@ -2035,12 +2035,12 @@ void veh_interact::do_refill( map &here )
         auto validate = [&]( const item & obj ) {
             if( pt.is_tank() ) {
                 if( obj.is_watertight_container() && obj.num_item_stacks() == 1 ) {
-                    // we are assuming only one pocket here, and it's a liquid so only one item
+
                     return pt.can_reload( obj.only_item() );
                 }
             } else if( pt.is_fuel_store() ) {
                 bool can_reload = pt.can_reload( obj );
-                //check base item for fuel_stores that can take multiple types of ammunition (like the fuel_bunker)
+
                 if( pt.get_base().can_reload_with( obj, true ) ) {
                     return true;
                 }
@@ -2076,7 +2076,7 @@ void veh_interact::calc_overview( map &here )
     overview_opts.clear();
     overview_headers.clear();
 
-    units::power epower = veh->net_battery_charge_rate( here, /* include_reactors = */ true );
+    units::power epower = veh->net_battery_charge_rate( here, true );
     overview_headers["1_ENGINE"] = [this, &here]( const catacurses::window & w, int y ) {
         trim_and_print( w, point( 1, y ), getmaxx( w ) - 2, c_light_gray,
                         string_format( _( "Engines: %sSafe %4d kW</color> %sMax %4d kW</color>" ),
@@ -2136,7 +2136,7 @@ void veh_interact::calc_overview( map &here )
         }
 
         if( vpr.part().is_engine() ) {
-            // if tank contains something then display the contents in milliliters
+
             auto details = []( const vehicle_part & pt, const catacurses::window & w, int y ) {
                 right_print(
                     w, y, 1, item::find_type( pt.ammo_current() )->color,
@@ -2147,7 +2147,7 @@ void veh_interact::calc_overview( map &here )
                         right_justify( pt.enabled ? _( "Yes" ) : _( "No" ), 3 ) ) );
             };
 
-            // display engine faults (if any)
+
             auto msg_cb = [&]( const vehicle_part & pt ) {
                 msg = std::string();
                 for( const auto &e : pt.faults() ) {
@@ -2167,13 +2167,13 @@ void veh_interact::calc_overview( map &here )
             auto tank_details = []( const vehicle_part & pt, const catacurses::window & w, int y ) {
                 if( !pt.ammo_current().is_null() ) {
                     std::string specials;
-                    // vehicle parts can only have one pocket, and we are showing a liquid,
-                    // which can only be one.
+
+
                     const item &it = pt.base.legacy_front();
-                    // a space isn't actually needed in front of the tags here,
-                    // but item::display_name tags use a space so this prevents
-                    // needing *second* translation for the same thing with a
-                    // space in front of it
+
+
+
+
                     if( it.has_own_flag( flag_FROZEN ) ) {
                         specials += _( " (frozen)" );
                     } else if( it.rotten() ) {
@@ -2227,7 +2227,7 @@ void veh_interact::calc_overview( map &here )
         }
 
         if( vpr.part().is_battery() ) {
-            // always display total battery capacity and percentage charge
+
             auto details = []( const vehicle_part & pt, const catacurses::window & w, int y ) {
                 int pct = ( static_cast<double>( pt.ammo_remaining( ) ) / pt.ammo_capacity(
                                 ammo_battery ) ) * 100;
@@ -2352,7 +2352,7 @@ void veh_interact::display_overview( const map &here )
     for( int idx = overview_offset; idx != static_cast<int>( overview_opts.size() ); ++idx ) {
         const vehicle_part &pt = *overview_opts[idx].part;
 
-        // if this is a new section print a header row
+
         if( last != overview_opts[idx].key ) {
             y += last.empty() ? 0 : 1;
             overview_headers[overview_opts[idx].key]( w_list, y );
@@ -2361,21 +2361,21 @@ void veh_interact::display_overview( const map &here )
         }
 
         bool highlighted = false;
-        // No action means no selecting, just highlight relevant ones
+
         if( overview_pos < 0 && overview_enable && !overview_action ) {
             highlighted = overview_enable( here, pt );
         } else if( overview_pos == idx ) {
             highlighted = true;
         }
 
-        // print part name
+
         nc_color col = overview_opts[idx].selectable ? c_white : c_dark_gray;
         trim_and_print( w_list, point( 1, y ), getmaxx( w_list ) - 1,
                         highlighted ? hilite( col ) : col,
                         "<color_dark_gray>%s </color>%s",
                         right_justify( overview_opts[idx].hotkey.short_description(), 2 ), pt.name() );
 
-        // print extra columns (if any)
+
         overview_opts[idx].details( pt, w_list, y );
         const int rows_used = 1 + ( overview_opts[idx].extra_rows
                                     ? overview_opts[idx].extra_rows( pt ) : 0 );
@@ -2414,7 +2414,7 @@ void veh_interact::overview( map &here,
             do {
                 if( ++overview_pos >= static_cast<int>( overview_opts.size() ) ) {
                     overview_pos = -1;
-                    break; // nothing could be selected
+                    break;
                 }
             } while( !overview_opts[overview_pos].selectable );
         }
@@ -2424,7 +2424,7 @@ void veh_interact::overview( map &here,
             return e.selectable;
         } );
         if( !has_any_selectable_part ) {
-            return; // nothing is selectable
+            return;
         }
 
         if( overview_pos >= 0 && static_cast<size_t>( overview_pos ) < overview_opts.size() ) {
@@ -2468,7 +2468,7 @@ void veh_interact::overview( map &here,
                 }
             } while( !overview_opts[overview_pos].selectable );
         } else if( input == "ANY_INPUT" ) {
-            // did we try and activate a hotkey option?
+
             const input_event hotkey = main_context.get_raw_input();
             if( hotkey != input_event() && overview_action ) {
                 auto iter = std::find_if( overview_opts.begin(),
@@ -2645,7 +2645,7 @@ void veh_interact::do_remove( map &here )
             reader->update( here, reader_session::mode::remove );
         }
 
-        //read input
+
         const std::string action = main_context.handle_input();
         msg.reset();
         if( can_remove && ( action == "REMOVE" || action == "CONFIRM" ) ) {
@@ -2666,8 +2666,8 @@ void veh_interact::do_remove( map &here )
                     break;
             }
 
-            // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
-            // It can only be the player doing this - an npc won't work well with query_yn
+
+
             if( veh->would_removal_prevent_flyable( veh->part( part ), player_character ) ) {
                 if( query_yn(
                         _( "Removing this part will mean that this vehicle is no longer flightworthy.  Continue?" ) ) ) {
@@ -2800,7 +2800,7 @@ void veh_interact::do_rename()
         veh->name = name;
         if( veh->tracking_on ) {
             overmap_buffer.remove_vehicle( veh );
-            // Add the vehicle again, this time with the new name
+
             overmap_buffer.add_vehicle( veh );
         }
     }
@@ -2905,22 +2905,22 @@ std::pair<bool, std::string> veh_interact::calc_lift_requirements( map &here, co
     return result;
 }
 
-/**
- * Returns the first part on the vehicle at the given position.
- * @param d The coordinates, relative to the viewport's 0-point (?)
- * @return The first vehicle part at the specified coordinates.
- */
+
+
+
+
+
 int veh_interact::part_at( const point_rel_ms &d )
 {
     const point_rel_ms vd{ -cursor_vp_mount + d.rotate( 1 ) };
     return veh->part_displayed_at( vd );
 }
 
-/**
- * Moves the cursor on the vehicle editing window.
- * @param d How far to move the cursor.
- * @param dstart_at How far to change the start position for vehicle part descriptions
- */
+
+
+
+
+
 void veh_interact::move_cursor( map &here, const point_rel_ms &d, int dstart_at )
 {
     cursor_vp_mount += d.rotate( 3 );
@@ -2930,7 +2930,7 @@ void veh_interact::move_cursor( map &here, const point_rel_ms &d, int dstart_at 
         start_at += dstart_at;
     }
 
-    // Update the current active component index to the new position.
+
     cpart = part_at( point_rel_ms::zero );
     const point_rel_ms vd = -cursor_vp_mount;
     const point_rel_ms q = veh->coord_translate( vd );
@@ -2964,46 +2964,46 @@ void veh_interact::move_cursor( map &here, const point_rel_ms &d, int dstart_at 
         }
     }
 
-    /* Update the lifting quality to be the that is available for this newly selected tile */
+
     cache_tool_availability_update_lifting( vehp );
 }
 
 void veh_interact::display_grid()
 {
-    // border window
+
     draw_border( w_border );
 
     wattron( w_border, BORDER_COLOR );
 
-    // match grid lines
+
     const int y_mode = getmaxy( w_mode ) + 1;
-    // |-
+
     mvwaddch( w_border, point( 0, y_mode ), LINE_XXXO );
-    // -|
+
     mvwaddch( w_border, point( TERMX - 1, y_mode ), LINE_XOXX );
     const int y_list = getbegy( w_list ) + getmaxy( w_list );
-    // |-
+
     mvwaddch( w_border, point( 0, y_list ), LINE_XXXO );
-    // -|
+
     mvwaddch( w_border, point( TERMX - 1, y_list ), LINE_XOXX );
 
     const int grid_w = getmaxx( w_border ) - 2;
 
-    // Two lines dividing the three middle sections.
+
     mvwvline( w_border, point( getmaxx( w_disp ) + 1,                     getmaxy( w_mode ) + 2 ),
               LINE_XOXO, page_size );
     mvwvline( w_border, point( getmaxx( w_disp ) + 2 + getmaxx( w_list ), getmaxy( w_mode ) + 2 ),
               LINE_XOXO, page_size );
-    // Two lines dividing the vertical menu sections.
+
     mvwhline( w_border, point( 1,             getmaxy( w_mode ) + 1 ), LINE_OXOX, grid_w );
     mvwhline( w_border, point( 1, getmaxy( w_mode ) + 2 + page_size ), LINE_OXOX, grid_w );
-    // Fix up the line intersections.
+
     mvwaddch( w_border, point( getmaxx( w_disp ) + 1, getmaxy( w_mode ) + 1 ), LINE_OXXX );
-    // _|_
+
     mvwaddch( w_border, point( getmaxx( w_disp ) + 1, getmaxy( w_mode ) + 2 + page_size ), LINE_XXOX );
     mvwaddch( w_border, point( getmaxx( w_disp ) + 2 + getmaxx( w_list ), getmaxy( w_mode ) + 1 ),
               LINE_OXXX );
-    // _|_
+
     mvwaddch( w_border, point( getmaxx( w_disp ) + 2 + getmaxx( w_list ),
                                getmaxy( w_mode ) + 2 + page_size ),
               LINE_XXOX );
@@ -3013,16 +3013,16 @@ void veh_interact::display_grid()
     wnoutrefresh( w_border );
 }
 
-/**
- * Draws the viewport with the vehicle.
- */
+
+
+
 void veh_interact::display_veh( map &here )
 {
     werase( w_disp );
     const point h_size = point( getmaxx( w_disp ), getmaxy( w_disp ) ) / 2;
 
     if( debug_mode ) {
-        // show CoM, pivot in debug mode
+
 
         const point_rel_ms &pivot = veh->pivot_point( here );
         const point_rel_ms &com = veh->local_center_of_mass( here );
@@ -3045,19 +3045,19 @@ void veh_interact::display_veh( map &here )
                   getmaxy( w_disp ) - std::max( 0, pivot_s.y() ) + 1 );
     }
 
-    // Draw guidelines to make current selection point more visible.
+
     mvwvline( w_disp, point( h_size.x, 0 ), c_dark_gray, LINE_XOXO, getmaxy( w_disp ) );
     mvwhline( w_disp, point( 0, h_size.y ), c_dark_gray, LINE_OXOX, getmaxx( w_disp ) );
 
     nc_color col_at_cursor = c_black;
     int sym_at_cursor = ' ';
-    //Iterate over structural parts so we only hit each square once
+
     for( const int structural_part_idx : veh->all_parts_at_location( vpart_location_structure ) ) {
         const vehicle_part &vp = veh->part( structural_part_idx );
         const vpart_display vd = veh->get_display_of_tile( vp.mount, false, false );
         const point_rel_ms q = ( vp.mount + cursor_vp_mount ).rotate( 3 );
 
-        if( q != point_rel_ms::zero ) { // cursor is not on this part
+        if( q != point_rel_ms::zero ) {
             mvwputch( w_disp, h_size + q.raw(), vd.color, vd.symbol_curses );
             continue;
         }
@@ -3125,9 +3125,9 @@ static std::string wheel_state_description( map &here, const vehicle &veh )
     return string_format( _( "Wheels: %s" ), wheel_status );
 }
 
-/**
- * Displays the vehicle's stats at the bottom of the window.
- */
+
+
+
 void veh_interact::display_stats( map &here ) const
 {
     werase( w_stats_1 );
@@ -3140,7 +3140,7 @@ void veh_interact::display_stats( map &here ) const
         wnoutrefresh( w_stats_3 );
     } );
 
-    // 3 * stats_h
+
     const int slots = 24;
     std::array<const catacurses::window *, slots> win;
     std::array<int, slots> row;
@@ -3155,15 +3155,15 @@ void veh_interact::display_stats( map &here ) const
 
     for( int i = 0; i < slots; i++ ) {
         if( i < stats_h ) {
-            // First column
+
             win[i] = &w_stats_1;
             row[i] = i;
         } else if( i < ( 2 * stats_h ) ) {
-            // Second column
+
             win[i] = &w_stats_2;
             row[i] = i - stats_h;
         } else {
-            // Third column
+
             win[i] = &w_stats_3;
             row[i] = i - 2 * stats_h;
         }
@@ -3198,7 +3198,7 @@ void veh_interact::display_stats( map &here ) const
                             vel_to_str( veh->max_ground_velocity( here, false ) ),
                             velocity_units( VU_VEHICLE ) );
             i += 1;
-            // TODO: extract accelerations units to its own function
+
             fold_and_print( *win[i], point( 0, row[i] ), getmaxx( *win[i] ), c_light_gray,
                             //~ /t means per turn
                             _( "Acceleration: <color_light_blue>%3s</color> %s/s" ),
@@ -3215,7 +3215,7 @@ void veh_interact::display_stats( map &here ) const
                             vel_to_str( veh->max_water_velocity( here, false ) ),
                             velocity_units( VU_VEHICLE ) );
             i += 1;
-            // TODO: extract accelerations units to its own function
+
             fold_and_print( *win[i], point( 0, row[i] ), getmaxx( *win[i] ), c_light_gray,
                             //~ /t means per turn
                             _( "Water acceleration: <color_light_blue>%3s</color> %s/s" ),
@@ -3236,7 +3236,7 @@ void veh_interact::display_stats( map &here ) const
                     format_volume( total_cargo - free_cargo ),
                     format_volume( total_cargo ), volume_units_abbr() );
     i += 1;
-    // Write the overall damage
+
     mvwprintz( *win[i], point( 0, row[i] ), c_light_gray, _( "Status: " ) );
     fold_and_print( *win[i], point( utf8_width( _( "Status: " ) ), row[i] ), getmaxx( *win[i] ),
                     total_durability_color, total_durability_text );
@@ -3247,15 +3247,15 @@ void veh_interact::display_stats( map &here ) const
     i += 1;
 
     if( install_info || remove_info ) {
-        // don't draw the second and third columns which would be overwritten by w_details
+
         return;
     }
 
-    // advance to next column if necessary
+
     i = std::max( i, stats_h );
 
-    //This lambda handles printing parts in the "Most damaged" and "Needs repair" cases
-    //for the veh_interact ui
+
+
     const auto print_part = [&]( const std::string & str, int slot, vehicle_part * pt ) {
         mvwprintz( *win[slot], point( 0, row[slot] ), c_light_gray, str );
         int iw = utf8_width( str ) + 1;
@@ -3266,7 +3266,7 @@ void veh_interact::display_stats( map &here ) const
     vehicle_part *mostDamagedPart = get_most_damaged_part();
     vehicle_part *most_repairable = get_most_repairable_part();
 
-    // Write the most damaged part
+
     if( mostDamagedPart && mostDamagedPart->damage_percent() ) {
         const std::string damaged_header = mostDamagedPart == most_repairable ?
                                            _( "Most damaged:" ) :
@@ -3276,7 +3276,7 @@ void veh_interact::display_stats( map &here ) const
         i += 1;
     }
 
-    // Write the part that needs repair the most.
+
     if( most_repairable && most_repairable != mostDamagedPart ) {
         const std::string needsRepair = _( "Needs repair:" );
         i += print_part( needsRepair, i, most_repairable );
@@ -3337,10 +3337,10 @@ void veh_interact::display_stats( map &here ) const
         i += 1;
     }
 
-    // advance to next column if necessary
+
     i = std::max( i, 2 * stats_h );
 
-    // Print fuel percentage & type name only if it fits in the window, 10 is width of "E...F 100%"
+
     veh->print_fuel_indicators( here, *win[i], point( 0, row[i] ), fuel_index, true,
                                 ( getmaxx( *win[i] ) > 10 ),
                                 ( getmaxx( *win[i] ) > 10 ) );
@@ -3379,9 +3379,9 @@ static std::string veh_act_desc( const input_context &ctxt, const std::string &i
     }
 }
 
-/**
- * Prints the list of usable commands, and highlights the hotkeys used to activate them.
- */
+
+
+
 void veh_interact::display_mode( const map &here )
 {
     werase( w_mode );
@@ -3447,13 +3447,13 @@ void veh_interact::display_mode( const map &here )
     wnoutrefresh( w_mode );
 }
 
-/**
- * Draws the list of parts that can be mounted in the selected square. Used
- * when installing new parts.
- * @param pos The current cursor position in the list.
- * @param list The list to display parts from.
- * @param header Number of lines occupied by the list header
- */
+
+
+
+
+
+
+
 void veh_interact::display_list( size_t pos, const std::vector<const vpart_info *> &list,
                                  const int header )
 {
@@ -3473,24 +3473,24 @@ void veh_interact::display_list( size_t pos, const std::vector<const vpart_info 
     if( install_info ) {
         auto &tab_list = install_info->tab_list;
         size_t &tab = install_info->tab;
-        // draw tab menu
+
         int tab_x = 0;
         for( size_t i = 0; i < tab_list.size(); i++ ) {
-            bool active = tab == i; // current tab is active
+            bool active = tab == i;
             std::string tab_name = active ? tab_list[i].name() : tab_list[i].short_name();
-            tab_x += active; // add a space before selected tab
+            tab_x += active;
             draw_subtab( w_list, tab_x, tab_name, active, false );
-            // one space padding and add a space after selected tab
+
             tab_x += 1 + utf8_width( tab_name ) + active;
         }
     }
     wnoutrefresh( w_list );
 }
 
-/**
- * Used when installing parts.
- * Opens up w_details containing info for part currently selected in w_list.
- */
+
+
+
+
 void veh_interact::display_details( const vpart_info *part )
 {
     const int details_w = getmaxx( w_details );
@@ -3503,18 +3503,18 @@ void veh_interact::display_details( const vpart_info *part )
         wnoutrefresh( w_details );
         return;
     }
-    // displays data in two columns
+
     int column_width = details_w / 2;
     int col_1 = 2;
     int col_2 = col_1 + column_width;
     int line = 0;
     bool small_mode = column_width < 20;
 
-    // TODO: show mod part comes from
-    // line 0: part name
+
+
     fold_and_print( w_details, point( col_1, line ), details_w, c_light_green, part->name() );
 
-    // line 1: (column 1) durability   (column 2) damage mod
+
     fold_and_print( w_details, point( col_1, line + 1 ), column_width, c_white,
                     "%s: <color_light_gray>%d</color>",
                     small_mode ? _( "Dur" ) : _( "Durability" ),
@@ -3524,7 +3524,7 @@ void veh_interact::display_details( const vpart_info *part )
                     small_mode ? _( "Dmg" ) : _( "Damage" ),
                     part->dmg_mod );
 
-    // line 2: (column 1) weight   (column 2) folded volume (if applicable)
+
     fold_and_print( w_details, point( col_1, line + 2 ), column_width, c_white,
                     "%s: <color_light_gray>%.1f%s</color>",
                     small_mode ? _( "Wgt" ) : _( "Weight" ),
@@ -3538,7 +3538,7 @@ void veh_interact::display_details( const vpart_info *part )
                         volume_units_abbr() );
     }
 
-    // line 3: (column 1) size, bonus, wheel diameter (if applicable)    (column 2) epower, wheel width (if applicable)
+
     if( part->size > 0_ml && part->has_flag( VPFLAG_CARGO ) ) {
         fold_and_print( w_details, point( col_1, line + 3 ), column_width, c_white,
                         "%s: <color_light_gray>%s %s</color>",
@@ -3572,7 +3572,7 @@ void veh_interact::display_details( const vpart_info *part )
     }
 
     if( part->has_flag( VPFLAG_WHEEL ) ) {
-        // Note: there is no guarantee that whl is non-empty!
+
         const cata::value_ptr<islot_wheel> &whl = item::find_type( part->base_item )->wheel;
         fold_and_print( w_details, point( col_1, line + 3 ), column_width, c_white,
                         "%s: <color_light_gray>%d\"</color>",
@@ -3591,9 +3591,9 @@ void veh_interact::display_details( const vpart_info *part )
                         units::to_watt( part->epower ) );
     }
 
-    // line 4 [horizontal]: fuel_type (if applicable)
-    // line 4 [vertical/hybrid]: (column 1) fuel_type (if applicable)    (column 2) power (if applicable)
-    // line 5 [horizontal]: power (if applicable)
+
+
+
     if( !part->fuel_type.is_null() ) {
         fold_and_print( w_details, point( col_1, line + 4 ), column_width,
                         c_white, _( "Charge: <color_light_gray>%s</color>" ),
@@ -3605,7 +3605,7 @@ void veh_interact::display_details( const vpart_info *part )
                         _( "Drain: <color_light_gray>%+8d</color>" ), -part_consumption );
     }
 
-    // line 5 [vertical/hybrid] flags
+
     std::vector<std::string> flags = { { "OPAQUE", "OPENABLE", "BOARDABLE" } };
     std::vector<std::string> flag_labels = { { _( "opaque" ), _( "openable" ), _( "boardable" ) } };
     std::string label;
@@ -3614,7 +3614,7 @@ void veh_interact::display_details( const vpart_info *part )
             label += ( label.empty() ? "" : " " ) + flag_labels[i];
         }
     }
-    // 6 [horizontal]: (column 1) flags    (column 2) battery capacity (if applicable)
+
     fold_and_print( w_details, point( col_1, line + 5 ), details_w, c_yellow, label );
 
     if( part->fuel_type == itype_battery && !part->has_flag( VPFLAG_ENGINE ) &&
@@ -3676,7 +3676,7 @@ void act_vehicle_siphon( map &here, vehicle *veh )
 {
     std::vector<itype_id> fuels;
     bool has_liquid = false;
-    // Check all tanks on this vehicle to see if they contain any liquid
+
     for( const vpart_reference &vp : veh->get_any_parts( VPFLAG_FLUIDTANK ) ) {
         if( vp.part().contains_liquid() ) {
             has_liquid = true;
@@ -3712,7 +3712,7 @@ void act_vehicle_unload_fuel( map &here, vehicle *veh )
         const itype *type = item::find_type( e.first );
 
         if( e.first == fuel_type_battery || type->phase != phase_id::SOLID ) {
-            // This skips battery and plutonium cells
+
             continue;
         }
         fuels.push_back( e.first );

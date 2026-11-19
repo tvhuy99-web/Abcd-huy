@@ -37,6 +37,6 @@ void setDebuggers( const std::set<std::string> &names );
 void addDebugger( const std::string &name );
 
 void setDefaults();
-} // namespace MAP_SHARING
+}
 
-#endif // CATA_SRC_MAPSHARING_H
+#endif

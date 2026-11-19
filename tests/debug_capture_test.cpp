@@ -50,10 +50,10 @@ TEST_CASE( "capture_ring_trimming", "[debug_capture]" )
         cap.push_debug_log( debugmode::DF_GAME, "msg " + std::to_string( i ) );
     }
     CHECK( cap.logs().size() == 5 );
-    // Ring is FIFO: oldest popped, last 5 retained.
+
     CHECK( cap.logs().front().text == "msg 15" );
     CHECK( cap.logs().back().text == "msg 19" );
-    // Restore default for other tests.
+
     cap.resize_log_ring( 2000 );
     cap.clear_logs();
 }
@@ -84,7 +84,7 @@ TEST_CASE( "capture_monitor_basic", "[debug_capture]" )
     const int id = cap.add_monitor( "test", [&counter]() {
         return std::to_string( ++counter );
     }, debug_menu::monitor_mode::every_turn );
-    // Adding takes initial snapshot (counter=1) but no log push.
+
     CHECK( cap.logs().empty() );
     cap.tick_monitors();
     CHECK( cap.logs().size() == 1 );
@@ -98,8 +98,8 @@ TEST_CASE( "capture_monitor_basic", "[debug_capture]" )
 
 TEST_CASE( "capture_jsonl_byte_counter_rebase_on_existing_file", "[debug_capture]" )
 {
-    // Write a placeholder file, then attach JSONL output to it -- the byte
-    // counter should reflect existing file size, not zero.
+
+
     const std::string path = "test_jsonl_rebase.jsonl";
     {
         std::ofstream pre( path, std::ios::trunc );
@@ -109,14 +109,14 @@ TEST_CASE( "capture_jsonl_byte_counter_rebase_on_existing_file", "[debug_capture
     }
     debug_menu::debug_capture &cap = debug_menu::debug_capture::instance();
     cap.settings().trace_file.path = path;
-    cap.settings().trace_file.rotate_mib = 100; // far above test size, won't rotate
+    cap.settings().trace_file.rotate_mib = 100;
     cap.settings().trace_file.enabled = true;
     cap.settings().trace_file.sources = { "log" };
     cap.settings().add_msg_debug_capture = true;
     cap.push_debug_log( debugmode::DF_GAME, "trigger open" );
     cap.flush_trace_file();
-    // Verify file size grew vs placeholder size (counter was rebased; new
-    // line appended).
+
+
     std::ifstream f( path, std::ios::ate );
     const auto sz = f.tellg();
     CHECK( sz > 100 );
@@ -128,10 +128,10 @@ TEST_CASE( "capture_jsonl_byte_counter_rebase_on_existing_file", "[debug_capture
 
 TEST_CASE( "capture_json_escape_produces_valid_json", "[debug_capture]" )
 {
-    // Control chars and non-ASCII become \uXXXX, so the result is a valid JSON
-    // string body once wrapped in quotes.
+
+
     SECTION( "non-ASCII is \\u-escaped, not emitted raw" ) {
-        // U+00E9 (e-acute) in UTF-8 is 0xC3 0xA9; EscapeString emits uppercase hex.
+
         const std::string in = "caf\xC3\xA9";
         const std::string out = debug_menu::capture_json_escape( in );
         CHECK( out == "caf\\u00E9" );
@@ -158,14 +158,14 @@ TEST_CASE( "capture_resize_feed_generation", "[debug_capture]" )
     }
     SECTION( "growing / keeping size leaves generation unchanged" ) {
         const uint64_t gen = cap.feed_generation();
-        cap.resize_log_ring( 100 ); // same
+        cap.resize_log_ring( 100 );
         CHECK( cap.feed_generation() == gen );
-        cap.resize_log_ring( 500 ); // grow, 10 entries kept
+        cap.resize_log_ring( 500 );
         CHECK( cap.feed_generation() == gen );
     }
     SECTION( "shrinking below the entry count bumps generation" ) {
         const uint64_t gen = cap.feed_generation();
-        cap.resize_log_ring( 4 ); // drops 6 entries
+        cap.resize_log_ring( 4 );
         CHECK( cap.feed_generation() > gen );
         CHECK( cap.logs().size() == 4 );
     }
@@ -187,16 +187,16 @@ TEST_CASE( "capture_trace_file_rotation", "[debug_capture]" )
     }
     debug_menu::debug_capture &cap = debug_menu::debug_capture::instance();
     cap.settings().trace_file.path = base;
-    cap.settings().trace_file.rotate_mib = 0; // rotate on the first append
+    cap.settings().trace_file.rotate_mib = 0;
     cap.settings().trace_file.enabled = true;
     cap.settings().trace_file.format = debug_menu::capture_format::jsonl;
     cap.settings().trace_file.sources = { "log" };
     cap.settings().add_msg_debug_capture = true;
-    // First append opens the file; with rotate_mib 0 the next append rotates.
+
     cap.push_debug_log( debugmode::DF_GAME, "first" );
     cap.push_debug_log( debugmode::DF_GAME, "second" );
     cap.flush_trace_file();
-    // base rolled to .1; no stray .tmp left behind.
+
     std::ifstream rolled( r1 );
     CHECK( rolled.good() );
     std::ifstream tmp( r2_tmp );

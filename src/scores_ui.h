@@ -4,4 +4,4 @@
 
 void show_scores_ui();
 
-#endif // CATA_SRC_SCORES_UI_H
+#endif

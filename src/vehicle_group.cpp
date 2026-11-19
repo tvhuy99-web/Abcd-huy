@@ -23,7 +23,7 @@ std::unordered_map<vgroup_id, VehicleGroup> vgroups;
 static std::unordered_map<vplacement_id, VehiclePlacement> vplacements;
 static std::unordered_map<vspawn_id, VehicleSpawn> vspawns;
 
-/** @relates string_id */
+
 template<>
 const VehicleGroup &string_id<VehicleGroup>::obj() const
 {
@@ -41,7 +41,7 @@ point_bub_ms VehicleLocation::pick_point() const
     return point_bub_ms( x.get(), y.get() );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<VehicleGroup>::is_valid() const
 {
@@ -194,9 +194,9 @@ void VehicleSpawn::load( const JsonObject &jo )
                 type.throw_error_at( "vehicle_function", "load_vehicle_spawn: unable to find builtin function" );
             }
 
-            // Use standard shared_ptr ownership for both derived spawn functions.
-            // GCC 16 incorrectly devirtualizes disposal through the non-atomic
-            // libstdc++ __shared_ptr<_S_single> control block used elsewhere.
+
+
+
             spawn.add( type.get_float( "weight" ), std::make_shared<VehicleFunction_builtin>(
                            builtin_functions[type.get_string( "vehicle_function" )] ) );
         } else {
@@ -252,7 +252,7 @@ static void builtin_parkinglot( map &m, std::string_view )
     }
 }
 
-} // namespace VehicleSpawnFunction
+}
 
 VehicleSpawn::FunctionMap VehicleSpawn::builtin_functions = {
     { "no_vehicles", VehicleSpawnFunction::builtin_no_vehicles },

@@ -19,9 +19,9 @@ TEST_CASE( "random_snippet_with_small_seed", "[text_snippets][rng]" )
         }
         prev_snip = snip;
     }
-    // Random snippets change at least 90% of the time when the seed has changed.
-    // This is a very weak requirement, but should rule out the possibility of
-    // using `std::minstd_rand0` with `std::uniform_int_distribution`.
+
+
+
     CHECK( snip_change >= ( seed_end - seed_start ) * 0.9 );
 }
 

@@ -37,6 +37,6 @@ void finalize();
 
 const std::vector<construction_group> &get_all();
 
-} // namespace construction_groups
+}
 
-#endif // CATA_SRC_CONSTRUCTION_GROUP_H
+#endif

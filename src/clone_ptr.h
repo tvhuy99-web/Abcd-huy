@@ -25,7 +25,7 @@ class clone_ptr
         }
         clone_ptr &operator=( clone_ptr && ) noexcept = default;
 
-        // implicit conversion from unique_ptr
+
         template<typename U>
         // NOLINTNEXTLINE(google-explicit-constructor)
         clone_ptr( std::unique_ptr<U> p ) : p_( std::move( p ) ) {}
@@ -66,6 +66,6 @@ class clone_ptr
         std::unique_ptr<T> p_;
 };
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_CLONE_PTR_H
+#endif

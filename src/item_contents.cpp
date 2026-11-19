@@ -53,7 +53,7 @@ class pocket_favorite_callback : public uilist_callback
 {
     private:
         std::vector<std::tuple<item_pocket *, int, uilist_entry *, item_location>> saved_pockets;
-        // whitelist or blacklist, for interactions
+
         bool whitelist = true;
         std::pair<item *, item_pocket *> item_to_move = { nullptr, nullptr };
 
@@ -61,7 +61,7 @@ class pocket_favorite_callback : public uilist_callback
 
         std::string uilist_text;
 
-        // items to create pockets for
+
         std::vector<item_location> to_organize;
 
         void move_item( uilist *menu, item_pocket *selected_pocket );
@@ -80,7 +80,7 @@ class pocket_favorite_callback : public uilist_callback
         }
         bool key( const input_context &, const input_event &event, int entnum, uilist *menu ) override;
 };
-} // namespace
+}
 
 void pocket_favorite_callback::refresh( uilist *menu )
 {
@@ -150,12 +150,12 @@ void pocket_favorite_callback::add_pockets( item_location il,
 {
     item &i = *il;
     if( i.get_container_pockets().empty() ) {
-        // if it doesn't have pockets skip it
+
         return;
     }
 
     pocket_selector.addentry( -1, false, '\0', string_format( "%s%s", depth, i.display_name() ) );
-    // pad list with empty entries for the items themselves
+
     saved_pockets.emplace_back( nullptr, 0, nullptr, item_location() );
 
     uilist_entry *item_entry = &pocket_selector.entries.back();
@@ -168,13 +168,13 @@ void pocket_favorite_callback::add_pockets( item_location il,
                                   temp,
                                   vol_to_info( "", "", it_pocket->contents_volume() ).sValue,
                                   vol_to_info( "", "", it_pocket->volume_capacity() ).sValue ) );
-        // pocket number is displayed from 1 stored from 0
+
         saved_pockets.emplace_back( it_pocket, pocket_num - 1, item_entry, il );
         pocket_num++;
 
-        // display the items
+
         for( item *it : it_pocket->all_items_top() ) {
-            // check for pockets in that pocket
+
             add_pockets( item_location( il, it ), pocket_selector, depth + "  " );
         }
     }
@@ -182,20 +182,20 @@ void pocket_favorite_callback::add_pockets( item_location il,
 
 void pocket_favorite_callback::refresh_columns( uilist *menu )
 {
-    // rebuild the list of rows can't fully clear or the menu will close
-    // clear all but one entry repopulate then delete that initial
+
+
     menu->entries.clear();
     saved_pockets.clear();
     for( const item_location &il : to_organize ) {
         add_pockets( il, *menu, "" );
     }
-    // there might be a better way to refresh this
+
     menu->setup();
 }
 
-/**
- * Return true, if item_pocket* needle is (eventually) in item* haystack.
- */
+
+
+
 static bool is_pocket_in_item( const item *haystack, const item_pocket *needle )
 {
     for( const item_pocket *pocket : haystack->get_standard_pockets() ) {
@@ -236,7 +236,7 @@ void pocket_favorite_callback::move_item( uilist *menu, item_pocket *selected_po
 
         if( selected_pocket->get_pocket_data()->_no_unload ) {
             popup( std::string( _( "Can't unload that." ) ), PF_GET_KEY );
-            // These make sure we exit back to the top level of the menu regardless of how the function was called.
+
             selector_menu.ret = -1;
             item_to_move = { nullptr, nullptr };
             refresh_columns( menu );
@@ -250,31 +250,31 @@ void pocket_favorite_callback::move_item( uilist *menu, item_pocket *selected_po
             menu->settext( string_format( "%s: %s", _( "Moving" ), item_to_move.first->display_name() ) );
             refresh_columns( menu );
 
-            // if we have an item already selected for moving update some info
+
             auto itt = saved_pockets.begin();
             for( uilist_entry &entry : menu->entries ) {
                 if( entry.enabled && !std::get<0>( *itt )->can_contain( *item_to_move.first ).success() ) {
                     entry.enabled = false;
                 }
 
-                // make sure we dont try to put anything in itself
+
                 if( entry.enabled && is_pocket_in_item( item_to_move.first, std::get<0>( *itt ) ) ) {
                     entry.enabled = false;
                 }
 
-                // parent can contain
+
                 if( entry.enabled
                     && !std::get<3>( *itt ).parents_can_contain_recursive( item_to_move.first ).success()
                   ) {
                     entry.enabled = false;
                 }
 
-                // move through the pockets as you process entries
+
                 ++itt;
             }
         }
     } else {
-        // If no pockets are enabled, uilist allows scrolling through them, so we need to recheck
+
         ret_val<item_pocket::contain_code> contain = selected_pocket->can_contain( *item_to_move.first );
 
         bool cant_reload = false;
@@ -285,13 +285,13 @@ void pocket_favorite_callback::move_item( uilist *menu, item_pocket *selected_po
         }
 
         if( contain.success() && !cant_reload ) {
-            // storage should mimick character inserting
+
             get_avatar().as_character()->store( selected_pocket, *item_to_move.first );
         } else {
             const std::string base_string = _( "Cannot put item in pocket because %s" );
             popup( string_format( base_string, cant_reload ? reload_fail : contain.str() ) );
         }
-        // reset the moved item
+
         item_to_move = { nullptr, nullptr };
 
         menu->settext( uilist_text );
@@ -428,7 +428,7 @@ bool pocket_favorite_callback::key( const input_context &ctxt, const input_event
 
         return true;
     } else if( action == "FAV_CATEGORY" ) {
-        // Get all categories and sort by name
+
         std::vector<item_category> all_cat = item_category::get_all();
         const cata::flat_set<item_category_id> &listed_cat = whitelist
                 ? selected_pocket->settings.get_category_whitelist()
@@ -468,7 +468,7 @@ bool pocket_favorite_callback::key( const input_context &ctxt, const input_event
                                         _( "Enter a preset name:" ) );
         const std::string &rval = popup.query();
         if( !popup.cancelled() ) {
-            // Check if already exists
+
             item_pocket::load_presets();
             if( item_pocket::has_preset( rval ) ) {
                 if( query_yn( _( "Preset already exists, overwrite?" ) ) ) {
@@ -638,7 +638,7 @@ bool item_contents::empty() const
     }
     for( const item_pocket &pocket : contents ) {
         if( pocket.is_type( pocket_type::MOD ) ) {
-            // item mods aren't really contents per se
+
             continue;
         }
         if( !pocket.empty() ) {
@@ -747,14 +747,14 @@ void item_contents::combine( const item_contents &read_input, const bool convert
                     }
                     continue;
                 } else if( pocket.is_type( pocket_type::MOD ) ) {
-                    // skipping mod type pocket because using combine this way requires mods to come first
-                    // and to call update_mod_pockets
+
+
                     ++pocket_index;
                     continue;
                 }
             } else {
                 if( pocket.saved_type() == pocket_type::MOD ) {
-                    // this is already handled in item_contents::read_mods
+
                     ++pocket_index;
                     continue;
                 } else if( pocket.saved_type() == pocket_type::MIGRATION ||
@@ -815,8 +815,8 @@ void item_contents::combine( const item_contents &read_input, const bool convert
 }
 
 struct item_contents::item_contents_helper {
-    // Static helper function to implement the const and non-const versions of
-    // find_pocket_for with less code duplication
+
+
     template<typename ItemContents>
     using item_pocket_type = std::conditional_t <
                              std::is_const_v<ItemContents>,
@@ -906,7 +906,7 @@ ret_val<item *> item_contents::insert_item( const item &it,
         pocket_type pk_type, bool ignore_contents, const bool unseal_pockets )
 {
     if( pk_type == pocket_type::LAST ) {
-        // LAST is invalid, so we assume it will be a regular container
+
         pk_type = pocket_type::CONTAINER;
     }
 
@@ -941,8 +941,8 @@ std::pair<item_location, item_pocket *> item_contents::best_pocket( const item &
         const bool nested, bool ignore_rigidity, bool allow_nested
                                                                   )
 {
-    // @TODO: this could be made better by doing a plain preliminary volume check.
-    // if the total volume of the parent is not sufficient, a child won't have enough either.
+
+
     std::pair<item_location, item_pocket *> ret = { this_loc, nullptr };
     std::vector<item_pocket *> valid_pockets;
     for( item_pocket &pocket : contents ) {
@@ -951,23 +951,23 @@ std::pair<item_location, item_pocket *> item_contents::best_pocket( const item &
         }
         if( !pocket.is_type( pocket_type::CONTAINER ) &&
             !( pocket.is_type( pocket_type::E_FILE_STORAGE ) && it.is_estorable_exclusive() ) ) {
-            // best pocket is for picking stuff up.
-            // containers are the only pockets that are available for such...
-            // unless it's an e-device spawning with contents; we can do this here because
-            // software items should never spawn outside a container
+
+
+
+
             continue;
         }
         if( !allow_sealed && pocket.sealed() ) {
-            // we don't want to unseal a pocket to put something in it automatically
-            // that needs to be something a player explicitly does
+
+
             continue;
         }
         if( allow_nested ) {
-            //if not allow check nested pockets ,it is no need to save valid pockets
+
             valid_pockets.emplace_back( &pocket );
         }
         if( !ignore_settings && !pocket.settings.accepts_item( it ) ) {
-            // Item forbidden by whitelist / blacklist
+
             continue;
         }
         if( !pocket.rigid() && (
@@ -977,10 +977,10 @@ std::pair<item_location, item_pocket *> item_contents::best_pocket( const item &
             ignore_rigidity = true;
         }
         if( ( !ignore_rigidity && nested && !pocket.rigid() ) || !pocket.can_contain( it ).success() ) {
-            // non-rigid nested pocket makes no sense, item should also be able to fit in parent.
+
             continue;
         }
-        if( ret.second == nullptr || ret.second->better_pocket( pocket, it, /*nested=*/nested ) ) {
+        if( ret.second == nullptr || ret.second->better_pocket( pocket, it, nested ) ) {
             ret.second = &pocket;
         }
     }
@@ -991,12 +991,12 @@ std::pair<item_location, item_pocket *> item_contents::best_pocket( const item &
                 pocket->best_pocket_in_contents( this_loc, it, avoid, allow_sealed, ignore_settings );
             if( !nested_content_pocket.second ||
                 ( !nested_content_pocket.second->rigid() && pocket->remaining_volume() < it.volume() ) ) {
-                // no nested pocket found, or the nested pocket is soft and the parent is full
+
                 continue;
             }
             if( parent_pkt_selected ) {
                 if( ret.second->better_pocket( *nested_content_pocket.second, it, true ) ) {
-                    // item is whitelisted in nested pocket, prefer that over parent pocket
+
                     ret = nested_content_pocket;
                 }
                 continue;
@@ -1098,7 +1098,7 @@ ret_val<void> item_contents::is_compatible( const item &it ) const
 {
     ret_val<void> ret = ret_val<void>::make_failure( _( "is not a container" ) );
     for( const item_pocket &pocket : contents ) {
-        // mod, migration, corpse, and software aren't regular pockets.
+
         if( !pocket.is_standard_type() ) {
             continue;
         }
@@ -1123,7 +1123,7 @@ ret_val<void> item_contents::can_contain_rigid( const item &it, int &copies_rema
 {
     ret_val<void> ret = ret_val<void>::make_failure( _( "is not a container" ) );
     for( const item_pocket &pocket : contents ) {
-        // Only count container in pickup_inventory_preset.
+
         if( ignore_non_container_pocket && !pocket.is_type( pocket_type::CONTAINER ) ) {
             continue;
         }
@@ -1172,11 +1172,11 @@ ret_val<void> item_contents::can_contain( const item &it, int &copies_remaining,
         if( pocket.is_forbidden() ) {
             continue;
         }
-        // Only count container in pickup_inventory_preset.
+
         if( ignore_non_container_pocket && !pocket.is_type( pocket_type::CONTAINER ) ) {
             continue;
         }
-        // mod, migration, corpse, and software aren't regular pockets.
+
         if( !pocket.is_standard_type() ) {
             continue;
         }
@@ -1193,10 +1193,10 @@ ret_val<void> item_contents::can_contain( const item &it, int &copies_remaining,
             return ret_val<void>::make_success();
         }
         int n = copies_remaining;
-        bool could_contain = pocket.can_contain( it, n, /*ignore_contents=*/true ).success();
+        bool could_contain = pocket.can_contain( it, n, true ).success();
         if( has_ret && !could_contain ) {
-            // This pocket could never contain the item, even if the pocket was emptied.
-            // So we would prefer to get the failure msg from another pocket which could potentially hold the item.
+
+
             continue;
         }
         ret = ret_val<void>::make_failure( pocket_contain_code.str() );
@@ -1256,7 +1256,7 @@ size_t item_contents::num_item_stacks() const
         if( pocket.is_type( pocket_type::MOD ) ||
             pocket.is_type( pocket_type::MAGAZINE_WELL ) ||
             pocket.is_type( pocket_type::CORPSE ) ) {
-            // mods and magazine wells aren't really a contained item, which this function gets
+
             continue;
         }
         num += pocket.size();
@@ -1346,14 +1346,14 @@ int item_contents::ammo_consume( int qty, map *here, const tripoint_bub_ms &pos,
             consumed += res;
         } else if( pocket.is_type( pocket_type::MAGAZINE ) ) {
             if( !pocket.empty() && pocket.front().is_fuel() && fuel_efficiency >= 0 ) {
-                // if using fuel instead of battery, everything is in kJ
-                // charges is going to be the energy needed over the energy in 1 unit of fuel * the efficiency of the generator
+
+
                 int charges_used = ceil( static_cast<float>( units::from_kilojoule( static_cast<std::int64_t>
                                          ( qty ) ).value() ) / (
                                              static_cast<float>( pocket.front().fuel_energy().value() ) * fuel_efficiency ) );
 
                 const int res = pocket.ammo_consume( charges_used );
-                //calculate the amount of energy generated
+
                 int energy_generated = res * units::to_kilojoule( pocket.front().fuel_energy() );
                 consumed += energy_generated;
                 qty -= energy_generated;
@@ -1781,7 +1781,7 @@ item &item_contents::first_item()
         if( pocket.empty() || !pocket.is_type( pocket_type::CONTAINER ) ) {
             continue;
         }
-        // the first item we come to is the only one.
+
         return pocket.front();
     }
     return null_item_reference();
@@ -1802,7 +1802,7 @@ const item &item_contents::first_item() const
         if( pocket.empty() || !pocket.is_type( pocket_type::CONTAINER ) ) {
             continue;
         }
-        // the first item we come to is the only one.
+
         return pocket.front();
     }
 
@@ -1897,7 +1897,7 @@ content_newness item_contents::get_content_newness( const std::set<itype_id> &re
 {
     content_newness ret = content_newness::SEEN;
     for( const item_pocket *pocket : get_standard_pockets() ) {
-        // taking transparent from item_contents::all_known_contents()
+
         if( !pocket->transparent() ) {
             ret = content_newness::MIGHT_BE_HIDDEN;
             continue;
@@ -2180,15 +2180,15 @@ void item_contents::update_modified_pockets(
 
             const pocket_data *current = pocket.get_pocket_data();
             bool found = false;
-            // this loop is to make sure the pockets on the current item are already here from @container_pockets,
-            // so we don't need to clear them (saving the favorite data)
+
+
             for( auto container_pocket = container_pockets.begin(); container_pocket != container_pockets.end();
                ) {
-                // comparing pointers because each pocket is uniquely defined in json as its own.
+
                 if( *container_pocket == current ) {
                     container_pocket = container_pockets.erase( container_pocket );
                     found = true;
-                    // there will not be more than one pocket with the same pocket_data pointer, so exit early
+
                     break;
                 } else {
                     ++container_pocket;
@@ -2197,7 +2197,7 @@ void item_contents::update_modified_pockets(
 
             if( !found ) {
                 if( !pocket.empty() ) {
-                    // in case the debugmsg wasn't clear, this should never happen
+
                     debugmsg( "Oops!  deleted some items when updating pockets that were added via toolmods" );
                 }
                 pocket_iter = contents.erase( pocket_iter );
@@ -2229,7 +2229,7 @@ void item_contents::update_modified_pockets(
         }
     }
 
-    // we've deleted all of the superfluous copies already, so time to add the new pockets
+
     for( const pocket_data *container_pocket : container_pockets ) {
         contents.emplace_back( container_pocket );
     }
@@ -2408,10 +2408,10 @@ void item_contents::add_pocket( const item &pocket_item )
     units::volume effective_nonrigid_volume = 0_ml;
     for( const item_pocket *i_pocket : pocket_item.get_container_pockets() ) {
 
-        // need to insert before the end since the final pocket is the migration pocket
+
         contents.insert( --contents.end(), *i_pocket );
-        // these pockets should fallback to using the item name as a description
-        // need to update it once it's stored in the contents list
+
+
         ( ++contents.rbegin() )->name_as_description = true;
         total_nonrigid_volume += i_pocket->volume_capacity();
         effective_nonrigid_volume += ( i_pocket->volume_capacity() - i_pocket->magazine_well() ) *
@@ -2427,16 +2427,16 @@ void item_contents::add_pocket( const item &pocket_item )
 
 item item_contents::remove_pocket( int index )
 {
-    // start at the first pocket
+
     auto rit = contents.rbegin();
 
-    // find the pockets to remove from the item
+
     for( int i = additional_pockets.size() - 1; i >= index; --i ) {
-        // move the iterator past all the pockets we aren't removing
+
         std::advance( rit, additional_pockets[i].get_container_pockets().size() );
     }
 
-    // at this point reversed past the pockets we want to get rid of so now start going forward
+
     auto it = std::next( rit ).base();
     units::volume total_nonrigid_volume = 0_ml;
     units::volume effective_nonrigid_volume = 0_ml;
@@ -2445,19 +2445,19 @@ item item_contents::remove_pocket( int index )
         effective_nonrigid_volume += ( i_pocket->volume_capacity() - i_pocket->magazine_well() ) *
                                      i_pocket->get_pocket_data()->volume_encumber_modifier;
 
-        // move items from the consolidated pockets to the item that will be returned
+
         for( const item *item_to_move : it->all_items_top() ) {
             i_pocket->add( *item_to_move );
         }
 
-        // finally remove the pocket data
+
         contents.erase( it++ );
     }
     additional_pockets_volume -= total_nonrigid_volume;
     additional_pockets_effective_volume -= effective_nonrigid_volume;
     additional_pockets_space_used -= additional_pockets[index].get_pocket_size();
 
-    // create a copy of the item to return and delete the old items entry
+
     item it_return( additional_pockets[index] );
     additional_pockets.erase( additional_pockets.begin() + index );
 
@@ -2470,16 +2470,16 @@ const item_pocket *item_contents::get_added_pocket( int index ) const
         return nullptr;
     }
 
-    // start at the first pocket
+
     auto rit = contents.rbegin();
 
-    // find the pockets to remove from the item
+
     for( int i = additional_pockets.size() - 1; i >= index; --i ) {
-        // move the iterator past all the pockets we aren't removing
+
         std::advance( rit, additional_pockets[i].get_container_pockets().size() );
     }
 
-    // at this point reversed past the pockets we want to get rid of so now start going forward
+
     auto it = std::next( rit ).base();
 
     return &*it;
@@ -2487,7 +2487,7 @@ const item_pocket *item_contents::get_added_pocket( int index ) const
 
 bool item_contents::has_additional_pockets() const
 {
-    // if there are additional pockets return true
+
     return !additional_pockets.empty();
 }
 
@@ -2621,7 +2621,7 @@ units::volume item_contents::volume_capacity_recursive( const
         units::volume pocket_adds_capacity = 0_ml;
         if( include_pocket( *pocket ) ) {
             pocket_adds_capacity = pocket_capacity;
-            // assume child pockets can't be larger than their parent pocket
+
             ret += pocket_adds_capacity;
         } else {
             units::volume nested_capacity = 0_ml;
@@ -2632,7 +2632,7 @@ units::volume item_contents::volume_capacity_recursive( const
             }
             units::volume rigid_child_capacity = nested_capacity - nested_expansion;
             units::volume pocket_adds_capacity = std::min( pocket_capacity,
-                                                 nested_expansion ); //the pocket can't be used directly, but it's children can expand into it
+                                                 nested_expansion );
 
             ret += pocket_adds_capacity + rigid_child_capacity;
         }
@@ -2681,10 +2681,10 @@ units::volume item_contents::remaining_volume_recursive( const
                                       nested_expansion );
         }
         units::volume nested_void_space = nested_remaining_space -
-                                          nested_expansion; // free space 'trapped' in rigid pockets
+                                          nested_expansion;
         units::volume this_pocket_space = std::max(
-                                              include_pocket( *pocket ) ? pocket_remaining_space : 0_ml, //the pocket counts directly, or
-                                              std::min( pocket_remaining_space, nested_expansion ) //the pocket's children can expand into it
+                                              include_pocket( *pocket ) ? pocket_remaining_space : 0_ml,
+                                              std::min( pocket_remaining_space, nested_expansion )
                                           );
 
         ret += this_pocket_space + nested_void_space;
@@ -2798,14 +2798,14 @@ float item_contents::relative_encumbrance() const
         if( pocket.rigid() ) {
             continue;
         }
-        // need to modify by pockets volume encumbrance modifier since some pockets may have less effect than others
+
         float modifier = pocket.get_pocket_data()->volume_encumber_modifier;
         nonrigid_volume += std::max( 0_ml,
                                      ( pocket.contents_volume() - pocket.magazine_well() ) ) * modifier;
         nonrigid_max_volume += ( pocket.volume_capacity() - pocket.magazine_well() ) * modifier;
     }
     if( nonrigid_volume > nonrigid_max_volume ) {
-        // volume exceeds capacity and will spill until 1 or lower if picked up, so assume 1
+
         return 1;
     }
     if( nonrigid_max_volume == 0_ml ) {
@@ -2888,7 +2888,7 @@ void item_contents::info( std::vector<iteminfo> &info, const iteminfo_query *par
     int pocket_number = 1;
     std::vector<iteminfo> contents_info;
     std::vector<item_pocket> found_pockets;
-    std::map<int, int> pocket_num; // index, amount
+    std::map<int, int> pocket_num;
     const bool describe_contents = parts->test( iteminfo_parts::DESCRIPTION_CONTENTS );
     for( const item_pocket &pocket : contents ) {
         if( pocket.is_type( pocket_type::CONTAINER ) ) {
@@ -2912,7 +2912,7 @@ void item_contents::info( std::vector<iteminfo> &info, const iteminfo_query *par
         }
     }
     if( parts->test( iteminfo_parts::DESCRIPTION_POCKETS ) ) {
-        // start by saying what items are attached to this directly
+
         if( !additional_pockets.empty() ) {
             info.emplace_back( "CONTAINER", _( "<bold>This item incorporates</bold>:" ) );
             for( const item &it : additional_pockets ) {
@@ -2922,7 +2922,7 @@ void item_contents::info( std::vector<iteminfo> &info, const iteminfo_query *par
             info.back().bNewLine = true;
         }
 
-        // If multiple pockets and/or multiple kinds of pocket, show total capacity section
+
         units::volume capacity = volume_capacity();
         units::mass weight = total_container_weight_capacity();
         if( ( found_pockets.size() > 1 || pocket_num[0] > 1 ) && capacity > 0_ml && weight > 0_gram ) {
@@ -2941,20 +2941,20 @@ void item_contents::info( std::vector<iteminfo> &info, const iteminfo_query *par
                 continue;
             }
             insert_separation_line( info );
-            // If there are multiple similar pockets, show their capacity as a set
+
             if( pocket_num[idx] > 1 ) {
                 std::vector<int> pocket_numbers( pocket_num[idx] );
                 std::iota( pocket_numbers.begin(), pocket_numbers.end(), pocket_number );
                 std::string pocket_numbers_enumeration = enumerate_as_string( pocket_numbers.begin(),
                 pocket_numbers.end(), []( int n ) {
-                    // std::to_string is not addressable, can't be passed directly
+
                     return std::to_string( n );
                 } );
                 info.emplace_back( "DESCRIPTION", string_format( _( "<bold>Pockets %s</bold>" ),
                                    pocket_numbers_enumeration ) );
             } else {
-                // If this is the only pocket the item has, label it "Total capacity"
-                // Otherwise, give it a generic "Pocket" heading (is one of several pockets)
+
+
                 bool only_one_pocket = ( found_pockets.size() == 1 && pocket_num[0] == 1 );
                 if( only_one_pocket ) {
                     info.emplace_back( "DESCRIPTION", _( "<bold>Total capacity</bold>:" ) );
@@ -3010,7 +3010,7 @@ void pocket_management_menu( const std::string &title,
         { "FAV_DEL_PRESET", translation() },
         { "FAV_WHITELIST_CONTENTS", translation() }
     };
-    // Override CONFIRM with FAV_CONTEXT_MENU
+
     pocket_selector.allow_confirm = false;
     pocket_selector.allow_additional = true;
 

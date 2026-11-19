@@ -24,7 +24,7 @@ struct enum_traits<aim_exit> {
     static constexpr aim_exit last = aim_exit::last;
 };
 
-// be explicit with the values
+
 enum class aim_entry : int {
     START     = 0,
     VEHICLE   = 1,
@@ -75,19 +75,19 @@ struct enum_traits<bionic_ui_sort_mode> {
 };
 
 enum class veh_spawn_status : int {
-    DEFAULT_LIGHT_DMG = -1, // light damage (DEFAULT)
-    UNDAMAGED = 0, // Undamaged
-    DISABLED = 1, // disabled: destroyed seats, controls, tanks, tires, OR engine
-    PRISTINE = 2, // undamaged with no faults or security
+    DEFAULT_LIGHT_DMG = -1,
+    UNDAMAGED = 0,
+    DISABLED = 1,
+    PRISTINE = 2,
     LAST = 3
 };
 
-// default is sorting by distance
+
 enum class surroundings_menu_sort_flags : int {
     DEFAULT       = 0,
     NAME          = 1 << 0,
     CATEGORY      = 1 << 1,
-    CATEGORY_NAME = NAME | CATEGORY, // this is currently needed to cycle through the option
+    CATEGORY_NAME = NAME | CATEGORY,
     count
 };
 
@@ -98,7 +98,7 @@ struct enum_traits<surroundings_menu_sort_flags> {
     static constexpr bool is_flag_enum = true;
 };
 
-// When bool is not enough. NONE, SOME or ALL
+
 enum class trinary : int {
     NONE = 0,
     SOME = 1,
@@ -129,7 +129,7 @@ enum class temperature_flag : int {
     ROOT_CELLAR
 };
 
-//Used for autopickup and safemode rules
+
 enum class rule_state : int {
     NONE,
     WHITELISTED,
@@ -145,26 +145,26 @@ enum class visibility_type : int {
     BOOMER_DARK
 };
 
-// Matching rules for comparing a string to an overmap terrain id.
+
 enum class ot_match_type : int {
-    // The provided string must completely match the overmap terrain id, including
-    // linear direction suffixes for linear terrain types or rotation suffixes
-    // for rotated terrain types.
+
+
+
     exact,
-    // The provided string must completely match the base type id of the overmap
-    // terrain id, which means that suffixes for rotation and linear terrain types
-    // are ignored.
+
+
+
     type,
-    // The provided string must completely match the base type id of the overmap
-    // terrain id as well as the linear subtype.
+
+
     subtype,
-    // The provided string must be a complete prefix (with additional parts delimited
-    // by an underscore) of the overmap terrain id. For example, "forest" will match
-    // "forest" or "forest_thick" but not "forestcabin".
+
+
+
     prefix,
-    // The provided string must be contained within the overmap terrain id, but may
-    // occur at the beginning, end, or middle and does not have any rules about
-    // underscore delimiting.
+
+
+
     contains,
     num_ot_match_type
 };
@@ -177,13 +177,13 @@ struct enum_traits<ot_match_type> {
 using accessor_flags = int;
 
 enum accessor_flags_ {
-    Access_None                       = 0,           // You probably don't want to use this!
-    Access_Inventory                  = 1 << 0,      // Only character's inventory
-    Access_Map_Around                 = 1 << 1,      // Items in radius PICKUP_RANGE around character (only reachable)
-    Access_Map_Current_Z              = 1 << 2,      // Everything on the current z-level (ignores reachability)
-    Access_Map_All                    = 1 << 3,      // Everything on the map, all z-levels (ignores reachability)
-    Access_Vehicle                    = 1 << 4,      // Everything on vehicles in the bubble *owned by that guy's faction* (ignores reachability)
-    Access_EVERYTHING                 = Access_Inventory | Access_Map_All | Access_Vehicle      // All of the above
+    Access_None                       = 0,
+    Access_Inventory                  = 1 << 0,
+    Access_Map_Around                 = 1 << 1,
+    Access_Map_Current_Z              = 1 << 2,
+    Access_Map_All                    = 1 << 3,
+    Access_Vehicle                    = 1 << 4,
+    Access_EVERYTHING                 = Access_Inventory | Access_Map_All | Access_Vehicle
 };
 
 enum class special_game_type : int {
@@ -194,48 +194,48 @@ enum class special_game_type : int {
 
 enum art_effect_passive : int {
     AEP_NULL = 0,
-    // Good
-    AEP_STR_UP, // Strength + 4
-    AEP_DEX_UP, // Dexterity + 4
-    AEP_PER_UP, // Perception + 4
-    AEP_INT_UP, // Intelligence + 4
-    AEP_ALL_UP, // All stats + 2
-    AEP_SPEED_UP, // +20 speed
-    AEP_PBLUE, // Reduces radiation
-    AEP_SNAKES, // Summons friendly snakes when you're hit
-    AEP_INVISIBLE, // Makes you invisible
-    AEP_CLAIRVOYANCE, // See through walls
-    AEP_SUPER_CLAIRVOYANCE, // See through walls to a great distance
-    AEP_STEALTH, // Your steps are quieted
-    AEP_EXTINGUISH, // May extinguish nearby flames
-    AEP_GLOW, // Four-tile light source
-    AEP_PSYSHIELD, // Protection from fear paralyze attack
-    AEP_RESIST_ELECTRICITY, // Protection from electricity
-    AEP_CARRY_MORE, // Increases carrying capacity by 200
-    AEP_SAP_LIFE, // Killing non-zombie monsters may heal you
-    AEP_FUN, // Slight passive morale
-    // Splits good from bad
+
+    AEP_STR_UP,
+    AEP_DEX_UP,
+    AEP_PER_UP,
+    AEP_INT_UP,
+    AEP_ALL_UP,
+    AEP_SPEED_UP,
+    AEP_PBLUE,
+    AEP_SNAKES,
+    AEP_INVISIBLE,
+    AEP_CLAIRVOYANCE,
+    AEP_SUPER_CLAIRVOYANCE,
+    AEP_STEALTH,
+    AEP_EXTINGUISH,
+    AEP_GLOW,
+    AEP_PSYSHIELD,
+    AEP_RESIST_ELECTRICITY,
+    AEP_CARRY_MORE,
+    AEP_SAP_LIFE,
+    AEP_FUN,
+
     AEP_SPLIT,
-    // Bad
-    AEP_HUNGER, // Increases hunger
-    AEP_THIRST, // Increases thirst
-    AEP_SMOKE, // Emits smoke occasionally
-    AEP_EVIL, // Addiction to the power
-    AEP_SCHIZO, // Mimicks schizophrenia
-    AEP_RADIOACTIVE, // Increases your radiation
-    AEP_MUTAGENIC, // Mutates you slowly
-    AEP_ATTENTION, // Draws netherworld attention slowly
-    AEP_STR_DOWN, // Strength - 3
-    AEP_DEX_DOWN, // Dex - 3
-    AEP_PER_DOWN, // Per - 3
-    AEP_INT_DOWN, // Int - 3
-    AEP_ALL_DOWN, // All stats - 2
-    AEP_SPEED_DOWN, // -20 speed
-    AEP_FORCE_TELEPORT, // Occasionally force a teleport
-    AEP_MOVEMENT_NOISE, // Makes noise when you move
-    AEP_BAD_WEATHER, // More likely to experience bad weather
-    AEP_SICK, // Decreases health over time
-    AEP_CLAIRVOYANCE_PLUS, // See through walls to a larger distance; not bad effect, placement to preserve old saves.
+
+    AEP_HUNGER,
+    AEP_THIRST,
+    AEP_SMOKE,
+    AEP_EVIL,
+    AEP_SCHIZO,
+    AEP_RADIOACTIVE,
+    AEP_MUTAGENIC,
+    AEP_ATTENTION,
+    AEP_STR_DOWN,
+    AEP_DEX_DOWN,
+    AEP_PER_DOWN,
+    AEP_INT_DOWN,
+    AEP_ALL_DOWN,
+    AEP_SPEED_DOWN,
+    AEP_FORCE_TELEPORT,
+    AEP_MOVEMENT_NOISE,
+    AEP_BAD_WEATHER,
+    AEP_SICK,
+    AEP_CLAIRVOYANCE_PLUS,
 
     NUM_AEPS
 };
@@ -247,21 +247,21 @@ struct enum_traits<art_effect_passive> {
 
 enum artifact_natural_property {
     ARTPROP_NULL,
-    ARTPROP_WRIGGLING, //
-    ARTPROP_GLOWING, //
-    ARTPROP_HUMMING, //
-    ARTPROP_MOVING, //
-    ARTPROP_WHISPERING, //
-    ARTPROP_BREATHING, //
-    ARTPROP_DEAD, //
-    ARTPROP_ITCHY, //
-    ARTPROP_GLITTERING, //
-    ARTPROP_ELECTRIC, //
-    ARTPROP_SLIMY, //
-    ARTPROP_ENGRAVED, //
-    ARTPROP_CRACKLING, //
-    ARTPROP_WARM, //
-    ARTPROP_RATTLING, //
+    ARTPROP_WRIGGLING,
+    ARTPROP_GLOWING,
+    ARTPROP_HUMMING,
+    ARTPROP_MOVING,
+    ARTPROP_WHISPERING,
+    ARTPROP_BREATHING,
+    ARTPROP_DEAD,
+    ARTPROP_ITCHY,
+    ARTPROP_GLITTERING,
+    ARTPROP_ELECTRIC,
+    ARTPROP_SLIMY,
+    ARTPROP_ENGRAVED,
+    ARTPROP_CRACKLING,
+    ARTPROP_WARM,
+    ARTPROP_RATTLING,
     ARTPROP_SCALED,
     ARTPROP_FRACTAL,
     ARTPROP_MAX
@@ -281,22 +281,22 @@ struct enum_traits<phase_id> {
     static constexpr phase_id last = phase_id::num_phases;
 };
 
-// Return the class an in-world object uses to interact with the world.
-//   ex; if ( player.grab_type == object_type::VEHICLE ) { ...
-//   or; if ( baseactor_just_shot_at.object_type() == object_type::NPC ) { ...
+
+
+
 enum class object_type : int {
-    NONE,      // Nothing, invalid.
-    ITEM,      // item.h
-    ACTOR,     // potential virtual base class, get_object_type() would return one of the types below
-    PLAYER,  // player.h, npc.h
-    NPC,   // nph.h
-    MONSTER, // monster.h
-    VEHICLE,   // vehicle.h
-    TRAP,      // trap.h
-    FIELD,     // field.h; field_entry
-    TERRAIN,   // Not a real object
-    FURNITURE, // Not a real object
-    FURNITURE_ON_VEHICLE, // least real
+    NONE,
+    ITEM,
+    ACTOR,
+    PLAYER,
+    NPC,
+    MONSTER,
+    VEHICLE,
+    TRAP,
+    FIELD,
+    TERRAIN,
+    FURNITURE,
+    FURNITURE_ON_VEHICLE,
     NUM_OBJECT_TYPES,
 };
 
@@ -314,31 +314,31 @@ enum class liquid_target_type : int {
     MONSTER = 4
 };
 
-/**
- *  Possible layers that a piece of clothing/armor can occupy
- *
- *  Every piece of clothing occupies one distinct layer on the body-part that
- *  it covers.  This is used for example by @ref Character to calculate
- *  encumbrance values, @ref player to calculate time to wear/remove the item,
- *  and by @ref profession to place the characters' clothing in a sane order
- *  when starting the game.
- */
+
+
+
+
+
+
+
+
+
 enum class layer_level : int {
-    /* "Personal effects" layer, corresponds to PERSONAL flag */
+
     PERSONAL = 0,
-    /* "Close to skin" layer, corresponds to SKINTIGHT flag. */
+
     SKINTIGHT,
-    /* "Normal" layer, default if no flags set, also if NORMAL flag is used*/
+
     NORMAL,
-    /* "Waist" layer, corresponds to WAIST flag. */
+
     WAIST,
-    /* "Outer" layer, corresponds to OUTER flag. */
+
     OUTER,
-    /* "Strapped" layer, corresponds to BELTED flag */
+
     BELTED,
-    /* "Aura" layer, corresponds to AURA flag */
+
     AURA,
-    /* Not a valid layer; used for C-style iteration through this enum */
+
     NUM_LAYER_LEVELS
 };
 
@@ -353,7 +353,7 @@ inline layer_level &operator++( layer_level &l )
     return l;
 }
 
-/** Possible reasons to interrupt an activity. */
+
 enum class distraction_type : int {
     noise,
     pain,
@@ -383,19 +383,19 @@ struct enum_traits<distraction_type> {
 };
 
 enum game_message_type : int {
-    m_good,    /* something good happened to the player character, e.g. health boost, increasing in skill */
-    m_bad,      /* something bad happened to the player character, e.g. damage, decreasing in skill */
-    m_mixed,   /* something happened to the player character which is mixed (has good and bad parts),
-                  e.g. gaining a mutation with mixed effect*/
-    m_warning, /* warns the player about a danger. e.g. enemy appeared, an alarm sounds, noise heard. */
-    m_info,    /* informs the player about something, e.g. on examination, seeing an item,
-                  about how to use a certain function, etc. */
-    m_neutral,  /* neutral or indifferent events which aren't informational or nothing really happened e.g.
-                  a miss, a non-critical failure. May also effect for good or bad effects which are
-                  just very slight to be notable. This is the default message type. */
+    m_good,
+    m_bad,
+    m_mixed,
 
-    m_debug, /* only shown when debug_mode is true */
-    /* custom SCT colors */
+    m_warning,
+    m_info,
+
+    m_neutral,
+
+
+
+    m_debug,
+
     m_headshot,
     m_critical,
     m_grazing,
@@ -408,14 +408,14 @@ struct enum_traits<game_message_type> {
 };
 
 enum game_message_flags {
-    /* No specific game message flags */
+
     gmf_none = 0,
-    /* Allow the message to bypass message cooldown. */
+
     gmf_bypass_cooldown = 1,
 };
 
-/** Structure allowing a combination of `game_message_type` and `game_message_flags`.
- */
+
+
 struct game_message_params {
     // NOLINTNEXTLINE(google-explicit-constructor)
     game_message_params( const game_message_type message_type ) : type( message_type ),
@@ -423,9 +423,9 @@ struct game_message_params {
     game_message_params( const game_message_type message_type,
                          const game_message_flags message_flags ) : type( message_type ), flags( message_flags ) {}
 
-    /* Type of the message */
+
     game_message_type type;
-    /* Flags pertaining to the message */
+
     game_message_flags flags;
 };
 
@@ -514,15 +514,15 @@ struct enum_traits<aggregate_type> {
 };
 
 enum class link_state : int {
-    no_link = 0,     // No connection, the default state
-    needs_reeling,   // Cable has been disconnected and needs to be manually reeled in before it can be used again
-    ups,             // Linked to a UPS the cable holder is holding
-    solarpack,       // Linked to a solarpack the cable holder is wearing
-    vehicle_port,    // Linked to a vehicle's cable ports / electrical controls or an appliance
-    vehicle_battery, // Linked to a vehicle's battery or an appliance
-    bio_cable,       // Linked to the cable holder's cable system bionic - source if connected to a vehicle, target otherwise
-    vehicle_tow,     // Linked to a valid tow point on a vehicle - source if it's the towing vehicle, target if the towed one
-    automatic,       // Use in link_to() to automatically set the type of connection based on the connected vehicle part. Is always true as a link_has_states() parameter.
+    no_link = 0,
+    needs_reeling,
+    ups,
+    solarpack,
+    vehicle_port,
+    vehicle_battery,
+    bio_cable,
+    vehicle_tow,
+    automatic,
     last
 };
 template<>
@@ -537,27 +537,27 @@ enum mut_count_type {
 };
 
 enum class bp_type {
-    // this is where helmets go, and is a vital part.
+
     head,
-    // the torso is generally the center of mass of a creature
+
     torso,
-    // provides sight
+
     sensor,
-    // you eat and scream with this
+
     mouth,
-    // may manipulate objects to some degree, is a main part
+
     arm,
-    // manipulates objects. usually is not a main part.
+
     hand,
-    // provides motive power
+
     leg,
-    // helps with balance. usually is not a main part
+
     foot,
-    // may reduce fall damage
+
     wing,
-    // may provide balance or manipulation
+
     tail,
-    // more of a general purpose limb, such as horns.
+
     other,
     num_types
 };
@@ -579,14 +579,14 @@ struct enum_traits<surroundings_menu_tab_enum> {
     static constexpr surroundings_menu_tab_enum last = surroundings_menu_tab_enum::num_tabs;
 };
 
-// remaining capacity return value, see item::get_remaining_capacity_for_liquid()
+
 enum class rem_cap_return {
     SUCCESS,
     NO_SPACE,
     NO_SPACE_IN_PARENT,
-    BUCKET_FAIL, // when item is bucket, and is not on ground/held
+    BUCKET_FAIL,
     ANOTHER_LIQUID_INSIDE,
     LAST
 };
 
-#endif // CATA_SRC_ENUMS_H
+#endif

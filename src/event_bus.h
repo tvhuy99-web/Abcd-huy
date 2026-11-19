@@ -36,4 +36,4 @@ class event_bus
 
 event_bus &get_event_bus();
 
-#endif // CATA_SRC_EVENT_BUS_H
+#endif

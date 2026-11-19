@@ -22,7 +22,7 @@ class vehicle_cursor : public visitable
         std::ptrdiff_t part;
         bool ignore_vpart;
 
-        // inherited from visitable
+
         bool has_quality( const quality_id &qual, int level = 1, int qty = 1 ) const override;
         int max_quality( const quality_id &qual ) const override;
         VisitResponse visit_items( const std::function<VisitResponse( const item_location & )> &func ) const
@@ -41,28 +41,28 @@ class vehicle_selector : public visitable
         using reference = std::vector<value_type>::reference;
         using const_reference = std::vector<value_type>::const_reference;
 
-        /**
-         *  Constructs vehicle_selector used for querying items located on vehicle tiles
-         *  @param pos map position at which to start each query which may or may not contain vehicle
-         *  @param radius number of adjacent tiles to include (searching from pos outwards)
-         *  @param accessible whether found items must be accessible from pos to be considered
-         *  @param visibility_only accessibility based on line of sight, not walkability
-         */
+
+
+
+
+
+
+
         explicit vehicle_selector( map &here,  const tripoint_bub_ms &pos, int radius = 0,
                                    bool accessible = true,
                                    bool visibility_only = false );
 
-        /**
-         *  Constructs vehicle_selector used for querying items located on vehicle tiles
-         *  @param pos map position at which to start each query which may or may not contain vehicle
-         *  @param radius number of adjacent tiles to include (searching from pos outwards)
-         *  @param accessible whether found items must be accessible from pos to be considered
-         *  @param ignore don't include this vehicle as part of the selection
-         */
+
+
+
+
+
+
+
         vehicle_selector( map &here, const tripoint_bub_ms &pos, int radius, bool accessible,
                           const vehicle &ignore );
 
-        // similar to item_location you are not supposed to store this class between turns
+
         vehicle_selector( const vehicle_selector &that ) = delete;
         vehicle_selector &operator=( const vehicle_selector & ) = delete;
         vehicle_selector( vehicle_selector && ) = default;
@@ -101,7 +101,7 @@ class vehicle_selector : public visitable
             return data.back();
         }
 
-        //inherited from visitable
+
         bool has_quality( const quality_id &qual, int level = 1, int qty = 1 ) const override;
         int max_quality( const quality_id &qual ) const override;
         VisitResponse visit_items( const std::function<VisitResponse( const item_location & )> &func ) const
@@ -113,4 +113,4 @@ class vehicle_selector : public visitable
         std::vector<value_type> data;
 };
 
-#endif // CATA_SRC_VEHICLE_SELECTOR_H
+#endif

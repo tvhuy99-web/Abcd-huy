@@ -12,7 +12,7 @@
 #include "type_id.h"
 #include "value_ptr.h"
 
-// Character "edible rating" tests, covering the `can_eat` and `will_eat` functions
+
 static const efftype_id effect_nausea( "nausea" );
 
 static const itype_id itype_apple( "apple" );
@@ -70,8 +70,8 @@ static void expect_cannot_eat( avatar &dummy, item &food, const std::string &exp
 static void expect_will_eat( avatar &dummy, item &food, const std::string &expect_consequence,
                              int expect_rating )
 {
-    // will_eat returns the first element in a vector of ret_val<edible_rating>
-    // this function only looks at the first (since each is tested separately)
+
+
     auto rate_will = dummy.will_eat( food );
     CHECK( rate_will.str() == expect_consequence );
     CHECK( rate_will.value() == expect_rating );
@@ -135,12 +135,12 @@ TEST_CASE( "who_can_eat_while_underwater", "[can_eat][edible_rating][underwater]
                 expect_can_eat( dummy, sushi );
             }
 
-            /*
-            // FIXME: This fails, despite what it says in the mutation description
-            THEN( "they cannot drink" ) {
-                expect_cannot_eat( dummy, water, "You can't do that while underwater." );
-            }
-            */
+
+
+
+
+
+
         }
     }
 }
@@ -212,9 +212,9 @@ TEST_CASE( "when_frozen_food_can_be_eaten", "[can_eat][edible_rating][frozen]" )
     GIVEN( "food that melts" ) {
         item milkshake( itype_milkshake );
 
-        // When food does not have EDIBLE_FROZEN, it will still be edible
-        // frozen if it MELTS. Ice cream, milkshakes and such do not have
-        // EDIBLE_FROZEN, but they have MELTS, which has the same effect.
+
+
+
         REQUIRE( milkshake.has_flag( flag_MELTS ) );
 
         WHEN( "it is frozen" ) {
@@ -232,8 +232,8 @@ TEST_CASE( "who_can_eat_inedible_animal_food", "[can_eat][edible_rating][inedibl
 {
     avatar dummy;
     dummy.set_body();
-    // Note: There are similar conditions for INEDIBLE food with FELINE or LUPINE flags, but
-    // "birdfood" and "cattlefodder" are the only INEDIBLE items that exist in the game.
+
+
 
     GIVEN( "food for animals" ) {
         item birdfood( itype_birdfood );
@@ -390,7 +390,7 @@ TEST_CASE( "what_you_can_drink_with_a_proboscis", "[can_eat][edible_rating][prob
         dummy.toggle_trait( trait_PROBOSCIS );
         REQUIRE( dummy.has_trait( trait_PROBOSCIS ) );
 
-        // Cannot drink
+
         std::string expect_reason = "Ugh, you can't drink that!";
 
         GIVEN( "a drink that is 'eaten' (USE_EAT_VERB)" ) {
@@ -411,7 +411,7 @@ TEST_CASE( "what_you_can_drink_with_a_proboscis", "[can_eat][edible_rating][prob
             }
         }
 
-        // Can drink
+
 
         GIVEN( "a drink that is not 'eaten'" ) {
             item broth( itype_broth );
@@ -549,4 +549,3 @@ TEST_CASE( "who_will_eat_cooked_human_flesh", "[will_eat][edible_rating][canniba
         }
     }
 }
-

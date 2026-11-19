@@ -16,14 +16,14 @@ TEST_CASE( "option_slider_test", "[option]" )
     options_manager::options_container opts = get_options().get_world_defaults();
     options_manager::options_container old_opts = opts;
 
-    // Simple reused variables, for ease of updating the test.
+
     const int num_slider_options = 7;
     const int level_of_last_slider = num_slider_options - 1;
 
     const option_slider &slider = option_slider_test_world_difficulty.obj();
     REQUIRE( slider.count() == num_slider_options );
 
-    // check reordering
+
     for( int i = 0; i < num_slider_options; i++ ) {
         REQUIRE( slider.level_name( i ).translated() == string_format( "TEST %d", i ) );
     }
@@ -48,7 +48,7 @@ TEST_CASE( "option_slider_test", "[option]" )
         { "ETERNAL_TIME_OF_DAY", "night" }
     };
 
-    // check defaults
+
     int checked = 0;
     for( const auto &opt : opts ) {
         CHECK( opt.second == old_opts.at( opt.first ) );
@@ -62,7 +62,7 @@ TEST_CASE( "option_slider_test", "[option]" )
     }
     CHECK( checked == num_slider_options );
 
-    // check modified
+
     slider.apply_opts( level_of_last_slider, opts );
     checked = 0;
     for( const auto &opt : opts ) {
@@ -76,7 +76,7 @@ TEST_CASE( "option_slider_test", "[option]" )
     }
     CHECK( checked == num_slider_options );
 
-    // check defaults
+
     slider.apply_opts( 3, opts );
     checked = 0;
     for( const auto &opt : opts ) {

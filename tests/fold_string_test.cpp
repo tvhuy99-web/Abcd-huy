@@ -27,9 +27,9 @@ TEST_CASE( "fold-string" )
                                 17
                             );
         const auto expected = {
-            /*
-             0123456789abcdefg
-            */
+
+
+
             "Lorem ipsum dolor",
             "sit amet, ",
             "consectetur ",
@@ -45,9 +45,9 @@ TEST_CASE( "fold-string" )
                                 19
                             );
         const auto expected = {
-            /*
-             0123456789abcdefghi
-            */
+
+
+
             "春哥纯爷们，铁血真",
             "汉子。人民好兄弟，",
             "父亲好儿子。",
@@ -61,9 +61,9 @@ TEST_CASE( "fold-string" )
                                 13
                             );
         const auto expected = {
-            /*
-             0123456789abc
-            */
+
+
+
             "Cataclysm-DDA",
             "是Github上的",
             "一个开源游戏",
@@ -95,9 +95,9 @@ TEST_CASE( "fold-string" )
                                 20
                             );
         const auto expected = {
-            /*
-             0123456789abcdefghij
-            */
+
+
+
             "You gain a mutation ",
             "called ",
             "Hippopotomonstrosesq",

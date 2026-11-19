@@ -15,12 +15,12 @@ uint64_t next_cache_generation()
 
 void level_cache::clear()
 {
-    // Blast zeroes over the entire region. Some compilers, looking at you msvc, aren't smart enough
-    // to turn this into a single fused memset. Sometimes it doesn't even optimize fill_n into memset
-    // but emits scalar loops. This murders map test performance.
+
+
+
 #pragma GCC diagnostic push
-    // It's safe to disable this because we static_assert that level_cache_default_zero_members is
-    // trivially copyable, and we know all zeros bit pattern is a legal representation for the type.
+
+
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
     std::memset( static_cast<level_cache_default_zero_members *>( this ), 0,
                  sizeof( level_cache_default_zero_members ) );
@@ -32,7 +32,7 @@ void level_cache::clear()
     floor_cache_dirty = false;
     seen_cache_dirty = false;
     lightmap_dirty = true;
-    // the memset above marked every memory cache bit dirty
+
     map_memory_sweep_pending = true;
     has_colored_lights = false;
     vision_observer_overrides.clear();

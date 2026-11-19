@@ -91,8 +91,8 @@ TEST_CASE( "wind_resistance_is_applied_independently_per_body_part", "[character
         return dummy.get_part_frostbite_timer( body_part_hand_l );
     };
 
-    // The test clothing protects only the torso.  It must not reduce the wind experienced by
-    // the bare hand, which is processed later by update_bodytemp().
+
+
     const int unprotected = hand_frostbite_timer( false );
     const int torso_protected = hand_frostbite_timer( true );
 

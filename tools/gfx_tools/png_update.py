@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# png_update.py
-# Rename a png and update all references to it.
+
+
 
 """Rename a png file, its associated tile_entry.json, and update all
 other tile_entry.json in the tileset dir to reflect the new name.

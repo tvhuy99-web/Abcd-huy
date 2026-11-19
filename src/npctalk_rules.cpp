@@ -73,7 +73,7 @@ void follower_rules_ui::draw_follower_rules_ui( npc *guy )
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "ANY_INPUT" );
-    // This is still bizarrely necessary for imgui
+
     ctxt.set_timeout( 10 );
 
     while( true ) {
@@ -94,10 +94,10 @@ void follower_rules_ui_impl::multi_rule_header( const std::string &id, T &rule,
 {
     if( ImGui::InvisibleButton( id.c_str(), ImVec2( 1.0, 1.0 ) ) || should_advance ) {
         if( rule_map.upper_bound( rule ) == rule_map.end() ) {
-            // Then we have the *last* entry the map, so wrap to the first element
+
             rule = rule_map.begin()->first;
         } else {
-            // Assign the next possible value contained in the map.
+
             rule = rule_map.upper_bound( rule )->first;
         }
         int offset = distance( rule_map.begin(), rule_map.find( rule ) );
@@ -145,9 +145,9 @@ std::string follower_rules_ui_impl::get_parsed( std::string initial_string )
 
 void follower_rules_ui_impl::print_hotkey( input_event &hotkey )
 {
-    // Padding spaces intentional, so it's obvious that the fake "Hotkey:" header refers to these.
-    // TODO: Just reimplement everything as a table...? Would avoid this sort of thing.
-    // But surely not *everything* needs to be a table...
+
+
+
     cataimgui::draw_colored_text( string_format( "  %c  ",
                                   static_cast<char>( hotkey.sequence.front() ) ),
                                   c_green );
@@ -168,7 +168,7 @@ void follower_rules_ui_impl::rules_transfer_popup( bool &exporting_rules, bool &
         //~Label for a button used to copy NPC follower rules from another NPC
         toggle_label = _( "Import" );
     }
-    // Not ideal but leaves plenty of room for even verbose languages. Really anywhere top-right-ish is fine
+
     ImGui::SameLine( ImGui::GetWindowWidth() * 0.7 );
     if( ImGui::Button( _( "Return to rules settings" ) ) ) {
         still_in_popup = false;
@@ -209,7 +209,7 @@ void follower_rules_ui_impl::rules_transfer_popup( bool &exporting_rules, bool &
         int button_number = 0;
         for( npc &role_model : g->all_npcs() ) {
             if( &role_model == guy ) {
-                continue; // No copying settings to/from yourself
+                continue;
             }
             if( role_model.is_player_ally() ) {
                 bool do_flags_overrides = false;
@@ -222,28 +222,28 @@ void follower_rules_ui_impl::rules_transfer_popup( bool &exporting_rules, bool &
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 cataimgui::draw_colored_text( role_model.disp_name() );
-                /*Flags and overrides*/
+
                 do_flags_overrides = setup_table_button( button_number, toggle_label,
                                      role_model.rules.flags == guy->rules.flags );
-                /*Aim rule*/
+
                 do_aim = setup_table_button( button_number, toggle_label,
                                              role_model.rules.aim == guy->rules.aim );
-                /*Engagement rule*/
+
                 do_engagement = setup_table_button( button_number, toggle_label,
                                                     role_model.rules.engagement == guy->rules.engagement );
-                /*CBM recharge rule*/
+
                 do_cbm_recharge = setup_table_button( button_number, toggle_label,
                                                       role_model.rules.cbm_recharge == guy->rules.cbm_recharge );
-                /*CBM reserve rule*/
+
                 do_cbm_reserve = setup_table_button( button_number, toggle_label,
                                                      role_model.rules.cbm_reserve == guy->rules.cbm_reserve );
-                /*Pickup whitelist rule*/
 
-                // This is not correct if both have rules and both have *different* rules, but comparison is expensive
-                // if( role_model.rules.pickup_whitelist->empty() == guy->rules.pickup_whitelist->empty() )
+
+
+
                 do_pickup = setup_table_button( button_number, toggle_label,
                                                 role_model.rules.pickup_whitelist->empty() == guy->rules.pickup_whitelist->empty() );
-                /*The ALL button*/
+
                 do_all = setup_table_button( button_number, toggle_label,
                                              role_model.rules.flags == guy->rules.flags &&
                                              role_model.rules.aim == guy->rules.aim &&
@@ -251,8 +251,8 @@ void follower_rules_ui_impl::rules_transfer_popup( bool &exporting_rules, bool &
                                              role_model.rules.cbm_recharge == guy->rules.cbm_recharge &&
                                              role_model.rules.cbm_reserve == guy->rules.cbm_reserve &&
                                              role_model.rules.pickup_whitelist->empty() == guy->rules.pickup_whitelist->empty() );
-                /*The great swap*/
-                // To make this slightly easier...
+
+
                 npc *guy_with_same = exporting_rules ? guy : &role_model;
                 npc *guy_with_new = exporting_rules ? &role_model : guy;
                 if( do_flags_overrides || do_all ) {
@@ -344,7 +344,7 @@ void follower_rules_ui_impl::draw_controls()
     }
 
     bool confirm_toggle = false;
-    // ImGui only captures arrow keys by default, we want to also capture the numpad and hjkl
+
     if( last_action == "QUIT" ) {
         return;
     } else if( last_action == "UP" ) {
@@ -400,34 +400,34 @@ void follower_rules_ui_impl::draw_controls()
     print_hotkey( assigned_hotkey );
     if( ImGui::Button( _( "Default ALL" ) ) || pressed_key == assigned_hotkey ) {
         ImGui::SetKeyboardFocusHere( -1 );
-        // TODO: use query_yn here as a safeguard against fatfingering. Can't use it right now,
-        // it destructs the imgui instance(?!) which obviously causes us to crash
-        npc_follower_rules default_values; //Call the constructor and let *it* tell us what the default is
+
+
+        npc_follower_rules default_values;
         guy->rules = default_values;
     }
     ImGui::NewLine();
 
     int rule_number = 0;
-    /* Handle all of our regular, boolean rules */
+
     for( const std::pair<const std::string, ally_rule_data> &rule_data : ally_rule_strs ) {
         assigned_hotkey = input_ptr->next_unassigned_hotkey( hotkeys, assigned_hotkey );
         checkbox( rule_number, rule_data.second, assigned_hotkey, pressed_key, confirm_toggle );
         rule_number += 1;
     }
 
-    // Engagement rules require their own set of buttons, each instruction is unique
+
     assigned_hotkey = input_ptr->next_unassigned_hotkey( hotkeys, assigned_hotkey );
     radio_group( "ENGAGEMENT_RULES", _( "Engagement rules:" ), &guy->rules.engagement, engagement_rules,
                  assigned_hotkey, pressed_key );
 
-    // Aiming rule also has a non-boolean set of values
+
     assigned_hotkey = input_ptr->next_unassigned_hotkey( hotkeys, assigned_hotkey );
     radio_group( "AIMING_RULES", _( "Aiming rules:" ), &guy->rules.aim, aim_rule_map, assigned_hotkey,
                  pressed_key );
 
-    /* Shows CBM rules, but only if the character has bionics. Must be last because it will
-    only appear sometimes and we don't want hotkeys to be different depending on whether
-    the character has bionics. That's bad for muscle memory! */
+
+
+
     if( !guy->get_bionics().empty() ) {
         assigned_hotkey = input_ptr->next_unassigned_hotkey( hotkeys, assigned_hotkey );
         radio_group( "RECHARGE_RULES", _( "CBM recharging rules:" ), &guy->rules.cbm_recharge, recharge_map,

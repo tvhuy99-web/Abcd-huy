@@ -31,15 +31,15 @@ bool grow_vine( monster *z );
 bool vine( monster *z );
 bool spit_sap( monster *z );
 bool triffid_heartbeat( monster *z );
-bool fungus( monster *z );            // Generic fungal spore-launch
-bool fungus_corporate( monster *z );   // Used by Crazy Cataclysm; spawns SpOreos(tm).
-bool fungus_haze( monster *z );       // Broadly scatter aerobics
-bool fungus_big_blossom( monster *z ); // Aerobic & anaerobic, as needed
-bool fungus_inject( monster *z );     // Directly inject the spores
-bool fungus_bristle( monster *z );    // Fungal hedgerow rake & inject
-bool fungus_growth( monster *z );     // Sporeling -> fungal creature
-bool fungus_sprout( monster *z );     // Grow fungal walls
-bool fungus_fortify( monster *z );    // Grow fungal hedgerows
+bool fungus( monster *z );
+bool fungus_corporate( monster *z );
+bool fungus_haze( monster *z );
+bool fungus_big_blossom( monster *z );
+bool fungus_inject( monster *z );
+bool fungus_bristle( monster *z );
+bool fungus_growth( monster *z );
+bool fungus_sprout( monster *z );
+bool fungus_fortify( monster *z );
 bool fungal_trail( monster *z );
 bool plant( monster *z );
 bool disappear( monster *z );
@@ -95,6 +95,6 @@ bool graze( monster *z );
 
 void taze( monster *z, Creature *target );
 
-} //namespace mattack
+}
 
-#endif // CATA_SRC_MONATTACK_H
+#endif

@@ -334,8 +334,8 @@ static std::vector<ExpressionComponent> consolidateComponents(
     return result;
 }
 
-// The code needed to extract the given coordinates from (first) a point and
-// (second) a tripoint.
+
+
 static const std::unordered_map<std::string, std::pair<std::string, std::string>>
 MemberAccessor = {
     { "x", { ".x", ".x" } },
@@ -477,7 +477,7 @@ static void CheckConstructor( UsePointArithmeticCheck &Check,
         return;
     }
 
-    // Don't mess with the methods of point and tripoint themselves
+
     if( isPointMethod( getContainingFunction( Result, ConstructorCall ) ) ) {
         return;
     }
@@ -510,9 +510,9 @@ static void CheckConstructor( UsePointArithmeticCheck &Check,
             }
         }
         if( XYAtEnd ) {
-            // We have finished at least one of the lists, so there will be no
-            // more matches.  We can simply append all the remainder to the
-            // leftovers
+
+
+
             for( auto const &Component : Components ) {
                 const std::string &Key = Component.first;
                 auto Position = Positions.at( Key );
@@ -524,7 +524,7 @@ static void CheckConstructor( UsePointArithmeticCheck &Check,
             break;
         }
 
-        // Find the minimum element amongst the next elements
+
         std::string MinKey = Positions.begin()->first;
         const ExpressionComponent *CurrentMin = &*Positions.begin()->second;
         for( auto const &Position : Positions ) {
@@ -576,8 +576,8 @@ static void CheckConstructor( UsePointArithmeticCheck &Check,
         }
 
         if( CurrentMin->isMember && XYEqual ) {
-            // There is some level of equality, so try to output a joined
-            // expression
+
+
             if( CoefficientsEqual ) {
                 if( AllEqual && HasZ ) {
                     appendComponent( Joined, *CurrentMin, "xyz" );
@@ -600,7 +600,7 @@ static void CheckConstructor( UsePointArithmeticCheck &Check,
                 }
             }
         } else {
-            // Otherwise just emit a single-coordinate piece
+
             appendComponent( Leftovers[MinKey], *CurrentMin, MinKey );
             ++Positions.at( MinKey );
         }
@@ -652,4 +652,4 @@ void UsePointArithmeticCheck::check( const MatchFinder::MatchResult &Result )
     CheckConstructor( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

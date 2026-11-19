@@ -18,9 +18,9 @@ class vpart_location
 
         translation name;
         translation description;
-        // Highest Z is rendered, potentially excluding roof. -1 never renders.
+
         int z_order = 0;
-        // Display order in vehicle interact display, lowest first
+
         int list_order = 5;
 
         static void load_vehicle_part_locations( const JsonObject &jo, const std::string &src );
@@ -31,4 +31,4 @@ class vpart_location
         void check() const;
 };
 
-#endif // CATA_SRC_VEHICLE_PART_LOCATION_H
+#endif

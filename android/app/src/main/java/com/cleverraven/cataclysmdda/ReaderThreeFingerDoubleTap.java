@@ -4,11 +4,11 @@ import android.content.Context;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
-/**
- * A narrow three-finger double-tap recognizer at Activity level.
- * Unlike the reader overlay, it still receives input when speech is off.
- * Other gestures and the live world map are left to their existing owners.
- */
+
+
+
+
+
 final class ReaderThreeFingerDoubleTap {
     static final int PASS = 0;
     static final int CAPTURE = 1;
@@ -131,8 +131,8 @@ final class ReaderThreeFingerDoubleTap {
                         && when - downTime <= MAX_TAP_MS);
             case MotionEvent.ACTION_CANCEL:
                 checkMovement(event);
-                // Some Android devices cancel a completed 3-finger touch.
-                // Recover only a stationary, prompt triple contact.
+
+
                 return finishTap(when, captured && !moved && tracked == 3
                         && event.getPointerCount() == 3
                         && when - downTime <= MAX_TAP_MS);

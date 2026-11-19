@@ -105,7 +105,7 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
                 const_dialogue d( get_const_talker_for( u ), get_const_talker_for( *creature ) );
                 const enchant_cache::special_vision sees_with_special = u.enchantment_cache->get_vision( d );
                 if( !sees_with_special.is_empty() ) {
-                    // handling against re-evaluation and snippet replacement on redraw
+
                     if( raw_description.empty() ) {
                         const enchant_cache::special_vision_descriptions special_vis_desc =
                             u.enchantment_cache->get_vision_description_struct( sees_with_special, d );
@@ -133,7 +133,7 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
                                           this_sound );
         line += lines - 1;
     } else {
-        // Check other z-levels
+
         tripoint_bub_ms tmp = lp;
         for( tmp.z() = -OVERMAP_DEPTH; tmp.z() <= OVERMAP_HEIGHT; tmp.z()++ ) {
             if( tmp.z() == lp.z() ) {
@@ -194,8 +194,8 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     const ter_t &terrain = visible
                            ? here.ter( lp ).obj()
                            : ter_str_id( get_avatar().get_memorized_tile( here.get_abs( lp ) ).get_ter_id() ).id().obj();
-    // Print OMT type and terrain type on first two lines
-    // if can't fit in one line.
+
+
     const std::string tile = uppercase_first_letter( terrain.name() );
     std::string area = uppercase_first_letter( area_name );
     if( visible ) {
@@ -215,15 +215,15 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     }
     wattroff( w_look, c_light_gray );
 
-    // Furniture, if any
+
     print_furniture_info( lp, w_look, column, line, visible );
     if( !visible ) {
-        // separate visibility_message
+
         ++line;
         return;
     }
 
-    // Cover percentage from terrain and furniture next.
+
     fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Concealment: %d%%" ),
                     here.coverage( lp ) );
 
@@ -233,8 +233,8 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
         line += lines - 1;
     }
 
-    // Terrain and furniture flags next. These can be several lines for some combinations of
-    // furnitures and terrains.
+
+
     lines = foldstring( here.features( lp ), max_width );
     numlines = lines.size();
     wattron( w_look, c_light_gray );
@@ -243,8 +243,8 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     }
     wattroff( w_look, c_light_gray );
 
-    // Move cost from terrain and furniture and vehicle parts.
-    // Vehicle part information is printed in a different function.
+
+
     if( here.impassable( lp ) ) {
         mvwprintz( w_look, point( column, ++line ), c_light_red, _( "Impassable" ) );
     } else {
@@ -252,7 +252,7 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
                    here.move_cost( lp ) * 50 );
     }
 
-    // Next print the string on any SIGN flagged furniture if any.
+
     std::string signage = here.get_signage( lp );
     if( !signage.empty() ) {
         std::string sign_string = u.has_trait( trait_ILLITERATE ) ? "???" : signage;
@@ -261,13 +261,13 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
         line += lines - 1;
     }
 
-    // Print light level on the selected tile.
+
     std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
                                           LIGHT_AMBIENT_LIT - here.ambient_light_at( lp ) + 1.0 ) );
     mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Lighting: " ) );
     mvwprintz( w_look, point( column + utf8_width( _( "Lighting: " ) ), line ), ll.second, ll.first );
 
-    // Print the terrain and any furntiure on the tile below and whether it is walkable.
+
     if( lp.z() > -OVERMAP_DEPTH && !here.has_floor( lp ) ) {
         tripoint_bub_ms below( lp + tripoint::below );
         std::string tile_below = here.tername( below );
@@ -295,23 +295,23 @@ void game::print_furniture_info( const tripoint_bub_ms &lp, const catacurses::wi
 
     const furn_str_id &f_memory = furn_str_id( get_avatar().get_memorized_tile( here.get_abs( lp ) )
                                   .get_dec_id() );
-    // Do nothing if there is no furniture here
+
     if( ( visible && !here.has_furn( lp ) ) || ( !visible && !f_memory.is_valid() ) ) {
         return;
     }
     const int max_width = getmaxx( w_look ) - column - 1;
 
-    // Print an empty line as padding IF and only if we're going to print any furniture info.
+
     mvwprintw( w_look, point( column, line++ ), "" );
 
     mvwprintz( w_look, point( column, line++ ), c_light_blue, _( "-----FURNITURE-----" ) );
 
     const furn_id &f = visible ? here.furn( lp ) : f_memory.id();
-    // Print furniture name in white
+
     std::string desc = uppercase_first_letter( visible ? here.furnname( lp ) : f.obj().name() );
     mvwprintz( w_look, point( column, line++ ), c_white, desc );
 
-    // Print each line of furniture description in gray
+
     desc = string_format( f.obj().description.translated() );
     std::vector<std::string> lines = foldstring( desc, max_width );
     int numlines = lines.size();
@@ -321,23 +321,23 @@ void game::print_furniture_info( const tripoint_bub_ms &lp, const catacurses::wi
     }
     wattroff( w_look, c_light_gray );
 
-    // If this furniture has a crafting pseudo item, check for tool qualities and print them
+
     if( !f->crafting_pseudo_item.is_empty() ) {
-        // Make a pseudo item instance so we can use qualities_info later
+
         const item pseudo( f->crafting_pseudo_item );
-        // Set up iteminfo query to show qualities
+
         std::vector<iteminfo_parts> quality_part = { iteminfo_parts::QUALITIES };
         const iteminfo_query quality_query( quality_part );
-        // Render info into info_vec
+
         std::vector<iteminfo> info_vec;
         pseudo.qualities_info( info_vec, &quality_query, 1, false );
-        // Get a newline-separated string of quality info, then parse and print each line
+
         std::string quality_string = format_item_info( info_vec, {} );
         size_t strpos = 0;
         while( ( strpos = quality_string.find( '\n' ) ) != std::string::npos ) {
             trim_and_print( w_look, point( column, line++ ), max_width, c_light_gray,
                             quality_string.substr( 0, strpos + 1 ) );
-            // Delete used token
+
             quality_string.erase( 0, strpos + 1 );
         }
     }
@@ -355,7 +355,7 @@ void game::print_fields_info( const tripoint_bub_ms &lp, const catacurses::windo
         return;
     }
 
-    // Header.
+
     mvwprintz( w_look, point( column, ++line ), c_light_blue, _( "-----FIELDS-----" ) );
     for( const auto &fld : tmpfield ) {
         const field_entry &cur = fld.second;
@@ -370,7 +370,7 @@ void game::print_fields_info( const tripoint_bub_ms &lp, const catacurses::windo
         }
     }
 
-    // Padding for whatever comes afterwards. Not sure why it needs to be in this function!
+
     mvwprintz( w_look, point( column, ++line ), c_white, "\n" );
 }
 
@@ -382,16 +382,16 @@ void game::print_trap_info( const tripoint_bub_ms &lp, const catacurses::window 
 
     const trap &tr = here.tr_at( lp );
     if( tr.is_null() ) {
-        return; // Nothing here!
+        return;
     }
 
     if( tr.can_see( lp, u ) ) {
-        // Header. Only printed if we actually know there's a trap there. ;)
+
         mvwprintz( w_look, point( column, ++line ), c_light_blue, _( "-----TRAP-----" ) );
 
         mvwprintz( w_look, point( column, ++line ), tr.color, tr.name() );
 
-        // Padding for whatever comes afterwards. Not sure why it needs to be in this function!
+
         ++line;
     }
 }
@@ -431,14 +431,14 @@ void game::print_vehicle_info( const vehicle *veh, int veh_part, const catacurse
                                const int column, int &line, const int last_line )
 {
     if( veh ) {
-        // Print the name of the vehicle.
+
         if( veh->is_appliance() ) {
             mvwprintz( w_look, point( column, ++line ), c_light_blue, _( "-----APPLIANCE-----" ) );
         } else {
             mvwprintz( w_look, point( column, ++line ), c_light_blue, _( "-----VEHICLE-----" ) );
         }
         mvwprintz( w_look, point( column, ++line ), c_white, "%s", veh->name );
-        // Then the list of parts on that tile.
+
         line = veh->print_part_list( w_look, ++line, last_line, getmaxx( w_look ), veh_part );
     }
 }
@@ -471,14 +471,14 @@ void game::print_items_info( const tripoint_bub_ms &lp, const catacurses::window
         return;
     } else {
         std::map<std::string, std::pair<int, nc_color>> item_names;
-        // This should probably use a map_entity_stack!
+
         for( const item &it : here.i_at( lp ) ) {
             add_visible_items_recursive( item_names, it );
         }
 
         const int max_width = getmaxx( w_look ) - column - 1;
         for( auto it = item_names.begin(); it != item_names.end(); ++it ) {
-            // last line but not last item
+
             if( line + 1 >= last_line && std::next( it ) != item_names.end() ) {
                 mvwprintz( w_look, point( column, ++line ), c_yellow, _( "More items here…" ) );
                 break;
@@ -546,11 +546,11 @@ void game::pre_print_all_tile_info( const tripoint_bub_ms &lp, const catacurses:
 {
     map &here = get_map();
 
-    // get global area info according to look_around caret position
+
     tripoint_abs_omt omp( coords::project_to<coords::omt>( here.get_abs( lp ) ) );
     const oter_id &cur_ter_m = overmap_buffer.ter( omp );
     om_vision_level vision = overmap_buffer.seen( omp );
-    // we only need the area name and then pass it to print_all_tile_info() function below
+
     const std::string area_name = cur_ter_m->get_name( vision );
     print_all_tile_info( lp, w_info, area_name, 1, first_line, last_line, cache );
 }

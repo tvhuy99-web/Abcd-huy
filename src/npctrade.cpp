@@ -43,7 +43,7 @@ static const skill_id skill_speech( "speech" );
 std::list<item> npc_trading::transfer_items( trade_selector::select_t &stuff, Character &giver,
         Character &receiver, std::list<item_location *> &from_map, bool use_escrow )
 {
-    // escrow is used only when the npc is the destination. Item transfer to the npc is deferred.
+
     std::list<item> escrow = std::list<item>();
 
     for( trade_selector::entry_t &ip : stuff ) {
@@ -66,14 +66,14 @@ std::list<item> npc_trading::transfer_items( trade_selector::select_t &stuff, Ch
                 return npc->wants_to_buy( *it, price ).success();
             };
         }
-        // spill contained, unwanted items
+
         if( f_wants && gift.is_container() ) {
             for( item *it : gift.get_contents().all_items_top() ) {
                 int const price =
                     trading_price( giver, receiver, { item_location{ giver, it }, 1 } );
                 if( !f_wants( item_location{ ip.first, it }, price ) ) {
                     giver.i_add_or_drop( *it, 1, ip.first.get_item() );
-                    // need some lvalues to pass into this function
+
                     int all = INT_MAX;
                     std::list<item> res{};
                     gift.remove_internal( [it]( const item & other ) {
@@ -86,18 +86,18 @@ std::list<item> npc_trading::transfer_items( trade_selector::select_t &stuff, Ch
 
         gift.set_owner( receiver );
 
-        // Items are moving to escrow.
+
         if( use_escrow && ip.first->count_by_charges() ) {
             gift.charges = ip.second;
             escrow.emplace_back( gift );
         } else if( use_escrow ) {
             std::fill_n( std::back_inserter( escrow ), ip.second, gift );
-            // No escrow in use. Items moving from giver to receiver.
+
         } else if( ip.first->count_by_charges() ) {
             gift.charges = ip.second;
             item newit = item( gift );
             ret_val<item_location> ret = receiver.i_add_or_fill( newit, true, nullptr, &gift,
-                                         /*allow_drop=*/true, /*allow_wield=*/true, false );
+ true, true, false );
         } else {
             for( int i = 0; i < ip.second; i++ ) {
                 receiver.i_add( gift );
@@ -134,7 +134,7 @@ std::vector<item_pricing> npc_trading::init_selling( npc &np )
         item &it = *i;
 
         int val = np.value( it );
-        // FIXME: this item_location is a hack
+
         if( np.wants_to_sell( item_location{ np, i }, val ).success() ) {
             result.emplace_back( np, it, val, static_cast<int>( it.count() ) );
         }
@@ -152,15 +152,15 @@ std::vector<item_pricing> npc_trading::init_selling( npc &np )
 
 double npc_trading::net_price_adjustment( const Character &buyer, const Character &seller )
 {
-    // Adjust the prices based on your social skill.
-    // cap adjustment so nothing is ever sold below value
-    ///\EFFECT_INT_NPC slightly increases bartering price changes, relative to your INT
 
-    ///\EFFECT_BARTER_NPC increases bartering price changes, relative to your BARTER
 
-    ///\EFFECT_INT slightly increases bartering price changes, relative to NPC INT
 
-    ///\EFFECT_BARTER increases bartering price changes, relative to NPC BARTER
+
+
+
+
+
+
     int const int_diff = seller.get_int() - buyer.get_int();
     double const int_adj = 1 + 0.05 * std::min( 19, std::abs( int_diff ) );
     double const soc_adj = price_adjustment( round( seller.get_skill_level( skill_speech ) -
@@ -234,7 +234,7 @@ int _trading_price( Character const &buyer, Character const &seller, item_locati
     }
     return ret;
 }
-} // namespace
+}
 
 int npc_trading::trading_price( Character const &buyer, Character const &seller,
                                 trade_selector::entry_t const &it )
@@ -262,26 +262,26 @@ void item_pricing::set_values( int ip_count )
     }
 }
 
-// Returns how much the NPC will owe you after this transaction.
-// You must also check if they will accept the trade.
+
+
 int npc_trading::calc_npc_owes_you( const npc &np, int your_balance )
 {
-    // Friends don't hold debts against friends.
+
     if( np.will_exchange_items_freely() ) {
         return 0;
     }
 
-    // If they're going to owe you more than before, and it's more than they're willing
-    // to owe, then cap the amount owed at the present level or their willingness to owe
-    // (whichever is bigger).
-    //
-    // When could they owe you more than max_willing_to_owe? It could be from quest rewards,
-    // when they were less angry, or from when you were better friends.
+
+
+
+
+
+
     if( your_balance > np.op_of_u.owed && your_balance > np.max_willing_to_owe() ) {
         return std::max( np.op_of_u.owed, np.max_willing_to_owe() );
     }
 
-    // Fair's fair. NPC will remember this debt (or credit they've extended)
+
     return your_balance;
 }
 void npc_trading::update_npc_owed( npc &np, int your_balance, int your_sale_value )
@@ -290,15 +290,15 @@ void npc_trading::update_npc_owed( npc &np, int your_balance, int your_sale_valu
     np.op_of_u.sold += your_sale_value;
 }
 
-// Oh my aching head
-// op_of_u.owed is the positive when the NPC owes the player, and negative if the player owes the
-// NPC
-// cost is positive when the player owes the NPC money for a service to be performed
+
+
+
+
 bool npc_trading::trade( npc &np, int cost, const std::string &deal )
 {
     np.shop_restock();
-    //np.drop_items( np.weight_carried() - np.weight_capacity(),
-    //               np.volume_carried() - np.volume_capacity() );
+
+
     np.drop_invalid_inventory();
 
     std::unique_ptr<trade_ui> tradeui = std::make_unique<trade_ui>( get_avatar(), np, cost, deal );
@@ -311,11 +311,11 @@ bool npc_trading::trade( npc &np, int cost, const std::string &deal )
 
         std::list<item> escrow;
         avatar &player_character = get_avatar();
-        // Movement of items in 3 steps: player to escrow - npc to player - escrow to npc.
+
         escrow = npc_trading::transfer_items( trade_result.items_you, player_character, np, from_map,
                                               true );
         npc_trading::transfer_items( trade_result.items_trader, np, player_character, from_map, false );
-        // Now move items from escrow to the npc. Keep the weapon wielded.
+
         if( np.is_shopkeeper() ) {
             distribute_items_to_npc_zones( escrow, np );
         } else {
@@ -344,20 +344,20 @@ bool npc_trading::trade( npc &np, int cost, const std::string &deal )
             }
         }
 
-        // NPCs will remember debts, to the limit that they'll extend credit or previous debts
+
         if( !np.will_exchange_items_freely() ) {
             player_character.cash -= trade_result.delta_bank;
             update_npc_owed( np, trade_result.balance, trade_result.value_you );
             player_character.practice( skill_speech, trade_result.value_you / 10000 );
         }
 
-        // R14.2: announce the completed exchange in the message log, the
-        // channel the reader speaks after this screen closes. Every number
-        // comes from trade_result itself or from state already updated
-        // above (the trader's remembered balance and the player's cash);
-        // nothing is recomputed here. This runs on every trade() path
-        // (plain trade, mission reward, pay-for-service), and in each of
-        // them the announced values are the ones just applied.
+
+
+
+
+
+
+
         add_msg( _( "Trade completed.  You gave items worth %s and received items worth %s." ),
                  format_money( trade_result.value_you ),
                  format_money( trade_result.value_trader ) );
@@ -382,16 +382,16 @@ bool npc_trading::trade( npc &np, int cost, const std::string &deal )
             }
         }
     } else {
-        // R14.2: leaving the trade screen without a completed exchange
-        // (cancel, or a refusal already explained by the confirmation
-        // popup in trade_ui::_confirm_trade) used to be silent. State
-        // only what is true on every such path: nothing changed hands.
+
+
+
+
         add_msg( _( "No trade took place.  Nothing was exchanged." ) );
     }
     return trade_result.traded ;
 }
 
-// Will the NPC accept the trade that's currently on offer?
+
 bool npc_trading::npc_will_accept_trade( npc const &np, int your_balance )
 {
     return np.will_exchange_items_freely() || your_balance + np.max_credit_extended() >= 0;

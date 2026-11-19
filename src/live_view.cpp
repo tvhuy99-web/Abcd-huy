@@ -1,6 +1,6 @@
 #include "live_view.h"
 
-#include <algorithm> // min & max
+#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -22,7 +22,7 @@ namespace
 constexpr int START_LINE = 1;
 constexpr int MIN_BOX_HEIGHT = 3;
 
-} //namespace
+}
 
 live_view::live_view() = default;
 live_view::~live_view() = default;
@@ -53,7 +53,7 @@ void live_view::show( const tripoint &p )
             const int line_limit = max_height - 2;
             const visibility_variables &cache = here.get_visibility_variables_cache();
             int line_out = START_LINE;
-            // HACK: using dummy window to get the window height without refreshing.
+
             win = catacurses::newwin( 1, width, point::zero );
             g->pre_print_all_tile_info( tripoint_bub_ms( mouse_position ), win, line_out, line_limit, cache );
             const int live_view_box_height = std::min( max_height, std::max( line_out + 2, MIN_BOX_HEIGHT ) );
@@ -73,7 +73,7 @@ void live_view::show( const tripoint &p )
             wnoutrefresh( win );
         } );
     }
-    // Always mark ui for resize as the required box height may have changed.
+
     ui->mark_resize();
 }
 

@@ -8,11 +8,11 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 GG_DIR = os.path.normpath(os.path.join(
     SCRIPT_DIR, '..', '..', 'data', 'mods', 'Generic_Guns'))
 
-# We might want to also warn about grenades and rockets, but leaving them
-# whitelisted for now.
+
+
 AMMO_TYPE_WHITELIST = {
-    '40x46mm',  # Grenade
-    'atgm',  # Rocket
+    '40x46mm',
+    'atgm',
     'atlatl',
     'bolt_ballista',
     'bone_dart',
@@ -28,7 +28,7 @@ AMMO_TYPE_WHITELIST = {
     'flammable',
     'gene_sting',
     'nether_huntsman_javelin_ammo',
-    'm235',  # Rocket
+    'm235',
     'metal_rail',
     'nail',
     'nuts_bolts',
@@ -45,10 +45,10 @@ SKILL_WHITELIST = {
     'archery',
     'launcher',
 }
-# Whitelisted specific ids are mostly obsolete stuff.
-# This could go away if obsolete stuff were explicitly marked as such.
+
+
 ID_WHITELIST = {
-    # Guns
+
     'bone_dart_launcher',
     'nl_destruction_ray',
     'nl_turret_chem_thrower',
@@ -68,7 +68,7 @@ ID_WHITELIST = {
     'ppsh',
     'af2011a1_38super',
     'm26_mass',
-    # Magazines
+
     'a180mag',
     'a180mag1',
     'a180mag2',

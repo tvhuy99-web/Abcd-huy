@@ -26,19 +26,19 @@ enum class Endianness {
     LittleEndian
 };
 
-/**
- * Represents a GNU gettext Message Object (.mo) document
- * Format specification: https://www.gnu.org/software/gettext/manual/html_node/MO-Files.html
- */
+
+
+
+
 class TranslationDocument
 {
     private:
         std::shared_ptr<const mmap_file> mmap_message_object;
-        std::size_t number_of_strings; // N
-        std::size_t original_strings_table_offset; // O
-        std::size_t translated_strings_table_offset; // T
-        // std::size_t hash_table_size; // S
-        // std::size_t hash_table_offset; // H
+        std::size_t number_of_strings;
+        std::size_t original_strings_table_offset;
+        std::size_t translated_strings_table_offset;
+
+
         const char *data;
         std::size_t data_size;
         Endianness endianness;
@@ -63,6 +63,6 @@ class TranslationDocument
         const char *GetTranslatedStringPlural( std::size_t index, std::size_t n ) const;
 };
 
-#endif // defined(LOCALIZE)
+#endif
 
-#endif // CATA_SRC_TRANSLATION_DOCUMENT_H
+#endif

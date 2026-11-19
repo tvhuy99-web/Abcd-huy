@@ -121,18 +121,18 @@ TEST_CASE( "Attack_vector_test", "[martial_arts][limb]" )
     REQUIRE( dude.get_all_body_parts_of_type( bp_type::tail ).empty() );
 
     SECTION( "Limb requirements" ) {
-        // Grow a tail, suddenly we can use it
+
         dude.toggle_trait( trait_DEBUG_TAIL );
         CHECK( dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                         false ) );
-        // Unless our tail breaks
+
         REQUIRE( body_part_debug_tail->health_limit == 5 );
         dude.set_part_hp_cur( body_part_debug_tail, 1 );
         CHECK( !dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                          false ) );
     }
     SECTION( "Missing contact" ) {
-        // Lose our vector limb
+
         dude.toggle_trait( trait_DEBUG_TAIL );
         CHECK( dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                         false ) );
@@ -146,7 +146,7 @@ TEST_CASE( "Attack_vector_test", "[martial_arts][limb]" )
         dude.toggle_trait( trait_DEBUG_TAIL );
         CHECK( dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                         false ) );
-        // Check bp hp limit (hands don't have HP so we check arms)
+
         dude.set_part_hp_cur( body_part_arm_l, 1 );
         CHECK( !dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                          false ) );
@@ -183,19 +183,19 @@ TEST_CASE( "Martial_art_technique_conditionals", "[martial_arts]" )
         monster &target_2 = spawn_test_monster( "mon_zombie_hulk", target_2_pos );
         monster &target_3 = spawn_test_monster( "mon_blob", target_3_pos );
 
-        // test sweeping a zombie (succeed)
+
         REQUIRE( target_1.get_size() == 3 );
         CHECK( dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                         false ).has_value() );
-        // Being downed disables the attack
+
         target_1.add_effect( effect_downed, 1_days );
         CHECK( !dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                          false ).has_value() );
-        // test sweeping a big zomb (fail)
+
         REQUIRE( target_2.get_size() == 5 );
         CHECK( !dude.evaluate_technique( tec, target_2, dude.used_weapon(), false, false,
                                          false ).has_value() );
-        // test sweeping a slime (fail)
+
         REQUIRE( target_3.get_size() == 3 );
         REQUIRE( target_3.type->bodytype == "blob" );
         CHECK( !dude.evaluate_technique( tec, target_3, dude.used_weapon(), false, false,
@@ -210,21 +210,21 @@ TEST_CASE( "Martial_art_technique_conditionals", "[martial_arts]" )
         item weap( itype_sword_crude );
         dude.wield( weap );
 
-        // test stunning a feral (succeed)
+
         REQUIRE( target_1.get_size() == 3 );
         REQUIRE( !target_1.type->in_species( species_ZOMBIE ) );
         CHECK( dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                         false ).has_value() );
-        // Being stunned disables the attack
+
         target_1.add_effect( effect_stunned, 1_days );
         CHECK( !dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                          false ).has_value() );
-        // test stunning a zombie (fail)
+
         REQUIRE( target_2.get_size() == 3 );
         REQUIRE( target_2.type->in_species( species_ZOMBIE ) );
         CHECK( !dude.evaluate_technique( tec, target_2, dude.used_weapon(), false, false,
                                          false ).has_value() );
-        // test stunning a slime (fail)
+
         REQUIRE( target_3.get_size() == 3 );
         REQUIRE( target_3.type->in_species( species_SLIME ) );
         CHECK( !dude.evaluate_technique( tec, target_3, dude.used_weapon(), false, false,
@@ -238,19 +238,19 @@ TEST_CASE( "Martial_art_technique_conditionals", "[martial_arts]" )
         item weap( itype_club_wooden );
         dude.wield( weap );
 
-        // test throwing a feral (succeed)
+
         REQUIRE( target_1.get_size() == 3 );
         CHECK( dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                         false ).has_value() );
-        // Being downed disables the attack
+
         target_1.add_effect( effect_downed, 1_days );
         CHECK( !dude.evaluate_technique( tec, target_1, dude.used_weapon(), false, false,
                                          false ).has_value() );
-        // test throwing a large target (fail)
+
         REQUIRE( target_2.get_size() == 5 );
         CHECK( !dude.evaluate_technique( tec, target_2, dude.used_weapon(), false, false,
                                          false ).has_value() );
-        // test throwing a monster grabbing you (succeed)
+
         dude.add_effect( effect_grabbed, 1_days );
         target_3.add_effect( effect_grabbing, 1_days );
         REQUIRE( target_3.get_size() == 3 );

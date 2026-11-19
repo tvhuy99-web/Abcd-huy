@@ -101,4 +101,4 @@ struct shopkeeper_whitelist {
     icg_entry const *matches( item const &it, npc const &beta ) const;
 };
 
-#endif // CATA_SRC_SHOP_CONS_RATE_H
+#endif

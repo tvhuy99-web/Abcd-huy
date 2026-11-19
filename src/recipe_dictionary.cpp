@@ -76,7 +76,7 @@ void delete_if( std::map<recipe_id, recipe> &data,
     }
 }
 
-} // namespace
+}
 
 static recipe null_recipe;
 static std::set<const recipe *> null_match;
@@ -117,7 +117,7 @@ const recipe &recipe_dictionary::get_craft( const itype_id &id )
     return iter != recipe_dict.recipes.end() ? iter->second : null_recipe;
 }
 
-// searches for left-anchored partial match in the relevant recipe requirements set
+
 template <class group>
 static bool search_reqs( const group &gp, std::string_view txt )
 {
@@ -128,7 +128,7 @@ static bool search_reqs( const group &gp, std::string_view txt )
         } );
     } );
 }
-// template specialization to make component searches easier
+
 template<>
 bool search_reqs( const std::vector<std::vector<item_comp> > &gp,
                   std::string_view txt )
@@ -197,7 +197,7 @@ std::vector<const recipe *> recipe_subset::recent() const
     return res;
 }
 
-// Cache for the search function
+
 static std::map<const itype_id, std::string> item_info_cache;
 static time_point cache_valid_turn;
 
@@ -215,7 +215,7 @@ static std::string cached_item_info( const itype_id &item_type )
     return item_info_cache.at( item_type );
 }
 
-// keep data for one search cycle
+
 static itype filtered_fake_itype;
 static item filtered_fake_item;
 static std::unordered_set<bodypart_id> filtered_bodyparts;
@@ -226,18 +226,18 @@ template<typename Unit, size_t N>
 static Unit can_contain_filter( std::string_view hint, std::string_view txt, Unit max,
                                 const std::array<std::pair<std::string_view, Unit>, N> &units )
 {
-    // TODO: LAMBDA_NORETURN_CLANG21x1 can be replaced with [[noreturn]] once we switch to C++23 on all compilers
-    auto const error = [hint, txt]( char const *, size_t /* offset */ ) LAMBDA_NORETURN_CLANG21x1 {
+
+    auto const error = [hint, txt]( char const *, size_t ) LAMBDA_NORETURN_CLANG21x1 {
         throw math::runtime_error( _( string_format( hint, txt ) ) );
     };
-    // Start at max. On convert failure: results are empty and user knows it is unusable.
+
     Unit uni = max;
     try {
         uni = detail::read_from_json_string_common<Unit>( txt, units, error );
     } catch( math::runtime_error &err ) {
         popup( err.what() );
     }
-    // copy the debug item template (itype)
+
     filtered_fake_itype = itype( *item_controller->find_template( itype_debug_item_search ) );
     return uni;
 }
@@ -312,7 +312,7 @@ std::vector<const recipe *> recipe_subset::search(
                 if( r->is_practice() ) {
                     return lcmatch( r->description.translated(), txt );
                 } else {
-                    // Info is always rendered for avatar anyway, no need to cache per Character then.
+
                     return lcmatch( remove_color_tags( cached_item_info( r->result() ) ), txt );
                 }
             }
@@ -373,7 +373,7 @@ std::vector<const recipe *> recipe_subset::search(
                     } else if( chr == '~' ) {
                         use_range = true;
                     } else {
-                        // unexpected character
+
                         return true;
                     }
                 }
@@ -408,7 +408,7 @@ std::vector<const recipe *> recipe_subset::search(
                 }
 
                 if( use_range ) {
-                    // check if number is between two numbers inclusive
+
                     return r->difficulty == clamp( r->difficulty, start, end );
                 } else {
                     return r->difficulty == start;
@@ -423,7 +423,7 @@ std::vector<const recipe *> recipe_subset::search(
         }
     };
 
-    // prepare search
+
     switch( key ) {
         case search_type::length: {
             units::length len = can_contain_filter(
@@ -432,7 +432,7 @@ std::vector<const recipe *> recipe_subset::search(
 
             filtered_fake_itype.longest_side = len;
             filtered_fake_item = item( &filtered_fake_itype );
-            // make the item hard, otherwise longest_side is ignored
+
             filtered_fake_item.set_flag( flag_HARD );
             break;
         }
@@ -485,7 +485,7 @@ std::vector<const recipe *> recipe_subset::search(
             break;
     }
 
-    // search
+
     std::vector<const recipe *> res;
     size_t i = 0;
     ctxt.register_action( "QUIT" );
@@ -569,7 +569,7 @@ bool recipe_subset::empty_category( const crafting_category_id &cat,
     } else if( subcat == "CSC_*_HIDDEN" ) {
         return uistate.hidden_recipes.empty();
     } else if( cat->is_wildcard ) {
-        //any other category in CC_* is populated
+
         return false;
     }
 
@@ -643,7 +643,7 @@ recipe &recipe_dictionary::load( const JsonObject &jo, const std::string &src,
 {
     recipe r;
 
-    // defer entries dependent upon as-yet unparsed definitions
+
     if( jo.has_string( "copy-from" ) ) {
         recipe_id base = recipe_id( jo.get_string( "copy-from" ) );
         if( !out.count( base ) ) {
@@ -658,7 +658,7 @@ recipe &recipe_dictionary::load( const JsonObject &jo, const std::string &src,
     mod_tracker::assign_src( r, src );
     r.was_loaded = true;
 
-    // Check for duplicate recipe_ids before assigning it to the map
+
     auto duplicate = out.find( r.ident() );
     if( duplicate != out.end() ) {
         mod_tracker::check_duplicate_entries( r, duplicate->second );
@@ -710,7 +710,7 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
     clock::duration finalize_elapsed{};
     clock::duration input_elapsed{};
     std::size_t processed = 0;
-    // Only retain the five slowest recipe IDs, never log every recipe.
+
     std::array<std::pair<clock::duration, std::string>, 5> slowest{};
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=recipe_internal step=start kind=" <<
                               kind << " count=" << obj.size();
@@ -751,9 +751,9 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
                                       kind << " done=" << processed << " total=" << obj.size() <<
                                       " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
                                           now - loop_started ).count();
-            // Finalizing a slow recipe can take more than a minute. The outer
-            // loading stage is displayed only once, so refresh it here with
-            // honest progress instead of leaving screen-reader users silent.
+
+
+
             loading_ui::show( _( "Finalizing" ),
                               string_format( "%s: %d/%d", _( "Crafting recipes" ),
                                              static_cast<int>( processed ),
@@ -784,7 +784,7 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
                                       slowest[rank].first ).count();
     }
 #endif
-    // Preserve the existing validation and pruning pass.
+
     delete_if( []( const recipe & elem ) {
         if( elem.is_blacklisted() ) {
             return true;
@@ -817,11 +817,11 @@ void recipe_dictionary::find_items_on_loops()
     std::size_t food_count = 0;
     std::size_t component_edges = 0;
 #endif
-    // Check for infinite recipe loops in food (which are problematic for
-    // nutrient calculations).
-    //
-    // Start by building a directed graph of itypes to potential components of
-    // those itypes.
+
+
+
+
+
     items_on_loops.clear();
     std::unordered_map<itype_id, std::vector<itype_id>> potential_components_of;
     for( const itype *i : item_controller->all() ) {
@@ -851,7 +851,7 @@ void recipe_dictionary::find_items_on_loops()
 #if defined(__ANDROID__)
     const auto cycle_started = clock::now();
 #endif
-    // Now check that graph for loops.
+
     std::vector<std::vector<itype_id>> loops = cata::find_cycles( potential_components_of );
 #if defined(__ANDROID__)
     const auto reporting_started = clock::now();
@@ -904,7 +904,7 @@ void recipe_dictionary::finalize()
     log_step( "deferred" );
 #endif
 
-    // remove abstract recipes
+
     delete_if( []( const recipe & element ) {
         return element.abstract;
     } );
@@ -936,15 +936,15 @@ void recipe_dictionary::finalize()
             const_cast<islot_book &>( *booktype->book ).recipes.insert( desc );
         }
 
-        // if reversible and no specific uncraft recipe exists use this recipe
+
 
         const string_id<recipe> uncraft_id = recipe_id( r.result().str() );
         if( r.is_reversible() && !recipe_dict.uncraft.count( uncraft_id ) ) {
             recipe_dict.uncraft[ uncraft_id ] = r;
 
             if( r.uncraft_time > 0 ) {
-                // If a specified uncraft time has been given, use that in the uncraft
-                // recipe rather than the original.
+
+
                 recipe_dict.uncraft[ uncraft_id ].time = r.uncraft_time;
             }
         }
@@ -954,12 +954,12 @@ void recipe_dictionary::finalize()
     log_step( "book_links_and_reversible" );
 #endif
 
-    // add pseudo uncrafting recipes
+
     for( const itype *e : item_controller->all() ) {
         const itype_id id = e->get_id();
         const recipe_id rid = recipe_id( id.str() );
 
-        // books that don't already have an uncrafting recipe
+
         if( e->book && !recipe_dict.uncraft.count( rid ) && e->weight > 0_gram ) {
             const int pages = e->weight / itype_paper->weight;
             recipe &bk = recipe_dict.uncraft[rid];
@@ -967,7 +967,7 @@ void recipe_dictionary::finalize()
             bk.result_ = id;
             bk.reversible = true;
             bk.requirements_ = *requirement_data_uncraft_book * pages;
-            // TODO: allow specifying time in requirement_data
+
             bk.time = pages * 10;
         }
     }
@@ -977,7 +977,7 @@ void recipe_dictionary::finalize()
     std::size_t nested_candidates = 0;
     std::size_t nested_comparisons = 0;
 #endif
-    // Check for nested items without a category to make sure nothing is getting lost
+
     for( const auto &rec : recipe_dict.recipes ) {
         if( rec.second.subcategory == "CSC_*_NESTED" ) {
 #if defined(__ANDROID__)
@@ -1009,7 +1009,7 @@ void recipe_dictionary::finalize()
                               " candidates=" << nested_candidates <<
                               " comparisons=" << nested_comparisons;
 #endif
-    // Cache auto-learn recipes and blueprints
+
     for( const auto &e : recipe_dict.recipes ) {
         if( e.second.obsolete ) {
             recipe_dict.obsoletes.emplace( e.second.result(), &e.second );
@@ -1105,32 +1105,32 @@ void recipe_subset::include( const recipe *r, int custom_difficulty )
     if( custom_difficulty < 0 ) {
         custom_difficulty = r->difficulty;
     }
-    // We always prefer lower difficulty for the subset, but we save it only if it's not default
+
     if( recipes.count( r ) > 0 ) {
         const auto iter = difficulties.find( r );
-        // See if we need to lower the difficulty of the existing recipe
+
         if( iter != difficulties.end() && custom_difficulty < iter->second ) {
             if( custom_difficulty != r->difficulty ) {
-                iter->second = custom_difficulty; // Added again with lower difficulty
+                iter->second = custom_difficulty;
             } else {
-                difficulties.erase( iter ); // No need to keep the default difficulty. Free some memory
+                difficulties.erase( iter );
             }
         } else if( custom_difficulty < r->difficulty ) {
-            difficulties[r] = custom_difficulty; // Added again with lower difficulty
+            difficulties[r] = custom_difficulty;
         }
     } else {
-        // add recipe to category and component caches
+
         for( const auto &opts : r->simple_requirements().get_components() ) {
             for( const item_comp &comp : opts ) {
                 component[comp.type].insert( r );
             }
         }
         category[r->category].insert( r );
-        // Set the difficulty is it's not the default
+
         if( custom_difficulty != r->difficulty ) {
             difficulties[r] = custom_difficulty;
         }
-        // insert the recipe
+
         recipes.insert( r );
     }
 }

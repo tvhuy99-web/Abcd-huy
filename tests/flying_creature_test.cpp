@@ -19,8 +19,8 @@ static const ter_str_id ter_t_floor( "t_floor" );
 static const ter_str_id ter_t_open_air( "t_open_air" );
 static const ter_str_id ter_t_wall( "t_wall" );
 
-// Floor at z=0, single open-air column straight up; walls everywhere else on
-// the 3x3 z=1,2 footprint. Aloft fliers have no lateral candidates here.
+
+
 static void build_narrow_shaft( map &here, const point_bub_ms &origin )
 {
     for( int dx = -1; dx <= 1; ++dx ) {
@@ -40,7 +40,7 @@ static void build_narrow_shaft( map &here, const point_bub_ms &origin )
     }
 }
 
-// Force MATT_FLEE attitude toward the player.
+
 static void force_flee_state( monster &mon )
 {
     mon.aggro_character = true;
@@ -155,13 +155,13 @@ TEST_CASE( "skittish_flier_ignores_distant_z_threat", "[monster][z-level][skitti
     const point_bub_ms origin( 30, 30 );
     build_narrow_shaft( here, origin );
 
-    // xy dist 0, z dist 2: unscaled would trip skittish flee at <=4;
-    // scaled effective is 8.
+
+
     player.setpos( here, tripoint_bub_ms( origin.x(), origin.y(), 0 ) );
     const tripoint_bub_ms spawn_pos( origin.x(), origin.y(), 2 );
     monster &mon = spawn_test_monster( mon_crow.str(), spawn_pos, false );
     REQUIRE( mon.flies() );
-    // attitude() returns MATT_FOLLOW when morale < 0 and morale + anger > 0.
+
     mon.aggro_character = true;
     mon.anger = 5;
     mon.morale = -3;

@@ -10,8 +10,8 @@
 #include "talker_character.h"
 #include "type_id.h"
 
-/*
- */
+
+
 class talker_npc_const : public const_talker_cloner<talker_npc_const, talker_character_const>
 {
     public:
@@ -27,47 +27,47 @@ class talker_npc_const : public const_talker_cloner<talker_npc_const, talker_cha
             return me_npc;
         }
 
-        // identity and location
+
         std::string distance_to_goal() const override;
 
-        // mandatory functions for starting a dialogue
+
         bool check_hostile_response( int anger ) const override;
         int parse_mod( const std::string &attribute, int factor ) const override;
         int trial_chance_mod( const std::string &trial_type ) const override;
 
-        // inventory, buying, and selling
+
         int debt() const override;
         int sold() const override;
         int cash_to_favor( int value ) const override;
         int value( const item &it ) const override;
 
-        // missions
+
         std::vector<mission *> available_missions() const override;
         std::vector<mission *> assigned_missions() const override;
         mission *selected_mission() const override;
 
-        // factions and alliances
+
         bool is_following() const override;
         bool is_friendly( const Character &guy ) const override;
         bool is_enemy() const override;
         bool is_player_ally()  const override;
         bool turned_hostile() const override;
 
-        // ai rules
+
         bool has_ai_rule( const std::string &type, const std::string &rule ) const override;
 
-        // other descriptors
+
         std::string get_job_description() const override;
         std::string view_personality_traits() const override;
         std::string evaluation_by( const_talker const &alpha ) const override;
         bool has_activity() const override;
         bool is_myclass( const npc_class_id &class_to_check ) const override;
 
-        // miscellaneous
+
         std::string opinion_text() const override;
         bool is_safe() const override;
 
-        // opinions
+
         int get_npc_fear() const override;
         int get_npc_trust() const override;
         int get_npc_value() const override;
@@ -126,4 +126,4 @@ class talker_npc : virtual public talker_npc_const,
     private:
         npc *me_npc{};
 };
-#endif // CATA_SRC_TALKER_NPC_H
+#endif

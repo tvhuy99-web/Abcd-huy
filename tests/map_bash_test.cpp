@@ -25,13 +25,13 @@
 
 class monster;
 
-// TODO: map::bash doesn't handle fields
-/*
-static const field_type_str_id field_fd_bash_bothfield( "fd_bash_bothfield" );
-static const field_type_str_id field_fd_bash_destroyfield( "fd_bash_destroyfield" );
-static const field_type_str_id field_fd_bash_hitfield( "fd_bash_hitfield" );
-static const field_type_str_id field_fd_bash_nofield( "fd_bash_nofield" );
-*/
+
+
+
+
+
+
+
 static const field_type_str_id field_fd_marker1( "fd_marker1" );
 static const field_type_str_id field_fd_marker2( "fd_marker2" );
 
@@ -79,7 +79,7 @@ static void test_bash_set( const bash_test_set &set )
 {
     map &here = get_map();
     Character &guy = get_player_character();
-    // Arbitrary point on the map
+
     const tripoint_bub_ms test_pt( 40, 40, 0 );
 
     for( const single_bash_test &test : set.tests ) {
@@ -143,9 +143,9 @@ static void test_bash_fields( const std::function<void( map &, const tripoint_bu
     const tripoint_bub_ms pt_2( pt_1 + point::east );
     const tripoint_bub_ms pt_3( pt_2 + point::east );
 
-    // so we can do a hit that does no damage
+
     REQUIRE( bash_limits().first > 2 );
-    // can hit and do damage without breaking
+
     REQUIRE( bash_limits().first + 2 < bash_limits().second );
 
     place( here, pt_1 );
@@ -155,7 +155,7 @@ static void test_bash_fields( const std::function<void( map &, const tripoint_bu
     REQUIRE( present( here, pt_1 ) );
     REQUIRE( present( here, pt_2 ) );
     REQUIRE( present( here, pt_3 ) );
-    // no fields
+
     REQUIRE( here.field_at( pt_1 ).find_field( hit ) == nullptr );
     REQUIRE( here.field_at( pt_1 ).find_field( destroy ) == nullptr );
     REQUIRE( here.field_at( pt_2 ).find_field( hit ) == nullptr );
@@ -163,7 +163,7 @@ static void test_bash_fields( const std::function<void( map &, const tripoint_bu
     REQUIRE( here.field_at( pt_3 ).find_field( hit ) == nullptr );
     REQUIRE( here.field_at( pt_3 ).find_field( destroy ) == nullptr );
 
-    // weak hit, no damage
+
     {
         here.bash( pt_1, bash_limits().first - 1 );
 
@@ -178,7 +178,7 @@ static void test_bash_fields( const std::function<void( map &, const tripoint_bu
         }
     }
 
-    // hit with damage
+
     {
         here.bash( pt_2, bash_limits().first + 1 );
 
@@ -193,7 +193,7 @@ static void test_bash_fields( const std::function<void( map &, const tripoint_bu
         }
     }
 
-    // destroying hit
+
     {
         here.bash( pt_3, bash_limits().second * 2 );
 
@@ -258,29 +258,29 @@ static void test_terrain_fields( ter_str_id ter,
                       destroy_field, destroy, destroy_intensity );
 }
 
-// TODO: map::bash doesn't handle fields
-/*
-static void test_field_fields( field_type_str_id fd,
-                               bool hit_field, field_type_str_id hit, int hit_intensity,
-                               bool destroy_field, field_type_str_id destroy, int destroy_intensity )
-{
-    CAPTURE( fd );
-    const auto place = [&fd]( map & here, const tripoint_bub_ms & pt ) {
-        REQUIRE( here.add_field( pt, fd, 1 ) );
-    };
-    const auto present = [&fd]( map & here, const tripoint_bub_ms & pt ) {
-        return here.field_at( pt ).find_field( fd ) != nullptr;
-    };
-    const auto bash_limits = [&fd]() {
-        return std::make_pair( fd->bash_info->str_min, fd->bash_info->str_max );
-    };
-    REQUIRE( fd.is_valid() );
-    REQUIRE( fd->bash_info );
-    test_bash_fields( place, present, bash_limits,
-                      hit_field, hit, hit_intensity,
-                      destroy_field, destroy, destroy_intensity );
-}
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 TEST_CASE( "map_bash_create_fields", "[map][bash]" )
 {
@@ -314,23 +314,23 @@ TEST_CASE( "map_bash_create_fields", "[map][bash]" )
                              true, field_fd_marker2, 1 );
     }
 
-    // TODO: map::bash doesn't handle fields
-    /*
-        SECTION( "fields" ) {
-            test_field_fields( field_fd_bash_nofield,
-                               false, field_type_str_id::NULL_ID(), 0,
-                               false, field_type_str_id::NULL_ID(), 0 );
-            test_field_fields( field_fd_bash_hitfield,
-                               true, field_fd_marker2, 1,
-                               false, field_type_str_id::NULL_ID(), 0 );
-            test_field_fields( field_fd_bash_destroyfield,
-                               false, field_type_str_id::NULL_ID(), 0,
-                               true, field_fd_marker2, 2 );
-            test_field_fields( field_fd_bash_bothfield,
-                               true, field_fd_marker1, 2,
-                               true, field_fd_marker2, 1 );
-        }
-        */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 TEST_CASE( "map_bash_ephemeral_persistence", "[map][bash]" )
@@ -340,7 +340,7 @@ TEST_CASE( "map_bash_ephemeral_persistence", "[map][bash]" )
 
     const tripoint_bub_ms test_pt( 40, 40, 0 );
 
-    // Assumptions
+
     REQUIRE( furn_test_f_bash_persist->bash->str_min == 4 );
     REQUIRE( furn_test_f_bash_persist->bash->str_max == 100 );
     REQUIRE( ter_test_t_bash_persist->bash->str_min == 4 );
@@ -351,15 +351,15 @@ TEST_CASE( "map_bash_ephemeral_persistence", "[map][bash]" )
 
         REQUIRE( here.furn( test_pt ) == furn_test_f_bash_persist );
         REQUIRE( here.get_map_damage( test_pt ) == 0 );
-        // One above str_min, but well below str_max
+
         here.bash( test_pt, 5 );
-        // Does not destroy it
+
         CHECK( here.furn( test_pt ) == furn_test_f_bash_persist );
-        // There is any map damage
+
         CHECK( here.get_map_damage( test_pt ) > 0 );
-        // Bash it again to destroy it
+
         here.bash( test_pt, 999 );
-        // Then, it is gone and there is no map damage
+
         CHECK( here.furn( test_pt ) != furn_test_f_bash_persist );
         CHECK( here.get_map_damage( test_pt ) == 0 );
     }
@@ -368,15 +368,15 @@ TEST_CASE( "map_bash_ephemeral_persistence", "[map][bash]" )
 
         REQUIRE( here.ter( test_pt ) == ter_test_t_bash_persist );
         REQUIRE( here.get_map_damage( test_pt ) == 0 );
-        // One above str_min, but well below str_max
+
         here.bash( test_pt, 5 );
-        // Does not destroy the terrain
+
         CHECK( here.ter( test_pt ) == ter_test_t_bash_persist );
-        // There is any map damage
+
         CHECK( here.get_map_damage( test_pt ) > 0 );
-        // Bash it again to destroy it
+
         here.bash( test_pt, 999 );
-        // Then, it is gone and there is no map damage
+
         CHECK( here.ter( test_pt ) != ter_test_t_bash_persist );
         CHECK( here.get_map_damage( test_pt ) == 0 );
     }
@@ -385,13 +385,13 @@ TEST_CASE( "map_bash_ephemeral_persistence", "[map][bash]" )
 
         REQUIRE( here.ter( test_pt ) == ter_test_t_bash_persist );
         REQUIRE( here.get_map_damage( test_pt ) == 0 );
-        // One above str_min, but well below str_max
+
         here.bash( test_pt, 5 );
-        // Does not destroy the terrain
+
         CHECK( here.ter( test_pt ) == ter_test_t_bash_persist );
-        // There is any map damage
+
         CHECK( here.get_map_damage( test_pt ) > 0 );
-        // Change the terrain
+
         here.ter_set( test_pt, ter_test_t_pit_shallow );
         CHECK( here.ter( test_pt ) == ter_test_t_pit_shallow );
         CHECK( here.get_map_damage( test_pt ) == 0 );
@@ -401,13 +401,13 @@ TEST_CASE( "map_bash_ephemeral_persistence", "[map][bash]" )
 
         REQUIRE( here.furn( test_pt ) == furn_test_f_bash_persist );
         REQUIRE( here.get_map_damage( test_pt ) == 0 );
-        // One above str_min, but well below str_max
+
         here.bash( test_pt, 5 );
-        // Does not destroy the terrain
+
         CHECK( here.furn( test_pt ) == furn_test_f_bash_persist );
-        // There is any map damage
+
         CHECK( here.get_map_damage( test_pt ) > 0 );
-        // Change the terrain
+
         here.furn_set( test_pt, furn_test_f_eoc );
         CHECK( here.furn( test_pt ) == furn_test_f_eoc );
         CHECK( here.get_map_damage( test_pt ) == 0 );
@@ -427,23 +427,23 @@ static void shoot_at_terrain( std::function<void()> &setup, npc &shooter,
     int num_trials = 20;
     int broken_count = 0;
     for( int i = 0; i < num_trials; i++ ) {
-        // Place a terrain
+
         here.ter_set( wall_pos, id );
 
         setup();
 
         REQUIRE( here.ter( wall_pos ) == id );
-        // This is a workaround for nonsense where you can't shoot terrain or furniture unless it
-        // obscures sight, specifically map::is_transparent() must return false.
+
+
         here.build_map_cache( 0, true );
 
-        // Shoot it a bunch
+
         for( int i = 0; i < 9; ++i ) {
             shooter.recoil = 0;
             shooter.set_moves( 100 );
             shooter.fire_gun( aim_pos );
         }
-        // is it gone?
+
         INFO( here.ter( wall_pos ).id().str() );
         broken_count += here.ter( wall_pos ) != id;
     }
@@ -459,7 +459,7 @@ TEST_CASE( "shooting_at_terrain", "[rng][map][bash][ranged]" )
 {
     clear_map_without_vision();
 
-    // Make a shooter
+
     standard_npc shooter( "Shooter", { 30, 30, 0 } );
     shooter.set_body();
     shooter.worn.wear_item( shooter, item( itype_backpack ), false, false );
@@ -470,11 +470,11 @@ TEST_CASE( "shooting_at_terrain", "[rng][map][bash][ranged]" )
         shoot_at_terrain( setup, shooter, "t_brick_wall",
                           shooter.pos_bub() + point::east, false );
     }
-    // Broken. See https://github.com/CleverRaven/Cataclysm-DDA/issues/79770
-    //SECTION( "birdshot vs adobe wall point blank" ) {
-    //    shoot_at_terrain( shooter, itype_mossberg_590, itype_shot_bird,
-    //                      "t_adobe_brick_wall", shooter.pos_bub() + point::east, false );
-    //}
+
+
+
+
+
     SECTION( "birdshot vs adobe wall near" ) {
         std::function<void()> setup = [&shooter]() {
             arm_shooter( shooter, itype_mossberg_590, {}, itype_shot_bird );
@@ -503,8 +503,8 @@ TEST_CASE( "shooting_at_terrain", "[rng][map][bash][ranged]" )
         shoot_at_terrain( setup, shooter, "t_door_c",
                           shooter.pos_bub() + point::east * 2, false );
     }
-    // I thought I saw some failures based on whether an unseen monster was present,
-    // But I think it was just shooting at door wthout a 100% chance to break it and getting unlucky.
+
+
     SECTION( "birdshot through door at nothing" ) {
         std::function<void()> setup = [&shooter]() {
             arm_shooter( shooter, itype_mossberg_590, {}, itype_shot_bird );
@@ -525,24 +525,24 @@ TEST_CASE( "shooting_at_terrain", "[rng][map][bash][ranged]" )
                           shooter.pos_bub() + point::east, true,
                           shooter.pos_bub() + point::east * 2 );
     }
-    // TODO: If we get a feature where damage accumulates a test for it would go here.
-    // These are failing because you can't shoot transparent terrain.
-    /*
-    SECTION( "birdshot vs glass door point blank" ) {
-        arm_shooter( shooter, itype_mossberg_590, {}, itype_shot_bird );
-        shoot_at_terrain( shooter, "t_door_glass_c", shooter.pos_bub() + point::east, true );
-    }
-    SECTION( "birdshot vs glass door near" ) {
-        arm_shooter( shooter, itype_mossberg_590, {}, itype_shot_bird );
-        shoot_at_terrain( shooter, "t_door_glass_c", shooter.pos_bub() + point::east * 2, false );
-    }
-    SECTION( "birdshot vs screen door point blank" ) {
-        arm_shooter( shooter, itype_mossberg_590, {}, itype_shot_bird );
-        shoot_at_terrain( shooter, "t_screen_door_c", shooter.pos_bub() + point::east, true );
-    }
-    SECTION( "birdshot vs screen door near" ) {
-        arm_shooter( shooter, itype_mossberg_590, {}, itype_shot_bird );
-        shoot_at_terrain( shooter, "t_screen_door_c", shooter.pos_bub() + point::east * 2, false );
-    }
-    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

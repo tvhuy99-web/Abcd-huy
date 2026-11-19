@@ -129,11 +129,11 @@ TEST_CASE( "cuboid_shrinks", "[point]" )
     CHECK( b.contains( tripoint( 2, 1, 2 ) ) );
     b.shrink( tripoint( 1, 1, 0 ) ); // NOLINT(cata-use-named-point-constants)
     CAPTURE( b );
-    // Shrank in the x and y directions
+
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     CHECK( !b.contains( tripoint( 1, 0, 0 ) ) );
     CHECK( !b.contains( tripoint( 2, 1, 2 ) ) );
-    // Didn't shrink in the z direction
+
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     CHECK( b.contains( tripoint( 1, 1, 0 ) ) );
     CHECK( b.contains( tripoint( 1, 1, 2 ) ) );

@@ -17,9 +17,9 @@ class npc;
 
 class npc_attack_rating
 {
-        // the total calculated effectiveness of this attack. no value means this attack is not possible.
+
         std::optional<int> _value = std::nullopt;
-        // the target tile of the attack
+
         tripoint_bub_ms _target;
     public:
         npc_attack_rating() = default;
@@ -40,27 +40,27 @@ class npc_attack_rating
 class npc_attack
 {
     public:
-        /**
-         *  Parameters:
-         *  source - the npc making the attack
-         *  target - the desired target of the npc. valued at 100%
-         */
+
+
+
+
+
         virtual npc_attack_rating evaluate( const npc &source, const Creature *target ) const = 0;
         virtual void use( npc &source, const tripoint_bub_ms &location ) const = 0;
-        /**
-         *  For debug information. returns all evaluated effectivenesses.
-         *  This is abstracted out in evaluate() as it's faster to not use a container
-         */
+
+
+
+
         virtual std::vector<npc_attack_rating> all_evaluations( const npc &source,
                 const Creature *target ) const = 0;
 
         virtual ~npc_attack() = default;
 };
 
-/**
- *  The type of npc_attack that is a spell.
- *  Assumption: if we made it this far, the npc is able to cast the spell.
- */
+
+
+
+
 class npc_attack_spell : public npc_attack
 {
         const spell_id attack_spell_id;
@@ -115,7 +115,7 @@ class npc_attack_gun : public npc_attack
 class npc_attack_throw : public npc_attack
 {
         item &thrown_item;
-        // source npc's evaluate_best_weapon() and speed_rating() results
+
         const item *best_weapon;
         float source_speed_rating;
     public:
@@ -148,4 +148,4 @@ class npc_attack_activate_item : public npc_attack
         bool can_use( const npc &source ) const;
 };
 
-#endif // CATA_SRC_NPC_ATTACK_H
+#endif

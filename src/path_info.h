@@ -47,7 +47,7 @@ std::string langdir();
 std::string lang_file();
 std::string soundpack_conf();
 
-// Debugging information. Saved only, not read.
+
 std::string external_options();
 
 std::string credits();
@@ -109,6 +109,6 @@ void set_keymap( const std::string &keymap );
 void set_autopickup( const std::string &autopickup );
 void set_motd( const std::string &motd );
 
-} // namespace PATH_INFO
+}
 
-#endif // CATA_SRC_PATH_INFO_H
+#endif

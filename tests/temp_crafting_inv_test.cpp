@@ -126,7 +126,7 @@ static item charged_ups( const itype_id &type, int charges )
     return ups;
 }
 
-// one pile covering each way a subtree can hold a type, with every kind of top-level entry.
+
 static void build_pile( temp_crafting_inventory &inv, item &loose )
 {
     map &here = get_map();
@@ -326,7 +326,7 @@ struct quality_ask {
     const Character *who;
     quality_count mode;
 };
-} // namespace
+}
 
 static bool ask( const temp_crafting_inventory &inv, const quality_ask &q )
 {
@@ -349,7 +349,7 @@ TEST_CASE( "provider_quality_memo_keeps_every_key_dimension", "[crafting][invent
 
     const quality_count each = quality_count::providers;
     const quality_count units = quality_count::units;
-    // two queries of a pair differ in one key dimension and in their answer
+
     const std::vector<std::pair<quality_ask, quality_ask>> pairs = {
         { { qual_FISHING_ROD, 1, 1, &u, each }, { qual_FISHING_ROD, 1, 1, &unpowered, each } },
         { { qual_FISHING_ROD, 1, 1, &u, each }, { qual_FISHING_ROD, 1, 1, nullptr, each } },

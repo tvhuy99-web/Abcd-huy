@@ -45,7 +45,7 @@
 #include "weather_type.h"
 #include "widget.h"
 
-// Needed for screen scraping
+
 #if defined(TILES)
 #include <cstddef>
 
@@ -103,7 +103,7 @@ static const weather_type_id weather_portal_storm( "portal_storm" );
 static const weather_type_id weather_snowing( "snowing" );
 static const weather_type_id weather_sunny( "sunny" );
 
-// test widgets defined in data/json/sidebar.json and data/mods/TEST_DATA/widgets.json
+
 static const widget_id widget_test_2_column_layout( "test_2_column_layout" );
 static const widget_id widget_test_3_column_layout( "test_3_column_layout" );
 static const widget_id widget_test_4_column_layout( "test_4_column_layout" );
@@ -176,8 +176,8 @@ static const widget_id widget_test_weather_text_height5( "test_weather_text_heig
 static const widget_id widget_test_weight_clauses_fun( "test_weight_clauses_fun" );
 static const widget_id widget_test_weight_clauses_normal( "test_weight_clauses_normal" );
 
-// dseguin 2022 - Ugly hack to scrape content from the window object.
-// Scrapes the window w at origin, reading the number of cols and rows.
+
+
 #if defined(TILES)
 static std::vector<std::string> scrape_win_at(
     catacurses::window &w, const point &origin, int cols, int rows )
@@ -193,17 +193,17 @@ static std::vector<std::string> scrape_win_at(
         }
     }
 
-    // For curses builds, this would need something like this instead (including "curses.h"):
-    //    ::WINDOW *win = static_cast<::WINDOW *>( w.get() );
-    //
-    //    int max_y = catacurses::getmaxy( w );
-    //    for( int i = origin.y; i < rows && i < max_y; i++ ) {
-    //        wchar_t *buf = static_cast<wchar_t *>( ::malloc( sizeof( *buf ) * ( cols + 1 ) ) );
-    //        ::mvwinnwstr( win, i, origin.x, buf, cols );
-    //        std::wstring line( buf, static_cast<size_t>( cols ), std::allocator<wchar_t>() );
-    //        lines.emplace_back( std::string( line.begin(), line.end() ) );
-    //        ::free( buf );
-    //    }
+
+
+
+
+
+
+
+
+
+
+
 
     return lines;
 }
@@ -225,11 +225,11 @@ TEST_CASE( "widget_value_strings", "[widget][value][string]" )
         head._var_max = 10;
         REQUIRE( head._style == "graph" );
         REQUIRE( head._fill == "bucket" );
-        // Buckets of width 5 with 2 nonzero symbols can show 10 values
+
         REQUIRE( head._width == 5 );
-        // Uses comma instead of period to avoid clang-tidy complaining about ellipses
+
         REQUIRE( head._symbols == ",\\|" );
-        // Each integer step cycles the graph symbol by one
+
         CHECK( head.value_string( 0 ) == ",,,,," );
         CHECK( head.value_string( 1 ) == "\\,,,," );
         CHECK( head.value_string( 2 ) == "|,,,," );
@@ -241,10 +241,10 @@ TEST_CASE( "widget_value_strings", "[widget][value][string]" )
         CHECK( head.value_string( 8 ) == "||||," );
         CHECK( head.value_string( 9 ) == "||||\\" );
         CHECK( head.value_string( 10 ) == "|||||" );
-        // Above max displayable value, show max
+
         CHECK( head.value_string( 11 ) == "|||||" );
         CHECK( head.value_string( 12 ) == "|||||" );
-        // Below minimum, show min
+
         CHECK( head.value_string( -1 ) == ",,,,," );
         CHECK( head.value_string( -2 ) == ",,,,," );
     }
@@ -255,10 +255,10 @@ TEST_CASE( "widget_value_strings", "[widget][value][string]" )
         stamina._var_max = 20;
         REQUIRE( stamina._style == "graph" );
         REQUIRE( stamina._fill == "pool" );
-        // Pool of width 20 with 2 nonzero symbols can show 20 values
+
         REQUIRE( stamina._width == 10 );
         REQUIRE( stamina._symbols == "-=#" );
-        // Each integer step increases the graph symbol by one
+
         CHECK( stamina.value_string( 0 ) == "----------" );
         CHECK( stamina.value_string( 1 ) == "=---------" );
         CHECK( stamina.value_string( 2 ) == "==--------" );
@@ -272,10 +272,10 @@ TEST_CASE( "widget_value_strings", "[widget][value][string]" )
         CHECK( stamina.value_string( 16 ) == "######====" );
         CHECK( stamina.value_string( 18 ) == "########==" );
         CHECK( stamina.value_string( 20 ) == "##########" );
-        // Above max displayable value, show max
+
         CHECK( stamina.value_string( 21 ) == "##########" );
         CHECK( stamina.value_string( 22 ) == "##########" );
-        // Below minimum, show min
+
         CHECK( stamina.value_string( -1 ) == "----------" );
         CHECK( stamina.value_string( -2 ) == "----------" );
     }
@@ -305,7 +305,7 @@ TEST_CASE( "number_widgets_with_color", "[widget][number][color]" )
         CHECK( colornum.color_value_string( 0 ) == "<color_c_red>0</color>" );
         CHECK( colornum.color_value_string( 1 ) == "<color_c_yellow>1</color>" );
         CHECK( colornum.color_value_string( 2 ) == "<color_c_green>2</color>" );
-        // Beyond var_max, stays at max color
+
         CHECK( colornum.color_value_string( 3 ) == "<color_c_green>3</color>" );
     }
 }
@@ -387,7 +387,7 @@ TEST_CASE( "graph_widgets_with_color", "[widget][graph][color]" )
         REQUIRE( colornum._style == "graph" );
         REQUIRE( colornum._colors.size() == 4 );
 
-        // with +0.5: 2r, 3y, 4lg, 2g
+
         CHECK( colornum.color_value_string( 0 ) == "<color_c_red>-----</color>" );
         CHECK( colornum.color_value_string( 1 ) == "<color_c_red>=----</color>" );
         CHECK( colornum.color_value_string( 2 ) == "<color_c_yellow>#----</color>" );
@@ -399,25 +399,25 @@ TEST_CASE( "graph_widgets_with_color", "[widget][graph][color]" )
         CHECK( colornum.color_value_string( 8 ) == "<color_c_light_green>####-</color>" );
         CHECK( colornum.color_value_string( 9 ) == "<color_c_green>####=</color>" );
         CHECK( colornum.color_value_string( 10 ) == "<color_c_green>#####</color>" );
-        // Beyond var_max, stays at max color
+
         CHECK( colornum.color_value_string( 11 ) == "<color_c_green>#####</color>" );
     }
 
     SECTION( "graph showing variable range 0-10000 with 5 colors and 20 states" ) {
-        // Long / large var graph
+
         widget graph10k = widget_test_color_graph_10k_widget.obj();
         graph10k._var_min = 0;
         graph10k._var_max = 10000;
-        // 2 nonzero symbols x 10 width == 20 possible graph states
+
         REQUIRE( graph10k._style == "graph" );
         REQUIRE( graph10k._symbols == "-=#" );
         REQUIRE( graph10k._width == 10 );
-        // 10000 values / 20 states == 500 values for each state
+
         int tick = 500;
-        // 20 states / 5 colors == 4 states in each color
+
         REQUIRE( graph10k._colors.size() == 5 );
 
-        // At each tick, the graph should be in a new state
+
         CHECK( graph10k.color_value_string( 0 * tick ) == "<color_c_red>----------</color>" );
         CHECK( graph10k.color_value_string( 1 * tick ) == "<color_c_red>=---------</color>" );
         CHECK( graph10k.color_value_string( 2 * tick ) == "<color_c_red>==--------</color>" );
@@ -469,17 +469,17 @@ TEST_CASE( "widgets_showing_avatar_stats_with_color_for_normal_value", "[widget]
     }
 
     SECTION( "stats above or below their normal level" ) {
-        // Normal base STR is 8, always shown in white
+
         ava.set_str_base( 8 );
         CHECK( str_w.layout( ava ) == "STR: <color_c_white>8</color>" );
-        // Reduced STR, due to pain or something
+
         ava.set_str_bonus( -1 );
         CHECK( str_w.layout( ava ) == "STR: <color_c_yellow>7</color>" );
         ava.set_str_bonus( -2 );
         CHECK( str_w.layout( ava ) == "STR: <color_c_light_red>6</color>" );
         ava.set_str_bonus( -3 );
         CHECK( str_w.layout( ava ) == "STR: <color_c_red>5</color>" );
-        // Increased STR, due to magic or something
+
         ava.set_str_bonus( 1 );
         CHECK( str_w.layout( ava ) == "STR: <color_c_light_cyan>9</color>" );
         ava.set_str_bonus( 2 );
@@ -487,7 +487,7 @@ TEST_CASE( "widgets_showing_avatar_stats_with_color_for_normal_value", "[widget]
         ava.set_str_bonus( 3 );
         CHECK( str_w.layout( ava ) == "STR: <color_c_green>11</color>" );
 
-        // STR mod has no effect on other stats
+
         CHECK( dex_w.layout( ava ) == "DEX: <color_c_white>8</color>" );
         CHECK( int_w.layout( ava ) == "INT: <color_c_white>8</color>" );
         CHECK( per_w.layout( ava ) == "PER: <color_c_white>8</color>" );
@@ -599,16 +599,16 @@ TEST_CASE( "widgets_showing_avatar_stamina", "[widget][avatar][stamina]" )
     avatar &ava = get_avatar();
     clear_avatar();
 
-    // Calculate 25%, 50%, 75%, and 100% of maximum stamina
+
     const int stamina_max = ava.get_stamina_max();
     const int stamina_25 = std::ceil( 0.25 * stamina_max );
     const int stamina_50 = std::ceil( 0.5 * stamina_max );
     const int stamina_75 = std::ceil( 0.75 * stamina_max );
 
-    // Test widgets showing stamina as a number, and as a 10-character graph
+
     widget stamina_num_w = widget_test_stamina_num.obj();
     widget stamina_graph_w = widget_test_stamina_graph.obj();
-    // Ensure graph is configured as expected
+
     REQUIRE( stamina_graph_w._fill == "pool" );
     REQUIRE( stamina_graph_w._symbols == "-=#" );
     REQUIRE( stamina_graph_w._width == 10 );
@@ -634,14 +634,14 @@ TEST_CASE( "widgets_showing_avatar_stamina", "[widget][avatar][stamina]" )
     CHECK( stamina_graph_w.layout( ava ) == "STAMINA: ##########" );
 }
 
-// Set the avatar's stored kcals to reach a given BMI value
+
 static void set_avatar_bmi( avatar &ava, float bmi )
 {
-    // BMI is split into muscle, fat and other. Other is always 12 and muscle is 1:1 strength stat.
-    // It is normal to have 5 BMIs of fat (this is bordering Normal and Overweight - BMI 25 for an 8 str character)
-    // Normal BMI is now irrelevant for almost everything, as "fat bmis" are what determine your obesity.
-    // Your natural strength trends down to 0 as you starve (below 2 fat BMIs - emaciated/skeletal) meaning you die at BMI 12.
-    // (see char_biometrics_test.cpp for more BMI details)
+
+
+
+
+
     ava.set_stored_kcal( ava.get_healthy_kcal() * ( bmi / 5 ) );
 }
 
@@ -650,7 +650,7 @@ TEST_CASE( "widgets_showing_avatar_weight", "[widget][weight]" )
     avatar &ava = get_avatar();
     clear_avatar();
 
-    // Classic weight widget, modeled after the one shown in-game
+
     widget weight_clause_w = widget_test_weight_clauses_normal.obj();
 
     set_avatar_bmi( ava, 0.5 );
@@ -693,7 +693,7 @@ TEST_CASE( "widgets_showing_avatar_weight", "[widget][weight]" )
     set_avatar_bmi( ava, 25.0 );
     CHECK( weight_clause_w.layout( ava ) == "Weight: <color_c_red>Morbidly Obese</color>" );
 
-    // "Fun" version with customized thresholds, text, and color
+
     widget weight_clause_fun_w = widget_test_weight_clauses_fun.obj();
 
     set_avatar_bmi( ava, 2.0 );
@@ -778,7 +778,7 @@ TEST_CASE( "widgets_showing_avatar_attributes", "[widget][avatar]" )
         widget weariness_w = widget_test_weariness_num.obj();
 
         CHECK( weariness_w.layout( ava ) == "WEARINESS: 0" );
-        // TODO: Check weariness set to other levels
+
     }
 
     SECTION( "wetness" ) {
@@ -947,19 +947,19 @@ TEST_CASE( "widgets_showing_movement_cost", "[widget][move_cost]" )
 
     SECTION( "without shoes" ) {
         REQUIRE_FALSE( ava.is_wearing_shoes() );
-        // Having no shoes adds +8 per foot to base run cost
+
         REQUIRE( ava.run_cost( 100 ) == 116 );
         CHECK( cost_num_w.layout( ava ) == "MOVE COST: 116" );
     }
     SECTION( "wearing sneakers" ) {
-        // Sneakers eliminate the no-shoes penalty
+
         ava.wear_item( item( itype_sneakers ) );
         REQUIRE( ava.is_wearing_shoes() );
         REQUIRE( ava.run_cost( 100 ) == 100 );
         CHECK( cost_num_w.layout( ava ) == "MOVE COST: 100" );
     }
     SECTION( "wearing swim fins" ) {
-        // Swim fins multiply cost by 1.5
+
         ava.wear_item( item( itype_swim_fins ) );
         REQUIRE( ava.is_wearing_shoes() );
         REQUIRE( ava.run_cost( 100 ) == 167 );
@@ -995,15 +995,15 @@ TEST_CASE( "widgets_showing_Sun_and_Moon_position", "[widget]" )
         CHECK( sundial_w.layout( ava ) == "SKY: [<color_c_white>            ○     </color>]" );
         set_time( calendar::turn_zero + 5_hours + 10_minutes );
         CHECK( sundial_w.layout( ava ) == "SKY: [<color_c_white>            ○     </color>]" );
-        set_time( calendar::turn_zero + 5_hours + 20_minutes ); // Sky begins to brighten, but no sun
+        set_time( calendar::turn_zero + 5_hours + 20_minutes );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_c_white>    </color><color_h_white> </color>"
                "<color_c_white>       ○     </color>]" );
-        set_time( calendar::turn_zero + 5_hours + 45_minutes ); // Rising sun is a red underscore
+        set_time( calendar::turn_zero + 5_hours + 45_minutes );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_h_white>    </color><color_h_red>_</color>"
                "<color_h_white>        ○  </color><color_c_white>  </color>]" );
-        set_time( calendar::turn_zero + 6_hours ); // Sun has risen and has brightened the whole sky
+        set_time( calendar::turn_zero + 6_hours );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_h_white>    </color><color_h_yellow>☼</color>"
                "<color_h_white>        ○    </color>]" );
@@ -1015,25 +1015,25 @@ TEST_CASE( "widgets_showing_Sun_and_Moon_position", "[widget]" )
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_h_white>        </color><color_h_yellow>☼</color>"
                "<color_h_white>        ○</color>]" );
-        set_time( calendar::turn_zero + 12_hours + 10_minutes ); // moon wrapped around the display
+        set_time( calendar::turn_zero + 12_hours + 10_minutes );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_h_white>○        </color><color_h_yellow>☼</color>"
                "<color_h_white>        </color>]" );
-        set_time( calendar::turn_zero + 58_days + 12_hours ); // White sun when illumination is max
+        set_time( calendar::turn_zero + 58_days + 12_hours );
         CHECK( sundial_w.layout( ava ) == "SKY: [<color_h_white>○        ☼        </color>]" );
         set_time( calendar::turn_zero + 16_hours );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_h_white>   ○        </color><color_h_yellow>☼</color>"
                "<color_h_white>     </color>]" );
-        set_time( calendar::turn_zero + 18_hours + 15_minutes ); // sun is still up
+        set_time( calendar::turn_zero + 18_hours + 15_minutes );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_h_white>    ○        </color><color_h_yellow>☼</color>"
                "<color_h_white>    </color>]" );
-        set_time( calendar::turn_zero + 18_hours + 30_minutes ); // sun is setting and some light is gone
+        set_time( calendar::turn_zero + 18_hours + 30_minutes );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_c_white>   </color><color_h_white> ○        </color>"
                "<color_h_red>_</color><color_h_white>    </color>]" );
-        set_time( calendar::turn_zero + 18_hours + 45_minutes ); // sun is down but still providing light
+        set_time( calendar::turn_zero + 18_hours + 45_minutes );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_c_white>     ○      </color><color_h_white>  </color>"
                "<color_c_white>    </color>]" );
@@ -1064,7 +1064,7 @@ TEST_CASE( "widgets_showing_Sun_and_Moon_position", "[widget]" )
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_c_white>      </color><color_c_white_yellow>  ●  </color>"
                "<color_c_white>       </color>]" );
-        set_time( calendar::turn_zero + 20_days ); // Waxing and waning gibbous share a symbol, sadly
+        set_time( calendar::turn_zero + 20_days );
         CHECK( sundial_w.layout( ava ) ==
                "SKY: [<color_c_white>       </color><color_c_white_yellow> ◕ </color>"
                "<color_c_white>        </color>]" );
@@ -1078,7 +1078,7 @@ TEST_CASE( "widgets_showing_Sun_and_Moon_position", "[widget]" )
 
     SECTION( "weather" ) {
         sundial_w._width = 20;
-        set_time( calendar::turn_zero + 18_hours + 15_minutes ); // sun is still up
+        set_time( calendar::turn_zero + 18_hours + 15_minutes );
 
         SECTION( "sunny" ) {
             scoped_weather_override forecast( weather_sunny );
@@ -1163,9 +1163,9 @@ TEST_CASE( "widgets_showing_Sun_and_Moon_position", "[widget]" )
     }
 }
 
-// Bodypart status strings are pulled from a std::map, which is
-// not guaranteed to be sorted in a deterministic way.
-// Just check if the layout string contains the specified status conditions.
+
+
+
 static void check_bp_has_status( const std::string_view layout,
                                  const std::vector<std::string> &stat_str )
 {
@@ -1184,12 +1184,12 @@ TEST_CASE( "widget_showing_body_part_status_text", "[widget][bp_status]" )
     widget arm_status_w = widget_test_status_left_arm_text.obj();
     widget torso_status_w = widget_test_status_torso_text.obj();
 
-    // No ailments
+
     CHECK( arm_status_w.layout( ava ) == "LEFT ARM STATUS: --" );
     CHECK( torso_status_w.layout( ava ) == "TORSO STATUS: --" );
 
-    // Add various ailments and/or treatments to the left arm, and ensure status is displayed
-    // correctly, while torso status display is unaffected
+
+
 
     WHEN( "bitten" ) {
         ava.add_effect( effect_bite, 1_minutes, arm );
@@ -1198,17 +1198,17 @@ TEST_CASE( "widget_showing_body_part_status_text", "[widget][bp_status]" )
     }
 
     WHEN( "bleeding" ) {
-        // low-intensity
+
         ava.add_effect( effect_bleed, 1_minutes, arm );
         ava.get_effect( effect_bleed, arm ).set_intensity( 5 );
         CHECK( arm_status_w.layout( ava ) == "LEFT ARM STATUS: <color_c_light_red>bleeding</color>" );
-        // medium-intensity
+
         ava.get_effect( effect_bleed, arm ).set_intensity( 15 );
         CHECK( arm_status_w.layout( ava ) == "LEFT ARM STATUS: <color_c_red>bleeding</color>" );
-        // high-intensity
+
         ava.get_effect( effect_bleed, arm ).set_intensity( 25 );
         CHECK( arm_status_w.layout( ava ) == "LEFT ARM STATUS: <color_c_red_red>bleeding</color>" );
-        // torso still fine
+
         CHECK( torso_status_w.layout( ava ) == "TORSO STATUS: --" );
     }
 
@@ -1307,7 +1307,7 @@ TEST_CASE( "compact_bodypart_status_widgets_+_legend", "[widget][bp_status]" )
     }
 
     WHEN( "bleeding" ) {
-        // low-intensity
+
         ava.add_effect( effect_bleed, 1_minutes, arm );
         ava.get_effect( effect_bleed, arm ).set_intensity( 5 );
         CHECK( arm_stat.layout( ava, sidebar_width ) ==
@@ -1315,14 +1315,14 @@ TEST_CASE( "compact_bodypart_status_widgets_+_legend", "[widget][bp_status]" )
         CHECK( torso_stat.layout( ava, sidebar_width ) == "TORSO:                              " );
         CHECK( bp_legend.layout( ava, sidebar_width ) ==
                "<color_c_light_red>b</color> bleeding                          " );
-        // medium-intensity
+
         ava.get_effect( effect_bleed, arm ).set_intensity( 15 );
         CHECK( arm_stat.layout( ava, sidebar_width ) ==
                "L ARM: <color_c_red>b</color>                            " );
         CHECK( torso_stat.layout( ava, sidebar_width ) == "TORSO:                              " );
         CHECK( bp_legend.layout( ava, sidebar_width ) ==
                "<color_c_red>b</color> bleeding                          " );
-        // high-intensity
+
         ava.get_effect( effect_bleed, arm ).set_intensity( 25 );
         CHECK( arm_stat.layout( ava, sidebar_width ) ==
                "L ARM: <color_c_red_red>b</color>                            " );
@@ -1429,20 +1429,20 @@ TEST_CASE( "outer_armor_widget", "[widget][armor]" )
     avatar &ava = get_avatar();
     clear_avatar();
 
-    // Empty when no armor is worn
+
     CHECK( torso_armor_w.layout( ava ) == "Torso Armor: -" );
 
-    // Wearing something covering torso
+
     ava.worn.wear_item( ava, item( itype_test_zentai ), false, false );
     CHECK( torso_armor_w.layout( ava ) ==
            "Torso Armor: <color_c_green>++</color>\u00A0test zentai (poor fit)" );
 
-    // Wearing socks doesn't affect the torso
+
     ava.worn.wear_item( ava, item( itype_test_socks ), false, false );
     CHECK( torso_armor_w.layout( ava ) ==
            "Torso Armor: <color_c_green>++</color>\u00A0test zentai (poor fit)" );
 
-    // Wearing something else on the torso
+
     ava.worn.wear_item( ava, item( itype_test_hazmat_suit ), false, false );
     CHECK( torso_armor_w.layout( ava ) ==
            "Torso Armor: <color_c_green>++</color>\u00A0TEST hazmat suit (poor fit)" );
@@ -1455,18 +1455,18 @@ TEST_CASE( "radiation_badge_widget", "[widget][radiation]" )
     avatar &ava = get_avatar();
     clear_avatar();
 
-    // No indicator when character has no radiation badge
+
     CHECK( rads_w.layout( ava ) == "RADIATION: <color_c_light_gray>Unknown</color>" );
 
-    // Acquire and wear a radiation badge
+
     item rad_badge( itype_rad_badge );
     auto rad_badge_iter = *ava.worn.wear_item( ava, rad_badge, false, false );
     item *rad_badge_worn = & *rad_badge_iter;
 
-    // Color indicator is shown when character has radiation badge
+
     rad_badge_worn->irradiation = 0;
     CHECK( rads_w.layout( ava ) == "RADIATION: <color_c_white_green> green </color>" );
-    // Any positive value turns it blue
+
     rad_badge_worn->irradiation = 1;
     CHECK( rads_w.layout( ava ) == "RADIATION: <color_h_white> blue </color>" );
     rad_badge_worn->irradiation = 29;
@@ -1483,9 +1483,9 @@ TEST_CASE( "radiation_badge_widget", "[widget][radiation]" )
 
 TEST_CASE( "moon_and_lighting_widgets", "[widget]" )
 {
-    // The CI tests have inconsistent lighting values for the same
-    // time/day/weather/sun azimuth/etc, so just validate extreme lighting
-    // conditions to check that the lighting widget updates properly.
+
+
+
     widget w_light = widget_test_lighting_clause.obj();
     widget w_moon = widget_test_moon_phase_clause.obj();
 
@@ -1653,26 +1653,26 @@ TEST_CASE( "compass_widget", "[widget][compass]" )
     }
 }
 
-// Widgets with "layout" style can combine other widgets in columns or rows.
-//
-// Using "arrange": "columns", width is divided as equally as possible among widgets.
-// With C columns, (C-1)*2 characters are allotted for space between columns (__):
-//
-//     C=2: FIRST__SECOND
-//     C=3: FIRST__SECOND__THIRD
-//     C=4: FIRST__SECOND__THIRD__FOURTH
-//
-// So total width available to each column is:
-//
-//     (W - (C-1)*2) / C
-//
-// At 24 width, 2 columns, each column gets (24 - (2-1)*2) / 2 == 11 characters.
-// At 36 width, 2 columns, each column gets (36 - (2-1)*2) / 2 == 17 characters.
-// At 36 width, 3 columns, each column gets (36 - (3-1)*2) / 3 == 10 characters.
-//
-// This test case calls layout() at different widths for 2-, 3-, and 4-column layouts,
-// to verify and demonstrate how the space is distributed among widgets in columns.
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "layout_widgets_in_columns", "[widget][layout][columns]" )
 {
     widget stat_w = widget_test_stat_panel.obj();
@@ -1692,8 +1692,8 @@ TEST_CASE( "layout_widgets_in_columns", "[widget][layout][columns]" )
     ava.set_speed_base( 100 );
     ava.magic->set_mana( 1000 );
 
-    // Two columns
-    // string ruler:                   123456789012345678901234567890123456
+
+
     CHECK( two_w.layout( ava, 24 ) == "MOVE: 50     SPEED: 100 " );
     CHECK( two_w.layout( ava, 25 ) == "MOVE: 50      SPEED: 100 " );
     CHECK( two_w.layout( ava, 26 ) == "MOVE: 50      SPEED: 100  " );
@@ -1707,10 +1707,10 @@ TEST_CASE( "layout_widgets_in_columns", "[widget][layout][columns]" )
     CHECK( two_w.layout( ava, 34 ) == "MOVE: 50          SPEED: 100      " );
     CHECK( two_w.layout( ava, 35 ) == "MOVE: 50           SPEED: 100      " );
     CHECK( two_w.layout( ava, 36 ) == "MOVE: 50           SPEED: 100       " );
-    // string ruler:                   123456789012345678901234567890123456
 
-    // Three columns
-    // string ruler:                     1234567890123456789012345678901234567890
+
+
+
     CHECK( three_w.layout( ava, 36 ) == "MOVE: 50     SPEED: 100   FOCUS: 120" );
     CHECK( three_w.layout( ava, 37 ) == "MOVE: 50     SPEED: 100   FOCUS: 120 " );
     CHECK( three_w.layout( ava, 38 ) == "MOVE: 50      SPEED: 100   FOCUS: 120 " );
@@ -1722,10 +1722,10 @@ TEST_CASE( "layout_widgets_in_columns", "[widget][layout][columns]" )
     CHECK( three_w.layout( ava, 44 ) == "MOVE: 50        SPEED: 100     FOCUS: 120   " );
     CHECK( three_w.layout( ava, 45 ) == "MOVE: 50        SPEED: 100      FOCUS: 120   " );
     CHECK( three_w.layout( ava, 46 ) == "MOVE: 50        SPEED: 100      FOCUS: 120    " );
-    // string ruler:                     1234567890123456789012345678901234567890123456
 
-    // Four columns
-    // string ruler:                    123456789012345678901234567890123456789012
+
+
+
     CHECK( stat_w.layout( ava, 32 ) == "STR: 8   DEX: 8   INT: 8  PER: 8" );
     CHECK( stat_w.layout( ava, 33 ) == "STR: 8   DEX: 8   INT: 8   PER: 8" );
     CHECK( stat_w.layout( ava, 34 ) == "STR: 8   DEX: 8   INT: 8   PER: 8 " );
@@ -1741,23 +1741,23 @@ TEST_CASE( "layout_widgets_in_columns", "[widget][layout][columns]" )
     CHECK( stat_w.layout( ava, 44 ) == "STR: 8      DEX: 8      INT: 8     PER: 8   " );
     CHECK( stat_w.layout( ava, 45 ) == "STR: 8      DEX: 8      INT: 8      PER: 8   " );
     CHECK( stat_w.layout( ava, 46 ) == "STR: 8      DEX: 8      INT: 8      PER: 8    " );
-    // string ruler:                    1234567890123456789012345678901234567890123456
 
-    // Column alignment
-    // Layout keeps labels vertically aligned for layouts with the same number of widgets
-    // string ruler:                    123456789012345678901234567890123456789012345678
+
+
+
+
     CHECK( stat_w.layout( ava, 48 ) == "STR: 8       DEX: 8       INT: 8      PER: 8    " );
     CHECK( four_w.layout( ava, 48 ) == "MOVE: 50     SPEED: 100   FOCUS: 120  MANA: 1000" );
 
-    // string ruler:                    1234567890123456789012345678901234567890123456789012
+
     CHECK( stat_w.layout( ava, 52 ) == "STR: 8        DEX: 8        INT: 8       PER: 8     " );
     CHECK( four_w.layout( ava, 52 ) == "MOVE: 50      SPEED: 100    FOCUS: 120   MANA: 1000 " );
 
-    // string ruler:                    12345678901234567890123456789012345678901234567890123456
+
     CHECK( stat_w.layout( ava, 56 ) == "STR: 8         DEX: 8         INT: 8        PER: 8      " );
     CHECK( four_w.layout( ava, 56 ) == "MOVE: 50       SPEED: 100     FOCUS: 120    MANA: 1000  " );
 
-    // string ruler:                    123456789012345678901234567890123456789012345678901234567890
+
     CHECK( stat_w.layout( ava, 60 ) == "STR: 8          DEX: 8          INT: 8         PER: 8       " );
     CHECK( four_w.layout( ava, 60 ) == "MOVE: 50        SPEED: 100      FOCUS: 120     MANA: 1000   " );
 }
@@ -1804,7 +1804,7 @@ TEST_CASE( "widgets_showing_weather_conditions", "[widget][weather]" )
     }
 }
 
-// Fill a 3x3 overmap area around the avatar with a given overmap terrain
+
 static void fill_overmap_area( const avatar &ava, const oter_id &oter )
 {
     const tripoint_abs_omt &ava_pos = ava.pos_abs_omt();
@@ -1815,7 +1815,7 @@ static void fill_overmap_area( const avatar &ava, const oter_id &oter )
             overmap_buffer.set_seen( ava_pos + offset, om_vision_level::full );
         }
     }
-    // Terrain changed, so the overmap widget cache is stale.
+
     display::invalidate_overmap_cache();
 }
 
@@ -1824,22 +1824,22 @@ TEST_CASE( "multi-line_overmap_text_widget", "[widget][overmap]" )
     widget overmap_w = widget_test_overmap_3x3_text.obj();
     avatar &ava = get_avatar();
     mission msn;
-    // Use mission target to invalidate the om cache
+
     msn.set_target( ava.pos_abs_omt() + tripoint( 5, 0, 0 ) );
     clear_avatar();
     clear_map_without_vision();
     ava.on_mission_assignment( msn );
 
-    // Mission marker is a red asterisk when it's along the border
+
     const std::string red_star = "<color_c_red>*</color>";
 
     SECTION( "field" ) {
         const std::string brown_dot = "<color_c_brown>.</color>";
         const std::string h_brown_dot = "<color_h_brown>.</color>";
         fill_overmap_area( ava, oter_id( "field" ) );
-        // Mission marker to the north of avatar position (y - 2)
+
         msn.set_target( ava.pos_abs_omt() + tripoint( 0, -2, 0 ) );
-        // (red star in top center of the map)
+
         const std::vector<std::string> field_3x3 = {
             brown_dot, red_star, brown_dot, "\n",
             brown_dot, h_brown_dot, brown_dot, "\n",
@@ -1852,9 +1852,9 @@ TEST_CASE( "multi-line_overmap_text_widget", "[widget][overmap]" )
         const std::string green_F = "<color_c_green>F</color>";
         const std::string h_green_F = "<color_h_green>F</color>";
         fill_overmap_area( ava, oter_id( "forest" ) );
-        // Mission marker to the east of avatar position (x + 2)
+
         msn.set_target( ava.pos_abs_omt() + tripoint( 2, 0, 0 ) );
-        // (red star on the right edge of the map)
+
         const std::vector<std::string> forest_3x3 = {
             green_F, green_F, green_F, "\n",
             green_F, h_green_F, red_star, "\n",
@@ -1867,9 +1867,9 @@ TEST_CASE( "multi-line_overmap_text_widget", "[widget][overmap]" )
         const std::string cyan_F = "<color_c_cyan>F</color>";
         const std::string h_cyan_F = "<color_h_cyan>F</color>";
         fill_overmap_area( ava, oter_id( "forest_water" ) );
-        // Mission marker southwest of avatar position (x-2, y+2)
+
         msn.set_target( ava.pos_abs_omt() + tripoint( -2, 2, 0 ) );
-        // (red star on lower left corner of map)
+
         const std::vector<std::string> swamp_3x3 = {
             cyan_F, cyan_F, cyan_F, "\n",
             cyan_F, h_cyan_F, cyan_F, "\n",
@@ -1878,7 +1878,7 @@ TEST_CASE( "multi-line_overmap_text_widget", "[widget][overmap]" )
         CHECK( overmap_w.layout( ava ) == string_join( swamp_3x3, "" ) );
     }
 
-    // TODO: Horde indicators
+
 }
 
 TEST_CASE( "Custom_widget_height_and_multiline_formatting", "[widget]" )
@@ -1942,7 +1942,7 @@ static int get_height_from_widget_factory( const widget_id &id )
     return -1;
 }
 
-// Use the compass legend as a proof-of-concept
+
 TEST_CASE( "Dynamic_height_for_multiline_widgets", "[widget]" )
 {
     const map &here = get_map();
@@ -2013,73 +2013,73 @@ TEST_CASE( "Dynamic_height_for_multiline_widgets", "[widget]" )
     }
 }
 
-/**
- * Alignments
- * ----------
- *
- * Label left, text right (default):
- * ------------------------------------
- * LEFT ARM STATUS:         disinfected
- * TORSO STATUS:                 bitten
- * L ARM:                             $
- * TORSO:                             B
- *
- * Label left, text left:
- * ------------------------------------
- * LEFT ARM STATUS: disinfected
- * TORSO STATUS:    bitten
- * L ARM:           $
- * TORSO:           B
- *
- * Label right, text left:
- * ------------------------------------
- * LEFT ARM STATUS: disinfected
- *    TORSO STATUS: bitten
- *           L ARM: $
- *           TORSO: B
- *
- * Label right, text right:
- * ------------------------------------
- *         LEFT ARM STATUS: disinfected
- *                 TORSO STATUS: bitten
- *                             L ARM: $
- *                             TORSO: B
- *
- * Label center, text left:
- * ------------------------------------
- * LEFT ARM STATUS: disinfected
- *   TORSO STATUS:  bitten
- *      L ARM:      $
- *      TORSO:      B
- *
- * Label center, text right:
- * ------------------------------------
- * LEFT ARM STATUS:         disinfected
- *   TORSO STATUS:               bitten
- *      L ARM:                        $
- *      TORSO:                        B
- *
- * Label center, text center:
- * ------------------------------------
- * LEFT ARM STATUS:     disinfected
- *   TORSO STATUS:         bitten
- *      L ARM:               $
- *      TORSO:               B
- *
- * Label left, text center:
- * ------------------------------------
- * LEFT ARM STATUS:     disinfected
- * TORSO STATUS:           bitten
- * L ARM:                    $
- * TORSO:                    B
- *
- * Label right, text center:
- * ------------------------------------
- * LEFT ARM STATUS:     disinfected
- *    TORSO STATUS:        bitten
- *           L ARM:          $
- *           TORSO:          B
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST_CASE( "Widget_alignment", "[widget]" )
 {
     const int sidebar_width = 36;
@@ -2465,14 +2465,14 @@ TEST_CASE( "widget_disabled_when_empty", "[widget]" )
     REQUIRE( wgt.has_flag( json_flag_W_DISABLED_WHEN_EMPTY ) );
 
     SECTION( "test layout results" ) {
-        // Show widget text when character is not blind
+
         REQUIRE( !ava.is_blind() );
         CHECK( wgt.layout( ava ) == "NOT EMPTY: <color_c_yellow>Text exists</color>" );
 
-        // Hide the widget when character is blind.
-        // The empty string indicates to the calling function
-        // that the widget should not be rendered
-        // (combined with the W_DISABLED_WHEN_EMPTY flag).
+
+
+
+
         ava.wear_item( blindfold );
         REQUIRE( ava.is_blind() );
         CHECK( wgt.layout( ava ).empty() );
@@ -2487,7 +2487,7 @@ TEST_CASE( "widget_disabled_when_empty", "[widget]" )
 
         werase( w );
         SECTION( "Not empty" ) {
-            // Show widget text when character is not blind
+
             REQUIRE( !ava.is_blind() );
             CHECK( widget::custom_draw_multiline( wgt.layout( ava ), w, 1, 30, 0 ) == 1 );
             std::vector<std::string> lines = scrape_win_at( w, point::zero, cols, rows );
@@ -2500,10 +2500,10 @@ TEST_CASE( "widget_disabled_when_empty", "[widget]" )
 
         werase( w );
         SECTION( "Empty" ) {
-            // Hide the widget when character is blind.
+
             ava.wear_item( blindfold );
             REQUIRE( ava.is_blind() );
-            // Shouldn't be called (height should be decremented), but check it just in case
+
             CHECK( widget::custom_draw_multiline( wgt.layout( ava ), w, 1, 30, 0 ) == 1 );
             std::vector<std::string> lines = scrape_win_at( w, point::zero, cols, rows );
             CHECK( lines[0] == "                                " );
@@ -2521,7 +2521,7 @@ TEST_CASE( "widget_rows_in_columns", "[widget]" )
     avatar &ava = get_avatar();
     clear_avatar();
     clear_map_without_vision();
-    // Setup overmap
+
     fill_overmap_area( ava, oter_id( "field" ) );
     ava.reset_all_missions();
     ava.set_focus( 100 );
@@ -2687,7 +2687,7 @@ TEST_CASE( "W_NO_PADDING_widget_flag", "[widget]" )
     ava.set_focus( 100 );
     ava.movecounter = 0;
 
-    // workaround for mbstowcs to process multibyte utf-8 chars
+
     std::locale const &oldloc = std::locale();
     on_out_of_scope reset_loc( [&oldloc]() {
         std::locale::global( oldloc );

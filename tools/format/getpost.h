@@ -84,7 +84,7 @@ inline void initializeGet( std::map <std::string, std::string> &Get )
         }
         raw_get++;
     }
-    //enter the last pair to the map
+
     if( !tmpkey.empty() ) {
         Get[urlDecode( tmpkey )] = urlDecode( tmpvalue );
         tmpkey.clear();
@@ -138,7 +138,7 @@ inline void initializePost( std::map <std::string, std::string> &Post )
         }
         ibuffer++;
     }
-    //enter the last pair to the map
+
     if( !tmpkey.empty() ) {
         Post[urlDecode( tmpkey )] = urlDecode( tmpvalue );
         tmpkey.clear();
@@ -146,4 +146,4 @@ inline void initializePost( std::map <std::string, std::string> &Post )
     }
 }
 
-#endif /*__GETPOST_H__*/
+#endif

@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-/** The car is quiet while moving, but never silent for explicit queries or hazards. */
+
 public final class DrivingSpeechPolicyTest {
     @Test public void ordinaryDrivingRemainsSilent() {
         assertFalse(GameReaderController.allowedDuringDriving("Tiến.", 1));

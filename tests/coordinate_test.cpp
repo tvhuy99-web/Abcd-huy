@@ -17,8 +17,8 @@ static_assert( tripoint::dimension == 3 );
 static_assert( point_abs_omt::dimension == 2 );
 static_assert( tripoint_abs_omt::dimension == 3 );
 
-// Out of bounds coords can be implicitly constructed from inbounds ones. This is used
-// to ensure a return type is NOT an inbounds one, before it can be converted.
+
+
 #define assert_not_ib(p) \
     (([](auto&& _p) { \
         using _t = decltype(_p); \
@@ -26,8 +26,8 @@ static_assert( tripoint_abs_omt::dimension == 3 );
         return std::forward<_t>(_p); } \
      )(p))
 
-// Code moved from the obsolete coodinates_conversions.cpp file, as its only remaining
-// usage is in these tests.
+
+
 
 static int divide( int v, int m )
 {
@@ -109,8 +109,8 @@ static point ms_to_sm_copy( const point &p )
     return point( divide( p.x, SEEX ), divide( p.y, SEEY ) );
 }
 
-// Note: this gives you the map square coordinates of the top-left corner
-// of the given submap.
+
+
 static point sm_to_ms_copy( const point &p )
 {
     return point( p.x * SEEX, p.y * SEEY );
@@ -136,7 +136,7 @@ static tripoint omt_to_seg_copy( const tripoint &p )
     return tripoint( divide( p.x, SEG_SIZE ), divide( p.y, SEG_SIZE ), p.z );
 }
 
-// End of moved code.
+
 
 TEST_CASE( "coordinate_strings", "[point][coords][nogame]" )
 {
@@ -353,8 +353,8 @@ TEST_CASE( "coordinate_hash", "[point][coords][nogame]" )
 
 TEST_CASE( "coordinate_conversion_consistency", "[point][coords][nogame]" )
 {
-    // Verifies that the new coord_point-based conversions yield the same
-    // results as the legacy conversion functions.
+
+
     SECTION( "omt_to_om_point" ) {
         point p = GENERATE( take( num_trials, random_points() ) );
         CAPTURE( p );
@@ -563,8 +563,8 @@ TEST_CASE( "coord_point_distances", "[point][coords][nogame]" )
     }
 
     SECTION( "trig" ) {
-        CHECK( trig_dist( p0, p1 ) == 14 ); // int(10*sqrt(2))
-        CHECK( trig_dist( t0, t1 ) == 17 ); // int(10*sqrt(3))
+        CHECK( trig_dist( p0, p1 ) == 14 );
+        CHECK( trig_dist( t0, t1 ) == 17 );
     }
 
     SECTION( "manhattan" ) {

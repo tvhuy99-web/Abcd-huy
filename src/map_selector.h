@@ -20,14 +20,14 @@ class map_cursor : public visitable
     public:
         explicit map_cursor( const tripoint_bub_ms &pos );
         explicit map_cursor( map *here, const tripoint_bub_ms &pos );
-        // Marginally faster than the previous operation if you have the absolute coordinates at hand.
+
         explicit map_cursor( const tripoint_abs_ms &pos );
         tripoint_bub_ms pos_bub() const;
         tripoint_bub_ms pos_bub( const map &here ) const;
-        // Will return tripoint_abs_ms::invalid if g hasn't been defined.
+
         tripoint_abs_ms pos_abs() const;
 
-        // inherited from visitable
+
         VisitResponse visit_items( const std::function<VisitResponse( const item_location & )> &func ) const
         override;
         std::list<item> remove_items_with( const std::function<bool( const item & )> &filter,
@@ -44,15 +44,15 @@ class map_selector : public visitable
         using reference = std::vector<value_type>::reference;
         using const_reference = std::vector<value_type>::const_reference;
 
-        /**
-         *  Constructs map_selector used for querying items located on map tiles
-         *  @param pos position on map at which to start each query
-         *  @param radius number of adjacent tiles to include (searching from pos outwards)
-         *  @param accessible whether found items must be accessible from pos to be considered
-         */
+
+
+
+
+
+
         explicit map_selector( const tripoint_bub_ms &pos, int radius = 0, bool accessible = true );
 
-        // similar to item_location you are not supposed to store this class between turns
+
         map_selector( const map_selector &that ) = delete;
         map_selector &operator=( const map_selector & ) = delete;
         map_selector( map_selector && ) = default;
@@ -85,7 +85,7 @@ class map_selector : public visitable
             return data.back();
         }
 
-        // inherited from visitable
+
         VisitResponse visit_items( const std::function<VisitResponse( const item_location & )> &func ) const
         override;
         std::list<item> remove_items_with( const std::function<bool( const item & )> &filter,
@@ -95,4 +95,4 @@ class map_selector : public visitable
         std::vector<value_type> data;
 };
 
-#endif // CATA_SRC_MAP_SELECTOR_H
+#endif

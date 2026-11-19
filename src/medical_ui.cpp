@@ -79,7 +79,7 @@ enum class medical_tab_mode {
     TAB_SUMMARY,
     last
 };
-} // namespace
+}
 
 template<>
 struct enum_traits<medical_tab_mode> {
@@ -139,7 +139,7 @@ class medical_ui : public cataimgui::window
             return ImGui::GetWindowSize().x / 2;
         }
 };
-} // namespace
+}
 
 bool Character::disp_medical()
 {
@@ -180,8 +180,8 @@ bool medical_ui::execute()
             break;
         }
 
-        // creating a new window within main loop of draw_controls() causes destructor to destroy wrong window
-        // so moved here, outside of draw_controls()
+
+
         if( last_action == "CONFIRM" ) {
             if( !you->has_part( bp ) ) {
                 if( a11y::enabled() ) {
@@ -242,7 +242,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
     const bool bitten = you->has_effect( effect_bite, part.id() );
     const bool infected = you->has_effect( effect_infected, part.id() );
 
-    // BLEEDING block
+
     if( bleeding ) {
         const effect bleed_effect = you->get_effect( effect_bleed, part );
         const nc_color bleeding_color = colorize_bleeding_intensity( bleed_intensity );
@@ -251,7 +251,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
                                       string_format( bleed_effect.disp_short_desc(), body_part_name( part.id() ) ) );
     }
 
-    // BITTEN block
+
     if( bitten ) {
         const effect bite_effect = you->get_effect( effect_bite, part );
         description += string_format( "[ %s ] - %s\n",
@@ -259,7 +259,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
                                       string_format( bite_effect.disp_short_desc(), body_part_name( part.id() ) ) );
     }
 
-    // INFECTED block
+
     if( infected ) {
         const effect infected_effect = you->get_effect( effect_infected, part );
         description += string_format( "[ %s ] - %s\n",
@@ -267,7 +267,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
                                       string_format( infected_effect.disp_short_desc(), body_part_name( part.id() ) ) );
     }
 
-    // rest of effects
+
     for( const effect &eff : you->get_effects_from_bp( part ) ) {
         if( eff.get_id() != effect_bleed &&
             eff.get_id() != effect_bite &&
@@ -286,7 +286,7 @@ std::string medical_ui::get_limb_wounds( const bodypart_id &part ) const
     std::string detail_str;
     const bodypart *bp = you->get_part( part );
 
-    // for existing wounds
+
     const std::vector<wound> &wds = bp->get_wounds();
     if( !wds.empty() ) {
         detail_str += _( "Current wounds" );
@@ -425,9 +425,9 @@ std::string a11y::limb_health_description( const Character &who, const bodypart_
 
 std::string medical_ui::get_modified_limb_name( const bodypart_id &part ) const
 {
-    std::string header; // Bodypart Title
-    std::string hp_str; // Bodypart HP, later merged into the header
-    std::string detail; // additional info, like [ BLEEDING ]
+    std::string header;
+    std::string hp_str;
+    std::string detail;
 
     const int bleed_intensity = you->get_effect_int( effect_bleed, part );
     const bool bleeding = bleed_intensity > 0;
@@ -467,18 +467,18 @@ std::string medical_ui::get_modified_limb_name( const bodypart_id &part ) const
                         display::limb_color( *you,
                                 part, true, true, true ) ) + " " + hp_str;
 
-    // BLEEDING block
+
     if( bleeding ) {
         const nc_color bleeding_color = colorize_bleeding_intensity( bleed_intensity );
         detail += string_format( _( "[ %s ]" ), colorize( _( "BLEEDING" ), bleeding_color ) );
     }
 
-    // BITTEN block
+
     if( bitten ) {
         detail += string_format( _( "[ %s ]" ), colorize( _( "BITTEN" ), c_yellow ) );
     }
 
-    // INFECTED block
+
     if( infected ) {
         detail += string_format( _( "[ %s ]" ), colorize( _( "SEPTIC" ), c_pink ) );
     }
@@ -602,7 +602,7 @@ void medical_ui::draw_limbs_list( const std::vector<bodypart_id> &bodyparts )
             ImGui::PushID( i );
 
             if( ImGui::Selectable( "", is_selected ) ) {
-                // if true, the option was selected, so set bp to what was selected
+
                 bp = part;
             }
 
@@ -718,7 +718,7 @@ void medical_ui::draw_hint_section()
 
 void medical_ui::draw_controls()
 {
-    // no need to draw anything if we are exiting
+
     if( last_action == "QUIT" ) {
         return;
     } else if( last_action == "NEXT_TAB" || last_action == "RIGHT" ) {
@@ -737,7 +737,7 @@ void medical_ui::draw_controls()
     }
     const int last_entry = num_entries == 0 ? 0 : ( static_cast<int>( num_entries ) - 1 );
 
-    // initialize selected_limb either from already set bp, or from zero if not set
+
     auto it = std::find( bodyparts.begin(), bodyparts.end(), bp );
     int selected_limb = ( it != bodyparts.end() ) ? std::distance( bodyparts.begin(), it ) : 0;
     if( last_action == "UP" ) {
@@ -768,8 +768,8 @@ void medical_ui::draw_controls()
 
     if( ImGui::BeginTabBar( "##Tabs" ) ) {
         if( cataimgui::BeginTabItem( _( "Limbs" ), selected_tab == medical_tab_mode::TAB_LIMBS ) ) {
-            // if we picked the tab via mouse imput, update selected_tab
-            // TODO there seems to be some lag appearing when you pick it with mouse?
+
+
             selected_tab = ImGui::IsItemActive() ? medical_tab_mode::TAB_LIMBS : selected_tab;
             limb_tab( bodyparts );
             ImGui::EndTabItem();
@@ -787,8 +787,8 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
 {
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
     snapshot.summary = selected_tab == medical_tab_mode::TAB_LIMBS ? _( "Limbs" ) : _( "Summary" );
-    // Urgent conditions are announced before the full limb list. A status
-    // estimate must never expose exact hit points or bypass treatment checks.
+
+
     const auto urgency = [this]( const bodypart_id &part ) {
         if( you->has_effect( effect_infected, part ) ) {
             return 5;
@@ -834,11 +834,11 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
                         ( node.id == "medical:tab:limbs" );
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // Table contract (R02.2): limbs form one table whose columns are
-    // declared once here. Condition text follows the medical knowledge
-    // policy (coarse descriptions, never exact hit points), and cells are
-    // presentation only -- selecting a row still uses the row node's own
-    // focus/activate path in reader_intent, never a per-cell action.
+
+
+
+
+
     a11y::semantic_table limbs_table;
     limbs_table.id = "medical:limbs";
     limbs_table.columns = { { "part", _( "Body part" ), "" },
@@ -929,8 +929,8 @@ std::optional<std::string> medical_ui::reader_intent( const a11y::semantic_inten
             bp = part;
             selected_tab = medical_tab_mode::TAB_LIMBS;
             s = cataimgui::scroll::begin;
-            // Inspection never starts treatment. The original wound menu and
-            // its skill/proficiency/material checks run only on activation.
+
+
             return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
         }
     }
@@ -945,7 +945,7 @@ struct healing_option {
     bool doable;
     time_duration time_to_apply;
 };
-} // namespace
+}
 
 bool Character::pick_wound_fix( const bodypart_id &bp_id )
 {
@@ -1025,7 +1025,7 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
     if( healing_options.empty() ) {
         if( bp->get_wounds().empty() ) {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
-                // should be popup, but popup() crashes this message, for some reason
+
                 report_treatment_issue( string_format( _( "The %s doesn't have any damage to repair." ), body_part_name( bp_id ) ) );
                 return false;
             } else {

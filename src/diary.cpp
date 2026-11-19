@@ -442,7 +442,7 @@ const std::vector<std::string> &diary::get_change_list()
         npc_kill_changes();
     }
     while( !change_list.empty() && change_list.back() == " " ) {
-        // usually one, possibly more or none, changes functions will append a trailing blank line.
+
         change_list.pop_back();
     }
     return change_list;
@@ -649,7 +649,7 @@ void diary::serialize( JsonOut &jsout ) const
         jsout.member( "time_accuracy", n->time_acc );
         jsout.member( "completed", n->mission_completed );
         jsout.member( "active", n->mission_active );
-        // TODO: migrate "faild" to "failed"?
+
         jsout.member( "faild", n->mission_failed );
         jsout.member( "kills", n->kills );
         jsout.member( "npc_kills", n->npc_kills );
@@ -696,7 +696,7 @@ void diary::deserialize( const JsonValue &jsin )
             elem.read( "time_accuracy", page->time_acc );
             elem.read( "active", page->mission_active );
             elem.read( "completed", page->mission_completed );
-            // TODO: migrate "faild" to "failed"?
+
             elem.read( "faild", page->mission_failed );
             elem.read( "kills", page->kills );
             elem.read( "npc_kills", page->npc_kills );

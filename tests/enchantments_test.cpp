@@ -72,11 +72,11 @@ struct enchant_test {
     int intimidate_before;
 };
 
-} // namespace
+}
 
 static void test_generic_ench( avatar &p, enchant_test enc_test )
 {
-    // wait a turn for the effect to kick in
+
     p.process_turn();
 
     CHECK( p.get_dex() == ( enc_test.dex_before + 1 ) * 2 );
@@ -94,7 +94,7 @@ static void test_generic_ench( avatar &p, enchant_test enc_test )
     const field &fields_here = get_map().field_at( p.pos_bub() );
     CHECK( fields_here.find_field( field_type_id( "fd_shadow" ) ) != nullptr );
 
-    // place a zombie next to the avatar
+
     const tripoint_bub_ms spot( 61, 60, 0 );
     clear_map_without_vision();
     monster &zombie = spawn_test_monster( "mon_zombie", spot );
@@ -121,11 +121,11 @@ TEST_CASE( "worn_enchantments", "[enchantments][worn][items]" )
 
     int str_before = p.get_str();
 
-    // put on the ring
+
     item_location equipped_ring_strplus_one = p.i_add( item( itype_test_ring_strength_1 ) );
     p.wear( equipped_ring_strplus_one, false );
 
-    // wait a turn for the effect to kick in
+
     p.recalculate_enchantment_cache();
     p.process_turn();
 
@@ -253,7 +253,7 @@ static int test_melee_attack_attack_speed( Character &guy, Creature &mon )
         guy.melee_attack_abstract( mon, false, matec_id( "" ) );
         add_msg( "attack %i: attack cost: %i, total amount of moves: %i", i, prev_attack - guy.get_moves(),
                  guy.get_moves() );
-        guy.set_stamina( guy.get_stamina_max() ); //Reset reset!
+        guy.set_stamina( guy.get_stamina_max() );
         guy.set_sleepiness( 0 );
         i++;
     }
@@ -273,7 +273,7 @@ TEST_CASE( "Enchantment_ATTACK_SPEED_test", "[magic][enchantments]" )
 
 
     INFO( "Character, melee skill lvl 10, attacks with no enchantment" );
-    // 38 moves per attack
+
     INFO( "10 attacks cost 380 moves" );
     moves_spent_on_attacks = test_melee_attack_attack_speed( guy, mon );
     REQUIRE( moves_spent_on_attacks == -380 );
@@ -281,7 +281,7 @@ TEST_CASE( "Enchantment_ATTACK_SPEED_test", "[magic][enchantments]" )
 
     INFO( "Character, melee skill lvl 10, attacks with enchantment, that halves attack speed cost" );
     guy.i_add( item( itype_test_ATTACK_SPEED_ench_item ) );
-    // 25 moves per attack
+
     INFO( "10 attacks cost only 250 moves" );
     moves_spent_on_attacks = test_melee_attack_attack_speed( guy, mon );
     REQUIRE( moves_spent_on_attacks == -250 );
@@ -290,7 +290,7 @@ TEST_CASE( "Enchantment_ATTACK_SPEED_test", "[magic][enchantments]" )
 
     INFO( "Character attacks with enchantment, that adds 62 moves to each attack" );
     guy.i_add( item( itype_test_ATTACK_SPEED_ench_item_2 ) );
-    // 100 moves per attack
+
     INFO( "10 attacks cost 1000 moves" );
     moves_spent_on_attacks = test_melee_attack_attack_speed( guy, mon );
     REQUIRE( moves_spent_on_attacks == -1000 );
@@ -333,9 +333,9 @@ TEST_CASE( "Enchantment_MELEE_STAMINA_CONSUMPTION_test", "[magic][enchantments]"
     int stamina_spent = 0;
 
     INFO( "Character attacks with no enchantment" );
-    // item weight 2 kilo and has 2 L of volume
+
     guy.i_add( item( itype_test_MELEE_STAMINA_CONSUMPTION_ench_item_0 ) );
-    // 165 stamina per attack
+
     INFO( "10 attacks cost 1650 stamina" );
     stamina_init = guy.get_stamina();
     stamina_current = test_melee_attack_attack_stamina( guy, mon );
@@ -346,7 +346,7 @@ TEST_CASE( "Enchantment_MELEE_STAMINA_CONSUMPTION_test", "[magic][enchantments]"
 
     INFO( "Character attacks with enchantment, that decreases stamina cost for 100" );
     guy.i_add( item( itype_test_MELEE_STAMINA_CONSUMPTION_ench_item_1 ) );
-    // 65 stamina per attack
+
     INFO( "10 attacks cost 650 stamina" );
     stamina_init = guy.get_stamina();
     stamina_current = test_melee_attack_attack_stamina( guy, mon );
@@ -357,7 +357,7 @@ TEST_CASE( "Enchantment_MELEE_STAMINA_CONSUMPTION_test", "[magic][enchantments]"
 
     INFO( "Character attacks with enchantment, that double stamina cost" );
     guy.i_add( item( itype_test_MELEE_STAMINA_CONSUMPTION_ench_item_2 ) );
-    // 330 stamina per attack
+
     INFO( "10 attacks cost 3300 stamina" );
     stamina_init = guy.get_stamina();
     stamina_current = test_melee_attack_attack_stamina( guy, mon );

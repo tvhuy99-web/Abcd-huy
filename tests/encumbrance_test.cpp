@@ -43,7 +43,7 @@ static void test_encumbrance_on(
     for( const item &i : clothing ) {
         p.worn.wear_item( p, i, false, false, false );
     }
-    //if the character is made TINY their stored kcal means they are now obese and have penalties
+
     p.set_stored_kcal( p.get_healthy_kcal() );
     p.calc_encumbrance();
     CHECK( p.get_part_encumbrance( bodypart_id( body_part ) )  == expected_encumbrance );
@@ -56,8 +56,8 @@ static void test_encumbrance_items(
     const std::function<void( Character & )> &tweak_player = {}
 )
 {
-    // Test NPC first because NPC code can accidentally end up using properties
-    // of g->u, and such bugs are hidden if we test the other way around.
+
+
     SECTION( "testing on npc" ) {
         npc example_npc;
         test_encumbrance_on( example_npc, clothing, body_part, expected_encumbrance, tweak_player );
@@ -95,7 +95,7 @@ struct add_trait {
 
     trait_id trait;
 };
-} // namespace
+}
 
 static constexpr int postman_shirt_e = 0;
 static constexpr int longshirt_e = 3;
@@ -144,7 +144,7 @@ TEST_CASE( "Complicated_with_split_layers_no_conflict", "[encumbrance]" )
                       ballistic + complex_phase );
 }
 
-// make sure ordering still works with pockets
+
 TEST_CASE( "additional_pockets_encumbrance", "[encumbrance]" )
 {
     item addition_vest( itype_test_load_bearing_vest );
@@ -162,14 +162,14 @@ TEST_CASE( "out_of_order_encumbrance", "[encumbrance]" )
 
 TEST_CASE( "same_layer_encumbrance", "[encumbrance]" )
 {
-    // When stacking within a layer, encumbrance for additional items is
-    // counted twice
+
+
     test_encumbrance( { itype_test_longshirt, itype_test_longshirt }, "torso",
                       longshirt_e * 2 + longshirt_e );
-    // ... with a minimum of 2
+
     test_encumbrance( { itype_test_postman_shirt, itype_test_postman_shirt }, "torso",
                       postman_shirt_e * 2 + 2 );
-    // ... and a maximum of 10
+
     test_encumbrance( { itype_test_jacket_jean, itype_test_jacket_jean }, "torso",
                       jacket_jean_e * 2 + 10 );
 }

@@ -34,8 +34,8 @@ static void process_activity_interrupt( Character &guy, const int interrupt_time
         while( guy.get_moves() > 0 && guy.has_activity( ACT_FIRSTAID ) ) {
             guy.activity.do_turn( guy );
             if( guy.activity.moves_total - guy.activity.moves_left >= interrupt_time ) {
-                // Assume the player confirms the option to cancel the activity when getting interrupted,
-                // as in Character::react_to_felt_pain()
+
+
                 guy.cancel_activity();
             }
         }
@@ -119,7 +119,7 @@ TEST_CASE( "npc_does_healing", "[activity][firstaid][npc]" )
     GIVEN( "npc has a damaged right arm" ) {
         dunsel.apply_damage( nullptr, right_arm, 20 );
         WHEN( "npc bandages self" ) {
-            // See npc::heal_self()
+
             bandages->type->invoke( &dunsel, *bandages, dunsel.pos_bub(), "heal" );
             process_activity( dunsel );
             THEN( "Check that bandage was consumed and arm is bandaged" ) {
@@ -131,7 +131,7 @@ TEST_CASE( "npc_does_healing", "[activity][firstaid][npc]" )
     GIVEN( "npc has a damaged right arm" ) {
         dunsel.apply_damage( nullptr, right_arm, 20 );
         WHEN( "npc bandages self and is interrupted before finishing" ) {
-            // See npc::heal_self()
+
             bandages->type->invoke( &dunsel, *bandages, dunsel.pos_bub(), "heal" );
             process_activity_interrupt( dunsel, moves / 2 );
             THEN( "Check that bandage was not consumed and arm is not bandaged" ) {
@@ -143,7 +143,7 @@ TEST_CASE( "npc_does_healing", "[activity][firstaid][npc]" )
     GIVEN( "avatar has a damaged right arm" ) {
         dummy.apply_damage( nullptr, right_arm, 20 );
         WHEN( "npc bandages avatar" ) {
-            // See npc::heal_player
+
             bandages->type->invoke( &dunsel, *bandages, dummy.pos_bub(), "heal" );
             process_activity( dunsel );
             THEN( "Check that bandage was consumed and avatar's arm is bandaged" ) {

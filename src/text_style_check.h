@@ -2,8 +2,8 @@
 #ifndef CATA_SRC_TEXT_STYLE_CHECK_H
 #define CATA_SRC_TEXT_STYLE_CHECK_H
 
-// This is used in both the game itself and the clang-tidy check,
-// so only system headers should be included here.
+
+
 #include <functional>
 #include <string>
 
@@ -23,16 +23,16 @@ enum class escape_unicode : int {
     yes
 };
 
-// Check text style in the c++ code and json files.
+
 template <typename Iter>
 void text_style_check( Iter beg, Iter end,
                        const fix_end_of_string_spaces eos_spaces,
                        const escape_unicode esc_unicode,
-                       const std::function<void( text_style_fix, const std::string & /*msg*/,
-                               const Iter & /*beg*/, const Iter & /*end*/,
-                               const Iter & /*at*/,
-                               const Iter & /*from*/, const Iter & /*to*/,
-                               const std::string & /*fix*/ )> &suggest_fix )
+                       const std::function<void( text_style_fix, const std::string & ,
+                               const Iter & , const Iter & ,
+                               const Iter & ,
+                               const Iter & , const Iter & ,
+                               const std::string & )> &suggest_fix )
 {
     struct punctuation {
         std::u32string symbol;
@@ -44,15 +44,15 @@ void text_style_check( Iter beg, Iter end,
             size_t fix_spaces_min = 0;
             size_t fix_spaces_max = 0;
             size_t fix_spaces_to = 0;
-            // remove unnecessary spaces at string end
+
             size_t fix_end_max = 0;
-            // remove unnecessary spaces at line end (before '\n')
+
             size_t fix_line_end_max = 0;
-            // remove unnecessary spaces after a symbol that starts a string
+
             size_t fix_start_max = 0;
-            // remove unnecessary spaces after a symbol that starts a line (after '\n')
+
             size_t fix_line_start_max = 0;
-            // remove unnecessary spaces before the symbol
+
             size_t fix_before_max = 0;
         } spaces;
         // NOLINTBEGIN(readability-redundant-member-init)
@@ -65,12 +65,12 @@ void text_style_check( Iter beg, Iter end,
         } replace;
         // NOLINTEND(readability-redundant-member-init)
     };
-    // always put the longest (in u32) symbols at the front, since we'll iterate
-    // and search for them in this order.
-    // *INDENT-OFF*
+
+
+
     static const std::array<punctuation, 19> punctuations = {{
-        // symbol,follow,    spaces,                                 replace,
-        //                    check,  len, num spc,  end,start,before    yes,   string,     escaped,  symbol desc,      replc desc
+
+
         { U"...",    U"",   {  true, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0 }, {  true, "\u2026", R"(\u2026)", "three dots",      "ellipsis" } },
         { U"::",     U"",   { false,                              }, { false,                                                      } },
         { U"!=",     U"",   { false,                              }, { false,                                                      } },
@@ -91,7 +91,7 @@ void text_style_check( Iter beg, Iter end,
         { U"\n",     U"",   {  true, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1 }, { false,                                                      } },
         { U"\t",     U"",   { false,                              }, {  true, "    ",   "    ",      "tab",             "spaces"   } },
     }};
-    // *INDENT-ON*
+
 
     const size_t text_length = std::distance( beg, end );
     for( Iter it = beg; it < end; ) {
@@ -206,4 +206,4 @@ void text_style_check( Iter beg, Iter end,
     }
 }
 
-#endif // CATA_SRC_TEXT_STYLE_CHECK_H
+#endif

@@ -36,14 +36,14 @@ public class CataclysmDDA extends SDLActivity {
     public static final String SCREEN_ORIENTATION_PORTRAIT = "portrait";
     public static final String SCREEN_ORIENTATION_AUTO = "auto";
 
-    // startActivityForResult code for the TTS settings screen.
-    // The result is read back so a save can be announced on return.
+
+
     private static final int REQUEST_TTS_SETTINGS = 9101;
     private boolean pendingTtsSavedAnnouncement;
 
     private NativeUI nativeUI = new NativeUI(CataclysmDDA.this);
     private volatile GameReaderController readerController;
-    // Remains active at Activity level when the internal reader surface is hidden.
+
     private ReaderThreeFingerDoubleTap readerToggleGesture;
     private int lastImeLeft = -1;
     private int lastImeTop = -1;
@@ -51,8 +51,8 @@ public class CataclysmDDA extends SDLActivity {
     private int lastImeBottom = -1;
     private boolean lastImeVisible = false;
 
-    // libmain.so must load first so cata_allocator binds before SDL's malloc.
-    // SDL3 dlsym's SDL_main from getMainSharedObject(), which we point at libmain.so.
+
+
     @Override
     protected String[] getLibraries() {
         return new String[] {
@@ -120,16 +120,16 @@ public class CataclysmDDA extends SDLActivity {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        // GnollHack uses the Activity root to prevent parent interception
-        // when another finger joins a gesture. Our transparent reader surface
-        // receives the pointer sequence after this Activity-level guard.
+
+
+
         GameReaderController reader = readerController;
         if (event != null && reader != null && readerToggleGesture != null
                 && reader.canToggleReaderOutsideWorld()) {
             int result = readerToggleGesture.observe(event);
             if (result == ReaderThreeFingerDoubleTap.CAPTURE) {
-                // SDL/the reader may have seen the first pointer. Cancel that
-                // sequence before owning the three-finger gesture ourselves.
+
+
                 MotionEvent cancel = MotionEvent.obtain(event);
                 cancel.setAction(MotionEvent.ACTION_CANCEL);
                 super.dispatchTouchEvent(cancel);
@@ -168,39 +168,39 @@ public class CataclysmDDA extends SDLActivity {
         else { super.onBackPressed(); }
     }
 
-    // Called on the SDL game thread. Presentation is posted to the main looper.
+
     public void onAccessibilitySnapshot(String json) {
         SessionDebugLog.event("SNAPSHOT", "bytes=" + json.length());
         GameReaderController reader = readerController;
         if (reader != null) { reader.receive(json); }
     }
 
-    // Called from the SDL game thread. The controller moves presentation to
-    // the main looper and drops messages without a live reader context.
+
+
     public void onAccessibilityAnnouncement(String text, int priority) {
         SessionDebugLog.event("GAME_SPEECH", "priority=" + priority + " text=" + text);
         GameReaderController reader = readerController;
         if (reader != null) { reader.announceGameMessage(text, priority); }
     }
 
-    // Called from the SDL game thread with one internal cue literal
-    // (R21.2). The controller checks the lifecycle and the user's cue
-    // opt-in before anything plays.
+
+
+
     public void onAccessibilityCue(String name) {
         GameReaderController reader = readerController;
         if (reader != null) { reader.onGameCue(name); }
     }
 
-    /** Visible nearest targets on eight rays, split into creatures and items. */
+
     public void onAccessibilityDirectionalSonar(int[] creatures, int[] items) {
         GameReaderController reader = readerController;
         if (reader != null) { reader.onDirectionalSonarTargets(creatures, items); }
     }
 
-    /**
-     * SDL debug messages have no semantic game nodes. They need an emergency
-     * reader panel even if the game menu never finished initializing.
-     */
+
+
+
+
     public void onAccessibilityDebugPrompt(String report) {
         SessionDebugLog.event("NATIVE_ERROR", report);
         runOnUiThread(() -> {
@@ -220,19 +220,19 @@ public class CataclysmDDA extends SDLActivity {
 
     static native void nativeDebugPromptResponse(int action);
 
-    /** Native engine diagnostic events do not depend on TTS being enabled. */
+
     public void onAccessibilityNativeDiagnostic(String category, String detail) {
-        // The manual log switch is the sole authority. Native never changes
-        // it in response to latency thresholds or gameplay conditions.
+
+
         SessionDebugLog.event(category, detail);
     }
 
-    /** SDL's confirmed normal quit clears the active journal synchronously. */
+
     public void onAccessibilityNormalExit() {
         SessionDebugLog.finishNormally();
     }
 
-    /** The tenth entry in the native main menu. */
+
     public void onAccessibilityOpenDebugLog() {
         SessionDebugLog.event("MENU", "debug_log_open_requested");
         runOnUiThread(() -> {
@@ -242,7 +242,7 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
-    /** Open the Android voice configuration requested from the game menu. */
+
     public void onAccessibilityOpenTtsSettings() {
         runOnUiThread(() -> {
             if (!isFinishing() && !isDestroyed()) {
@@ -252,9 +252,9 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
-    // A successful save must reload the live speech engine, but only after
-    // the game regains window focus. Otherwise an immediate announcement
-    // could be dropped while the settings Activity is still in front.
+
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -263,7 +263,7 @@ public class CataclysmDDA extends SDLActivity {
         }
     }
 
-    /** Open the two added entries in the original native game Settings list. */
+
     public void onAccessibilityOpenAccessibilitySettings() {
         runOnUiThread(() -> {
             if (!isFinishing() && !isDestroyed()) {
@@ -280,7 +280,7 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
-    /** Launch the separate native game-audio controls from Settings. */
+
     public void onAccessibilityOpenSoundSettings(int music, int effects, boolean enabled) {
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) { return; }
@@ -292,7 +292,7 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
-    // Java never edits native options on this thread. C++ drains a queue.
+
     static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
@@ -320,8 +320,8 @@ public class CataclysmDDA extends SDLActivity {
                     reader.applySavedTtsSettings();
                     if (reader.usesTouchExploration()) {
                         if (reader.isEnabled()) {
-                            // TalkBack can announce immediately; the internal
-                            // TTS reader waits for its new engine's READY state.
+
+
                             reader.announceGameMessage(
                                     getString(R.string.a11yReaderEnabledNotice),
                                     ReaderSpeechQueue.INFORMATION);
@@ -450,7 +450,7 @@ public class CataclysmDDA extends SDLActivity {
                     decor.getWindowVisibleDisplayFrame(visibleFrame);
                     int rootHeight = decor.getRootView().getHeight();
                     boolean imeVisible = rootHeight - visibleFrame.bottom > rootHeight / 5;
-                    // visible frame is in screen coordinates
+
                     int[] surfaceOrigin = new int[2];
                     if (mSurface != null) {
                         mSurface.getLocationOnScreen(surfaceOrigin);
@@ -489,7 +489,7 @@ public class CataclysmDDA extends SDLActivity {
         try {
             onNativeImeInsetsChanged(left, top, right, bottom, visible);
         } catch(UnsatisfiedLinkError e) {
-            // The Activity can receive early inset callbacks before native startup.
+
         }
     }
 
@@ -503,9 +503,9 @@ public class CataclysmDDA extends SDLActivity {
     private int lastOuterWidth = -1;
     private int lastOuterHeight = -1;
 
-    // whole-window size in pixels, system bars included. text size is picked from
-    // it, so bars that inset the surface in one orientation only don't change it on
-    // rotation
+
+
+
     private void reportOuterSize() {
         int width;
         int height;
@@ -518,30 +518,30 @@ public class CataclysmDDA extends SDLActivity {
             width = decor.getWidth();
             height = decor.getHeight();
         }
-        // zero while the window is still being laid out
+
         if (width <= 0 || height <= 0 || (width == lastOuterWidth && height == lastOuterHeight)) {
             return;
         }
         try {
             onNativeOuterSizeChanged(width, height);
         } catch(UnsatisfiedLinkError e) {
-            // early layout callbacks can arrive before native startup; resend later
+
             return;
         }
         lastOuterWidth = width;
         lastOuterHeight = height;
     }
 
-    // ten-thousandths of the surface size; native reader uses the same scale
+
     private static final int SAFE_AREA_SCALE = 10000;
     private int lastSafeLeft = -1;
     private int lastSafeTop = -1;
     private int lastSafeRight = -1;
     private int lastSafeBottom = -1;
-    // null until the first report; Insets needs API 29, so no Insets.NONE here
+
     private Insets lastNavigationInsets = null;
 
-    // in surface units, so native code needs no Java pixel sizes or origins
+
     private int[] scaleToSurface(int left, int top, int right, int bottom, int[] surfaceOrigin) {
         if (mSurface == null) {
             return null;
@@ -566,16 +566,16 @@ public class CataclysmDDA extends SDLActivity {
         };
     }
 
-    // report the part of the SDL surface clear of the camera cutout and visible
-    // system bars. gesture strips catch edge swipes, not taps, so the game may draw
-    // under them
+
+
+
     private void reportSafeArea(WindowInsets insets) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || mSurface == null) {
             return;
         }
         View decor = getWindow().getDecorView();
-        // navigation bar can appear only while the keyboard is up; keep its
-        // no-keyboard layout so opening the keyboard doesn't move the view
+
+
         Insets navigation;
         if (insets.isVisible(WindowInsets.Type.ime())) {
             navigation = lastNavigationInsets != null ? lastNavigationInsets : Insets.NONE;
@@ -604,7 +604,7 @@ public class CataclysmDDA extends SDLActivity {
         try {
             onNativeSafeAreaChanged(scaledLeft, scaledTop, scaledRight, scaledBottom);
         } catch(UnsatisfiedLinkError e) {
-            // early inset callbacks can arrive before native startup; resend later
+
             return;
         }
         lastSafeLeft = scaledLeft;
@@ -629,8 +629,8 @@ public class CataclysmDDA extends SDLActivity {
         activity.setRequestedOrientation(requestedOrientationFor(mode));
     }
 
-    // SDL asks for orientation from its hint and window shape; the game option
-    // decides instead
+
+
     @Override
     public void setOrientationBis(int w, int h, boolean resizable, String hint) {
         applyStoredScreenOrientation(this);

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/** The game reader must never paint the removed Android control dashboard. */
+
 @RunWith(AndroidJUnit4.class)
 public final class ReaderOverlayRemovalTest {
     private static final class AttachedGameActivity extends CataclysmDDA {

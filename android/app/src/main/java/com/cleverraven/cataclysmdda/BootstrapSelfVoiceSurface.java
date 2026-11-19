@@ -17,15 +17,15 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-/** Gesture-driven spoken navigation for the Android startup screens before the game engine starts. */
+
 public final class BootstrapSelfVoiceSurface extends ScrollView {
     public interface Listener {
         boolean isActive();
         void speak(String id, String text);
         void stopSpeech();
-        /** A new focused control supersedes the previous spoken control. */
+
         default void interruptForFocus() { stopSpeech(); }
-        /** Return from this outer Android screen without saving draft settings. */
+
         void goBack();
         float swipeDistancePx();
         long swipeDurationLimitMs();
@@ -101,9 +101,9 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         setContent(content, 0);
     }
 
-    /** Replace the presented controls and restore their native reader focus. */
+
     public void setContent(View content, int initialFocus) {
-        // The caller's real form remains intact when a spoken choice list opens.
+
         choosingSpinner = null;
         primaryContent = content;
         showContent(content, initialFocus);
@@ -132,7 +132,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         post(this::speakFocused);
     }
 
-    /** Keep native Android semantics, adding the same item index as the spoken reader. */
+
     private void annotateTalkBackPositions() {
         final int total = items.size();
         for (int i = 0; i < total; i++) {
@@ -164,7 +164,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         return R.string.a11yControlText;
     }
 
-    /** The same select-by-list interaction as TalkBack's native Spinner popup. */
+
     private void openChoiceList(Spinner spinner) {
         if (spinner.getCount() == 0 || choosingSpinner != null) { return; }
         previousFormFocus = focus;
@@ -193,7 +193,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         showContent(choices, selected);
     }
 
-    /** Back closes a nested choice list before leaving the settings screen. */
+
     public boolean dismissChoiceList() {
         if (choosingSpinner == null) { return false; }
         choosingSpinner = null;
@@ -243,14 +243,14 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             text += ". " + getContext().getString(R.string.a11yReaderDisabledEntry);
         }
         view.requestRectangleOnScreen(new Rect(0, 0, view.getWidth(), view.getHeight()), true);
-        // Without the interruption the speech session rejects a rapid focus change.
+
         listener.interruptForFocus();
         listener.speak("bootstrap-focus-" + focus, text);
     }
 
     private void navigate(int delta) {
         if (items.isEmpty()) { return; }
-        // Fixed menu rule throughout the app: right = next, left = previous.
+
         focus = Math.floorMod(focus + delta, items.size());
         speakFocused();
     }
@@ -277,7 +277,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         if (items.isEmpty()) { return; }
         View view = items.get(focus);
         if (view instanceof Spinner && view.isEnabled()) {
-            // Do not silently rotate choices: display every available option.
+
             openChoiceList((Spinner) view);
         } else if (view.isEnabled() && view.isClickable()) {
             view.performClick();
@@ -297,8 +297,8 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             return super.dispatchTouchEvent(event);
         }
         int action = event.getActionMasked();
-        // Consume the final finger-up after a two-finger Back gesture.
-        // Never reinterpret it as a one-finger swipe or click.
+
+
         if (ignoreUntilPointersReleased) {
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 ignoreUntilPointersReleased = false;

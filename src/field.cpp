@@ -110,10 +110,10 @@ void field_entry::initialize_decay()
 
 void field_entry::do_decay()
 {
-    // Bypass set_field_age() so we don't reset decay_time;
+
     age += 1_turns;
     if( type.obj().half_life > 0_turns && get_field_age() > 0_turns ) {
-        // Legacy handling for fire because it's weird and complicated.
+
         if( type == field_fd_fire ) {
             if( to_turns<int>( type->half_life ) < dice( 2, to_turns<int>( age ) ) ) {
                 set_field_age( 0_turns );
@@ -136,11 +136,11 @@ field::field()
 {
 }
 
-/*
-Function: find_field
-Returns a field entry corresponding to the field_type_id parameter passed in. If no fields are found then returns NULL.
-Good for checking for existence of a field: if(myfield.find_field(fd_fire)) would tell you if the field is on fire.
-*/
+
+
+
+
+
 field_entry *field::find_field( const field_type_id &field_type_to_find, const bool alive_only )
 {
     if( !_displayed_field_type ) {
@@ -166,24 +166,24 @@ const field_entry *field::find_field( const field_type_id &field_type_to_find,
     return nullptr;
 }
 
-/*
-Function: add_field
-Inserts the given field_type_id into the field list for a given tile if it does not already exist.
-Returns false if the field_type_id already exists, true otherwise.
-If the field already exists, it will return false BUT it will add the intensity/age to the current values for upkeep.
-If you wish to modify an already existing field use find_field and modify the result.
-Intensity defaults to 1, and age to 0 (permanent) if not specified.
-*/
+
+
+
+
+
+
+
+
 bool field::add_field( const field_type_id &field_type_to_add, const int new_intensity,
                        const time_duration &new_age, effect_source source )
 {
-    // sanity check, we don't want to store fd_null
+
     if( !field_type_to_add ) {
         return false;
     }
     auto it = _field_type_list->find( field_type_to_add );
     if( it != _field_type_list->end() ) {
-        //Already exists, but lets update it. This is tentative.
+
         int prev_intensity = it->second.get_field_intensity();
         if( !it->second.is_field_alive() ) {
             it->second.set_field_age( new_age );
@@ -229,10 +229,10 @@ void field::clear()
     _displayed_field_type = fd_null;
 }
 
-/*
-Function: field_count
-Returns the number of fields existing on the current tile.
-*/
+
+
+
+
 unsigned int field::field_count() const
 {
     return _field_type_list->size();
@@ -258,10 +258,10 @@ std::map<field_type_id, field_entry>::const_iterator field::end() const
     return _field_type_list->end();
 }
 
-/*
-Function: displayed_field_type
-Returns the last added field type from the tile for drawing purposes.
-*/
+
+
+
+
 field_type_id field::displayed_field_type() const
 {
     return _displayed_field_type;

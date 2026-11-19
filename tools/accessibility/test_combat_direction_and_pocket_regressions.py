@@ -31,7 +31,7 @@ class CombatPocketRegressions(unittest.TestCase):
         self.assertIn("cancelPosition = items.size() + (pocketAllowsSelection() ? 2 : 1)", self.reader)
         self.assertIn("index = choices.size() + (pocketAllowsSelection() ? 1 : 0)", self.reader)
         self.assertIn("Math.floorMod(index + delta, count)", self.reader)
-        # A one-item read-only pocket has exactly two navigable choices.
+
         size = 1
         selectable = False
         count = size + (2 if selectable else 1)

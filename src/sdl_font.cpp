@@ -19,14 +19,14 @@
 #       define strcasecmp StrCmpI
 #   endif
 #else
-#   include <strings.h> // for strcasecmp
+#   include <strings.h>
 #endif
 
 #define dbg(x) DebugLog((x),D_SDL) << __FILE__ << ":" << __LINE__ << ": "
 
 
-    // bitmap font size test
-    // return face index that has this size or below
+
+
     static int test_face_size( const std::string &f, int size, int faceIndex )
 {
     const TTF_Font_Ptr fnt = OpenFontIndex( f.c_str(), size, faceIndex );
@@ -51,8 +51,8 @@
     return faceIndex;
 }
 
-// power-of-two side of a regular atlas page; 512x512 RGBA is 1 MiB, holds
-// ~1600 cells of 8x16, and is below every SDL3 renderer's texture limit
+
+
 static constexpr int glyph_page_size = 512;
 
 static int glyph_page_failures_armed = 0;
@@ -71,7 +71,7 @@ static bool glyph_page_create_fails()
     return true;
 }
 
-// opacity truncated to 8 bits, as an alpha mod of opacity * 255
+
 static float quantized_opacity( const float opacity )
 {
     return static_cast<Uint8>( opacity * 255.0f ) / 255.0f;
@@ -84,8 +84,8 @@ std::unique_ptr<Font> Font::load_font( SDL_Renderer_Ptr &renderer, Uint32 pixel_
                                        const bool fontblending )
 {
     if( is_bitmap_typeface( typeface ) ) {
-        // Seems to be an image file, not a font.
-        // Try to load as bitmap font from user font dir, then from font dir.
+
+
         try {
             return std::unique_ptr<Font>( std::make_unique<BitmapFont>( renderer, pixel_format, width, height,
                                           palette,
@@ -102,12 +102,12 @@ std::unique_ptr<Font> Font::load_font( SDL_Renderer_Ptr &renderer, Uint32 pixel_
                                                   PATH_INFO::fontdir() + typeface ) );
                 } catch( std::exception &err ) {
                     dbg( D_ERROR ) << "Failed to load font " << typeface << ": " << err.what();
-                    // Continue to load as truetype font
+
                 }
             }
         }
     }
-    // Not loaded as bitmap font (or it failed), try to load as truetype
+
     try {
         return std::unique_ptr<Font>( std::make_unique<CachedTTFFont>( width, height,
                                       palette, typeface, fontsize, fontblending ) );
@@ -138,8 +138,8 @@ void Font::OutputChar( const SDL_Renderer_Ptr &renderer, const std::string &ch, 
     one_glyph.flush( renderer );
 }
 
-// line_id is one of the LINE_*_C constants
-// color is a curses color
+
+
 void Font::queue_ascii_lines( text_batch &batch, const unsigned char line_id, const point &p,
                               const unsigned char color ) const
 {
@@ -155,55 +155,55 @@ void Font::queue_ascii_lines( text_batch &batch, const unsigned char line_id, co
         batch.add_rect( SDL_Rect{ from.x, from.y, vertical_thickness, y2 - from.y }, sdl_color );
     };
     switch( line_id ) {
-        // box bottom/top side (horizontal line)
+
         case LINE_OXOX_C:
             hline( p + point( 0, starting_y_offset ), p.x + width );
             break;
-        // box left/right side (vertical line)
+
         case LINE_XOXO_C:
             vline( p + point( starting_x_offset, 0 ), p.y + height );
             break;
-        // box top left
+
         case LINE_OXXO_C:
             hline( p + point( starting_x_offset, starting_y_offset ), p.x + width );
             vline( p + point( starting_x_offset, starting_y_offset ), p.y + height );
             break;
-        // box top right
+
         case LINE_OOXX_C:
             hline( p + point( 0, starting_y_offset ), p.x + starting_x_offset + vertical_thickness );
             vline( p + point( starting_x_offset, starting_y_offset ), p.y + height );
             break;
-        // box bottom right
+
         case LINE_XOOX_C:
             hline( p + point( 0, starting_y_offset ), p.x + starting_x_offset + vertical_thickness );
             vline( p + point( starting_x_offset, 0 ), p.y + starting_y_offset + horizontal_thickness );
             break;
-        // box bottom left
+
         case LINE_XXOO_C:
             hline( p + point( starting_x_offset, starting_y_offset ), p.x + width );
             vline( p + point( starting_x_offset, 0 ), p.y + starting_y_offset + horizontal_thickness );
             break;
-        // box bottom north T (left, right, up)
+
         case LINE_XXOX_C:
             hline( p + point( 0, starting_y_offset ), p.x + width );
             vline( p + point( starting_x_offset, 0 ), p.y + starting_y_offset );
             break;
-        // box bottom east T (up, right, down)
+
         case LINE_XXXO_C:
             vline( p + point( starting_x_offset, 0 ), p.y + height );
             hline( p + point( starting_x_offset, starting_y_offset ), p.x + width );
             break;
-        // box bottom south T (left, right, down)
+
         case LINE_OXXX_C:
             hline( p + point( 0, starting_y_offset ), p.x + width );
             vline( p + point( starting_x_offset, starting_y_offset ), p.y + height );
             break;
-        // box X (left down up right)
+
         case LINE_XXXX_C:
             hline( p + point( 0, starting_y_offset ), p.x + width );
             vline( p + point( starting_x_offset, 0 ), p.y + height );
             break;
-        // box bottom east T (left, down, up)
+
         case LINE_XOXX_C:
             vline( p + point( starting_x_offset, 0 ), p.y + height );
             hline( p + point( 0, starting_y_offset ), p.x + starting_x_offset );
@@ -247,16 +247,16 @@ CachedTTFFont::CachedTTFFont(
     }
     known_prefixes.emplace_back( buf + std::string( "\\fonts\\" ) );
 #elif defined(_APPLE_) && defined(_MACH_)
-    /*
-    // Well I don't know how osx actually works ....
-    known_prefixes.emplace_back( "/System/Library/Fonts/" );
-    known_prefixes.emplace_back( "/Library/Fonts/" );
-    wordexp_t exp;
-    wordexp( "~/Library/Fonts/", &exp, 0 );
-    known_prefixes.emplace_back( exp.we_wordv[0] );
-    wordfree( &exp );
-    */
-#else // Other POSIX-ish systems
+
+
+
+
+
+
+
+
+
+#else
     known_prefixes.emplace_back( "/usr/share/fonts/" );
     known_prefixes.emplace_back( "/usr/local/share/fonts/" );
     char *home;
@@ -300,7 +300,7 @@ CachedTTFFont::CachedTTFFont(
     if( fontsize <= 0 ) {
         fontsize = height - 1;
     }
-    // SDL_ttf handles bitmap fonts size incorrectly
+
     if( typeface.length() > 4 &&
         strcasecmp( typeface.substr( typeface.length() - 4 ).c_str(), ".fon" ) == 0 ) {
         faceIndex = test_face_size( typeface, fontsize, faceIndex );
@@ -342,7 +342,7 @@ SDL_Surface_Ptr CachedTTFFont::render_glyph_cell( const std::string &ch, int &ce
         src_rect.y = ( src_rect.h - dst_rect.h ) / 2;
         src_rect.h = dst_rect.h;
     }
-    // Copy without altering the source
+
     SetSurfaceBlendMode( sglyph, SDL_BLENDMODE_NONE );
     if( printErrorIf( BlitSurface( sglyph, &src_rect, surface, &dst_rect ) != 0,
                       "SDL_BlitSurface failed" ) ) {
@@ -357,7 +357,7 @@ bool CachedTTFFont::ensure_page( const SDL_Renderer_Ptr &renderer, const int pag
     if( page < static_cast<int>( pages.size() ) ) {
         return true;
     }
-    // Pages are committed in order, so a missing page is always the next one
+
     cata_assert( page == static_cast<int>( pages.size() ) );
     if( glyph_page_create_fails() ) {
         return false;
@@ -368,7 +368,7 @@ bool CachedTTFFont::ensure_page( const SDL_Renderer_Ptr &renderer, const int pag
         return false;
     }
     SetTextureBlendMode( tex, SDL_BLENDMODE_BLEND );
-    // Static textures start undefined, so gaps between cells must be clear
+
     if( !UpdateTexture( tex, SDL_Rect{ 0, 0, w, h }, create_surface_32( w, h ) ) ) {
         return false;
     }
@@ -383,17 +383,17 @@ const CachedTTFFont::glyph_entry &CachedTTFFont::glyph_for( const SDL_Renderer_P
     if( found != glyphs.end() ) {
         return found->second;
     }
-    // returned, not cached, when GPU work failed, so the next draw retries
+
     static const glyph_entry not_drawn;
     int cell_width = 0;
-    // white glyphs: vertex color supplies the palette color when drawn
+
     constexpr SDL_Color white = { 255, 255, 255, 255 };
     const SDL_Surface_Ptr cell = render_glyph_cell( ch, cell_width, white );
     const std::optional<glyph_shelf_packer::placement> p =
         cell ? packer.plan( cell_width ) : std::nullopt;
     if( !p ) {
-        // either SDL_ttf can't render it, or it has no width. that won't
-        // change.
+
+
         return glyphs.emplace( ch, glyph_entry() ).first->second;
     }
     if( !ensure_page( renderer, p->at.page, p->page_w, p->page_h ) ) {
@@ -412,12 +412,12 @@ const CachedTTFFont::glyph_entry &CachedTTFFont::glyph_for( const SDL_Renderer_P
 
 bool CachedTTFFont::isGlyphProvided( const std::string &ch ) const
 {
-    // Just return false if the glyph is not provided by the font
+
     if( !CanRenderGlyph( font, UTF8_getch( ch ) ) ) {
         return false;
     }
 
-    // Test whether the glyph can actually be rendered
+
     constexpr SDL_Color white{255, 255, 255, 0};
     SDL_Surface_Ptr surface = RenderUTF8_Solid( font, ch.c_str(), white );
     return static_cast<bool>( surface );
@@ -516,7 +516,7 @@ void BitmapFont::build_textures( const SDL_Renderer_Ptr &renderer, const Uint32 
         }
         UnlockSurface( ascii_surf[a] );
     }
-    //convert ascii_surf to SDL_Texture
+
     for( size_t a = 0; a < std::tuple_size_v<decltype( ascii )>; ++a ) {
         ascii[a] = CreateTextureFromSurface( renderer, ascii_surf[a] );
     }
@@ -526,47 +526,47 @@ void BitmapFont::queue_ascii_lines( text_batch &batch, const unsigned char line_
                                     const point &p, const unsigned char color ) const
 {
     switch( line_id ) {
-        // box bottom/top side (horizontal line)
+
         case LINE_OXOX_C:
             queue_index( batch, 0xcd, p, color, 1.0f );
             break;
-        // box left/right side (vertical line)
+
         case LINE_XOXO_C:
             queue_index( batch, 0xba, p, color, 1.0f );
             break;
-        // box top left
+
         case LINE_OXXO_C:
             queue_index( batch, 0xc9, p, color, 1.0f );
             break;
-        // box top right
+
         case LINE_OOXX_C:
             queue_index( batch, 0xbb, p, color, 1.0f );
             break;
-        // box bottom right
+
         case LINE_XOOX_C:
             queue_index( batch, 0xbc, p, color, 1.0f );
             break;
-        // box bottom left
+
         case LINE_XXOO_C:
             queue_index( batch, 0xc8, p, color, 1.0f );
             break;
-        // box bottom north T (left, right, up)
+
         case LINE_XXOX_C:
             queue_index( batch, 0xca, p, color, 1.0f );
             break;
-        // box bottom east T (up, right, down)
+
         case LINE_XXXO_C:
             queue_index( batch, 0xcc, p, color, 1.0f );
             break;
-        // box bottom south T (left, right, down)
+
         case LINE_OXXX_C:
             queue_index( batch, 0xcb, p, color, 1.0f );
             break;
-        // box X (left down up right)
+
         case LINE_XXXX_C:
             queue_index( batch, 0xce, p, color, 1.0f );
             break;
-        // box bottom east T (left, down, up)
+
         case LINE_XOXX_C:
             queue_index( batch, 0xb9, p, color, 1.0f );
             break;
@@ -747,4 +747,4 @@ void FontFallbackList::rebuild_for_renderer( const SDL_Renderer_Ptr &renderer )
     }
 }
 
-#endif // TILES
+#endif

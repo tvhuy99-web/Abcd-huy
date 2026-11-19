@@ -29,17 +29,17 @@ int advanced_inventory_pagination::lines_needed( int index )
 
 bool advanced_inventory_pagination::step( int index )
 {
-    // item would overflow page
+
     if( line + lines_needed( index ) > linesPerPage ) {
         page++;
         line = 0;
-        // always reprint category header on next page
+
         last_category = nullptr;
-        // print item on next page
+
         step( index );
         return true;
     }
-    // print on this page
+
     line += lines_needed( index );
     last_category = pane.items[index].cat;
     return false;

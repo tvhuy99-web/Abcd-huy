@@ -13,8 +13,8 @@ static void check_cycle_finding( std::unordered_map<int, std::vector<int>> &g,
 {
     CAPTURE( g );
     std::vector<std::vector<int>> loops = cata::find_cycles( g );
-    // Canonicalize the list of loops by rotating each to be lexicographically
-    // least and then sorting.
+
+
     for( std::vector<int> &loop : loops ) {
         auto min = std::min_element( loop.begin(), loop.end() );
         std::rotate( loop.begin(), min, loop.end() );

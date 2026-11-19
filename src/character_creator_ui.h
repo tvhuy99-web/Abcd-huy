@@ -34,28 +34,28 @@ struct enum_traits<character_creator_tab> {
     static constexpr character_creator_tab last = character_creator_tab::character_creator_tab_LAST;
 };
 
-// only for handling additional inputs, draws nothing
+
 class character_creator_callback : public uilist_callback
 {
         character_creator_ui *ui_parent;
     public:
         character_creator_callback() = default;
         explicit character_creator_callback( character_creator_ui *parent ) : ui_parent( parent ) {};
-        // handles any non-uilist (character_creator) inputs
+
         bool key( const input_context &ctxt, const input_event &event, int, uilist *menu ) override;
-        // this override stores and resets uilist's return value so that the uilist doesn't redraw
+
         void confirm( uilist *menu ) override;
         void select( uilist *menu ) override;
         void refresh( uilist *menu ) override;
 };
 
-// never serialized, just to keep state in one place
+
 struct character_creator_uistate {
 
     std::vector<const scenario *> sorted_scenarios;
     std::vector<profession_id> sorted_professions;
-    //TODO: this inventory only exists as an example;
-    // it is NOT the inventory used on game start
+
+
     std::list<item> cached_profession_inventory;
     std::vector<profession_id> sorted_hobbies;
     std::vector<trait_id> sorted_traits;
@@ -75,9 +75,9 @@ struct character_creator_uistate {
     int selected_trait_index = 0;
     int selected_skill_index = 0;
 
-    // the currently selected tab
+
     character_creator_tab selected_tab = CHARCREATOR_SCENARIO;
-    // for circumventing ImGui inputs; set when you need to switch the tab by key
+
     character_creator_tab switched_tab = character_creator_tab_LAST;
     character_creator_tab previous_tab = character_creator_tab_LAST;
 
@@ -117,9 +117,9 @@ struct character_creator_uistate {
     void reset();
 };
 
-// implemented as two separate windows:
-// 1. a `uilist` that handles all list selections and inputs, displayed on left
-// 2. standard ImGui display details for the `uilist` selection, displayed on right
+
+
+
 class character_creator_ui
 {
         character_creator_callback cc_callback;
@@ -129,19 +129,19 @@ class character_creator_ui
 
     public:
         character_creator_ui();
-        // returns true if character creation completed successfully
+
         bool display();
-        // setup new uilist if necessary, assumes current tab has been set
+
         void setup_new_uilist();
-        // setup the avatar for switching to a different tab
+
         void setup_avatar();
-        // update uilist_entries for current tab, but do not modify uilist_entry count
+
         void update_uilist_entries();
         void upon_switching_tab();
         void update_uilist_position( ImVec2 new_position );
-        // @param quick_value_change - if true, add inputs for changing a value (stat or skill)
+
         void setup_input_context( input_context &cc_ictxt, bool quick_value_change );
-        // @return action was handled
+
         bool handle_action( const std::string &action );
 
         std::shared_ptr<uilist> get_current_tab_uilist();
@@ -161,7 +161,7 @@ class character_creator_ui_impl : public cataimgui::window
         void draw_scenarios() const;
         void draw_professions() const;
         void draw_backgrounds();
-        // STR, DEX, etc...
+
         void draw_stats();
         void draw_traits();
         void draw_skills();
@@ -174,7 +174,7 @@ class character_creator_ui_impl : public cataimgui::window
 
 namespace char_creation
 {
-// an ImGui button that, when clicked, sends an action to cc_uistate
+
 void draw_action_button( const std::string &button_text, const std::string &button_action );
 void draw_name( const avatar &you, bool no_name_entered );
 void draw_gender( const avatar &you );
@@ -223,4 +223,4 @@ void draw_hobby_selected( const avatar &u );
 void draw_skill_details( const avatar &u,
                          const std::map<skill_id, int> &prof_skills, skill_id currentSkill );
 void draw_scenario_details( const avatar &u );
-} // namespace char_creation
+}

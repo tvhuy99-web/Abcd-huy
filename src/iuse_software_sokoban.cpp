@@ -46,15 +46,15 @@ void sokoban_game::print_score( const catacurses::window &w_sokoban, int iScore,
 
 void sokoban_game::parse_level( std::istream &fin )
 {
-    /*
-    # Wall
-    $ Package
-    space Floor
-    . Goal
-    * Package on Goal
-    @ Sokoban
-    + Sokoban on Goal
-    */
+
+
+
+
+
+
+
+
+
 
     iCurrentLevel = 0;
     iNumLevel = 0;
@@ -75,7 +75,7 @@ void sokoban_game::parse_level( std::istream &fin )
         }
 
         if( sLine.empty() ) {
-            //Find level start
+
             vLevel.resize( iNumLevel + 1 );
             vLevelDone.resize( iNumLevel + 1 );
             mLevelInfo[iNumLevel]["MaxLevelY"] = 0;
@@ -95,7 +95,7 @@ void sokoban_game::parse_level( std::istream &fin )
                     mLevelInfo[iNumLevel]["PlayerY"] = mLevelInfo[iNumLevel]["MaxLevelY"];
                     mLevelInfo[iNumLevel]["PlayerX"] = i;
                 } else {
-                    // TODO: describe why it's invalid
+
                     throw std::runtime_error( "invalid content of sokoban file" );
                 }
             }
@@ -136,7 +136,7 @@ int sokoban_game::get_wall_connection( const point &i )
     }
 
     if( !bRight && !bLeft ) {
-        return LINE_XOXO; //
+        return LINE_XOXO;
 
     } else if( !bTop && !bBottom ) {
         return LINE_OXOX;
@@ -250,16 +250,16 @@ int sokoban_game::start_game()
     ctxt.register_action( "UNDO" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    // Reader adapter: the whole Sokoban board is public knowledge (the
-    // sighted UI draws every tile), so the snapshot below publishes the
-    // player, every package and every goal, with no hidden information.
-    // The custom "soko:" nodes are observation only: they offer just the
-    // "focus" action, so a reader intent on one changes nothing in the
-    // game and the handler answers "TIMEOUT", which keeps the original
-    // ctxt.handle_input() call waiting for real input. Command nodes
-    // (directions, NEXT/PREV/RESET/UNDO/QUIT, HELP_KEYBINDINGS) go
-    // through the shared registered-intent mapping, so activating one
-    // returns exactly the action the keypress would have returned.
+
+
+
+
+
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "sokoban",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         if( intent.node.rfind( "soko:", 0 ) == 0 ) {
@@ -274,11 +274,11 @@ int sokoban_game::start_game()
 
         std::vector<std::string> shortcuts;
         shortcuts.reserve( 5 );
-        shortcuts.emplace_back( _( "<+> next" ) ); // '+': next
-        shortcuts.emplace_back( _( "<-> prev" ) ); // '-': prev
-        shortcuts.emplace_back( _( "<r>eset" ) ); // 'r': reset
-        shortcuts.emplace_back( _( "<q>uit" ) ); // 'q': quit
-        shortcuts.emplace_back( _( "<u>ndo move" ) ); // 'u': undo move
+        shortcuts.emplace_back( _( "<+> next" ) );
+        shortcuts.emplace_back( _( "<-> prev" ) );
+        shortcuts.emplace_back( _( "<r>eset" ) );
+        shortcuts.emplace_back( _( "<q>uit" ) );
+        shortcuts.emplace_back( _( "<u>ndo move" ) );
 
         int indent = 10;
         for( auto &shortcut : shortcuts ) {
@@ -300,13 +300,13 @@ int sokoban_game::start_game()
     int iPlayerY = 0;
     int iPlayerX = 0;
 
-    // Builds one reader snapshot from the live board. mLevel is only
-    // ever read here, through find() on a const reference: the usual
-    // mLevel[y][x] operator[] would insert a missing row or cell into
-    // the live board, so a cell (or row) that is not in the map is
-    // reported as a wall instead, which is also how cells outside the
-    // drawn board behave. Rows and columns are spoken 1-based, in the
-    // board's own coordinates (row = y + 1, column = x + 1).
+
+
+
+
+
+
+
     const auto make_reader_snapshot = [&]() {
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Sokoban" ) );
         std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
@@ -383,11 +383,11 @@ int sokoban_game::start_game()
         player.actions = { "focus" };
         snapshot.nodes.push_back( player );
 
-        // One node per package, numbered in scan order (row by row, then
-        // column by column; the std::map board already iterates in that
-        // order). The four neighbours of the package are included so the
-        // player can work out a pushing route: a package can only be
-        // pushed from the opposite side onto a free cell.
+
+
+
+
+
         int package_number = 0;
         for( const auto &row : board ) {
             for( const auto &cell : row.second ) {
@@ -412,8 +412,8 @@ int sokoban_game::start_game()
             }
         }
 
-        // One document with the short rules and the whole goal list in
-        // words: every goal, and whether a package already covers it.
+
+
         std::string board_text = _( "Rules: push every package onto a goal. "
                                     "You can push one package at a time, and a package "
                                     "cannot be pulled. Undo, reset, previous level and "
@@ -465,13 +465,13 @@ int sokoban_game::start_game()
 
         std::string action;
         if( check_win() ) {
-            //we won yay
-            // the win auto-advances to the next level and this
-            // iteration publishes no snapshot, so the win itself was never
-            // announced -- the player only noticed the new level and score
-            // when re-reading the summary. Announce it at once; the next
-            // level's own summary (new level, new score) is published right
-            // after and says something different, so this does not repeat it.
+
+
+
+
+
+
+
             if( !mAlreadyWon[iCurrentLevel] ) {
                 iScore += 500;
                 mAlreadyWon[iCurrentLevel] = true;
@@ -492,7 +492,7 @@ int sokoban_game::start_game()
             if( a11y::enabled() ) {
                 reader.update( make_reader_snapshot() );
             }
-            //Check input
+
             action = ctxt.handle_input();
         }
 
@@ -507,9 +507,9 @@ int sokoban_game::start_game()
             int iPlayerYNew = 0;
             int iPlayerXNew = 0;
             bool bUndoSkip = false;
-            //undo move
+
             if( !vUndo.empty() ) {
-                //reset last player pos
+
                 mLevel[iPlayerY][iPlayerX] = mLevel[iPlayerY][iPlayerX] == "+" ? "." : " ";
                 iPlayerYNew = vUndo[vUndo.size() - 1].old.y;
                 iPlayerXNew = vUndo[vUndo.size() - 1].old.x;
@@ -539,17 +539,17 @@ int sokoban_game::start_game()
                 iPlayerX = iPlayerXNew;
             }
         } else if( action == "RESET" ) {
-            //reset level
+
             bNewLevel = true;
         } else if( action == "NEXT" ) {
-            //next level
+
             iCurrentLevel++;
             if( iCurrentLevel >= iNumLevel ) {
                 iCurrentLevel = 0;
             }
             bNewLevel = true;
         } else if( action == "PREV" ) {
-            //previous level
+
             iCurrentLevel--;
             if( iCurrentLevel < 0 ) {
                 iCurrentLevel = iNumLevel - 1;
@@ -558,16 +558,16 @@ int sokoban_game::start_game()
         }
 
         if( bMoved ) {
-            //check if we can move the player
+
             std::string sMoveTo = mLevel[iPlayerY + iDirY][iPlayerX + iDirX];
             bool bMovePlayer = false;
 
             if( sMoveTo != "#" ) {
                 if( sMoveTo == "$" || sMoveTo == "*" ) {
-                    //Check if we can move the package
+
                     std::string sMovePackTo = mLevel[iPlayerY + iDirY * 2][iPlayerX + iDirX * 2];
                     if( sMovePackTo == "." || sMovePackTo == " " ) {
-                        //move both
+
                         bMovePlayer = true;
                         mLevel[iPlayerY + iDirY * 2][iPlayerX + iDirX * 2] = sMovePackTo == "." ? "*" : "$";
 
@@ -580,7 +580,7 @@ int sokoban_game::start_game()
                 }
 
                 if( bMovePlayer ) {
-                    //move player
+
                     vUndo.emplace_back( point( iPlayerX, iPlayerY ), mLevel[iPlayerY][iPlayerX] );
 
                     mLevel[iPlayerY][iPlayerX] = mLevel[iPlayerY][iPlayerX] == "+" ? "." : " ";
@@ -594,13 +594,13 @@ int sokoban_game::start_game()
                 }
             }
             if( !bMovePlayer && a11y::enabled() ) {
-                // the board does not change, so the snapshot is
-                // identical and the reader would otherwise stay silent: the
-                // player cannot tell a blocked push from a gesture the game
-                // never received. Announce the blocked push at once, exactly
-                // as a blocked world step is announced. A wall ahead and a
-                // package that cannot move are told apart: only the wall
-                // case has sMoveTo == "#".
+
+
+
+
+
+
+
                 if( sMoveTo == "#" ) {
                     a11y::android::announce( _( "Blocked by a wall." ), 3 );
                 } else {

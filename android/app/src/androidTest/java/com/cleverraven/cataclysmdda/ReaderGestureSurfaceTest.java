@@ -9,7 +9,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-/** Source-level direction mapping checks; device gesture behavior still needs user testing. */
+
 @RunWith(AndroidJUnit4.class)
 public class ReaderGestureSurfaceTest {
     @Test

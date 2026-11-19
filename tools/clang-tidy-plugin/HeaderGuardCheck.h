@@ -11,8 +11,8 @@ namespace tidy
 namespace cata
 {
 
-/// Finds and fixes header guards.
-/// Based loosely on the LLVM version.
+
+
 class CataHeaderGuardCheck : public ClangTidyCheck
 {
     public:
@@ -20,8 +20,8 @@ class CataHeaderGuardCheck : public ClangTidyCheck
         void registerPPCallbacks( const SourceManager &, Preprocessor *, Preprocessor * ) override;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_HEADERGUARDCHECK_H
+#endif

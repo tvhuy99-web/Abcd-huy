@@ -18,16 +18,16 @@ namespace
 
 generic_factory<material_type> material_data( "material" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 bool string_id<material_type>::is_valid() const
 {
     return material_data.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const material_type &string_id<material_type>::obj() const
 {
@@ -57,7 +57,7 @@ std::string enum_to_string<breathability_rating>( breathability_rating data )
     }
     cata_fatal( "Invalid breathability" );
 }
-} // namespace io
+}
 
 material_type::material_type() :
     id( material_id::NULL_ID() ),
@@ -84,7 +84,7 @@ void material_type::load( const JsonObject &jsobj, std::string_view )
 {
     mandatory( jsobj, was_loaded, "name", _name );
 
-    // FIXME: load resistances by deserialize or reader class
+
     if( jsobj.has_object( "resist" ) ) {
         _res_was_loaded.clear();
         JsonObject jo = jsobj.get_object( "resist" );
@@ -226,7 +226,7 @@ std::string material_type::cut_dmg_verb() const
 std::string material_type::dmg_adj( int damage_level ) const
 {
     if( damage_level <= 1 ) {
-        return std::string(); // not damaged
+        return std::string();
     }
     const int idx = std::clamp( damage_level - 2, 0, static_cast<int>( _dmg_adj.size() ) );
     return _dmg_adj[idx].translated();
@@ -274,12 +274,12 @@ bool material_type::is_conductive() const
 
 bool material_type::is_valid_thickness( float thickness ) const
 {
-    // if this doesn't have an expected thickness return true
+
     if( _sheet_thickness == 0 ) {
         return true;
     }
 
-    // float calcs so rounding need to be mindful of
+
     return std::fmod( thickness, _sheet_thickness ) < .01f;
 }
 
@@ -290,7 +290,7 @@ float material_type::thickness_multiple() const
 
 int material_type::breathability_to_rating( breathability_rating breathability )
 {
-    // this is where the values for each of these exist
+
     switch( breathability ) {
         case breathability_rating::IMPERMEABLE:
             return 0;
@@ -374,7 +374,7 @@ const std::set<material_id> &materials::get_rotting()
     static generic_factory<material_type>::Version version;
     static std::set<material_id> rotting;
 
-    // freshly created version is guaranteed to be invalid
+
     if( !material_data.is_valid( version ) ) {
         material_list all = get_all();
         rotting.clear();

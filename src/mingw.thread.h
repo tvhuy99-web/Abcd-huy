@@ -1,11 +1,11 @@
 #pragma once
-/**
-* @file mingw.thread.h
-* @brief std::thread implementation for MinGW
-*
-* This file is part of the mingw-w64 runtime package.
-* No warranty is given; refer to the file DISCLAIMER within this package.
-*/
+
+
+
+
+
+
+
 
 #ifndef WIN32STDTHREAD_H
 #ifndef _GLIBCXX_HAS_GTHREADS
@@ -20,7 +20,7 @@
 #include <memory>
 #include <chrono>
 
-//instead of INVALID_HANDLE_VALUE _beginthreadex returns 0
+
 #define _STD_THREAD_INVALID_HANDLE nullptr
 namespace std
 {
@@ -142,5 +142,5 @@ void sleep_until( const std::chrono::time_point<Clock, Duration> &sleep_time )
 }
 
 }
-#endif // _GLIBCXX_THREAD
-#endif // WIN32STDTHREAD_H
+#endif
+#endif

@@ -26,7 +26,7 @@ static const ter_str_id ter_t_grass( "t_grass" );
 static const ter_str_id ter_t_open_air( "t_open_air" );
 static const ter_str_id ter_t_rock( "t_rock" );
 
-// Remove all vehicles from the map
+
 void clear_vehicles( map *target )
 {
     map &here = target ? *target : get_map();
@@ -77,14 +77,14 @@ void wipe_map_terrain_with_vision( map *target, bool with_vision )
 
 void clear_creatures()
 {
-    // Remove any interfering monsters.
+
     g->clear_zombies();
 }
 
 void clear_npcs()
 {
     map &here = get_map();
-    // Reload to ensure that all active NPCs are in the overmap_buffer.
+
     g->reload_npcs();
     for( npc &n : g->all_npcs() ) {
         n.die( & here, nullptr );
@@ -112,8 +112,8 @@ void clear_fields( const int zlevel )
 
 void clear_reservations()
 {
-    // Records outlive the items they claim, and tests never advance calendar::turn, so
-    // nothing would expire between them.
+
+
     get_craft_reservations().clear();
 }
 
@@ -156,11 +156,11 @@ void clear_map_with_vision( int zmin, int zmax, bool with_vision )
 {
     map &here = get_map();
     if( const tripoint_abs_sm &abs_sub = here.get_abs_sub(); abs_sub.z() != 0 ) {
-        // Reset z level to 0
+
         here.load( tripoint_abs_sm( abs_sub.xy(), 0 ), false );
     }
-    // Clearing all z-levels is rather slow, so just clear the ones I know the
-    // tests use for now.
+
+
     for( int z = zmin; z <= zmax; ++z ) {
         clear_fields( z );
     }
@@ -176,7 +176,7 @@ void clear_map_with_vision( int zmin, int zmax, bool with_vision )
     here.process_items();
     clear_basecamps();
     get_weather().snow_depth_map.clear();
-    // Set a chunk of overmap passability cache to all passable.
+
     const tripoint_abs_sm &abs_sub = here.get_abs_sub();
     const tripoint_abs_omt abs_omt = project_to<coords::omt>( abs_sub );
     overmap_buffer.clear_mongroups();
@@ -192,17 +192,17 @@ void clear_map_and_put_player_underground()
 {
     map &here = get_map();
     clear_map_without_vision();
-    // Make sure the player doesn't block the path of the monster being tested.
+
     get_player_character().setpos( here, tripoint_bub_ms{ 0, 0, -2 } );
 }
 
 void clear_overmaps()
 {
-    // Just drop all generated overmaps.
+
     overmap_buffer.clear();
-    // Also all generated submaps.
+
     MAPBUFFER.clear();
-    // Just make a new map.
+
     get_map() = map();
     g->place_player_overmap( tripoint_abs_omt() );
 }

@@ -19,11 +19,11 @@ std::unordered_map<std::string, const strategy_t *> strategy_map = {{
         { "utility", &default_utility }
     }
 };
-} // namespace behavior
+}
 
 using namespace behavior;
 
-// A standard behavior strategy, execute runnable children in order unless one fails.
+
 behavior_return sequential_t::evaluate( const oracle_t *subject,
                                         const std::vector<const node_t *> children ) const
 {
@@ -36,7 +36,7 @@ behavior_return sequential_t::evaluate( const oracle_t *subject,
     return { status_t::success, nullptr };
 }
 
-// A standard behavior strategy, execute runnable children in order until one succeeds.
+
 behavior_return fallback_t::evaluate( const oracle_t *subject,
                                       const std::vector<const node_t *> children ) const
 {
@@ -49,7 +49,7 @@ behavior_return fallback_t::evaluate( const oracle_t *subject,
     return { status_t::failure, nullptr };
 }
 
-// A non-standard behavior strategy, execute runnable children in order unconditionally.
+
 behavior_return sequential_until_done_t::evaluate( const oracle_t *subject,
         const std::vector<const node_t *> children ) const
 {
@@ -62,7 +62,7 @@ behavior_return sequential_until_done_t::evaluate( const oracle_t *subject,
     return { status_t::success, nullptr };
 }
 
-// Evaluate all children and select the running one with the highest score.
+
 behavior_return utility_t::evaluate( const oracle_t *subject,
                                      const std::vector<const node_t *> children ) const
 {

@@ -113,7 +113,7 @@ inline double round( std::vector<double> const &params )
     return std::round( params[0] );
 }
 
-constexpr double test_( std::vector<double> const &/* params */ )
+constexpr double test_( std::vector<double> const & )
 {
     return 42;
 }
@@ -170,7 +170,7 @@ constexpr double e_v = M_E;
 constexpr double pi_v = 3.14159265358979323846;
 constexpr double e_v = 2.7182818284590452354;
 #endif
-} // namespace math_constants
+}
 
 constexpr std::array<math_const, 5> constants{
     math_const{ "π", math_constants::pi_v },
@@ -180,4 +180,4 @@ constexpr std::array<math_const, 5> constants{
     math_const{ "false", 0 },
 };
 
-#endif // CATA_SRC_MATH_PARSER_FUNC_H
+#endif

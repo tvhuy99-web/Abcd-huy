@@ -34,9 +34,9 @@ class memorial_log_entry
         std::string oter_name_;
         std::string message_;
 
-        // For legacy lines loaded from the text memorial file.  For any given
-        // memorial_log_entry either the following value will be populated or
-        // the above four values (but not both).
+
+
+
         std::optional<std::string> preformatted_;
 };
 
@@ -54,15 +54,15 @@ class memorial_logger : public event_subscriber
                         string_format( female_msg, arg, args... ) );
         }
 
-        // Loads the memorial log from a file
+
         void load( std::istream & );
         void save( std::ostream & ) const;
-        // Dumps all memorial events into a single newline-delimited string
-        // (this is the content of the temporary file used to preserve the log
-        // over saves, not the final memorial file).
+
+
+
         std::string dump() const;
 
-        // Prints out the final memorial file
+
         void write_text_memorial( std::ostream &memorial_file,
                                   const std::string &epitaph ) const;
         void write_json_memorial( std::ostream &memorial_file ) const;
@@ -75,4 +75,4 @@ class memorial_logger : public event_subscriber
 
 memorial_logger &get_memorial();
 
-#endif // CATA_SRC_MEMORIAL_LOGGER_H
+#endif

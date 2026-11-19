@@ -7,16 +7,16 @@ namespace
 
 generic_factory<construction_group> all_construction_groups( "construction groups" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 bool string_id<construction_group>::is_valid() const
 {
     return all_construction_groups.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const construction_group &string_id<construction_group>::obj() const
 {

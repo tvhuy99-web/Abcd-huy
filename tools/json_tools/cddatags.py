@@ -45,7 +45,7 @@ def main(args):
 
     definitions = []
 
-    # JSON keys to generate tags for
+
     id_keys = (
         'id', 'abstract', 'ident',
         'nested_mapgen_id', 'om_terrain', 'update_mapgen_id', 'result')
@@ -81,7 +81,7 @@ def main(args):
                             "expected a list." % filename)
                         continue
 
-                    # Check each object in json_data for taggable keys
+
                     for obj in json_data:
                         for id_key in id_keys:
                             if id_key in obj:

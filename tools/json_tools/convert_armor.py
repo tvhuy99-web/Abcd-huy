@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-# Usage 'convert_armor.py dir'
-# NOTE: for mods, ensure 'dir' includes as a subdirectory all
-#       JSON data which an modded armor item may include (e.g. data/json)
+
+
+
 
 import argparse
 import json
@@ -13,21 +13,21 @@ args = argparse.ArgumentParser()
 args.add_argument("dir", action="store", help="specify json directory")
 args_dict = vars(args.parse_args())
 
-# All the file paths of valid JSON files
-# we read all the files twice, may as well save them
+
+
 all_filepaths = set()
-# Definitions and paths:
+
 items_at_path = dict()
-# All of the armor definitions - for copy-from
+
 all_armor_defs = dict()
-# The keys we are moving to armor portion data
+
 transferred_keys = [
     "material",
     "material_thickness",
     "environmental_protection",
     "environmental_protection_with_filter"
 ]
-# Item types we might be copying from
+
 accepted_types = [
     "AMMO",
     "GUN",
@@ -54,8 +54,8 @@ def id_or_abstract(jo):
     return jo["abstract"]
 
 
-# Extract all the JSON defs of armor items to all_armor_defs for copy-from
-# And store the paths of all correctly formatted files for later use
+
+
 def extract_armor_add_path(path):
     with open(path, "r", encoding="utf-8") as json_file:
         try:
@@ -85,7 +85,7 @@ def extract_armor_add_path(path):
                 items_at_path[def_id] = set()
             items_at_path[def_id].add(path)
 
-            # Remove comments for better duplicate checking
+
             '''
             color_discard = "\x1b[31m"
             color_used = "\x1b[32m"
@@ -97,7 +97,7 @@ def extract_armor_add_path(path):
                    all_armor_defs[def_id]["copy-from"] == def_id)):
                 print(f"WARNING: {def_id} defined twice, at {path},"
                       " second definition discarded")
-                # Here too
+
                 '''
                 print("Defined at:")
                 for path in items_at_path[def_id]:
@@ -109,7 +109,7 @@ def extract_armor_add_path(path):
             elif def_id in all_armor_defs:
                 print(f"WARNING: {def_id} defined twice, "
                       "using definition from {path}")
-                # And here
+
                 '''
                 print("Defined at:")
                 for path in items_at_path[def_id]:
@@ -126,17 +126,17 @@ def assign_if_absent(dat, key, value):
         dat[key] = value
 
 
-# Store any of the keys we're transferring into dict, not overwriting existing
+
 def read_armor_data(jo, dat):
     for key in transferred_keys:
         if key in jo:
             assign_if_absent(dat, key, jo[key])
 
 
-# while there's still armor data to get
-# grab it from each definition in the copy-from chain
+
+
 def get_armor_data_rec(jo, dat):
-    # When we've got all of our data filled, we can stop recursing
+
     if all(key in dat for key in transferred_keys):
         return
 
@@ -146,13 +146,13 @@ def get_armor_data_rec(jo, dat):
         get_armor_data_rec(all_armor_defs[jo["copy-from"]], dat)
 
 
-# Get the armor data for this item that needs to be transferred
-# Returns empty dict if this armor specifies no novel armor data
-# (And doesn't already have other armor data)
+
+
+
 def get_armor_data(jo):
     dat = dict()
-    # This will be done again in the recursive function
-    # But we do it here for an early return on no data
+
+
     read_armor_data(jo, dat)
     if ("armor" not in jo and
        (len(dat) == 0 or (len(dat) == 1 and "material" in dat))):
@@ -162,8 +162,8 @@ def get_armor_data(jo):
     return dat
 
 
-# If this item has data that is actually distinct from the parent item
-# So we can do nothing in cases where copy-from handles it all
+
+
 def actually_distinct(jo):
     if "copy-from" not in jo:
         return True
@@ -183,7 +183,7 @@ def actually_distinct(jo):
     return False
 
 
-# Merge the 'armor' section of the parent item and the new data
+
 def merge_with_armor(jo, dat):
     orig = all_armor_defs[jo["copy-from"]]
     while "armor" not in orig:

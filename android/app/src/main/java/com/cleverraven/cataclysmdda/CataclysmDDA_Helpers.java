@@ -37,7 +37,7 @@ public class CataclysmDDA_Helpers {
     public static void saveAccessibilityServiceInfoFalsePositives(Context context) {
         List<AccessibilityServiceInfo> enabledServicesInfo = getEnabledAccessibilityServiceInfo( context );
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
-        // Purposeful copy to avoid some nonsense
+
         Set<String> false_positives = new HashSet<String>(preferences.getStringSet("Accessibility Service Info False Positives", new HashSet<String>()));
         for (AccessibilityServiceInfo enabledService : enabledServicesInfo) {
             ServiceInfo enabledServiceInfo = enabledService.getResolveInfo().serviceInfo;

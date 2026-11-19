@@ -13,16 +13,16 @@
 namespace cata
 {
 
-/**
- * @brief Sort elements of a sequence by their rating (the smaller the better).
- *
- * @param  begin           An input/output iterator.
- * @param  end             An input/output iterator.
- * @param  rating_func     A functor which calculates ratings (the outcome
- *                         must be comparable using '<' operator).
- *
- * The rating is calculated only once per each element.
- */
+
+
+
+
+
+
+
+
+
+
 template<typename Iterator, typename RatingFunction>
 void sort_by_rating( Iterator begin, Iterator end, RatingFunction rating_func )
 {
@@ -46,8 +46,8 @@ void sort_by_rating( Iterator begin, Iterator end, RatingFunction rating_func )
     } );
 }
 
-// Implementation detail of below find_cycles
-// This explores one branch of the given graph depth-first
+
+
 template<typename T>
 void find_cycles_impl(
     const std::unordered_map<T, std::vector<T>> &edges,
@@ -68,14 +68,14 @@ void find_cycles_impl(
 
     for( const T &next_v : it->second ) {
         if( next_v == v ) {
-            // Trivial self-loop
+
             result.push_back( { v } );
             continue;
         }
         auto previous_match = on_current_branch.find( next_v );
         if( previous_match != on_current_branch.end() ) {
-            // We have looped back to somewhere along the branch we took to
-            // reach this vertex, so reconstruct the loop and save it.
+
+
             std::vector<T> loop;
             T on_path = v;
             while( true ) {
@@ -95,14 +95,14 @@ void find_cycles_impl(
     }
 }
 
-// Find and return a list of all cycles in a directed graph.
-// Each T defines a vertex.
-// For a vertex a, edges[a] is a list of all the vertices connected by edges
-// from a.
-// It is acceptable for some vertex keys to be missing from the edges map, if
-// those vertices have no out-edges.
-// Complexity should be O(V+E)
-// Based on https://www.geeksforgeeks.org/detect-cycle-in-a-graph/
+
+
+
+
+
+
+
+
 template<typename T>
 std::vector<std::vector<T>> find_cycles( const std::unordered_map<T, std::vector<T>> &edges )
 {
@@ -122,6 +122,6 @@ std::vector<std::vector<T>> find_cycles( const std::unordered_map<T, std::vector
     return result;
 }
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_CATA_ALGO_H
+#endif

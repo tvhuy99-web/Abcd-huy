@@ -10,6 +10,6 @@ namespace cata
 {
 template<class T, class Allocator = std::allocator<T>>
 using list = plf::list<T, Allocator>;
-} // namespace cata
+}
 
-#endif // CATA_SRC_LIST_H
+#endif

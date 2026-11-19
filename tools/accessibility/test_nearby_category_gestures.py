@@ -85,8 +85,8 @@ class NearbyCategoryGestures(unittest.TestCase):
             self.assertIn(translation, self.vi)
 
     def test_double_tap_route_to_selected_object_is_unchanged(self):
-        # Filter and page handlers only set local UI state; the existing
-        # hazard-aware game route is still the single activation path.
+
+
         self.assertIn('g->safe_route_to( you, target.target, target.stop_distance,', self.native)
         self.assertIn('you.set_destination( *route );', self.native)
         self.assertIn('if( !route )', self.native)

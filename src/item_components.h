@@ -36,23 +36,23 @@ class item_components
 
         std::vector<item> operator[]( itype_id it_id );
 
-        // needed for disassembly items
-        // todo: better way to handle that
+
+
         item only_item();
         item only_item() const;
 
-        // total number of items in components
+
         size_t size() const;
         void add( item &new_it );
         ret_val<item> remove( itype_id it_id );
-        // components must not be empty!
+
         item get_and_remove_random_entry();
 
-        // used to distribute the components of a finished craft to the resulting items
+
         item_components split( int batch_size, size_t offset, bool is_cooked = false );
 
         void serialize( JsonOut &jsout ) const;
         void deserialize( const JsonValue &jv );
 };
 
-#endif // CATA_SRC_ITEM_COMPONENTS_H
+#endif

@@ -156,13 +156,13 @@ template<>
 std::string enum_to_string<map_extra_method>( map_extra_method data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case map_extra_method::null: return "null";
         case map_extra_method::map_extra_function: return "map_extra_function";
         case map_extra_method::mapgen: return "mapgen";
         case map_extra_method::update_mapgen: return "update_mapgen";
         case map_extra_method::num_map_extra_methods: break;
-        // *INDENT-ON*
+
     }
     cata_fatal( "Invalid map_extra_method" );
 }
@@ -191,23 +191,23 @@ std::string enum_to_string<map_extra_visibility>( map_extra_visibility data )
     cata_fatal( "Invalid map extra visibility" );
 }
 
-} // namespace io
+}
 
 namespace
 {
 
 generic_factory<map_extra> extras( "map extra" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const map_extra &string_id<map_extra>::obj() const
 {
     return extras.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<map_extra>::is_valid() const
 {
@@ -236,7 +236,7 @@ static bool mx_null( map &, const tripoint_abs_sm & )
 
 static void dead_vegetation_parser( map &m, const tripoint_bub_ms &loc )
 {
-    // furniture plants die to withered plants
+
     const furn_t &fid = m.furn( loc ).obj();
     if( fid.has_flag( ter_furn_flag::TFLAG_PLANT ) || fid.has_flag( ter_furn_flag::TFLAG_FLOWER ) ||
         fid.has_flag( ter_furn_flag::TFLAG_ORGANIC ) ) {
@@ -244,7 +244,7 @@ static void dead_vegetation_parser( map &m, const tripoint_bub_ms &loc )
         m.furn_set( loc, furn_str_id::NULL_ID() );
         m.spawn_item( loc, itype_withered );
     }
-    // terrain specific conversions
+
     const ter_id &tid = m.ter( loc );
     static const std::map<ter_id, ter_str_id> dies_into {{
             {ter_t_grass, ter_t_grass_dead},
@@ -264,7 +264,7 @@ static void dead_vegetation_parser( map &m, const tripoint_bub_ms &loc )
     if( iter != dies_into.end() ) {
         m.ter_set( loc, iter->second );
     }
-    // non-specific small vegetation falls into sticks, large dies and randomly falls
+
     const ter_t &tr = tid.obj();
     if( tr.has_flag( ter_furn_flag::TFLAG_SHRUB ) ) {
         m.ter_set( loc, ter_t_dirt );
@@ -289,7 +289,7 @@ static void dead_vegetation_parser( map &m, const tripoint_bub_ms &loc )
 
 static void delete_items_at_mount( vehicle &veh, const point_rel_ms &pt )
 {
-    for( const int idx_cargo : veh.parts_at_relative( pt, /* use_cache = */ true ) ) {
+    for( const int idx_cargo : veh.parts_at_relative( pt, true ) ) {
         vehicle_part &vp_cargo = veh.part( idx_cargo );
         veh.get_items( vp_cargo ).clear();
     }
@@ -328,7 +328,7 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
                     }
 
                 } else if( one_in( 4 + ( std::abs( x - c.x() ) + std::abs( y -
-                                         c.y() ) ) ) ) { // 1 in 10 chance of being wreckage anyway
+                                         c.y() ) ) ) ) {
                     m.make_rubble( pos, furn_f_wreckage, true );
                     if( !one_in( 3 ) ) {
                         if( m.ter( pos )->has_flag( ter_furn_flag::TFLAG_DIGGABLE ) ) {
@@ -346,16 +346,16 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
 
     tripoint_bub_ms wreckage_pos;
     {
-        // veh should fall out of scope, don't actually use it, create the vehicle so
-        // we can rotate it and calculate its bounding box, but don't place it on the map.
+
+
         vehicle veh( crashed_hull );
         veh.turn( dir1 );
-        // Find where the center of the vehicle is and adjust the spawn position to get it centered in the
-        // debris area.
+
+
         const bounding_box bbox = veh.get_bounding_box();
 
         point_rel_ms center_offset = {( bbox.p1.x() + bbox.p2.x() ) / 2, ( bbox.p1.y() + bbox.p2.y() ) / 2};
-        // Clamp x1 & y1 such that no parts of the vehicle extend over the border of the submap.
+
 
         wreckage_pos = { clamp( c.x() - center_offset.x(), std::abs( bbox.p1.x() ), SEEX * 2 - 1 - std::abs( bbox.p2.x() ) ),
                          clamp( c.y() - center_offset.y(), std::abs( bbox.p1.y() ), SEEY * 2 - 1 - std::abs( bbox.p2.y() ) ),
@@ -378,42 +378,42 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
             case 1:
             case 2:
             case 3:
-                // Full clown car
+
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
                     const tripoint_bub_ms pos = vp.pos_bub( m );
-                    // Spawn pilots in seats with controls.CTRL_ELECTRONIC
+
                     if( controls_at( wreckage, pos ) ) {
                         m.place_spawns( GROUP_MIL_PILOT, 1, pos.xy(), pos.xy(), pos.z(), 1, true );
                     } else {
                         m.place_spawns( GROUP_MIL_PASSENGER, 1, pos.xy(), pos.xy(), pos.z(), 1, true );
                     }
-                    delete_items_at_mount( *wreckage, vp.mount_pos() ); // delete corpse items
+                    delete_items_at_mount( *wreckage, vp.mount_pos() );
                 }
                 break;
             case 4:
             case 5:
-                // 2/3rds clown car
+
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
                     const tripoint_bub_ms pos = vp.pos_bub( m );
-                    // Spawn pilots in seats with controls.
+
                     if( controls_at( wreckage, pos ) ) {
                         m.place_spawns( GROUP_MIL_PILOT, 1, pos.xy(), pos.xy(), pos.z(), 1, true );
                     } else {
                         m.place_spawns( GROUP_MIL_WEAK, 2, pos.xy(), pos.xy(), pos.z(), 1, true );
                     }
-                    delete_items_at_mount( *wreckage, vp.mount_pos() ); // delete corpse items
+                    delete_items_at_mount( *wreckage, vp.mount_pos() );
                 }
                 break;
             case 6:
-                // Just pilots
+
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_CONTROLS ) ) {
                     const tripoint_bub_ms pos = vp.pos_bub( m );
                     m.place_spawns( GROUP_MIL_PILOT, 1, pos.xy(), pos.xy(), pos.z(), 1, true );
-                    delete_items_at_mount( *wreckage, vp.mount_pos() ); // delete corpse items
+                    delete_items_at_mount( *wreckage, vp.mount_pos() );
                 }
                 break;
             case 7:
-            // Empty clown car
+
             case 8:
             default:
                 break;
@@ -433,15 +433,15 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
 static void place_fumarole( map &m, const point_bub_ms &p1, const point_bub_ms &p2,
                             std::set<point_bub_ms> &ignited )
 {
-    // Tracks points nearby for ignition after the lava is placed
-    //std::set<point_bub_ms> ignited;
+
+
 
     std::vector<point_bub_ms> fumarole = line_to( p1, p2, 0 );
     for( point_bub_ms &i : fumarole ) {
         m.ter_set( i, ter_t_lava );
 
-        // Add all adjacent tiles (even on diagonals) for possible ignition
-        // Since they're being added to a set, duplicates won't occur
+
+
         ignited.insert( ( i + point::north_west ) );
         ignited.insert( ( i + point::north ) );
         ignited.insert( ( i + point::north_east ) );
@@ -461,9 +461,9 @@ static void place_fumarole( map &m, const point_bub_ms &p1, const point_bub_ms &
 static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
 {
     static constexpr int omt_size = SEEX * 2;
-    // minimum 9 tiles from the edge because ARTPROP_FRACTAL calls
-    // create_anomaly at an offset of 4, and create_anomaly generates a
-    // furniture circle around that of radius 5.
+
+
+
     static constexpr int min_coord = 9;
     static constexpr int max_coord = omt_size - 1 - min_coord;
     static_assert( min_coord < max_coord, "no space for randomness" );
@@ -472,7 +472,7 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
     const point_bub_ms p( portal_location.xy() );
 
     switch( rng( 1, 6 ) ) {
-        //Mycus spreading through the portal
+
         case 1: {
             m.add_field( portal_location, fd_fatigue, 3 );
             fungal_effects fe;
@@ -481,12 +481,12 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
                     fe.marlossify( loc );
                 }
             }
-            //50% chance to spawn pouf-maker
+
             m.place_spawns( GROUP_FUNGI_FUNGALOID, 2, p + point::north_west, p + point::south_east,
                             portal_location.z(), 1, true );
             break;
         }
-        //Netherworld monsters spawning around the portal
+
         case 2: {
             m.add_field( portal_location, fd_fatigue, 3 );
             for( const tripoint_bub_ms &loc : m.points_in_radius( portal_location, 5 ) ) {
@@ -494,7 +494,7 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
             }
             break;
         }
-        //Several cracks in the ground originating from the portal
+
         case 3: {
             m.add_field( portal_location, fd_fatigue, 3 );
             for( int i = 0; i < rng( 1, 10 ); i++ ) {
@@ -506,7 +506,7 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
             }
             break;
         }
-        //Radiation from the portal killed the vegetation
+
         case 4: {
             m.add_field( portal_location, fd_fatigue, 3 );
             const int rad = 5;
@@ -521,13 +521,13 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
             }
             break;
         }
-        //Lava seams originating from the portal
+
         case 5: {
             if( abs_sub.z() <= 0 ) {
                 point_bub_ms p1( rng( 1,    SEEX     - 3 ), rng( 1,    SEEY     - 3 ) );
                 point_bub_ms p2( rng( SEEX, SEEX * 2 - 3 ), rng( SEEY, SEEY * 2 - 3 ) );
-                // Pick a random cardinal direction to also spawn lava in
-                // This will make the lava a single connected line, not just on diagonals
+
+
                 static const std::array<direction, 4> possibilities = { { direction::EAST, direction::WEST, direction::NORTH, direction::SOUTH } };
                 const direction extra_lava_dir = random_entry( possibilities );
                 point_rel_ms extra;
@@ -557,17 +557,17 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
                                 ignited );
 
                 for( const point_bub_ms &i : ignited ) {
-                    // Don't need to do anything to tiles that already have lava on them
+
                     if( m.ter( i ) != ter_t_lava ) {
-                        // Spawn an intense but short-lived fire
-                        // Any furniture or buildings will catch fire, otherwise it will burn out quickly
+
+
                         m.add_field( tripoint_bub_ms( i, abs_sub.z() ), fd_fire, 15, 1_minutes );
                     }
                 }
             }
             break;
         }
-        //Anomaly caused by the portal and spawned an artifact
+
         case 6: {
             m.add_field( portal_location, fd_fatigue, 3 );
             artifact_natural_property prop =
@@ -584,11 +584,11 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
 
 static bool mx_helper_clone_plant( map &m, const tripoint_abs_sm &abs_sub, ter_furn_flag tfflag )
 {
-    // From wikipedia - The main meaning of "grove" is a group of trees that grow close together,
-    // generally without many bushes or other plants underneath.
 
-    // This map extra helper finds the first appropriately flagged terrain in the area, and then
-    // converts all trees, young trees, and shrubs in the area into that type.
+
+
+
+
 
     ter_id tree;
     bool found_tree = false;
@@ -632,20 +632,20 @@ static bool mx_grove( map &m, const tripoint_abs_sm &abs_sub )
 
 static bool mx_pond( map &m, const tripoint_abs_sm &abs_sub )
 {
-    // This map extra creates small ponds using a simple cellular automaton.
+
 
     constexpr int width = SEEX * 2;
     constexpr int height = SEEY * 2;
 
-    // Generate the cells for our lake.
+
     std::vector<std::vector<int>> current = CellularAutomata::generate_cellular_automaton( width,
                                             height, 55, 5, 4, 3 );
 
-    // Loop through and turn every live cell into water.
-    // Do a roll for our three possible lake types:
-    // - all deep water
-    // - all shallow water
-    // - shallow water on the shore, deep water in the middle
+
+
+
+
+
     const int lake_type = rng( 1, 3 );
     for( int i = 0; i < width; i++ ) {
         for( int j = 0; j < height; j++ ) {
@@ -681,12 +681,12 @@ static bool mx_pond( map &m, const tripoint_abs_sm &abs_sub )
 
 static bool mx_reed( map &m, const tripoint_abs_sm &abs_sub )
 {
-    // This map extra is for populating river banks, lake shores, etc. with
-    // water vegetation
 
-    // intensity consistent for whole overmap terrain bit
-    // so vegetation is placed from one_in(1) = full overgrowth
-    // to one_in(4) = 1/4 of terrain;
+
+
+
+
+
     int intensity = rng( 1, 4 );
 
     const auto near_water = [ &m ]( tripoint_bub_ms loc ) {
@@ -717,7 +717,7 @@ static bool mx_reed( map &m, const tripoint_abs_sm &abs_sub )
                 one_in( intensity ) ) {
                 m.furn_set( loc, vegetation.pick()->id() );
             }
-            // tall grass imitates reed
+
             if( ( ter_loc == ter_t_dirt || ter_loc == ter_t_grass ) &&
                 one_in( near_water( loc ) ? intensity : 7 ) ) {
                 m.ter_set( loc, ter_t_grass_tall );
@@ -730,10 +730,10 @@ static bool mx_reed( map &m, const tripoint_abs_sm &abs_sub )
 
 static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
 {
-    // This map extra creates road works on NS & EW roads, including barricades (as barrier poles),
-    // holes in the road, scattered soil, chance for heavy utility vehicles and some working
-    // equipment in a box
-    // (curved roads & intersections excluded, perhaps TODO)
+
+
+
+
 
     const tripoint_abs_omt abs_omt( coords::project_to<coords::omt>( abs_sub ) );
     const oter_id &north = overmap_buffer.ter( abs_omt + point::north );
@@ -746,7 +746,7 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
     const bool road_at_west = west->get_type_id() == oter_type_road;
     const bool road_at_east = east->get_type_id() == oter_type_road;
 
-    // defect types
+
     weighted_int_list<ter_id> road_defects;
     road_defects.add( ter_t_pit_shallow, 15 );
     road_defects.add( ter_t_dirt, 15 );
@@ -754,26 +754,26 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
     road_defects.add( ter_t_pavement, 55 );
     const weighted_int_list<ter_id> defects = road_defects;
 
-    // location holders
-    point_bub_ms defects_from; // road defects square start
-    point_bub_ms defects_to; // road defects square end
-    point_bub_ms defects_centered; //  road defects centered
-    tripoint_bub_ms veh; // vehicle
-    point_bub_ms equipment; // equipment
+
+    point_bub_ms defects_from;
+    point_bub_ms defects_to;
+    point_bub_ms defects_centered;
+    tripoint_bub_ms veh;
+    point_bub_ms equipment;
 
     bool straight = true;
     int turns = -1;
-    // determine placement of effects
+
     if( road_at_north && road_at_south && !road_at_east && !road_at_west ) {
-        if( one_in( 2 ) ) { // west side of the NS road
+        if( one_in( 2 ) ) {
             turns = 0;
-        } else { // east side of the NS road
+        } else {
             turns = 2;
         }
     } else if( road_at_west && road_at_east && !road_at_north && !road_at_south ) {
-        if( one_in( 2 ) ) { // north side of the EW road
+        if( one_in( 2 ) ) {
             turns = 1;
-        } else { // south side of the EW road
+        } else {
             turns = 3;
         }
     } else if( road_at_north && road_at_east && !road_at_west && !road_at_south ) {
@@ -789,11 +789,11 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
         straight = false;
         turns = 1;
     } else {
-        return false; // crossroads and strange roads - no generation, bail out
+        return false;
     }
 
     if( straight ) {
-        // road barricade
+
         line_furn( &m, furn_f_barricade_road,
                    point_bub_ms( 4, 0 ).rotate_in_map( turns ), point_bub_ms( 11, 7 ).rotate_in_map( turns ),
                    abs_sub.z() );
@@ -803,20 +803,20 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
         line_furn( &m, furn_f_barricade_road,
                    point_bub_ms( 11, 16 ).rotate_in_map( turns ), point_bub_ms( 4, 23 ).rotate_in_map( turns ),
                    abs_sub.z() );
-        // road defects
+
         defects_from = point_bub_ms( 9, 7 ).rotate_in_map( turns );
         defects_to = point_bub_ms( 4, 16 ).rotate_in_map( turns );
         defects_centered = point_bub_ms( rng( 4, 7 ), rng( 10, 16 ) ).rotate_in_map( turns );
-        // vehicle
+
         veh = tripoint_bub_ms( rng( 4, 6 ), rng( 8, 10 ), abs_sub.z() ).rotate_in_map( turns );
-        // equipment
+
         if( one_in( 2 ) ) {
             equipment = point_bub_ms( rng( 0, 4 ), rng( 1, 2 ) ).rotate_in_map( turns );
         } else {
             equipment = point_bub_ms( rng( 0, 4 ), rng( 21, 22 ) ).rotate_in_map( turns );
         }
     } else {
-        // road barricade
+
         line_furn( &m, furn_f_barricade_road,
                    // NOLINTNEXTLINE(cata-use-named-point-constants)
                    point_bub_ms( 1, 0 ).rotate_in_map( turns ), point_bub_ms( 11, 0 ).rotate_in_map( turns ),
@@ -827,7 +827,7 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
         line_furn( &m, furn_f_barricade_road,
                    point_bub_ms( 23, 22 ).rotate_in_map( turns ), point_bub_ms( 23, 11 ).rotate_in_map( turns ),
                    abs_sub.z() );
-        // road defects
+
         switch( rng( 1, 3 ) ) {
             case 1:
                 defects_from = point_bub_ms( 9, 8 ).rotate_in_map( turns );
@@ -843,16 +843,16 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
                 break;
         }
         defects_centered = point_bub_ms( rng( 8, 14 ), rng( 8, 14 ) ).rotate_in_map( turns );
-        // vehicle
+
         veh = tripoint_bub_ms( rng( 7, 15 ), rng( 7, 15 ), abs_sub.z() ).rotate_in_map( turns );
-        // equipment
+
         if( one_in( 2 ) ) {
             equipment = point_bub_ms( rng( 0, 1 ), rng( 2, 23 ) ).rotate_in_map( turns );
         } else {
             equipment = point_bub_ms( rng( 0, 22 ), rng( 22, 23 ) ).rotate_in_map( turns );
         }
     }
-    // road defects generator
+
     switch( rng( 1, 5 ) ) {
         case 1:
             square( &m, defects, defects_from,
@@ -871,12 +871,12 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
             circle( &m, ter_t_dirtmound, defects_centered, rng( 2, 4 ) );
             break;
     }
-    // soil generator
+
     for( int i = 1; i <= 10; i++ ) {
         m.spawn_item( point_bub_ms( rng( defects_from.x(), defects_to.x() ),
                                     rng( defects_from.y(), defects_to.y() ) ), itype_material_soil );
     }
-    // vehicle placer
+
     switch( rng( 1, 6 ) ) {
         case 1:
             m.add_vehicle( vehicle_prototype_road_roller, veh, random_direction() );
@@ -889,9 +889,9 @@ static bool mx_roadworks( map &m, const tripoint_abs_sm &abs_sub )
         case 5:
         case 6:
             break;
-            // 3-6 empty to reduce chance of vehicles on site
+
     }
-    // equipment placer
+
     if( one_in( 3 ) ) {
         m.furn_set( equipment, furn_f_crate_c );
         m.place_items( Item_spawn_data_mine_equipment, 100, tripoint_bub_ms( equipment, abs_sub.z() ),
@@ -906,7 +906,7 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
     const std::vector<item> items = item_group::items_from( Item_spawn_data_ammo_casings,
                                     calendar::turn );
 
-    // Spawn a pile of casings around location
+
     const auto spawn_casings_pile = [&m]( const tripoint_bub_ms & location,
     const std::vector<item> &items ) {
         for( const tripoint_bub_ms &loc : m.points_in_radius( location, rng( 1, 2 ) ) ) {
@@ -916,7 +916,7 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
         }
     };
 
-    //Spawn blood and bloody rag and sometimes trail of blood
+
     const auto spawn_blood = [&m]( const tripoint_bub_ms & location, const int radius, bool trail ) {
         if( one_in( 2 ) ) {
             m.add_field( location, fd_blood, rng( 1, 3 ) );
@@ -931,7 +931,7 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
         }
     };
 
-    // Spawn random trash
+
     const int num = rng( 1, 3 );
     for( int i = 0; i < num; i++ ) {
         const std::vector<item> trash =
@@ -941,15 +941,15 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
 
     const tripoint_bub_ms random_loc = rng_map_point<tripoint_bub_ms>( 1, abs_sub.z() );
     switch( rng( 1, 4 ) ) {
-        //Pile of random casings in random place
+
         case 1: {
             spawn_casings_pile( random_loc, items );
             spawn_blood( random_loc, 3, true );
             break;
         }
-        //Entire battlefield filled with casings
+
         case 2: {
-            //Spawn casings
+
             for( int i = 0; i < SEEX * 2; i++ ) {
                 for( int j = 0; j < SEEY * 2; j++ ) {
                     if( one_in( 20 ) ) {
@@ -960,9 +960,9 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
             spawn_blood( { SEEX, SEEY, abs_sub.z() }, rng( 1, 10 ), false );
             break;
         }
-        //Person moved and fired in some direction
+
         case 3: {
-            //Spawn casings and blood trail along the direction of movement
+
             const tripoint_bub_ms to = rng_map_point<tripoint_bub_ms>( 1, abs_sub.z() );
             std::vector<tripoint_bub_ms> casings = line_to( random_loc, to );
             for( const tripoint_bub_ms &i : casings ) {
@@ -976,7 +976,7 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
             spawn_blood( to, 3, false );
             break;
         }
-        //Two persons shot and created two piles of casings
+
         case 4: {
             const tripoint_bub_ms second_loc = rng_map_point<tripoint_bub_ms>( 1, abs_sub.z() );
             const std::vector<item> second_items =
@@ -995,7 +995,7 @@ static bool mx_casings( map &m, const tripoint_abs_sm &abs_sub )
 static bool mx_looters( map &m, const tripoint_abs_sm &abs_sub )
 {
     const tripoint_bub_ms center = rng_map_point<tripoint_bub_ms>( 4, abs_sub.z() );
-    //25% chance to spawn a corpse with some blood around it
+
     if( one_in( 4 ) && m.passable_through( center ) ) {
         m.add_corpse( center );
         const tripoint_range<tripoint_bub_ms> points = m.points_in_radius( center, 1 );
@@ -1005,7 +1005,7 @@ static bool mx_looters( map &m, const tripoint_abs_sm &abs_sub )
         }
     }
 
-    //Spawn up to 5 hostile bandits with equal chance to be ranged or melee type
+
     const int num_looters = rng( 1, 5 );
     const tripoint_range<tripoint_bub_ms> looter_points = m.points_in_radius( center, rng( 1, 4 ) );
     for( int i = 0; i < num_looters; i++ ) {
@@ -1024,13 +1024,13 @@ static bool mx_looters( map &m, const tripoint_abs_sm &abs_sub )
 static bool mx_corpses( map &m, const tripoint_abs_sm &abs_sub )
 {
     const int num_corpses = rng( 1, 5 );
-    //Spawn up to 5 human corpses in random places
+
     for( int i = 0; i < num_corpses; i++ ) {
         const tripoint_bub_ms corpse_location = rng_map_point<tripoint_bub_ms>( 1, abs_sub.z() );
         if( m.passable_through( corpse_location ) ) {
             m.add_field( corpse_location, fd_blood, rng( 1, 3 ) );
             m.put_items_from_loc( Item_spawn_data_everyday_corpse, corpse_location );
-            //50% chance to spawn blood in every tile around every corpse in 1-tile radius
+
             for( const tripoint_bub_ms &loc : m.points_in_radius( corpse_location, 1 ) ) {
                 if( one_in( 2 ) ) {
                     m.add_field( loc, fd_blood, rng( 1, 3 ) );
@@ -1038,7 +1038,7 @@ static bool mx_corpses( map &m, const tripoint_abs_sm &abs_sub )
             }
         }
     }
-    //10% chance to spawn a flock of stray dogs feeding on human flesh
+
     if( one_in( 10 ) && num_corpses <= 4 ) {
         const tripoint_bub_ms corpse_location = rng_map_point<tripoint_bub_ms>( 1, abs_sub.z() );
         const std::vector<item> gibs =
@@ -1046,7 +1046,7 @@ static bool mx_corpses( map &m, const tripoint_abs_sm &abs_sub )
                                     calendar::start_of_cataclysm );
         m.spawn_items( corpse_location, gibs );
         m.add_field( corpse_location, fd_gibs_flesh, rng( 1, 3 ) );
-        //50% chance to spawn gibs and dogs in every tile around what's left of human corpse in 1-tile radius
+
         for( const tripoint_bub_ms &loc : m.points_in_radius( corpse_location, 1 ) ) {
             if( one_in( 2 ) ) {
                 m.add_field( { loc.xy(), abs_sub.z()}, fd_gibs_flesh, rng( 1, 3 ) );
@@ -1060,7 +1060,7 @@ static bool mx_corpses( map &m, const tripoint_abs_sm &abs_sub )
 
 static bool mx_fungal_zone( map &m, const tripoint_abs_sm &abs_sub )
 {
-    // Find suitable location for fungal spire to spawn (grass, dirt etc)
+
     const tripoint_bub_ms omt_center = { SEEX, SEEY, abs_sub.z()};
     std::vector<tripoint_bub_ms> suitable_locations;
     for( const tripoint_bub_ms &loc : m.points_in_radius( omt_center, 10 ) ) {
@@ -1069,7 +1069,7 @@ static bool mx_fungal_zone( map &m, const tripoint_abs_sm &abs_sub )
         }
     }
 
-    // If there's no suitable location found, bail out
+
     if( suitable_locations.empty() ) {
         return false;
     }
@@ -1289,9 +1289,9 @@ void debug_spawn_test()
     }
 }
 
-} // namespace MapExtras
+}
 
-// gross
+
 void map_extra::finalize_all()
 {
     extras.finalize();
@@ -1306,13 +1306,13 @@ bool map_extra::is_valid_for( const mapgendata &md ) const
         }
     }
     if( !md.region.overmap_feature_flag.blacklist.empty() ) {
-        // map extra is blacklisted by flag
+
         if( cata::sets_intersect( md.region.overmap_feature_flag.blacklist, get_flags() ) ) {
             return false;
         }
     }
     if( !md.region.overmap_feature_flag.whitelist.empty() ) {
-        // map extra is not whitelisted by flag
+
         if( !cata::sets_intersect( md.region.overmap_feature_flag.whitelist, get_flags() ) ) {
             return false;
         }
@@ -1336,7 +1336,7 @@ bool map_extra::potentially_visible_at( om_vision_level vis ) const
             return vis >= om_vision_level::details;
         case map_extra_visibility::full:
             return vis >= om_vision_level::full;
-        case map_extra_visibility::same_tile: // this is a weird case and has it's own checks
+        case map_extra_visibility::same_tile:
             return true;
         case map_extra_visibility::LAST:
             return false;

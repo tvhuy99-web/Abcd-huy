@@ -7,10 +7,10 @@
 
 #include "json.h"
 
-/**
- * An interval of numeric values between @ref min and @ref max (including both).
- * By default it's [0, 0].
- */
+
+
+
+
 template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>, T>>
 struct numeric_interval {
     T min = static_cast<T>( 0 );
@@ -34,8 +34,8 @@ struct numeric_interval {
         return max == 0;
     }
 
-    // TODO: break deserialize out into its own thing so that
-    // common_types.h isn't dragging json.h into things unnecessarily
+
+
     void deserialize( const JsonValue &jsin ) {
         JsonArray ja = jsin.get_array();
         if( ja.size() != 2 ) {
@@ -52,4 +52,4 @@ struct numeric_interval {
     }
 };
 
-#endif // CATA_SRC_COMMON_TYPES_H
+#endif

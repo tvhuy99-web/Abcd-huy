@@ -54,7 +54,7 @@ static void reset_caches( int zlev )
     you.recalc_sight_limits();
 }
 
-// Phase 1: monster::attack_at SWIM_UNDER position check
+
 TEST_CASE( "monsters_cannot_attack_through_swim_under", "[swim_under][melee]" )
 {
     clear_map_and_put_player_underground();
@@ -62,34 +62,34 @@ TEST_CASE( "monsters_cannot_attack_through_swim_under", "[swim_under][melee]" )
     clear_avatar();
     map &here = get_map();
 
-    // Set up walkway at fish position, regular floor adjacent
+
     here.ter_set( fish_pos, ter_t_bridge );
     here.ter_set( adjacent_pos, ter_t_floor );
 
     SECTION( "underwater monster on SWIM_UNDER tile cannot attack adjacent surface creature" ) {
-        // Spawn seweranha on the walkway tile, set it underwater
+
         monster &fish = spawn_test_monster( mon_sewer_fish.str(), fish_pos );
         fish.underwater = true;
         REQUIRE( fish.is_underwater() );
         REQUIRE( here.has_flag( ter_furn_flag::TFLAG_SWIM_UNDER, fish_pos ) );
         REQUIRE( !here.has_flag( ter_furn_flag::TFLAG_SWIM_UNDER, adjacent_pos ) );
 
-        // Place player on the adjacent floor tile
+
         Character &player = get_player_character();
         player.setpos( here, adjacent_pos );
         REQUIRE( !player.is_underwater() );
 
-        // Fish should NOT be able to attack through the solid surface
+
         CHECK_FALSE( fish.attack_at( adjacent_pos ) );
     }
 
     SECTION( "underwater monsters on SWIM_UNDER can fight each other" ) {
-        // Seweranha (mutant_piscivores) hates fish faction, so use a brook trout
-        // as a hostile underwater target to verify the SWIM_UNDER gate passes.
+
+
         monster &predator = spawn_test_monster( mon_sewer_fish.str(), fish_pos );
         predator.underwater = true;
 
-        // Prey fish on an adjacent walkway tile (fish_small -> fish faction, hostile)
+
         here.ter_set( adjacent_pos, ter_t_bridge );
         monster &prey = spawn_test_monster( mon_fish_brook_trout.str(), adjacent_pos );
         prey.underwater = true;
@@ -98,7 +98,7 @@ TEST_CASE( "monsters_cannot_attack_through_swim_under", "[swim_under][melee]" )
         REQUIRE( prey.is_underwater() );
         REQUIRE( predator.attitude_to( prey ) == Creature::Attitude::HOSTILE );
 
-        // attack_at should succeed for underwater-to-underwater through SWIM_UNDER
+
         CHECK( predator.attack_at( adjacent_pos ) );
     }
 
@@ -111,12 +111,12 @@ TEST_CASE( "monsters_cannot_attack_through_swim_under", "[swim_under][melee]" )
         REQUIRE( fish.is_underwater() );
         REQUIRE( here.has_flag( ter_furn_flag::TFLAG_SWIM_UNDER, fish_pos ) );
 
-        // Player melee should be blocked (this already works, regression guard)
+
         CHECK_FALSE( player.melee_attack( fish, false ) );
     }
 }
 
-// Phase 2: NPC melee evaluation should skip SWIM_UNDER targets
+
 TEST_CASE( "npc_does_not_target_swim_under_creatures", "[swim_under][npc_attack]" )
 {
     clear_map_and_put_player_underground();
@@ -125,10 +125,10 @@ TEST_CASE( "npc_does_not_target_swim_under_creatures", "[swim_under][npc_attack]
     map &here = get_map();
     creature_tracker &creatures = get_creature_tracker();
 
-    // Place player out of the way
+
     get_player_character().setpos( here, { 40, 40, 0 } );
 
-    // Spawn NPC at adjacent_pos
+
     static constexpr point_bub_ms npc_start{ adjacent_pos.xy() };
     static constexpr tripoint_bub_ms npc_start_tri{ npc_start, 0 };
     REQUIRE( creatures.creature_at<Creature>( npc_start_tri ) == nullptr );
@@ -140,7 +140,7 @@ TEST_CASE( "npc_does_not_target_swim_under_creatures", "[swim_under][npc_attack]
     g->load_npcs();
     REQUIRE( creatures.creature_at<npc>( npc_start_tri ) != nullptr );
 
-    // Give NPC a weapon
+
     item weapon( itype_knife_large );
     test_npc.set_wielded_item( weapon );
 
@@ -156,7 +156,7 @@ TEST_CASE( "npc_does_not_target_swim_under_creatures", "[swim_under][npc_attack]
 
         test_npc.evaluate_best_attack( fish );
         const npc_attack_rating &rating = test_npc.get_current_attack_evaluation();
-        // The rating should have no value (target unreachable)
+
         CHECK_FALSE( rating.value().has_value() );
     }
 
@@ -170,13 +170,13 @@ TEST_CASE( "npc_does_not_target_swim_under_creatures", "[swim_under][npc_attack]
 
         test_npc.evaluate_best_attack( zombie );
         const npc_attack_rating &rating = test_npc.get_current_attack_evaluation();
-        // Normal zombie should get a positive rating
+
         CHECK( rating.value().has_value() );
         CHECK( *rating.value() > 0 );
     }
 }
 
-// Phase 2b: player can walk over SWIM_UNDER creatures
+
 TEST_CASE( "player_can_walk_over_swim_under_creatures", "[swim_under][movement]" )
 {
     clear_map_and_put_player_underground();
@@ -197,8 +197,8 @@ TEST_CASE( "player_can_walk_over_swim_under_creatures", "[swim_under][movement]"
 
         reset_caches( 0 );
 
-        // Moving towards the fish tile should succeed (walk over the walkway)
-        // The fish is under the surface and should not block movement
+
+
         tripoint_rel_ms direction( fish_pos.raw() - adjacent_pos.raw() );
         avatar &you = get_avatar();
         you.setpos( here, adjacent_pos );
@@ -209,7 +209,7 @@ TEST_CASE( "player_can_walk_over_swim_under_creatures", "[swim_under][movement]"
     }
 }
 
-// Phase 3: visibility of creatures under SWIM_UNDER terrain
+
 TEST_CASE( "creatures_under_swim_under_are_invisible", "[swim_under][vision]" )
 {
     clear_map_and_put_player_underground();
@@ -233,7 +233,7 @@ TEST_CASE( "creatures_under_swim_under_are_invisible", "[swim_under][vision]" )
 
         reset_caches( 0 );
 
-        // Player should NOT be able to see fish under the walkway
+
         CHECK_FALSE( player.sees( here, fish ) );
     }
 
@@ -248,7 +248,7 @@ TEST_CASE( "creatures_under_swim_under_are_invisible", "[swim_under][vision]" )
 
         reset_caches( 0 );
 
-        // Underwater fish should see each other
+
         CHECK( fish1.sees( here, fish2 ) );
     }
 }

@@ -871,9 +871,9 @@ static JsonValue submap_fd_pre_migration = json_loader::from_string( submap_fd_p
 
 static void load_from_jsin( submap &sm, const JsonValue &jsin )
 {
-    // Ensure that the JSON is up to date for our savegame version
+
     REQUIRE( savegame_version == 40 );
-    // Important note for future testmakers: Submaps can have their own version, different from the savegame_version. Good luck with that.
+
     int version = 0;
     JsonObject sm_json = jsin.get_object();
     if( sm_json.has_member( "version" ) ) {
@@ -904,9 +904,9 @@ struct submap_checks {
     bool computers = true;
 };
 
-} // namespace
+}
 
-//static const submap_checks dont_care;
+
 
 static bool is_normal_submap( const submap &sm, submap_checks checks = {} )
 {
@@ -922,7 +922,7 @@ static bool is_normal_submap( const submap &sm, submap_checks checks = {} )
     const bool construction = checks.construction;
     const bool computers = checks.computers;
 
-    // For every point on the submap
+
     for( int y = 0; y < SEEY; ++y ) {
         for( int x = 0; x < SEEX; ++x ) {
             if( terrain && sm.get_ter( { x, y } ) != ter_t_dirt ) {
@@ -949,7 +949,7 @@ static bool is_normal_submap( const submap &sm, submap_checks checks = {} )
         }
     }
 
-    // Can be found without checking every point
+
     if( cosmetics && !sm.cosmetics.empty() ) {
         return false;
     }
@@ -987,18 +987,18 @@ TEST_CASE( "submap_terrain_rle_load", "[submap][load]" )
     const ter_id ter_sw = sm.get_ter( corner_sw );
     const ter_id ter_se = sm.get_ter( corner_se );
 
-    // We placed a unique terrain in each of the corners. Check that those are correct
+
     INFO( string_format( "nw: %s", ter_nw.id().str() ) );
     INFO( string_format( "ne: %s", ter_ne.id().str() ) );
     INFO( string_format( "sw: %s", ter_sw.id().str() ) );
     INFO( string_format( "se: %s", ter_se.id().str() ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( ter_nw == ter_t_floor_green );
     REQUIRE( ter_ne == ter_t_floor_red );
     REQUIRE( ter_sw == ter_t_floor );
     REQUIRE( ter_se == ter_t_floor_blue );
 
-    // And for the rest of the map, half of it is t_dirt, the other half t_rock_floor
+
     for( int x = 1; x < SEEX - 2; ++x ) {
         CHECK( sm.get_ter( { x, 0 } ) == ter_t_dirt );
     }
@@ -1029,11 +1029,11 @@ TEST_CASE( "submap_terrain_load_invalid_ter_ids_as_t_dirt", "[submap][load]" )
     REQUIRE( is_normal_submap( sm, checks ) );
     REQUIRE( error == "invalid ter_str_id 't_this_ter_id_does_not_exist'" );
 
-    //capture_debugmsg_during
+
     for( int x = 0; x < SEEX; x++ ) {
         for( int y = 0; y < SEEY; y++ ) {
             CAPTURE( x, y );
-            // expect t_rock_floor patch in a corner
+
             const ter_id expected = ( ( x == 11 ) && ( y == 11 ) ) ? ter_t_rock_floor : ter_t_dirt;
             CHECK( sm.get_ter( {x, y} ) == expected );
         }
@@ -1055,20 +1055,20 @@ TEST_CASE( "submap_furniture_load", "[submap][load]" )
     const furn_id furn_se = sm.get_furn( corner_se );
     const furn_id furn_ra = sm.get_furn( random_pt );
 
-    // We placed a unique furniture in a couple pf place. Check that those are correct
+
     INFO( string_format( "nw: %s", furn_nw.id().str() ) );
     INFO( string_format( "ne: %s", furn_ne.id().str() ) );
     INFO( string_format( "sw: %s", furn_sw.id().str() ) );
     INFO( string_format( "se: %s", furn_se.id().str() ) );
     INFO( string_format( "ra: %s", furn_ra.id().str() ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( furn_nw == furn_f_coffin_c );
     REQUIRE( furn_ne == furn_f_bookcase );
     REQUIRE( furn_sw == furn_f_dresser );
     REQUIRE( furn_se == furn_f_crate_o );
     REQUIRE( furn_ra == furn_f_gas_tank );
 
-    // Also, check we have no other furniture
+
     for( int x = 0; x < SEEX; ++x ) {
         for( int y = 0; y < SEEY; ++y ) {
             point_sm_ms tested{ x, y };
@@ -1096,20 +1096,20 @@ TEST_CASE( "submap_trap_load", "[submap][load]" )
     const trap_id trap_se = sm.get_trap( corner_se );
     const trap_id trap_ra = sm.get_trap( random_pt );
 
-    // We placed a unique trap in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: %s", trap_nw.id().str() ) );
     INFO( string_format( "ne: %s", trap_ne.id().str() ) );
     INFO( string_format( "sw: %s", trap_sw.id().str() ) );
     INFO( string_format( "se: %s", trap_se.id().str() ) );
     INFO( string_format( "ra: %s", trap_ra.id().str() ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( trap_nw == tr_rollmat );
     REQUIRE( trap_ne == tr_bubblewrap );
     REQUIRE( trap_sw == tr_beartrap );
     REQUIRE( trap_se == tr_funnel );
     REQUIRE( trap_ra == tr_landmine );
 
-    // Also, check we have no other traps
+
     for( int x = 0; x < SEEX; ++x ) {
         for( int y = 0; y < SEEY; ++y ) {
             point_sm_ms tested{ x, y };
@@ -1137,13 +1137,13 @@ TEST_CASE( "submap_rad_load", "[submap][load]" )
     const int rad_se = sm.get_radiation( corner_se );
     const int rad_ra = sm.get_radiation( random_pt );
 
-    // We placed a unique rad level in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: %d", rad_nw ) );
     INFO( string_format( "ne: %d", rad_ne ) );
     INFO( string_format( "sw: %d", rad_sw ) );
     INFO( string_format( "se: %d", rad_se ) );
     INFO( string_format( "ra: %d", rad_ra ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( rad_nw == 2 );
     REQUIRE( rad_ne == 1 );
     REQUIRE( rad_sw == 4 );
@@ -1151,7 +1151,7 @@ TEST_CASE( "submap_rad_load", "[submap][load]" )
     REQUIRE( rad_ra == 5 );
 
     std::array<int, SEEX> rads;
-    // Also, check we have no other radiation
+
     INFO( "Below is the radiation on the row above and the current row.  Unknown values are -1" );
     for( int y = 0; y < SEEY; ++y ) {
         INFO( string_format( "%2d: %2d%2d%2d%2d%2d%2d%2d%2d%2d%2d%2d%2d", y - 1, rads[0], rads[1], rads[2],
@@ -1194,8 +1194,8 @@ TEST_CASE( "submap_item_load", "[submap][load]" )
     std::vector<itype_id> item_sw;
     std::vector<itype_id> item_se;
     std::vector<itype_id> item_ra;
-    // We're just checking the ids, checking more gets quite complex
-    // Only one of these needs to be a loop, I'm just doing all of them for simplicity/extensiblity
+
+
     for( const item &it : citem_nw ) {
         item_nw.push_back( it.typeId() );
     }
@@ -1212,13 +1212,13 @@ TEST_CASE( "submap_item_load", "[submap][load]" )
         item_ra.push_back( it.typeId() );
     }
 
-    // We placed a unique item in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: %d %s %s", item_nw.size(), item_nw[0].str(), item_nw[1].str() ) );
     INFO( string_format( "ne: %d %s", item_ne.size(), item_ne[0].str() ) );
     INFO( string_format( "sw: %d %s", item_sw.size(), item_sw[0].str() ) );
     INFO( string_format( "se: %d %s", item_se.size(), item_se[0].str() ) );
     INFO( string_format( "ra: %d %s", item_ra.size(), item_ra[0].str() ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( item_nw[0] == itype_machete );
     REQUIRE( item_nw[1] == itype_foon );
     REQUIRE( item_ne[0] == itype_foodperson_mask );
@@ -1226,7 +1226,7 @@ TEST_CASE( "submap_item_load", "[submap][load]" )
     REQUIRE( item_se[0] == itype_bat_nerf );
     REQUIRE( item_ra[0] == itype_jackhammer );
 
-    // Also, check we have no other items
+
     for( int y = 0; y < SEEY; ++y ) {
         for( int x = 0; x < SEEX; ++x ) {
             point_sm_ms tested{ x, y };
@@ -1259,7 +1259,7 @@ TEST_CASE( "submap_field_load", "[submap][load]" )
     const field_entry *fd_se = field_se.find_field( field_fd_acid );
     const field_entry *fd_ra = field_ra.find_field( field_fd_nuke_gas );
     const field_entry *fd_ow = field_nw.find_field( field_fd_smoke );
-    // No nullptrs for me
+
     REQUIRE( fd_nw != nullptr );
     REQUIRE( fd_ow != nullptr );
     REQUIRE( fd_ne != nullptr );
@@ -1267,7 +1267,7 @@ TEST_CASE( "submap_field_load", "[submap][load]" )
     REQUIRE( fd_se != nullptr );
     REQUIRE( fd_ra != nullptr );
 
-    // We placed a unique item in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: %d %s %d %d %s %d %d", field_nw.field_count(),
                          fd_nw->get_field_type().id().str(), fd_nw->get_field_intensity(),
                          to_turns<int>( fd_nw->get_field_age() ), fd_ow->get_field_type().id().str(),
@@ -1285,7 +1285,7 @@ TEST_CASE( "submap_field_load", "[submap][load]" )
     INFO( string_format( "ra: %d %s %d %d", field_ra.field_count(),
                          fd_ra->get_field_type().id().str(), fd_ra->get_field_intensity(),
                          to_turns<int>( fd_ra->get_field_age() ) ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( fd_nw->get_field_intensity() == 3 );
     REQUIRE( fd_nw->get_field_age() == 2077_seconds );
     REQUIRE( fd_ow->get_field_intensity() == 4 );
@@ -1299,7 +1299,7 @@ TEST_CASE( "submap_field_load", "[submap][load]" )
     REQUIRE( fd_ra->get_field_intensity() == 6 );
     REQUIRE( fd_ra->get_field_age() == 1615_seconds );
 
-    // Also, check we have no other fields
+
     for( int y = 0; y < SEEY; ++y ) {
         for( int x = 0; x < SEEX; ++x ) {
             point_sm_ms tested{ x, y };
@@ -1327,20 +1327,20 @@ TEST_CASE( "submap_graffiti_load", "[submap][load]" )
     const std::string &g_se = sm.get_graffiti( corner_se );
     const std::string &g_ra = sm.get_graffiti( random_pt );
 
-    // We placed a unique graffiti in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: %s", g_nw ) );
     INFO( string_format( "ne: %s", g_ne ) );
     INFO( string_format( "sw: %s", g_sw ) );
     INFO( string_format( "se: %s", g_se ) );
     INFO( string_format( "ra: %s", g_ra ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( g_nw == "c" );
     REQUIRE( g_ne == "a" );
     REQUIRE( g_sw == "d" );
     REQUIRE( g_se == "b" );
     REQUIRE( g_ra == "e" );
 
-    // Also, check we have no other graffiti
+
     REQUIRE( sm.cosmetics.size() == 5 );
 }
 
@@ -1350,7 +1350,7 @@ TEST_CASE( "submap_cosmetics_load", "[submap][load]" )
     load_from_jsin( sm, submap_cosmetic );
     submap_checks checks;
     checks.cosmetics = false;
-    // Signs require furniture
+
     checks.furniture = false;
 
     REQUIRE( is_normal_submap( sm, checks ) );
@@ -1361,20 +1361,20 @@ TEST_CASE( "submap_cosmetics_load", "[submap][load]" )
     const std::string &g_se = sm.get_signage( corner_se );
     const std::string &g_ra = sm.get_graffiti( random_pt );
 
-    // We placed a unique graffiti in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: %s", g_nw ) );
     INFO( string_format( "ne: %s", g_ne ) );
     INFO( string_format( "sw: %s", g_sw ) );
     INFO( string_format( "se: %s", g_se ) );
     INFO( string_format( "ra: %s", g_ra ) );
-    // Require to prevent the lower CHECK from being spammy
+
     REQUIRE( g_nw == "I <3 Dr. Hylke van der Schaaf." );
     REQUIRE( g_ne == "This is written text." );
     REQUIRE( g_sw == "This is a sign" );
     REQUIRE( g_se == "Subway Map: illegible city name stop" );
     REQUIRE( g_ra == "Santina is a heteronormative bully!" );
 
-    // Also, check we have no other cosmetics
+
     REQUIRE( sm.cosmetics.size() == 5 );
 }
 
@@ -1408,7 +1408,7 @@ TEST_CASE( "submap_spawns_load", "[submap][load]" )
         return spawn.pos == random_pt;
     } );
 
-    // We placed a unique spawn in a couple of places. Check that those are correct
+
     INFO( string_format( "nw: [%d, %d] %d %s %s %s", nw.pos.x(), nw.pos.y(), nw.count, nw.type.str(),
                          nw.friendly ? "friendly" : "hostile", nw.name.value_or( "NONE" ) ) );
     INFO( string_format( "ne: [%d, %d] %d %s %s %s", ne.pos.x(), ne.pos.y(), ne.count, ne.type.str(),
@@ -1419,7 +1419,7 @@ TEST_CASE( "submap_spawns_load", "[submap][load]" )
                          se.friendly ? "friendly" : "hostile", se.name.value_or( "NONE" ) ) );
     INFO( string_format( "ra: [%d, %d] %d %s %s %s", ra.pos.x(), ra.pos.y(), ra.count, ra.type.str(),
                          ra.friendly ? "friendly" : "hostile", ra.name.value_or( "NONE" ) ) );
-    // Require to prevent the lower CHECK from being spammy
+
     CHECK( nw.count == 3 );
     CHECK( nw.type.str() == "mon_fish_eel" );
     CHECK( !nw.friendly );
@@ -1441,7 +1441,7 @@ TEST_CASE( "submap_spawns_load", "[submap][load]" )
     CHECK( ra.friendly );
     CHECK( ra.name.value_or( "NONE" ) == "Alice" );
 
-    // Also, check we have no other spawns
+
     CHECK( sm.spawns.size() == 5 );
 }
 
@@ -1455,7 +1455,7 @@ TEST_CASE( "submap_vehicle_load", "[submap][load]" )
     REQUIRE( is_normal_submap( sm, checks ) );
 
     REQUIRE( sm.vehicles.size() == 1 );
-    // There's a lot we can test here, but that's getting into vehicle testing, not submap
+
     CHECK( sm.vehicles[0]->disp_name() == "the Welding Cart" );
 }
 
@@ -1489,8 +1489,8 @@ TEST_CASE( "submap_computer_load", "[submap][load]" )
     checks.computers = false;
 
     REQUIRE( is_normal_submap( sm, checks ) );
-    // Just check there are computers in the right place
-    // Checking more is complicated
+
+
     REQUIRE( sm.has_computer( point_sm_ms( point::south ) ) );
     REQUIRE( sm.has_computer( {3, 5} ) );
 }
@@ -1515,23 +1515,23 @@ TEST_CASE( "submap_ter_furn_migration", "[submap][load]" )
     const furn_id furn_sw = sm.get_furn( corner_sw );
     const furn_id furn_se = sm.get_furn( corner_se );
 
-    // North corners should have migrated from test_t_migration_old_id to test_t_migration_new_id
+
     INFO( string_format( "ter nw: %s", ter_nw.id().str() ) );
     INFO( string_format( "ter ne: %s", ter_ne.id().str() ) );
     REQUIRE( ter_nw == ter_test_t_migration_new_id );
     REQUIRE( ter_ne == ter_test_t_migration_new_id );
-    // West one could still have a f_bookcase as it may override the test_f_migration_new_id placed by migration, as the load order for the json members isn't defined
+
     INFO( string_format( "furn nw: %s", furn_nw.id().str() ) );
     REQUIRE( ( furn_nw == furn_f_bookcase || furn_nw == furn_test_f_migration_new_id ) );
-    // East one should now have test_f_migration_new_id as per the migration
+
     INFO( string_format( "furn ne: %s", furn_ne.id().str() ) );
     REQUIRE( furn_ne == furn_test_f_migration_new_id );
-    // South corners should still have t_dirt
+
     INFO( string_format( "ter sw: %s", ter_sw.id().str() ) );
     INFO( string_format( "ter se: %s", ter_se.id().str() ) );
     REQUIRE( ter_sw == ter_t_dirt );
     REQUIRE( ter_se == ter_t_dirt );
-    // But should have migrated test_f_migration_old_id to test_f_migration_new_id
+
     INFO( string_format( "furn sw: %s", furn_sw.id().str() ) );
     INFO( string_format( "furn se: %s", furn_se.id().str() ) );
     REQUIRE( furn_sw == furn_test_f_migration_new_id );
@@ -1549,7 +1549,7 @@ TEST_CASE( "submap_fd_migration", "[submap][load]" )
 
     const field field_ne = sm.get_field( corner_ne );
 
-    // North east corner should have migrated from test_fd_migration_old_id to test_fd_migration_new_id
+
     std::string fields_list;
     bool found_field_new_id = false;
     int total_fields = 0;

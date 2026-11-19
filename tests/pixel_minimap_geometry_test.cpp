@@ -21,9 +21,9 @@ TEST_CASE( "render_read_pixels_honors_requested_format", "[tiles][pixel_minimap]
         SetRenderDrawColor( get_sdl_renderer(), 255, 0, 0, 255 );
         RenderClear( get_sdl_renderer() );
         WHEN( "one pixel is read back as ARGB8888 and as ABGR8888" ) {
-            // One of the two requested formats always differs from the
-            // backend's native format, so at least one read exercises a
-            // real conversion.
+
+
+
             const SDL_Rect probe = { 0, 0, 1, 1 };
             Uint32 argb = 0;
             Uint32 abgr = 0;
@@ -32,8 +32,8 @@ TEST_CASE( "render_read_pixels_honors_requested_format", "[tiles][pixel_minimap]
             REQUIRE( RenderReadPixels( get_sdl_renderer(), &probe,
                                        SDL_PIXELFORMAT_ABGR8888, &abgr, 4 ) );
             THEN( "red occupies each format's own red channel position" ) {
-                // Packed-32 formats are defined on the Uint32 value, so
-                // shifts are endian-safe.
+
+
                 CHECK( ( ( argb >> 16 ) & 0xFF ) == 255 );
                 CHECK( ( argb & 0xFF ) == 0 );
                 CHECK( ( abgr & 0xFF ) == 255 );
@@ -54,7 +54,7 @@ TEST_CASE( "minimap_batch_quad_layout", "[tiles][pixel_minimap]" )
                 CHECK( batch.index_count() == 6 );
             }
             THEN( "corners are in CW fan order with the shared color" ) {
-                // (x,y) (x+w,y) (x+w,y+h) (x,y+h)
+
                 const SDL_Vertex *v = batch.vertex_data();
                 CHECK( v[0].position.x == 2.0f );
                 CHECK( v[0].position.y == 3.0f );
@@ -75,8 +75,8 @@ TEST_CASE( "minimap_batch_quad_layout", "[tiles][pixel_minimap]" )
 
 TEST_CASE( "minimap_batch_index_invariants", "[tiles][pixel_minimap]" )
 {
-    // SDL_RenderGeometryRaw rejects count % 3 != 0 and OOB indices at the
-    // API boundary; enforce the contract on our side.
+
+
     GIVEN( "a batch of several quads" ) {
         quad_batch batch;
         for( int i = 0; i < 7; ++i ) {
@@ -138,13 +138,13 @@ TEST_CASE( "minimap_beacon_pixel_pattern", "[tiles][pixel_minimap]" )
             CHECK( first.g == Approx( 30.0f / 255.0f ) );
             CHECK( first.b == Approx( 10.0f / 255.0f ) );
             const SDL_Vertex *v = batch.vertex_data();
-            CHECK( v[0].position.x == 8.0f );   // rect.x - 2
-            CHECK( v[0].position.y == 20.0f );  // rect.y + 0
+            CHECK( v[0].position.x == 8.0f );
+            CHECK( v[0].position.y == 20.0f );
         }
         THEN( "the center pixel (x=0, y=0) keeps the undivided color" ) {
-            // Emission order is x-major, y ascending: x = -2 emits 1 pixel,
-            // x = -1 emits 3, then x = 0 emits y = -2, -1 before (0,0).
-            // Pixels before (0,0): 1 + 3 + 2 = 6.
+
+
+
             const SDL_FColor center = batch.vertex_data()[6 * 4].color;
             CHECK( center.r == Approx( 210.0f / 255.0f ) );
         }
@@ -154,7 +154,7 @@ TEST_CASE( "minimap_beacon_pixel_pattern", "[tiles][pixel_minimap]" )
 TEST_CASE( "minimap_transform_screen_mapping", "[tiles][pixel_minimap]" )
 {
     GIVEN( "scale_to_fit with a width-constrained exact ratio" ) {
-        // native 200x100 into 50x40: factor 0.25, fitted 50x25, centered.
+
         const minimap_transform tf =
             compute_minimap_transform( point( 200, 100 ), SDL_Rect{ 0, 0, 50, 40 }, true );
         THEN( "dest rect is the fitted centered box with matching scales" ) {
@@ -167,8 +167,8 @@ TEST_CASE( "minimap_transform_screen_mapping", "[tiles][pixel_minimap]" )
         }
     }
     GIVEN( "scale_to_fit with a truncating odd ratio" ) {
-        // native 482x242 into 100x40: the truncated fit gives different
-        // per-axis scales.
+
+
         const minimap_transform tf =
             compute_minimap_transform( point( 482, 242 ), SDL_Rect{ 5, 9, 100, 40 }, true );
         THEN( "each axis maps native extent exactly onto its dest extent" ) {
@@ -180,8 +180,8 @@ TEST_CASE( "minimap_transform_screen_mapping", "[tiles][pixel_minimap]" )
         }
     }
     GIVEN( "no scale_to_fit, native larger than the screen rect" ) {
-        // native 300x300 into 100x100 at offset (10, 20): crop d = 100,
-        // dest = screen rect, origin shifted left/up by the crop.
+
+
         const minimap_transform tf =
             compute_minimap_transform( point( 300, 300 ), SDL_Rect{ 10, 20, 100, 100 }, false );
         THEN( "scales are 1 and the origin backs out the central crop" ) {
@@ -196,7 +196,7 @@ TEST_CASE( "minimap_transform_screen_mapping", "[tiles][pixel_minimap]" )
         }
     }
     GIVEN( "no scale_to_fit, native smaller than the screen rect" ) {
-        // native 60x60 into 100x100 at origin: centered, no crop.
+
         const minimap_transform tf =
             compute_minimap_transform( point( 60, 60 ), SDL_Rect{ 0, 0, 100, 100 }, false );
         THEN( "the map is centered with unit scale" ) {
@@ -213,7 +213,7 @@ TEST_CASE( "minimap_transform_screen_mapping", "[tiles][pixel_minimap]" )
 
 TEST_CASE( "minimap_snap_to_pixel_tiles_without_gaps", "[tiles][pixel_minimap]" )
 {
-    // A fractional scale must not open gaps or overlaps between tiles.
+
     const float origin = 5.0f;
     const float scale = 1.2146f;
     const int tile = 3;
@@ -234,8 +234,8 @@ TEST_CASE( "minimap_snap_to_pixel_tiles_without_gaps", "[tiles][pixel_minimap]" 
 
 TEST_CASE( "minimap_render_geometry_raw_smoke", "[tiles][pixel_minimap]" )
 {
-    // A logged SDL error fails the run under the renderer test policy, so
-    // completing without error output is the assertion that matters.
+
+
     software_render_fixture fx;
     if( !fx.available() ) {
         WARN( "dummy SDL video backend unavailable; skipping" );
@@ -247,4 +247,4 @@ TEST_CASE( "minimap_render_geometry_raw_smoke", "[tiles][pixel_minimap]" )
     CHECK( true );
 }
 
-#endif // TILES
+#endif

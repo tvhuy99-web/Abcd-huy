@@ -69,7 +69,7 @@ struct addict_effect_totals {
         hallu += u.has_effect( effect_hallu ) ? 1 : 0;
     }
 };
-} // namespace
+}
 
 static void clear_addictions( Character &u )
 {
@@ -137,11 +137,11 @@ TEST_CASE( "hardcoded_and_json_addictions", "[addiction]" )
         int res = suffer_addiction( addiction_test_caffeine, 5, u, max_iters, totals );
         CHECK( res == Approx( 50 ).margin( 40 ) );
         CHECK( totals.sleepiness == 0 );
-        // Morale & stim very rarely get decremented in the effect
-        // Just check that they aren't positive
+
+
         CHECK( totals.morale <= 0 );
         CHECK( totals.stim <= 0 );
-        // Can also cause the "shakes" effect, but RNG makes it inconsistent
+
     }
 
     SECTION( "caffeine json test, intensity 20" ) {

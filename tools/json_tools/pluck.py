@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
     json_data, load_errors = import_data(json_fmatch=args.fnmatch)
     if load_errors:
-        # If we start getting unexpected JSON or other things, might need to
-        # revisit quitting on load_errors
+
+
         print("Error loading JSON data.")
         for e in load_errors:
             print(e)
@@ -44,8 +44,8 @@ if __name__ == "__main__":
         print("No data loaded.")
         sys.exit(1)
 
-    # Wasteful iteration, but less code to maintain on a tool that will likely
-    # change again.
+
+
     plucked = [
         item for item in json_data if matches_all_wheres(item, args.where)]
 
@@ -55,9 +55,9 @@ if __name__ == "__main__":
     elif plucked and not args.all:
         print(CDDAJSONWriter(plucked[0]).dumps())
     else:
-        # ugh, didn't realize JSON writer only wanted single objects when I
-        # wrote it.
-        # TODO: get rid of ugh
+
+
+
         print("[")
         for i, p in enumerate(plucked):
             eol = ",\n" if i < len(plucked) - 1 else "\n"

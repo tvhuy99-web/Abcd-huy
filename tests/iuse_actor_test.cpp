@@ -142,19 +142,19 @@ TEST_CASE( "tool_transform_when_activated", "[iuse][tool][transform]" )
         item bat_cell( itype_medium_battery_cell );
         REQUIRE( flashlight.can_reload_with( item( itype_medium_battery_cell ), true ) );
 
-        // Charge the battery
+
         const int bat_charges = bat_cell.ammo_capacity( ammo_battery );
         bat_cell.ammo_set( bat_cell.ammo_default(), bat_charges );
         REQUIRE( bat_cell.ammo_remaining( ) == bat_charges );
 
-        // Put battery in flashlight
+
         REQUIRE( flashlight.has_pocket_type( pocket_type::MAGAZINE_WELL ) );
         ret_val<void> result = flashlight.put_in( bat_cell, pocket_type::MAGAZINE_WELL );
         REQUIRE( result.success() );
         REQUIRE( flashlight.magazine_current() );
 
         WHEN( "flashlight is turned on" ) {
-            // Activation occurs via the iuse_transform actor
+
             const use_function *use = flashlight.type->get_use( "transform" );
             REQUIRE( use != nullptr );
             const iuse_transform *actor = dynamic_cast<const iuse_transform *>( use->get_actor_ptr() );
@@ -179,7 +179,7 @@ TEST_CASE( "transform_blocked_when_result_too_long_for_parent_pocket",
     Character &dummy = get_avatar();
     clear_avatar();
 
-    // Vest has a single 30 cm pocket; the test baton extends from 24 cm to 60 cm.
+
     item baton( itype_test_transform_baton );
     REQUIRE( baton.length() <= 30_cm );
     REQUIRE( item( itype_test_transform_baton_long ).length() > 30_cm );
@@ -305,9 +305,9 @@ static void cut_up_yields( const itype_id &target )
     map &here = get_map();
     Character &guy = get_avatar();
     clear_avatar();
-    // Nominal dex to avoid yield penalty.
+
     guy.set_dex_base( 12 );
-    //guy.set_skill_level( skill_id( "fabrication" ), 10 );
+
     here.i_at( guy.pos_bub() ).clear();
 
     CAPTURE( target.c_str() );
@@ -399,7 +399,7 @@ TEST_CASE( "place_trap_move_cost_scales_with_skill_and_proficiencies", "[iuse_ac
     GIVEN( "no traps skill" ) {
         WHEN( "has neither trap proficiency" ) {
             THEN( "cost is JSON moves times eight for every practice value" ) {
-                // practice: funnel 0, caltrops 2, beartrap 4
+
                 CHECK( place_trap_actor_of( itype_funnel ).unburied_data.move_cost( dummy ) == 800 );
                 CHECK( place_trap_actor_of( itype_caltrops ).unburied_data.move_cost( dummy ) == 1200 );
                 CHECK( place_trap_actor_of( itype_beartrap ).unburied_data.move_cost( dummy ) == 1600 );
@@ -428,7 +428,7 @@ TEST_CASE( "place_trap_move_cost_scales_with_skill_and_proficiencies", "[iuse_ac
             dummy.get_skill_level_object( skill_traps ).set_exercise( 50 );
             REQUIRE( dummy.get_skill_level( skill_traps ) == Approx( 1.5f ) );
             THEN( "cost is JSON moves / skill rounded to nearest" ) {
-                // 100 / 1.5 = 66.67, round 67, trunc 66
+
                 CHECK( place_trap_actor_of( itype_funnel ).unburied_data.move_cost( dummy ) == 67 );
             }
         }
@@ -436,7 +436,7 @@ TEST_CASE( "place_trap_move_cost_scales_with_skill_and_proficiencies", "[iuse_ac
             dummy.get_skill_level_object( skill_traps ).set_exercise( 75 );
             REQUIRE( dummy.get_skill_level( skill_traps ) == Approx( 1.75f ) );
             THEN( "cost is JSON moves / skill rounded to nearest" ) {
-                // 150 / 1.75 = 85.71, round 86, trunc 85
+
                 CHECK( place_trap_actor_of( itype_caltrops ).unburied_data.move_cost( dummy ) == 86 );
             }
         }

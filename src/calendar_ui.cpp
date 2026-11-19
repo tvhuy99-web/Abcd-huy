@@ -81,7 +81,7 @@ class calendar_accessibility_callback : public uilist_callback
         calendar_ui::granularity max_granularity;
         bool concise;
 };
-} // namespace
+}
 
 time_point calendar_ui::select_time_point( time_point initial_value, std::string_view title,
         calendar_ui::granularity granularity_level, bool creator_reader )
@@ -99,7 +99,7 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
             new_value = result_time;
         }
         const time_duration offset = ( new_value - initial ) * factor;
-        // Arbitrary maximal value.
+
         const time_point max = calendar::turn_zero + time_duration::from_turns(
                                    std::numeric_limits<int>::max() / 2 );
         return_value = std::max( std::min( max, return_value + offset ), calendar::turn_zero );
@@ -128,8 +128,8 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
             { "RESET", to_translation( "Reset value" ) }
         };
         if( simple_reader ) {
-            // Two-finger Up finishes, two-finger Down cancels. Only the
-            // date/day and hour controls are surfaced in this concise view.
+
+
             smenu.additional_actions.emplace_back( "CALENDAR_DONE", to_translation( "Done" ) );
         }
         smenu.callback = &accessibility_callback;
@@ -168,13 +168,13 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                                                 calendar_granularity_name( granularity_level ) );
             }
         }
-        // (G11): the old/new date comparison lives only in smenu.text,
-        // which the reader publishes as the snapshot summary, and the Java
-        // reader does not speak that summary when entering this menu. Attach
-        // the same comparison to the first (initially focused) row's
-        // reader-only value, reusing the already-translated frame above, so
-        // it is heard on entry and whenever that row is focused. a11y_value
-        // is never drawn on screen, so sighted play is unchanged.
+
+
+
+
+
+
+
         if( !smenu.entries.empty() ) {
             smenu.entries.front().a11y_value = string_format(
                 _( "Old date: %1$s\nNew date: %2$s" ),

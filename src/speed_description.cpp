@@ -8,7 +8,7 @@
 namespace
 {
 generic_factory<speed_description> speed_description_factory( "speed_description" );
-} // namespace
+}
 
 template<>
 const speed_description &speed_description_id::obj() const
@@ -16,7 +16,7 @@ const speed_description &speed_description_id::obj() const
     return speed_description_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool speed_description_id::is_valid() const
 {

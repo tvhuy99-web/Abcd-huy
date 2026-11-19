@@ -45,11 +45,11 @@ class math_exception_impl : public exception
                                                 std::forward<Args>( args )... ) ) ) {}
 };
 
-// syntax error in parsed expression
+
 using syntax_error = math_exception_impl<0>;
-// runtime error that can't be found at parse time, like bad variable types or values
+
 using runtime_error = math_exception_impl<5>;
-// math parser entered an unexpected state
+
 using internal_error = math_exception_impl<10>;
 
 template<int severity>
@@ -64,6 +64,6 @@ constexpr std::string_view _severity_str()
     }
     return "Math error";
 }
-} // namespace math
+}
 
-#endif // CATA_SRC_MATH_PARSER_TYPE_H
+#endif

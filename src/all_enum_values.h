@@ -24,4 +24,4 @@ auto all_enum_values() -> const std::array<E, num_enum_values<E>()> &
     return all_enum_values_helper<E>( std::make_index_sequence<num_enum_values<E>()> {} );
 }
 
-#endif // CATA_SRC_ALL_ENUM_VALUES_H
+#endif

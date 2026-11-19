@@ -12,14 +12,14 @@
 
 SDL_FColor to_fcolor( const SDL_Color &color );
 
-// CPU-side quads for one SDL_RenderGeometry call, as SDL_Vertex so position,
-// color and uv share one stride. A beacon-heavy minimap frame exceeds 65535
-// vertices, hence int indices.
+
+
+
 class quad_batch
 {
     public:
         void append_quad( float x, float y, float w, float h, const SDL_FColor &color );
-        // `src` in texels of a tex_w x tex_h texture
+
         void append_textured_quad( const SDL_Rect &dst, const SDL_Rect &src, int tex_w, int tex_h,
                                    const SDL_FColor &color );
         void clear();
@@ -40,20 +40,20 @@ class quad_batch
 void render_quad_batch( const SDL_Renderer_Ptr &renderer, const quad_batch &batch,
                         SDL_Texture *texture = nullptr );
 
-// solid rects, glyph quads of one text pass. flush() draws all rects, then
-// glyph quads grouped by texture in first-use order. callers guarantee no glyph
-// quad overlaps another texture's glyph quad or a rect appended after it, and
-// flush first where one would. immediate pass draws each rect when added, fonts
-// draw glyphs directly instead of queueing them
+
+
+
+
+
 class text_batch
 {
     public:
-        // start pass on `renderer`; the renderer must outlive the pass
+
         void begin_pass( const SDL_Renderer_Ptr &renderer, bool immediate );
         bool immediate() const {
             return immediate_;
         }
-        // renderer of the current pass; only valid after begin_pass
+
         const SDL_Renderer_Ptr &renderer() const {
             return *renderer_;
         }
@@ -67,11 +67,11 @@ class text_batch
         const SDL_Renderer_Ptr *renderer_ = nullptr;
         bool immediate_ = false;
         quad_batch rects_;
-        // groups past active_groups_ are spare: texture reset to null, buffers
-        // cleared but keeping their capacity for the next pass
+
+
         std::vector<std::pair<SDL_Texture *, quad_batch>> glyphs_;
         size_t active_groups_ = 0;
 };
 
-#endif // TILES
-#endif // CATA_SRC_SDL_QUAD_BATCH_H
+#endif
+#endif

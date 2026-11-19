@@ -226,16 +226,16 @@ TEST_CASE( "Proportional_armor_material_resistances", "[material]" )
 
     SECTION( "Mostly cotton armor vs. melee" ) {
         const float dmg = get_avg_melee_dmg( itype_test_swat_mostly_cotton );
-        // more variance on this test since it has a 5% chance of blocking with
-        // high protection steel
+
+
         check_near( "Average damage", dmg, 14.4f, 0.4f );
     }
 
     SECTION( "Multi material segmented armor vs. melee" ) {
         const float dmg = get_avg_melee_dmg( itype_test_multi_portion_segmented_armor );
         const float base_line = get_avg_melee_dmg( itype_test_portion_segmented_armor );
-        // our armor should NOT be near 1 mm cloth + 80% of 1mm of steel
-        // and should be higher (so lower damage) since they can overlap
+
+
         check_not_near( "Average damage", dmg, base_line, 0.05f );
     }
 }
@@ -248,12 +248,12 @@ TEST_CASE( "Ghost_ablative_vest", "[coverage]" )
         full.force_insert_item( item( itype_test_plate ), pocket_type::CONTAINER );
         item empty = item( itype_test_ghost_vest );
 
-        // make sure vest only covers torso_upper when it has armor in it
+
         REQUIRE( full.covers( sub_bodypart_id( "torso_upper" ) ) );
         REQUIRE( !empty.covers( sub_bodypart_id( "torso_upper" ) ) );
         const float dmg_full = get_avg_melee_dmg( full );
         const float dmg_empty = get_avg_melee_dmg( empty );
-        // make sure the armor is counting even if the base vest doesn't do anything
+
         check_not_near( "Average damage", dmg_full, dmg_empty, 0.5f );
     }
 }
@@ -280,13 +280,13 @@ TEST_CASE( "helmet_with_face_shield_coverage", "[coverage]" )
 
 TEST_CASE( "vest_with_plate_coverage", "[coverage]" )
 {
-    //Vest covers torso_upper and torso_lower
+
     item vest = item( itype_ballistic_vest_esapi );
-    //100 (torso_upper coverage) * 0.6 (torso_upper max_coverage) + 80 (torso_lower coverage) * 0.4
+
     CHECK( vest.get_coverage( body_part_torso ) == 92 );
 
     WHEN( "inserting 2 plates" ) {
-        //Each plate covers torso_upper with coverage 45
+
         CHECK( vest.put_in( item( itype_test_plate ), pocket_type::CONTAINER ).success() );
         CHECK( vest.put_in( item( itype_test_plate ), pocket_type::CONTAINER ).success() );
 

@@ -53,9 +53,9 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
-// Legacy: positional index lookup, used only for serializing idx (kept for old-save compat
-// from before #85905) and vehicle base items. Once legacy save support is dropped, this can
-// be removed for map/person/container paths. Vehicle base items still need idx=-1 as a sentinel.
+
+
+
 template <typename T>
 static int find_index( const T &sel, const item *obj )
 {
@@ -72,7 +72,7 @@ static int find_index( const T &sel, const item *obj )
     return found ? idx : -1;
 }
 
-// Legacy: positional index retrieval, counterpart to find_index. Same deprecation applies (#85905).
+
 template <typename T>
 static item *retrieve_index( const T &sel, int idx )
 {
@@ -113,7 +113,7 @@ class item_location::impl
 
         impl() = default;
         explicit impl( item *i ) : what( i->get_safe_reference() ) {}
-        // Legacy: idx-only constructor for old-save compat (#85905)
+
         explicit impl( int idx ) : idx( idx ), needs_unpacking( true ) {}
         impl( int idx, int64_t uid ) : idx( idx ), uid_hint( uid ), needs_unpacking( true ) {}
 
@@ -144,7 +144,7 @@ class item_location::impl
         virtual void remove_item() = 0;
         virtual void on_contents_changed() = 0;
         virtual void serialize( JsonOut &js ) const = 0;
-        // Legacy: idx-based item lookup for old-save compat and vehicle base items (#85905)
+
         virtual item *unpack( int ) const = 0;
         virtual item *unpack_by_uid( int64_t ) const {
             return nullptr;
@@ -168,7 +168,7 @@ class item_location::impl
                     i = unpack_by_uid( uid_hint );
                 }
                 if( !i && uid_hint == 0 ) {
-                    // Legacy save or vehicle base item: use index
+
                     i = unpack( idx );
                 }
                 if( i ) {
@@ -180,13 +180,13 @@ class item_location::impl
             }
         }
         mutable safe_reference<item> what;
-        mutable int idx = -1; // legacy, see #85905
+        mutable int idx = -1;
         mutable int64_t uid_hint = 0;
         mutable bool needs_unpacking = false;
 
     public:
-        //Flag that controls whether functions like obtain() should stack the obtained item
-        //with similar existing items in the inventory or create a new stack for the item
+
+
         bool should_stack = true;
 };
 
@@ -353,7 +353,7 @@ class item_location::impl::item_on_map : public item_location::impl
             int mv = ch.item_handling_cost( *obj, true, MAP_HANDLING_PENALTY, qty );
             mv += 100 * rl_dist( ch.pos_bub(), cur.pos_bub() );
 
-            // TODO: handle unpacking costs
+
 
             return mv;
         }
@@ -391,7 +391,7 @@ class item_location::impl::item_on_person : public item_location::impl
             if( !who ) {
                 who = g->critter_by_id<Character>( who_id );
                 if( !who ) {
-                    // If we failed to find it throw a debug message cause we're probably going to crash soon
+
                     debugmsg( "Failed to find item_location owner with character_id %d", who_id.get_value() );
                     return false;
                 }
@@ -499,7 +499,7 @@ class item_location::impl::item_on_person : public item_location::impl
 
             on_contents_changed();
             if( &ch.i_at( ch.get_item_position( target() ) ) == target() ) {
-                // item already in target characters inventory at base of stack
+
                 return item_location( ch, target() );
             }
 
@@ -508,7 +508,7 @@ class item_location::impl::item_on_person : public item_location::impl
                 return ch.i_add( obj, should_stack );
             } else {
                 item_location inv = ch.i_add( *target(), should_stack, nullptr, target() );
-                remove_item();  // This also takes off the item from whoever wears it.
+                remove_item();
                 return inv;
             }
         }
@@ -523,13 +523,13 @@ class item_location::impl::item_on_person : public item_location::impl
             if( who->is_wielding( *obj ) ) {
                 mv = who->item_handling_cost( *obj, false, 0, qty );
             } else {
-                // then we are wearing it
+
                 mv = who->item_handling_cost( *obj, true, INVENTORY_HANDLING_PENALTY / 2, qty );
                 mv += 250;
             }
 
             if( &ch != who ) {
-                // TODO: implement movement cost for transferring item between characters
+
             }
 
             return mv;
@@ -682,7 +682,7 @@ class item_location::impl::item_on_vehicle : public item_location::impl
             int mv = ch.item_handling_cost( *obj, true, VEHICLE_HANDLING_PENALTY, qty );
             mv += 100 * rl_dist( ch.pos_bub( here ), cur.veh.bub_part_pos( here, cur.part ) );
 
-            // TODO: handle unpacking costs
+
 
             return mv;
         }
@@ -692,9 +692,9 @@ class item_location::impl::item_on_vehicle : public item_location::impl
             vehicle_part &vp = cur.veh.part( cur.part );
             item &base = vp.base;
             if( &base == target() ) {
-                cur.veh.remove_part( vp ); // vehicle_part::base
+                cur.veh.remove_part( vp );
             } else {
-                cur.remove_item( *target() ); // item within CARGO
+                cur.remove_item( *target() );
             }
         }
 
@@ -726,7 +726,7 @@ class item_location::impl::item_in_container : public item_location::impl
         item_location container;
         mutable item_pocket *container_pkt = nullptr; // NOLINT(cata-serialize)
 
-        // Legacy: positional index for old-save compat (#85905). UID is now preferred.
+
         int calc_index() const {
             if( !container ) {
                 return -1;
@@ -839,9 +839,9 @@ class item_location::impl::item_in_container : public item_location::impl
 
             on_contents_changed();
             if( container.held_by( ch ) ) {
-                // we don't need to move it in this case, it's in a pocket
-                // we just charge the obtain cost and leave it in place. otherwise
-                // it's liable to end up back in the same pocket, where shenanigans ensue
+
+
+
                 return item_location( container, target() );
             }
             if( target()->made_of( phase_id::LIQUID ) && container->num_item_stacks() == 1 ) {
@@ -859,10 +859,10 @@ class item_location::impl::item_in_container : public item_location::impl
 
             const item obj = target()->split( qty );
             if( !obj.is_null() ) {
-                return ch.i_add( obj, should_stack,/*avoid=*/nullptr, nullptr,/*allow_drop=*/false );
+                return ch.i_add( obj, should_stack, nullptr, nullptr, false );
             } else {
-                item_location inv = ch.i_add( *target(), should_stack,/*avoid=*/nullptr,
-                                              target(), /*allow_drop=*/false );
+                item_location inv = ch.i_add( *target(), should_stack, nullptr,
+                                              target(), false );
                 if( inv == item_location::nowhere ) {
                     DebugLog( D_INFO, DC_ALL )
                             << "failed to add item " << target()->tname()
@@ -895,10 +895,10 @@ class item_location::impl::item_in_container : public item_location::impl
                 } else {
                     primary_cost = ch.item_retrieve_cost( *target(), *container );
                 }
-                // for holsters, we should not include the cost of wielding the holster itself
+
                 parent_obtain_cost = 0;
             } else if( container.where() != item_location::type::container ) {
-                // Worn items don't need to be retrieved, just accessed.
+
                 parent_obtain_cost = 0;
             }
             return primary_cost + parent_obtain_cost;
@@ -921,15 +921,15 @@ class item_location::impl::item_in_container : public item_location::impl
 class item_location::impl::item_in_crafting_inventory : public item_location::impl
 {
     private:
-        // a temp crafting inventory can be deleted. it is an ephemeral class
+
         temp_crafting_inventory *inv;
     public:
         item_in_crafting_inventory( temp_crafting_inventory &inv, item *which ) : impl( which ),
             inv( &inv ) {}
 
         int obtain_cost( const Character &, int ) const override {
-            // technically this could be a pseudo item from a furniture a few steps away.
-            // TODO: return something else
+
+
             return 0;
         }
 
@@ -950,7 +950,7 @@ class item_location::impl::item_in_crafting_inventory : public item_location::im
         }
 
         Character *carrier() const override {
-            // technically this is the crafting inventory of a specific person, but they're not "carrying" it
+
             return nullptr;
         }
 
@@ -959,7 +959,7 @@ class item_location::impl::item_in_crafting_inventory : public item_location::im
         }
 
         item_location obtain( Character &, int ) override {
-            // obtaining this type of item is not allowed!
+
             return item_location();
         }
 
@@ -1080,7 +1080,7 @@ void item_location::deserialize( const JsonObject &obj )
     obj.read( "idx", idx );
     obj.read( "uid", uid );
     if( !obj.read( "position", position ) ) {
-        // Save compatibility for change made 2025-02-19
+
         obj.read( "pos", pos_ );
         position = here.get_abs( pos_ );
     }
@@ -1090,8 +1090,8 @@ void item_location::deserialize( const JsonObject &obj )
         if( obj.has_member( "character" ) ) {
             obj.read( "character", who_id );
         } else {
-            // This is for migrating saves before npc item locations were supported and all
-            // character item locations were assumed to be on g->u
+
+
             who_id = get_player_character().getID();
         }
         ptr = std::make_shared<impl::item_on_person>( who_id, idx, uid );
@@ -1115,7 +1115,7 @@ void item_location::deserialize( const JsonObject &obj )
                 return;
             }
             debugmsg( "parent location does not point to valid item" );
-            ptr = std::make_shared<impl::item_on_map>( map_cursor( parent.pos_abs() ), idx ); // drop on ground
+            ptr = std::make_shared<impl::item_on_map>( map_cursor( parent.pos_abs() ), idx );
             return;
         }
         const std::list<item *> parent_contents = parent->all_items_container_top();
@@ -1134,7 +1134,7 @@ void item_location::deserialize( const JsonObject &obj )
                 return;
             }
         } else if( idx > -1 && idx < static_cast<int>( parent_contents.size() ) ) {
-            // Legacy save: no UID, use index
+
             auto iter = parent_contents.begin();
             std::advance( iter, idx );
             found = *iter;
@@ -1208,10 +1208,10 @@ pocket_constraint item_location::get_pocket_constraints_recursive( const item_po
     return ret;
 }
 
-/**
- * Return length of the longest nesting chain.
- * For A > B > C, return 2.
- */
+
+
+
+
 static int DFS_nesting( const item *it )
 {
     int max_nest = 0;
@@ -1228,24 +1228,24 @@ ret_val<void> item_location::parents_can_contain_recursive( item *it ) const
     units::volume it_volume = it->volume();
     units::length it_length = it->length();
     item_location current_location = *this;
-    //item_location class cannot return current pocket so use first pocket for innermost container
-    //Only used for weight and volume multipliers
+
+
     const item_pocket *current_pocket = get_item()->get_standard_pockets().front();
     const pocket_data *current_pocket_data = current_pocket->get_pocket_data();
 
     int recursion_depth = DFS_nesting( it );
-    //Repeat until top-most container reached
+
     while( current_location.has_parent() ) {
         ++recursion_depth;
         parent_pocket = current_location.parent_pocket();
 
-        //Ignore volume and length after innermost rigid container
+
         if( current_pocket->rigid() ) {
             it_volume = 0_ml;
             it_length = 0_mm;
         }
 
-        //Multiply weight and volume multipliers for each container
+
         it_weight = it_weight * current_pocket_data->weight_multiplier;
         it_volume = it_volume * current_pocket_data->volume_multiplier;
         it_length = it_length * std::cbrt( current_pocket_data->volume_multiplier );
@@ -1258,12 +1258,12 @@ ret_val<void> item_location::parents_can_contain_recursive( item *it ) const
             return ret_val<void>::make_failure( _( "item is too long for a parent pocket" ) );
         }
 
-        //Move up one level of containers
+
         current_pocket = parent_pocket;
         current_pocket_data = current_pocket->get_pocket_data();
         current_location = current_location.parent_item();
     }
-    // Deep nesting would lead to stack overflow error on loading
+
     if( recursion_depth > 10 ) {
         return ret_val<void>::make_failure( _( "containers are nested too deeply" ) );
     }
@@ -1281,37 +1281,37 @@ ret_val<int> item_location::max_charges_by_parent_recursive( const item &it ) co
     units::mass max_weight = 1000_kilogram;
     units::volume max_volume = MAX_ITEM_VOLUME;
     item_location current_location = *this;
-    //item_location class cannot return current pocket so use first pocket for innermost container
-    //Only used for weight and volume multipliers
+
+
     const item_pocket *current_pocket = get_item()->get_standard_pockets().front();
     const pocket_data *current_pocket_data = current_pocket->get_pocket_data();
 
-    //Repeat until top-most container reached
+
     while( current_location.has_parent() ) {
-        //Multiply weight and volume multipliers for each container
+
         weight_multiplier = weight_multiplier * current_pocket_data->weight_multiplier;
         volume_multiplier = volume_multiplier * current_pocket_data->volume_multiplier;
-        //Inserting into rigid pockets will not affect parent volume so stop keeping track
+
         if( current_pocket->rigid() ) {
             volume_multiplier = 0.0f;
         };
 
-        //Weight multiplier of zero means parent containers are no longer affected so stop keeping track
+
         if( weight_multiplier > 0 ) {
-            //Calculate effective remaining weight for current parent
+
             units::mass temp_weight = weight_capacity() / weight_multiplier;
-            //Find the most restrictive weight to determine maximum charges
+
             max_weight = std::min( max_weight, temp_weight );
         }
-        //Volume multiplier of zero means parent containers are no longer affected so stop keeping track
+
         if( volume_multiplier > 0 ) {
-            //Calculate effective remaining volume for current parent
+
             units::volume temp_volume = volume_capacity() / volume_multiplier;
-            //Find the most restrictive volume to determine maximum charges
+
             max_volume = std::min( max_volume, temp_volume );
         }
 
-        //Move up one level of containers
+
         current_pocket = current_location.parent_pocket();
         current_pocket_data = current_pocket->get_pocket_data();
         current_location = current_location.parent_item();
@@ -1381,7 +1381,7 @@ item_location item_location::obtain( Character &ch, int qty )
         return item_location();
     }
     const item_location landed = ptr->obtain( ch, qty );
-    // Every backend copies through i_add, which re-uids the whole tree.
+
     craft_relocated( landed );
     return landed;
 }
@@ -1435,9 +1435,9 @@ void item_location::make_active()
         }
         case type::invalid:
         case type::crafting_inventory:
-        // crafting inventory doesn't cache active items
+
         case type::character: {
-            // NOOP: characters don't cache active items
+
             break;
         }
     }
@@ -1490,21 +1490,21 @@ bool item_location::check_parent_capacity_recursive() const
 
 bool item_location::protected_from_liquids() const
 {
-    // check if inside a watertight which is not an open_container
+
     if( has_parent() ) {
         item_location parent = parent_item();
 
-        // parent can protect the item against water
+
         if( parent->is_watertight_container() && !parent->will_spill() ) {
             return true;
         }
 
-        // check the parent's parent
+
         return parent.protected_from_liquids();
     }
 
-    // we recursively checked all containers
-    // none are closed watertight containers
+
+
     return false;
 }
 
@@ -1548,8 +1548,8 @@ void item_location::favorite_settings_menu()
     ( *this )->favorite_settings_menu( *this );
 }
 
-// Hint-driven uid resolution with bounded fallback.  No world-wide scan.
-// Returns invalid for items in monster stomachs, portals, or off-bubble.
+
+
 item_location find_item_by_uid( int64_t uid, const item_locator_hint &hint )
 {
     if( uid <= 0 ) {
@@ -1571,8 +1571,8 @@ item_location find_item_by_uid( int64_t uid, const item_locator_hint &hint )
         return item_location( *c, found );
     };
 
-    // Off-bubble would wrap a pointer into a temporary tinymap; gate to
-    // in-bounds.  Owners must call rebuild_for_item once back in range.
+
+
     auto try_map_at = [uid, &here]( const tripoint_abs_ms & abs ) -> item_location {
         if( !here.inbounds( here.get_bub( abs ) ) )
         {
@@ -1624,8 +1624,8 @@ item_location find_item_by_uid( int64_t uid, const item_locator_hint &hint )
                 const optional_vpart_position vp = here.veh_at( vh->cargo_square );
                 if( vp ) {
                     vehicle &veh = vp->vehicle();
-                    // Try in order: stored part_index (if in range), then
-                    // mount_offset lookup, then the cargo-square part.
+
+
                     std::vector<int> candidates;
                     if( vh->part_index >= 0 && vh->part_index < veh.part_count() ) {
                         candidates.push_back( vh->part_index );
@@ -1660,8 +1660,8 @@ item_location find_item_by_uid( int64_t uid, const item_locator_hint &hint )
             break;
     }
 
-    // Bounded fallback: avatar + nearby NPCs + loaded vehicles + map tiles.
-    // No world-wide scan.
+
+
     item_location loc = try_character( &get_player_character() );
     if( loc ) {
         return loc;

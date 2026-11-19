@@ -17,7 +17,7 @@ static constexpr bool is_valid_impl( const cata_variant &v, std::index_sequence<
             is_valid_impl_2<I>...
         }
     };
-    // No match
+
     return is_valid_helpers[static_cast<size_t>( v.type() )]( v.get_string() );
 }
 
@@ -34,7 +34,7 @@ template<>
 std::string enum_to_string<cata_variant_type>( cata_variant_type type )
 {
     switch( type ) {
-        // *INDENT-OFF*
+
         case cata_variant_type::void_: return "void";
         case cata_variant_type::achievement_id: return "achievement_id";
         case cata_variant_type::activity_id: return "activity_id";
@@ -85,7 +85,7 @@ std::string enum_to_string<cata_variant_type>( cata_variant_type type )
         case cata_variant_type::vgroup_id: return "vgroup_id";
         case cata_variant_type::widget_id: return "widget_id";
         case cata_variant_type::zone_type_id: return "zone_type_id";
-        // *INDENT-ON*
+
         case cata_variant_type::num_types:
             break;
     }
@@ -93,4 +93,4 @@ std::string enum_to_string<cata_variant_type>( cata_variant_type type )
     return "";
 }
 
-} // namespace io
+}

@@ -216,4 +216,4 @@ const char *TranslationDocument::GetTranslatedStringPlural( const std::size_t in
     return GetString( translated_offsets[index][plural_form] );
 }
 
-#endif // defined(LOCALIZE)
+#endif

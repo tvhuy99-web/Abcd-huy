@@ -20,10 +20,10 @@ template <typename T> struct enum_traits;
 using Region_map = std::unordered_map<tripoint_abs_om, region_settings_id>;
 
 enum class regions_generation_mode : int {
-    UNIFORM = 0, // DYNAMIC; single-region
-    MANUAL_VORONOI = 1, // STATIC; plot region points with JSON, where a voronoi diagram is generated from the points
-    RANDOM = 2, // DYNAMIC; each overmap generated picks a random region from the provided set of regions
-    ANGLES = 3, // DYNAMIC; divides world map into equal pie-chart-like sectors
+    UNIFORM = 0,
+    MANUAL_VORONOI = 1,
+    RANDOM = 2,
+    ANGLES = 3,
     last = 4
 };
 
@@ -32,7 +32,7 @@ struct enum_traits<regions_generation_mode> {
     static constexpr regions_generation_mode last = regions_generation_mode::last;
 };
 
-// an origin point with a region type for voronoi diagram generation
+
 struct region_voronoi_point {
     tripoint_abs_om region_point;
     region_settings_id region;
@@ -40,28 +40,28 @@ struct region_voronoi_point {
     void deserialize( const JsonObject &jo );
 };
 
-// a set of points accompanied by a set of regions
-// different generation modes have different usages; not all use `region_points`
+
+
 struct region_point_set {
-    // to-generate region points read from JSON
+
     std::unordered_set<tripoint_abs_om> region_points;
-    // providing weights is optional
+
     weighted_int_list<region_settings_id> regions_weighted;
-    // if true, removes a region from the weighted list when selected
-    // if `regions` is empty, defaults to `default_region`
+
+
     bool remove_region = false;
-    // fallback for region placement
+
     region_settings_id default_region;
-    // maximum distance from specified point
+
     int region_point_variance = 0;
 
-    // resolves the point set, mapping regions to points
+
     std::vector<region_voronoi_point> resolve() const;
     void deserialize( const JsonObject &jo );
 };
 
-// defines properties of an in-game dimension
-// its name is solely to distinguish from a generic `dimension`
+
+
 class dimension_world
 {
 
@@ -82,37 +82,37 @@ class dimension_world
 class dimension_region_layout_generator
 {
 
-        // forward to child deserialize function based on `generation_mode`
+
         virtual void deserialize( const JsonObject &jo ) = 0;
     public:
         virtual ~dimension_region_layout_generator() = default;
-        // return the region for the given overmap
+
         virtual region_settings_id get_overmap_region( const tripoint_abs_om &om_point ) = 0;
         virtual bool is_static_generation() const = 0;
-        // generate for one overmap, which will generate the entire layout for static layouts
+
         void init() {
             get_overmap_region( tripoint_abs_om( 0, 0, 0 ) );
         }
 };
 
-// generate one or more regions when first getting an overmap's region
+
 class dimension_region_layout_dynamic : public dimension_region_layout_generator
 {
 
-        // forward to child deserialize function based on `generation_mode`
+
         void deserialize( const JsonObject &jo ) override = 0;
     public:
-        // do dynamic region generation, called from get_overmap_region
+
         virtual void generate_dynamic( Region_map &placed_regions, const tripoint_abs_om &current_om ) = 0;
-        // return the region for the given overmap
+
         region_settings_id get_overmap_region( const tripoint_abs_om &om_point ) override;
         bool is_static_generation() const override {
             return false;
         }
 };
 
-// generate a bounded static region layout at world start,
-// and then use a dynamic generator for out-of-bounds
+
+
 class dimension_region_layout_static : public dimension_region_layout_generator
 {
 
@@ -160,7 +160,7 @@ class dimension_region_layout_generator_random : public dimension_region_layout_
 
 class dimension_region_layout_generator_angles : public dimension_region_layout_dynamic
 {
-        // these should be loaded in order
+
         std::vector<region_settings_id> angles_regions;
         units::angle angles_offset = 0_degrees;
     public:
@@ -171,13 +171,13 @@ class dimension_region_layout_generator_angles : public dimension_region_layout_
         }
 };
 
-/*
-* reads JSON data used to generate a dimension's region map
-*/
+
+
+
 class dimension_region_layout
 {
 
-        // what type of region layout generator to use (see `regions_generation_mode`)
+
         regions_generation_mode generation_mode;
         std::shared_ptr<dimension_region_layout_generator> layout_generator;
 

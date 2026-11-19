@@ -54,26 +54,26 @@ void set_reserved_position( sfx::channel slot, int angle_deg, int distance );
 using bool_predicate = bool ( * )();
 void set_slow_time_predicate( bool_predicate fn );
 
-// Lets slow-time DSP code outside the backend query the installed
-// predicate without re-exporting the function pointer.
+
+
 bool slow_time_predicate_active();
 
 namespace testing
 {
-// Reserved track's current frequency ratio. Used by slow-time
-// property tests to verify predicate-to-ratio wiring without coupling
-// tests to backend internals.
+
+
+
 float reserved_track_frequency_ratio( sfx::channel slot );
 
-// Current frequency ratio of the most-recently-started one-shot
-// track. Returns 0.0 if no one-shot is currently tracked.
+
+
 float last_oneshot_frequency_ratio();
 
-// Produce a minimal valid sfx_audio (a single silent stereo frame)
-// that play_reserved and play_oneshot will accept. Used by tests
-// that need to exercise the play path without loading a real file.
+
+
+
 sfx_audio *make_synthetic_sfx_audio();
-} // namespace testing
+}
 
 void stop_all_sfx( int fade_out_ms );
 void fade_group( sfx::group g, int ms );
@@ -87,8 +87,8 @@ void stop_music( int fade_out_ms );
 void set_music_volume( int vol );
 bool is_music_playing();
 
-} // namespace sound_backend
+}
 
-#endif // SDL_SOUND
+#endif
 
-#endif // CATA_SRC_SOUND_BACKEND_H
+#endif

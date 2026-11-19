@@ -66,11 +66,11 @@ auto_pickup::player_settings &get_auto_pickup()
     return single_instance;
 }
 
-/**
- * The function will return `true` if the user has set all limits to a value of 0.
- * @param pickup_item item to check.
- * @return `true` if given item's weight and volume is within auto pickup user configured limits.
- */
+
+
+
+
+
 static bool within_autopickup_limits( const item *pickup_item )
 {
     bool valid_item = !pickup_item->has_any_flag( cata::flat_set<flag_id> { flag_ZERO_WEIGHT, flag_NO_DROP } );
@@ -84,78 +84,78 @@ static bool within_autopickup_limits( const item *pickup_item )
     return valid_item && ( volume_limit <= 0 || valid_volume ) && ( weight_limit <= 0 || valid_weight );
 }
 
-/**
- * @param pickup_item item to get the auto pickup rule for.
- * @return `rule_state` associated with the given item.
- */
+
+
+
+
 static rule_state get_autopickup_rule( const item *pickup_item )
 {
     return get_auto_pickup().check_item( *pickup_item );
 }
 
-/**
- * Drop all items from the given container that match special auto pickup rules.
- * The items will be removed from the container and dropped in the designated location.
- *
- * @param from container to drop items from.
- * @param where location on the map to drop items to.
- */
+
+
+
+
+
+
+
 static void empty_autopickup_target( item_location what, tripoint_bub_ms where )
 {
     bool is_rigid = what->all_pockets_rigid();
     for( item *entry : what->all_items_top() ) {
         const rule_state ap_rule = get_autopickup_rule( entry );
-        // rigid containers want to keep as much items as possible so drop only blacklisted items
-        // non-rigid containers want to drop as much items as possible so keep only whitelisted items
+
+
         if( is_rigid ? ap_rule == rule_state::BLACKLISTED : ap_rule != rule_state::WHITELISTED ) {
             item nitem( *entry );
             what.remove_item( *entry );
-            // drop the items on the same tile the container is on
+
             get_map().add_item( where, nitem );
         }
     }
 }
 
-/**
- * Iterate through every item inside the container to find items that match auto pickup rules.
- * In most cases whitelisted items will be included and blacklisted one will be excluded however
- * there are special cases. Below is an overview of selection rules for container auto pickup.
- *
- * Containers and items will **never** be picked up when:
- *
- * - they are owned by player and `AUTO_PICKUP_OWNED` game option is disabled.
- * - they exceed volume or weight user auto pickup limitations.
- * - they are blacklisted in auto pickup rules.
- *
- * Containers will **always** be picked up when:
- *
- * - the container is sealed.
- * - there is any liquids stored in container pockets.
- * - all items inside the container are marked for pickup.
- *
- * Containers will **never** be picked up when:
- *
- * - only batteries were selected and the container is battery powered.
- * - the container is a non-whitelisted corpse.
- *
- * Items will **NOT** be picked up when:
- *
- * - the parent container is non-rigid and the item is not whitelisted.
- *
- * @param from item to search for items to auto pickup from.
- * @return sequence of items to auto pickup from given container.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static std::vector<item_location> get_autopickup_items( item_location &from )
 {
     map &here = get_map();
 
     item *container_item = from.get_item();
-    // items sealed in containers should never be unsealed by auto pickup
+
     bool force_pick_container = container_item->any_pockets_sealed();
     bool pick_all_items = true;
 
     std::vector<item_location> result;
-    // do not auto pickup owned containers or items
+
     if( !get_option<bool>( "AUTO_PICKUP_OWNED" ) &&
         container_item->is_owned_by( get_player_character() ) ) {
         return result;
@@ -167,7 +167,7 @@ static std::vector<item_location> get_autopickup_items( item_location &from )
     std::list<item *>::iterator it;
     for( it = contents.begin(); it != contents.end(); ++it ) {
         item *item_entry = *it;
-        // Before empty_autopickup_target below, which turns a container out.
+
         if( craft_reservation::contains_reserved( *item_entry ) ) {
             pick_all_items = false;
             continue;
@@ -181,38 +181,38 @@ static std::vector<item_location> get_autopickup_items( item_location &from )
             any_whitelisted = true;
             if( !force_pick_container ) {
                 if( item_entry->is_container() ) {
-                    // whitelisted containers should exclude contained blacklisted items
+
                     empty_autopickup_target( item_location( from, item_entry ), from.pos_bub( here ) );
                 } else if( item_entry->made_of_from_type( phase_id::LIQUID ) ) {
-                    // liquid items should never be picked up without container
+
                     force_pick_container = true;
                     break;
                 }
-                // pick up the whitelisted item
+
                 result.emplace_back( from, item_entry );
             }
         } else if( !force_pick_container && item_entry->is_container() &&
                    !item_entry->is_container_empty() ) {
-            // get pickup list from nested item container
+
             item_location location = item_location( from, item_entry );
             std::vector<item_location> result_nested = get_autopickup_items( location );
 
-            // container with content was NOT marked for pickup
+
             if( result_nested.size() != 1 || result_nested[0] != location ) {
                 pick_all_items = false;
             }
             result.reserve( result_nested.size() + result.size() );
             result.insert( result.end(), result_nested.begin(), result_nested.end() );
         } else {
-            // skip not whitelisted items that are not containers with items
+
             pick_all_items = false;
         }
     }
-    // all items in container were approved for pickup
+
     if( !contents.empty() && ( pick_all_items || force_pick_container ) ) {
-        // only auto pickup corpses if they are whitelisted
-        // blacklisted containers should still have their contents picked up but themselves should be excluded.
-        // If all items inside blacklisted container match then just pickup the items without the container
+
+
+
         rule_state pickup_state = get_autopickup_rule( container_item );
         if( pickup_state == rule_state::BLACKLISTED || !any_whitelisted ||
             ( container_item->is_corpse() && pickup_state != rule_state::WHITELISTED ) ) {
@@ -221,35 +221,35 @@ static std::vector<item_location> get_autopickup_items( item_location &from )
         bool all_batteries = true;
         bool powered_container = container_item->ammo_capacity( ammo_battery );
         if( powered_container ) {
-            // when dealing with battery powered tools there should only be one pocket
-            // and one battery inside but this could change in future so account for that here
+
+
             all_batteries = std::all_of( result.begin(), result.end(),
             []( const item_location & il ) {
                 return il.get_item()->is_battery();
             } );
         }
         bool batteries_from_tool = powered_container && all_batteries;
-        // make sure container is allowed to be picked up
-        // when picking up batteries from powered containers don't pick container
+
+
         if( within_autopickup_limits( container_item ) && !batteries_from_tool ) {
             result.clear();
             result.push_back( from );
         } else if( force_pick_container ) {
-            // when force picking never pick individual items
+
             result.clear();
         }
     }
     return result;
 }
 
-/**
- * Select which items on the map tile should be auto-picked up.
- * The return value represents locations of the selected items on the map.
- *
- * @param from stack of item entries on a map tile.
- * @param location where the stack of items is located on the map.
- * @return sequence of selected items on the map.
- */
+
+
+
+
+
+
+
+
 drop_locations auto_pickup::select_items(
     const std::vector<item_stack::iterator> &from, const tripoint_bub_ms &location )
 {
@@ -258,7 +258,7 @@ drop_locations auto_pickup::select_items(
     drop_locations result;
     const map_cursor map_location = map_cursor( location );
 
-    // iterate over all item stacks found in location
+
     for( const item_stack::iterator &stack : from ) {
         item *item_entry = &*stack;
 
@@ -266,45 +266,45 @@ drop_locations auto_pickup::select_items(
             picking_up_itype_id = false;
             picking_up_last_itype_id = item_entry->typeId();
         } else if( !picking_up_itype_id ) {
-            // Don't bother checking if we didn't pick up the last item that had this itype_id
+
             continue;
         }
 
-        // do not auto pickup owned containers or items
+
         if( !get_option<bool>( "AUTO_PICKUP_OWNED" ) &&
             item_entry->is_owned_by( get_player_character() ) ) {
             continue;
         }
-        // do not auto pickup spilt liquids
+
         if( item_entry->made_of( phase_id::LIQUID ) ) {
             continue;
         }
-        // Before empty_autopickup_target below, which turns a container out as part of
-        // selection.  Manual pickup stays unguarded.
+
+
         if( craft_reservation::contains_reserved( *item_entry ) ) {
             continue;
         }
         rule_state pickup_state = get_autopickup_rule( item_entry );
         bool is_container = item_entry->is_container() && !item_entry->empty_container();
 
-        // before checking contents check if item is on pickup list
+
         if( pickup_state == rule_state::WHITELISTED ) {
             if( item_entry->is_container() ) {
                 empty_autopickup_target( item_location( map_location, item_entry ), location );
             }
-            // skip if the container is still above the limit after emptying it
+
             if( !within_autopickup_limits( item_entry ) ) {
                 continue;
             }
-            int it_count = 0; // TODO: factor in auto pickup max_quantity here
+            int it_count = 0;
             item_location it_location = item_location( map_location, item_entry );
             picking_up_itype_id = true;
             result.emplace_back( std::make_pair( it_location, it_count ) );
         } else if( is_container || item_entry->ammo_capacity( ammo_battery ) ) {
-            picking_up_itype_id = true; // Always check containers or tools with batteries
+            picking_up_itype_id = true;
             item_location container_location = item_location( map_location, item_entry );
             for( const item_location &add_item : get_autopickup_items( container_location ) ) {
-                int it_count = 0; // TODO: factor in auto pickup max_quantity here
+                int it_count = 0;
                 result.emplace_back( std::make_pair( add_item, it_count ) );
             }
         }
@@ -364,21 +364,21 @@ void user_interface::show()
         ctxt.register_action( "SWAP_RULE_GLOBAL_CHAR" );
     }
 
-    // Reader adapter (R16): this screen draws itself through a
-    // ui_adaptor, so without this scope it would only get the generic
-    // command fallback and the rules themselves would never be
-    // published. Rows follow the R02 table contract (one declaration
-    // in snapshot.tables, cells on the row node, cells carry no
-    // actions) and the selected row's editable columns are published
-    // as R02 form fields: set_value/select_choice only record a local
-    // draft, apply writes the draft into tabs[iTab].new_rules (the
-    // working copy the original screen only commits to the real
-    // rules on a Yes answer to "Save changes?" at exit), and
-    // cancel_draft drops it. Every row/field intent carries a binding
-    // (tab + index + a copy of the rule text taken when the snapshot
-    // was built); an intent whose binding no longer matches the live
-    // rule is refused with std::nullopt. All adapter state lives in
-    // these locals, never in members.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     struct reader_binding {
         size_t tab = 0;
         int line = 0;
@@ -406,17 +406,17 @@ void user_interface::show()
     reader_binding draft_exclude_binding;
     std::optional<bool> draft_active;
     reader_binding draft_active_binding;
-    // Two-step removal, as in the safe mode manager: the first
-    // REMOVE_RULE activation only arms the confirmation, and the
-    // builder publishes the confirm node only while the armed
-    // binding still matches the selected row.
+
+
+
+
     bool remove_armed = false;
     reader_binding remove_binding;
     a11y::screen_scope reader( &ctxt, "auto-pickup-manager",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         if( intent.action == "activate" && intent.node != "autopickup:remove:confirm" &&
             intent.node != "REMOVE_RULE" ) {
-            // Activating anything else disarms a pending removal.
+
             remove_armed = false;
         }
         if( intent.node == "autopickup:remove:confirm" ) {
@@ -515,19 +515,19 @@ void user_interface::show()
                     return std::string( "TIMEOUT" );
                 }
                 if( intent.action == "apply" ) {
-                    // The draft is written only into the rule it was
-                    // drafted against, and only while that rule is
-                    // still the selected one.
+
+
+
                     if( field == "rule" ) {
                         if( !draft_rule || !same_binding( draft_rule_binding, binding ) ||
                             !binding_is_current( draft_rule_binding ) ) {
                             return std::nullopt;
                         }
                         if( draft_rule->empty() ) {
-                            // The original screen treats an empty rule
-                            // as cancelling the edit: "*" is the way to
-                            // match everything. The draft is kept and
-                            // the refusal is published as a field error.
+
+
+
+
                             rule_field_error = _( "A rule cannot be empty.  Use * to match everything." );
                             return std::string( "TIMEOUT" );
                         }
@@ -696,24 +696,24 @@ void user_interface::show()
     };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        // Redraw the border
+
         draw_border( w_border, BORDER_COLOR, title );
 
         wattron( w, c_light_gray );
-        // |-
+
         mvwaddch( w_border, point( 0, 3 ), LINE_XXXO );
-        // -|
+
         mvwaddch( w_border, point( 79, 3 ), LINE_XOXX );
-        // _|_
+
         mvwaddch( w_border, point( 5, FULL_SCREEN_HEIGHT - 1 ), LINE_XXOX );
         mvwaddch( w_border, point( 51, FULL_SCREEN_HEIGHT - 1 ), LINE_XXOX );
         mvwaddch( w_border, point( 61, FULL_SCREEN_HEIGHT - 1 ), LINE_XXOX );
         wattroff( w, c_light_gray );
         wnoutrefresh( w_border );
 
-        // Redraw the header
+
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwhline( w_header, point( 0, 0 ), ' ', FULL_SCREEN_WIDTH - 2 );  // clear the line
+        mvwhline( w_header, point( 0, 0 ), ' ', FULL_SCREEN_WIDTH - 2 );
         const bool enabled = get_option<bool>( "AUTO_PICKUP" );
         nc_color color = c_white;
         // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -747,7 +747,7 @@ void user_interface::show()
 
         wnoutrefresh( w_header );
 
-        // Clear the lines
+
         mvwrectf( w, point::zero, c_black, ' ', 79, iContentHeight );
         for( int x : {
                  4, 50, 60
@@ -760,7 +760,7 @@ void user_interface::show()
 
         calcStartPos( iStartPos, iLine, iContentHeight, cur_rules.size() );
 
-        // display auto pickup
+
         for( int i = iStartPos; i < static_cast<int>( cur_rules.size() ); i++ ) {
             if( i >= iStartPos &&
                 i < iStartPos + std::min<int>( iContentHeight, cur_rules.size() ) ) {
@@ -810,7 +810,7 @@ void user_interface::show()
         } else if( action == "REMOVE_RULE" && currentPageNonEmpty ) {
             bStuffChanged = true;
             cur_rules.erase( cur_rules.begin() + iLine );
-            // after erase, recmax - 2 is the last valid index
+
             iLine = std::clamp( iLine, 0, recmax - 2 );
         } else if( action == "COPY_RULE" && currentPageNonEmpty ) {
             bStuffChanged = true;
@@ -820,9 +820,9 @@ void user_interface::show()
             const size_t other_iTab = ( iTab + 1 ) % 2;
             rule_list &other_rules = tabs[other_iTab].new_rules;
             bStuffChanged = true;
-            //copy over
+
             other_rules.push_back( cur_rules[iLine] );
-            //remove old
+
             cur_rules.erase( cur_rules.begin() + iLine );
             iTab = other_iTab;
             iLine = other_rules.size() - 1;
@@ -853,9 +853,9 @@ void user_interface::show()
                                           );
                 popup.set_description( description, c_white, true );
                 const std::string r = popup.query();
-                // If r is empty, then either (1) The player ESC'ed from the window (changed their mind), or
-                // (2) Explicitly entered an empty rule- which isn't allowed since "*" should be used
-                // to include/exclude everything
+
+
+
                 if( !r.empty() ) {
                     cur_rules[iLine].sRule = wildcard_trim_rule( r );
                     bStuffChanged = true;
@@ -940,8 +940,8 @@ void rule::test_pattern() const
         return;
     }
 
-    //Loop through all itemfactory items
-    //APU now ignores prefixes, bottled items and suffix combinations still not generated
+
+
     for( const itype *e : item_controller->all() ) {
         const std::string sItemName = e->nname( 1 );
         if( !check_special_rule( e->materials, sRule ) && !wildcard_match( sItemName, sRule ) ) {
@@ -990,9 +990,9 @@ void rule::test_pattern() const
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    // Reader adapter (R16): the matching items are published as
-    // focus-only documents under the same heading text the border
-    // draws; scrolling stays with the screen's own navigate commands.
+
+
+
     a11y::screen_scope reader( &ctxt, "auto-pickup-test",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         return a11y::registered_intent( ctxt, intent );
@@ -1033,12 +1033,12 @@ void rule::test_pattern() const
                       _( "Won't display content or suffix matches" ) );
         wnoutrefresh( w_test_rule_border );
 
-        // Clear the lines
+
         mvwrectf( w_test_rule_content, point::zero, c_black, ' ', 79, iContentHeight );
 
         calcStartPos( iStartPos, iLine, iContentHeight, vMatchingItems.size() );
 
-        // display auto pickup
+
         for( int i = iStartPos; i < static_cast<int>( vMatchingItems.size() ); i++ ) {
             if( i >= iStartPos &&
                 i < iStartPos + std::min<int>( iContentHeight, vMatchingItems.size() ) ) {
@@ -1151,7 +1151,7 @@ bool check_special_rule( const std::map<material_id, int> &materials, std::strin
     return false;
 }
 
-//Special case. Required for NPC harvest auto pickup. Ignores material rules.
+
 void npc_settings::create_rule( const std::string &to_match )
 {
     rules.create_rule( map_items, to_match );
@@ -1173,7 +1173,7 @@ rule_state player_settings::check_item( const item &it )
     const std::string item_name = it.tname( 1, false );
     const rule_state cached_state = base_settings::check_item( item_name );
 
-    // NONE = uncached OR cached unmatched.
+
     if( cached_state != rule_state::NONE || map_items.find( item_name ) != map_items.end() ) {
         return cached_state;
     }
@@ -1184,7 +1184,7 @@ rule_state player_settings::check_item( const item &it )
 
 void player_settings::create_rule( const item *it )
 {
-    // TODO: change it to be a reference
+
     global_rules.create_rule( map_items, *it );
     character_rules.create_rule( map_items, *it );
 }
@@ -1208,9 +1208,9 @@ void rule_list::create_rule( cache &map_items, const item &it )
 
 void player_settings::refresh_map_items( cache &map_items ) const
 {
-    //process include/exclude in order of rules, global first, then character specific
-    //if a specific item is being added, all the rules need to be checked now
-    //may have some performance issues since exclusion needs to check all items also
+
+
+
     global_rules.refresh_map_items( map_items );
     character_rules.refresh_map_items( map_items );
 }
@@ -1223,7 +1223,7 @@ void rule_list::refresh_map_items( cache &map_items ) const
         }
 
         if( !elem.bExclude ) {
-            //Check include patterns against all itemfactory items
+
             for( const itype *e : item_controller->all() ) {
                 const std::string &cur_item = e->nname( 1 );
 
@@ -1235,8 +1235,8 @@ void rule_list::refresh_map_items( cache &map_items ) const
                 map_items.temp_items[ cur_item ] = e;
             }
         } else {
-            //only re-exclude items from the existing mapping for now
-            //new exclusions will process during pickup attempts
+
+
             for( auto &map_item : map_items ) {
                 if( !check_special_rule( map_items.temp_items[ map_item.first ]->materials, elem.sRule ) &&
                     !wildcard_match( map_item.first, elem.sRule ) ) {
@@ -1288,7 +1288,7 @@ bool player_settings::save( const bool bCharacter )
 
         const cata_path player_save = PATH_INFO::player_base_save_path() + ".sav";
         const cata_path player_save_zzip = player_save + zzip_suffix;
-        //Character not saved yet.
+
         if( !file_exist( player_save ) && !file_exist( player_save_zzip ) ) {
             return true;
         }
@@ -1366,7 +1366,7 @@ void npc_settings::show( const std::string &name )
     ui.title = string_format( _( "Pickup rules for %s" ), name );
     ui.tabs.emplace_back( name, rules );
     ui.show();
-    // Don't need to save the rules here, it will be save along with the NPC object itself.
+
     if( !ui.bStuffChanged ) {
         return;
     }

@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/** No TTS engine is required: inspect the policy before posted speak callbacks run. */
+
 @RunWith(AndroidJUnit4.class)
 public final class UserActionSpeechInterruptionTest {
     @Test public void passiveNotificationsQueueUntilTheNextExplicitUserAction() {
@@ -26,8 +26,8 @@ public final class UserActionSpeechInterruptionTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
             ReaderSpeechQueue queue = new ReaderSpeechQueue(context, state -> { });
             try {
-                // Simulate READY without starting a real voice. The Android
-                // speak runnables cannot execute until runOnMainSync returns.
+
+
                 Field healthy = ReaderSpeechQueue.class.getDeclaredField("healthy");
                 healthy.setAccessible(true);
                 healthy.setBoolean(queue, true);

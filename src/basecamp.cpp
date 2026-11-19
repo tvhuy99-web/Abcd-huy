@@ -50,7 +50,7 @@ static const flag_id json_flag_PSEUDO( "PSEUDO" );
 static const zone_type_id zone_type_CAMP_STORAGE( "CAMP_STORAGE" );
 
 const std::map<point_rel_omt, base_camps::direction_data> base_camps::all_directions = {
-    // direction, direction id, tab order, direction abbreviation with bracket, direction tab title
+
     { base_camps::base_dir, { "[B]", base_camps::TAB_MAIN, to_translation( "base camp: base", "[B]" ), to_translation( "base camp: base", " MAIN " ) } },
     { point_rel_omt::north, { "[N]", base_camps::TAB_N, to_translation( "base camp: north", "[N]" ), to_translation( "base camp: north", "  [N] " ) } },
     { point_rel_omt::north_east, { "[NE]", base_camps::TAB_NE, to_translation( "base camp: northeast", "[NE]" ), to_translation( "base camp: northeast", " [NE] " ) } },
@@ -96,7 +96,7 @@ static const time_duration work_day_hours_time = work_day_hours * 1_hours;
 
 time_duration base_camps::to_workdays( const time_duration &work_time )
 {
-    // logic here is duplicated in reverse in basecamp::time_to_food
+
     if( work_time < ( work_day_hours + 1 ) * 1_hours ) {
         return work_time;
     }
@@ -124,7 +124,7 @@ basecamp::basecamp() = default;
 
 basecamp_map::basecamp_map( const basecamp_map & ) {}
 
-// rhs is intentionally ignored; assignment resets the cached map.
+
 // NOLINTNEXTLINE(bugprone-unhandled-self-assignment,cert-oop54-cpp)
 basecamp_map &basecamp_map::operator=( const basecamp_map & )
 {
@@ -157,10 +157,10 @@ void basecamp::set_by_radio( bool access_by_radio )
     by_radio = access_by_radio;
 }
 
-// read an expansion's terrain ID of the form faction_base_$TYPE_$CURLEVEL
-// find the last underbar, strip off the prefix of faction_base_ (which is 13 chars),
-// and the pull out the $TYPE and $CURLEVEL
-// This is legacy support for existing camps; future camps don't use cur_level at all
+
+
+
+
 expansion_data basecamp::parse_expansion( std::string_view terrain,
         const tripoint_abs_omt &new_pos )
 {
@@ -205,7 +205,7 @@ void basecamp::define_camp( const tripoint_abs_omt &p, std::string_view camp_typ
     }
     omt_pos = p;
     const oter_id &omt_ref = overmap_buffer.ter( omt_pos );
-    // purging the regions guarantees all entries will start with faction_base_
+
     for( const std::pair<std::string, tripoint_abs_omt> &expansion :
          talk_function::om_building_region( omt_pos, 1, true ) ) {
         add_expansion( expansion.first, expansion.second );
@@ -230,7 +230,7 @@ void basecamp::define_camp( const tripoint_abs_omt &p, std::string_view camp_typ
     }
 }
 
-/// Returns the description for the recipe of the next building @ref bldg
+
 std::string basecamp::om_upgrade_description( const std::string &bldg, const mapgen_arguments &args,
         bool trunc ) const
 {
@@ -284,15 +284,15 @@ basecamp *basecamp::any_claim_at( tripoint_abs_omt there )
     }
     basecamp *actual_camp = *any_camp;
     if( actual_camp->get_owner()->limited_area_claim && there != actual_camp->camp_omt_pos() ) {
-        return nullptr; // outside of claimed area
+        return nullptr;
     }
 
-    // A camp exists in range, and this area is claimed.
+
     return actual_camp;
 }
 
-// upgrade levels
-// legacy next upgrade
+
+
 std::string basecamp::next_upgrade( const point_rel_omt &dir, const int offset ) const
 {
     const auto &e = expansions.find( dir );
@@ -346,21 +346,21 @@ bool basecamp::has_provides( const std::string &req, const std::optional<point_r
 
 bool basecamp::has_water() const
 {
-    // special case required for fbmh_well_north constructed between b9162 (Jun 16, 2019) and b9644 (Sep 20, 2019)
+
     return has_provides( "water_well" ) || has_provides( "fbmh_well_north" );
 }
 
 bool basecamp::allowed_access_by( Character &guy, bool water_request ) const
 {
-    // The owner can always access their own camp.
+
     if( fac() == guy.get_faction() ) {
         return true;
     }
-    // Sharing stuff also means sharing access.
+
     if( fac()->has_relationship( guy.get_faction()->id, npc_factions::relationship::share_my_stuff ) ) {
         return true;
     }
-    // Some factions will share access to infinite water sources, but not food
+
     if( water_request &&
         fac()->has_relationship( guy.get_faction()->id, npc_factions::relationship::share_public_goods ) ) {
         return true;
@@ -377,11 +377,11 @@ std::vector<basecamp_upgrade> basecamp::available_upgrades( const point_rel_omt 
         for( const recipe *recp_p : recipe_dict.all_blueprints() ) {
             const recipe &recp = *recp_p;
             const std::string &bldg = recp.result().str();
-            // skip buildings that are completed
+
             if( e_data.provides.find( bldg ) != e_data.provides.end() ) {
                 continue;
             }
-            // skip building that have unmet requirements
+
             size_t needed_requires = recp.blueprint_requires().size();
             size_t met_requires = 0;
             for( const auto &bp_require : recp.blueprint_requires() ) {
@@ -399,14 +399,14 @@ std::vector<basecamp_upgrade> basecamp::available_upgrades( const point_rel_omt 
             bool should_display = true;
             bool in_progress = false;
             for( const auto &bp_exclude : recp.blueprint_excludes() ) {
-                // skip buildings that are excluded by previous builds
+
                 if( e_data.provides.find( bp_exclude.first ) != e_data.provides.end() ) {
                     if( e_data.provides[bp_exclude.first] >= bp_exclude.second ) {
                         should_display = false;
                         break;
                     }
                 }
-                // track buildings that are currently being built
+
                 if( e_data.in_progress.find( bp_exclude.first ) != e_data.in_progress.end() ) {
                     if( e_data.in_progress[bp_exclude.first] >= bp_exclude.second ) {
                         in_progress = true;
@@ -457,7 +457,7 @@ std::unordered_set<recipe_id> basecamp::recipe_deck_all() const
     return known_recipes;
 }
 
-// recipes and craft support functions
+
 std::map<recipe_id, translation> basecamp::recipe_deck( const point_rel_omt &dir ) const
 {
     std::map<recipe_id, translation> recipes;
@@ -558,8 +558,8 @@ void basecamp::reset_camp_resources( map &here )
     form_crafting_inventory( here );
 }
 
-// available companion list manipulation
-// get all the companions currently performing missions at this camp
+
+
 void basecamp::reset_camp_workers()
 {
     camp_workers.clear();
@@ -617,7 +617,7 @@ void basecamp::validate_assignees()
             }
         }
     }
-    // remove duplicates - for legacy handling.
+
     std::sort( assigned_npcs.begin(), assigned_npcs.end() );
     auto last = std::unique( assigned_npcs.begin(), assigned_npcs.end() );
     assigned_npcs.erase( last, assigned_npcs.end() );
@@ -635,7 +635,7 @@ void basecamp::hide_mission( ui_mission_id id )
     for( ui_mission_id &miss_id : hidden_missions[size_t( base_data.tab_order )] ) {
         if( is_equal( miss_id, id ) ) {
             return;
-        }  //  The UI shouldn't allow us to hide something already hidden, but check anyway.
+        }
     }
     hidden_missions[size_t( base_data.tab_order )].push_back( id );
 }
@@ -672,7 +672,7 @@ bool basecamp::is_hidden( ui_mission_id id )
     return false;
 }
 
-// get the subset of companions working on a specific task
+
 comp_list basecamp::get_mission_workers( const mission_id &miss_id, bool contains )
 {
     comp_list available;
@@ -718,10 +718,10 @@ void basecamp::set_name( const std::string &new_name )
     parse_tags( name, get_player_character(), get_player_character() );
 }
 
-/*
- * we could put this logic in map::use_charges() the way the vehicle code does, but I think
- * that's sloppy
- */
+
+
+
+
 std::list<item> basecamp::use_charges( const itype_id &fake_id, int &quantity )
 {
     std::list<item> ret;
@@ -749,14 +749,14 @@ void basecamp::form_storage_zones( map &here, const tripoint_abs_ms &abspos )
     if( here.check_vehicle_zones( here.get_abs_sub().z() ) ) {
         mgr.cache_vzones();
     }
-    // NPC camps may never have had bb_pos registered
+
     validate_bb_pos( project_to<coords::ms>( omt_pos ) );
     tripoint_bub_ms src_loc = here.get_bub( bb_pos ) + point::north;
     std::vector<tripoint_abs_ms> possible_liquid_dumps;
     if( mgr.has_near( zone_type_CAMP_STORAGE, abspos, MAX_VIEW_DISTANCE ) ) {
         const std::vector<const zone_data *> zones = mgr.get_near_zones( zone_type_CAMP_STORAGE, abspos,
                 MAX_VIEW_DISTANCE, get_owner() );
-        // Find the nearest unsorted zone to dump objects at
+
         if( !zones.empty() ) {
             std::unordered_set<tripoint_abs_ms> src_set;
             for( const zone_data *zone : zones ) {
@@ -795,13 +795,13 @@ void basecamp::form_crafting_inventory( map &target_map )
     if( !src_set.empty() ) {
         _inv.form_from_zone( target_map, src_set, nullptr );
     }
-    /*
-     * something of a hack: add the resources we know the camp has
-     * the hacky part is that we're adding resources based on the camp's flags, which were
-     * generated based on upgrade missions, instead of having resources added when the
-     * map changes
-     */
-    // make sure the array is empty
+
+
+
+
+
+
+
     fuels.clear();
     for( const itype_id &fuel_id : fuel_types ) {
         basecamp_fuel bcp_f;
@@ -809,7 +809,7 @@ void basecamp::form_crafting_inventory( map &target_map )
         fuels.emplace_back( bcp_f );
     }
 
-    // find available fuel
+
 
     for( const tripoint_abs_ms &abs_ms_pt : src_set ) {
         const tripoint_bub_ms &pt = target_map.get_bub( abs_ms_pt );
@@ -843,10 +843,10 @@ void basecamp::form_crafting_inventory( map &target_map )
         _inv.add_item_copy( camp_item );
     }
 
-    //  We're potentially adding the same item multiple times if present in multiple expansions,
-    //  but we're already that with the resources above. The resources are stored in expansions
-    //  rather than in a common pool to allow them to apply only to their respective expansion
-    //  in the future.
+
+
+
+
     for( auto &expansion : expansions ) {
         for( itype_id &it : expansion.second.available_pseudo_items ) {
             item camp_item = item( it );
@@ -887,7 +887,7 @@ void basecamp::unload_camp_map()
 
 void basecamp::set_owner( faction_id new_owner )
 {
-    // Absolutely no safety checks, factions don't exist until you've encountered them but we sometimes set the owner before that
+
     owner = new_owner;
 }
 
@@ -900,7 +900,7 @@ void basecamp::handle_takeover_by( faction_id new_owner, bool violent_takeover )
 {
     get_event_bus().send<event_type::camp_taken_over>( get_owner(), new_owner, name, violent_takeover );
 
-    // If anyone was somehow assigned here, they aren't any longer.
+
     assigned_npcs.clear();
     camp_workers.clear();
 
@@ -912,23 +912,23 @@ void basecamp::handle_takeover_by( faction_id new_owner, bool violent_takeover )
         return;
     }
 
-    // Since it was violent, the old owner is going to be upset.
-    // Currently only handles player faction, and very bluntly.
+
+
     if( new_owner == get_player_character().get_faction()->id ) {
         fac()->likes_u -= 100;
         fac()->trusts_u -= 100;
     }
 
     int num_of_owned_camps = 0;
-    // Go over all camps in existence and count the ones belonging to current owner
-    // TODO: Remove this when camps stop being stored on the player
+
+
     for( tripoint_abs_omt camp_loc : get_player_character().camps ) {
         std::optional<basecamp *> bcp = overmap_buffer.find_camp( camp_loc.xy() );
         if( !bcp ) {
             continue;
         }
         basecamp *checked_camp = *bcp;
-        // Note: Will count current basecamp object as well
+
         if( checked_camp->get_owner() == get_owner() ) {
             add_msg_debug( debugmode::DF_CAMPS,
                            "Camp %s at %s is owned by %s, adding it to plunder calculations.",
@@ -941,13 +941,13 @@ void basecamp::handle_takeover_by( faction_id new_owner, bool violent_takeover )
     if( num_of_owned_camps < 1 ) {
         debugmsg( "Tried to take over a camp owned by %s, but they somehow own no camps!  Is the owner's faction id no longer valid?",
                   get_owner().c_str() );
-        // Also abort the rest
+
         set_owner( new_owner );
         return;
     }
 
-    // The faction taking over also seizes resources proportional to the number of camps the previous owner had
-    // e.g. a single-camp faction has its entire stockpile plundered, a 10-camp faction has 10% transferred
+
+
     nutrients captured_with_camp = fac()->food_supply() / num_of_owned_camps;
     nutrients taken_from_camp = -captured_with_camp;
     camp_food_supply( taken_from_camp );
@@ -957,7 +957,7 @@ void basecamp::handle_takeover_by( faction_id new_owner, bool violent_takeover )
                    1.0 / static_cast<double>( num_of_owned_camps ) * 100.0 );
     set_owner( new_owner );
     int previous_days_of_food = camp_food_supply_days( MODERATE_EXERCISE );
-    // kinda a bug - rot time is lost here
+
     std::map<time_point, nutrients> added;
     added[calendar::turn_zero] = captured_with_camp;
     fac()->add_to_food_supply( added );
@@ -977,7 +977,7 @@ void basecamp::form_crafting_inventory()
     here.save();
 }
 
-// display names
+
 std::string basecamp::expansion_tab( const point_rel_omt &dir ) const
 {
     if( dir == base_camps::base_dir ) {
@@ -1004,12 +1004,12 @@ bool basecamp::point_within_camp( const tripoint_abs_omt &p ) const
     } );
 }
 
-// legacy load and save
+
 void basecamp::load_data( const std::string &data )
 {
     std::stringstream stream( data );
     stream >> name >> bb_pos.x() >> bb_pos.y();
-    // add space to name
+
     replace( name.begin(), name.end(), '_', ' ' );
 }
 
@@ -1024,9 +1024,9 @@ basecamp_action_components::basecamp_action_components(
 
 bool basecamp_action_components::choose_components()
 {
-    // Basecamp crafting selects and consumes tools whole-recipe; the per-step
-    // tool model is not wired through this path, so step recipes are excluded
-    // here rather than risk mis-metering their tools.
+
+
+
     if( making_.has_steps() ) {
         debugmsg( "step recipe %s cannot be crafted at a basecamp yet", making_.ident().str() );
         return false;
@@ -1063,7 +1063,7 @@ bool basecamp_action_components::choose_components()
         }
         item_selections_.push_back( is );
     }
-    // this may consume pseudo-resources from fake items
+
     for( const auto &it : req->get_tools() ) {
         comp_selection<tool_comp> ts =
             player_character.select_tool_component( it, batch_size_, base_._inv, true,
@@ -1092,11 +1092,11 @@ void basecamp_action_components::consume_components()
             consumed_components_.add( comp );
         }
     }
-    // this may consume pseudo-resources from fake items
+
     for( const comp_selection<tool_comp> &sel : tool_selections_ ) {
         player_character.consume_tools( target_map, sel, batch_size_, src, &base_ );
     }
-    // go back and consume the actual resources
+
     for( basecamp_resource &bcp_r : base_.resources ) {
         if( bcp_r.consumed > 0 ) {
             target_map.use_charges( src, bcp_r.ammo_id, bcp_r.consumed );

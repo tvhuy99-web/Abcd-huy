@@ -52,7 +52,7 @@ point _pane_size()
     return { TERMX / 2, TERMY - _pane_orig( 0 ).y };
 }
 
-} // namespace
+}
 
 trade_preset::trade_preset( Character const &you, Character const &trader )
     : _u( you ), _trader( trader )
@@ -115,7 +115,7 @@ std::string trade_preset::get_denial( const item_location &loc ) const
 
 bool trade_preset::cat_sort_compare( const inventory_entry &lhs, const inventory_entry &rhs ) const
 {
-    // sort worn and held categories last we likely don't want to trade them
+
     auto const fudge_rank = []( inventory_entry const & e ) -> int {
         item_category_id const cat = e.get_category_ptr()->get_id();
         int const rank = e.get_category_ptr()->sort_rank();
@@ -183,7 +183,7 @@ trade_ui::trade_ui( party_t &you, npc &trader, currency_t cost, std::string titl
         resize();
     } );
     _header_ui.mark_resize();
-    _header_ui.on_redraw( [this]( ui_adaptor const & /* ui */ ) {
+    _header_ui.on_redraw( [this]( ui_adaptor const & ) {
         werase( _header_w );
         _draw_header();
         wnoutrefresh( _header_w );
@@ -229,7 +229,7 @@ void trade_ui::recalc_values_cpane()
     _trade_unit_counts[_cpane] = 0;
 
     for( entry_t const &it : _panes[_cpane]->to_trade() ) {
-        // FIXME: cache trading_price
+
         _trade_values[_cpane] +=
             npc_trading::trading_price( *_parties[-_cpane + 1], *_parties[_cpane], it );
         _trade_unit_counts[_cpane] += static_cast<std::size_t>( it.second );
@@ -249,11 +249,11 @@ std::string trade_ui::build_accessibility_summary( const pane_t &pane ) const
                                  format_money( std::abs( _balance ) ) );
     }
 
-    // The screen title ("Trade: <name>", set by the talk functions) is
-    // drawn in the visual header only and never reaches the reader
-    // snapshot, whose title is the (unset) selector title. Name the
-    // trader at the top of the spoken summary instead, so the reader
-    // hears who the other party is as soon as the trade screen opens.
+
+
+
+
+
     std::string summary = string_format( _( "Trading with %s." ), trader.get_name() );
     summary += "\n";
     summary += string_format(
@@ -312,7 +312,7 @@ void trade_ui::bank_balance()
     }
     _bank += _delta_bank;
     _delta_bank = -( _balance - _delta_bank );
-    if( _delta_bank > 0 ) { // a withdrawal
+    if( _delta_bank > 0 ) {
         _delta_bank = std::min( _delta_bank, _bank );
         _delta_bank = std::max( _delta_bank, 0 );
     }
@@ -365,7 +365,7 @@ bool trade_ui::_confirm_trade() const
                !npc_trading::npc_can_fit_items( np, _panes[_you]->to_trade() ) ) {
         popup( _( "%s doesn't have the appropriate pockets to accept that." ), np.get_name() );
     } else if( npc_trading::calc_npc_owes_you( np, _balance ) < _balance ) {
-        // NPC is happy with the trade, but isn't willing to remember the whole debt.
+
         return query_yn(
                    _( "I'm never going to be able to pay you back for all that.  The most I'm "
                       "willing to owe you is %s.\n\nContinue with trade?" ),

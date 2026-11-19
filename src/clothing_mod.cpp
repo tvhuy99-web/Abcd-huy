@@ -16,18 +16,18 @@ namespace
 
 generic_factory<clothing_mod> all_clothing_mods( "clothing mods" );
 
-} // namespace
+}
 
 static std::map<clothing_mod_type, std::vector<clothing_mod>> clothing_mods_by_type;
 
-/** @relates string_id */
+
 template<>
 bool string_id<clothing_mod>::is_valid() const
 {
     return all_clothing_mods.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const clothing_mod &string_id<clothing_mod>::obj() const
 {
@@ -41,7 +41,7 @@ template<>
 std::string enum_to_string<clothing_mod_type>( clothing_mod_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case clothing_mod_type_acid: return "acid";
         case clothing_mod_type_fire: return "fire";
         case clothing_mod_type_bash: return "bash";
@@ -50,7 +50,7 @@ std::string enum_to_string<clothing_mod_type>( clothing_mod_type data )
         case clothing_mod_type_encumbrance: return "encumbrance";
         case clothing_mod_type_warmth: return "warmth";
         case clothing_mod_type_invalid: return "invalid";
-        // *INDENT-ON*
+
         case num_clothing_mod_types:
             break;
     }
@@ -58,7 +58,7 @@ std::string enum_to_string<clothing_mod_type>( clothing_mod_type data )
     return "invalid";
 }
 
-} // namespace io
+}
 
 void clothing_mod::load( const JsonObject &jo, std::string_view )
 {
@@ -154,7 +154,7 @@ const std::vector<clothing_mod> &clothing_mods::get_all_with( clothing_mod_type 
     if( iter != clothing_mods_by_type.end() ) {
         return iter->second;
     } else {
-        // Build cache
+
         std::vector<clothing_mod> list;
         for( const clothing_mod &cm : get_all() ) {
             if( cm.has_mod_type( type ) ) {

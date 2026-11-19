@@ -12,11 +12,11 @@ class lightson_game
     private:
         catacurses::window w_border;
         catacurses::window w;
-        // rows, columns
+
         point level_size;
         std::vector<bool> level;
         std::vector<point> change_coords;
-        // row, column
+
         point position;
         bool win = false;
 
@@ -36,4 +36,4 @@ class lightson_game
         lightson_game() = default;
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_LIGHTSON_H
+#endif

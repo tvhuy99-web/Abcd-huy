@@ -35,8 +35,8 @@ class tab_data
         std::string title;
 
         surroundings_menu_sort_flags sort_flags = surroundings_menu_sort_flags::DEFAULT;
-        // each group will start at a new line
-        // currently roughly grouped by actions on an entry and actions on the list as a whole
+
+
         std::vector<std::unordered_set<std::string>> hotkey_groups;
 
         virtual size_t get_filtered_list_size() = 0;
@@ -134,7 +134,7 @@ class monster_tab_data : public tab_data
                                const tripoint_rel_ms &stored_view_offset ) const override;
 
     private:
-        // could be turned into a map to allow monster grouping
+
         std::vector<map_entity_stack<Creature>> monsters;
         void find_nearby_monsters( const Character &you );
 };
@@ -180,8 +180,8 @@ class surroundings_menu : public cataimgui::window
 
     private:
 #if defined(__ANDROID__)
-        // A single near-to-far, paginated screen-reader list; ordinary
-        // visual tabs retain their existing behavior when the reader is off.
+
+
         void execute_accessible();
 #endif
         void draw_item_tab();
@@ -216,7 +216,7 @@ class surroundings_menu : public cataimgui::window
 
         surroundings_menu_tab_enum selected_tab = surroundings_menu_tab_enum::items;
         surroundings_menu_tab_enum switch_tab = surroundings_menu_tab_enum::num_tabs;
-        // auto scrolling when navigating by keyboard
+
         bool auto_scroll = false;
 
         int max_gun_range = 0;
@@ -240,8 +240,8 @@ class surroundings_menu : public cataimgui::window
         monster_tab_data monster_data;
         terfurn_tab_data terfurn_data;
 
-        const int dist_width = 8; // width of the distance column, to display e.g. "15 DN_SE"
+        const int dist_width = 8;
         const int page_scroll = 10;
 };
 
-#endif // CATA_SRC_SURROUNDINGS_MENU_H
+#endif

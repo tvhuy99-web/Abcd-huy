@@ -25,15 +25,15 @@ class monster;
 struct iteminfo;
 template<typename T> class ret_val;
 
-// iuse methods return the number of charges expended, which is usually "1", or no value.
-// Returning 0 indicates the item has not been used up, though it may have been successfully activated.
-// 0 may also mean that the consumption and time progress was handled within iuse action.
-// If the item is destroyed here the return value must be 0.
-// A return of std::nullopt means it was not used at all.
+
+
+
+
+
 namespace iuse
 {
 
-// FOOD AND DRUGS (ADMINISTRATION)
+
 std::optional<int> antibiotic( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> anticonvulsant( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> antifungal( Character *, item *, const tripoint_bub_ms & );
@@ -64,7 +64,7 @@ std::optional<int> thorazine( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> weed_cake( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> xanax( Character *, item *, const tripoint_bub_ms & );
 
-// TOOLS
+
 std::optional<int> acidbomb_act( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> adrenaline_injector( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> afs_translocator( Character *, item *, const tripoint_bub_ms & );
@@ -194,7 +194,7 @@ std::optional<int> lux_meter( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> dbg_lux_meter( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> calories_intake_tracker( Character *p, item *, const tripoint_bub_ms & );
 
-// MACGUFFINS
+
 
 std::optional<int> radiocar( Character *, item *, const tripoint_bub_ms & );
 std::optional<int> radiocontrol( Character *, item *, const tripoint_bub_ms & );
@@ -212,7 +212,7 @@ std::optional<int> disassemble( Character *, item *, const tripoint_bub_ms & );
 
 std::optional<int> post_up( Character *, item *, const tripoint_bub_ms & );
 
-// Helper functions for other iuse functions
+
 void cut_log_into_planks( Character & );
 void play_music( Character *p, const tripoint_bub_ms &source, int volume, int max_morale,
                  bool play_sounds = true );
@@ -221,22 +221,22 @@ void make_music( Character *p, const tripoint_bub_ms &source, int volume, int ma
 std::optional<int> purify_water( Character *p, item *purifier, item_location &water );
 int towel_common( Character *, item *, bool );
 
-// Helper for validating a potential target of robot control
+
 bool robotcontrol_can_target( Character &, const monster & );
 
-// Helper for handling pesky wannabe-artists
+
 std::optional<int> handle_ground_graffiti( Character &p, item *it, const std::string &prefix,
         map *here, const tripoint_bub_ms &where );
 
-//helper for lit cigs
+
 std::optional<std::string> can_smoke( const Character &you );
-} // namespace iuse
+}
 
 void remove_radio_mod( item &it, Character &p );
-// used for unit testing iuse::gun_repair
+
 std::optional<int> gun_repair( Character *p, item *it, item_location &loc );
 
-// Helper for clothes washing
+
 struct washing_requirements {
     int water;
     int cleanser;
@@ -272,13 +272,13 @@ class iuse_actor
         explicit iuse_actor( const std::string &type, int cost = -1 ) : type( type ), cost( cost ) {}
 
     public:
-        /**
-         * The type of the action. It's not translated. Different iuse_actor instances may have the
-         * same type, but different data.
-         */
+
+
+
+
         const std::string type;
 
-        /** Units of ammo required per invocation (or use value from base item if negative) */
+
         int cost;
 
         virtual ~iuse_actor() = default;
@@ -287,34 +287,34 @@ class iuse_actor
         virtual ret_val<void> can_use( const Character &, const item &, map *here,
                                        const tripoint_bub_ms & ) const;
         virtual void info( const item &, std::vector<iteminfo> & ) const {}
-        /**
-         * Returns a deep copy of this object. Example implementation:
-         * \code
-         * class my_iuse_actor {
-         *     std::unique_ptr<iuse_actor> clone() const override {
-         *         return std::make_unique<my_iuse_actor>( *this );
-         *     }
-         * };
-         * \endcode
-         * The returned value should behave like the original item and must have the same type.
-         */
+
+
+
+
+
+
+
+
+
+
+
         virtual std::unique_ptr<iuse_actor> clone() const = 0;
-        /**
-         * Returns whether the actor is valid (exists in the generator).
-         */
+
+
+
         virtual bool is_valid() const;
-        /**
-         * Returns the translated name of the action. It is used for the item action menu.
-         */
+
+
+
         virtual std::string get_name() const;
-        /**
-         * Returns the translated description of the action. It is used for the item action menu.
-         */
+
+
+
         virtual std::string get_description() const;
-        /**
-         * Finalizes the actor. Must be called after all items are loaded.
-         */
-        virtual void finalize( const itype_id &/*my_item_type*/ ) { }
+
+
+
+        virtual void finalize( const itype_id & ) { }
 };
 
 struct use_function {
@@ -326,10 +326,10 @@ struct use_function {
         use_function( const std::string &type, use_function_pointer f );
         explicit use_function( std::unique_ptr<iuse_actor> f ) : actor( std::move( f ) ) {}
 
-        // TODO: Replace map unaware overload with map aware.
+
         std::optional<int> call( Character *, item &, const tripoint_bub_ms & ) const;
         std::optional<int> call( Character *, item &, map *here, const tripoint_bub_ms & ) const;
-        // TODO: Replace map unaware overload with map aware.
+
         ret_val<void> can_call( const Character &, const item &, const tripoint_bub_ms &pos ) const;
         ret_val<void> can_call( const Character &, const item &, map *here,
                                 const tripoint_bub_ms &pos ) const;
@@ -346,14 +346,14 @@ struct use_function {
             return actor != nullptr;
         }
 
-        /** @return See @ref iuse_actor::type */
+
         std::string get_type() const;
-        /** @return See @ref iuse_actor::get_name */
+
         std::string get_name() const;
-        /** @return See @ref iuse_actor::get_description */
+
         std::string get_description() const;
-        /** @return Used by @ref item::info to get description of the actor */
+
         void dump_info( const item &, std::vector<iteminfo> & ) const;
 };
 
-#endif // CATA_SRC_IUSE_H
+#endif

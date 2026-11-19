@@ -27,7 +27,7 @@ class IsOneOf : public Catch::MatcherBase<std::string>
         }
 };
 
-} // namespace
+}
 
 TEST_CASE( "name_generation", "[name]" )
 {
@@ -87,4 +87,3 @@ TEST_CASE( "name_generation", "[name]" )
         }
     }
 }
-

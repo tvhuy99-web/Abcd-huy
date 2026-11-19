@@ -1,10 +1,10 @@
-/**
-* This file is for container-related functions strictly in the `item` class.
-*
-* This file is NOT for `item_pocket` or `item_contents` function definitions;
-* many of this file's functions forward to identically-named `item_pocket` or `item_contents`
-* functions, which is intended.
-*/
+
+
+
+
+
+
+
 
 #include "item.h"
 
@@ -115,9 +115,9 @@ void item::update_modified_pockets()
     std::vector<const pocket_data *> mag_or_mag_wells;
     std::vector<const pocket_data *> container_pockets;
 
-    // Mods that supply magazine pockets via pocket_mods replace the base
-    // item's mag wells (e.g. battery adapter mods). Without a mag-supplying
-    // mod, the base item's wells are preserved as-is.
+
+
+
     bool mod_supplies_mag_pockets = false;
     for( const item *mod : mods() ) {
         if( mod->type->mod ) {
@@ -134,7 +134,7 @@ void item::update_modified_pockets()
         }
     }
 
-    // Prevent cleanup of pockets belonging to the item base type
+
     for( const pocket_data &pocket : type->pockets ) {
         if( pocket.type == pocket_type::CONTAINER ) {
             container_pockets.push_back( &pocket );
@@ -145,7 +145,7 @@ void item::update_modified_pockets()
         }
     }
 
-    // Prevent cleanup of added modular pockets
+
     for( const item *it : contents.get_added_pockets() ) {
         for( const pocket_data &pocket : it->type->pockets ) {
             if( pocket.type == pocket_type::CONTAINER ) {
@@ -169,8 +169,8 @@ void item::update_modified_pockets()
 
     contents.update_modified_pockets( std::move( mag_or_mag_wells ), std::move( container_pockets ) );
 
-    // A gunmod's hide_modes can remove the gun's selected mode; reselect a
-    // survivor. All modes hidden leaves no selection, and shot resolution refuses.
+
+
     if( is_gun() ) {
         const std::map<gun_mode_id, gun_mode> modes = gun_all_modes();
         if( !modes.empty() && modes.count( gun_get_mode_id() ) == 0 ) {
@@ -178,8 +178,8 @@ void item::update_modified_pockets()
         }
     }
 
-    // Restamp per-pocket capacity scaling from installed mods. Reset first so
-    // removing a mod restores base capacity; combine multiple mods by product.
+
+
     for( item_pocket *p : get_pockets( []( const item_pocket & ) {
     return true;
 } ) ) {
@@ -479,7 +479,7 @@ bool item::contains_no_solids() const
 bool item::is_funnel_container( units::volume &bigger_than ) const
 {
     if( get_volume_capacity( item_pocket::ok_all_containers ) <= bigger_than ) {
-        return false; // skip contents check, performance
+        return false;
     }
     return contents.is_funnel_container( bigger_than );
 }
@@ -502,10 +502,10 @@ units::volume item::max_containable_volume() const
 ret_val<void> item::is_compatible( const item &it ) const
 {
     if( this == &it ) {
-        // does the set of all sets contain itself?
+
         return ret_val<void>::make_failure();
     }
-    // disallow putting portable holes into bags of holding
+
     if( contents.bigger_on_the_inside( volume() ) &&
         it.contents.bigger_on_the_inside( it.volume() ) ) {
         return ret_val<void>::make_failure();
@@ -541,14 +541,14 @@ ret_val<void> item::can_contain( const item &it, int &copies_remaining, const bo
     }
     if( this == &it || ( parent_it.where() != item_location::type::invalid &&
                          this == parent_it.get_item() ) ) {
-        // does the set of all sets contain itself?
-        // or does this already contain it?
+
+
         return ret_val<void>::make_failure( "can't put a container into itself" );
     }
     if( nested && !this->is_container() ) {
         return ret_val<void>::make_failure();
     }
-    // disallow putting portable holes into bags of holding
+
     if( contents.bigger_on_the_inside( volume() ) &&
         it.contents.bigger_on_the_inside( it.volume() ) ) {
         return ret_val<void>::make_failure();
@@ -560,13 +560,13 @@ ret_val<void> item::can_contain( const item &it, int &copies_remaining, const bo
                 continue;
             }
 
-            // early exit for max length no nested item is gonna fix this
+
             if( pkt->max_containable_length() < it.length() ) {
                 continue;
             }
 
-            // If the current pocket has restrictions or blacklists the item or is a holster,
-            // try the nested pocket regardless of whether it's soft or rigid.
+
+
             const bool ignore_nested_rigidity =
                 !pkt->settings.accepts_item( it ) ||
                 !pkt->get_pocket_data()->get_flag_restrictions().empty() || pkt->is_holster();
@@ -645,7 +645,7 @@ bool item::spill_contents( Character &c )
         return spill_contents( c.pos_bub() );
     }
 
-    contents.handle_liquid_or_spill( c, /*avoid=*/this );
+    contents.handle_liquid_or_spill( c, this );
     on_contents_changed();
 
     return is_container_empty();
@@ -817,7 +817,7 @@ int item::fill_with( const item &contained, const int amount,
             if( count_by_charges ) {
                 contained_item.charges = 1;
             }
-            pocket = best_pocket( contained_item, loc, /*avoid=*/nullptr, allow_sealed,
+            pocket = best_pocket( contained_item, loc, nullptr, allow_sealed,
                                   ignore_settings, false, false, allow_nested ).second;
         }
         if( pocket == nullptr ) {
@@ -873,7 +873,7 @@ int item::fill_with( const item &contained, const int amount,
 bool item::can_holster( const item &obj ) const
 {
     if( !type->can_use( "holster" ) ) {
-        return false; // item is not a holster
+        return false;
     }
 
     const holster_actor *ptr = dynamic_cast<const holster_actor *>
@@ -911,7 +911,7 @@ bool item::leak( map &here, Character *carrier, const tripoint_bub_ms &pos, item
 
 int item::get_pocket_size() const
 {
-    // set the amount of space that will be used on the vest based on the size of the item
+
     if( has_flag( flag_PALS_SMALL ) ) {
         return 1;
     } else if( has_flag( flag_PALS_MEDIUM ) ) {
@@ -1011,7 +1011,7 @@ void _aggregate( C &container, typename C::key_type const &key, item const *it,
         running_max = running_max->count < iter->second.count ? &iter->second : running_max;
     }
 }
-} // namespace
+}
 
 item::aggregate_t item::aggregated_contents( int depth, int maxdepth ) const
 {
@@ -1049,7 +1049,7 @@ item::aggregate_t item::aggregated_contents( int depth, int maxdepth ) const
     unsigned int const cutoff_check =
         total < 3 ? total - 1 : static_cast<int>( std::floor( total * cutoff ) );
 
-    // alow a type to still dominate over its own category
+
     if( max_type->count > cutoff_check &&
         max_type->header->type->category_force != item_category_container &&
         max_type->header->cached_category.id == running_max->header->cached_category.id ) {

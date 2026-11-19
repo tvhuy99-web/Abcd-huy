@@ -10,8 +10,8 @@
 
 namespace a11y
 {
-// Use the text model supplied to the game's UI, never pixels or terminal cells.
-// The Android presenter reads documents explicitly, with stoppable speech chunks.
+
+
 inline void append_document( semantic_snapshot &snapshot, std::string id,
                              const std::string_view title, const std::string_view text )
 {
@@ -25,5 +25,5 @@ inline void append_document( semantic_snapshot &snapshot, std::string id,
     node.detail = remove_color_tags( text );
     snapshot.nodes.push_back( std::move( node ) );
 }
-} // namespace a11y
-#endif // CATA_SRC_A11Y_DOCUMENT_H
+}
+#endif

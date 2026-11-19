@@ -26,7 +26,7 @@ enum computer_action {
     COMPACT_AMIGARA_START,
     COMPACT_BLOOD_ANAL,
     COMPACT_CASCADE,
-    COMPACT_COMPLETE_DISABLE_EXTERNAL_POWER, // Completes "Disable External Power" mission
+    COMPACT_COMPLETE_DISABLE_EXTERNAL_POWER,
     COMPACT_CONVEYOR,
     COMPACT_DATA_ANAL,
     COMPACT_DEACTIVATE_SHOCK_VENT,
@@ -34,7 +34,7 @@ enum computer_action {
     COMPACT_DOWNLOAD_SOFTWARE,
     COMPACT_ELEVATOR_ON,
     COMPACT_EMERG_MESS,
-    COMPACT_EMERG_REF_CENTER,   //Points to the refugee center
+    COMPACT_EMERG_REF_CENTER,
     COMPACT_EXTRACT_RAD_SOURCE,
     COMPACT_GEIGER,
     COMPACT_IRRADIATOR,
@@ -55,11 +55,11 @@ enum computer_action {
     COMPACT_RELEASE,
     COMPACT_RELEASE_BIONICS,
     COMPACT_RELEASE_DISARM,
-    COMPACT_REPEATER_MOD,       //Converts a terminal in a radio station into a 'repeater', locks terminal and completes mission
+    COMPACT_REPEATER_MOD,
     COMPACT_RESEARCH,
     COMPACT_SAMPLE,
     COMPACT_SHUTTERS,
-    COMPACT_SR1_MESS,           //Security Reminders for Hazardous Waste Sarcophagus (SRCF)
+    COMPACT_SR1_MESS,
     COMPACT_SR2_MESS,
     COMPACT_SR3_MESS,
     COMPACT_SR4_MESS,
@@ -99,10 +99,10 @@ struct computer_option {
 
     computer_option();
     computer_option( const std::string &N, computer_action A, int S );
-    // Save to/load from saves
+
     void serialize( JsonOut &jout ) const;
     void deserialize( const JsonObject &jo );
-    // Load from data files
+
     static computer_option from_json( const JsonObject &jo );
 };
 
@@ -112,10 +112,10 @@ struct computer_failure {
     computer_failure();
     explicit computer_failure( computer_failure_type t ) : type( t ) {
     }
-    // Save to/load from saves
+
     void serialize( JsonOut &jout ) const;
     void deserialize( const JsonObject &jo );
-    // Load from data files
+
     static computer_failure from_json( const JsonObject &jo );
 };
 
@@ -125,7 +125,7 @@ class computer
         computer( const std::string &new_name, int new_security, map &here, tripoint_bub_ms new_loc );
         computer( const std::string &new_name, int new_security, tripoint_abs_ms new_loc );
 
-        // Initialization
+
         void set_security( int Security );
         void add_option( const computer_option &opt );
         void add_eoc( const effect_on_condition_id &eoc );
@@ -135,36 +135,36 @@ class computer
         void add_failure( computer_failure_type failure );
         void set_access_denied_msg( const std::string &new_msg );
         void set_mission( int id );
-        // Save/load
+
         void load_legacy_data( const std::string &data );
         void serialize( JsonOut &jout ) const;
         void deserialize( const JsonValue &jv );
 
         friend class computer_session;
         tripoint_abs_ms loc;
-        // "Jon's Computer", "Lab 6E77-B Terminal Omega"
+
         std::string name;
-        // Linked to a mission?
+
         int mission_id;
-        // Difficulty of simply logging in
+
         int security;
-        // Number of times security is tripped
+
         int alerts;
-        // Date of next attempt
+
         time_point next_attempt;
-        // Things we can do
+
         std::vector<computer_option> options;
-        // Things that happen if we fail a hack
+
         std::vector<computer_failure> failures;
-        // Message displayed when the computer is secured and initial login fails.
-        // Can be customized to for example warn the player of potentially lethal
-        // consequences like secubots spawning.
+
+
+
         std::string access_denied;
-        std::vector<std::string> chat_topics; // What it has to say.
-        std::vector<effect_on_condition_id> eocs; // Effect on conditions to run when accessed.
-        // Miscellaneous key/value pairs.
+        std::vector<std::string> chat_topics;
+        std::vector<effect_on_condition_id> eocs;
+
         global_variables::impl_t values;
-        // Methods for setting/getting misc key/value pairs.
+
         void set_value( const std::string &key, diag_value value );
         template <typename... Args>
         void set_value( const std::string &key, Args... args ) {
@@ -178,4 +178,4 @@ class computer
 std::unique_ptr<talker> get_talker_for( computer &me );
 std::unique_ptr<talker> get_talker_for( computer *me );
 
-#endif // CATA_SRC_COMPUTER_H
+#endif

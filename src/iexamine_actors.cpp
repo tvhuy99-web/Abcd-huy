@@ -89,7 +89,7 @@ void appliance_convert_examine_actor::finalize() const
     if( !appliance_item.is_valid() ) {
         debugmsg( "Invalid appliance item %s in appliance_convert action", appliance_item.str() );
     } else if( !vpart_appliance_from_item( appliance_item ).is_valid() ) {
-        // This will never actually trigger now, but is here if the semantics of vpart_appliance_from_item change
+
         debugmsg( "In appliance_convert action, %s does not correspond to an appliance",
                   appliance_item.str() );
     }
@@ -146,7 +146,7 @@ std::vector<item_location> cardreader_examine_actor::get_cards( Character &you,
         if( omt_allowed_radius ) {
             tripoint_abs_omt cardloc = coords::project_to<coords::omt>(
                                            it->get_var( "spawn_location", tripoint_abs_ms::min ) );
-            // Cards without a location are treated as valid
+
             if( cardloc == tripoint_abs_omt::min ) {
                 ret.push_back( it );
                 return VisitResponse::NEXT;
@@ -200,9 +200,9 @@ bool cardreader_examine_actor::apply( const tripoint_bub_ms &examp ) const
     return open;
 }
 
-/**
- * Use id/hack reader. Using an id despawns turrets.
- */
+
+
+
 void cardreader_examine_actor::call( Character &you, const tripoint_bub_ms &examp ) const
 {
     bool open = false;
@@ -217,7 +217,7 @@ void cardreader_examine_actor::call( Character &you, const tripoint_bub_ms &exam
             if( !despawn_monsters ) {
                 break;
             }
-            // Check 1) same overmap coords, 2) turret, 3) hostile
+
             if( coords::project_to<coords::omt>( here.get_abs( critter.pos_bub() ) ) ==
                 coords::project_to<coords::omt>( here.get_abs( examp ) ) &&
                 critter.has_flag( mon_flag_ID_CARD_DESPAWN ) &&
@@ -389,11 +389,11 @@ void mortar_examine_actor::call( Character &you, const tripoint_bub_ms &examp ) 
     tripoint_abs_ms target_abs_ms = project_to<coords::ms>( target );
 
     const int deviation = ( aim_deviation.evaluate( d ) * rl_dist( you.pos_abs(), target_abs_ms ) / 2 );
-    // aim at the center of OMT, but with some deviation
-    // we just assume mortar projectiles fall at 90 degrees, duh
+
+
     target_abs_ms.x() += rng_float( 12 + deviation, 12 - deviation );
     target_abs_ms.y() += rng_float( 12 + deviation, 12 - deviation );
-    // we can have edge cases with it if, for example, we target radio tower (high building, but with small profile)
+
     target_abs_ms.z() = overmap_buffer.highest_omt_point( project_to<coords::omt>( target_abs_ms ) );
 
     for( ammo_effect_str_id ammo_eff : loc.get_item()->ammo_data()->ammo->ammo_effects ) {

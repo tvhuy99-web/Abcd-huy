@@ -28,7 +28,7 @@ enum face_type : int {
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 namespace overmap_ui
 {
@@ -37,13 +37,13 @@ void draw_overmap_chunk( const catacurses::window &w_minimap, const avatar &you,
                          int height );
 void draw_overmap_chunk_imgui( const avatar &you, const tripoint_abs_omt &global_omt,
                                int width, int height );
-} // namespace overmap_ui
+}
 
 bool default_render();
 
-// Arguments to pass into the static draw function (in window_panel::draw)
-// Includes public avatar (_ava) and window (_win) references, and private widget reference
-// passed to the constructor, accessible with get_widget().
+
+
+
 struct draw_args {
     public:
         const avatar &_ava;
@@ -59,10 +59,10 @@ struct draw_args {
         widget_id _wgt;
 };
 
-// A window_panel is a rectangular region or drawable area within the sidebar window.
-// It corresponds to a section that the player may toggle or rearrange from the in-game sidebar options.
-// It is associated with a draw function (taking draw_args with avatar and window), along with id and name.
-// The height, width, and default toggle state must be provided to the constructor as well.
+
+
+
+
 class window_panel
 {
     public:
@@ -73,8 +73,8 @@ class window_panel
         window_panel( const std::string &id, const translation &nm, int ht, int wd, bool default_toggle_,
                       const std::function<bool()> &render_func = default_render, bool force_draw = false );
 
-        // Draw function returns the diff in height on the sidebar.
-        // This is to reclaim any lines from skipped widgets.
+
+
         std::function<int( const draw_args & )> draw;
         std::function<bool()> render;
 
@@ -96,8 +96,8 @@ class window_panel
         translation name;
 };
 
-// A panel_layout is a collection of window_panels drawn in order from top to bottom.
-// It is associated with the user-selectable layouts named "classic", "compact", "labels", etc.
+
+
 class panel_layout
 {
     public:
@@ -112,9 +112,9 @@ class panel_layout
         std::vector<window_panel> _panels;
 };
 
-// The panel_manager allows the player choose their current panel layout and window panels.
-// The player's selected panel_layout, enabled window_panels and what order they appear in,
-// are saved to the PATH_INFO::panel_options() file, typically config/panel_options.json.
+
+
+
 class panel_manager
 {
     public:
@@ -146,10 +146,10 @@ class panel_manager
         bool load();
         void serialize( JsonOut &json );
         void deserialize( const JsonArray &ja );
-        // update the screen offsets so the game knows how to adjust the main window
+
         void update_offsets( int x );
 
-        // The amount of screen space from each edge the sidebar takes up
+
         int width_right = 0; // NOLINT(cata-serialize)
         int width_left = 0; // NOLINT(cata-serialize)
         std::string current_layout_id;
@@ -158,4 +158,4 @@ class panel_manager
         friend widget;
 };
 
-#endif // CATA_SRC_PANELS_H
+#endif

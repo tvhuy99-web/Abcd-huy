@@ -84,7 +84,7 @@ static const skill_id skill_survival( "survival" );
 
 namespace io
 {
-    // *INDENT-OFF*
+
     template<>
     std::string enum_to_string<butcher_type>( butcher_type data )
     {
@@ -101,16 +101,16 @@ namespace io
         }
         cata_fatal( "Invalid valid_target" );
     }
-    // *INDENT-ON*
 
-} // namespace io
+
+}
 
 static bool check_butcher_dissect( const int roll )
 {
-    // Failure rates for dissection rolls
-    // 100% at roll 0, 66% at roll 1, 50% at roll 2, 40% @ 3, 33% @ 4, 28% @ 5, ... , 16% @ 10
-    // Roll is roughly a rng(0, -3 + 1st_aid + fine_cut_quality + 1/2 electronics + small_dex_bonus)
-    // Roll is reduced by corpse damage level, but to no less then 0
+
+
+
+
     add_msg_debug( debugmode::DF_ACT_BUTCHER, "Roll = %i", roll );
     add_msg_debug( debugmode::DF_ACT_BUTCHER, "Failure chance = %f%%",
                    ( 10.0f / ( 10.0f + roll * 5.0f ) ) * 100.0f );
@@ -147,8 +147,8 @@ std::string butcher_progress_time_var()
     return "butchery_progress_time";
 }
 
-// How much of `butcher_type` has already been completed, in range [0..1], 0=not started yet, 1=completed.
-// used for resuming previously started butchery
+
+
 double butcher_get_progress( const item &corpse_item, const butcher_type action )
 {
     return corpse_item.get_var( butcher_progress_var( action ), 0.0 );
@@ -183,7 +183,7 @@ static bool check_anger_empathetic_npcs_with_cannibalism( const Character &you,
     const map &here = get_map();
 
     if( !you.is_avatar() ) {
-        return true; // NPCs dont accidentally cause player hate
+        return true;
     }
 
     bool you_empathize = you.empathizes_with_monster( monster );
@@ -199,25 +199,25 @@ static bool check_anger_empathetic_npcs_with_cannibalism( const Character &you,
     if( you_empathize && nearby_empathetic_npc ) {
         if( !query_yn(
                 _( "Really desecrate the mortal remains of this being by butchering them for meat?  You feel others may take issue with your action." ) ) ) {
-            return false; // player cancels
+            return false;
         }
     } else if( you_empathize && !nearby_empathetic_npc ) {
         if( !query_yn(
                 _( "Really desecrate the mortal remains of this being by butchering them for meat?" ) ) ) {
-            return false; // player cancels
+            return false;
         }
     } else if( !you_empathize && nearby_empathetic_npc ) {
         if( !query_yn(
                 _( "Really take this thing apart?  You feel others may take issue with your action." ) ) ) {
-            return false; // player cancels
+            return false;
         }
     }
-    // !you_empathize && !nearby_empathetic_npc means no check.  Will likely happen for most combinations.
+
 
     for( npc &guy : g->all_npcs() ) {
         if( guy.is_active() && guy.sees( here, you ) && guy.empathizes_with_monster( monster ) ) {
             guy.say( _( "<swear!>?  Are you butchering them?  That's not okay, <name_b>." ) );
-            // massive opinion penalty
+
             guy.op_of_u.trust -= 5;
             guy.op_of_u.value -= 5;
             guy.op_of_u.anger += 5;
@@ -273,7 +273,7 @@ bool set_up_butchery( player_activity &act, Character &you, butchery_data bd )
         }
     }
 
-    // Requirements for the various types
+
     const requirement_id butchery_requirement = bd.req;
 
     if( !butchery_requirement->can_make_with_inventory(
@@ -338,26 +338,26 @@ bool set_up_butchery( player_activity &act, Character &you, butchery_data bd )
         }
     }
 
-    // Dissections are slightly less angering than other butcher types
+
     if( action == butcher_type::DISSECT ) {
         if( you.has_proficiency( proficiency_prof_dissect_humans ) ) {
             if( you.empathizes_with_monster( corpse.id ) ) {
-                // this is a dissection, and we are trained for dissection, so no morale penalty, anger, and lighter flavor text.
+
                 you.add_msg_if_player( m_good, SNIPPET.random_from_category(
                                            "msg_human_dissection_with_prof" ).value_or( translation() ).translated() );
             }
         } else {
             if( check_anger_empathetic_npcs_with_cannibalism( you, corpse.id ) ) {
                 if( you.empathizes_with_monster( corpse.id ) ) {
-                    // give us a message indicating we are dissecting without the stomach for it, but not actually butchering. lower morale penalty.
+
                     you.add_msg_if_player( m_good, SNIPPET.random_from_category(
                                                "msg_human_dissection_no_prof" ).value_or( translation() ).translated() );
                     you.add_morale( morale_butcher, -40, 0, 1_days, 2_hours );
-                    // Some trauma. You are methodically cutting a person up.
+
                     you.mod_trauma( 5 );
                 }
             } else {
-                // standard refusal to butcher
+
                 you.add_msg_if_player( m_good, _( "It needs a coffin, not a knife." ) );
                 return false;
             }
@@ -365,20 +365,20 @@ bool set_up_butchery( player_activity &act, Character &you, butchery_data bd )
     } else if( action != butcher_type::DISMEMBER ) {
         if( check_anger_empathetic_npcs_with_cannibalism( you, corpse.id ) ) {
             if( you.empathizes_with_monster( corpse.id ) ) {
-                // give the player a random message showing their disgust and cause morale penalty.
+
                 you.add_msg_if_player( m_good, SNIPPET.random_from_category(
                                            "msg_human_butchery" ).value_or( translation() ).translated() );
                 you.add_morale( morale_butcher, -50, 0, 2_days, 3_hours );
-                // LOTS of trauma. You are butchering a person.
+
                 you.mod_trauma( 10 );
             }
         } else {
             if( you.has_proficiency( proficiency_prof_dissect_humans ) ) {
-                // player has the dissect_humans prof, so they're familiar with dissection. reference this in their refusal to butcher
+
                 you.add_msg_if_player( m_good, _( "You were trained for autopsies, not butchery." ) );
                 return false;
             } else {
-                // player doesn't have dissect_humans, so just give a regular refusal to mess with the corpse
+
                 you.add_msg_if_player( m_good, _( "It needs a coffin, not a knife." ) );
                 return false;
             }
@@ -393,10 +393,10 @@ int butcher_time_to_cut( Character &you, const item &corpse_item, const butcher_
     const mtype &corpse = *corpse_item.get_mtype();
     const int factor = you.max_quality( action == butcher_type::DISSECT ? qual_CUT_FINE : qual_BUTCHER,
                                         PICKUP_RANGE );
-    // in moves
+
     int time_to_cut;
     switch( corpse.size ) {
-        // Time (roughly) in turns to cut up the corpse
+
         case creature_size::tiny:
             time_to_cut = 900;
             break;
@@ -414,11 +414,11 @@ int butcher_time_to_cut( Character &you, const item &corpse_item, const butcher_
             break;
         default:
             debugmsg( "ERROR: Invalid creature_size on %s", corpse.nname() );
-            time_to_cut = 2700; // default to medium
+            time_to_cut = 2700;
             break;
     }
 
-    // At factor 0, base 100 time_to_cut remains 100. At factor 50, it's 50 , at factor 75 it's 25
+
     time_to_cut *= std::max( 25, 100 - factor );
 
     switch( action ) {
@@ -473,15 +473,15 @@ int butcher_time_to_cut( Character &you, const item &corpse_item, const butcher_
     int prof_butch_penalty = penalty_big * ( 1 - butch_basic ) + penalty_small * ( 1 - butch_adv );
     int prof_skin_penalty = penalty_small * ( 1 - skin_basic );
 
-    // there supposed to be a code for book mitigation, but we don't have any book fitting for this
+
 
     if( action == butcher_type::FULL ) {
-        // 40% of butchering and gutting, 40% of skinning, 20% another activities
+
         time_to_cut *= 0.4 * ( 1 + prof_butch_penalty ) + 0.4 * ( 1 + prof_skin_penalty ) + 0.2;
     }
 
     if( action == butcher_type::QUICK ) {
-        // 70% of butchery, 15% skinning, 15% another activities
+
         time_to_cut *= 0.7 * ( 1 + prof_butch_penalty ) + 0.15 * ( 1 + prof_skin_penalty ) + 0.15;
     }
 
@@ -497,7 +497,7 @@ int butcher_time_to_cut( Character &you, const item &corpse_item, const butcher_
     return time_to_cut;
 }
 
-// this function modifies the input weight by its damage level, depending on the bodypart
+
 static int corpse_damage_effect( int weight, const harvest_drop_type_id &entry_type,
                                  int damage_level )
 {
@@ -508,7 +508,7 @@ static int corpse_damage_effect( int weight, const harvest_drop_type_id &entry_t
 
     switch( damage_level ) {
         case 2:
-            // "damaged"
+
             if( entry_type == harvest_drop_offal ) {
                 return std::round( weight * damage );
             }
@@ -520,7 +520,7 @@ static int corpse_damage_effect( int weight, const harvest_drop_type_id &entry_t
             }
             break;
         case 3:
-            // "mangled"
+
             if( entry_type == harvest_drop_offal ) {
                 return destroyed;
             }
@@ -535,7 +535,7 @@ static int corpse_damage_effect( int weight, const harvest_drop_type_id &entry_t
             }
             break;
         case 4:
-            // "pulped"
+
             if( entry_type == harvest_drop_offal ) {
                 return destroyed;
             }
@@ -550,7 +550,7 @@ static int corpse_damage_effect( int weight, const harvest_drop_type_id &entry_t
             }
             break;
         default:
-            // "bruised" modifier is almost impossible to avoid; also includes no modifier (zero damage)
+
             break;
     }
     return weight;
@@ -559,7 +559,7 @@ static int corpse_damage_effect( int weight, const harvest_drop_type_id &entry_t
 static int butchery_dissect_skill_level( Character &you, int tool_quality,
         const harvest_drop_type_id &htype )
 {
-    // DISSECT has special case factor calculation and results.
+
     if( htype.is_valid() ) {
         float sk_total = 0;
         int sk_count = 0;
@@ -575,9 +575,9 @@ static int butchery_dissect_skill_level( Character &you, int tool_quality,
 int roll_butchery_dissect( int skill_level, int dex, int tool_quality )
 {
     double skill_shift = 0.0;
-    ///\EFFECT_SURVIVAL randomly increases butcher rolls
+
     skill_shift += rng_float( 0, skill_level - 3 );
-    ///\EFFECT_DEX >8 randomly increases butcher rolls, slightly, <8 decreases
+
     skill_shift += rng_float( 0, dex - 8 ) / 4.0;
 
     if( tool_quality < 0 ) {
@@ -589,8 +589,8 @@ int roll_butchery_dissect( int skill_level, int dex, int tool_quality )
     return static_cast<int>( std::round( skill_shift ) );
 }
 
-// A number between 0 and 1 that represents how much usable material can be harvested
-// as a fraction of the maximum possible amount.
+
+
 static double butchery_dissect_yield_mult( int skill_level, int dex, int tool_quality )
 {
     const double skill_score = skill_level / 10.0;
@@ -641,7 +641,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
     const int tool_quality = you.max_quality( action == butcher_type::DISSECT ? qual_CUT_FINE :
                              qual_BUTCHER, PICKUP_RANGE );
 
-    //all BUTCHERY types - FATAL FAILURE
+
     if( action != butcher_type::DISSECT &&
         roll_butchery_dissect( round( you.get_average_skill_level( skill_survival ) ), you.get_dex(),
                                tool_quality ) <= ( -15 ) && one_in( 2 ) ) {
@@ -706,13 +706,13 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
         const float max_num = entry.base_num.second + butchery * entry.scale_num.second;
 
         int roll = 0;
-        // mass_ratio will override the use of base_num, scale_num, and max
+
         if( entry.mass_ratio != 0.00f ) {
             roll = static_cast<int>( std::round( entry.mass_ratio * monster_weight ) );
             roll = corpse_damage_effect( roll, entry.type, corpse_item.damage_level() );
         } else {
             roll = std::min<int>( entry.max, std::round( rng_float( min_num, max_num ) ) );
-            // will not give less than min_num defined in the JSON
+
             roll = std::max<int>( corpse_damage_effect( roll, entry.type, corpse_item.damage_level() ),
                                   entry.base_num.first );
         }
@@ -724,7 +724,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
             drop = item::find_type( drop_id );
         }
 
-        // Check if monster was gibbed, and handle accordingly
+
         if( corpse_item.has_flag( flag_GIBBED ) && ( entry.type == harvest_drop_flesh ||
                 entry.type == harvest_drop_bone ) ) {
             roll /= 2;
@@ -750,7 +750,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
             roll /= 1 + ( penalty_small * ( 1 - skin_adv ) );
         }
 
-        // QUICK BUTCHERY
+
         if( action == butcher_type::QUICK ) {
             if( entry.type == harvest_drop_flesh ) {
                 roll /= 4;
@@ -765,11 +765,11 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
                 continue;
             }
         }
-        // RIP AND TEAR
+
         if( action == butcher_type::DISMEMBER ) {
             roll = 0;
         }
-        // field dressing ignores skin, flesh, and blood
+
         if( action == butcher_type::FIELD_DRESS ) {
             if( entry.type == harvest_drop_bone ) {
                 roll = rng( 0, roll / 2 );
@@ -782,14 +782,14 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
             }
         }
 
-        // you only get the blood from bleeding
+
         if( action == butcher_type::BLEED ) {
             if( entry.type != harvest_drop_blood ) {
                 continue;
             }
         }
 
-        // you only get the skin from skinning
+
         if( action == butcher_type::SKIN ) {
             if( entry.type != harvest_drop_skin ) {
                 continue;
@@ -799,7 +799,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
             }
         }
 
-        // field dressing removed innards and bones from meatless limbs
+
         if( ( action == butcher_type::FULL || action == butcher_type::QUICK ) &&
             corpse_item.has_flag( flag_FIELD_DRESS ) ) {
             if( entry.type == harvest_drop_offal ) {
@@ -809,7 +809,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
                 roll = ( roll / 2 ) + rng( roll / 2, roll );
             }
         }
-        // unskillfull field dressing may damage the skin, meat, and other parts
+
         if( ( action == butcher_type::FULL || action == butcher_type::QUICK ) &&
             corpse_item.has_flag( flag_FIELD_DRESS_FAILED ) ) {
             if( entry.type == harvest_drop_offal ) {
@@ -827,12 +827,12 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
         }
 
         if( drop != nullptr ) {
-            // divide total dropped weight by drop's weight to get amount
+
             if( entry.mass_ratio != 0.00f ) {
-                // apply skill before converting to items, but only if mass_ratio is defined
+
                 roll *= butchery_dissect_yield_mult( skill_level, you.get_dex(), tool_quality );
                 monster_weight_remaining -= roll;
-                // use milligrams to avoid truncation for sub-gram items
+
                 roll = std::ceil( static_cast<double>( roll ) * 1000.0 /
                                   to_milligram( drop->weight ) );
             } else {
@@ -866,7 +866,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
                     obj.remove_fault( flt );
                 }
 
-                // If we're not bleeding the animal we don't care about the blood being wasted
+
                 if( action != butcher_type::BLEED ) {
                     if( !corpse_item.has_flag( flag_BLED ) ) {
                         drop_on_map( you, item_drop_reason::deliberate, { obj }, &here, corpse_loc );
@@ -913,17 +913,17 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
         }
         practice++;
     }
-    // 20% of the original corpse weight is not an item, but liquid gore
+
     monster_weight_remaining -= monster_weight / 5;
-    // add the remaining unusable weight as rotting garbage
+
     if( monster_weight_remaining > 0 && action != butcher_type::BLEED ) {
         if( action == butcher_type::FIELD_DRESS ) {
-            // 25% of the corpse weight is what's removed during field dressing
+
             monster_weight_remaining -= monster_weight * 3 / 4;
         } else if( action == butcher_type::SKIN ) {
             monster_weight_remaining -= monster_weight * 0.85;
         } else {
-            // a carcass is 75% of the weight of the unmodified creature's weight
+
             if( ( corpse_item.has_flag( flag_FIELD_DRESS ) ||
                   corpse_item.has_flag( flag_FIELD_DRESS_FAILED ) ) &&
                 !corpse_item.has_flag( flag_QUARTERED ) ) {
@@ -963,10 +963,10 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
                       0 ) + 4 );
     }
 
-    // handle our prof training
+
     if( action == butcher_type::FULL && ( mt.harvest->has_entry_type( harvest_drop_flesh ) ||
                                           mt.harvest->has_entry_type( harvest_drop_offal ) ) ) {
-        // 40% of butchering and gutting, 40% of skinning, 20% another activities
+
         if( you.has_proficiency( proficiency_prof_butchering_basic ) ) {
             you.practice_proficiency( proficiency_prof_butchering_adv, moves_total * 0.4 );
         } else {
@@ -975,7 +975,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
     }
 
     if( action == butcher_type::FULL && mt.harvest->has_entry_type( harvest_drop_skin ) ) {
-        // 40% of butchering and gutting, 40% of skinning, 20% another activities
+
         if( you.has_proficiency( proficiency_prof_skinning_basic ) ) {
             you.practice_proficiency( proficiency_prof_skinning_adv, moves_total * 0.4 );
         } else {
@@ -985,7 +985,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
 
     if( action == butcher_type::QUICK && ( mt.harvest->has_entry_type( harvest_drop_flesh ) ||
                                            mt.harvest->has_entry_type( harvest_drop_offal ) ) ) {
-        // 70% of butchery, 15% skinning, 15% another activities
+
         if( you.has_proficiency( proficiency_prof_butchering_basic ) ) {
             you.practice_proficiency( proficiency_prof_butchering_adv, moves_total * 0.7 );
         } else {
@@ -994,7 +994,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
     }
 
     if( action == butcher_type::QUICK && mt.harvest->has_entry_type( harvest_drop_skin ) ) {
-        // 70% of butchery, 15% skinning, 15% another activities
+
         if( you.has_proficiency( proficiency_prof_skinning_basic ) ) {
             you.practice_proficiency( proficiency_prof_skinning_adv, moves_total * 0.15 );
         } else {
@@ -1012,7 +1012,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
     }
 
     if( action == butcher_type::SKIN && mt.harvest->has_entry_type( harvest_drop_skin ) ) {
-        // 70% of butchery, 15% skinning, 15% another activities
+
         if( you.has_proficiency( proficiency_prof_skinning_basic ) ) {
             you.practice_proficiency( proficiency_prof_skinning_adv, moves_total );
         } else {
@@ -1020,10 +1020,10 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
         }
     }
 
-    // after this point, if there was a liquid handling from the harvest,
-    // and the liquid handling was interrupted, then the activity was canceled,
-    // therefore operations on this activity's targets and values may be invalidated.
-    // reveal hidden items / hidden content
+
+
+
+
     if( action != butcher_type::FIELD_DRESS && action != butcher_type::SKIN &&
         action != butcher_type::BLEED && action != butcher_type:: DISMEMBER ) {
         for( item *content : corpse_item.all_items_top( pocket_type::CONTAINER ) ) {
@@ -1046,7 +1046,7 @@ bool butchery_drops_harvest( butchery_data bt, Character &you )
 void butchery_quarter( item *corpse_item, const Character &you )
 {
     corpse_item->set_flag( flag_QUARTERED );
-    // Quartering destroys the skin, so mark it as skinned, even if it isn't.
+
     corpse_item->set_flag( flag_SKINNED );
     you.add_msg_if_player( m_good,
                            _( "You roughly slice the corpse of %s into four parts and set them aside." ),
@@ -1054,7 +1054,7 @@ void butchery_quarter( item *corpse_item, const Character &you )
     map &here = get_map();
     tripoint_bub_ms pos = you.pos_bub();
 
-    // 4 quarters (one exists, add 3, flag does the rest)
+
     for( int i = 1; i <= 3; i++ ) {
         here.add_item_or_charges( pos, *corpse_item, true );
     }
@@ -1085,13 +1085,13 @@ void destroy_the_carcass( const butchery_data &bd, Character &you )
                            ( corpse->size + 1 ) * 2 ) );
     }
 
-    // all action types - yields
+
     if( !butchery_drops_harvest( bd, you ) ) {
-        // FATAL FAILURE
+
         add_msg( m_warning, SNIPPET.random_from_category( "harvest_drop_default_dissect_failed" ).value_or(
                      translation() ).translated() );
 
-        // Remove the target from the map
+
         target.remove_item();
 
         here.add_splatter( type_gib, corpse_pos, rng( corpse->size + 2, ( corpse->size + 1 ) * 2 ) );
@@ -1108,21 +1108,21 @@ void destroy_the_carcass( const butchery_data &bd, Character &you )
         return;
     }
 
-    //end messages and effects
+
     switch( action ) {
         case butcher_type::QUARTER:
             break;
         case butcher_type::QUICK:
             add_msg( m_good, SNIPPET.random_from_category( "harvest_drop_default_quick_butcher" ).value_or(
                          translation() ).translated() );
-            // Remove the target from the map
+
             target.remove_item();
             break;
         case butcher_type::FULL:
             add_msg( m_good, SNIPPET.random_from_category( "harvest_drop_default_full_butcher" ).value_or(
                          translation() ).translated() );
 
-            // Remove the target from the map
+
             target.remove_item();
             break;
         case butcher_type::FIELD_DRESS: {
@@ -1158,14 +1158,14 @@ void destroy_the_carcass( const butchery_data &bd, Character &you )
         case butcher_type::DISMEMBER:
             add_msg( m_good, SNIPPET.random_from_category( "harvest_drop_default_dismember" ).value_or(
                          translation() ).translated() );
-            // Remove the target from the map
+
             target.remove_item();
             break;
         case butcher_type::DISSECT:
             add_msg( m_good, SNIPPET.random_from_category( "harvest_drop_default_dissect_success" ).value_or(
                          translation() ).translated() );
 
-            // Remove the target from the map
+
             target.remove_item();
             break;
         case butcher_type::NUM_TYPES:
@@ -1180,7 +1180,7 @@ void destroy_the_carcass( const butchery_data &bd, Character &you )
 
 }
 
-// Butchery sub-menu and time calculation
+
 std::optional<butcher_type> butcher_submenu( const std::vector<map_stack::iterator> &corpses,
         int index )
 {
@@ -1247,7 +1247,7 @@ std::optional<butcher_type> butcher_submenu( const std::vector<map_stack::iterat
     bool has_blood = false;
     bool has_skin = false;
     bool has_organs = false;
-    std::string dissect_wp_hint; // dissection weakpoint proficiencies training hint
+    std::string dissect_wp_hint;
 
     if( index != -1 ) {
         const mtype *dead_mon = corpses[index]->get_mtype();
@@ -1283,7 +1283,7 @@ std::optional<butcher_type> butcher_submenu( const std::vector<map_stack::iterat
         }
     }
 
-    // Returns true if a cruder method is already in progress, to disallow finer butchering methods
+
     auto has_started_cruder_type = [&]( butcher_type bt ) {
         for( int other_bt = 0; other_bt < num_butcher_types; other_bt++ ) {
             if( has_started[other_bt] && cut_times[other_bt] < cut_times[static_cast<int>( bt )] ) {

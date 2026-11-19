@@ -45,7 +45,7 @@ struct weakpoint_report_item {
         hits{ 1 } { }
     weakpoint_report_item() : weakpoint_report_item( "", 0 ) { }
 };
-} // namespace
+}
 
 namespace
 {
@@ -84,7 +84,7 @@ struct weakpoint_report {
         items.clear();
     }
 };
-} // namespace
+}
 
 static weakpoint_report damage_monster( const mtype_id &target_type, const damage_instance &dam,
                                         int attacks )
@@ -108,27 +108,27 @@ static void reset_proficiencies( Character &dummy, const proficiency_id &prof )
 TEST_CASE( "weakpoint_basic", "[monster][weakpoint]" )
 {
     constexpr float epsilon = 0.225f;
-    // Debug Monster has two weakpoints at 25% each, one leaves 0 armor the other 25 bullet armor, down from 100 bullet armor
+
     weakpoint_report wr1 = damage_monster( pseudo_debug_mon, damage_instance( damage_bullet, 100.0f,
                                            0.0f ), 1000 );
     CHECK( wr1.PercHits( "the knee" ) == Approx( 0.25f ).epsilon( epsilon ) );
-    CHECK( wr1.AveDam( "the knee" ) == Approx( 75.0f ).epsilon( epsilon ) ); // 25 armor
+    CHECK( wr1.AveDam( "the knee" ) == Approx( 75.0f ).epsilon( epsilon ) );
     CHECK( wr1.PercHits( "the bugs" ) == Approx( 0.25f ).epsilon( epsilon ) );
-    CHECK( wr1.AveDam( "the bugs" ) == Approx( 100.0f ).epsilon( epsilon ) ); // No armor
+    CHECK( wr1.AveDam( "the bugs" ) == Approx( 100.0f ).epsilon( epsilon ) );
     CHECK( wr1.PercHits( "" ) == Approx( 0.50f ).epsilon( epsilon ) );
-    CHECK( wr1.AveDam( "" ) == Approx( 0.0f ).epsilon( epsilon ) ); // Full 100 armor
+    CHECK( wr1.AveDam( "" ) == Approx( 0.0f ).epsilon( epsilon ) );
 
-    // With 25 ap, adjust no weakpoint and the knee damage
+
     weakpoint_report wr2 = damage_monster( pseudo_debug_mon, damage_instance( damage_bullet, 100.0f,
                                            25.0f ), 1000 );
     CHECK( wr2.PercHits( "the knee" ) == Approx( 0.25f ).epsilon( epsilon ) );
-    CHECK( wr2.AveDam( "the knee" ) == Approx( 100.0f ).epsilon( epsilon ) ); // 25 armor with 25 ap
+    CHECK( wr2.AveDam( "the knee" ) == Approx( 100.0f ).epsilon( epsilon ) );
     CHECK( wr2.PercHits( "the bugs" ) == Approx( 0.25f ).epsilon( epsilon ) );
-    CHECK( wr2.AveDam( "the bugs" ) == Approx( 100.0f ).epsilon( epsilon ) ); // No armor with 25 ap
+    CHECK( wr2.AveDam( "the bugs" ) == Approx( 100.0f ).epsilon( epsilon ) );
     CHECK( wr2.PercHits( "" ) == Approx( 0.50f ).epsilon( epsilon ) );
-    CHECK( wr2.AveDam( "" ) == Approx( 25.0f ).epsilon( epsilon ) ); // Full 100 armor with 25 ap
+    CHECK( wr2.AveDam( "" ) == Approx( 25.0f ).epsilon( epsilon ) );
 
-    // No cut armordebug_mon
+
     weakpoint_report wr3 = damage_monster( pseudo_debug_mon, damage_instance( damage_cut, 100.0f,
                                            0.0f ), 1000 );
     CHECK( wr3.PercHits( "the knee" ) == Approx( 0.25f ).epsilon( epsilon ) );
@@ -264,7 +264,7 @@ TEST_CASE( "Check_copy-from_inheritance_between_sets_and_inline_weakpoints",
     weakpoints wplist = mon_test_weakpoint_mon->weakpoints;
     CHECK( wplist.weakpoint_list.size() == 2 );
 
-    // { weakpoint_id, { found, coverage } }
+
     std::map<std::string, std::pair<bool, int>> wp_found {
         { "test_eye", { false, 0 } },
         { "test_arm", { false, 5 } }
@@ -295,7 +295,7 @@ struct wp_test_values {
     float skill_lvl;
     float accuracy = 0.f;
 };
-} // namespace
+}
 
 static std::unordered_map<std::string, int> weakpoint_hit_distribution_proj(
     wp_test_values test_values )
@@ -318,7 +318,7 @@ static std::unordered_map<std::string, int> weakpoint_hit_distribution_proj(
 
     std::unordered_map<std::string, int> hits;
 
-    // construct map of all weakpoints; if some weakpoints were hitted 0 times, we want to see it
+
     for( const weakpoint &wp : test_values.mon->weakpoints.weakpoint_list ) {
         hits.emplace( wp.id, 0 );
     }
@@ -342,7 +342,7 @@ TEST_CASE( "weakpoint_hit_distribution_projectile", "[.]" )
 {
 
     static const std::vector<wp_test_values> test = {
-        // tested creature, weapon, weapon skill level, accuracy
+
         { mon_pig, itype_compbow, 0.f },
         { mon_pig, itype_compbow, 5.f },
         { mon_pig, itype_compbow, 10.f }

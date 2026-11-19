@@ -46,7 +46,7 @@
 #include "vpart_range.h"
 
 #if defined(TILES)
-#include "sdltiles.h" // To get tile screen positions for draw_appliance_connections()
+#include "sdltiles.h"
 #endif
 
 class uilist_impl;
@@ -67,9 +67,9 @@ static const std::string flag_APPLIANCE( "APPLIANCE" );
 static const std::string flag_WIRING( "WIRING" );
 static const std::string flag_HALF_CIRCLE_LIGHT( "HALF_CIRCLE_LIGHT" );
 
-// Width of the entire set of windows. 60 is sufficient for
-// all tested cases while remaining within the 80x24 limit.
-// TODO: make this dynamic in the future.
+
+
+
 static const int win_width = 60;
 
 vpart_id vpart_appliance_from_item( const itype_id &item_id )
@@ -102,7 +102,7 @@ bool place_appliance( map &here, const tripoint_bub_ms &p, const vpart_id &vpart
     if( base ) {
         item copied = *base;
         if( vpinfo.base_item != copied.typeId() ) {
-            // transform the deploying item into what it *should* be before storing it
+
             copied.convert( vpinfo.base_item );
         }
         partnum = veh->install_part( here, point_rel_ms::zero, vpart, std::move( copied ) );
@@ -110,7 +110,7 @@ bool place_appliance( map &here, const tripoint_bub_ms &p, const vpart_id &vpart
         partnum = veh->install_part( here, point_rel_ms::zero, vpart );
     }
     if( partnum == -1 ) {
-        // unrecoverable, failed to be installed somehow
+
         here.destroy_vehicle( veh );
         return false;
     }
@@ -122,11 +122,11 @@ bool place_appliance( map &here, const tripoint_bub_ms &p, const vpart_id &vpart
         veh->add_tag( flag_WIRING );
     }
 
-    // Update the vehicle cache immediately,
-    // or the appliance will be invisible for the first couple of turns.
+
+
     here.add_vehicle_to_cache( veh );
 
-    // Connect to any neighbouring appliances or wires once
+
     std::unordered_set<const vehicle *> connected_vehicles;
     for( const tripoint_bub_ms &trip : here.points_in_radius( p, 1 ) ) {
         const optional_vpart_position vp = here.veh_at( trip );
@@ -148,7 +148,7 @@ bool place_appliance( map &here, const tripoint_bub_ms &p, const vpart_id &vpart
     }
     veh->part_removal_cleanup( here );
 
-    // Make some lighting appliances directed
+
     if( vpinfo.has_flag( flag_HALF_CIRCLE_LIGHT ) && partnum != -1 ) {
         orient_part( here, veh, vpinfo, partnum );
     }
@@ -166,7 +166,7 @@ void veh_app_interact::run( map &here, vehicle &veh, const point_rel_ms &p )
 static bool showing_connections = true;
 #endif
 
-// Registers general appliance actions from keybindings
+
 veh_app_interact::veh_app_interact( vehicle &veh, const point_rel_ms &p )
     : a_point( p ), veh( &veh ), ctxt( "APP_INTERACT", keyboard_mode::keycode )
 {
@@ -182,7 +182,7 @@ veh_app_interact::veh_app_interact( vehicle &veh, const point_rel_ms &p )
 #endif
 }
 
-// @returns true if a battery part exists on any vehicle connected to veh
+
 static bool has_battery_in_grid( map &here, vehicle *veh )
 {
     return !veh->search_connected_batteries( here ).empty();
@@ -223,18 +223,18 @@ void veh_app_interact::init_ui_windows( map &here )
     const int win_height = height_info + 2;
     const int full_height = win_height + height_input;
 
-    // NOTE: This offset is retained even though the header moved to uilist itself.
+
     point topleft( TERMX / 2 - win_width / 2, TERMY / 2 - full_height / 2 );
 
-    // Try to align the imgui window to be below the header.
-    // to that end, we have some awkward math translating character positions to screen positions here:
+
+
     ImVec2 text_metrics = { ImGui::CalcTextSize( "X" ).x, ImGui::GetTextLineHeight() };
     ImVec2 origin = text_metrics * ImVec2{ static_cast<float>( topleft.x ), static_cast<float>( topleft.y + win_height ) };
     ImVec2 size = text_metrics * ImVec2{ static_cast<float>( win_width ), static_cast<float>( height_input ) };
     imenu.desired_bounds = { origin.x,
                              origin.y,
-                             size.x,  // align the width of the input to be the same as the header
-                             -1,      // but let uilist choose the height as it pleases.
+                             size.x,
+                             -1,
                            };
 
     imenu.allow_cancel = true;
@@ -257,10 +257,10 @@ static void draw_imgui_line( point start, point end, uint32_t line_color, float 
 static void draw_connection_lines( point start, point end )
 {
 
-    // Yellow-ish. TODO: Expose to styles or inherit from one of our yellows?
+
     const uint32_t line_color = IM_COL32( 245, 255, 55, 200 );
 
-    //black (used as bordered outline)
+
     const uint32_t line_border_color = IM_COL32( 0, 0, 0, 255 );
 
     const float line_width = 4.0f;
@@ -272,17 +272,17 @@ static void draw_connection_lines( point start, point end )
 static void draw_appliance_connections( vehicle *veh )
 {
     if( !showing_connections ) {
-        return; // User toggled off
+        return;
     }
     const map &here = get_map();
-    // Normally drawing happens from the top-left pixel of the tile. We want to draw from the center.
+
     const point mid_tile_offset( tilecontext->get_tile_width() / 2,
                                  tilecontext->get_tile_height() / 2 );
-    // BAD HACK(?): Gets 0 index of vehicle parts
+
     point start = tilecontext->player_to_screen( veh->bub_part_pos( here,
                   veh->part( 0 ) ).xy() ) + mid_tile_offset;
 
-    // draw connections to other vehicles (jumper cable)
+
     for( const auto &other_vehicle : veh->search_connected_vehicles( here ) ) {
         vehicle *that_veh = other_vehicle.first;
         point end = tilecontext->player_to_screen( that_veh->bub_part_pos( here,
@@ -290,7 +290,7 @@ static void draw_appliance_connections( vehicle *veh )
         draw_connection_lines( start, end );
     }
 
-    // draw intra-vehicle connections (merged appliances)
+
     for( vpart_reference some_part : veh->get_all_parts() ) {
         point end = tilecontext->player_to_screen( veh->bub_part_pos( here,
                     some_part.part() ).xy() ) + mid_tile_offset;
@@ -301,16 +301,16 @@ static void draw_appliance_connections( vehicle *veh )
 
 std::string veh_app_interact::draw_info_imgui_header( map &here )
 {
-    // Always print this warning and only this warning if we don't have a grid.
-    // We should not pretend anything is functional without a battery, because it's not!
+
+
     if( !has_battery_in_grid( here, veh ) ) {
         return colorize( _( "Appliance has no connection to a battery." ), c_light_red );
     }
 
     std::string ret = veh->print_fuel_indicators( here, 0 );
 
-    // Onboard battery power
-    // Pre-existing issue: If the specific appliance we selected isn't *itself* a battery, this is considered empty!
+
+
     if( !veh->batteries.empty() ) {
         std::pair<int, int> battery = veh->battery_power_level( );
         nc_color batt_col = c_yellow;
@@ -318,7 +318,7 @@ std::string veh_app_interact::draw_info_imgui_header( map &here )
             batt_col = battery.first == 0 ? c_light_red :
                        battery.first == battery.second ? c_light_green : c_yellow;
         }
-        // Bad, but pre-existing.
+
         ret += colorize( string_format( _( "Onboard battery power: " ) ), c_white );
         ret += colorize( string_format( "%d/%d", battery.first, battery.second ), batt_col );
     }
@@ -339,46 +339,46 @@ std::string veh_app_interact::draw_info_imgui_header( map &here )
         ret += "\n";
     };
 
-    // Battery power output
+
     units::power grid_flow = 0_W;
     for( const std::pair<vehicle *const, float> &pair : veh->search_connected_vehicles( here ) ) {
-        grid_flow += pair.first->net_battery_charge_rate( here, /* include_reactors = */ true );
+        grid_flow += pair.first->net_battery_charge_rate( here, true );
     }
-    // Always start printing this on its own line
+
     ret += "\n";
     print_charge( _( "Grid battery power flow: " ), grid_flow, ret );
 
-    // Reactor power output
+
     if( !veh->reactors.empty() ) {
         const units::power rate = veh->active_reactor_epower( here );
         print_charge( _( "Reactor power output: " ), rate, ret );
     }
 
-    // Wind power output
+
     if( !veh->wind_turbines.empty() ) {
         units::power rate = veh->total_wind_epower( here );
         print_charge( _( "Wind power output: " ), rate, ret );
     }
 
-    // Solar power output
+
     if( !veh->solar_panels.empty() ) {
         units::power rate = veh->total_solar_epower( here );
         print_charge( _( "Solar power output: " ), rate, ret );
     }
 
-    // Water power output
+
     if( !veh->water_wheels.empty() ) {
         units::power rate = veh->total_water_wheel_epower( here );
         print_charge( _( "Water power output: " ), rate, ret );
     }
 
-    // Alternator power output
+
     if( !veh->alternators.empty() ) {
         units::power rate = veh->total_alternator_epower( here );
         print_charge( _( "Alternator power output: " ), rate, ret );
     }
 
-    // Other power output
+
     if( !veh->accessories.empty() || veh->has_part( "RECHARGE" ) ) {
         units::power rate = veh->total_accessory_epower() + veh->recharge_epower_this_turn;
         print_charge( _( "Appliance power consumption: " ), rate, ret );
@@ -411,8 +411,8 @@ bool veh_app_interact::can_siphon()
     return false;
 }
 
-// Helper function for selecting a part in the parts list.
-// If only one part is available, don't prompt the player.
+
+
 static vehicle_part *pick_part( const std::vector<vehicle_part *> &parts,
                                 const std::string &query_msg )
 {
@@ -465,12 +465,12 @@ void veh_app_interact::refill( )
     auto validate = [&pt]( const item & obj ) {
         if( pt->is_tank() ) {
             if( obj.is_watertight_container() && obj.num_item_stacks() == 1 ) {
-                // we are assuming only one pocket here, and it's a liquid so only one item
+
                 return pt->can_reload( obj.only_item() );
             }
         } else if( pt->is_fuel_store() ) {
             bool can_reload = pt->can_reload( obj );
-            //check base item for fuel_stores that can take multiple types of ammunition (like the fuel_bunker)
+
             if( pt->get_base().can_reload_with( obj, true ) ) {
                 return true;
             }
@@ -479,7 +479,7 @@ void veh_app_interact::refill( )
         return false;
     };
 
-    // Setup the refill activity
+
     item_location target = g->inv_map_splice( validate, string_format( _( "Refill %s" ), pt->name() ),
                            1 );
     if( target ) {
@@ -508,7 +508,7 @@ void veh_app_interact::siphon( map &here )
         return;
     }
 
-    // Setup liquid handling activity
+
     const item &base = pt->get_base();
     const int idx = veh->index_of_part( pt );
     item liquid( base.legacy_front() );
@@ -528,7 +528,7 @@ void veh_app_interact::rename()
         veh->name = name;
         if( veh->tracking_on ) {
             overmap_buffer.remove_vehicle( veh );
-            // Add the vehicle again, this time with the new name
+
             overmap_buffer.add_vehicle( veh );
         }
     }
@@ -631,32 +631,32 @@ void veh_app_interact::populate_app_actions( map &here )
     imenu.text = draw_info_imgui_header( here );
     app_actions.clear();
 
-    /******************** General actions ********************/
-    // Refill
+
+
     app_actions.emplace_back( [this]() {
         refill( );
     } );
     imenu.addentry( -1, can_refill( ), ctxt.keys_bound_to( "REFILL" ).front(),
                     ctxt.get_action_name( "REFILL" ) );
-    // Siphon
+
     app_actions.emplace_back( [&here, this]() {
         siphon( here );
     } );
     imenu.addentry( -1, can_siphon(), ctxt.keys_bound_to( "SIPHON" ).front(),
                     ctxt.get_action_name( "SIPHON" ) );
-    // Rename
+
     app_actions.emplace_back( [this]() {
         rename();
     } );
     imenu.addentry( -1, true, ctxt.keys_bound_to( "RENAME" ).front(),
                     ctxt.get_action_name( "RENAME" ) );
-    // Remove
+
     app_actions.emplace_back( [&here, this]() {
         remove( here );
     } );
     imenu.addentry( -1, veh->can_unmount( *vp, true ).success(), ctxt.keys_bound_to( "REMOVE" ).front(),
                     ctxt.get_action_name( "REMOVE" ) );
-    // Plug
+
     app_actions.emplace_back( [&here, this]() {
         plug( here );
     } );
@@ -665,14 +665,14 @@ void veh_app_interact::populate_app_actions( map &here )
                                    //~ An addendum to Plug In's description, as in: Plug in appliance / merge power grid".
                                    veh->is_powergrid() ? _( " / merge power grid" ) : "" ) );
 #if defined(TILES)
-    // Hide connections
+
     app_actions.emplace_back( []() {
         toggle_connections_visibility();
     } );
     imenu.addentry( -1, true, ctxt.keys_bound_to( "TOGGLE_CONNECTION_VISIBILITY" ).front(),
                     ctxt.get_action_name( "TOGGLE_CONNECTION_VISIBILITY" ) );
 
-    // Hide wire vehicle parts
+
     if( use_tiles && vp->info().has_flag( flag_WIRING ) ) {
         app_actions.emplace_back( [this]() {
             hide();
@@ -682,7 +682,7 @@ void veh_app_interact::populate_app_actions( map &here )
 #endif
 
     if( veh->is_powergrid() && veh->part_count() > 1 && !vp->info().has_flag( VPFLAG_WALL_MOUNTED ) ) {
-        // Disconnect from power grid
+
         app_actions.emplace_back( [&here, this]() {
             disconnect( here );
             veh = nullptr;
@@ -692,7 +692,7 @@ void veh_app_interact::populate_app_actions( map &here )
                              ctxt.get_action_name( "DISCONNECT_GRID" ), can_disc ? "" : _( "Remove other cables first" ) );
     }
 
-    /*************** Get part-specific actions ***************/
+
     veh_menu menu( veh, "IF YOU SEE THIS IT IS A BUG" );
     veh->build_interact_menu( menu, &here, veh->mount_to_tripoint( &here, a_point ), false );
     const std::vector<veh_menu_item> items = menu.get_items();
@@ -728,7 +728,7 @@ void veh_app_interact::app_loop( map &here )
     bool done = false;
     Character &you = get_player_character();
     while( !done ) {
-        // scope this tighter so that this ui is hidden when app_actions[ret]() triggers
+
         {
             ui.reset();
             shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor( here );
@@ -743,7 +743,7 @@ void veh_app_interact::app_loop( map &here )
         } else if( imenu.entries[ret].enabled ) {
             app_actions[ret]();
         }
-        // Player activity queued up, close interaction menu
+
         if( veh == nullptr || you.activity ) {
             done = true;
         }

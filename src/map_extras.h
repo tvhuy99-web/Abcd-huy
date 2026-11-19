@@ -88,7 +88,7 @@ class map_extra
 
         bool potentially_visible_at( om_vision_level vis ) const;
 
-        // Used by generic_factory
+
         bool was_loaded = false;
         void load( const JsonObject &jo, std::string_view src );
         static void finalize_all();
@@ -120,9 +120,9 @@ void debug_spawn_test();
 
 void clear();
 
-/// This function provides access to all loaded map extras.
+
 const generic_factory<map_extra> &mapExtraFactory();
 
-} // namespace MapExtras
+}
 
-#endif // CATA_SRC_MAP_EXTRAS_H
+#endif

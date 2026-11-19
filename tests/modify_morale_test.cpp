@@ -94,7 +94,7 @@ static const trait_id trait_VEGETARIAN( "VEGETARIAN" );
 
 static const vitamin_id vitamin_human_flesh_vitamin( "human_flesh_vitamin" );
 
-// Test cases for `Character::modify_morale` defined in `src/consumption.cpp`
+
 
 TEST_CASE( "food_enjoyability", "[food][modify_morale][fun]" )
 {
@@ -135,14 +135,14 @@ TEST_CASE( "dining_with_table_and_chair", "[food][modify_morale][table][chair]" 
     dummy.setpos( here, avatar_pos );
     dummy.worn.wear_item( dummy, item( itype_backpack ), false, false );
 
-    // Morale bonus only applies to unspoiled food that is not junk
+
     item_location bread = dummy.i_add( item( itype_sourdough_bread ) );
     REQUIRE( bread->is_fresh() );
     REQUIRE_FALSE( bread->has_flag( flag_ALLERGEN_JUNK ) );
 
-    // Much of the below code is to support the "Rigid Table Manners" trait, notoriously prone to
-    // causing unexpected morale effects from bandages, aspirin, cigs etc. (#38698, #39580)
-    // Table-related morale effects should not apply to any of the following items:
+
+
+
     const std::vector<itype_id> no_table_eating_bonus = {
         {
             itype_aspirin,
@@ -447,12 +447,12 @@ TEST_CASE( "junk_food_that_is_not_ingested", "[modify_morale][junk][no_ingest]" 
 
     item_location caff_gum = dummy.i_add( item( itype_caff_gum ) );
 
-    // This is a regression test for gum having "junk" material, and being
-    // treated as junk food (despite not being ingested). At the time of
-    // writing this test, gum and caffeinated gum are made of "junk", and thus
-    // are treated as junk food, but might not always be so. Here we set the
-    // relevant flags to cover the scenario we're interested in, namely any
-    // comestible having both "junk" and "no ingest" flags.
+
+
+
+
+
+
     caff_gum->set_flag( flag_ALLERGEN_JUNK );
     caff_gum->set_flag( flag_NO_INGEST );
 
@@ -606,7 +606,7 @@ TEST_CASE( "saprophage_character", "[food][modify_morale][saprophage]" )
 
         AND_GIVEN( "some rotten chewable food" ) {
             item_location toastem = dummy.i_add( item( itype_toastem ) );
-            // food rot > 1.0 is rotten
+
             toastem->set_relative_rot( 1.5 );
             REQUIRE( toastem->rotten() );
 
@@ -618,7 +618,7 @@ TEST_CASE( "saprophage_character", "[food][modify_morale][saprophage]" )
 
         AND_GIVEN( "some fresh chewable food" ) {
             item_location toastem = dummy.i_add( item( itype_toastem ) );
-            // food rot < 0.1 is fresh
+
             toastem->set_relative_rot( 0.0 );
             REQUIRE( toastem->is_fresh() );
 
@@ -665,4 +665,3 @@ TEST_CASE( "ursine_honey", "[food][modify_morale][ursine][honey]" )
         }
     }
 }
-

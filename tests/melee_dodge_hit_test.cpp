@@ -25,14 +25,14 @@ static const skill_id skill_dodge( "dodge" );
 
 static const trait_id trait_PROF_SKATER( "PROF_SKATER" );
 
-// The test cases below cover polymorphic functions related to melee hit and dodge rates
-// for the Character, player, and monster classes, including:
-//
-// - Character::get_hit_base, monster::get_hit_base
-// - Character::get_dodge_base, monster::get_dodge_base
-// - player::get_dodge, monster::get_dodge
 
-// Return the avatar's `get_hit_base` with a given DEX stat.
+
+
+
+
+
+
+
 static float hit_base_with_dex( avatar &dummy, int dexterity )
 {
     clear_character( dummy );
@@ -41,7 +41,7 @@ static float hit_base_with_dex( avatar &dummy, int dexterity )
     return dummy.get_hit_base();
 }
 
-// Return the avatar's `get_dodge_base` with the given DEX stat and dodge skill.
+
 static float dodge_base_with_dex_and_skill( avatar &dummy, int dexterity, int dodge_skill )
 {
     clear_character( dummy );
@@ -51,20 +51,20 @@ static float dodge_base_with_dex_and_skill( avatar &dummy, int dexterity, int do
     return dummy.get_dodge_base();
 }
 
-// Return the Creature's `get_dodge` with the given effect.
+
 static float dodge_with_effect( Creature &critter, const std::string &effect_name )
 {
-    // Set one effect and leave other attributes alone
+
     critter.clear_effects();
     critter.add_effect( efftype_id( effect_name ), 1_hours );
 
     return critter.get_dodge();
 }
 
-// Return the avatar's `get_dodge` while wearing a single item of clothing.
+
 static float dodge_wearing_item( avatar &dummy, item &clothing )
 {
-    // Get nekkid and wear just this one item
+
 
     std::list<item> temp;
     while( true ) {
@@ -129,8 +129,8 @@ TEST_CASE( "Character_get_dodge_base", "[character][melee][dodge][dex][skill]" )
     avatar &dummy = get_avatar();
     clear_character( dummy );
 
-    // Character::get_dodge_base is simply DEXTERITY / 2 + DODGE_SKILL
-    // Even with average dexterity, you can become really good at dodging
+
+
     GIVEN( "character has 8 DEX and no dodge skill" ) {
         THEN( "base dodge is 4" ) {
             CHECK( dodge_base_with_dex_and_skill( dummy, 8, 0 ) == 4.0f );
@@ -149,7 +149,7 @@ TEST_CASE( "Character_get_dodge_base", "[character][melee][dodge][dex][skill]" )
         }
     }
 
-    // More generally
+
 
     SECTION( "character get_dodge_base increases by 1/2 for each point of DEX" ) {
         CHECK( dodge_base_with_dex_and_skill( dummy, 1, 0 ) == 0.5f );
@@ -192,8 +192,8 @@ TEST_CASE( "monster_get_dodge_with_effects", "[monster][melee][dodge][effect]" )
     const float base_dodge = zombie.get_dodge_base();
     REQUIRE( base_dodge > 0 );
 
-    // Monsters don't have all the status effects of characters and can't be grabbed,
-    // but a few things may affect their ability to dodge.
+
+
 
     SECTION( "no effects or bonuses: base dodge" ) {
         zombie.clear_effects();
@@ -245,7 +245,7 @@ TEST_CASE( "player_get_dodge_with_effects", "[player][melee][dodge][effect]" )
     clear_character( dummy );
     dodge_base_with_dex_and_skill( dummy, 8, 4 );
 
-    // Compare all effects against base dodge ability
+
     const float base_dodge = dummy.get_dodge_base();
 
     SECTION( "no effects or bonuses: base dodge" ) {
@@ -266,7 +266,7 @@ TEST_CASE( "player_get_dodge_with_effects", "[player][melee][dodge][effect]" )
     }
 
     SECTION( "unstable footing: 1/4 dodge" ) {
-        // FIXME: Margin is flat instead of relative %.
+
         CHECK( dodge_with_effect( dummy, "bouldering" ) == Approx( base_dodge / 4 ).margin( 0.1f ) );
     }
 

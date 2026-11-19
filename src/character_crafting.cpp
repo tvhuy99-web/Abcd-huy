@@ -81,15 +81,15 @@ bool Character::studied_all_recipes( const itype &book ) const
 }
 const recipe_subset &Character::get_learned_recipes() const
 {
-    // Cache validity check
+
     if( !_skills->has_same_levels_as( *valid_autolearn_skills ) ) {
         for( const recipe * const &r : recipe_dict.all_autolearn() ) {
-            // skip nested recipes they will be covered in get_available_nested
+
             if( meets_skill_requirements( r->autolearn_requirements ) && !r->is_nested() ) {
                 learned_recipes->include( r );
             }
         }
-        *valid_autolearn_skills = *_skills; // Reassign the validity stamp
+        *valid_autolearn_skills = *_skills;
     }
 
     return *learned_recipes;
@@ -99,7 +99,7 @@ static bool check_nested_has_recipes( const recipe *r, const recipe_subset &res 
 {
     for( const recipe_id &nestedr : r->nested_category_data ) {
         if( nestedr->is_nested() ) {
-            // recursively check for a category that has stuff in it
+
             if( check_nested_has_recipes( &nestedr.obj(), res ) ) {
                 return true;
             }
@@ -115,7 +115,7 @@ recipe_subset Character::get_available_nested( const recipe_subset &res ) const
 {
     recipe_subset nested_recipes;
     for( const recipe * const &r : recipe_dict.all_nested() ) {
-        // only display a nested category if you know at least one recipe within it
+
         if( check_nested_has_recipes( r, res ) ) {
             nested_recipes.include( r );
         }
@@ -175,12 +175,12 @@ recipe_subset Character::get_available_recipes( const temp_crafting_inventory &c
 
     if( helpers != nullptr ) {
         for( Character *guy : *helpers ) {
-            // Directly form the helper's inventory
+
             res.include( get_recipes_from_books( guy->crafting_inventory( tripoint_bub_ms::zero, -1 ) ) );
-            // Being told what to do
+
             res.include_if( guy->get_learned_recipes(), [ this ]( const recipe & r ) {
                 return get_knowledge_level( r.skill_used ) >= static_cast<int>( r.get_difficulty(
-                            *this ) * 0.8f ); // Skilled enough to understand
+                            *this ) * 0.8f );
             } );
         }
     }
@@ -220,7 +220,7 @@ std::set<itype_id> Character::get_books_for_recipe( const temp_crafting_inventor
     for( const auto &book_lvl : r->booksets ) {
         itype_id book_id = book_lvl.first;
         int required_skill_level = book_lvl.second.skill_req;
-        // NPCs don't need to identify books
+
         if( !has_identified( book_id ) ) {
             continue;
         }

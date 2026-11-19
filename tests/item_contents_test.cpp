@@ -38,7 +38,7 @@ TEST_CASE( "item_contents" )
     const units::volume tool_belt_vol = tool_belt.volume();
     const units::mass tool_belt_weight = tool_belt.weight();
 
-    //check empty weight is consistent
+
     CHECK( tool_belt.weight( true ) == tool_belt.type->weight );
     CHECK( tool_belt.weight( false ) == tool_belt.type->weight );
 
@@ -69,17 +69,17 @@ TEST_CASE( "item_contents" )
         CHECK( i4.success() );
     }
 
-    // check the items actually got added to the tool belt
+
     REQUIRE( tool_belt.num_item_stacks() == 4 );
-    // tool belts are non-rigid
+
     CHECK( tool_belt.volume() == tool_belt_vol +
            hammer.volume() + tongs.volume() + wrench.volume() + crowbar.volume() );
-    // check that the tool belt's weight adds up all its contents properly
+
     CHECK( tool_belt.weight() == tool_belt_weight +
            hammer.weight() + tongs.weight() + wrench.weight() + crowbar.weight() );
-    // check that individual (not including contained items) weight is correct
+
     CHECK( tool_belt.weight( false ) == tool_belt.type->weight );
-    // check that the tool belt is "full"
+
     CHECK( !tool_belt.can_contain( crowbar ).success() );
 
     tool_belt.force_insert_item( crowbar, pocket_type::CONTAINER );
@@ -88,7 +88,7 @@ TEST_CASE( "item_contents" )
     tool_belt.overflow( here, tripoint_bub_ms::zero );
     CHECK( tool_belt.num_item_stacks() == 4 );
     tool_belt.overflow( here, tripoint_bub_ms::zero );
-    // overflow should only spill items if they can't fit
+
     CHECK( tool_belt.num_item_stacks() == 4 );
 
     item_location tool_belt_loc( map_cursor( tripoint_bub_ms::zero ),
@@ -96,7 +96,7 @@ TEST_CASE( "item_contents" )
     tool_belt_loc.remove_items_with( []( const item & it ) {
         return it.typeId() == itype_crowbar_pocket_test;
     } );
-    // check to see that removing an item works
+
     CHECK( tool_belt_loc->num_item_stacks() == 3 );
     tool_belt_loc->spill_contents( tripoint_bub_ms::zero );
     CHECK( tool_belt_loc->empty() );

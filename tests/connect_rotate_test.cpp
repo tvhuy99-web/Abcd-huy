@@ -46,7 +46,7 @@ TEST_CASE( "walls_should_be_unconnected_without_nearby_walls", "[multitile][conn
     int subtile = 0;
     int rotation = 0;
 
-    // Unconnected
+
     WHEN( "no connecting neighbours" ) {
         REQUIRE( here.ter_set( pos + point::east, ter_t_floor ) );
         REQUIRE( here.ter_set( pos + point::south, ter_t_floor ) );
@@ -76,7 +76,7 @@ TEST_CASE( "walls_should_connect_to_walls_as_end_pieces", "[multitile][connects]
     int subtile = 0;
     int rotation = 0;
 
-    // End pieces
+
     WHEN( "connecting neighbour south" ) {
         REQUIRE( here.ter_set( pos + point::south, ter_t_wall ) );
         REQUIRE( here.ter_set( pos + point::east, ter_t_floor ) );
@@ -145,7 +145,7 @@ TEST_CASE( "walls_should_connect_to_walls_as_corners", "[multitile][connects]" )
     int subtile = 0;
     int rotation = 0;
 
-    // Corners
+
     WHEN( "connecting neighbour south and east" ) {
         REQUIRE( here.ter_set( pos + point::south, ter_t_wall ) );
         REQUIRE( here.ter_set( pos + point::east, ter_t_wall ) );
@@ -214,7 +214,7 @@ TEST_CASE( "walls_should_connect_to_walls_as_edges", "[multitile][connects]" )
     int subtile = 0;
     int rotation = 0;
 
-    // Edges
+
     WHEN( "connecting neighbour north and south" ) {
         REQUIRE( here.ter_set( pos + point::south, ter_t_wall ) );
         REQUIRE( here.ter_set( pos + point::east, ter_t_floor ) );
@@ -257,7 +257,7 @@ TEST_CASE( "walls_should_connect_to_walls_as_t-connections_and_fully", "[multiti
     int subtile = 0;
     int rotation = 0;
 
-    // T connections
+
     WHEN( "connecting neighbour all but north" ) {
         REQUIRE( here.ter_set( pos + point::south, ter_t_wall ) );
         REQUIRE( here.ter_set( pos + point::east, ter_t_wall ) );
@@ -310,7 +310,7 @@ TEST_CASE( "walls_should_connect_to_walls_as_t-connections_and_fully", "[multiti
             CHECK( rotation == 1 );
         }
     }
-    // All
+
     WHEN( "connecting neighbour all" ) {
         REQUIRE( here.ter_set( pos + point::south, ter_t_wall ) );
         REQUIRE( here.ter_set( pos + point::east, ter_t_wall ) );
@@ -342,7 +342,7 @@ TEST_CASE( "windows_should_connect_to_walls_and_rotate_to_indoor_floor", "[multi
     int subtile = 0;
     int rotation = 0;
 
-    // Edges
+
     WHEN( "connecting neighbours north and south, and rotate to west" ) {
         REQUIRE( here.ter_set( pos + point::east, ter_t_pavement ) );
         REQUIRE( here.ter_set( pos + point::south, ter_t_wall ) );
@@ -465,7 +465,7 @@ TEST_CASE( "unconnected_windows_rotate_to_indoor_floor", "[multitile][rotates]" 
     int subtile = 0;
     int rotation = 0;
 
-    // Unconnected
+
     WHEN( "nothing to rotate to" ) {
         REQUIRE( here.ter_set( pos + point::east, ter_t_pavement ) );
         REQUIRE( here.ter_set( pos + point::south, ter_t_pavement ) );
@@ -534,4 +534,4 @@ TEST_CASE( "unconnected_windows_rotate_to_indoor_floor", "[multitile][rotates]" 
     }
 }
 
-#endif // SDL_TILES
+#endif

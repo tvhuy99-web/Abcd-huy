@@ -12,14 +12,14 @@
 
 static std::map<vitamin_id, vitamin> vitamins_all;
 
-/** @relates string_id */
+
 template<>
 bool string_id<vitamin>::is_valid() const
 {
     return vitamins_all.count( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const vitamin &string_id<vitamin>::obj() const
 {
@@ -121,7 +121,7 @@ void vitamin::reset()
 
 float vitamin::RDA_to_default( int percent ) const
 {
-    // if not a vitamin it's in Units and doesn't need conversion
+
     if( type_ != vitamin_type::VITAMIN ) {
         return percent;
     }
@@ -170,4 +170,4 @@ std::string enum_to_string<vitamin_type>( vitamin_type data )
     }
     cata_fatal( "Invalid vitamin_type" );
 }
-} // namespace io
+}

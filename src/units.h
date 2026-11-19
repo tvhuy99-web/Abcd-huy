@@ -34,48 +34,48 @@ class quantity
         using unit_type = U;
         using this_type = quantity<value_type, unit_type>;
 
-        /**
-         * Create an empty quantity - its @ref value_ is value initialized.
-         * It does not need an explicitly named unit, it's always 0: 0 l == 0 ml == 0 Ml.
-         */
+
+
+
+
         constexpr quantity() : value_() {
         }
-        /**
-         * Construct from value. This is supposed to be wrapped into a static
-         * function (e.g. `from_liter(int)` ) to provide context.
-         */
+
+
+
+
         constexpr quantity( const value_type &v, unit_type ) : value_( v ) {
         }
-        /**
-         * Conversion from other value type, e.g. from `quantity<int, foo>` to
-         * `quantity<float, foo>`. The unit type stays the same!
-         */
+
+
+
+
         template<typename other_value_type>
         // NOLINTNEXTLINE(google-explicit-constructor)
         constexpr quantity( const quantity<other_value_type, unit_type> &other ) :
             value_( other.value() ) {
         }
 
-        //returns the smallest possible value for this unit
+
         static constexpr this_type min() {
             return this_type( std::numeric_limits<value_type>::min(), unit_type{} );
         }
-        //returns the largest possible value for this unit
+
         static constexpr this_type max() {
             return this_type( std::numeric_limits<value_type>::max(), unit_type{} );
         }
 
-        /**
-         * Access the raw dimensionless value. Use it in a properly named wrapper function only.
-         */
+
+
+
         constexpr const value_type &value() const {
             return value_;
         }
 
-        /**
-         * The usual comparators, they compare the base value only.
-         */
-        /**@{*/
+
+
+
+
         constexpr bool operator==( const this_type &rhs ) const {
             return value_ == rhs.value_;
         }
@@ -94,30 +94,30 @@ class quantity
         constexpr bool operator<=( const this_type &rhs ) const {
             return !operator>( rhs );
         }
-        /**@}*/
 
-        /**
-         * Addition and subtraction of quantities of the same unit type. Result is
-         * a quantity with the same unit as the input.
-         * Functions are templated to allow combining quantities with different `value_type`, e.g.
-         * \code
-         *   quantity<int, foo> a = ...;
-         *   quantity<double, foo> b = ...;
-         *   auto sum = a + b;
-         *   static_assert(std::is_same<decltype(sum), quantity<double, foo>>::value);
-         * \endcode
-         *
-         * Note that `+=` and `-=` accept any type as `value_type` for the other operand, but
-         * they convert this back to the type of the right hand, like in `int a; a += 0.4;`
-         * \code
-         *   quantity<int, foo> a( 10, foo{} );
-         *   quantity<double, foo> b( 0.5, foo{} );
-         *   a += b;
-         *   cata_assert( a == quantity<int, foo>( 10 + 0.5, foo{} ) );
-         *   cata_assert( a == quantity<int, foo>( 10, foo{} ) );
-         * \endcode
-         */
-        /**@{*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         template<typename other_value_type>
         constexpr quantity < decltype( std::declval<value_type>() + std::declval<other_value_type>() ),
                   unit_type >
@@ -141,7 +141,7 @@ class quantity
             value_ -= rhs.value();
             return *this;
         }
-        /**@}*/
+
 
         constexpr this_type operator-() const {
             return this_type( -value_, unit_type{} );
@@ -166,48 +166,48 @@ inline quantity<V, U> fmod( quantity<V, U> num, quantity<V, U> den )
     return quantity<V, U>( std::fmod( num.value(), den.value() ), U{} );
 }
 
-/**
- * Multiplication and division with scalars. Result is a quantity with the same unit
- * as the input.
- * Functions are templated to allow scaling with different types:
- * \code
- *   quantity<int, foo> a{ 10, foo{} };
- *   auto b = a * 4.52;
- *   static_assert(std::is_same<decltype(b), quantity<double, foo>>::value);
- * \endcode
- *
- * Note that the result for `*=` and `/=` is calculated using the given types, but is
- * implicitly converted back to `value_type` as it is stored in the operand.
- * \code
- *   quantity<int, foo> a{ 10, foo{} };
- *   a *= 4.52;
- *   cata_assert( a == quantity<int, foo>( 10 * 4.52, foo{} ) );
- *   cata_assert( a != quantity<int, foo>( 10 * (int)4.52, foo{} ) );
- *   cata_assert( a == quantity<int, foo>( 45, foo{} ) );
- * \endcode
- *
- * Division of a quantity with a quantity of the same unit yields a dimensionless
- * scalar value, with the same type as the division of the contained `value_type`s:
- * \code
- *   quantity<int, foo> a{ 10, foo{} };
- *   quantity<double, foo> b{ 20, foo{} };
- *   auto proportion = a / b;
- *   static_assert(std::is_same<decltype(proportion), double>::value);
- *   cata_assert( proportion == 10 / 20.0 );
- * \endcode
- *
- */
-/**@{*/
-// the decltype in the result type ensures the returned type has the same scalar type
-// as you would get when performing the operation directly:
-// `int * double` => `double` and `char * int` => `int`
-// st is scalar type (dimensionless)
-// lvt is the value type (of a quantity) on the left side, rvt is the value type on the right side
-// ut is unit type (same for left and right side)
-// The enable_if ensures no ambiguity, the compiler may otherwise not be able to decide whether
-// "quantity / scalar" or "quantity / other_quanity" is meant.
 
-// scalar * quantity<foo, unit> == quantity<decltype(foo * scalar), unit>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std::is_arithmetic_v<st>>>
          inline constexpr quantity<decltype( std::declval<lvt>() * std::declval<st>() ), ut>
          operator*( const st &factor, const quantity<lvt, ut> &rhs )
@@ -215,7 +215,7 @@ template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std
     return { factor * rhs.value(), ut{} };
 }
 
-// same as above only with inverse order of operands: quantity * scalar
+
 template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std::is_arithmetic_v<st>>>
          inline constexpr quantity<decltype( std::declval<st>() * std::declval<lvt>() ), ut>
          operator*( const quantity<lvt, ut> &lhs, const st &factor )
@@ -223,11 +223,11 @@ template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std
     return { lhs.value() *factor, ut{} };
 }
 
-// quantity<foo, unit> * quantity<bar, unit> is not supported
+
 template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<std::is_arithmetic_v<lvt>>>
          inline void operator*( quantity<lvt, ut>, quantity<rvt, ut> ) = delete;
 
-         // operator *=
+
          template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std::is_arithmetic_v<st>>>
                   inline quantity<lvt, ut> &
                   operator*=( quantity<lvt, ut> &lhs, const st &factor )
@@ -236,8 +236,8 @@ template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<st
     return lhs;
 }
 
-// and the revers of the multiplication above:
-// quantity<foo, unit> / scalar == quantity<decltype(foo / scalar), unit>
+
+
 template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<std::is_arithmetic_v<rvt>>>
          inline constexpr quantity<decltype( std::declval<lvt>() * std::declval<rvt>() ), ut>
          operator/( const quantity<lvt, ut> &lhs, const rvt &divisor )
@@ -245,11 +245,11 @@ template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<st
     return { lhs.value() / divisor, ut{} };
 }
 
-// scalar / quantity<foo, unit> is not supported
+
 template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<std::is_arithmetic_v<lvt>>>
          inline void operator/( lvt, quantity<rvt, ut> ) = delete;
 
-         // quantity<foo, unit> / quantity<bar, unit> == decltype(foo / bar)
+
          template<typename lvt, typename ut, typename rvt>
          inline constexpr decltype( std::declval<lvt>() / std::declval<rvt>() )
          operator/( const quantity<lvt, ut> &lhs, const quantity<rvt, ut> &rhs )
@@ -257,7 +257,7 @@ template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<st
     return lhs.value() / rhs.value();
 }
 
-// operator /=
+
 template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std::is_arithmetic_v<st>>>
          inline quantity<lvt, ut> &
          operator/=( quantity<lvt, ut> &lhs, const st &divisor )
@@ -266,8 +266,8 @@ template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std
     return lhs;
 }
 
-// remainder:
-// quantity<foo, unit> % scalar == quantity<decltype(foo % scalar), unit>
+
+
 template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<std::is_arithmetic_v<rvt>>>
          inline constexpr quantity < decltype( std::declval<lvt>() % std::declval<rvt>() ), ut >
          operator%( const quantity<lvt, ut> &lhs, const rvt &divisor )
@@ -275,11 +275,11 @@ template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<st
     return { lhs.value() % divisor, ut{} };
 }
 
-// scalar % quantity<foo, unit> is not supported
+
 template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<std::is_arithmetic_v<lvt>>>
          inline void operator%( lvt, quantity<rvt, ut> ) = delete;
 
-         // quantity<foo, unit> % quantity<bar, unit> == decltype(foo % bar)
+
          template<typename lvt, typename ut, typename rvt>
          inline constexpr quantity < decltype( std::declval<lvt>() % std::declval<rvt>() ), ut >
          operator%( const quantity<lvt, ut> &lhs, const quantity<rvt, ut> &rhs )
@@ -287,7 +287,7 @@ template<typename lvt, typename ut, typename rvt, typename = std::enable_if_t<st
     return { lhs.value() % rhs.value(), ut{} };
 }
 
-// operator %=
+
 template<typename lvt, typename ut, typename st, typename = std::enable_if_t<std::is_arithmetic_v<st>>>
          inline quantity<lvt, ut> &
          operator%=( quantity<lvt, ut> &lhs, const st &divisor )
@@ -302,7 +302,7 @@ operator%=( quantity<lvt, ut> &lhs, const quantity<rvt, ut> &rhs )
     lhs = lhs % rhs;
     return lhs;
 }
-/**@}*/
+
 
 template<typename value_type>
 inline constexpr quantity<value_type, volume_in_milliliter_tag> from_milliliter(
@@ -454,7 +454,7 @@ inline constexpr value_type to_fahrenheit( const
     return ( v * 1.8f - from_kelvin( 459.67f ) ).value();
 }
 
-// Conversions from legacy temperature units. Do not use without a good reason.
+
 
 inline constexpr units::temperature from_legacy_bodypart_temp( int temp )
 {
@@ -545,7 +545,7 @@ inline constexpr value_type to_fahrenheit_delta( const
     return ( v * 1.8f ).value();
 }
 
-// Conversions from legacy temperature units. Do not use without a good reason.
+
 
 inline constexpr units::temperature_delta from_legacy_bodypart_temp_delta( int temp )
 {
@@ -559,7 +559,7 @@ inline constexpr int to_legacy_bodypart_temp_delta( const
     return static_cast<int>( units::to_kelvin_delta( v ) * 500.0 );
 }
 
-// Energy
+
 template<typename value_type>
 inline constexpr quantity<value_type, energy_in_millijoule_tag> from_millijoule(
     const value_type v )
@@ -571,8 +571,8 @@ template<typename value_type>
 inline constexpr quantity<value_type, energy_in_millijoule_tag> from_joule( const value_type v )
 {
     const value_type max_energy_joules = std::numeric_limits<value_type>::max() / 1000;
-    // Check for overflow - if the energy provided is greater than max energy, then it
-    // if overflow when converted to millijoules
+
+
     const value_type energy = v > max_energy_joules ? max_energy_joules : v;
     return from_millijoule<value_type>( energy * 1000 );
 }
@@ -581,9 +581,9 @@ template<typename value_type>
 inline constexpr quantity<value_type, energy_in_millijoule_tag> from_kilojoule( const value_type v )
 {
     const value_type max_energy_joules = std::numeric_limits<value_type>::max() / 1000;
-    // This checks for value_type overflow - if the energy we are given in Joules is greater
-    // than the max energy in Joules, overflow will occur when it is converted to millijoules
-    // The value we are given is in kJ, multiply by 1000 to convert it to joules, for use in from_joule
+
+
+
     value_type energy = v * 1000 > max_energy_joules ? max_energy_joules : v * 1000;
     return from_joule<value_type>( energy );
 }
@@ -606,7 +606,7 @@ inline constexpr value_type to_kilojoule( const quantity<value_type, energy_in_m
     return to_joule( v ) / 1000.0;
 }
 
-// Power (watts)
+
 template<typename value_type>
 inline constexpr quantity<value_type, power_in_milliwatt_tag> from_milliwatt(
     const value_type v )
@@ -618,8 +618,8 @@ template<typename value_type>
 inline constexpr quantity<value_type, power_in_milliwatt_tag> from_watt( const value_type v )
 {
     constexpr value_type max_power_watts = std::numeric_limits<value_type>::max() / 1000;
-    // Check for overflow - if the power provided is greater than max power, then it
-    // will overflow when converted to milliwatt
+
+
     const value_type power = v > max_power_watts ? max_power_watts : v;
     return from_milliwatt<value_type>( power * 1000 );
 }
@@ -628,9 +628,9 @@ template<typename value_type>
 inline constexpr quantity<value_type, power_in_milliwatt_tag> from_kilowatt( const value_type v )
 {
     constexpr value_type max_power_watts = std::numeric_limits<value_type>::max() / 1000;
-    // This checks for value_type overflow - if the power we are given in watts is greater
-    // than the max power in watts, overflow will occur when it is converted to milliwatts
-    // The value we are given is in kilowatts, multiply by 1000 to convert it to watts, for use in from_watt
+
+
+
     value_type power = v * 1000 > max_power_watts ? max_power_watts : v * 1000;
     return from_watt<value_type>( power );
 }
@@ -653,7 +653,7 @@ inline constexpr value_type to_kilowatt( const quantity<value_type, power_in_mil
     return to_watt( v ) / 1000.0;
 }
 
-// Money(cents)
+
 template<typename value_type>
 inline constexpr quantity<value_type, money_in_cent_tag> from_cent(
     const value_type v )
@@ -797,7 +797,7 @@ inline constexpr quantity<value_type, ememory_in_kilobytes_tag> from_terabytes( 
     return from_gigabytes<value_type>( v ) * 1000;
 }
 
-// converts a volume as if it were a cube to the length of one side
+
 template<typename value_type>
 inline constexpr quantity<value_type, length_in_millimeter_tag> default_length_from_volume(
     const quantity<value_type, volume_in_milliliter_tag> &v )
@@ -807,9 +807,9 @@ inline constexpr quantity<value_type, length_in_millimeter_tag> default_length_f
             std::cbrt( units::to_milliliter( v ) ) ) );
 }
 
-// Streaming operators for debugging and tests
-// (for UI output other functions should be used which render in the user's
-// chosen units)
+
+
+
 inline std::ostream &operator<<( std::ostream &o, mass_in_milligram_tag )
 {
     return o << "mg";
@@ -868,9 +868,9 @@ std::string display( const units::energy &v );
 std::string display( const units::ememory &v );
 std::string display( units::power v );
 
-} // namespace units
+}
 
-// Implicitly converted to volume, which has int as value_type!
+
 inline constexpr units::volume operator""_ml( const unsigned long long v )
 {
     return units::from_milliliter( v );
@@ -882,7 +882,7 @@ inline constexpr units::quantity<double, units::volume_in_milliliter_tag> operat
     return units::from_milliliter( v );
 }
 
-// Implicitly converted to volume, which has int as value_type!
+
 inline constexpr units::volume operator""_liter( const unsigned long long v )
 {
     return units::from_milliliter( v * 1000 );
@@ -894,7 +894,7 @@ inline constexpr units::quantity<double, units::volume_in_milliliter_tag> operat
     return units::from_milliliter( v * 1000 );
 }
 
-// Implicitly converted to mass, which has int as value_type!
+
 inline constexpr units::mass operator""_milligram( const unsigned long long v )
 {
     return units::from_milligram( v );
@@ -1220,9 +1220,9 @@ constexpr std::array<std::pair<std::string_view, mass>, 3> mass_units = { {
         { "kg", 1_kilogram },
     }
 };
-// NOTE: Due to string matching, any string that is a subset of another must come after the one it partially matches.
-// Because e.g. 'cent' will be read as a valid unit before 'cents', our order-of-iteration must check if the string is actually
-// 'cents' first, otherwise it will assume it is 'cent' and fail when parsing the 's' in 'cents'.
+
+
+
 constexpr std::array<std::pair<std::string_view, money>, 6> money_units = { {
         { "cents", 1_cent },
         { "cent", 1_cent },
@@ -1250,8 +1250,8 @@ constexpr std::array<std::pair<std::string_view, angle>, 3> angle_units = { {
         { "rad", 1_radians },
     }
 };
-// AFAIK unused, and it's probably not wise to use them...
-// If you need to serialize/deserialize, because of the offset, temperature_delta_units is more appropriate.
+
+
 constexpr std::array<std::pair<std::string_view, temperature>, 1> temperature_units = { {
         { "K", 1_K }
     }
@@ -1288,7 +1288,7 @@ units::temperature operator+( const units::temperature &, const units::temperatu
 
 units::temperature &operator+=( units::temperature &T, const units::temperature_delta &T_delta );
 
-} // namespace units
+}
 
 namespace detail
 {
@@ -1298,7 +1298,7 @@ T read_from_json_string_common( const std::string_view s,
                                 const std::array<std::pair<std::string_view, T>, N> &units, Error &&error )
 {
     size_t i = 0;
-    // returns whether we are at the end of the string
+
     const auto skip_spaces = [&]() {
         while( i < s.size() && s[ i ] == ' ' ) {
             ++i;
@@ -1322,13 +1322,13 @@ T read_from_json_string_common( const std::string_view s,
             error_msg += p.first;
         }
         error( error_msg.c_str(), i );
-        // above always throws but lambdas cannot be marked [[noreturn]]
+
         throw std::string( "Exceptionally impossible" );
     };
 
     if( skip_spaces() ) {
         error( "invalid quantity string: empty string", i );
-        // above always throws but lambdas cannot be marked [[noreturn]]
+
         throw std::string( "Exceptionally impossible" );
     }
     T result{};
@@ -1342,7 +1342,7 @@ T read_from_json_string_common( const std::string_view s,
         }
         if( i >= s.size() || !isdigit( s[ i ] ) ) {
             error( "invalid quantity string: number expected", i );
-            // above always throws but lambdas cannot be marked [[noreturn]]
+
             throw std::string( "Exceptionally impossible" );
         }
         int64_t value = 0;
@@ -1354,7 +1354,7 @@ T read_from_json_string_common( const std::string_view s,
     return result;
 }
 
-} // namespace detail
+}
 
 template<typename T, size_t N>
 T read_from_json_string( const JsonValue &jv,
@@ -1373,7 +1373,7 @@ template<typename T, size_t N>
 void dump_to_json_string( T t, JsonOut &jsout,
                           const std::array<std::pair<std::string_view, T>, N> &units )
 {
-    // deduplicate unit strings and choose the shortest representations
+
     std::map<T, std::string> sorted_units;
     for( const std::pair<std::string_view, T> &p : units ) {
         const auto it = sorted_units.find( p.second );
@@ -1416,4 +1416,4 @@ void dump_to_json_string( T t, JsonOut &jsout,
     jsout.write( str );
 }
 
-#endif // CATA_SRC_UNITS_H
+#endif

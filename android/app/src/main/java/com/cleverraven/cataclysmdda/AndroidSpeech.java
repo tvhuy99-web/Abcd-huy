@@ -18,23 +18,23 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** Android output driver. Gameplay priorities and context ownership belong to
- *  the caller; this class never queues stale text while the engine initializes.
- *  Public operations and TTS callbacks are serialized onto the main looper.
- *  The owner must close this instance when its lifecycle ends.
- */
+
+
+
+
+
 public final class AndroidSpeech implements AutoCloseable {
     public enum State { NEW, INITIALIZING, READY, MISSING_LANGUAGE, MISSING_VOICE, NETWORK_REQUIRED, FAILED, CLOSED }
     public enum Event { STARTED, DONE, CANCELLED, REJECTED, ERROR }
 
     public interface Listener {
-        // Callbacks run on the main looper. A native consumer must enqueue them
-        // for its game thread, never mutate gameplay from here.
+
+
         void onState(State state);
         void onUtterance(String clientId, Event event);
     }
 
-    /** One installed TTS engine, as reported by a probe instance (R06.1). */
+
     public static final class EngineOption {
         public final String name;
         public final String label;
@@ -45,12 +45,12 @@ public final class AndroidSpeech implements AutoCloseable {
         }
     }
 
-    /**
-     * One voice offered by one engine. Only the stable voice name is kept;
-     * the live {@link Voice} object is re-resolved inside the owning
-     * AndroidSpeech instance at initialize time, so a selection can be
-     * persisted and later reported MISSING_VOICE if the voice was removed.
-     */
+
+
+
+
+
+
     public static final class VoiceOption {
         public final String engineName;
         public final String voiceName;
@@ -65,20 +65,20 @@ public final class AndroidSpeech implements AutoCloseable {
         }
     }
 
-    /** Result of a one-shot engine/voice probe; lists are never null. */
+
     public interface ProbeListener {
         void onProbe(List<EngineOption> engines, List<VoiceOption> voices, boolean success);
     }
 
     private static final long PROBE_TIMEOUT_MS = 8000;
 
-    /**
-     * Enumerate installed engines and the voices of one engine (null asks
-     * for the system default engine) with a short-lived probe instance.
-     * The probe is always shut down before the callback and never speaks,
-     * so it cannot disturb the caller's own engine (R06.1/R06.2: exactly
-     * one speaking owner at a time; a probe is discovery-only).
-     */
+
+
+
+
+
+
+
     public static void probeVoices(Context context, String engineName, ProbeListener listener) {
         final Handler probeHandler = new Handler(Looper.getMainLooper());
         final Context appContext = context.getApplicationContext();
@@ -163,7 +163,7 @@ public final class AndroidSpeech implements AutoCloseable {
             try {
                 probe.shutdown();
             } catch (RuntimeException ignored) {
-                // Probe is discarded either way.
+
             }
         }
     }
@@ -173,8 +173,8 @@ public final class AndroidSpeech implements AutoCloseable {
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SpeechSession session = new SpeechSession();
-    // Cancelling on the UI thread invalidates any older speak() Runnable
-    // that is still queued on the same handler, before it reaches TTS.
+
+
     private final AtomicLong outputGeneration = new AtomicLong();
     private Listener listener;
     private TextToSpeech engine;
@@ -194,25 +194,25 @@ public final class AndroidSpeech implements AutoCloseable {
         return state;
     }
 
-    /** Explicit setup/recovery; no silent fallback to a different language.
-     *  A null engineName asks Android for the user's default engine.
-     */
+
+
+
     public void initialize(String engineName, Locale language, float rate) {
         initialize(engineName, language, rate, true);
     }
 
-    /** Online voices require an explicit caller choice, never silent fallback. */
+
     public void initialize(String engineName, Locale language, float rate, boolean offlineOnly) {
         initialize(engineName, language, rate, offlineOnly, null);
     }
 
-    /**
-     * Initialize with one explicitly chosen voice (by stable name, R06.1).
-     * A named voice that no longer exists fails MISSING_VOICE instead of
-     * silently speaking with a different voice; a named network voice
-     * under offlineOnly fails NETWORK_REQUIRED, exactly like the default
-     * voice path. Passing null keeps the engine-default voice behavior.
-     */
+
+
+
+
+
+
+
     public void initialize(String engineName, Locale language, float rate, boolean offlineOnly,
                            String voiceName) {
         initialize(engineName, language, rate, offlineOnly, voiceName, 1.0f, 1.0f);
@@ -314,7 +314,7 @@ public final class AndroidSpeech implements AutoCloseable {
         }
     }
 
-    /** Resolve a persisted voice name against this engine's current voices. */
+
     private Voice findVoice(String voiceName) {
         try {
             for (Voice candidate : engine.getVoices()) {
@@ -323,14 +323,14 @@ public final class AndroidSpeech implements AutoCloseable {
                 }
             }
         } catch (RuntimeException ignored) {
-            // Treated as missing: the caller recovers by explicit re-selection.
+
         }
         return null;
     }
 
-    /** One chunk at a time; the caller waits for DONE before its next chunk.
-     *  Invalid/not-ready requests are rejected, never held for a future screen.
-     */
+
+
+
     public void speak(String clientId, String text) {
         final long generation = outputGeneration.get();
         handler.post(() -> {
@@ -379,9 +379,9 @@ public final class AndroidSpeech implements AutoCloseable {
 
     public void cancel() {
         outputGeneration.incrementAndGet();
-        // The reader's gestures are handled on the main looper. Stop the
-        // Android engine before returning to the gesture dispatcher, not
-        // after another UI message or native snapshot gets processed.
+
+
+
         if (Looper.myLooper() == Looper.getMainLooper()) {
             cancelNow();
         } else {
@@ -477,7 +477,7 @@ public final class AndroidSpeech implements AutoCloseable {
             try {
                 engine.shutdown();
             } catch (RuntimeException ignored) {
-                // The driver will not use this engine again.
+
             }
             engine = null;
         }

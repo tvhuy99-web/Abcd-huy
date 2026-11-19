@@ -14,8 +14,8 @@ import re
 import subprocess
 
 
-# Mask comments without changing offsets, preserving strings (including raw
-# strings) so comment markers inside labels do not hide real registrations.
+
+
 TOKEN = re.compile(
     r'R"(?P<raw_delim>[^ ()\\\t\r\n]{0,16})\(.*?\)(?P=raw_delim)"'
     r'|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\''
@@ -44,8 +44,8 @@ def mask_comments(text):
 
 def scan(path, text):
     masked = mask_comments(text)
-    # Scan code outside string bodies: a documentation string mentioning a call
-    # must not itself become a call site. Arguments are read from `masked`.
+
+
     code = TOKEN.sub(lambda m: ''.join('\n' if c == '\n' else ' ' for c in m.group()), masked)
     for kind, pattern in CALLS:
         for match in pattern.finditer(masked):

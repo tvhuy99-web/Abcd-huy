@@ -35,82 +35,82 @@ namespace ui
 namespace omap
 {
 
-/**
- * Display overmap centered at the player's position.
- */
+
+
+
 void display();
-/** Reader-only list of already discovered landmarks within 500 local tiles. */
+
 void display_accessible_places();
-/** Game-thread continuation for a selected Explore Places vehicle trip:
- * use the native path to the driver's seat and timed engine ignition
- * before assigning the actual autodrive activity. */
+
+
+
 void update_accessible_drive_to_place();
 bool accessible_drive_to_place_pending();
 void cancel_accessible_drive_to_place();
-/** Candidate nearby destinations whose first overmap step differs from the
- * segment that the vehicle could not traverse. No UI or game state changes. */
+
+
 std::vector<std::vector<tripoint_abs_omt>> accessible_vehicle_alternative_routes(
     const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step );
-/**
- * Display overmap centered at starting_pos.
- */
+
+
+
 void look_around_map( tripoint_abs_ms starting_pos );
-/**
- * Display overmap centered at the given NPC's position and visually move across their intended OMT path.
- */
+
+
+
 void display_npc_path( tripoint_abs_omt starting_pos,
                        const std::vector<tripoint_abs_omt> &display_path );
-/**
- * Display overmap like with @ref display() and display hordes.
- */
+
+
+
 void display_hordes();
-/**
- * Display overmap like with @ref display() and display the weather.
- */
+
+
+
 void display_weather();
-/**
- * Display overmap like with @ref display() and display the weather that is within line of sight.
- */
+
+
+
 void display_visible_weather();
-/**
- * Display overmap like with @ref display() and display scent traces.
- */
+
+
+
 void display_scents();
-/**
- * Display overmap like with @ref display() and display the given zone.
- */
+
+
+
 void display_zones( const tripoint_abs_omt &center, const tripoint_abs_omt &select,
                     int iZoneIndex );
-/**
- * Display overmap like with @ref display() and enable the overmap editor.
- */
+
+
+
 void display_editor();
 
-/**
- * Interactive point choosing; used as the map screen.
- * The map is initially center at the players position.
- * @returns The absolute coordinates of the chosen point or
- * point::invalid if canceled with Escape (or similar key).
- */
+
+
+
+
+
+
 tripoint_abs_omt choose_point( const std::string &message = "", bool show_debug_info = false,
                                const int distance = INT_MAX );
 
-/**
- * Interactive point choosing; used as the map screen.
- * The map is initially center at the players x and y
- * location and the given z level.
- * @returns The absolute coordinates of the chosen point or
- * point::invalid if canceled with Escape (or similar key).
- */
+
+
+
+
+
+
+
 tripoint_abs_omt choose_point( const std::string &message, int z, bool show_debug_info = false,
                                const int distance = INT_MAX );
 
-/**
- * Interactive point choosing; used as the map screen.
- * The map is initially centered on the @ref origin.
- * @returns The absolute coordinates of the chosen point or
- * point::invalid if canceled with Escape (or similar key).
- */
+
+
+
+
+
+
 tripoint_abs_omt choose_point( const std::string &message, const tripoint_abs_omt &origin,
                                bool show_debug_info = false, const int distance = INT_MAX );
 
@@ -131,43 +131,43 @@ void path_mark(
     const std::string &message = "R;X: PATH" );
 
 void force_quit();
-} // namespace omap
+}
 
-} // namespace ui
+}
 
 namespace overmap_ui
 {
-// drawing relevant data, e.g. what to draw.
+
 struct overmap_draw_data_t {
-    // draw editor.
+
     bool debug_editor = false;
-    // draw scent traces.
+
     bool debug_scent = false;
-    // draw debug info.
+
     bool debug_info = false;
-    // darken explored tiles
+
     bool show_explored = true;
-    // currently auto traveling with overmap-only mode on
+
     bool overmap_only_auto_travel = false;
-    // message to display while using the map
+
     std::string message;
-    // if there is a distance limit to pick the OMT
+
     int distance = INT_MAX;
 
-    // draw zone location.
+
     tripoint_abs_omt select = tripoint_abs_omt( -1, -1, -1 );
     int iZoneIndex = -1;
     std::vector<tripoint_abs_omt> display_path;
-    //center of UI view; usually player OMT position
+
     tripoint_abs_omt origin_pos = tripoint_abs_omt( -1, -1, -1 );
-    /**
-     * remainder for smooth toggle between map and look_around
-     * SEEX = SEEY is half of OMT, so point_rel_ms( SEEX, SEEY ) is middle of a tile
-     */
+
+
+
+
     point_omt_ms origin_remainder = point_omt_ms( SEEX, SEEY );
-    //UI view cursor position
+
     tripoint_abs_omt cursor_pos = tripoint_abs_omt( -1, -1, -1 );
-    //the UI adaptor for the overmap; this can keep the overmap displayed while turns are processed
+
     std::shared_ptr<ui_adaptor> ui;
 
     overmap_draw_data_t() = default;
@@ -181,13 +181,13 @@ struct tiles_redraw_info {
 extern tiles_redraw_info redraw_info;
 #endif
 
-// what an overmap loop pass can change without input
+
 struct map_view_state {
     tripoint_abs_omt cursor;
     bool show_overlays = false;
 };
-// whether the overmap map area must be redrawn after a pass: any action but
-// TIMEOUT may have changed what the draw reads
+
+
 bool map_redraw_needed( const std::string &action, const map_view_state &drawn,
                         const map_view_state &now, bool animated_tiles );
 
@@ -195,14 +195,14 @@ weather_type_id get_weather_at_point( const tripoint_abs_omt &pos );
 std::tuple<char, nc_color, size_t> get_note_display_info( std::string_view note );
 bool is_generated_omt( const point_abs_omt &omp );
 
-} // namespace overmap_ui
-#endif // CATA_SRC_OVERMAP_UI_H
+}
+#endif
 
 class overmap_sidebar : public cataimgui::window
 {
         overmap_ui::overmap_draw_data_t &draw_data;
         const input_context &ictxt;
-        //uses input context to print a keybind hint
+
         void draw_sidebar_text( const std::string_view &original_text, const nc_color &color );
         void print_hint( const std::string &action, nc_color color = c_magenta );
         void draw_tile_info();

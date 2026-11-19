@@ -53,9 +53,9 @@ std::optional<tripoint_bub_ms> random_point_on_level( const map &m, const int z,
 std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_ms> &range,
         const std::function<bool( const tripoint_bub_ms & )> &predicate )
 {
-    // Optimist approach: just assume there are plenty of suitable places and a randomly
-    // chosen point will have a good chance to hit one of them.
-    // If there are only few suitable places, we have to find them all, otherwise this loop may never finish.
+
+
+
     for( int tries = 0; tries < 10; ++tries ) {
         const tripoint_bub_ms p( rng( range.min().x(), range.max().x() ), rng( range.min().y(),
                                  range.max().y() ),
@@ -78,7 +78,7 @@ std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_m
 
 int rng_map_coord( int border )
 {
-    // this assumes SEEY==SEEX
+
     return rng( border, SEEX * 2 - 1 - border );
 }
 

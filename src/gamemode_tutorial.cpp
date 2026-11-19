@@ -74,7 +74,7 @@ template<>
 std::string enum_to_string<tut_lesson>( tut_lesson data )
 {
     switch( data ) {
-            // *INDENT-OFF*
+
         case tut_lesson::LESSON_INTRO: return "LESSON_INTRO";
         case tut_lesson::LESSON_MOVE: return "LESSON_MOVE";
         case tut_lesson::LESSON_MOVEMENT_MODES: return "LESSON_MOVEMENT_MODES";
@@ -124,27 +124,27 @@ std::string enum_to_string<tut_lesson>( tut_lesson data )
         case tut_lesson::LESSON_CONSTRUCTION: return "LESSON_CONSTRUCTION";
         case tut_lesson::LESSON_THROWING: return "LESSON_THROWING";
         case tut_lesson::LESSON_FINALE: return "LESSON_FINALE";
-            // *INDENT-ON*
+
         case tut_lesson::NUM_LESSONS:
             break;
     }
     cata_fatal( "Invalid tut_lesson" );
 }
-} // namespace io
+}
 
 bool tutorial_game::init()
 {
     loading_ui::done();
-    // TODO: clean up old tutorial
 
-    // Start at noon at the end of the spring and set a fixed temperature of 20 degrees to prevent freezing
+
+
     calendar::turn = calendar::start_of_cataclysm + 8_weeks + 12_hours;
     get_weather().forced_temperature = units::from_celsius( 20 );
 
     tutorials_seen.clear();
     get_scent().reset();
-    // We use a Z-factor of 10 so that we don't plop down tutorial rooms in the
-    // middle of the "real" game world
+
+
     avatar &player_character = get_avatar();
     player_character.normalize();
 
@@ -165,9 +165,9 @@ bool tutorial_game::init()
     //~ default name for the tutorial
     player_character.name = _( "John Smith" );
     player_character.prof = profession::generic();
-    // overmap terrain coordinates
+
     const tripoint_om_omt lp( 50, 50, 0 );
-    // Assume overmap zero
+
     const tripoint_abs_omt lp_abs = project_combine( point_abs_om(), lp );
     overmap &starting_om = overmap_buffer.get( point_abs_om() );
     starting_om.place_special_forced( overmap_special_tutorial, lp, om_direction::type::north );
@@ -185,14 +185,14 @@ bool tutorial_game::init()
     g->load_map( project_to<coords::sm>( lp_abs ) );
     player_character.move_to( project_to<coords::ms>( lp_abs ) + point( 2, 2 ) );
 
-    // This shifts the view to center the players pos
+
     g->update_map( player_character );
 #if defined(__ANDROID__)
-    // The tutorial map has four stationary practice dummies. On Android the
-    // map can be available before its mapgen monsters are activated, leaving
-    // the screen-reader tutorial asking for a melee hit when no target exists.
-    // Restore only empty prescribed tiles, never overwrite an existing
-    // creature, and never respawn dummies killed during play.
+
+
+
+
+
     const std::array<point, 4> dummy_offsets = {
         point( 21, 9 ), point( 8, 10 ), point( 15, 12 ), point( 18, 22 )
     };
@@ -217,7 +217,7 @@ void tutorial_game::per_turn()
 {
     map &here = get_map();
 
-    // note that add_message does nothing if the message was already shown
+
     add_message( tut_lesson::LESSON_INTRO );
     add_message( tut_lesson::LESSON_MOVE );
 
@@ -306,7 +306,7 @@ void tutorial_game::pre_action( action_id &act )
                       "Weird things might happen when you load this save.  You have been warned." ) );
             break;
         default:
-            // Other actions are fine.
+
             break;
     }
 }
@@ -389,7 +389,7 @@ void tutorial_game::post_action( action_id act )
             break;
 
         default:
-            // TODO: add more actions here
+
             break;
 
     }
@@ -404,8 +404,8 @@ void tutorial_game::add_message( tut_lesson lesson )
     g->invalidate_main_ui_adaptor();
     std::string lesson_id = io::enum_to_string<tut_lesson>( lesson );
 #if defined(__ANDROID__)
-    // The Android screen reader uses touch gestures, not keyboard bindings.
-    // Keep the original snippets intact for desktop and other platforms.
+
+
     lesson_id = "ANDROID_READER_" + lesson_id;
 #endif
     std::string translated_lesson = SNIPPET.get_snippet_by_id( snippet_id( lesson_id ) )

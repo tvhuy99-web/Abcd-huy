@@ -55,7 +55,7 @@ std::string comp_selection<CompType>::nname() const
         case usage_from::both:
             return item::nname( comp.type, comp.count ) + _( " (person & nearby)" );
         case usage_from::player:
-        // Is the same as the default return;
+
         case usage_from::none:
         case usage_from::cancel:
         case usage_from::num_usages_from:
@@ -72,20 +72,20 @@ template<>
 std::string enum_to_string<usage_from>( usage_from data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case usage_from::map: return "map";
         case usage_from::player: return "player";
         case usage_from::both: return "both";
         case usage_from::none: return "none";
         case usage_from::cancel: return "cancel";
-        // *INDENT-ON*
+
         case usage_from::num_usages_from:
             break;
     }
     cata_fatal( "Invalid usage" );
 }
 
-} // namespace io
+}
 
 template<typename CompType>
 void comp_selection<CompType>::serialize( JsonOut &jsout ) const
@@ -153,7 +153,7 @@ void craft_command::execute( bool only_cache_comps )
         std::vector<comp_selection<tool_comp>> missing_tools = check_tool_components_missing( map_inv );
 
         if( missing_items.empty() && missing_tools.empty() ) {
-            // All items we used previously are still there, so we don't need to do selection.
+
             need_selections = false;
         } else if( !only_cache_comps && !query_continue( missing_items, missing_tools ) ) {
             return;
@@ -213,9 +213,9 @@ void craft_command::execute( bool only_cache_comps )
             item_selections.push_back( is );
         }
 
-        // Step recipes select their tools per step, so only stepless recipes
-        // select from the flattened whole-recipe tool list here; doing both would
-        // prompt for the same tools twice.
+
+
+
         tool_selections.clear();
         if( !rec->has_steps() ) {
             for( const auto &it : needs->get_tools() ) {
@@ -235,9 +235,9 @@ void craft_command::execute( bool only_cache_comps )
         return;
     }
 
-    // Only (re)select per-step tools when fresh selection is needed; a cached
-    // repeat craft whose tools are all still present reuses the stored
-    // allocations rather than reselecting and reprompting.
+
+
+
     if( need_selections && rec->has_steps() ) {
         bool cancelled = false;
         step_tool_allocs = select_step_tool_allocs( *crafter, *rec, batch_size, map_inv, cancelled );
@@ -249,7 +249,7 @@ void craft_command::execute( bool only_cache_comps )
     std::vector<attention_plan> plans;
     if( rec->has_attention_steps() && crafter->is_avatar() ) {
         std::optional<std::vector<attention_plan>> chosen =
-                show_craft_planning_modal( *rec, *crafter, batch_size, /*from_step=*/0, {} );
+                show_craft_planning_modal( *rec, *crafter, batch_size, 0, {} );
         if( !chosen ) {
             return;
         }
@@ -272,7 +272,7 @@ void craft_command::execute( bool only_cache_comps )
     }
 }
 
-/** Does a string join with ', ' of the components in the passed vector and inserts into 'str' */
+
 template<typename T>
 static std::string component_list_string( const std::vector<comp_selection<T>> &components )
 {
@@ -315,7 +315,7 @@ bool craft_command::continue_prompt_liquids( const std::function<bool( const ite
             continue;
         }
 
-        // Everything below only occurs for item components that are liquid containers
+
         std::function<bool( const item & )> empty_filter = [&filter]( const item & it ) {
             return it.empty_container() && filter( it );
         };
@@ -344,8 +344,8 @@ bool craft_command::continue_prompt_liquids( const std::function<bool( const ite
                 for( int radius = 0; radius <= PICKUP_RANGE && real_count > 0; radius++ ) {
                     for( const tripoint_bub_ms &p : m.points_in_radius( loc, radius ) ) {
                         if( rl_dist( loc, p ) >= radius ) {
-                            // "Simulate" consuming items and put them back
-                            // not very efficient but should be rare enough not to matter
+
+
                             std::list<item> tmp = m.use_amount_square( p, it.comp.type, real_count,
                                                   i == 0 ? empty_filter : filter );
                             bool cont_not_empty = false;
@@ -370,8 +370,8 @@ bool craft_command::continue_prompt_liquids( const std::function<bool( const ite
                 }
             }
             if( it.use_from & usage_from::player && real_count > 0 ) {
-                // "Simulate" consuming items and put them back
-                // not very efficient but should be rare enough not to matter
+
+
                 std::list<item> tmp = crafter->use_amount( it.comp.type, real_count,
                                       i == 0 ? empty_filter : filter );
                 real_count -= tmp.size();
@@ -408,7 +408,7 @@ static std::list<item> sane_consume_items( const comp_selection<item_comp> &it, 
         return consumed;
     }
 
-    // Everything below only occurs for item components that are liquid containers
+
     std::function<bool( const item & )> empty_filter = [&filter]( const item & it ) {
         return it.empty_container() && filter( it );
     };
@@ -440,12 +440,12 @@ static std::list<item> sane_consume_items( const comp_selection<item_comp> &it, 
 
 bool craft_command::safe_to_unload_comp( const item &it )
 {
-    // Candle wax from candles should be consumed with the candle
+
     if( it.is_container_empty() || it.typeId() == itype_candle ) {
         return false;
     }
 
-    // Return true if item contains anything "real"
+
     const std::function<bool( const item &i )> filter = []( const item & i ) {
         return !i.has_flag( flag_ZERO_WEIGHT ) && !i.has_flag( flag_NO_DROP );
     };
@@ -456,7 +456,7 @@ bool craft_command::safe_to_unload_comp( const item &it )
         return true;
     }
 
-    // Don't try to unload items that shouldn't be outside their container
+
     itype_id ammo = it.loaded_ammo().typeId();
     if( ammo.is_null() ) {
         return !it.empty_container();
@@ -470,8 +470,8 @@ bool craft_command::safe_to_unload_comp( const item &it )
 
 static bool should_add_crafting_faults( Character *who, const recipe *rec )
 {
-    // Intentionally does not consider books helping.
-    // Because ~~lazy implementation~~ book learning is no substitute for experience.
+
+
     if( rec->proficiency_skill_maluses( *who ) > 0.0f ) {
         return true;
     }
@@ -491,8 +491,8 @@ std::vector<std::vector<step_tool_alloc>> select_step_tool_allocs(
         return charges / 20 + charges % 20;
     };
 
-    // Replay a tool group's selection across groups with the same options and
-    // counts, so a group shared between steps prompts the crafter only once.
+
+
     std::vector<std::pair<std::string, comp_selection<tool_comp>>> replay;
     const auto group_key = []( const std::vector<tool_comp> &group ) -> std::string {
         std::vector<std::string> parts;
@@ -528,8 +528,8 @@ std::vector<std::vector<step_tool_alloc>> select_step_tool_allocs(
     };
 
     for( size_t i = 0; i < steps.size(); ++i ) {
-        // On resume only the current step's own tools are reselected; other
-        // steps keep their prior selections (filled in by the caller).
+
+
         if( reselect_step >= 0 && static_cast<int>( i ) != reselect_step ) {
             continue;
         }
@@ -546,10 +546,10 @@ std::vector<std::vector<step_tool_alloc>> select_step_tool_allocs(
         }
     }
 
-    // Recipe-root tools belong to the whole craft.  Distribute their charges
-    // across all timed steps pro-rata by each step's move budget (so per-step
-    // time, proficiency, and tool-speed modifiers are reflected); the last
-    // weighted step takes the rounding remainder so the shares sum exactly.
+
+
+
+
     const std::vector<std::vector<tool_comp>> &root_groups = rec.root_requirements().get_tools();
     if( root_groups.empty() ) {
         return allocs;
@@ -597,7 +597,7 @@ std::vector<std::vector<step_tool_alloc>> select_step_tool_allocs(
 
 item craft_command::create_in_progress_craft()
 {
-    // Use up the components and tools
+
     item_components used;
     std::vector<item_comp> comps_used;
     if( crafter->has_trait( trait_DEBUG_HS ) ) {
@@ -621,12 +621,12 @@ item craft_command::create_in_progress_craft()
 
     if( crafter->is_avatar() &&
         !continue_prompt_liquids( filter ) ) {
-        // player cancelled when prompted to unload liquid
+
         return item();
     }
 
-    // Build the per-step allocations the craft will carry.  A stepless recipe
-    // collapses its whole-recipe tool selections into one implicit step.
+
+
     std::vector<std::vector<step_tool_alloc>> start_allocs;
     if( rec->has_steps() ) {
         start_allocs = step_tool_allocs;
@@ -642,9 +642,9 @@ item craft_command::create_in_progress_craft()
         start_allocs = { step0 };
     }
 
-    // Run the start (bucket-0) tool debit on a probe before consuming components
-    // so a charge shortfall aborts without losing them; the debited allocations
-    // carry over to the real craft.
+
+
+
     {
         item probe( rec, batch_size, item_components{}, std::vector<item_comp> {} );
         probe.set_step_tool_allocs( start_allocs );
@@ -672,7 +672,7 @@ item craft_command::create_in_progress_craft()
         item_comp comp_used = selection.comp;
         comp_used.count *= batch_size;
 
-        //Handle duplicate component requirement
+
         auto found_it = std::find_if( comps_used.begin(),
         comps_used.end(), [&comp_used]( const item_comp & c ) {
             return c.type == comp_used.type;
@@ -687,7 +687,7 @@ item craft_command::create_in_progress_craft()
 
     item new_craft( rec, batch_size, used, comps_used, should_add_crafting_faults( crafter, rec ) );
 
-    // Carry the probe's debited start buckets onto the real craft.
+
     new_craft.set_step_tool_allocs( start_allocs );
     new_craft.set_tools_to_continue( true );
     new_craft.set_next_failure_point( *crafter );
@@ -737,7 +737,7 @@ std::vector<comp_selection<item_comp>> craft_command::check_item_components_miss
                     break;
             }
         } else {
-            // Counting by units, not charges.
+
             switch( item_sel.use_from ) {
                 case usage_from::player:
                     if( !crafter->has_amount( type, count, false, filter ) ) {
@@ -771,9 +771,9 @@ std::vector<comp_selection<tool_comp>> craft_command::check_tool_components_miss
 {
     std::vector<comp_selection<tool_comp>> missing;
 
-    // Step recipes store their tools per step; a root tool repeats across steps
-    // with the same selection, so check each distinct selection once.  Stepless
-    // recipes carry the flat whole-recipe selection list.
+
+
+
     std::vector<comp_selection<tool_comp>> to_check;
     if( rec->has_steps() ) {
         for( const std::vector<step_tool_alloc> &step_allocs : step_tool_allocs ) {

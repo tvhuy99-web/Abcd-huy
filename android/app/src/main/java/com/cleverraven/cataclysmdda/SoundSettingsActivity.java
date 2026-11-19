@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
-/** Four direct controls for the native game's music and sound effects. */
+
 public final class SoundSettingsActivity extends Activity {
     private static final String PREFS = "game_sound_controls";
     private BootstrapSelfVoiceSurface surface;
@@ -92,8 +92,8 @@ public final class SoundSettingsActivity extends Activity {
         SeekBar.OnSeekBarChangeListener changes = new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
                 updateVolumeLabels();
-                // The internal reader adjusts sliders with gestures, so an
-                // accessibility change may report fromUser=false.
+
+
                 persistAndApply();
             }
             @Override public void onStartTrackingTouch(SeekBar bar) { }
@@ -142,8 +142,8 @@ public final class SoundSettingsActivity extends Activity {
                 .putBoolean("effects_on", effectsOn)
                 .putInt("music_level", music)
                 .putInt("effects_level", effects).apply();
-        // JNI only queues the values. The game thread applies its own option
-        // changes and saves them; UI gestures never modify C++ options.
+
+
         CataclysmDDA.nativeQueueSoundSettings(musicOn ? music : 0,
                 effectsOn ? effects : 0, musicOn || effectsOn);
     }

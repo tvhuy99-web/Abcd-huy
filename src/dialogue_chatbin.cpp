@@ -15,7 +15,7 @@ void dialogue_chatbin::add_new_mission( mission *miss )
 
 void dialogue_chatbin::check_missions()
 {
-    // TODO: or simply fail them? Some missions might only need to be reported.
+
     auto &ma = missions_assigned;
     const auto last = std::remove_if( ma.begin(), ma.end(), []( class mission const * m ) {
         return !m->is_assigned();

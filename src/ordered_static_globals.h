@@ -4,4 +4,4 @@
 
 void ordered_static_globals();
 
-#endif // CATA_SRC_ORDERED_STATIC_GLOBALS_H
+#endif

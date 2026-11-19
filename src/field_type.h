@@ -48,7 +48,7 @@ struct hash<description_affix> {
         return static_cast<size_t>( k );
     }
 };
-} // namespace std
+}
 
 template<>
 struct enum_traits<description_affix> {
@@ -190,7 +190,7 @@ struct field_type {
         void finalize();
         void check() const;
 
-        // Used by generic_factory
+
         field_type_str_id id;
         std::vector<std::pair<field_type_str_id, mod_id>> src;
         bool was_loaded = false;
@@ -215,7 +215,7 @@ struct field_type {
         description_affix desc_affix = description_affix::DESCRIPTION_AFFIX_NUM;
         std::optional<map_fd_bash_info> bash_info;
 
-        // chance, issue, duration, speech
+
         std::tuple<int, std::string, time_duration, translation> npc_complain_data;
         field_immunity_data immunity_data;
 
@@ -239,9 +239,9 @@ struct field_type {
         bool decrease_intensity_on_contact = false;
 
     private:
-        // any_of( intensity_levels::dangerous )
+
         bool dangerous = false;
-        // all_of( intensity_levels::transparent )
+
         bool transparent = false;
 
         std::vector<map_field_processing::FieldProcessorPtr> processors;
@@ -254,11 +254,11 @@ struct field_type {
         std::string get_symbol( int level = 0 ) const {
             return utf32_to_utf8( get_intensity_level( level ).symbol );
         }
-        // any_of( intensity_levels::dangerous )
+
         inline bool is_dangerous() const {
             return dangerous;
         }
-        // all_of( intensity_levels::transparent )
+
         inline bool is_transparent() const {
             return transparent;
         }
@@ -288,6 +288,6 @@ void load_immunity( const JsonObject &jid, field_immunity_data &fd );
 const std::vector<field_type> &get_all();
 field_type get_field_type_by_legacy_enum( int legacy_enum_id );
 
-} // namespace field_types
+}
 
-#endif // CATA_SRC_FIELD_TYPE_H
+#endif

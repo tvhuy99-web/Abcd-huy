@@ -101,13 +101,13 @@ struct book_recipe_data {
 };
 
 struct practice_recipe_data {
-    // recipe difficulty will be set dynamically between min and max
-    // based on current skill level; max is optional and defaults to
-    // MAX_SKILL - 1
+
+
+
     int min_difficulty;
     int max_difficulty;
-    // character cannot raise the primary skill above this limit regardless
-    // of recipe difficulty; defaults to MAX_SKILL
+
+
     int skill_limit;
 
     void load( const JsonObject &jo );
@@ -115,17 +115,17 @@ struct practice_recipe_data {
 };
 
 struct batch_savings {
-    // Linear, time taken for recipe of time T and batch of N is:
-    // ((N/max_batch) * offset) + (N * (T - offset))
+
+
     struct linear {
         int64_t offset;
         std::optional<int> max_batch;
     };
     struct logistic {
-        // maximum achievable time reduction, as percentage of the original time.
-        // if zero then the recipe has no batch crafting time reduction.
+
+
         double rscale;
-        int rsize; // minimum batch size to needed to reach batch_rscale
+        int rsize;
     };
     struct none { };
 
@@ -140,42 +140,42 @@ struct batch_savings {
 
 struct recipe_step {
     translation name;
-    int64_t time = 0;  // movement points
+    int64_t time = 0;
     float exertion = 0.0f;
     std::vector<recipe_proficiency> proficiencies;
     batch_savings batch_info;
-    // Stored as requirement_id refs during load, resolved during finalize
+
     std::vector<std::pair<requirement_id, int>> reqs_internal;
-    // External requirements via "using" syntax, resolved during finalize
+
     std::vector<std::pair<requirement_id, int>> reqs_external;
-    // Populated during finalize from reqs_internal + reqs_external
+
     requirement_data requirements;
 
     step_attention attention = step_attention::none;
-    // nullopt = step waits indefinitely.
+
     std::optional<time_duration> max_time;
-    // Buffer past max_time before destruction.  Requires max_time.
+
     std::optional<time_duration> grace_period;
     translation unattend_message;
 
     void load( const JsonObject &jo, const std::string &recipe_name, int step_index );
 };
 
-// Pre-computed environment data for recipe cost calculations.
-// Eliminates hidden inventory scans from recipe time/proficiency functions.
-// Construct once at the evaluation boundary (UI open, craft start, 5% tick)
-// and pass through to all recipe cost functions.
-//
-// Use for_recipe() to compute from crafter + recipe, not bare {} --
-// {} means "no book bonuses, no tool speeds" which silently drops
-// book proficiency mitigation.
-struct crafting_cost_context {
-    book_proficiency_bonuses books;     // nearby book proficiency bonuses
-    std::vector<float> tool_speeds;     // per-step tool speed modifiers (empty = none)
 
-    // Compute full context: book bonuses + tool speed modifiers for this recipe.
+
+
+
+
+
+
+
+struct crafting_cost_context {
+    book_proficiency_bonuses books;
+    std::vector<float> tool_speeds;
+
+
     static crafting_cost_context for_recipe( const Character &guy, const recipe &rec );
-    // Book bonuses only (no tool speed modifiers). Cheaper than for_recipe().
+
     static crafting_cost_context for_proficiencies( const Character &guy );
 };
 
@@ -188,7 +188,7 @@ class recipe
         itype_id result_ = itype_id::NULL_ID();
         std::string variant_;
 
-        int64_t time = 0; // in movement points (100 per turn)
+        int64_t time = 0;
 
         std::string exertion_str;
         float exertion = 0.0f;
@@ -223,25 +223,25 @@ class recipe
         std::string subcategory;
 
         translation description;
-        // prefer calling this one if it's a description that player can see
+
         std::string get_description( const Character &crafter ) const;
-        // overrides the result name;
+
         translation name_;
 
         int difficulty = 0;
 
-        // Returns the recipe difficulty. For practice recipes, this is adjusted
-        // for the crafter's current skill level.
+
+
         int get_difficulty( const Character &crafter ) const;
-        // Returns the maximum skill level at which crafting this recipe would still
-        // give xp (matching the definition of cap from Character::practice).
+
+
         int get_skill_cap() const;
 
-        /** Fetch combined requirement data (inline and via "using" syntax).
-         *
-         * Use simple_requirements() for player display or when you just want to
-         * know the requirements as listed in the json files.  Use
-         * deduped_requirements() to calculate actual craftability of a recipe. */
+
+
+
+
+
         const requirement_data &simple_requirements() const {
             return requirements_;
         }
@@ -250,8 +250,8 @@ class recipe
             return deduped_requirements_;
         }
 
-        // Root-level requirements (inline + "using"), captured before per-step
-        // requirements merge in.  Empty for stepless recipes.
+
+
         const requirement_data &root_requirements() const {
             return root_requirements_;
         }
@@ -260,7 +260,7 @@ class recipe
             return id;
         }
 
-        /** Returns the character resource costs required to complete this recipe. */
+
         const character_resource_costs &get_character_resources() const {
             return character_resources;
         }
@@ -269,8 +269,8 @@ class recipe
             return requirements_.is_blacklisted();
         }
 
-        // Slower equivalent of is_blacklisted that needs to be used before
-        // recipe finalization happens
+
+
         bool will_be_blacklisted() const;
 
         std::function<bool( const item & )> get_component_filter(
@@ -282,10 +282,10 @@ class recipe
         void apply_negative_morale_mods( Character &guy ) const;
         void apply_positive_morale_mods( Character &guy ) const;
 
-        /** Prevent this recipe from ever being added to the player's learned recipes ( used for special NPC crafting ) */
+
         bool never_learn = false;
 
-        /** If recipe can be used for disassembly fetch the combined requirements */
+
         requirement_data disassembly_requirements() const {
             if( reversible ) {
                 return simple_requirements().disassembly_requirements();
@@ -294,79 +294,79 @@ class recipe
             }
         }
 
-        /// @returns The name (@ref item::nname) of the resulting item (@ref result).
-        /// @param decorated whether the result includes decoration (favorite mark, etc).
+
+
         std::string result_name( bool decorated = false ) const;
         std::vector<effect_on_condition_id> result_eocs;
         std::pair<int, time_duration> morale_modifier;
         skill_id skill_used;
         std::map<skill_id, int> required_skills;
-        /** Character resource costs required to complete this recipe */
+
         character_resource_costs character_resources;
-        // For step recipes, use get_proficiencies() instead -- this field is empty.
+
         std::vector<recipe_proficiency> proficiencies;
 
-        std::map<skill_id, int> autolearn_requirements; // Skill levels required to autolearn
-        std::map<skill_id, int> learn_by_disassembly; // Skill levels required to learn by disassembly
-        // Books containing this recipe, and the skill level required
+        std::map<skill_id, int> autolearn_requirements;
+        std::map<skill_id, int> learn_by_disassembly;
+
         std::map<itype_id, book_recipe_data> booksets;
-        // Parameters for practice recipes
+
         std::optional<practice_recipe_data> practice_data;
-        // Original data name for accessible practice lists. A faulty language
-        // catalog must not turn "computer (beginner)" into a camp blueprint.
-        // Display-only metadata; never serialize or overwrite translation keys.
+
+
+
         std::string practice_source_name;
         std::string practice_source_description;
-        // Parameters for nested categories
+
         std::set<recipe_id> nested_category_data;
 
-        std::set<flag_id> flags_to_delete; // Flags to delete from the resultant item.
+        std::set<flag_id> flags_to_delete;
 
-        // Returns true if the character satisfies all configured stat requirements.
+
         bool character_meets_requirements( const Character &character ) const;
-        // Returns true if the recipe has any character stat requirements.
+
         bool has_character_requirements() const;
-        // Returns the character stat requirements configured for this recipe.
+
         const std::map<scaling_stat, int> &get_character_requirements() const;
 
-        // Create a string list to describe the skill requirements for this recipe
-        // Format: skill_name(level/amount), skill_name(level/amount)
-        // Character object (if provided) used to color levels
 
-        // These are primarily used by the crafting menu.
-        // Format the primary skill string.
+
+
+
+
+
         std::string primary_skill_string( const Character &c ) const;
-        // Format the other skills string.
+
         std::string required_skills_string( const Character &c ) const;
-        // Format the proficiencies string.
+
         std::string required_proficiencies_string( const Character *c ) const;
         std::string used_proficiencies_string( const Character *c ) const;
         std::string missing_proficiencies_string( const Character *c ) const;
-        // Proficiencies for search
+
         std::string recipe_proficiencies_string() const;
-        // Required proficiencies, mandatory to craft
+
         std::vector<proficiency_id> required_proficiencies() const;
-        // True if character and helpers have all required proficiencies
+
         bool character_has_required_proficiencies( const Character &c ) const;
-        // Used proficiencies, will impede crafting if missing
+
         std::vector<proficiency_id> used_proficiencies() const;
-        // The time malus due to proficiencies lacking.
-        // book_bonuses: nearby book proficiency bonuses (avoids inventory scan).
+
+
         float proficiency_time_maluses( const Character &crafter,
                                         const book_proficiency_bonuses &books = {} ) const;
-        // The time malus if all the proficiencies were lacking
+
         float max_proficiency_time_maluses( const Character &crafter ) const;
-        // The skill malus due to proficiencies lacking.
-        // book_bonuses: nearby book proficiency bonuses (avoids inventory scan).
+
+
         float proficiency_skill_maluses( const Character &crafter,
                                          const book_proficiency_bonuses &books = {} ) const;
-        // The max skill malus due to proficiencies lacking
+
         float max_proficiency_skill_maluses( const Character &crafter ) const;
 
-        // How active of exercise this recipe is
+
         float exertion_level() const;
 
-        // Recipe steps support
+
         bool has_steps() const {
             return !steps_.empty();
         }
@@ -375,50 +375,50 @@ class recipe
         }
         bool has_attention_steps() const;
         bool has_remaining_attention_steps( int from_step ) const;
-        // Returns aggregate proficiencies for step recipes, or the legacy
-        // proficiencies field for stepless recipes.  This is a conservative
-        // whole-recipe approximation used for display, gating, approximate
-        // learning, and approximate failure/success math.
+
+
+
+
         const std::vector<recipe_proficiency> &get_proficiencies() const {
             return has_steps() ? aggregate_proficiencies_ : proficiencies;
         }
-        // Per-step proficiency time malus (uses step's own proficiency list).
-        // book_bonuses: nearby book proficiency bonuses (avoids inventory scan).
+
+
         static float proficiency_time_maluses_for_step(
             const Character &crafter, const recipe_step &step,
             const book_proficiency_bonuses &books );
-        // Per-step time budget in base moves (with proficiency malus and batch savings).
-        // Same per-step formula that batch_time() uses internally.
-        // ignore_proficiencies skips the proficiency malus (passive steps run on
-        // wall-clock independent of crafter skill).
+
+
+
+
         double step_budget_moves( const Character &guy, size_t step_idx, int batch,
                                   const crafting_cost_context &ctx,
                                   recipe_time_flag flags = recipe_time_flag::none ) const;
 
-        // This is used by the basecamp bulletin board.
+
         std::string required_all_skills_string( const std::map<skill_id, int> & ) const;
 
-        // Create a string to describe the time savings of batch-crafting, if any.
-        // Format: "N% at >M units" or "none"
+
+
         std::string batch_savings_string() const;
 
-        // Create an item instance as if the recipe was just finished,
-        // Contain charges multiplier
+
+
     private:
         std::vector<item> create_result( bool set_components, bool is_food,
                                          item_components *used = nullptr ) const;
     public:
         std::vector<item> create_results( int batch = 1, item_components *used = nullptr ) const;
 
-        // Create byproduct instances as if the recipe was just finished
+
         std::vector<item> create_byproducts( int batch = 1 ) const;
         std::map<itype_id, int> get_byproducts() const;
         bool in_byproducts( const itype_id &it ) const;
         bool has_byproducts() const;
-        // Raw legacy byproduct definitions, without expanding the
-        // byproduct item group (get_byproducts() rolls the group).
-        // Readers that must not generate items use these two accessors
-        // to describe byproducts deterministically.
+
+
+
+
         const std::map<itype_id, int> &legacy_byproducts() const;
         bool has_byproduct_group() const;
 
@@ -442,11 +442,11 @@ class recipe
         void load( const JsonObject &jo, std::string_view src );
         void finalize();
 
-        /** Returns a non-empty string describing an inconsistency (if any) in the recipe. */
+
         std::string get_consistency_error() const;
 
         bool is_practice() const;
-        /* Return true if this is NOT a recipe but instead only nested recipe (folder for recipes).*/
+
         bool is_nested() const;
         bool is_blueprint() const;
         const update_mapgen_id &get_blueprint() const;
@@ -458,19 +458,19 @@ class recipe
         const std::vector<std::pair<std::string, int>> &blueprint_requires() const;
         const std::vector<std::pair<std::string, int>> &blueprint_excludes() const;
         const parameterized_build_reqs &blueprint_build_reqs() const;
-        /**
-         * Calculate blueprint requirements according to changed terrain and furniture
-         * tiles, then check the calculated requirements against blueprint requirements
-         * specified in JSON.  If there's any inconsistency, it issues a debug message.
-         * This is only used in unit tests so as to speed up data loading in gameplay.
-         */
+
+
+
+
+
+
         void check_blueprint_requirements();
 
         bool hot_result() const;
 
         bool removes_raw() const;
 
-        // Return the amount the recipe will produce (be it charges, or whole items).
+
         int makes_amount() const;
 
     private:
@@ -481,97 +481,97 @@ class recipe
         recipe_id id = recipe_id::NULL_ID();
         std::vector<std::pair<recipe_id, mod_id>> src;
 
-        /** Abstract recipes can be inherited from but are themselves disposed of at finalization */
+
         bool abstract = false;
 
-        /** set learning requirements equal to required skills at finalization? */
+
         bool autolearn = false;
 
-        /** Does the item spawn contained in container? */
+
         bool contained = false;
 
-        /** Does the container spawn sealed? */
+
         bool sealed = true;
 
-        /** What does the item spawn contained in? Unset ("null") means default container. */
+
         itype_id container = itype_id::NULL_ID();
 
-        /** What variant of the above container should be used? Unset ("") means a randomly chosen variant if it has variants. */
+
         std::string container_variant;
 
-        /** Can recipe be used for disassembly of @ref result via @ref disassembly_requirements */
+
         bool reversible = false;
 
-        /** Time (in moves) to disassemble if different to assembly. Requires `reversible = true` */
+
         int64_t uncraft_time = 0;
 
-        /** External requirements (via "using" syntax) where second field is multiplier */
+
         std::vector<std::pair<requirement_id, int>> reqs_external;
 
-        /** Requires specified inline with the recipe (and replaced upon inheritance) */
+
         std::vector<std::pair<requirement_id, int>> reqs_internal;
 
-        /** Character stat requirements. */
+
         std::map<scaling_stat, int> character_requirements_;
 
-        /** Combined requirements cached when recipe finalized */
+
         requirement_data requirements_;
 
-        /** Snapshot backing root_requirements() */
+
         requirement_data root_requirements_;
 
-        /** Deduped version constructed from the above requirements_ */
+
         deduped_requirement_data deduped_requirements_;
 
-        /** Recipe steps (empty for stepless/legacy recipes) */
+
         std::vector<recipe_step> steps_;
-        /** Aggregate proficiency view for step recipes (empty for stepless) */
+
         std::vector<recipe_proficiency> aggregate_proficiencies_;
 
         std::set<std::string> flags;
 
-        /** If set (zero or positive) set charges of output result for items counted by charges */
+
         std::optional<int> charges;
 
-        /** Legacy definitions for byproducts **/
+
         std::map<itype_id, int> byproducts;
 
-        /** Item group representing byproducts **/
+
         std::optional<item_group_id> byproduct_group;
 
         batch_savings batch_info;
-        int result_mult = 1; // used by certain batch recipes that create more than one stack of the result
+        int result_mult = 1;
         update_mapgen_id blueprint;
         translation bp_name;
         using TranslationMap = std::map<std::string, translation>;
         std::map<std::string, TranslationMap> bp_parameter_names;
         std::vector<itype_id> bp_resources;
         std::vector<std::pair<std::string, int>> bp_provides;
-        /** bp_requires specifies which other basecamp components need to exist
-         * before this one.  Whereas bp_build_reqs below contains the material
-         * and skills requirements */
+
+
+
         std::vector<std::pair<std::string, int>> bp_requires;
         std::vector<std::pair<std::string, int>> bp_excludes;
 
-        /** Blueprint requirements either autocalculcated or explicitly
-         * specified.  These members relate to resolving those blueprint
-         * requirements into the standard recipe requirements. */
+
+
+
         bool bp_autocalc = false;
         bool check_blueprint_needs = false;
         cata::value_ptr<parameterized_build_reqs> bp_build_reqs;
 };
 
-// ---------- Tool speed modifiers ----------
 
-// Best (lowest) speed modifier for a quality at a given level from available items.
-// Returns 1.0f if no items have a speed modifier for this quality.
-// crafter is used for charged_qualities (ammo_sufficient check).
+
+
+
+
 float best_quality_speed_modifier( const temp_crafting_inventory &inv,
                                    const Character &crafter, const quality_id &qual, int level );
 
-// Compute per-step tool speed modifiers for a recipe from the crafter's inventory.
-// Returns a vector with one float per step (1.0 = no modifier).
-// For stepless recipes, returns empty vector.
+
+
+
 std::vector<float> compute_tool_speeds( const recipe &rec, const Character &crafter );
 
-#endif // CATA_SRC_RECIPE_H
+#endif

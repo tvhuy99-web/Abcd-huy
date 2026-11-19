@@ -8,7 +8,7 @@
 
 #include "printf_converter.h"
 
-// #include <fmt/format.h>
+
 #include <fmt/printf.h>
 
 extern std::string string_vfmt( fmt::string_view format, fmt::format_args args );
@@ -27,4 +27,4 @@ inline std::string string_format( std::string_view format, Args &&...args )
     return string_format_inner( format, printf_converter<std::decay_t<Args>> {}.convert( args )... );
 }
 
-#endif // CATA_SRC_STRING_FORMATTER_H
+#endif

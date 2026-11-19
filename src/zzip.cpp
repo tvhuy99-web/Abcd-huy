@@ -33,8 +33,8 @@
 namespace
 {
 
-// Implementations of the mandatory Json helper types
-// to use flexbuffers/JsonObject with zzips.
+
+
 
 struct zzip_flexbuffer_storage : flexbuffer_storage {
     std::shared_ptr<mmap_file> mmap_handle_;
@@ -85,8 +85,8 @@ struct zzip_vector_storage : flexbuffer_storage {
     }
 };
 
-// To save time, and because we aren't multithreading, we can cache zstd
-// compress and decompress contexts, indexed by dictionary path.
+
+
 struct cached_zstd_context {
     std::vector<char> dictionary_;
     ZSTD_CCtx *cctx = nullptr;
@@ -136,7 +136,7 @@ struct cached_zstd_context {
 
 std::unordered_map<std::string, cached_zstd_context> cached_contexts;
 
-} // namespace
+}
 
 struct zzip::compressed_entry {
     std::string path;
@@ -182,7 +182,7 @@ struct zzip_meta {
 };
 
 
-// A helper class for safely and consistently accessing metadata from the footer index.
+
 struct zzip_footer {
     const JsonObject &footer_;
 
@@ -285,9 +285,9 @@ bool write_footer_len_and_checksum( void *base, uint64_t frame_len, uint64_t foo
     return true;
 }
 
-// Given a pointer and length of an encoded entry, reads or skips the metadata
-// and returns a pointer to the beginning of any content after the metadata frames.
-// Returns { nullptr, 0 } on any detected errors.
+
+
+
 std::pair<void *, size_t> read_and_skip_entry_metadata(
     void *entry_base,
     size_t entry_len,
@@ -329,7 +329,7 @@ std::pair<void *, size_t> read_and_skip_entry_metadata(
     return { base, entry_len };
 }
 
-} // namespace
+}
 
 struct zzip::context {
     context( ZSTD_CCtx *cctx, ZSTD_DCtx *dctx )
@@ -359,8 +359,8 @@ std::optional<zzip> zzip::load( std::filesystem::path const &path,
     int retries = 0;
 
     while( !file && ++retries < 3 ) {
-        // It's the caller's responsibility to ensure this is a writeable path, but maybe
-        // OneDrive or antivirus is interfering. Wait a couple time slices to see if it resolves.
+
+
         std::this_thread::sleep_for( std::chrono::milliseconds( 32 ) );
         file = mmap_file::map_writeable_file( path );
     }
@@ -397,7 +397,7 @@ std::optional<zzip> zzip::load(
                 flexbuffer = std::make_shared<zzip_flexbuffer>( std::move( storage ) );
                 footer = JsonValue( std::move( flexbuffer ), root, nullptr, 0 );
             } catch( std::exception &e ) {
-                // Something went wrong. Try to recover the file.
+
                 needs_footer = true;
             }
         }
@@ -563,7 +563,7 @@ std::vector<std::byte> zzip::get_file( std::filesystem::path const &zzip_relativ
     size_t size = get_file_size( zzip_relative_path );
     buf.resize( size );
     size_t final_size = get_file_to( zzip_relative_path, buf.data(), size );
-    // get_file_to returns 0 on error so we return an empty array.
+
     buf.resize( final_size );
     return buf;
 }
@@ -640,7 +640,7 @@ std::vector<zzip::entry_layout> zzip::get_layout() const
     return layout;
 }
 
-// Returns a copy of the footer json as a fresh independent object, not backed by the zzip.
+
 JsonObject zzip::copy_footer() const
 {
     if( !file_ ) {
@@ -653,7 +653,7 @@ JsonObject zzip::copy_footer() const
             old_content_end = meta_opt->content_end;
         }
         if( file_->len() <= old_content_end ) {
-            // This should really be impossible.
+
             return JsonObject{};
         }
         size_t footer_size = file_->len() - old_content_end;
@@ -675,18 +675,18 @@ namespace
 {
 size_t round_up_file_size( size_t bytes )
 {
-    // Round up to a whole page. Drives nowadays are all 4k pages.
+
     size_t needed_pages = std::max( size_t{ 1 }, ( bytes + kAssumedPageSize - 1 ) / kAssumedPageSize );
 
     return needed_pages * kAssumedPageSize;
 }
-} // namespace
+}
 
-// Ensures the zzip file has room to write at least this many bytes.
-// Returns the guaranteed size of the file, which is at least bytes large.
+
+
 size_t zzip::ensure_capacity_for( size_t bytes )
 {
-    // Round up to a whole page. Drives nowadays are all 4k pages.
+
     size_t new_size = round_up_file_size( bytes );
 
     if( file_->len() < new_size && !file_->resize_file( new_size ) ) {
@@ -695,18 +695,18 @@ size_t zzip::ensure_capacity_for( size_t bytes )
     return new_size;
 }
 
-// Actually performs the compression and encoding of a file into the zzip.
+
 size_t zzip::write_file_at( std::string_view filename, std::string_view content, size_t offset,
                             std::optional<uint64_t> force_checksum )
 {
-    // The format of a compressed entry is a series of zstd frames.
-    // There are an unbounded number of leading skippable frames of unspecified content.
-    // At present, we write two skippable frames per entry:
-    //   - A frame for the filename of the entry.
-    //   - A frame for a 64 bit XXH checksum of the entire compressed frame.
-    //   - The actual compressed frame.
-    // Returns the size of the entire file entry, or the return zstd error.
-    // (i.e. from the start of the first skippable frame to the end of the compressed data).
+
+
+
+
+
+
+
+
 
     if( file_->len() <= offset ) {
         return 0;
@@ -723,7 +723,7 @@ size_t zzip::write_file_at( std::string_view filename, std::string_view content,
         return header_size;
     }
     offset += header_size;
-    // Make room for the checksum frame before the file.
+
     offset += kEntryChecksumFrameSize;
     size_t file_size = ZSTD_compress2(
                            ctx_->cctx,
@@ -756,10 +756,10 @@ size_t zzip::write_file_at( std::string_view filename, std::string_view content,
     return header_size + checksum_size + file_size;
 }
 
-// Writes a new footer at the end of the zzip, copying old entries from the given
-// original JsonObject and inserting the given new entries.
-// If shrink_to_fit is true, will shrink the file as needed to eliminate padding bytes
-// between the content and the footer.
+
+
+
+
 bool zzip::update_footer( JsonObject const &original_footer,
                           size_t content_end,
                           const std::vector<compressed_entry> &entries, bool shrink_to_fit )
@@ -768,8 +768,8 @@ bool zzip::update_footer( JsonObject const &original_footer,
     flexbuffers::Builder builder;
     size_t root_start = builder.StartMap();
     size_t total_content_size = 0;
-    // The k*Key constants are constexpr string_views built from string literals, so
-    // their underlying buffer is null-terminated and safe for the const char* APIs.
+
+
     // NOLINTBEGIN(bugprone-suspicious-stringview-data-usage)
     {
         size_t entries_start = builder.StartMap( kEntriesKey.data() );
@@ -843,13 +843,13 @@ bool zzip::update_footer( JsonObject const &original_footer,
     return true;
 }
 
-// Scans the zzip to read what data we can validate and write a fresh footer.
+
 bool zzip::rewrite_footer( bool shrink_to_fit )
 {
     const size_t zzip_len = file_->len();
     size_t scan_offset = 0;
 
-    // Check for the footer checksum data
+
     std::array<uint64_t, 2> footer_checksums{ 0, 0 };
     unsigned int footer_magic = -1;
     size_t footer_checksum_size = ZSTD_readSkippableFrame(
@@ -863,12 +863,12 @@ bool zzip::rewrite_footer( bool shrink_to_fit )
                               footer_checksum_size != kFooterChecksumContentSize;
 
     if( needs_footer_frame ) {
-        // Either it's a completely fresh file or it's hopelessly corrupted.
+
         size_t new_file_size = ensure_capacity_for( kFooterChecksumFrameSize + kDefaultFooterSize );
         if( new_file_size < kFooterChecksumContentSize ) {
             return false;
         }
-        // This is a glorified memcpy, assume it works.
+
         size_t footer_frame_size = ZSTD_writeSkippableFrame(
                                        file_->base(),
                                        new_file_size,
@@ -884,12 +884,12 @@ bool zzip::rewrite_footer( bool shrink_to_fit )
 
     std::unordered_map<std::string, compressed_entry> entries_map;
 
-    // Try to recover as many files as we can
+
     while( scan_offset < zzip_len ) {
-        // Scan the headers for the filename and checksum fields.
-        // The checksum is for the _compressed_ content, to make sure it is
-        // okay to decompress. Not sure if zstd does sensible things when asked
-        // to decompress garbage (it almost certainly does, but still).
+
+
+
+
         const size_t entry_offset = scan_offset;
         size_t file_offset = 0;
 
@@ -898,7 +898,7 @@ bool zzip::rewrite_footer( bool shrink_to_fit )
 
         size_t zzip_remaining = zzip_len - scan_offset;
 
-        // For each entry we expect at least a filename and checksum header.
+
         void *file_ptr = nullptr;
         std::tie( file_ptr, zzip_remaining ) = read_and_skip_entry_metadata(
                 file_base_plus( scan_offset ),
@@ -912,7 +912,7 @@ bool zzip::rewrite_footer( bool shrink_to_fit )
         file_offset = zzip_len - zzip_remaining;
 
         if( !filename_opt.has_value() || !checksum_opt.has_value() ) {
-            // Missing required metadata.
+
             break;
         }
 
@@ -930,8 +930,8 @@ bool zzip::rewrite_footer( bool shrink_to_fit )
 
         uint64_t checksum = XXH64( file_ptr, file_frame_size, kCheckumSeed );
         if( checksum != checksum_opt ) {
-            // Corruption in the compressed frame. Don't try to recover it, assume
-            // everything after is lost.
+
+
             break;
         }
         scan_offset = file_offset + file_frame_size;
@@ -962,7 +962,7 @@ std::optional<zzip> zzip::create_from_folder( std::filesystem::path const &path,
         }
         size_t size = entry.file_size();
         if( size == 0 ) {
-            // Skip empty files, not supported.
+
             continue;
         }
         total_file_size += entry.file_size();
@@ -1010,7 +1010,7 @@ std::optional<zzip> zzip::create_from_folder_with_files( std::filesystem::path c
         }
     }
 
-    // Conservatively estimate 10x compression ratio
+
     size_t input_consumed = 0;
     size_t bytes_written = 0;
     zip->ensure_capacity_for( ( total_file_size / 10 ) + kFixedSizeOverhead );
@@ -1018,7 +1018,7 @@ std::optional<zzip> zzip::create_from_folder_with_files( std::filesystem::path c
     for( std::filesystem::path const &file_path : files ) {
         std::shared_ptr<const mmap_file> file = mmap_file::map_file( file_path );
         if( !file ) {
-            // This is really a higher level error but we should just continue if we can.
+
             continue;
         }
         std::string file_relative_path = file_path.lexically_relative( folder ).generic_u8string();
@@ -1032,9 +1032,9 @@ std::optional<zzip> zzip::create_from_folder_with_files( std::filesystem::path c
                               );
             if( ZSTD_isError( compressed_size ) ) {
                 if( ZSTD_getErrorCode( compressed_size ) == ZSTD_error_dstSize_tooSmall ) {
-                    // Possibly ran out of file space. Figure out how much is left to insert.
-                    // Estimate based on compression ratio of data so far.
-                    // If we hit this again we need to add even more space.
+
+
+
                     needed += total_file_size * ( input_consumed > 0 ? ( static_cast<double>
                                                   ( bytes_written ) / input_consumed ) : 1 );
                     if( !zip->ensure_capacity_for( content_end + needed + kFixedSizeOverhead ) ) {
@@ -1052,7 +1052,7 @@ std::optional<zzip> zzip::create_from_folder_with_files( std::filesystem::path c
         content_end += compressed_size;
         total_file_size -= file->len();
     }
-    zip->update_footer( original_footer, content_end, new_entries, /* shrink_to_fit = */ true );
+    zip->update_footer( original_footer, content_end, new_entries, true );
     return zip;
 }
 
@@ -1143,7 +1143,7 @@ bool zzip::delete_files( std::unordered_set<std::filesystem::path, std_fs_path_h
     } ),
     compressed_entries.end() );
 
-    // If we errored partway through we should still update the footer with what we did erase.
+
     if( !update_footer( JsonObject{}, content_end, compressed_entries ) ) {
         return false;
     }
@@ -1163,12 +1163,12 @@ bool zzip::compact_to( std::filesystem::path const &dest, double bloat_factor )
 
     if( bloat_factor > 0 ) {
         size_t max_allowed_size = meta.total_content_size * bloat_factor + kFixedSizeOverhead;
-        // Are we even going to try to compact?
+
         if( file_->len() < max_allowed_size ) {
             return false;
         }
 
-        // Can we save at least one physical page?
+
         size_t delta = file_->len() - ( meta.total_content_size + kFixedSizeOverhead );
         if( delta < kAssumedPageSize ) {
             return false;
@@ -1189,23 +1189,23 @@ bool zzip::compact_to( std::shared_ptr<mmap_file> const &dest ) const
     if( !new_zip ) {
         return false;
     }
-    bool success = new_zip->copy_files( get_entries(), *this, /* shrink_to_fit = */ true );
+    bool success = new_zip->copy_files( get_entries(), *this, true );
     dest->flush();
     return success;
 }
 
 bool zzip::clear()
 {
-    return file_->resize_file( 0 ) && rewrite_footer( /* shrink_to_fit = */ true );
+    return file_->resize_file( 0 ) && rewrite_footer( true );
 }
 
-// Can't directly increment void*, have to cast to char* first.
+
 void *zzip::file_base_plus( size_t offset ) const
 {
     return static_cast<char *>( file_->base() ) + offset;
 }
 
-// A helper to handle underflow. I wouldn't write it if I didn't hit it.
+
 size_t zzip::file_capacity_at( size_t offset ) const
 {
     if( file_->len() < offset ) {

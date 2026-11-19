@@ -25,51 +25,51 @@ template <typename E> struct enum_traits;
 
 static const achievement_id achievement_achievement_arcade_mode( "achievement_arcade_mode" );
 
-// Some details about how achievements work
-// ========================================
-//
-// Achievements are built on the stats_tracker, which is in turn built on the
-// event_bus.  Each of these layers involves subscription / callback style
-// interfaces, so the code flow may now be obvious.  Here's a quick outline of
-// the execution flow to help clarify how it all fits together.
-//
-// * Various core game code paths generate events via the event bus.
-// * The stats_tracker subscribes to the event bus, and receives these events.
-// * Events contribute to event_multisets managed by the stats_tracker.
-// * (In the docs, these event_multisets are described as "event streams").
-// * (Optionally) event_transformations transform these event_multisets into
-//   other event_multisets based on json-defined transformation rules.  These
-//   are also managed by stats_tracker.
-// * event_statistics monitor these event_multisets and summarize them into
-//   single values.  These are also managed by stats_tracker.
-// * Each achievement requirement has a corresponding requirement_watcher which
-//   is alerted to statistic changes via the stats_tracker's watch interface.
-// * Each requirement_watcher notifies its achievement_tracker (of which there
-//   is one per achievement) of the requirement's status on each change to a
-//   statistic.
-// * The achievement_tracker keeps track of which requirements are currently
-//   satisfied and which are not.
-// * When all the requirements are satisfied, the achievement_tracker tells the
-//   achievement_tracker (only one of these exists per game).
-// * The achievement_tracker calls the achievement_attained_callback it was
-//   given at construction time.  This hooks into the actual game logic (e.g.
-//   telling the player they just got an achievement).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 namespace
 {
 
 generic_factory<achievement> achievement_factory( "achievement" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const achievement &string_id<achievement>::obj() const
 {
     return achievement_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<achievement>::is_valid() const
 {
@@ -85,7 +85,7 @@ enum class requirement_visibility : int {
     never,
     last
 };
-} // namespace
+}
 
 template<>
 struct enum_traits<requirement_visibility> {
@@ -99,12 +99,12 @@ template<>
 std::string enum_to_string<achievement_comparison>( achievement_comparison data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case achievement_comparison::equal: return "==";
         case achievement_comparison::less_equal: return "<=";
         case achievement_comparison::greater_equal: return ">=";
         case achievement_comparison::anything: return "anything";
-        // *INDENT-ON*
+
         case achievement_comparison::last:
             break;
     }
@@ -115,10 +115,10 @@ template<>
 std::string enum_to_string<achievement::time_bound::epoch>( achievement::time_bound::epoch data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case achievement::time_bound::epoch::cataclysm: return "cataclysm";
         case achievement::time_bound::epoch::game_start: return "game_start";
-        // *INDENT-ON*
+
         case achievement::time_bound::epoch::last:
             break;
     }
@@ -129,19 +129,19 @@ template<>
 std::string enum_to_string<requirement_visibility>( requirement_visibility data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case requirement_visibility::always: return "always";
         case requirement_visibility::when_requirement_completed: return "when_requirement_completed";
         case requirement_visibility::when_achievement_completed: return "when_achievement_completed";
         case requirement_visibility::never: return "never";
-        // *INDENT-ON*
+
         case requirement_visibility::last:
             break;
     }
     cata_fatal( "Invalid requirement_visibility" );
 }
 
-} // namespace io
+}
 
 static nc_color color_from_completion( bool is_conduct, achievement_completion comp, bool is_title )
 {
@@ -470,7 +470,7 @@ void achievement::check() const
         }
     }
 
-    // handled with debug mode or given by EOC
+
     if( is_manually_given() ) {
         all_requirements_become_false = false;
     }
@@ -506,9 +506,9 @@ static std::optional<std::string> text_for_requirement(
         result = string_format( _( "%d/%d %s" ), current, target,
                                 req.statistic->description().translated( target ) );
     } else {
-        // The tricky part here is formatting an arbitrary cata_variant value.
-        // It might be possible, but for now we punt the problem to content
-        // developers.
+
+
+
         result = "ERROR: Non-integer requirements must provide a custom description";
     }
     return colorize( result, c );
@@ -552,7 +552,7 @@ class requirement_watcher : stat_watcher
 
         void new_value( const cata_variant &new_value, stats_tracker & ) override;
 
-        bool is_satisfied( stats_tracker &/*stats*/ ) {
+        bool is_satisfied( stats_tracker & ) {
             return requirement_->satisfied_by( current_value_ );
         }
 
@@ -571,8 +571,8 @@ void requirement_watcher::new_value( const cata_variant &new_value, stats_tracke
     if( !tracker_->time_is_expired() ) {
         current_value_ = new_value;
     }
-    // set_requirement can result in this being deleted, so it must be the last
-    // thing in this function
+
+
     tracker_->set_requirement( this, requirement_->satisfied_by( current_value_ ) );
 }
 
@@ -582,22 +582,22 @@ template<>
 std::string enum_to_string<achievement_completion>( achievement_completion data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case achievement_completion::pending: return "pending";
         case achievement_completion::completed: return "completed";
         case achievement_completion::failed: return "failed";
-        // *INDENT-ON*
+
         case achievement_completion::last:
             break;
     }
     cata_fatal( "Invalid achievement_completion" );
 }
 
-} // namespace io
+}
 
 std::string achievement_state::ui_text( const achievement *ach ) const
 {
-    // First: the achievement name and description
+
     nc_color c = color_from_completion( ach->is_conduct(), completion, false );
     nc_color c_title = color_from_completion( ach->is_conduct(), completion, true );
     std::string result = colorize( ach->name(), c_title ) + "\n";
@@ -614,17 +614,17 @@ std::string achievement_state::ui_text( const achievement *ach ) const
                                   _( "Failed %s" ), to_string( last_state_change ) );
         result += "  " + colorize( message, c ) + "\n";
     } else {
-        // Next: the time constraint
+
         if( ach->time_constraint() ) {
             result += "  " + ach->time_constraint()->ui_text( ach->is_conduct() ) + "\n";
         }
     }
 
-    // Next: the requirements
+
     const std::vector<achievement_requirement> &reqs = ach->requirements();
-    // If these two vectors are of different sizes then the definition must
-    // have changed since it was completed / failed, so we don't print any
-    // requirements info.
+
+
+
     std::vector<std::optional<std::string>> req_texts;
     if( final_values.size() == reqs.size() ) {
         for( size_t i = 0; i < final_values.size(); ++i ) {
@@ -670,7 +670,7 @@ achievement_tracker::achievement_tracker( const achievement &a, achievements_tra
 void achievement_tracker::set_requirement( requirement_watcher *watcher, bool is_satisfied )
 {
     if( sorted_watchers_[is_satisfied].insert( watcher ).second ) {
-        // Remove from other
+
         sorted_watchers_[!is_satisfied].erase( watcher );
         cata_assert( sorted_watchers_[0].size() + sorted_watchers_[1].size() == watchers_.size() );
     }
@@ -681,16 +681,16 @@ void achievement_tracker::set_requirement( requirement_watcher *watcher, bool is
 
     if( sorted_watchers_[false].empty() && time_comp == achievement_completion::completed &&
         !achievement_->is_conduct() ) {
-        // report_achievement can result in this being deleted, so it must be
-        // the last thing in the function
+
+
         tracker_->report_achievement( achievement_, achievement_completion::completed );
         return;
     }
 
     if( time_comp == achievement_completion::failed ||
         ( !is_satisfied && watcher->requirement().becomes_false ) ) {
-        // report_achievement can result in this being deleted, so it must be
-        // the last thing in the function
+
+
         tracker_->report_achievement( achievement_, achievement_completion::failed );
     }
 }
@@ -713,7 +713,7 @@ std::vector<cata_variant> achievement_tracker::current_values() const
 
 std::string achievement_tracker::ui_text() const
 {
-    // Determine overall achievement status
+
     if( time_is_expired() ) {
         return achievement_state{
             achievement_completion::failed,
@@ -722,7 +722,7 @@ std::string achievement_tracker::ui_text() const
         } .ui_text( achievement_ );
     }
 
-    // First: the achievement name and description
+
     nc_color c = color_from_completion( achievement_->is_conduct(),
                                         achievement_completion::pending,
                                         false );
@@ -734,7 +734,7 @@ std::string achievement_tracker::ui_text() const
         result += "  " + colorize( achievement_->description(), c ) + "\n";
     }
 
-    // Note if it's been completed in other games
+
     const std::vector<std::string> avatars_completed =
         get_past_achievements().avatars_completed( achievement_->id );
     if( !avatars_completed.empty() ) {
@@ -749,13 +749,13 @@ std::string achievement_tracker::ui_text() const
         result += "  " + colorize( message, c_blue ) + "\n";
     }
 
-    // Next: the time constraint
+
     if( achievement_->time_constraint() ) {
         result += "  " + achievement_->time_constraint()->ui_text( achievement_->is_conduct() ) +
                   "\n";
     }
 
-    // Next: the requirements
+
     std::vector<std::optional<std::string>> req_texts;
     req_texts.reserve( watchers_.size() );
     for( const std::unique_ptr<requirement_watcher> &watcher : watchers_ ) {
@@ -817,7 +817,7 @@ achievement_completion achievements_tracker::is_completed( const achievement_id 
 {
     auto it = achievements_status_.find( id );
     if( it == achievements_status_.end() ) {
-        // It might still have failed; check for time expiry
+
         auto tracker_it = trackers_.find( id );
         if( tracker_it != trackers_.end() && tracker_it->second.time_is_expired() ) {
             return achievement_completion::failed;
@@ -829,7 +829,7 @@ achievement_completion achievements_tracker::is_completed( const achievement_id 
 
 bool achievements_tracker::is_hidden( const achievement *ach ) const
 {
-    // hard code for arcade mode achievement
+
     if( ach->id == achievement_achievement_arcade_mode ) {
         return true;
     }
@@ -868,7 +868,7 @@ void achievements_tracker::write_json_achievements(
 
     jsout.end_object();
 
-    // Clear past achievements so that it will be reloaded
+
     clear_past_achievements();
 }
 

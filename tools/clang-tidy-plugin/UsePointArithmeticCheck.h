@@ -27,8 +27,8 @@ class UsePointArithmeticCheck : public ClangTidyCheck
         using ClangTidyCheck::getLangOpts;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_USEPOINTARITHMETICCHECK_H
+#endif

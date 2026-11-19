@@ -4,16 +4,16 @@
 
 #include <functional>
 
-// Support for hashing standard types.
-// This is taken almost directly from the boost library code.
+
+
 namespace cata
 {
 
-// Code from boost
-// Reciprocal of the golden ratio helps spread entropy
-//     and handles duplicates.
-// See Mike Seymour in magic-numbers-in-boosthash-combine:
-//     http://stackoverflow.com/questions/4948780
+
+
+
+
+
 
 template <class T, typename Hash = std::hash<T>>
 inline void hash_combine( std::size_t &seed, const T &v, const Hash &hash = std::hash<T>() )
@@ -24,7 +24,7 @@ inline void hash_combine( std::size_t &seed, const T &v, const Hash &hash = std:
 namespace tuple_hash_detail
 {
 
-// Recursive template code derived from Matthieu M.
+
 template < class Tuple, size_t Index = std::tuple_size_v<Tuple> - 1 >
 struct Impl
 {
@@ -41,7 +41,7 @@ struct Impl<Tuple, 0> {
     }
 };
 
-} // namespace tuple_hash_detail
+}
 
 struct tuple_hash {
     template <typename ... TT>
@@ -60,8 +60,8 @@ struct tuple_hash {
     }
 };
 
-// auto_hash will use std::hash for most types but tuple_hash for pair or
-// tuple.
+
+
 template<typename T>
 struct auto_hash : std::hash<T> {};
 
@@ -105,15 +105,15 @@ std::enable_if_t < sizeof( T ) >= 8, T > maybe_mix_bits( std::uint64_t val )
     return val;
 }
 
-} // namespace hash64_detail
+}
 
-// hash64 hashes a 64-bit integer, either using the identity function (on 64-bit systems)
-// or using hash_combine on the two 32-bit halves (on 32-bit systems)
+
+
 inline std::size_t hash64( std::uint64_t val )
 {
     return hash64_detail::maybe_mix_bits<std::size_t>( val );
 }
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_HASH_UTILS_H
+#endif

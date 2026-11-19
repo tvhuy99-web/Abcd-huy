@@ -38,7 +38,7 @@ TEST_CASE( "active_items_processed_regularly", "[active_item]" )
     clear_map_without_vision();
     avatar &player_character = get_avatar();
     map &here = get_map();
-    // An arbitrary active item that ticks every turn.
+
     item active_item( itype_chainsaw_on );
     active_item.active = true;
 
@@ -63,11 +63,11 @@ TEST_CASE( "active_items_processed_regularly", "[active_item]" )
     vehicle_active_item.active = true;
     cargo->vehicle().add_item( here, cargo->part(), vehicle_active_item );
 
-    // Call item processing entry points.
+
     here.process_items();
     player_character.process_items( &here );
 
-    // Each chainsaw was processed and turned off from lack of fuel
+
     CHECK( inventory_item->typeId().str() == "chainsaw_off" );
     CHECK( player_character.get_wielded_item()->typeId().str() == "chainsaw_off" );
     CHECK( here.i_at( player_character.pos_bub() ).only_item().typeId().str() == "chainsaw_off" );
@@ -81,7 +81,7 @@ TEST_CASE( "active_items_processed_regularly", "[active_item]" )
 
 TEST_CASE( "non_energy_tool_power_consumption_rate", "[active_item]" )
 {
-    // Gasoline lantern without a battery, using gasoline instead
+
     item test_lantern( itype_gasoline_lantern_on );
     const itype_id &default_ammo = test_lantern.ammo_default();
     const int ammo_capacity = test_lantern.ammo_capacity( default_ammo->ammo->type );
@@ -90,10 +90,10 @@ TEST_CASE( "non_energy_tool_power_consumption_rate", "[active_item]" )
 
     test_lantern.active = true;
 
-    // Now process the tool until it runs out of fuel.
+
     int seconds_active = 0;
     map &here = get_map();
-    // Must be captured before it's inactive and transforms
+
     int turns_per_charge = test_lantern.type->tool->turns_per_charge;
     REQUIRE( test_lantern.ammo_remaining( ) == ammo_capacity );
     do {
@@ -102,14 +102,14 @@ TEST_CASE( "non_energy_tool_power_consumption_rate", "[active_item]" )
         seconds_active++;
     } while( test_lantern.active );
     REQUIRE( test_lantern.ammo_remaining( ) == 0 );
-    // Runtime vaguely in the bounds we expect.
+
     CHECK( seconds_active > ( turns_per_charge - 1 ) * ammo_capacity );
     CHECK( seconds_active < ( turns_per_charge + 1 ) * ammo_capacity );
 }
 
 TEST_CASE( "tool_power_consumption_rate", "[active_item]" )
 {
-    // Give the flashlight a fully charged battery, 56 kJ
+
     item test_battery( itype_medium_battery_cell );
     test_battery.ammo_set( test_battery.ammo_default(), 56 );
     REQUIRE( test_battery.energy_remaining() == 56_kJ );
@@ -119,17 +119,17 @@ TEST_CASE( "tool_power_consumption_rate", "[active_item]" )
     REQUIRE( tool.energy_remaining() == 56_kJ );
     tool.active = true;
 
-    // Now process the tool until it runs out of battery power, which should be about 10h.
+
     int seconds_of_discharge = 0;
     map &here = get_map();
-    // Capture now because after the loop the tool will be an inactive tool with no power draw.
+
     units::energy minimum_energy = tool.type->tool->power_draw * 1_seconds;
     do {
         tool.process( here, nullptr, tripoint_bub_ms::zero );
         seconds_of_discharge++;
     } while( tool.active );
     REQUIRE( tool.energy_remaining() < minimum_energy );
-    // Just a loose check, 9 - 10 hours runtime, based on the product page.
+
     CHECK( seconds_of_discharge > to_seconds<int>( 9_hours + 30_minutes ) );
     CHECK( seconds_of_discharge < to_seconds<int>( 10_hours ) );
 }

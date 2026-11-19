@@ -386,14 +386,14 @@ TEST_CASE( "craft_tname_projects_progress_during_passive_step",
     REQUIRE( built.is_craft() );
 
     const time_point t0 = calendar::turn;
-    built.item_counter = 1000000; // 10%
+    built.item_counter = 1000000;
     built.set_passive_started_at( t0 - 5_minutes );
     built.set_ready_at( t0 + 5_minutes );
     built.set_passive_start_counter( 1000000 );
     built.set_passive_end_counter( 9000000 );
 
     const std::string name = built.tname();
-    // halfway between 10% and 90% = 50%
+
     CHECK( name.find( "50%" ) != std::string::npos );
 }
 
@@ -429,7 +429,7 @@ TEST_CASE( "craft_tname_falls_back_to_item_counter_outside_passive",
     item ingredient( itype_2x4, calendar::turn );
     item built( &recipe_cudgel_test_unattended_simple.obj(), 1, ingredient );
     REQUIRE( built.is_craft() );
-    built.item_counter = 4200000; // 42%
+    built.item_counter = 4200000;
 
     const std::string name = built.tname();
     CHECK( name.find( "42%" ) != std::string::npos );
@@ -443,7 +443,7 @@ TEST_CASE( "craft_tname_never_decreases_below_item_counter",
     REQUIRE( built.is_craft() );
 
     const time_point t0 = calendar::turn;
-    built.item_counter = 8500000; // 85%
+    built.item_counter = 8500000;
     built.set_passive_started_at( t0 );
     built.set_ready_at( t0 + 10_minutes );
     built.set_passive_start_counter( 1000000 );
@@ -466,8 +466,8 @@ TEST_CASE( "craft_tname_uses_saved_ready_at_during_pause",
     built.set_passive_start_counter( 1000000 );
     built.set_passive_end_counter( 9000000 );
 
-    // While paused, ready_at is repurposed as polling cursor; saved_ready_at
-    // holds the original deadline.  Display must use the saved value.
+
+
     built.set_ready_at( t0 + 1_minutes );
     built.set_saved_ready_at( t0 + 5_minutes );
 
@@ -520,9 +520,9 @@ TEST_CASE( "craft_data_persists_attention_runtime_fields",
 
 TEST_CASE( "craft_data_persists_step_tool_allocs", "[craft][attention][persist]" )
 {
-    // Round-trip a single allocation directly, so this covers serialization
-    // independent of the load-time recipe-shape validation (exercised by the
-    // craft_data_validates_* cases).
+
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::player;
     alloc.sel.comp.type = itype_soldering_iron_portable;
@@ -557,8 +557,8 @@ TEST_CASE( "craft_data_resets_stale_step_tool_allocs_on_size_mismatch",
     REQUIRE( built.is_craft() );
     REQUIRE( built.get_making().steps().size() == 2 );
 
-    // A save whose allocation rows do not match the recipe's step count (a
-    // legacy flat save deserializes to zero rows the same way).
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::player;
     alloc.sel.comp.type = itype_soldering_iron_portable;
@@ -592,8 +592,8 @@ TEST_CASE( "craft_data_resets_step_tool_allocs_on_tool_shape_change",
     REQUIRE( built.is_craft() );
     REQUIRE( built.get_making().steps().size() == 2 );
 
-    // Right row count, but the allocation references a tool the recipe's steps
-    // no longer list (a tool-group edit that preserved the step count).
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::player;
     alloc.sel.comp.type = itype_soldering_iron_portable;
@@ -601,7 +601,7 @@ TEST_CASE( "craft_data_resets_step_tool_allocs_on_tool_shape_change",
     alloc.step_count_units = 8;
     built.set_step_tool_allocs( { {}, { alloc } } );
     built.set_tools_to_continue( true );
-    // Mid-flight on the unattended step, with live passive timers.
+
     built.set_current_step( 1 );
     built.set_passive_started_at( calendar::turn );
     built.set_ready_at( calendar::turn + 10_minutes );
@@ -617,8 +617,8 @@ TEST_CASE( "craft_data_resets_step_tool_allocs_on_tool_shape_change",
     REQUIRE( restored.get_making().steps().size() == 2 );
     CHECK( restored.get_step_tool_allocs().empty() );
     CHECK_FALSE( restored.has_tools_to_continue() );
-    // Scrubbing the allocs also drops the passive timers, so the step cannot
-    // finish unmetered on load.
+
+
     CHECK( restored.get_passive_started_at() == calendar::before_time_starts );
     CHECK( restored.get_ready_at() == calendar::before_time_starts );
 }
@@ -885,7 +885,7 @@ TEST_CASE( "craft_data_root_alloc_shape_follows_timed_steps",
     };
 
     GIVEN( "a root allocation on every timed step" ) {
-        // Per-step shares must sum to the tool's whole-craft total.
+
         const int half = root_tool.count / 2;
         item restored = round_trip( { { root_alloc( root_tool.count - half ) }, { root_alloc( half ) } } );
         REQUIRE( restored.is_craft() );
@@ -916,7 +916,7 @@ TEST_CASE( "craft_data_default_step_plan_serializes_minimally",
     item built( &recipe_cudgel_test_unattended_simple.obj(), 1, ingredient );
     REQUIRE( built.is_craft() );
 
-    std::vector<attention_plan> plans( 2 );  // all defaults: do_wait, no alarm_offset
+    std::vector<attention_plan> plans( 2 );
     built.set_step_plans( plans );
 
     std::ostringstream ss;
@@ -942,8 +942,8 @@ TEST_CASE( "craft_data_resets_stale_passive_state_on_step_plan_size_mismatch",
                 std::vector<item_comp> {} );
     REQUIRE( built.is_craft() );
 
-    // Simulate a save written under a different recipe (3 steps) before the
-    // recipe was edited down to 2 steps.
+
+
     std::vector<attention_plan> stale( 3 );
     stale[1].choice = step_choice::set_timer;
     stale[1].alarm_offset = 5_minutes;
@@ -1030,7 +1030,7 @@ TEST_CASE( "craft_apply_resume_replan_targets_correct_alarm_slot",
     }
 
     SECTION( "before passive entry: no-op" ) {
-        // passive_started_at left at before_time_starts.
+
         std::vector<attention_plan> plans( 2 );
         plans[1].choice = step_choice::set_timer;
         plans[1].alarm_offset = 8_minutes;
@@ -1063,7 +1063,7 @@ TEST_CASE( "craft_unattended_charged_tool_debits_at_step_completion",
     item &on_map = here.add_item( origin, placed );
     REQUIRE( on_map.is_craft() );
 
-    // Position at the unattended Cure step (idx 1) carrying its charged tool.
+
     on_map.set_current_step( 1 );
     on_map.set_passive_started_at( calendar::turn );
     on_map.set_ready_at( calendar::turn + 10_minutes );
@@ -1151,8 +1151,8 @@ TEST_CASE( "craft_unattended_charged_tool_drains_per_tick_and_pauses",
                 THEN( "the step unpauses and slides its deadline forward" ) {
                     CHECK( on_map.get_pause_started_at() == calendar::before_time_starts );
                     CHECK( on_map.get_ready_at() == calendar::turn + 11_minutes );
-                    // Entry slides with the deadline so the paused minute is not
-                    // counted as progress by the passive debit fraction.
+
+
                     CHECK( on_map.get_passive_started_at() == calendar::turn + 1_minutes );
                 }
             }
@@ -1178,10 +1178,10 @@ TEST_CASE( "craft_unattended_charged_tool_offset_crafter_uses_map_source",
     avatar &u = get_avatar();
     map &here = get_map();
     const tripoint_bub_ms craft_pos( 75, 75, 0 );
-    // Crafter stands well outside PICKUP_RANGE of the workbench craft.
+
     u.setpos( here, tripoint_bub_ms( 60, 60, 0 ) );
 
-    // The charged tool sits on the map at the craft, not in the crafter's pack.
+
     item &map_iron = here.add_item( craft_pos, tool_with_ammo( itype_soldering_iron_portable, 50 ) );
     REQUIRE( map_iron.ammo_remaining() == 50 );
 
@@ -1300,7 +1300,7 @@ TEST_CASE( "craft_unattended_charged_tools_shared_pool_no_partial_debit",
     map &here = get_map();
     const tripoint_bub_ms origin( 60, 60, 0 );
     u.setpos( here, origin );
-    // Enough charges to satisfy one allocation but not both together.
+
     u.i_add( tool_with_ammo( itype_soldering_iron_portable, 30 ) );
     u.invalidate_crafting_inventory();
 
@@ -1340,8 +1340,8 @@ TEST_CASE( "craft_unattended_charged_tool_completion_pauses_on_partial_charges",
     map &here = get_map();
     const tripoint_bub_ms origin( 60, 60, 0 );
     u.setpos( here, origin );
-    // 25 charges clears the start-only gate for a 40-charge step but cannot
-    // cover the full completion debit.
+
+
     u.i_add( tool_with_ammo( itype_soldering_iron_portable, 25 ) );
     u.invalidate_crafting_inventory();
 
@@ -1381,7 +1381,7 @@ TEST_CASE( "craft_unattended_charged_tool_overdue_load_pauses_when_drained",
     map &here = get_map();
     const tripoint_bub_ms origin( 60, 60, 0 );
     u.setpos( here, origin );
-    // No charged tool present anywhere.
+
 
     item ingredient( itype_2x4, calendar::turn );
     item placed( &recipe_cudgel_test_unattended_charged.obj(), 1, ingredient );
@@ -1452,7 +1452,7 @@ TEST_CASE( "craft_unattended_noncharged_tool_offset_crafter_uses_map_source",
 
     GIVEN( "the tool is removed after its last bucket but before completion" ) {
         item &tool = here.add_item( craft_pos, item( itype_soldering_iron_portable, calendar::turn ) );
-        // A near-end tick reaches bucket 20 while the tool is still present.
+
         REQUIRE( u.craft_consume_passive_step_tools(
                      on_map, calendar::turn + 9_minutes + 30_seconds, loc ) );
         REQUIRE( on_map.get_step_tool_allocs()[1][0].consumed_buckets == 20 );
@@ -1463,7 +1463,7 @@ TEST_CASE( "craft_unattended_noncharged_tool_offset_crafter_uses_map_source",
 
             THEN( "the verifier fails and clears tools_to_continue" ) {
                 CHECK_FALSE( u.verify_step_tools( on_map, 1, craft_pos, PICKUP_RANGE,
-                                                  /*pin_to_map=*/true ) );
+ true ) );
                 CHECK_FALSE( on_map.has_tools_to_continue() );
             }
         }
@@ -1504,9 +1504,9 @@ TEST_CASE( "craft_resolve_overdue_passive_chains_preserve_wall_time",
     item &on_map = here.add_item( origin, placed );
     REQUIRE( on_map.is_craft() );
 
-    // Position at the first unattended step (Cure A, idx 1) with passive
-    // state stamped manually.  Step 2 (Cure B) is also unattended; step 3
-    // (Finish) is active.
+
+
+
     on_map.set_current_step( 1 );
     on_map.set_passive_started_at( calendar::turn );
     on_map.set_ready_at( calendar::turn + 10_minutes );
@@ -1517,8 +1517,8 @@ TEST_CASE( "craft_resolve_overdue_passive_chains_preserve_wall_time",
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
     SECTION( "now past both passive deadlines: chain advances to active step" ) {
-        // step 1 ends at turn+10m, step 2 chained at turn+10m ends at turn+20m.
-        // Now at turn+25m: both overdue, both should drain.
+
+
         craft_resolve_overdue_passive( on_map, calendar::turn + 25_minutes, loc );
 
         CHECK( on_map.get_current_step() == 3 );
@@ -1526,8 +1526,8 @@ TEST_CASE( "craft_resolve_overdue_passive_chains_preserve_wall_time",
     }
 
     SECTION( "now past first deadline only: chain stops at second step alive" ) {
-        // step 1 ends at turn+10m, step 2 chained at turn+10m ends at turn+20m.
-        // Now at turn+15m: step 2 is mid-flight, not overdue.
+
+
         craft_resolve_overdue_passive( on_map, calendar::turn + 15_minutes, loc );
 
         CHECK( on_map.get_current_step() == 2 );
@@ -1550,16 +1550,16 @@ TEST_CASE( "chained_unattended_step_stays_live_without_resolvable_crafter",
     item &on_map = here.add_item( origin, placed );
     REQUIRE( on_map.is_craft() );
 
-    // Cure A (idx 1) in flight with Cure B (idx 2) unattended behind it, so
-    // closing Cure A has to chain into another passive step.
+
+
     on_map.set_current_step( 1 );
     on_map.set_passive_started_at( calendar::turn );
     on_map.set_ready_at( calendar::turn + 10_minutes );
     on_map.set_passive_start_counter( 2500000 );
     on_map.set_passive_end_counter( 5000000 );
     on_map.set_step_plans( std::vector<attention_plan>( 4 ) );
-    // Crafter cannot be looked up: an NPC that left the bubble, or a craft
-    // that never got a crafter stamped onto it.
+
+
     on_map.set_crafter_id( character_id() );
     REQUIRE_FALSE( on_map.get_crafter_id().is_valid() );
 
@@ -1576,8 +1576,8 @@ TEST_CASE( "chained_unattended_step_stays_live_without_resolvable_crafter",
                 CHECK( on_map.get_ready_at() != calendar::before_time_starts );
             }
 
-            // Equal bounds switch the tname projection off, which pins the
-            // displayed percentage to the step that just closed.
+
+
             THEN( "progress bounds still span a range" ) {
                 CAPTURE( on_map.get_current_step() );
                 CAPTURE( on_map.get_passive_start_counter() );
@@ -1615,8 +1615,8 @@ TEST_CASE( "chained_unattended_step_holds_for_absent_npc_crafter",
     on_map.set_passive_start_counter( 2500000 );
     on_map.set_passive_end_counter( 5000000 );
     on_map.set_step_plans( std::vector<attention_plan>( 4 ) );
-    // A recorded crafter who is not the avatar and is not a loaded NPC: an
-    // NPC that walked out of the reality bubble mid-craft.
+
+
     const character_id absent_npc( u.getID().get_value() + 1000 );
     on_map.set_crafter_id( absent_npc );
     REQUIRE( on_map.get_crafter_id().is_valid() );
@@ -1681,7 +1681,7 @@ TEST_CASE( "craft_stamp_passive_entry_batch_scales_fail_at",
 
     const recipe &rec = recipe_cudgel_test_timeout_recipe.obj();
 
-    // Single unit: ready_at and fail_at match the per-unit values.
+
     SECTION( "batch of one is unchanged" ) {
         item ingredient( itype_2x4, calendar::turn );
         item placed( &rec, 1, ingredient );
@@ -1695,14 +1695,14 @@ TEST_CASE( "craft_stamp_passive_entry_batch_scales_fail_at",
         item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
         craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
 
-        // Cure: time 10m -> ready; max_time 20m + grace 5m -> fail 25m.
+
         CHECK( on_map.get_ready_at() == calendar::turn + 10_minutes );
         CHECK( on_map.get_fail_at() == calendar::turn + 25_minutes );
     }
 
-    // Batch of eight (no batch_time_factors -> none -> x8):
-    //   ready_at = entry + 10m*8 = 80m
-    //   fail_at  = entry + (20m + 5m)*8 = 200m
+
+
+
     SECTION( "batch of eight scales both deadlines, fail stays after ready" ) {
         const int batch = 8;
         item ingredient( itype_2x4, calendar::turn );
@@ -1719,7 +1719,7 @@ TEST_CASE( "craft_stamp_passive_entry_batch_scales_fail_at",
 
         CHECK( on_map.get_ready_at() == calendar::turn + 80_minutes );
         CHECK( on_map.get_fail_at() == calendar::turn + 200_minutes );
-        // Ruin deadline must stay strictly after completion.
+
         CHECK( on_map.get_fail_at() > on_map.get_ready_at() );
     }
 }
@@ -1748,9 +1748,9 @@ TEST_CASE( "craft_batch_completes_instead_of_vanishing",
     craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
     get_item_wakeups().rebuild_for_item( loc );
 
-    // Past the batch-scaled ready_at (80m) but well before the scaled fail_at
-    // (200m): the step finalizes and spawns the result rather than being
-    // destroyed by a ruin deadline that elapsed before completion.
+
+
+
     craft_resolve_overdue_passive( on_map, calendar::turn + 81_minutes, loc );
 
     bool found_cudgel = false;
@@ -1769,8 +1769,8 @@ TEST_CASE( "craft_terminal_unattended_liquid_parks_for_collection",
     avatar &u = get_avatar();
     map &here = get_map();
     const tripoint_bub_ms craft_pos( 60, 60, 0 );
-    // Avatar on the craft tile: a liquid step still parks (collection is always
-    // explicit, so proximity does not gate it).
+
+
     u.setpos( here, craft_pos );
 
     SECTION( "liquid result parks at full progress instead of finalizing" ) {
@@ -1790,15 +1790,15 @@ TEST_CASE( "craft_terminal_unattended_liquid_parks_for_collection",
         get_item_wakeups().rebuild_for_item( loc );
         const int64_t uid = on_map.uid().get_value();
 
-        // Finalizing a liquid here would hit the pour prompt and abort the test
-        // (cata_assert( !test_mode ) in uilist); parking is what prevents that.
+
+
         craft_resolve_overdue_passive( on_map, calendar::turn + 10_minutes + 1_turns, loc );
 
         REQUIRE( loc.get_item() != nullptr );
         item *parked = loc.get_item();
         CHECK( parked->is_craft() );
         CHECK( parked->tname().find( "100%" ) != std::string::npos );
-        // Parked, so no ready wakeup remains to re-fire.
+
         CHECK_FALSE( get_item_wakeups().is_scheduled( uid, item_wakeup_kind::ready_check ) );
     }
 
@@ -1819,7 +1819,7 @@ TEST_CASE( "craft_terminal_unattended_liquid_parks_for_collection",
 
         craft_resolve_overdue_passive( on_map, calendar::turn + 10_minutes + 1_turns, loc );
 
-        // Non-liquid result finalizes normally; the parking gate is liquid-only.
+
         CHECK( loc.get_item() == nullptr );
     }
 }
@@ -1860,7 +1860,7 @@ TEST_CASE( "craft_stamp_passive_entry_carries_step_progress_fraction",
 
         craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
 
-        // Entry back-dated; full passive duration preserved.
+
         CHECK( on_map.get_passive_started_at() < calendar::turn );
         const time_duration step_dur = on_map.get_ready_at() -
                                        on_map.get_passive_started_at();
@@ -1880,7 +1880,7 @@ TEST_CASE( "craft_stamp_passive_entry_carries_step_progress_fraction",
 
         craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
 
-        // Fraction clamps at 1.0; ready_at lands at now.
+
         CHECK( on_map.get_ready_at() == calendar::turn );
     }
 }
@@ -1897,8 +1897,8 @@ TEST_CASE( "craft_tname_freezes_projection_during_env_pause",
     built.set_passive_start_counter( 1000000 );
     built.set_passive_end_counter( 9000000 );
 
-    // Entered 5m ago, paused 2m ago.  Elapsed clamps to 3m of 10m = 30%
-    // of the 1M..9M window -> 3.4M -> 34%.
+
+
     built.set_passive_started_at( t0 - 5_minutes );
     built.set_pause_started_at( t0 - 2_minutes );
     built.set_ready_at( t0 + 1_minutes );
@@ -1969,8 +1969,8 @@ TEST_CASE( "craft_env_unpause_alarm_clears_when_already_due",
     plans[1].alarm_offset = 5_minutes;
     on_map.set_step_plans( plans );
 
-    // saved_alarm_at < pause_started_at: slid alarm_at lands in the past
-    // after restore; must fire inline.
+
+
     const time_point t0 = calendar::turn;
     on_map.set_passive_started_at( t0 );
     on_map.set_ready_at( t0 + 1_minutes );
@@ -2010,8 +2010,8 @@ TEST_CASE( "craft_stamp_arms_env_check_when_step_has_env_requirements",
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
     craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
 
-    // Step has OVEN quality requirement -> env_check_at armed at now+1min,
-    // clamped under ready_at.
+
+
     REQUIRE( on_map.get_passive_started_at() == calendar::turn );
     CHECK( on_map.get_env_check_at() != calendar::before_time_starts );
     CHECK( on_map.get_env_check_at() <= on_map.get_ready_at() );
@@ -2041,8 +2041,8 @@ TEST_CASE( "craft_stamp_arms_env_check_for_a_grounded_step_with_no_env_requireme
     craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
 
     REQUIRE( on_map.get_passive_started_at() == calendar::turn );
-    // A grounded step holds a craft-site lock even with nothing to bind, and the lock
-    // needs a poll to refresh it before the lease expires.
+
+
     CHECK( on_map.get_reserved_tile() == here.get_abs( origin ) );
     CHECK( on_map.get_env_check_at() != calendar::before_time_starts );
     CHECK( get_item_wakeups().is_scheduled( on_map.uid().get_value(),
@@ -2068,8 +2068,8 @@ TEST_CASE( "craft_stamp_arms_env_check_and_debits_entry_for_charged_alloc",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 2 ) );
 
-    // A charged (root-derived) allocation on a step with no step-level env
-    // requirements still needs metering.
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::both;
     alloc.sel.comp.type = itype_soldering_iron_portable;
@@ -2119,8 +2119,8 @@ TEST_CASE( "craft_env_check_rearms_for_charged_only_step",
     on_map.set_step_tool_allocs( { {}, { alloc } } );
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // A mid-step env tick on a step with only a charged allocation (no
-    // step-level env requirement) must keep polling so the drain continues.
+
+
     craft_actualize_scheduled( on_map, item_wakeup_kind::env_check,
                                calendar::turn + 5_minutes, loc );
     u.invalidate_crafting_inventory();
@@ -2157,7 +2157,7 @@ TEST_CASE( "craft_env_check_restore_rearms_for_charged_only_step",
     alloc.root_derived = true;
     on_map.set_step_tool_allocs( { {}, { alloc } } );
 
-    // Installed pause state, as if a prior shortfall paused the step.
+
     const time_point t0 = calendar::turn;
     on_map.set_passive_started_at( t0 - 2_minutes );
     on_map.set_ready_at( t0 + 1_minutes );
@@ -2166,7 +2166,7 @@ TEST_CASE( "craft_env_check_restore_rearms_for_charged_only_step",
 
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // Restoring from pause on a charged-only step must keep polling.
+
     craft_actualize_scheduled( on_map, item_wakeup_kind::env_check, t0, loc );
 
     CHECK( on_map.get_pause_started_at() == calendar::before_time_starts );
@@ -2184,7 +2184,7 @@ TEST_CASE( "craft_env_check_dispatch_pauses_when_quality_missing",
     map &here = get_map();
     const tripoint_bub_ms origin( 60, 60, 0 );
     u.setpos( here, origin );
-    // No OVEN quality present: the quality gate fails and the step pauses.
+
 
     item ingredient( itype_2x4, calendar::turn );
     item placed( &recipe_cudgel_test_unattended_with_qual.obj(), 1, ingredient );
@@ -2228,16 +2228,16 @@ TEST_CASE( "craft_env_check_dispatch_restores_when_quality_returns",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 2 ) );
 
-    // Manually install a pause state, then satisfy env and dispatch env_check.
+
     const time_point t0 = calendar::turn;
     on_map.set_passive_started_at( t0 - 2_minutes );
-    on_map.set_ready_at( t0 + 1_minutes ); // pause polling cursor
+    on_map.set_ready_at( t0 + 1_minutes );
     on_map.set_saved_ready_at( t0 + 8_minutes );
     on_map.set_pause_started_at( t0 - 1_minutes );
 
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // Restore environment.
+
     u.i_add( item( itype_microwave, calendar::turn ) );
     craft_actualize_scheduled( on_map, item_wakeup_kind::env_check, t0, loc );
 
@@ -2267,8 +2267,8 @@ TEST_CASE( "craft_env_check_dispatch_clamps_cursor_under_ready_at",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 2 ) );
 
-    // Short remaining: ready_at is 30s away.  Cursor must clamp to ready_at,
-    // not now+1min which would poll past completion.
+
+
     const time_point t0 = calendar::turn;
     on_map.set_passive_started_at( t0 - 9_minutes - 30_seconds );
     on_map.set_ready_at( t0 + 30_seconds );
@@ -2303,7 +2303,7 @@ TEST_CASE( "craft_actualize_ready_via_helper_still_pauses_on_env_loss",
 
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // ready_check at ready_at with no OVEN tool must pause the craft.
+
     craft_actualize_scheduled( on_map, item_wakeup_kind::ready_check,
                                t0 + 10_minutes, loc );
 
@@ -2322,7 +2322,7 @@ TEST_CASE( "craft_activity_do_wait_env_check_fires_per_turn",
     map &here = get_map();
     const tripoint_bub_ms origin( 60, 60, 0 );
     u.setpos( here, origin );
-    // No OVEN: per-turn env_check inside do_wait branch must trip pause.
+
 
     item ingredient( itype_2x4, calendar::turn );
     item placed( &recipe_cudgel_test_unattended_with_qual.obj(), 1, ingredient );
@@ -2341,7 +2341,7 @@ TEST_CASE( "craft_activity_do_wait_env_check_fires_per_turn",
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
     REQUIRE( on_map.get_pause_started_at() == calendar::before_time_starts );
 
-    craft_activity_actor craft_actor( loc, /*is_long=*/false );
+    craft_activity_actor craft_actor( loc, false );
     u.activity = player_activity( craft_actor );
     u.activity.targets.push_back( loc );
 
@@ -2375,9 +2375,9 @@ TEST_CASE( "reconcile_walks_avatar_inventory_for_env_check",
     REQUIRE( placed->is_craft() );
     const int64_t uid = placed->uid().get_value();
 
-    // Clear any schedule that i_add may have triggered, then exercise the
-    // same iteration map::reconcile_loaded_items uses for character inventory
-    // (Character::all_items_loc() + rebuild_for_item per location).
+
+
+
     get_item_wakeups().cancel_all( uid );
     REQUIRE_FALSE( get_item_wakeups().is_scheduled( uid, item_wakeup_kind::env_check ) );
 
@@ -2447,7 +2447,7 @@ TEST_CASE( "compute_inflight_alarm_choices_for_resume_timer_modal",
     }
 
     GIVEN( "a paused step whose live_ready_at has been slid forward" ) {
-        // live_ready_at = passive_started_at + slid duration via env pause.
+
         const time_point ready = started + 15_minutes;
 
         WHEN( "evaluated 6 minutes after step start" ) {
@@ -2584,20 +2584,20 @@ TEST_CASE( "requirement_gate_counting_rules",
     REQUIRE( req.get_qualities().size() == 1 );
     REQUIRE( req.get_qualities()[0][0].count == 2 );
 
-    // same itype as both consumed material and quality provider. that's the path
-    // check_enough_materials takes, and it counts by a different rule than "amount"
+
+
     const requirement_data overlap( {},
     { { quality_requirement( qual_TEST_RESERVE_A, 1, 1 ) } },
     { { item_comp( itype_test_reserve_charge_stack, 1 ) } } );
 
-    // Two providers must outlive the craft, consumed one is a plain tool. The stack cannot
-    // stand in for the tool it loses, so this is refused however many charges it holds.
+
+
     const requirement_data overlap_two_tool( {},
     { { quality_requirement( qual_TEST_RESERVE_A, 2, 1 ) } },
     { { item_comp( itype_test_reserve_tool_a, 1 ) } } );
 
-    // same demand but consuming a charge. both providers outlive the craft, so the refusal
-    // below is the known-conservative boundary, not the intended answer.
+
+
     const requirement_data overlap_two_charge( {},
     { { quality_requirement( qual_TEST_RESERVE_A, 2, 1 ) } },
     { { item_comp( itype_test_reserve_charge_stack, 1 ) } } );
@@ -2629,8 +2629,8 @@ TEST_CASE( "requirement_gate_counting_rules",
             CHECK_FALSE( req.can_make_with_inventory( &u, crafting_inv, return_true<item> ) );
         }
 
-        // the two rules have to disagree on one fixture: as "amount" of two the stack is
-        // one tool, but as material+tool it's two items out of the one stack
+
+
         THEN( "the same stack still covers a quality it is also consumed for" ) {
             CHECK( overlap.can_make_with_inventory( &u, crafting_inv, return_true<item> ) );
         }
@@ -2679,7 +2679,7 @@ TEST_CASE( "requirement_gate_counting_rules",
             CHECK( overlap.can_make_with_inventory( &u, crafting_inv, return_true<item>, 1 ) );
         }
 
-        // a batch eats its component once per unit, so the spare has to scale with it
+
         THEN( "a batch of two would spend both, leaving nothing to swing" ) {
             CHECK_FALSE( overlap.can_make_with_inventory( &u, crafting_inv, return_true<item>, 2 ) );
         }
@@ -2702,9 +2702,9 @@ TEST_CASE( "requirement_gate_counting_rules",
                          return_true<item> ) );
         }
 
-        // Over-strict, and deliberately left so.  Consuming one charge of a hundred destroys
-        // no provider, so both survive the craft.  Counting providers cannot see that, and no
-        // shipped requirement asks for more than one.
+
+
+
         THEN( "consuming a charge is refused too, though both providers would survive" ) {
             CHECK_FALSE( overlap_two_charge.can_make_with_inventory( &u, crafting_inv,
                          return_true<item> ) );
@@ -2781,8 +2781,8 @@ TEST_CASE( "intrinsic_qualities_count_provider_occurrences",
     GIVEN( "both digging traits at once" ) {
         u.set_mutation( trait_BURROW );
         u.set_mutation( trait_BURROWLARGE );
-        // Of the innate pair only the shovel carries a DIG quality; the pickaxe digs
-        // through its use action.  One occurrence is therefore the whole supply.
+
+
         THEN( "the innate pair is granted once, not once per trait" ) {
             CHECK( u.has_intrinsic_quality( qual_DIG, 1, 1 ) );
             CHECK_FALSE( u.has_intrinsic_quality( qual_DIG, 1, 2 ) );
@@ -2796,7 +2796,7 @@ TEST_CASE( "reservation_index_expiry_decides_visibility", "[craft][attention][re
     clear_map();
     craft_reservation_index &idx = get_craft_reservations();
 
-    // calendar::turn is never mutated; leases are set relative to it instead.
+
     const time_point now = calendar::turn;
     const time_point live_until = now + 1_hours;
     const time_point lapsed_at = now - 1_minutes;
@@ -2832,7 +2832,7 @@ TEST_CASE( "reservation_index_expiry_decides_visibility", "[craft][attention][re
     GIVEN( "an expired incumbent that the sweep has not yet removed" ) {
         idx.set( make_item_record( 100, 4242, live_until ) );
         REQUIRE( idx.is_reserved_uid( 4242 ) );
-        // Nothing runs at the deadline, so the mapping survives until the sweep.
+
         idx.set( make_item_record( 100, 4242, lapsed_at ) );
         REQUIRE_FALSE( idx.is_reserved_uid( 4242 ) );
 
@@ -3139,7 +3139,7 @@ TEST_CASE( "craft_data_reservation_owner_token_is_stable_and_unique",
         }
 
         THEN( "the token survives the copy that picking a craft up performs" ) {
-            // The copy is the subject: item_uid regenerates, the token must not.
+
             // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
             item copied( first );
             CHECK( copied.peek_reservation_owner_token() == token );
@@ -3175,7 +3175,7 @@ TEST_CASE( "reservation_index_rebuilds_from_craft_state",
     item_binding.kind = craft_reservation::provider_kind::item;
     item_binding.provider_uid = 4242;
 
-    // Two bindings, one provider: release is reference counted.
+
     craft_reservation::binding same_provider = item_binding;
 
     craft_reservation::binding furn_binding;
@@ -3318,7 +3318,7 @@ TEST_CASE( "craft_bindings_survive_a_batched_reload", "[craft][attention][reserv
     clear_avatar();
     clear_map();
 
-    // operator* scales components and tool charges, not qualities.
+
     item ingredient( itype_water, calendar::turn );
     item built( &recipe_water_clean_test_unattended_boil.obj(), 4, ingredient );
     REQUIRE( built.is_craft() );
@@ -3393,7 +3393,7 @@ TEST_CASE( "reserved_tiles_refuse_construction_from_a_record",
     const tripoint_bub_ms site_pos( 60, 60, 0 );
     const tripoint_bub_ms provider_pos( 61, 60, 0 );
     const tripoint_bub_ms free_pos( 63, 60, 0 );
-    // check_empty refuses a tile a creature stands on, so keep the avatar off all three.
+
     u.setpos( here, tripoint_bub_ms( 55, 55, 0 ) );
 
     for( const tripoint_bub_ms &p : {
@@ -3443,8 +3443,8 @@ TEST_CASE( "craft_relocation_rekeys_its_schedule_and_site_lock",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
-    // Without storage, obtain falls through i_add to wield, which carries a re-key hook
-    // of its own; every obtain below would then pass whatever the wrapper does.
+
+
     u.wear_item( item( itype_debug_backpack ) );
 
     craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
@@ -3454,7 +3454,7 @@ TEST_CASE( "craft_relocation_rekeys_its_schedule_and_site_lock",
     GIVEN( "the craft is carried to another tile and put down" ) {
         item_location carried = loc.obtain( u );
         REQUIRE( carried );
-        // Not wielded, so the wield hook is not what re-keyed it.
+
         REQUIRE( u.get_wielded_item().get_item() != carried.get_item() );
         item_location dropped = here.add_item_or_charges_ret_loc( landing, *carried );
         carried.remove_item();
@@ -3565,8 +3565,8 @@ TEST_CASE( "craft_relocation_rekeys_its_schedule_and_site_lock",
         REQUIRE( in_cargo );
         item_location cargo_loc( vehicle_cursor( cargo->vehicle(), cargo->part_index() ),
                                  & **in_cargo );
-        // The vehicle add copies; re-key once the way the stow hook does, so the GIVENs
-        // below start from a coherent schedule.
+
+
         craft_relocated( cargo_loc );
         REQUIRE( get_item_wakeups().is_scheduled( cargo_loc->uid().get_value(),
                  item_wakeup_kind::env_check ) );
@@ -3622,9 +3622,9 @@ TEST_CASE( "craft_relocation_rekeys_its_schedule_and_site_lock",
     }
 
     GIVEN( "the hook is handed a location beneath the moved root" ) {
-        // A craft type has no container pocket, so obtain can never return a location
-        // whose parent is the craft itself; the below-root contract is exercised on
-        // the helper directly, with the craft a sibling of the handed child.
+
+
+
         const tripoint_bub_ms bag_pos( 63, 63, 0 );
         item bag( itype_backpack );
         item_location carried = loc.obtain( u );
@@ -4017,7 +4017,7 @@ TEST_CASE( "reservation_pauses_when_a_bound_provider_disappears",
     avatar &u = get_avatar();
     map &here = get_map();
     const tripoint_bub_ms origin( 60, 60, 0 );
-    // The pot sits on its own tile so it can be removed without touching the craft.
+
     const tripoint_bub_ms pot_pos( 61, 60, 0 );
     u.setpos( here, origin );
 
@@ -4293,8 +4293,8 @@ TEST_CASE( "reservation_pause_reports_itself_once_per_transition",
     GIVEN( "the bound pot destroyed under a running step" ) {
         here.i_clear( pot_pos );
 
-        // Each section clears the message log as it starts, so every tick whose output
-        // is being counted has to run inside the section that counts it.
+
+
         THEN( "the pause explains itself" ) {
             craft_actualize_scheduled( on_map, item_wakeup_kind::env_check, t0 + 1_minutes, loc );
 
@@ -4420,8 +4420,8 @@ TEST_CASE( "reservation_preflight_counts_the_power_a_bound_tool_takes_with_it",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // The recipe names the magazine-fed tool; this draw is of the bionic-powered one,
-    // whose charges sit outside the item and vanish along with it.
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::player;
     alloc.sel.comp.type = itype_test_reserve_bionic_powered_tool;
@@ -5849,8 +5849,8 @@ TEST_CASE( "reservation_search_escalates_then_defers_on_an_unchanged_pool",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // Enough charges left over for any two providers to be hidden and not for any three,
-    // so every complete assignment fails and the search has to walk the whole space.
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::map;
     alloc.sel.comp.type = itype_test_reserve_charged_tool;
@@ -5859,8 +5859,8 @@ TEST_CASE( "reservation_search_escalates_then_defers_on_an_unchanged_pool",
     on_map.set_step_tool_allocs( { { alloc } } );
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // Distinct charge loads, so no two collapse into one equivalence class and the
-    // branching factor is the whole pool rather than one representative.
+
+
     for( int i = 0; i < 21; ++i ) {
         item tool( itype_test_reserve_charged_tool );
         tool.ammo_set( itype_battery, 100 + i );
@@ -5905,8 +5905,8 @@ TEST_CASE( "reservation_search_escalates_then_defers_on_an_unchanged_pool",
                 CHECK( craft_reservation::search_expansions_total() == 0 );
                 CHECK( on_map.get_reservation_search_attempts() ==
                        craft_reservation::search_escalation_cap );
-                // No search ran and the world has not moved, so there is nothing new to
-                // report and the stored reason stands.
+
+
                 CHECK( Messages::size() == 0 );
             }
 
@@ -5964,7 +5964,7 @@ TEST_CASE( "reservation_preflight_counts_one_shared_battery_once",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // More than the one battery holds and less than two tools would report between them.
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::map;
     alloc.sel.comp.type = itype_test_reserve_cabled_tool;
@@ -6014,8 +6014,8 @@ TEST_CASE( "reservation_fingerprint_reads_the_power_behind_a_carried_tool",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // Sized so two hidden providers still clear the draw and any three fall short,
-    // which is what makes the search walk the whole space before refusing the step.
+
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::both;
     alloc.sel.comp.type = itype_test_reserve_bionic_powered_tool;
@@ -6024,15 +6024,15 @@ TEST_CASE( "reservation_fingerprint_reads_the_power_behind_a_carried_tool",
     on_map.set_step_tool_allocs( { { alloc } } );
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // Distinct charge loads, so no two collapse into one class and the branching factor
-    // is the whole pool.
+
+
     for( int i = 0; i < 30; ++i ) {
         item tool( itype_test_reserve_bionic_powered_tool );
         tool.ammo_set( itype_battery, 100 + i );
         here.add_item( tool_pos, tool );
     }
-    // Empty and carried, so everything it contributes to the draw is bionic power.  That
-    // term moves without any item moving, which no class key can see.
+
+
     u.worn.wear_item( u, item( itype_debug_backpack ), false, false );
     REQUIRE( u.i_add( item( itype_test_reserve_bionic_powered_tool ) ) );
     u.set_max_power_level( units::from_kilojoule( 300 ) );
@@ -6130,7 +6130,7 @@ TEST_CASE( "reservation_reuses_a_held_provider_across_groups",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // Met by hiding one multitool and not by hiding two.
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::map;
     alloc.sel.comp.type = itype_test_reserve_multitool_ab_charged;
@@ -6184,8 +6184,8 @@ TEST_CASE( "reservation_fingerprint_reads_the_unit_spread_of_a_class",
     const tripoint_bub_ms origin( 60, 60, 0 );
     const tripoint_bub_ms tool_pos( 61, 60, 0 );
 
-    // Four members of one class, spread over `spread` containers, and one search that
-    // runs out of budget so a fingerprint is stored.
+
+
     const auto fingerprint_for = [&]( const std::vector<int> &spread ) -> uint64_t {
         clear_avatar();
         clear_map();
@@ -6207,16 +6207,16 @@ TEST_CASE( "reservation_fingerprint_reads_the_unit_spread_of_a_class",
         on_map.set_step_tool_allocs( { { alloc } } );
         item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-        // Distinct charge loads, so the wide group branches over the whole pool and the
-        // search runs out of budget rather than settling.
+
+
         for( int i = 0; i < 21; ++i )
         {
             item tool( itype_test_reserve_charged_tool );
             tool.ammo_set( itype_battery, 100 + i );
             here.add_item( tool_pos, tool );
         }
-        // Chargeless, so how many share a container changes what taking them all hides
-        // without changing any class key.
+
+
         for( const int members : spread )
         {
             item bag( itype_backpack );
@@ -6314,7 +6314,7 @@ TEST_CASE( "reservation_does_not_renew_a_lapsed_site_lease",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // Charges nothing in range can pay, so every tick pauses and none of them completes.
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::map;
     alloc.sel.comp.type = itype_test_reserve_charged_tool;
@@ -6368,7 +6368,7 @@ TEST_CASE( "reservation_counts_a_carried_held_provider_once",
     on_map.set_crafter_id( u.getID() );
     on_map.set_step_plans( std::vector<attention_plan>( 1 ) );
 
-    // Met by hiding one multitool and not by hiding two.
+
     step_tool_alloc alloc;
     alloc.sel.use_from = usage_from::player;
     alloc.sel.comp.type = itype_test_reserve_multitool_ab_charged;
@@ -6377,7 +6377,7 @@ TEST_CASE( "reservation_counts_a_carried_held_provider_once",
     on_map.set_step_tool_allocs( { { alloc } } );
     item_location loc( map_cursor( here.get_abs( origin ) ), &on_map );
 
-    // Separate roots, or hiding either one hides the pack holding both.
+
     item_location packed = u.i_add( item( itype_test_reserve_multitool_ab_charged ) );
     REQUIRE( packed );
     packed->ammo_set( itype_battery, 100 );
@@ -6634,8 +6634,8 @@ TEST_CASE( "automation_leaves_a_container_holding_a_live_craft",
     GIVEN( "a live site-only craft inside a container" ) {
         craft_stamp_passive_entry( *nested, u, calendar::turn, craft_loc );
         REQUIRE( nested->get_passive_started_at() != calendar::before_time_starts );
-        // site-only recipe binds nothing, so contains_reserved can't stand in for
-        // craft check here.
+
+
         REQUIRE( nested->get_reservations().empty() );
         REQUIRE_FALSE( craft_reservation::contains_reserved( bag_on_map ) );
 
@@ -6731,7 +6731,7 @@ TEST_CASE( "reservation_keeps_npc_pickup_off_a_bound_provider",
     scavenger.wear_item( item( itype_debug_backpack ) );
     scavenger.set_attitude( NPCATT_NULL );
 
-    // A live craft on the map so its owner token is a real one, and a bound pot beside it.
+
     item ingredient( itype_water, calendar::turn );
     item placed( &recipe_water_clean_test_unattended_boil.obj(), 1, ingredient );
     item &on_map = here.add_item( origin, placed );
@@ -6748,7 +6748,7 @@ TEST_CASE( "reservation_keeps_npc_pickup_off_a_bound_provider",
     craft_stamp_passive_entry( on_map, u, calendar::turn, loc );
     REQUIRE( on_map.get_reservations().size() == 1 );
     const int64_t bound_uid = on_map.get_reservations().front().provider_uid;
-    // Binding picks one, the other is the free instance for the whole case
+
     const int64_t loose_uid = bound_uid == reserved_uid ? free_uid : reserved_uid;
     REQUIRE( get_craft_reservations().is_reserved_uid( bound_uid ) );
     REQUIRE_FALSE( get_craft_reservations().is_reserved_uid( loose_uid ) );
@@ -7219,10 +7219,10 @@ TEST_CASE( "reservation_keeps_npc_selectors_off_a_bound_provider",
     hostile.mutation_category_level.clear();
     hostile.clear_bionics();
     hostile.set_attitude( NPCATT_KILL );
-    // Storage, or everything handed over below lands on the floor instead.
+
     hostile.wear_item( item( itype_debug_backpack ) );
 
-    // weapon selectors only fire when NPC thinks it's in danger
+
     arm_shooter( player_character, itype_M24 );
 
     GIVEN( "NPC carrying a reserved good weapon and a free worse one" ) {
@@ -7455,8 +7455,8 @@ TEST_CASE( "reservation_keeps_zone_planning_off_a_bound_tool",
     };
 
     GIVEN( "a spill to mop and one mop in the pack" ) {
-        // New water takes the tile's temperature at once. turn_zero's weather at
-        // wherever an earlier test left the map can be below freezing.
+
+
         restore_on_out_of_scope restore_temp( get_weather().forced_temperature );
         get_weather().forced_temperature = units::from_celsius( 20 );
         here.add_item( work_pos, item( itype_water, calendar::turn, 1 ) );
@@ -7510,8 +7510,8 @@ TEST_CASE( "reservation_keeps_zone_planning_off_a_bound_tool",
 
     GIVEN( "a tilled plot and one seed of the zone's kind in the pack" ) {
         add_farm_zone( "seed_hops" );
-        // Greenhouse rather than a mound, so the season's forecast cannot refuse the
-        // planting before the seed is ever looked at.
+
+
         here.ter_set( work_pos, ter_t_greenhouse_tilled );
         item_location seed = u.i_add( item( itype_seed_hops, calendar::turn ) );
 
@@ -7680,4 +7680,3 @@ TEST_CASE( "reservation_scans_past_a_claimed_colocated_vehicle_tool",
         }
     }
 }
-

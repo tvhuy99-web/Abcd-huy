@@ -29,9 +29,9 @@ struct RestoredDecl {
     }
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
 namespace std
 {
@@ -41,7 +41,7 @@ struct hash<clang::tidy::cata::RestoredDecl> {
         return clang::tidy::cata::HashCombine( r.function, r.variable );
     }
 };
-} // namespace std
+}
 
 namespace clang
 {
@@ -76,8 +76,8 @@ class TestsMustRestoreGlobalStateCheck : public ClangTidyCheck
         std::vector<AssignmentToGlobal> suspicious_assignments_;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_TESTSMUSTRESTOREGLOBALSTATECHECK_H
+#endif

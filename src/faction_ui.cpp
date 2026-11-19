@@ -80,8 +80,8 @@ static bool has_radio( const Character &guy )
     return guy.cache_has_item_with_flag( json_flag_TWO_WAY_RADIO, true );
 }
 
-// is physically close enough to contact the beta without much hassle
-// mainly for followers
+
+
 static bool can_contact( const Character &alpha, const Character &beta )
 {
     const map &here = get_map();
@@ -91,7 +91,7 @@ static bool can_contact( const Character &alpha, const Character &beta )
     return !too_far_omt || see_each_other ;
 }
 
-// opposite to previouis one, far enough to check for radio contact
+
 static radio_contact_result can_radio_contact( const Character &alpha, const Character &beta )
 {
     bool u_has_radio = has_radio( alpha );
@@ -99,23 +99,23 @@ static radio_contact_result can_radio_contact( const Character &alpha, const Cha
     if( u_has_radio && guy_has_radio ) {
         if( !( alpha.posz() >= 0 && beta.posz() >= 0 ) &&
             !( alpha.posz() == beta.posz() ) ) {
-            //Early exit
+
             return radio_contact_result::TOO_FAR;
         } else {
-            // TODO: better range calculation than just elevation.
+
             const int base_range = 200;
             float send_elev_boost = ( 1 + ( alpha.posz() * 0.1 ) );
             float recv_elev_boost = ( 1 + ( beta.posz() * 0.1 ) );
             if( ( square_dist( alpha.pos_abs_sm(),
                                beta.pos_abs_sm() ) <= base_range * send_elev_boost * recv_elev_boost ) ) {
-                //Direct radio contact, both of their elevation are in effect
+
                 return radio_contact_result::YES;
             } else {
-                //contact via camp radio tower
+
                 int recv_range = base_range * recv_elev_boost;
                 int send_range = base_range * send_elev_boost;
                 const int radio_tower_boost = 5;
-                // find camps that are near player or npc
+
                 const std::vector<camp_reference> &camps_near_player = overmap_buffer.get_camps_near(
                             alpha.pos_abs_sm(), send_range * radio_tower_boost );
                 const std::vector<camp_reference> &camps_near_npc = overmap_buffer.get_camps_near(
@@ -128,12 +128,12 @@ static radio_contact_result can_radio_contact( const Character &alpha, const Cha
                     }
                     if( camp_to_camp ||
                         square_dist( i.abs_sm_pos, beta.pos_abs_sm() ) <= recv_range * radio_tower_boost ) {
-                        //one radio tower relay
+
                         camp_to_npc = true;
                         break;
                     }
                     for( const camp_reference &j : camps_near_npc ) {
-                        //two radio tower relays
+
                         if( ( j.camp )->has_provides( "radio" ) &&
                             ( square_dist( i.abs_sm_pos, j.abs_sm_pos ) <= base_range * radio_tower_boost *
                               radio_tower_boost ) ) {
@@ -346,7 +346,7 @@ void faction_ui::draw_your_factions_list()
     size_t num_entries = camps.size();
     const int last_entry = num_entries == 0 ? 0 : ( static_cast<int>( num_entries ) - 1 );
 
-    // initialize selected_camp either from already set camp, or from zero if not set
+
     auto it = std::find( camps.begin(), camps.end(), picked_camp );
     int selected_camp = ( it != camps.end() ) ? std::distance( camps.begin(), it ) : 0;
     if( last_action == "UP" ) {
@@ -375,7 +375,7 @@ void faction_ui::draw_your_factions_list()
             ImGui::PushID( i );
 
             if( ImGui::Selectable( "", is_selected ) ) {
-                // if true, the option was selected, so set bp to what was selected
+
                 picked_camp = it_camp;
             }
 
@@ -407,7 +407,7 @@ void faction_ui::your_faction_display() const
     std::string direction = direction_name( direction_from( player_abspos, camp_pos ) );
     faction *yours = player_character.get_faction();
 
-    // Hint
+
     const std::string hint_desc = string_format(
                                       _( "Press [%s] to rename this camp" ), ctxt.get_desc( "CONFIRM" ) );
     cataimgui::draw_colored_text( hint_desc, c_light_gray, col_width );
@@ -467,7 +467,7 @@ void faction_ui::draw_your_followers_list()
     size_t num_entries = followers.size();
     const int last_entry = num_entries == 0 ? 0 : ( static_cast<int>( num_entries ) - 1 );
 
-    // initialize selected_camp either from already set camp, or from zero if not set
+
     auto it = std::find( followers.begin(), followers.end(), picked_follower );
     int selected_npc = ( it != followers.end() ) ? std::distance( followers.begin(), it ) : 0;
     if( last_action == "UP" ) {
@@ -496,7 +496,7 @@ void faction_ui::draw_your_followers_list()
             ImGui::PushID( i );
 
             if( ImGui::Selectable( "", is_selected ) ) {
-                // if true, the option was selected, so set bp to what was selected
+
                 picked_follower = it_npc;
             }
 
@@ -525,7 +525,7 @@ void faction_ui::your_follower_display()
     Character &player_character = get_player_character();
     const tripoint_abs_omt player_abspos = player_character.pos_abs_omt();
 
-    // Mission
+
     std::string mission_string;
     if( picked_follower->has_companion_mission() ) {
         std::string dest_string;
@@ -547,7 +547,7 @@ void faction_ui::your_follower_display()
 
         cataimgui::draw_colored_text( mission_string, col_width );
 
-        // Determine remaining time in mission, and display it
+
         std::string mission_eta;
         if( picked_follower->companion_mission_time_ret < calendar::turn ) {
             mission_eta = _( "JOB COMPLETED" );
@@ -569,7 +569,7 @@ void faction_ui::your_follower_display()
         }
     }
 
-    // Direction
+
     const bool is_stationed = picked_follower->assigned_camp && temp_camp;
     std::string direction = direction_name( direction_from( player_abspos, guy_abspos ) );
     std::string dir_text;
@@ -580,7 +580,7 @@ void faction_ui::your_follower_display()
     }
     cataimgui::draw_colored_text( dir_text, col_width );
 
-    // Location
+
     std::string stationed_text;
     if( is_stationed ) {
         stationed_text = string_format( _( "Location: %s, at camp: %s" ), guy_abspos.to_string(),
@@ -590,7 +590,7 @@ void faction_ui::your_follower_display()
     }
     cataimgui::draw_colored_text( stationed_text, col_width );
 
-    // Can be radio-ed
+
     std::string can_see;
     nc_color see_color;
     if( can_contact( get_avatar(), *picked_follower ) ) {
@@ -636,7 +636,7 @@ void faction_ui::your_follower_display()
     }
 
 
-    // Status/activity
+
     nc_color status_col = c_white;
     if( picked_follower->current_target() != nullptr ) {
         status_col = c_light_red;
@@ -645,19 +645,19 @@ void faction_ui::your_follower_display()
                                     picked_follower->get_current_status() );
     cataimgui::draw_colored_text( colorize( status_text, status_col ), col_width );
 
-    // Job and station
+
     if( is_stationed && picked_follower->has_job() ) {
         cataimgui::draw_colored_text( _( "Working at camp" ), col_width );
     } else if( is_stationed ) {
         cataimgui::draw_colored_text( _( "Idling at camp" ), col_width );
     }
 
-    // HP description
+
     const auto &[hp_desc, hp_color] = picked_follower->hp_description();
     const std::string cond_text = string_format( _( "%s: %s" ), _( "Condition" ), hp_desc );
     cataimgui::draw_colored_text( cond_text, hp_color, col_width );
 
-    // Hunger, thirst, sleepiness
+
     const auto &[hunger, hunger_color] = display::hunger_text_color( *picked_follower );
     const auto &[thirst, thirst_color] = display::thirst_text_color( *picked_follower );
     const auto &[sleepiness, sleepiness_color] = display::sleepiness_text_color( *picked_follower );
@@ -672,7 +672,7 @@ void faction_ui::your_follower_display()
     cataimgui::draw_colored_text( thirst_text, thirst_color, col_width );
     cataimgui::draw_colored_text( sleepiness_text, sleepiness_color, col_width );
 
-    // Wield
+
     const std::string wielding_text = string_format( _( "Wielding: %s" ),
                                       picked_follower->weapname_simple() );
     cataimgui::draw_colored_text( wielding_text, col_width );
@@ -737,7 +737,7 @@ void faction_ui::draw_other_factions_list()
     size_t num_entries = factions.size();
     const int last_entry = num_entries == 0 ? 0 : ( static_cast<int>( num_entries ) - 1 );
 
-    // initialize selected_camp either from already set camp, or from zero if not set
+
     auto it = std::find( factions.begin(), factions.end(), picked_faction );
     int selected_faction = ( it != factions.end() ) ? std::distance( factions.begin(), it ) : 0;
     if( last_action == "UP" ) {
@@ -766,7 +766,7 @@ void faction_ui::draw_other_factions_list()
             ImGui::PushID( i );
 
             if( ImGui::Selectable( "", is_selected ) ) {
-                // if true, the option was selected, so set bp to what was selected
+
                 picked_faction = it_faction;
             }
 
@@ -792,13 +792,13 @@ void faction_ui::other_faction_display()
         return;
     }
 
-    // Attitude towards you
+
     const std::string attitude_text = string_format( _( "Attitude to you: %s" ),
                                       fac_ranking_text( picked_faction->likes_u ) );
     cataimgui::draw_colored_text( attitude_text, col_width );
 
 
-    // Can you contact them by radio
+
     const std::vector<npc *> applicable_repres = get_known_faction_radio_representative(
                 picked_faction );
     if( !applicable_repres.empty() ) {
@@ -814,7 +814,7 @@ void faction_ui::other_faction_display()
         }
     }
 
-    // Description
+
     cataimgui::draw_colored_text( picked_faction->desc.translated(), col_width );
 }
 
@@ -847,7 +847,7 @@ void faction_ui::draw_creature_list()
     size_t num_entries = creatures.size();
     const int last_entry = num_entries == 0 ? 0 : ( static_cast<int>( num_entries ) - 1 );
 
-    // initialize selected_creature either from already set camp, or from zero if not set
+
     auto it = std::find( creatures.begin(), creatures.end(), picked_creature );
     int selected_creature = ( it != creatures.end() ) ? std::distance( creatures.begin(), it ) : 0;
     if( last_action == "UP" ) {
@@ -876,7 +876,7 @@ void faction_ui::draw_creature_list()
             ImGui::PushID( i );
 
             if( ImGui::Selectable( "", is_selected ) ) {
-                // if true, the option was selected, so set bp to what was selected
+
                 picked_creature = it_creature;
             }
 
@@ -906,15 +906,15 @@ void faction_ui::creature_display() const
 
     const mtype &cr = picked_creature->obj();
 
-    // Name & symbol
+
     cataimgui::draw_colored_text( string_format( "%s  %s", colorize( cr.sym, cr.color ), cr.nname() ),
                                   col_width );
 
-    // Difficulty
+
     const std::string diff_str = cr.get_difficulty_description();
     cataimgui::draw_colored_text( string_format( "%s: %s", _( "Difficulty" ), diff_str ), col_width );
 
-    // Origin
+
     const std::string origin_list = string_format( "%s: %s", _( "Origin" ),
                                     enumerate_as_string( cr.src.begin(), cr.src.end(),
     []( const std::pair<mtype_id, mod_id> &source ) {
@@ -922,18 +922,18 @@ void faction_ui::creature_display() const
     }, enumeration_conjunction::arrow ) );
     cataimgui::draw_colored_text( origin_list, c_light_gray, col_width );
 
-    // Size
+
     cataimgui::draw_colored_text( string_format( "%s: %s", _( "Size" ), colorize( cr.get_size_name(),
                                   c_light_gray ) ), col_width );
 
-    // Species
+
     const std::string species_list = string_format( "%s: %s", colorize( _( "Species" ), c_white ),
     enumerate_as_string( cr.species_descriptions(), []( const std::string & sp ) {
         return colorize( sp, c_yellow );
     } ) );
     cataimgui::draw_colored_text( species_list, c_light_gray, col_width );
 
-    // Senses
+
     std::vector<std::string> senses_str;
     if( cr.has_flag( mon_flag_HEARS ) ) {
         senses_str.emplace_back( colorize( _( "hearing" ), c_yellow ) );
@@ -949,7 +949,7 @@ void faction_ui::creature_display() const
                        enumerate_as_string( senses_str ) );
     cataimgui::draw_colored_text( senses_text, c_light_gray, col_width );
 
-    // Abilities
+
     if( cr.has_flag( mon_flag_SWIMS ) || cr.move_skills.swim.has_value() ) {
         cataimgui::draw_colored_text( _( "It can swim." ), col_width );
     }
@@ -973,7 +973,7 @@ void faction_ui::creature_display() const
     }
 
     ImGui::NewLine();
-    // Description
+
     cataimgui::draw_colored_text( cr.get_description(), c_light_gray, col_width );
 }
 
@@ -1087,11 +1087,11 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 const npc &follower = *followers[i];
                 std::string contact;
                 if( follower.has_companion_mission() ) {
-                    // Promise recall only when it can actually be done:
-                    // CONFIRM is hidden when the follower is out of
-                    // contact (can_confirm stays false below), so a row
-                    // that still says "Use Contact to recall" promises
-                    // an action that does not exist.
+
+
+
+
+
                     const bool recallable = can_contact( get_avatar(), follower ) ||
                                             can_radio_contact( get_avatar(), follower ) ==
                                             radio_contact_result::YES;
@@ -1260,10 +1260,10 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                     append_field( details,
                                   _( "You know someone from this faction you can contact by radio." ) );
                     if( !has_radio( get_avatar() ) ) {
-                        // Do not offer CONFIRM when there is no radio to
-                        // call with: pressing it only reported the failure
-                        // afterwards. State what is missing instead, and
-                        // leave can_confirm false so the command is hidden.
+
+
+
+
                         append_field( details, _( "You need a radio to contact them." ) );
                     } else {
                         append_field( details, string_format(
@@ -1389,7 +1389,7 @@ std::optional<std::string> faction_ui::reader_intent( const a11y::semantic_inten
                     picked_follower = followers[i];
                     s = cataimgui::scroll::begin;
                     if( intent.action == "activate" ) {
-                        // Recall from a mission must be an explicit Contact action.
+
                         if( picked_follower->has_companion_mission() ) {
                             add_msg( m_info, _( "%s is on a companion mission.  Use Contact to recall." ),
                                      picked_follower->get_name() );
@@ -1435,7 +1435,7 @@ void faction_ui::draw_controls()
         ImGui::SetWindowHiddenAndSkipItemsForCurrentFrame( w );
     }
 
-    // no need to draw anything if we are exiting
+
     if( last_action == "QUIT" ) {
         return;
     } else if( last_action == "NEXT_TAB" || last_action == "RIGHT" ) {
@@ -1460,8 +1460,8 @@ void faction_ui::draw_controls()
 
     if( ImGui::BeginTabBar( "##Tabs" ) ) {
         if( cataimgui::BeginTabItem( _( "Your Faction" ), selected_tab == tab_mode::TAB_MYFACTION ) ) {
-            // if we picked the tab via mouse imput, update selected_tab
-            // TODO there seems to be some lag appearing when you pick it with mouse?
+
+
             selected_tab = ImGui::IsItemActive() ? tab_mode::TAB_MYFACTION : selected_tab;
             draw_your_faction_tab();
             ImGui::EndTabItem();
@@ -1526,8 +1526,8 @@ void faction_ui::radio_the_faction()
         if( res == radio_contact_result::YES ) {
             call_npc_query.addentry( MENU_AUTOASSIGN, true, MENU_AUTOASSIGN, npc->disp_name() );
         } else {
-            // ALPHA_NO_RADIO & BOTH_NO_RADIO are excluded by check above
-            // so this fires only for BETA_NO_RADIO and TOO_FAR
+
+
             const std::string desc = string_format( "%s (%s)", npc->disp_name(), _( "No response" ) );
             call_npc_query.addentry( MENU_AUTOASSIGN, false, MENU_AUTOASSIGN, desc );
         }

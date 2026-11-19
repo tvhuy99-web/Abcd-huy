@@ -18,40 +18,40 @@ class Character;
 class map;
 enum class creature_size : int;
 
-// An attribute of a particular map square that is of interest in pathfinding.
-// Has a maximum of 32 members. For more, the datatype underlying PathfindingFlags
-// needs to be increased.
+
+
+
 enum class PathfindingFlag : uint8_t {
-    Ground = 0,     // Can walk on
-    Slow,           // Move cost > 2
-    Swimmable,      // Can swim in
-    Air,            // Empty air
-    Unsheltered,    // Outside and above ground level
-    Obstacle,       // Something stopping us, might be bashable.
-    Bashable,       // Something bashable.
-    Impassable,     // Impassable obstacle.
-    Vehicle,        // Vehicle tile (passable or not)
-    DangerousField, // Dangerous field
-    DangerousTrap,  // Dangerous trap (i.e. not flagged benign)
-    GoesUp,         // Valid stairs up
-    GoesDown,       // Valid stairs down
-    RampUp,         // Valid ramp up
-    RampDown,       // Valid ramp down
-    Climbable,      // Obstacle but can be climbed on examine
-    Sharp,          // Sharp items (barbed wire, etc)
-    Door,           // A door (any kind)
-    InsideDoor,     // A door that can be opened from the inside only
-    LockedDoor,     // A locked door
-    Pit,            // A pit you can fall into / climb out of.
-    DeepWater,      // Deep water.
-    Burrowable,     // Can burrow into
-    HardGround,     // Can not dig & burrow intotiny = 1,
-    RestrictTiny,   // Tiny cannot enter
-    RestrictSmall,  // Small cannot enter
-    RestrictMedium, // Medium cannot enter
-    RestrictLarge,  // Large cannot enter
-    RestrictHuge,   // Huge cannot enter
-    Lava,           // Lava terrain
+    Ground = 0,
+    Slow,
+    Swimmable,
+    Air,
+    Unsheltered,
+    Obstacle,
+    Bashable,
+    Impassable,
+    Vehicle,
+    DangerousField,
+    DangerousTrap,
+    GoesUp,
+    GoesDown,
+    RampUp,
+    RampDown,
+    Climbable,
+    Sharp,
+    Door,
+    InsideDoor,
+    LockedDoor,
+    Pit,
+    DeepWater,
+    Burrowable,
+    HardGround,
+    RestrictTiny,
+    RestrictSmall,
+    RestrictMedium,
+    RestrictLarge,
+    RestrictHuge,
+    Lava,
 };
 
 class PathfindingFlags
@@ -143,11 +143,11 @@ struct pathfinding_cache {
 struct pathfinding_settings {
     std::map<damage_type_id, int> bash_strength;
     int max_dist = 0;
-    // At least 2 times the above, usually more
+
     int max_length = 0;
 
-    // Expected terrain cost (2 is flat ground) of climbing a wire fence
-    // 0 means no climbing
+
+
     int climb_cost = 0;
 
     bool allow_open_doors = false;
@@ -178,36 +178,36 @@ struct pathfinding_target {
     const int r;
     bool contains( const tripoint_bub_ms &p ) const;
 
-    // Finds a path that ends on a specific tile
+
     static pathfinding_target point( const tripoint_bub_ms &p ) {
         return { p, 0 };
     }
 
-    // Finds a path that ends on either the given tile, or one of the tiles directly adjacent to it
+
     static pathfinding_target adjacent( const tripoint_bub_ms &p ) {
         return { p, 1 };
     }
 
-    // Finds a path that ends on any tile within the given radius of the specified tile, calculated by square distance
+
     static pathfinding_target radius( const tripoint_bub_ms &p, int radius ) {
         return { p, radius };
     }
 };
 
-// Returns true when the character is an avatar dragging a single-tile
-// vehicle, meaning grab-aware pathfinding (route_with_grab) should be used.
+
+
 bool has_grabbed_single_tile_vehicle( const Character &you, const map &here );
 
-// Grab-aware A* pathfinding for a player dragging a single-tile vehicle.
-// State is (player_position, grab_direction), so it finds routes where both
-// the player and the dragged vehicle can physically move.
-// Returns an empty vector if no path exists, or if the character is not an
-// avatar, not grabbing a vehicle, or dragging a multi-tile vehicle.
-// The optional |avoid| callback rejects player tiles matching map::route
-// semantics: if( !target.contains(pos) && avoid && avoid(pos) ) skip tile.
+
+
+
+
+
+
+
 std::vector<tripoint_bub_ms> route_with_grab(
     map &here, const Character &you,
     const pathfinding_target &target,
     const std::function<bool( const tripoint_bub_ms & )> &avoid = {} );
 
-#endif // CATA_SRC_PATHFINDING_H
+#endif

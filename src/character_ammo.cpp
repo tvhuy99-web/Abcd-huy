@@ -87,7 +87,7 @@ bool Character::can_reload( const item &it, const item *ammo ) const
 bool Character::list_ammo( const item_location &base, std::vector<item::reload_option> &ammo_list,
                            bool empty, bool per_well_targets ) const
 {
-    // pocket_index < 0 -> first-compatible-well fallback in item::reload.
+
     struct opt_entry {
         item_location loc;
         int pocket_index;
@@ -125,8 +125,8 @@ bool Character::list_ammo( const item_location &base, std::vector<item::reload_o
     int ammo_search_range = is_mounted() ? -1 : 1;
     for( opt_entry &entry : opts ) {
         item_location &p = entry.loc;
-        // For per-well entries, filter compatibility against that specific
-        // pocket so magazines that fit a sibling well do not leak through.
+
+
         const item_pocket *targeted_well = nullptr;
         if( entry.pocket_index >= 0 ) {
             int idx = 0;
@@ -147,13 +147,13 @@ bool Character::list_ammo( const item_location &base, std::vector<item::reload_o
                                       ? targeted_well->can_reload_with( *ammo, false )
                                       : p.can_reload_with( ammo, false );
             if( well_accepts ) {
-                // Record that there's a matching ammo type,
-                // even if something is preventing reloading at the moment.
+
+
                 ammo_match_found = true;
             } else if( ( ammo->has_flag( flag_SPEEDLOADER ) || ammo->has_flag( flag_SPEEDLOADER_CLIP ) ) &&
                        p->allows_speedloader( ammo->typeId() ) && ammo->ammo_remaining( ) > 1 &&
                        p->ammo_remaining( ) < 1 ) {
-                // Again, this is "are they compatible", later check handles "can we do it now".
+
                 ammo_match_found = p.can_reload_with( ammo, false );
             }
             const bool emit = targeted_well != nullptr
@@ -173,7 +173,7 @@ int Character::item_reload_cost( const item &it, const item &ammo, int qty ) con
         qty = std::max( std::min( ammo.charges, qty ), 1 );
     } else if( ammo.is_ammo_container() ) {
         int min_clamp = 0;
-        // find the first ammo in the container to get its charges
+
         ammo.visit_items( [&min_clamp]( const item * it, const item * ) {
             if( it->is_ammo() ) {
                 min_clamp = it->charges;
@@ -184,28 +184,28 @@ int Character::item_reload_cost( const item &it, const item &ammo, int qty ) con
 
         qty = clamp( qty, min_clamp, 1 );
     } else {
-        // Handle everything else as magazines
+
         qty = 1;
     }
 
-    // No base cost for handling ammo - that's already included in obtain cost
-    // We have the ammo in our hands right now
+
+
     int mv = item_handling_cost( ammo, true, 0, qty );
 
     if( ammo.has_flag( flag_MAG_BULKY ) ) {
-        mv *= 1.5; // bulky magazines take longer to insert
+        mv *= 1.5;
     }
 
     if( !it.is_gun() && !it.is_magazine() ) {
-        return mv + 100; // reload a tool or sealable container
+        return mv + 100;
     }
 
-    /** @EFFECT_GUN decreases the time taken to reload a magazine */
-    /** @EFFECT_PISTOL decreases time taken to reload a pistol */
-    /** @EFFECT_SMG decreases time taken to reload an SMG */
-    /** @EFFECT_RIFLE decreases time taken to reload a rifle */
-    /** @EFFECT_SHOTGUN decreases time taken to reload a shotgun */
-    /** @EFFECT_LAUNCHER decreases time taken to reload a launcher */
+
+
+
+
+
+
 
     int cost = 0;
     if( it.is_gun() ) {
@@ -220,7 +220,7 @@ int Character::item_reload_cost( const item &it, const item &ammo, int qty ) con
     mv += cost / ( 1.0f + std::min( get_skill_level( sk ) * 0.1f, 1.0f ) );
 
     if( it.has_flag( flag_STR_RELOAD ) ) {
-        /** @EFFECT_STR reduces reload time of some weapons */
+
         mv -= get_str() * 20;
     }
 
@@ -295,4 +295,3 @@ hint_rating Character::rate_action_insert( const item_location &loc ) const
     }
     return hint_rating::good;
 }
-

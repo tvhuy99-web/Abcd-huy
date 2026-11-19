@@ -120,7 +120,7 @@ std::string character_requirement_text( const scaling_stat stat, const int requi
     return text;
 }
 
-} // namespace
+}
 
 template<>
 const crafting_category &string_id<crafting_category>::obj() const
@@ -134,10 +134,10 @@ bool string_id<crafting_category>::is_valid() const
     return craft_cat_list.is_valid( *this );
 }
 
-/**
- * return index of newly chosen crafter.
- * return < 0 if error happens or nobody is choosen.
- */
+
+
+
+
 static int choose_crafter( const std::vector<Character *> &crafting_group, int crafter_i,
                            const recipe *rec, bool rec_valid );
 
@@ -150,18 +150,18 @@ static void compare_recipe_with_item( const item &recipe_item, Character &crafte
 static void prioritize_components( const recipe &recipe, Character &crafter );
 static void deprioritize_components( const recipe &recipe );
 
-// Clickable text label -- mouse click or keyboard nav activation.
-// nav_idx/nav_cursor/nav_activated support keyboard navigation:
-//   nav_idx: this item's index in the nav sequence (-1 = not navigable)
-//   nav_cursor: currently focused nav index
-//   nav_activated: index that was activated by Enter (-1 = none)
-// Returns true when activated (mouse click or keyboard).
+
+
+
+
+
+
 static bool clickable_text( const char *label, nc_color col,
                             int nav_idx = -1, int nav_cursor = -1, int nav_activated = -1 )
 {
     bool focused = nav_idx >= 0 && nav_idx == nav_cursor;
     if( focused ) {
-        // Draw highlight background
+
         ImVec2 cursor = ImGui::GetCursorScreenPos();
         float w = ImGui::CalcTextSize( label ).x;
         float h = ImGui::GetTextLineHeight();
@@ -190,10 +190,10 @@ static std::string get_cat_unprefixed( std::string_view prefixed_name )
     return std::string( prefixed_name.substr( 3, prefixed_name.size() - 3 ) );
 }
 
-// The Vietnamese game catalog can map practice titles to unrelated camp
-// blueprints. Preserve actual game data and provide separate, reviewed
-// accessible wording for common training sessions. Ordinary crafting and
-// the visual interface keep the upstream translation behavior.
+
+
+
+
 static std::string accessible_crafting_recipe_name( const recipe &rec )
 {
     if( !a11y::enabled() || !rec.is_practice() || rec.practice_source_name.empty() ) {
@@ -252,16 +252,16 @@ static std::string accessible_practice_description( const recipe &rec,
     if( original == "unarmed (beginner)" ) {
         return _( "Practice shadowboxing to prepare for fighting without a weapon." );
     }
-    // Show an accurate source description rather than an unrelated
-    // Vietnamese construction instruction until a reviewed translation exists.
+
+
     return !rec.practice_source_description.empty() ? rec.practice_source_description :
            rec.get_description( crafter );
 }
 
 static std::string accessible_recipe_description( const recipe &rec, const Character &crafter )
 {
-    // Work directly from the selected recipe. reader_documents may still
-    // contain the previously focused recipe when the detail screen opens.
+
+
     if( rec.is_practice() && a11y::enabled() ) {
         return accessible_practice_description( rec, crafter );
     }
@@ -286,7 +286,7 @@ static std::string accessible_recipe_description( const recipe &rec, const Chara
     return description;
 }
 
-// Ceil-rounded human-readable craft time.  Input is game turns (seconds).
+
 
 void load_recipe_category( const JsonObject &jsobj, const std::string &src )
 {
@@ -300,7 +300,7 @@ void crafting_category::finalize_all()
 
 void crafting_category::load( const JsonObject &jo, std::string_view )
 {
-    // Ensure id is correct
+
     if( id.str().find( "CC_" ) != 0 ) {
         jo.throw_error( "Crafting category id has to be prefixed with 'CC_'" );
     }
@@ -312,7 +312,7 @@ void crafting_category::load( const JsonObject &jo, std::string_view )
     mandatory( jo, was_loaded, "recipe_subcategories", subcategories,
                auto_flags_reader<> {} );
 
-    // Ensure subcategory ids are correct and remove dupes
+
     std::string cat_name = get_cat_unprefixed( id.str() );
     std::unordered_set<std::string> known;
     for( auto it = subcategories.begin(); it != subcategories.end(); ) {
@@ -423,7 +423,7 @@ class recipe_result_info_cache
             return item_info_data( "", "", info, {}, scroll_pos );
         }
 };
-} // namespace
+}
 
 std::pair<std::vector<const recipe *>, bool> recipes_from_cat( const recipe_subset
         &available_recipes, const crafting_category_id &cat, const std::string &subcat )
@@ -467,7 +467,7 @@ static bool selection_ok( const std::vector<const recipe *> &list, const int cur
     return false;
 }
 
-// returns false if the popup was cancelled
+
 static bool filter_crafting_recipes( std::string &filterstring )
 {
     int max_example_length = 0;
@@ -506,7 +506,7 @@ static bool filter_crafting_recipes( std::string &filterstring )
 
     string_input_popup_imgui popup( 85, filterstring );
     popup.set_label( _( "Search:" ) );
-    popup.set_description( description, c_light_gray, /*monofont=*/ true );
+    popup.set_description( description, c_light_gray, true );
     popup.set_identifier( "craft_recipe_filter" );
     popup.use_uilist_history( false );
     filterstring = popup.query();
@@ -514,9 +514,9 @@ static bool filter_crafting_recipes( std::string &filterstring )
     return !popup.cancelled();
 }
 
-// ---------------------------------------------------------------------------
-// ImGui crafting UI implementation
-// ---------------------------------------------------------------------------
+
+
+
 
 namespace
 {
@@ -531,8 +531,8 @@ class crafting_ui_impl : public cataimgui::window
         a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
         std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
                 input_context &ctxt );
-        // Full recipe detail text from the cached reader documents plus the
-        // result item info, for an explicit two-finger detail request.
+
+
         std::string full_recipe_detail_text( const recipe &rec, int batch );
         void set_input_context( const input_context *ctxt ) {
             ctxt_ptr = ctxt;
@@ -559,7 +559,7 @@ class crafting_ui_impl : public cataimgui::window
         cataimgui::bounds get_bounds() override;
 
     private:
-        // --- Core state ---
+
         Character *crafter;
         const recipe *chosen = nullptr;
         bool done = false;
@@ -569,12 +569,12 @@ class crafting_ui_impl : public cataimgui::window
         std::vector<Character *> crafting_group;
         int crafter_i;
 
-        // --- Recipe list ---
-        // A first snapshot may land on an empty Favorites/Recent/hidden
-        // subcategory even though the player knows recipes. Recover once,
-        // but never silently reset a filter that the player requested.
+
+
+
+
         bool initial_accessible_recipe_check_done = false;
-        bool reader_all_categories = false; // Accessible global All, not a subcategory.
+        bool reader_all_categories = false;
         std::vector<const recipe *> current;
         std::vector<int> indent_vec;
         std::vector<availability> available;
@@ -582,13 +582,13 @@ class crafting_ui_impl : public cataimgui::window
         int num_recipe = 0;
         size_t num_hidden = 0;
 
-        // --- Tab state ---
+
         std::vector<std::string> crafting_cats;
         tab_list tab;
         tab_list subtab;
         std::string filterstring;
 
-        // --- Mode flags ---
+
         bool recalc = true;
         bool keepline = false;
         bool batch = false;
@@ -597,28 +597,28 @@ class crafting_ui_impl : public cataimgui::window
         bool show_hidden = false;
         bool is_wide = false;
 
-        // --- Scroll state ---
+
         int line_item_info_popup = 0;
         int embedded_item_scroll_dummy = 0;
         cataimgui::scroll recipe_info_scroll = cataimgui::scroll::none;
         cataimgui::scroll item_info_scroll = cataimgui::scroll::none;
 
-        // --- Pending UI intents ---
+
         int pending_tab_index = -1;
         int pending_subtab_index = -1;
         int pending_line_click = -1;
-        int pending_batch_delta = 0;    // +1/-1 from inline batch buttons
+        int pending_batch_delta = 0;
         bool pending_enter_batch = false;
         bool pending_exit_batch = false;
         bool need_scroll_to_selected = false;
         bool need_scroll_to_selected_recipe_details = false;
 
-        // One-frame flags: force ImGui to select a specific tab, then clear.
-        // Set on programmatic tab changes (PREV_TAB/NEXT_TAB/LEFT/RIGHT).
-        bool force_select_tab = true;   // true initially to sync ImGui with tab state
+
+
+        bool force_select_tab = true;
         bool force_select_subtab = true;
 
-        // --- Input context ---
+
         const input_context *ctxt_ptr = nullptr;
         std::string reader_detail_key;
         const Character *reader_detail_crafter = nullptr;
@@ -627,19 +627,19 @@ class crafting_ui_impl : public cataimgui::window
         std::string displayed_description;
         std::optional<a11y::semantic_intent> reader_quantity_receipt;
 
-        // --- Reader detail screen ---
-        // Tapping a recipe opens a detail screen instead of crafting at
-        // once. The list snapshot and the detail snapshot never mix: the
-        // detail screen publishes only its own nodes plus the command tail.
+
+
+
+
         bool reader_detail_open = false;
         std::string reader_detail_recipe;
         int reader_detail_quantity = 1;
         bool reader_detail_quantity_picker_open = false;
 
-        // --- Keybinding footer ---
+
         std::string keybinding_tips;
 
-        // --- Unread tracking ---
+
         bool highlight_unread;
         bool unread_recipes_first = false;
         bool recalc_unread;
@@ -650,27 +650,27 @@ class crafting_ui_impl : public cataimgui::window
         std::map<std::string, std::map<std::string, bool>> is_subcat_unread;
         bool is_filtered_unread = false;
 
-        // --- Caches ---
+
         std::map<character_id, std::map<const recipe *, availability>> guy_availability_cache;
         std::map<const recipe *, availability> *availability_cache;
         std::unique_ptr<recipe_result_info_cache> result_info;
 
-        // --- Tool group expansion state ---
+
         std::set<int> expanded_tool_groups;
         std::set<int> expanded_comp_groups;
 
-        // Cached because get_byproducts() randomizes via item_group each call
+
         const recipe *cached_byproduct_recipe = nullptr;
         std::map<itype_id, int> cached_byproducts;
 
-        // --- Info panel keyboard navigation ---
+
         bool info_nav_active = false;
         int info_nav_cursor = 0;
-        int info_nav_count = 0;    // set during draw, read during process_action
-        int info_nav_activated = -1; // set by process_action, consumed by draw
+        int info_nav_count = 0;
+        int info_nav_activated = -1;
 
 
-        // --- Rendering helpers ---
+
         void draw_category_tabs();
         void draw_subcategory_tabs();
         void draw_recipe_list();
@@ -692,14 +692,14 @@ class crafting_ui_impl : public cataimgui::window
         void draw_keybinding_footer();
         void rebuild_keybinding_tips();
 
-        // --- State management ---
+
         void recalculate_recipes();
         void recalculate_unread();
         void invalidate_info_panels();
 };
-} // namespace
+}
 
-// --- Constructor ---
+
 
 crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_recipe,
                                     std::string filterstring, bool camp_crafting,
@@ -724,11 +724,11 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
 
     result_info = std::make_unique<recipe_result_info_cache>( *crafter );
 
-    // Build only real crafting categories. CC_* is a wildcard/dummy
-    // category for nested recipe grouping and Favorites/Recent/Hidden,
-    // not a navigable main category in accessible mode. Normal visual
-    // mode keeps its existing special tabs. The 2026-11-12 reader log
-    // showed swipes from Weapons landing on empty Favorites.
+
+
+
+
+
     crafting_cats.reserve( craft_cat_list.size() );
     for( const crafting_category &cat : craft_cat_list.get_all() ) {
         if( !cat.is_hidden && ( !a11y::enabled() || !cat.is_wildcard ) &&
@@ -738,8 +738,8 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
     }
     tab = tab_list( crafting_cats );
     subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
-    // The accessible crafting reader starts on the same global All tab
-    // that ImGui displays first. Thereafter semantic gestures own this state.
+
+
     reader_all_categories = a11y::enabled() && !goto_recipe.is_valid();
 
     if( goto_recipe.is_valid() ) {
@@ -765,7 +765,7 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
     }
 }
 
-// --- get_bounds ---
+
 
 cataimgui::bounds crafting_ui_impl::get_bounds()
 {
@@ -786,12 +786,12 @@ cataimgui::bounds crafting_ui_impl::get_bounds()
     return { x, 0.f, width, viewport.y };
 }
 
-// --- draw_controls ---
+
 
 void crafting_ui_impl::draw_controls()
 {
     hide_if_hidden();
-    // Debug: set to true to show borders around all child regions and table cells
+
     static constexpr bool debug_layout = false;
     if( debug_layout ) {
         ImGui::PushStyleVar( ImGuiStyleVar_ChildBorderSize, 1.0f );
@@ -801,7 +801,7 @@ void crafting_ui_impl::draw_controls()
         recalculate_unread();
     }
 
-    // Wide/narrow decision
+
     float char_w = ImGui::CalcTextSize( "X" ).x;
     float full_screen_width = 80.f * char_w;
     float window_width = ImGui::GetWindowWidth();
@@ -812,14 +812,14 @@ void crafting_ui_impl::draw_controls()
         rebuild_keybinding_tips();
     }
 
-    // Reserve a fixed height for the footer (separator + ~3 lines of tips)
+
     float line_height = ImGui::GetTextLineHeightWithSpacing();
     float footer_height = line_height * 4.f;
 
-    // Main content area (above footer)
+
     ImGuiChildFlags content_flags = debug_layout ? ImGuiChildFlags_Borders : ImGuiChildFlags_None;
     if( ImGui::BeginChild( "##CRAFT_CONTENT", ImVec2( 0, -footer_height ), content_flags ) ) {
-        // Section 1: split header (category tabs left, status right)
+
         ImGuiTableFlags header_flags = debug_layout
                                        ? ImGuiTableFlags_Borders : ImGuiTableFlags_None;
         if( ImGui::BeginTable( "##HEADER_TOP", 2, header_flags ) ) {
@@ -832,8 +832,8 @@ void crafting_ui_impl::draw_controls()
 
             ImGui::TableNextColumn();
             draw_category_tabs();
-            // Apply pending category change immediately so subcategory
-            // tabs render with the correct list on the same frame
+
+
             if( pending_tab_index >= 0 ) {
                 reader_all_categories = false;
                 tab.set_index( pending_tab_index );
@@ -843,7 +843,7 @@ void crafting_ui_impl::draw_controls()
                 force_select_subtab = true;
             }
             draw_subcategory_tabs();
-            // Apply pending subcategory change immediately
+
             if( pending_subtab_index >= 0 ) {
                 subtab.set_index( pending_subtab_index );
                 recalc = true;
@@ -856,7 +856,7 @@ void crafting_ui_impl::draw_controls()
             ImGui::EndTable();
         }
 
-        // Section 3: main content table (recipe list + info panels)
+
         float list_width = 28.f * char_w;
         float item_info_width = is_wide ? std::min( 40.f * char_w,
                                 ( window_width - full_screen_width ) ) : 0.f;
@@ -892,7 +892,7 @@ void crafting_ui_impl::draw_controls()
     }
     ImGui::EndChild();
 
-    // Footer
+
     draw_keybinding_footer();
 
     if( debug_layout ) {
@@ -900,7 +900,7 @@ void crafting_ui_impl::draw_controls()
     }
 }
 
-// --- draw_category_tabs ---
+
 
 void crafting_ui_impl::draw_category_tabs()
 {
@@ -933,9 +933,9 @@ void crafting_ui_impl::draw_category_tabs()
             const std::string all_label = std::string( _( "All categories" ) ) + "###cat_reader_all";
             if( cataimgui::BeginTabItem( all_label.c_str(),
                                         force_select_tab && reader_all_categories ) ) {
-                // BeginTabItem reports the selected tab even when nobody
-                // touched it. Do not let a stale ImGui selection undo a
-                // category chosen by a two-finger reader gesture.
+
+
+
                 if( ImGui::IsItemClicked() && !reader_all_categories ) {
                     reader_all_categories = true;
                     recalc = true;
@@ -948,9 +948,9 @@ void crafting_ui_impl::draw_category_tabs()
             if( is_cat_unread[crafting_cats[i]] ) {
                 label += " +";
             }
-            // Stable tab ID so adding/removing " +" doesn't change identity
+
             label += "###cat_" + std::to_string( i );
-            // Only force-select for one frame after programmatic tab change
+
             bool should_select = force_select_tab && !reader_all_categories &&
                                  ( tab.cur_index() == static_cast<int>( i ) );
             if( cataimgui::BeginTabItem( label.c_str(), should_select ) ) {
@@ -966,7 +966,7 @@ void crafting_ui_impl::draw_category_tabs()
     }
 }
 
-// --- draw_subcategory_tabs ---
+
 
 void crafting_ui_impl::draw_subcategory_tabs()
 {
@@ -987,7 +987,7 @@ void crafting_ui_impl::draw_subcategory_tabs()
             if( is_subcat_unread[tab.cur()][subcats[i]] ) {
                 label += " +";
             }
-            // Stable tab ID so adding/removing " +" doesn't change identity
+
             label += "###subcat_" + std::to_string( i );
 
             if( is_empty ) {
@@ -1011,7 +1011,7 @@ void crafting_ui_impl::draw_subcategory_tabs()
     }
 }
 
-// --- draw_recipe_list ---
+
 
 void crafting_ui_impl::draw_recipe_list()
 {
@@ -1020,7 +1020,7 @@ void crafting_ui_impl::draw_recipe_list()
     }
     float avail_width = ImGui::GetContentRegionAvail().x;
 
-    // Recipes / Batch toggle buttons
+
     {
         float spacing = ImGui::GetStyle().ItemSpacing.x;
         float btn_w = ( avail_width - spacing ) / 2.f;
@@ -1111,10 +1111,10 @@ void crafting_ui_impl::draw_recipe_list()
     ImGui::EndChild();
 }
 
-// --- draw_recipe_info_panel ---
 
-// Wrapper: register a clickable_text with the info panel nav system.
-// Returns true when activated (mouse or keyboard).
+
+
+
 bool crafting_ui_impl::nav_clickable( const char *label, nc_color col )
 {
     int idx = info_nav_active ? info_nav_count : -1;
@@ -1134,7 +1134,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
         return;
     }
     info_nav_count = 0;
-    // info_nav_activated persists from process_action until consumed this frame
+
     const recipe &recp = *current[line];
     const availability &avail = available[line];
 
@@ -1142,9 +1142,9 @@ void crafting_ui_impl::draw_recipe_info_panel()
                            ImGuiWindowFlags_NoNav ) ) {
         cataimgui::set_scroll( recipe_info_scroll );
 
-        // --- Summary ---
 
-        // Line 1: recipe name with inline batch controls [-] name [xN] [+]
+
+
         {
             const std::string recipe_name = recp.result_name( true );
             cataimgui::PushGuiFont1_5x();
@@ -1160,7 +1160,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 mult_str = string_format( " x%d", manual_batch );
             }
 
-            // Measure total width for centering
+
             float total_w = ImGui::CalcTextSize( recipe_name.c_str() ).x;
             if( show_minus ) {
                 total_w += ImGui::CalcTextSize( "-" ).x + space;
@@ -1201,12 +1201,12 @@ void crafting_ui_impl::draw_recipe_info_panel()
             cataimgui::PopGuiFont1_5x();
         }
 
-        // Batch size for all subsequent calculations
+
         const int batch_size = get_batch_size();
         float region_w = ImGui::GetContentRegionAvail().x;
 
         {
-            // Line 2: centered source attribution
+
             {
                 std::string source_text;
                 if( !crafter->knows_recipe( &recp ) ) {
@@ -1225,7 +1225,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 if( source_text.empty() && !recp.is_nested() ) {
                     const float success = recp.is_nested() ? 1.f :
                                           crafter->recipe_success_chance( recp );
-                    // Confident phrases for >=60% success, uncertain for <60%
+
                     size_t idx = std::hash<std::string> {}( recp.ident().str() );
                     if( success >= 0.6f ) {
                         static const std::array<std::string, 2> confident = {{
@@ -1252,9 +1252,9 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 }
             }
 
-            // Item flavor text: capped at 70% width, centered block.
-            // Short text (fits in one line) is centered; long text wraps
-            // left-aligned within the centered cap.
+
+
+
             {
                 std::string desc;
                 if( recp.is_nested() || recp.is_practice() ) {
@@ -1278,12 +1278,12 @@ void crafting_ui_impl::draw_recipe_info_panel()
                     float cap_w = region_w * 0.7f;
                     float desc_w = ImGui::CalcTextSize( desc.c_str() ).x;
                     if( desc_w <= cap_w ) {
-                        // Fits in one line: center it
+
                         ImGui::SetCursorPosX( ImGui::GetCursorPosX() + ( region_w - desc_w ) / 2.f );
                         ImGui::TextColored( cataimgui::imvec4_from_color( c_light_gray ), "%s",
                                             desc.c_str() );
                     } else {
-                        // Wraps: center the cap block, left-align text inside
+
                         float offset = ( region_w - cap_w ) / 2.f;
                         ImGui::SetCursorPosX( ImGui::GetCursorPosX() + offset );
                         ImGui::PushTextWrapPos( ImGui::GetCursorPosX() + cap_w );
@@ -1294,7 +1294,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 }
             }
 
-            // Line 3: centered natural-language stats
+
             if( !recp.is_nested() ) {
                 const int expected_turns = crafter->expected_time_to_craft( recp, batch_size )
                                            / to_moves<int>( 1_turns );
@@ -1304,7 +1304,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                                              success < 75.f ? c_light_gray : c_green;
                 const nc_color activity_col = activity_level_color( recp.exertion_level() );
 
-                // Lowercase activity name
+
                 std::string activity_lc = lowercase_first_letter( display::activity_level_str(
                                               recp.exertion_level() ) );
 
@@ -1314,7 +1314,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 const int total_yield = recp.makes_amount() * batch_size;
 
                 // Single format string so translators can reorder parts.
-                // Plain version for width measurement, colored for rendering.
+
                 std::string plain;
                 std::string colored;
                 if( total_yield > 1 ) {
@@ -1344,7 +1344,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
             }
         }
 
-        // Line 4: lighting warning, if applicable
+
         if( !recp.is_nested() && crafter->lighting_craft_speed_multiplier( recp ) <= 0.0f ) {
             const std::string lighting_str = _( "Lighting conditions are too poor to craft this." );
             float line_w = ImGui::CalcTextSize( lighting_str.c_str() ).x;
@@ -1355,7 +1355,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
         }
         ImGui::Separator();
 
-        // Warnings (right after stats)
+
         if( avail.can_craft_recipe && avail.would_use_rotten ) {
             cataimgui::TextColoredParagraphNewline( c_red, _( "Will use rotten ingredients" ) );
         }
@@ -1381,7 +1381,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                                                     : _( "Crafter lacks theoretical knowledge for this recipe." ) );
         }
 
-        // Complex/overlapping requirement warnings
+
         if( !recp.is_nested() ) {
             const bool too_complex = recp.deduped_requirements().is_too_complex();
             if( avail.can_craft_recipe && too_complex ) {
@@ -1404,7 +1404,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
             }
         }
 
-        // Batch time savings
+
         if( batch_size > 1 ) {
             const std::string savings = recp.batch_savings_string();
             if( !savings.empty() ) {
@@ -1414,9 +1414,9 @@ void crafting_ui_impl::draw_recipe_info_panel()
             }
         }
 
-        // Centered "Details" button that opens the modifier table
+
         if( !recp.is_nested() ) {
-            // Practice recipes always show details
+
             bool show_details = uistate.crafting_expand_details || recp.is_practice();
             if( !recp.is_practice() ) {
                 const char *details_label = uistate.crafting_expand_details ? _( "- details -" ) :
@@ -1431,7 +1431,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
             if( show_details ) {
                 draw_modifier_table( recp, avail, batch_size );
 
-                // Practice-specific info after the modifier table
+
                 if( recp.is_practice() && recp.practice_data ) {
                     ImGui::NewLine();
                     if( recp.skill_used ) {
@@ -1456,7 +1456,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                         ImGui::TextColored( cataimgui::imvec4_from_color( gain_col ), "%s",
                                             gains.c_str() );
 
-                        // Proficiency gains
+
                         for( const recipe_proficiency &prof : recp.get_proficiencies() ) {
                             if( prof.required ) {
                                 continue;
@@ -1473,7 +1473,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
             }
         }
 
-        // --- Recipe ---
+
         const bool has_recipe_content = !recp.is_nested() && (
                                             recp.has_character_requirements() ||
                                             !recp.simple_requirements().is_empty() ||
@@ -1496,7 +1496,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
             const temp_crafting_inventory &crafting_inv = avail.inv_override
                     ? *avail.inv_override : crafter->crafting_inventory();
 
-            // Single step recipes
+
             if( recp.has_steps() && ( recp.steps().size() <= 1 ) ) {
                 const recipe_step &step = recp.steps().front();
                 ImGui::TextColored( cataimgui::imvec4_from_color( c_white ),
@@ -1523,12 +1523,12 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 ImGui::Spacing();
             }
 
-            // Components (always recipe-level)
+
             draw_components( recp.simple_requirements(), crafting_inv,
                              recp.get_component_filter(), batch_size,
                              recp.has_flag( "NEED_FULL_MAGAZINE" ) );
 
-            // Byproducts
+
             if( recp.has_byproducts() ) {
                 if( cached_byproduct_recipe != &recp ) {
                     cached_byproduct_recipe = &recp;
@@ -1544,9 +1544,9 @@ void crafting_ui_impl::draw_recipe_info_panel()
                 }
             }
 
-            // Multi step details
+
             if( recp.has_steps() && ( recp.steps().size() > 1 ) ) {
-                // Step details are collapsible; collapsed shows flat merged view
+
                 {
                     const char *steps_label = uistate.crafting_expand_steps
                                               ? _( "- steps -" ) : _( "+ steps +" );
@@ -1578,7 +1578,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                         const std::string activity = display::activity_level_str( step.exertion );
                         nc_color act_col = activity_level_color( step.exertion );
 
-                        // Per-step batch savings annotation
+
                         std::string batch_note;
                         if( batch_size > 1 ) {
                             const double single_moves = recp.step_budget_moves(
@@ -1590,7 +1590,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                             }
                         }
 
-                        // Step header: "1. Name  time  activity  [batch note]"
+
                         ImGui::TextColored( cataimgui::imvec4_from_color( c_white ),
                                             "%d. %s", static_cast<int>( si + 1 ),
                                             step.name.translated().c_str() );
@@ -1613,7 +1613,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
 
                         ImGui::Indent( step_indent );
 
-                        // Per-step proficiencies
+
                         if( !step.proficiencies.empty() ) {
                             ImGui::TextColored( cataimgui::imvec4_from_color( c_white ), "%s",
                                                 _( "Proficiencies:" ) );
@@ -1629,7 +1629,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
                             ImGui::Unindent( sub_indent );
                         }
 
-                        // Per-step tools + qualities
+
                         const requirement_data &step_req = step.requirements;
                         if( !step_req.get_tools().empty() || !step_req.get_qualities().empty() ) {
                             draw_requirement_tools( step_req, crafting_inv, batch_size,
@@ -1640,19 +1640,19 @@ void crafting_ui_impl::draw_recipe_info_panel()
                         tool_group_offset += step_req.get_tools().size();
                     }
                 } else {
-                    // Collapsed: flat merged tools view
+
                     draw_requirement_tools( recp.simple_requirements(), crafting_inv,
                                             batch_size, 0 );
                 }
             } else {
-                // Legacy: flat tools + qualities
+
                 draw_requirement_tools( recp.simple_requirements(), crafting_inv,
                                         batch_size, 0 );
             }
 
             draw_character_resources( recp, batch_size );
 
-            // Helpers who know this recipe
+
             if( !crafter->knows_recipe( &recp ) ) {
                 std::vector<const Character *> helpers;
                 for( const Character *h : crafting_group ) {
@@ -1672,7 +1672,7 @@ void crafting_ui_impl::draw_recipe_info_panel()
             }
         }
 
-        // Nested recipe groups: clickable sub-recipe list in middle column
+
         if( recp.is_nested() ) {
             for( const recipe_id &child_id : recp.nested_category_data ) {
                 const recipe &child = child_id.obj();
@@ -1696,13 +1696,13 @@ void crafting_ui_impl::draw_recipe_info_panel()
     info_nav_activated = -1;
 }
 
-// --- draw_modifier_table ---
+
 
 void crafting_ui_impl::draw_modifier_table( const recipe &recp,
         const availability &avail, int batch_size )
 {
-    // Helper: time impact as percentage. Input is a time multiplier
-    // (>1 = slower, <1 = faster). Shows "+50%" (red) or "-20%" (green).
+
+
     const auto time_pct_cell = [&]( float time_mult ) {
         float pct = ( time_mult - 1.0f ) * 100.f;
         ImGui::TableNextColumn();
@@ -1713,7 +1713,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
             ImGui::TextColored( cataimgui::imvec4_from_color( col ), "%+.0f%%", pct );
         }
     };
-    // Helper: effective skill modifier cell
+
     const auto skill_mod_cell = [&]( float val ) {
         ImGui::TableNextColumn();
         if( std::abs( val ) < 0.01f ) {
@@ -1727,7 +1727,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
         ImGui::TableNextColumn();
         ImGui::TextColored( cataimgui::imvec4_from_color( c_dark_gray ), "-" );
     };
-    // Section label row: dimmed text in Source, empty other columns
+
     const auto section_label = [&]( const char *label ) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
@@ -1743,7 +1743,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
         ImGui::TableSetupColumn( "source", ImGuiTableColumnFlags_WidthFixed );
         ImGui::TableSetupColumn( "time", ImGuiTableColumnFlags_WidthFixed );
         ImGui::TableSetupColumn( "eff_skill", ImGuiTableColumnFlags_WidthFixed );
-        // Manual header row
+
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::TextColored( cataimgui::imvec4_from_color( c_white ), "%s", _( "Source" ) );
@@ -1753,7 +1753,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
         // NOLINTNEXTLINE(cata-text-style)
         ImGui::TextColored( cataimgui::imvec4_from_color( c_white ), "%s", _( "Eff. skill" ) );
 
-        // Base row
+
         {
             const int64_t base_moves = recp.time_to_craft_moves(
                                            *crafter, {}, recipe_time_flag::ignore_proficiencies );
@@ -1774,7 +1774,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
             dash_cell();
         }
 
-        // --- Skills ---
+
         {
             bool has_skills = static_cast<bool>( recp.skill_used ) ||
                               !recp.required_skills.empty();
@@ -1818,7 +1818,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
             }
         }
 
-        // --- Proficiencies ---
+
         {
             const auto &profs = recp.get_proficiencies();
             if( !profs.empty() ) {
@@ -1870,7 +1870,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
             }
         }
 
-        // --- Conditions ---
+
         {
             float morale_mult = crafter->morale_crafting_speed_multiplier( recp );
             float light_mult = crafter->lighting_craft_speed_multiplier( recp );
@@ -1886,7 +1886,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
                 }
             }
             float int_bonus = crafter->get_int() / 4.0f;
-            float baseline_int = 2.0f; // INT 8 / 4
+            float baseline_int = 2.0f;
             float int_delta = int_bonus - baseline_int;
 
             bool has_farsight = false;
@@ -1914,13 +1914,13 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
             if( has_conditions ) {
                 section_label( _( "Conditions" ) );
 
-                // Start an indented condition row in the Source column
+
                 const auto cond_source = [&]() {
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     ImGui::Indent( row_indent );
                 };
-                // End the Source column indent (call before moving to Time/Eff.skill)
+
                 const auto cond_source_end = [&]() {
                     ImGui::Unindent( row_indent );
                 };
@@ -2000,7 +2000,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
             }
         }
 
-        // Separator + Total
+
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::Separator();
@@ -2013,7 +2013,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
         ImGui::TableNextColumn();
         ImGui::TextColored( cataimgui::imvec4_from_color( c_white ), "%s", _( "Total" ) );
 
-        // Total time
+
         {
             const int expected_turns = crafter->expected_time_to_craft( recp, batch_size )
                                        / to_moves<int>( 1_turns );
@@ -2022,7 +2022,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
                                 to_string( time_duration::from_turns( expected_turns ) ).c_str() );
         }
 
-        // Total success + catastrophic failure stacked in Eff. skill cell
+
         {
             float success = 100.f * crafter->recipe_success_chance( recp );
             nc_color success_col = success < 25.f ? c_red :
@@ -2045,7 +2045,7 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
         ImGui::EndTable();
     }
 
-    // Darkness and nearby count live under the Details spoiler
+
     const std::string darkness = recp.has_flag( "BLIND_EASY" ) ? _( "easy" ) :
                                  recp.has_flag( "BLIND_HARD" ) ? _( "hard" ) :
                                  _( "impossible" );
@@ -2063,9 +2063,9 @@ void crafting_ui_impl::draw_modifier_table( const recipe &recp,
     ImGui::Spacing();
 }
 
-// --- draw_tools_section ---
 
-// Lazy-built lookup: sorted item IDs of a tool group -> requirement display name.
+
+
 void crafting_ui_impl::draw_components( const requirement_data &req,
                                         const temp_crafting_inventory &crafting_inv,
                                         const std::function<bool( const item & )> &filter,
@@ -2077,10 +2077,10 @@ void crafting_ui_impl::draw_components( const requirement_data &req,
         return;
     }
 
-    // Ensure availability cache is fresh
+
     req.can_make_with_inventory( &get_player_character(), crafting_inv, filter );
 
-    // Compute how many of a given component the player has on hand
+
     const auto avail_count = [&crafting_inv, &filter]( const item_comp & ic ) -> int {
         if( item::count_by_charges( ic.type ) )
         {
@@ -2108,8 +2108,8 @@ void crafting_ui_impl::draw_components( const requirement_data &req,
             continue;
         }
 
-        // Sort available components first so they aren't hidden behind "or N more"
-        // Order: has enough > has some > has none
+
+
         std::vector<const item_comp *> sorted_alts;
         sorted_alts.reserve( comp_alts.size() );
         bool any_available = false;
@@ -2139,7 +2139,7 @@ void crafting_ui_impl::draw_components( const requirement_data &req,
             float indent = ImGui::CalcTextSize( "    " ).x;
             for( size_t i = 0; i < sorted_alts.size(); ++i ) {
                 const item_comp *ic = sorted_alts[i];
-                // Draw the first item on the same line as the bullet, then indent the rest
+
                 if( i == 0 ) {
                     ImGui::SameLine( 0, 0 );
                 }
@@ -2251,7 +2251,7 @@ void crafting_ui_impl::draw_requirement_tools( const requirement_data &req,
     ImGui::TextColored( cataimgui::imvec4_from_color( c_white ), "%s",
                         _( "Tools:" ) );
 
-    // Quality requirements -- bullet per group, colored by availability
+
     for( const auto &qual_alts : qual_groups ) {
         bool any_has = false;
         for( const quality_requirement &qr : qual_alts ) {
@@ -2274,7 +2274,7 @@ void crafting_ui_impl::draw_requirement_tools( const requirement_data &req,
         ImGui::EndGroup();
     }
 
-    // Tool groups -- bullet per group, with named req labels and expand/collapse
+
     for( size_t gi = 0; gi < tool_groups.size(); ++gi ) {
         const auto &alts = tool_groups[gi];
         if( alts.empty() ) {
@@ -2286,7 +2286,7 @@ void crafting_ui_impl::draw_requirement_tools( const requirement_data &req,
         const bool has_name = !group_name.empty();
         const bool is_expanded = expanded_tool_groups.count( global_gi ) > 0;
 
-        // Check availability per tool, dedup by type, sort available first
+
         bool any_available = false;
         std::set<itype_id> seen;
         std::vector<const tool_comp *> unique_alts;
@@ -2303,11 +2303,11 @@ void crafting_ui_impl::draw_requirement_tools( const requirement_data &req,
             return tc->has( &get_player_character(), crafting_inv, return_true<item>, batch_size );
         } );
 
-        // Label
+
         std::string label = string_format( _( "\u2022 %s: " ), has_name ? group_name : _( "One of" ) );
 
         if( is_expanded ) {
-            // Expanded: label line, then each tool as a bullet below
+
             ImGui::TextColored( cataimgui::imvec4_from_color( c_white ), "  %s",
                                 label.c_str() );
             float indent = ImGui::CalcTextSize( "      " ).x;
@@ -2324,13 +2324,13 @@ void crafting_ui_impl::draw_requirement_tools( const requirement_data &req,
             }
             ImGui::Unindent( indent );
         } else {
-            // Collapsed: label + tools on one line, truncated
+
             float avail_width = ImGui::GetContentRegionAvail().x;
             float or_w = ImGui::CalcTextSize( _( " or " ) ).x;
             std::string bullet_label = "  " + label;
             float used_w = ImGui::CalcTextSize( bullet_label.c_str() ).x;
 
-            // Pre-measure how many fit
+
             int fits = 0;
             for( size_t i = 0; i < unique_alts.size(); ++i ) {
                 std::string text = unique_alts[i]->to_string( batch_size );
@@ -2381,7 +2381,7 @@ void crafting_ui_impl::draw_requirement_tools( const requirement_data &req,
     }
 }
 
-// --- draw_item_info_panel ---
+
 
 void crafting_ui_impl::draw_item_info_panel()
 {
@@ -2395,10 +2395,10 @@ void crafting_ui_impl::draw_item_info_panel()
                            ImGuiWindowFlags_NoNav ) ) {
         cataimgui::set_scroll( item_info_scroll );
         if( cur_recipe->is_nested() || cur_recipe->is_practice() ) {
-            // Nested groups and practice recipes are shown in the middle column
+
         } else {
-            // panel_width is only used for centering separator titles;
-            // display_item_info handles pixel-based text wrapping.
+
+
             int panel_width = static_cast<int>( ImGui::GetContentRegionAvail().x /
                                                 ImGui::CalcTextSize( "X" ).x );
             item_info_data data = result_info->get_result_data(
@@ -2414,7 +2414,7 @@ void crafting_ui_impl::draw_item_info_panel()
     ImGui::EndChild();
 }
 
-// --- draw_status_header ---
+
 
 void crafting_ui_impl::draw_status_header()
 {
@@ -2423,9 +2423,9 @@ void crafting_ui_impl::draw_status_header()
 
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        // When crafting as the player, this constant status text repeats
-        // before every spoken category/recipe after navigation. Keep the
-        // visual header and still identify a non-player crafter.
+
+
+
         if( ( !a11y::enabled() || !crafter->is_avatar() ) &&
             cataimgui::BeginRightAlign( "##CRAFTER_NAME" ) ) {
             ImGui::Text( "%s: %s", _( "Crafter" ),
@@ -2443,7 +2443,7 @@ void crafting_ui_impl::draw_status_header()
     }
 }
 
-// --- draw_hidden_count ---
+
 
 void crafting_ui_impl::draw_hidden_count()
 {
@@ -2469,7 +2469,7 @@ void crafting_ui_impl::draw_hidden_count()
     }
 }
 
-// --- rebuild_keybinding_tips ---
+
 
 void crafting_ui_impl::rebuild_keybinding_tips()
 {
@@ -2512,7 +2512,7 @@ void crafting_ui_impl::rebuild_keybinding_tips()
     keybinding_tips = enumerate_as_string( act_descs, enumeration_conjunction::none );
 }
 
-// --- draw_keybinding_footer ---
+
 
 void crafting_ui_impl::draw_keybinding_footer()
 {
@@ -2520,7 +2520,7 @@ void crafting_ui_impl::draw_keybinding_footer()
     cataimgui::TextColoredParagraph( c_dark_gray, keybinding_tips );
 }
 
-// --- recalculate_recipes ---
+
 
 void crafting_ui_impl::recalculate_recipes()
 {
@@ -2568,12 +2568,12 @@ void crafting_ui_impl::recalculate_recipes()
                 filter_recipes( *available_recipes, qry, *crafter, progress_callback );
             picking.insert( picking.end(), filtered_recipes.begin(), filtered_recipes.end() );
         } else if( reader_all_categories ) {
-            // Only aggregate real, visible crafting categories. The raw
-            // recipe_subset also contains CC_* wildcard nested-category
-            // definitions (not craftable recipes), which inflated the
-            // spoken All count to 1121 while visible categories held 812.
-            // Checking against crafting_cats keeps All and each main
-            // category consistent and excludes hidden camp-only recipes.
+
+
+
+
+
+
             for( const recipe *entry : *available_recipes ) {
                 if( std::find( crafting_cats.begin(), crafting_cats.end(),
                                entry->category.str() ) != crafting_cats.end() ) {
@@ -2614,7 +2614,7 @@ void crafting_ui_impl::recalculate_recipes()
         }
     }
     keepline = false;
-    // In batch mode, sync line to manual_batch
+
     if( batch ) {
         line = std::clamp( manual_batch - 1, 0,
                            std::max( 0, static_cast<int>( current.size() ) - 1 ) );
@@ -2623,7 +2623,7 @@ void crafting_ui_impl::recalculate_recipes()
     recalc_unread = highlight_unread;
 }
 
-// --- recalculate_unread ---
+
 
 void crafting_ui_impl::recalculate_unread()
 {
@@ -2671,7 +2671,7 @@ void crafting_ui_impl::recalculate_unread()
     }
 }
 
-// --- invalidate_info_panels ---
+
 
 void crafting_ui_impl::invalidate_info_panels()
 {
@@ -2686,15 +2686,15 @@ void crafting_ui_impl::invalidate_info_panels()
     }
 }
 
-// One reader focus per requirement alternative, in group order. The label
-// is the engine's own requirement text -- components add the have-count
-// ("3 wood (have 5)") -- plus the Available/Missing verdict, so every
-// focus announces the requirement and its counts. Nodes keep position 0:
-// Java recomputes "X of Y" from the swipe list then, and the focus fallback
-// on entering the detail screen lands on the name node instead of a
-// mid-list requirement (see GameReaderController.resolveFocusFallback).
-// Twin of the same helper in construction.cpp; keep both in sync. A shared
-// home in a11y_requirements.cpp needs a sparse-checkout change.
+
+
+
+
+
+
+
+
+
 static int reader_requirement_have( const itype_id &type, const temp_crafting_inventory &inventory,
                                     const std::function<bool( const item & )> &filter )
 {
@@ -2748,8 +2748,8 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
         heading.id = prefix + ":requirement:" + std::to_string( ++requirement_number );
         heading.role = "text";
         heading.label = string_format( _( "Requirement %d" ), requirement_number );
-        // All entries inside one group are alternatives, never simultaneous
-        // demands. Even a one-option group still has its own numbered heading.
+
+
         if( alternatives > 1 ) {
             heading.value = _( "Choose one of the following." );
         }
@@ -2794,11 +2794,11 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
     }
 }
 
-// Resolve a "…:req:<kind>:<group>:<alt>" node id back to the label the
-// detail screen shows for it and, for tool/component requirements, the
-// required item type whose full info a two-finger tap reads. Quality
-// requirements have no item to describe, so type stays null. Returns
-// false for stale or unknown ids.
+
+
+
+
+
 static bool reader_requirement_detail( const requirement_data &requirements,
                                        const Character &actor, const temp_crafting_inventory &inventory,
                                        const std::function<bool( const item & )> &filter, int batch,
@@ -2872,14 +2872,14 @@ std::string crafting_ui_impl::full_recipe_detail_text( const recipe &rec, int ba
 
 a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &ctxt )
 {
-    // The first reader snapshot can precede ImGui draw_controls() in headless
-    // Android mode. Rebuild first so the spoken list starts with recipes,
-    // never with the native keybinding/command tail.
+
+
+
     if( recalc && !crafting_cats.empty() ) {
         recalculate_recipes();
     }
-    // Recover every transient empty subtab during ImGui startup, not just
-    // the first snapshot. Never announce "no recipes" between real lists.
+
+
     if( current.empty() && available_recipes && available_recipes->size() > 0 &&
         filterstring.empty() && !batch && !reader_all_categories && !crafting_cats.empty() ) {
         const std::size_t starting_category = static_cast<std::size_t>( tab.cur_index() );
@@ -2904,9 +2904,9 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
     }
     if( !initial_accessible_recipe_check_done ) {
         initial_accessible_recipe_check_done = true;
-        // The log now distinguishes genuinely unknown recipes from a
-        // category/filter that happens to show none. Do not manufacture
-        // starter knowledge or award recipes outside native game rules.
+
+
+
         a11y::android::diagnostic_event( "CRAFT_RECIPE_SCOPE",
                                          string_format( "learned=%d group=%d categories=%d visible=%d filtered=%d",
                                                  static_cast<int>( crafter->get_learned_recipes().size() ),
@@ -2916,7 +2916,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                  filterstring.empty() ? 0 : 1 ) );
     }
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
-    // The detail screen reuses the same command tail as the list.
+
     const std::vector<a11y::semantic_node> command_nodes = snapshot.nodes;
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
     if( crafting_cats.empty() ) {
@@ -2929,7 +2929,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                             _( get_subcat_unprefixed( tab.cur(), subtab.cur() ) );
         snapshot.summary += ". " + string_format( _( "%d recipes" ), static_cast<int>( current.size() ) );
     }
-    // Pages bound the JNI snapshot cost for All (potentially >1000 recipes).
+
     constexpr std::size_t reader_page_size = 80;
     const std::size_t page_start = line >= 0 ?
                                    ( static_cast<std::size_t>( line ) / reader_page_size ) * reader_page_size : 0;
@@ -2964,8 +2964,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         node.selected = static_cast<int>( i ) == line;
         node.value = batch ? string_format( _( "Batch size: %d" ), i + 1 ) : "";
         if( i < available.size() && !rec.is_nested() ) {
-            // Remain selectable for inspecting missing requirements. Activation
-            // still goes through can_start_craft and container checks.
+
+
             node.value += node.value.empty() ? "" : ". ";
             node.value += available[i].can_craft_recipe ? _( "Can craft" ) : _( "Cannot craft" );
         }
@@ -2973,8 +2973,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             node.value += ". " + std::string( _( "Favorite" ) );
         }
         if( node.selected && !rec.is_nested() ) {
-            // One short estimate on the focused row. Full materials, skills,
-            // conditions and byproducts remain separate reader documents.
+
+
             const int expected_turns = crafter->expected_time_to_craft( rec, manual_batch ) /
                                        to_moves<int>( 1_turns );
             node.value += ". " + string_format( _( "Estimated time: %s" ),
@@ -2986,7 +2986,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         rows.push_back( std::move( node ) );
     }
     if( current.size() > 1 ) {
-        // This command also wraps from recipe 1 to the last recipe.
+
         a11y::semantic_node previous_page;
         previous_page.id = "craft:page:previous";
         previous_page.role = "button";
@@ -2995,7 +2995,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         rows.push_back( std::move( previous_page ) );
     }
     if( current.size() > 1 ) {
-        // This command also wraps from the final recipe back to recipe 1.
+
         a11y::semantic_node next_page;
         next_page.id = "craft:page:next";
         next_page.role = "button";
@@ -3007,9 +3007,9 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                  std::make_move_iterator( snapshot.nodes.end() ) );
     snapshot.nodes = std::move( rows );
     if( current.empty() ) {
-        // "No recipes in this subcategory" is not the same as knowing
-        // nothing. Give the actual native recipe count and a meaningful
-        // way to distinguish an empty filter from missing knowledge.
+
+
+
         std::string reason;
         if( available_recipes->size() == 0 ) {
             reason = _( "No recipes learned or available to this crafter yet." );
@@ -3033,9 +3033,9 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
     }
     const recipe &rec = *current[line];
     if( reader_detail_open ) {
-        // The detail screen only makes sense for the recipe it was opened
-        // for. Any reselection, recalculation or category change closes it
-        // instead of showing another recipe's detail.
+
+
+
         if( rec.is_nested() || rec.ident().str() != reader_detail_recipe ) {
             reader_detail_open = false;
             reader_detail_quantity_picker_open = false;
@@ -3083,7 +3083,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 name.id = "craft:detail:name";
                 name.role = "button";
                 name.label = remove_color_tags( accessible_crafting_recipe_name( rec ) );
-                // Disambiguate same-named recipes the way the list does.
+
                 std::size_t occurrence = 0;
                 for( std::size_t i = page_start; i <= static_cast<std::size_t>( line ); ++i ) {
                     if( remove_color_tags( accessible_crafting_recipe_name( *current[i] ) ) ==
@@ -3107,9 +3107,9 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 a11y::semantic_node intro;
                 intro.id = "craft:detail:intro";
                 intro.role = "document";
-                // This second row IS the complete original recipe detail,
-                // not a button named "Description" or "Read details".
-                // Its text is already available for ordinary swipe focus.
+
+
+
                 const std::string expected_detail_key = rec.ident().str() + ":" +
                         std::to_string( reader_detail_quantity ) + ":" +
                         std::to_string( detail::get_current_language_version() );
@@ -3117,8 +3117,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                     intro.label = full_recipe_detail_text( rec, reader_detail_quantity );
                 }
                 if( intro.label.empty() ) {
-                    // Never reuse documents cached for another recipe or
-                    // batch. Fall back to this recipe's live description.
+
+
                     intro.label = accessible_recipe_description( rec, *crafter );
                 }
                 intro.detail = intro.label;
@@ -3176,8 +3176,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                    list_nested( *crafter, &rec, *available_recipes ) );
         } else {
             std::string text;
-            // Reuse the same byproduct preview shown by the UI; never roll it
-            // again just because focus moved or the reader refreshed.
+
+
             const std::map<itype_id, int> empty_byproducts;
             const auto &byproducts = cached_byproduct_recipe == &rec ? cached_byproducts : empty_byproducts;
             for( const std::string &part : recipe_info( rec, avail, *crafter, filterstring,
@@ -3185,9 +3185,9 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 text += part + "\n";
             }
             a11y::append_document( documents, "craft:details", _( "Recipe details" ), text );
-            // Do not depend on the visual ImGui panel having been drawn.
-            // Headless spoken mode can publish the recipe before that panel
-            // fills displayed_description; derive its real text directly.
+
+
+
             a11y::append_document( documents, "craft:description", _( "Description" ),
                                    accessible_recipe_description( rec, *crafter ) );
             const temp_crafting_inventory &inventory = avail.inv_override ?
@@ -3204,10 +3204,10 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 }
             }
             a11y::append_document( documents, "craft:stats", _( "Character requirements:" ), stats );
-            // Start conditions (R12.1): the same gate the CONFIRM path applies
-            // (can_start_craft), published before activation so the reason a
-            // craft cannot start is readable instead of only appearing as a
-            // popup after the fact. Lighting is the engine's own check.
+
+
+
+
             std::string conditions = string_format( _( "Crafter: %s\n" ),
                                                     crafter->name_and_maybe_activity() );
             switch( can_start_craft( rec, avail, *crafter, manual_batch ) ) {
@@ -3225,14 +3225,14 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                     break;
             }
             a11y::append_document( documents, "craft:conditions", _( "Crafting conditions" ), conditions );
-            // Byproducts (R12.2): the details text only lists byproducts when
-            // the visual UI has already generated its cached preview, so a
-            // recipe can read as byproduct-free when it is not. Publish the
-            // deterministic part straight from the recipe data instead --
-            // the same arithmetic get_byproducts applies to legacy entries --
-            // and never roll the item group here: group items are generated
-            // by the real craft, and their actual results are announced from
-            // the finished craft, not from a preview rolled for the reader.
+
+
+
+
+
+
+
+
             if( rec.has_byproducts() ) {
                 std::string byproduct_text;
                 for( const auto &entry : rec.legacy_byproducts() ) {
@@ -3290,9 +3290,9 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         input_context &ctxt )
 {
     if( reader_detail_open ) {
-        // Back closes the detail screen, never the whole crafting menu.
-        // The command-tail Back button sends activate on QUIT; the
-        // two-finger back gesture sends the cancel action.
+
+
+
         if( intent.action == "cancel" ||
             ( intent.action == "activate" && intent.node == "QUIT" ) ) {
             reader_detail_open = false;
@@ -3305,9 +3305,9 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
             return "TIMEOUT";
         }
         if( intent.action == "activate" && intent.node == "craft:detail:confirm" ) {
-            // The native CONFIRM path below applies can_start_craft and
-            // the container checks; the detail screen only supplies the
-            // quantity. Close first so a failed confirm returns to the list.
+
+
+
             manual_batch = reader_detail_quantity;
             reader_detail_open = false;
             reader_detail_quantity_picker_open = false;
@@ -3323,11 +3323,11 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 return "TIMEOUT";
             }
             if( intent.action == "set_text" && intent.node == "craft:detail:qty:manual" ) {
-                // Manual entry hands over to TalkBack: Java opens the
-                // native EditText for this set_text node and submits the
-                // typed number back here. Same 1-50 validation as the
-                // list-mode batch field, and the same receipt so Java
-                // closes the editor once the value is applied.
+
+
+
+
+
                 int quantity = 0;
                 const std::from_chars_result parsed = std::from_chars( intent.value.data(),
                         intent.value.data() + intent.value.size(), quantity );
@@ -3358,10 +3358,10 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         }
         if( intent.action == "read_detail" ||
             ( intent.action == "activate" && intent.node == "craft:detail:intro" ) ) {
-            // The detail screen's two-finger readout and the accessible
-            // one-finger "Read details" action. Name and intro
-            // read the full recipe detail; a requirement focus describes
-            // the required item itself.
+
+
+
+
             if( intent.node == "craft:detail:name" || intent.node == "craft:detail:intro" ) {
                 if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
                     current[line]->ident().str() != reader_detail_recipe ) {
@@ -3415,11 +3415,11 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
             }
             return "TIMEOUT";
         }
-        // Focus moves on detail nodes and anything stale while the detail
-        // screen is open never reach the list handlers. Command-tail
+
+
         // activations other than QUIT fall through below so tab and filter
-        // commands keep working; the snapshot guard closes the detail
-        // screen if the selection changes under it.
+
+
         if( intent.action == "focus" ) {
             return "TIMEOUT";
         }
@@ -3427,10 +3427,10 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
             return "TIMEOUT";
         }
     }
-    // Apply spoken tab/subtab controls on the native game thread before
-    // returning. Simply returning a keybinding ID from the semantic handler
-    // left category intents accepted in JNI but with no observable transition
-    // in the 2026-11-12 Android log.
+
+
+
+
     if( intent.action == "activate" &&
         ( intent.node == "PREV_TAB" || intent.node == "NEXT_TAB" ||
           intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
@@ -3459,13 +3459,13 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         const int page = line / page_size;
         const int first = ( page + ( intent.node == "craft:page:next" ? 1 : -1 ) ) * page_size;
         if( intent.node == "craft:page:previous" ) {
-            // Crossing a real page boundary lands on its last recipe.
-            // At the first page, wrap directly to the final recipe.
+
+
             line = first < 0 ? static_cast<int>( current.size() ) - 1 :
                    std::min( first + page_size - 1, static_cast<int>( current.size() ) - 1 );
         } else {
-            // Crossing forward lands on the next page's first recipe.
-            // At the final page, wrap to recipe 1.
+
+
             line = first >= static_cast<int>( current.size() ) ? 0 : first;
         }
         invalidate_info_panels();
@@ -3501,17 +3501,17 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
             invalidate_info_panels();
         }
         if( intent.action == "read_detail" ) {
-            // Read all the current original recipe documents, plus the
-            // complete item-info pane for the result when that pane exists.
-            // This is generated only for an explicit two-finger request.
-            // Rebuild the visible list first: recalculation may invalidate
-            // the selected recipe, checked below. The documents the detail
-            // text is assembled from live in the reader_documents cache
-            // that rebuild maintains.
+
+
+
+
+
+
+
             reader_snapshot( ctxt );
-            // Recalculation may invalidate the selected recipe while
-            // reader_snapshot rebuilds the visible list. Do not examine
-            // a different or out-of-range result after that update.
+
+
+
             if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
                 current[line]->ident().str() + ":" + std::to_string( line ) !=
                 id.substr( std::string( "recipe:" ).size() ) ) {
@@ -3523,11 +3523,11 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         }
         info_nav_active = false;
         rebuild_keybinding_tips();
-        // Focusing the same row twice must never confirm it. Mouse double-click
-        // handling uses a different path; semantic focus does not synthesize it.
+
+
         if( intent.action == "activate" && !current[line]->is_nested() ) {
-            // Tapping a recipe opens its detail screen; nothing is crafted
-            // until the detail screen's confirm button is pressed.
+
+
             reader_detail_open = true;
             reader_detail_recipe = current[line]->ident().str();
             reader_detail_quantity = manual_batch;
@@ -3539,19 +3539,19 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
     return a11y::registered_intent( ctxt, intent );
 }
 
-// --- process_action ---
+
 
 void crafting_ui_impl::process_action( const std::string &action_in,
                                        input_context &ctxt )
 {
     std::string action = action_in;
 
-    // Snapshot state before mutation
+
     int prev_line = line;
     const bool previously_toggled_unread = just_toggled_unread;
     just_toggled_unread = false;
 
-    // Consume pending line click (tab/subtab intents are handled inline in draw_controls)
+
     if( pending_line_click >= 0 && info_nav_active ) {
         info_nav_active = false;
         rebuild_keybinding_tips();
@@ -3569,7 +3569,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
     }
     pending_line_click = -1;
 
-    // Consume pending batch view toggles
+
     if( pending_enter_batch && !batch && !current.empty() &&
         line >= 0 && line < static_cast<int>( current.size() ) &&
         !current[line]->is_nested() ) {
@@ -3590,7 +3590,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
     }
     pending_exit_batch = false;
 
-    // Consume pending batch size change from +/- buttons
+
     if( pending_batch_delta != 0 ) {
         bool can_batch_here = !current.empty() &&
                               line >= 0 && line < static_cast<int>( current.size() ) &&
@@ -3598,7 +3598,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
         if( can_batch_here ) {
             int new_batch = std::clamp( manual_batch + pending_batch_delta, 1, 50 );
             if( new_batch != manual_batch ) {
-                // Auto-enter batch mode on first increment from x1
+
                 if( manual_batch == 1 && new_batch > 1 && !batch ) {
                     chosen = current[line];
                     batch_line = line;
@@ -3615,14 +3615,14 @@ void crafting_ui_impl::process_action( const std::string &action_in,
         pending_batch_delta = 0;
     }
 
-    // Recalculate if needed
+
     if( recalc ) {
         recalculate_recipes();
     }
 
-    // Info-nav mode: intercept list-moving and confirm actions.
-    // Uses a flag instead of early return so the shared tail (clamp, batch-sync,
-    // invalidate_info_panels) still runs.
+
+
+
     bool handled_by_nav = false;
     if( info_nav_active ) {
         handled_by_nav = true;
@@ -3654,7 +3654,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
         rebuild_keybinding_tips();
     }
 
-    // Auto-mark-read on cursor movement
+
     if( !handled_by_nav && highlight_unread && !current.empty() && user_moved_line ) {
         user_moved_line = false;
         uistate.read_recipes.insert( current[line]->ident() );
@@ -3668,7 +3668,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
     const int recmax = static_cast<int>( current.size() );
     const int scroll_rate = recmax > 20 ? 10 : 3;
 
-    // Process keyboard actions (skipped when info-nav handled the action)
+
     if( handled_by_nav ) {
         // nothing -- fall through to shared tail
     } else if( action == "SCROLL_RECIPE_INFO_UP" ) {
@@ -3999,38 +3999,38 @@ void crafting_ui_impl::process_action( const std::string &action_in,
             done = true;
         }
     } else if( action == "HELP_KEYBINDINGS" ) {
-        // Rebuild keybinding tips after keybinding editor
+
         rebuild_keybinding_tips();
     }
 
-    // Clamp line
+
     if( current.empty() || line >= static_cast<int>( current.size() ) ) {
         line = 0;
     } else if( line < 0 ) {
         line = static_cast<int>( current.size() ) - 1;
     }
 
-    // Sync manual_batch with line when navigating in batch mode
+
     if( batch && line != prev_line && line >= 0 &&
         line < static_cast<int>( current.size() ) ) {
         manual_batch = line + 1;
     }
 
-    // Invalidate info panels if selection changed
+
     if( line != prev_line ) {
         invalidate_info_panels();
     }
     if( reader_quantity_receipt ) {
-        // Acknowledge only after the game's batch-size path and line sync have
-        // actually applied the value, not while it is merely a pending intent.
+
+
         a11y::android::status( "text_applied", &*reader_quantity_receipt );
         reader_quantity_receipt.reset();
     }
 }
 
-// ---------------------------------------------------------------------------
-// Public entry point -- now uses crafting_ui_impl
-// ---------------------------------------------------------------------------
+
+
+
 
 std::pair<Character *, const recipe *> select_crafter_and_crafting_recipe( int &batch_size_out,
         const recipe_id &goto_recipe, Character *crafter, std::string filterstring, bool camp_crafting,
@@ -4040,7 +4040,7 @@ std::pair<Character *, const recipe *> select_crafter_and_crafting_recipe( int &
         return { nullptr, nullptr };
     }
 
-    // nothing reachable from this menu changes what the query caches read
+
     temp_crafting_inventory::query_cache_scope cache_scope;
     crafting_ui_impl impl( crafter, goto_recipe, std::move( filterstring ),
                            camp_crafting, inventory_override );
@@ -4099,7 +4099,7 @@ int choose_crafter( const std::vector<Character *> &crafting_group, int crafter_
             if( !avail.crafter_has_primary_skill ) {
                 reasons.emplace_back( _( "skill" ) );
             }
-            if( !avail.has_proficiencies ) {  // this is required proficiency
+            if( !avail.has_proficiencies ) {
                 reasons.emplace_back( _( "proficiency" ) );
             }
             if( chara->lighting_craft_speed_multiplier( *rec ) <= 0.0f ) {
@@ -4111,13 +4111,13 @@ int choose_crafter( const std::vector<Character *> &crafting_group, int crafter_
             }
 
             entry.emplace_back(
-                // *INDENT-OFF* readable ternary operator
+
                 rec->is_nested()
                     ? colorize( "-", c_yellow )
                     : reasons.empty()
                         ? colorize( _( "yes" ), c_green )
                         : colorize( _( "no" ), c_red ) );
-                // *INDENT-ON* readable ternary operator
+
             entry.emplace_back( colorize( string_join( reasons, ", " ), c_red ) );
         }
         entry.emplace_back( chara->in_sleep_state()
@@ -4127,7 +4127,7 @@ int choose_crafter( const std::vector<Character *> &crafting_group, int crafter_
         ++i;
     }
 
-    choose_char_menu.set_selected( crafter_i + 1 );  // +1 for header entry
+    choose_char_menu.set_selected( crafter_i + 1 );
     return choose_char_menu.query();
 }
 
@@ -4140,7 +4140,7 @@ std::string peek_related_recipe( const recipe *current, const recipe_subset &ava
         return localized_compare( a.second, b.second );
     };
 
-    // current recipe components
+
     std::vector<std::pair<itype_id, std::string>> related_components;
     const requirement_data &req = current->simple_requirements();
     for( const std::vector<item_comp> &comp_list : req.get_components() ) {
@@ -4149,16 +4149,16 @@ std::string peek_related_recipe( const recipe *current, const recipe_subset &ava
         }
     }
     std::sort( related_components.begin(), related_components.end(), compare_second );
-    // current recipe result
+
     std::vector<std::pair<itype_id, std::string>> related_results;
     item tmp( current->result() );
-    // use this item
+
     const itype_id tid = tmp.typeId();
     const std::set<const recipe *> &known_recipes =
         crafter.get_learned_recipes().of_component( tid );
     for( const recipe * const &b : known_recipes ) {
         if( available.contains( b ) ) {
-            related_results.emplace_back( b->result(), b->result_name( /*decorated=*/true ) );
+            related_results.emplace_back( b->result(), b->result_name( true ) );
         }
     }
     std::stable_sort( related_results.begin(), related_results.end(), compare_second );
@@ -4183,10 +4183,10 @@ std::string peek_related_recipe( const recipe *current, const recipe_subset &ava
     rel_menu.query();
     if( rel_menu.ret != UILIST_CANCEL ) {
 
-        // Grab the recipe name without our bullet point.
+
         std::string recipe = rel_menu.entries[rel_menu.ret].txt.substr( strlen( "─ " ) );
 
-        // If the string is decorated as a favourite, return it without the star
+
         if( recipe.rfind( "* ", 0 ) == 0 ) {
             return recipe.substr( strlen( "* " ) );
         }
@@ -4211,8 +4211,8 @@ int related_menu_fill( uilist &rmenu,
     std::string recipe_name_prev;
     for( const std::pair<itype_id, std::string> &p : related_recipes ) {
 
-        // we have different recipes with the same names
-        // list only one of them as we show and filter by name only
+
+
         std::string recipe_name = p.second;
         if( recipe_name == recipe_name_prev ) {
             continue;
@@ -4226,15 +4226,15 @@ int related_menu_fill( uilist &rmenu,
 
         bool different_recipes = false;
 
-        // 1st pass: check if we need to add group
+
         for( size_t recipe_n = 0; recipe_n < current_part.size(); recipe_n++ ) {
-            if( current_part[recipe_n]->result_name( /*decorated=*/true ) != recipe_name ) {
-                // add group
+            if( current_part[recipe_n]->result_name( true ) != recipe_name ) {
+
                 rmenu.addentry( ++np_last, false, -1, recipe_name );
                 different_recipes = true;
                 break;
             } else if( recipe_n == current_part.size() - 1 ) {
-                // only one result
+
                 rmenu.addentry( ++np_last, true, -1, "─ " + recipe_name );
             }
         }
@@ -4242,9 +4242,9 @@ int related_menu_fill( uilist &rmenu,
             continue;
         }
         std::string prev_item_name;
-        // 2nd pass: add different recipes
+
         for( size_t recipe_n = 0; recipe_n < current_part.size(); recipe_n++ ) {
-            std::string cur_item_name = current_part[recipe_n]->result_name( /*decorated=*/true );
+            std::string cur_item_name = current_part[recipe_n]->result_name( true );
             if( cur_item_name != prev_item_name ) {
                 std::string sym = recipe_n == current_part.size() - 1 ? "└ " : "├ ";
                 rmenu.addentry( ++np_last, true, -1, sym + cur_item_name );

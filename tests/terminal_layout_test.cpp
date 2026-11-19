@@ -24,7 +24,7 @@ TEST_CASE( "terminal_layout_orientation_follows_window_shape", "[terminal_layout
 {
     CHECK( terminal_layout::is_portrait( point( 1080, 2400 ) ) );
     CHECK_FALSE( terminal_layout::is_portrait( point( 2400, 1080 ) ) );
-    // square window keeps the landscape terminal
+
     CHECK_FALSE( terminal_layout::is_portrait( point( 1000, 1000 ) ) );
 }
 
@@ -140,8 +140,8 @@ TEST_CASE( "terminal_layout_auto_text_size", "[terminal_layout]" )
 TEST_CASE( "terminal_layout_sizing_reference", "[terminal_layout]" )
 {
     GIVEN( "a rotation with system bars insetting the content" ) {
-        // portrait: nav bar takes 53 at the bottom; landscape: status bar takes 72 off the
-        // short side, so the content surfaces are not transposes of each other
+
+
         const point portrait_window( 1080, 2357 );
         const point landscape_window( 2410, 1008 );
         const point portrait_outer( 1080, 2410 );
@@ -177,8 +177,8 @@ TEST_CASE( "terminal_layout_sizing_reference", "[terminal_layout]" )
 }
 
 #if defined(TILES)
-// preset cells are bitmap strikes of the bundled Terminus, drawn at a point size equal
-// to the cell height; check against the font's EBLC strike sizes and SDL_ttf advances
+
+
 TEST_CASE( "terminal_layout_presets_are_terminus_strikes", "[terminal_layout]" )
 {
     const std::string path = "data/font/Terminus.ttf";
@@ -192,7 +192,7 @@ TEST_CASE( "terminal_layout_presets_are_terminus_strikes", "[terminal_layout]" )
     const auto u32 = [&]( size_t at ) {
         return u16( at ) << 16 | u16( at + 2 );
     };
-    // table directory: numTables at 4, records of 16 bytes from 12 (tag, checksum, offset, length)
+
     size_t eblc = 0;
     for( uint32_t i = 0; i < u16( 4 ); ++i ) {
         const size_t rec = 12 + i * 16;
@@ -201,7 +201,7 @@ TEST_CASE( "terminal_layout_presets_are_terminus_strikes", "[terminal_layout]" )
         }
     }
     REQUIRE( eblc != 0 );
-    // EBLC: version (4), numSizes (4), then 48 byte BitmapSize records; ppemY at byte 45
+
     std::vector<int> strike_heights;
     strike_heights.reserve( u32( eblc + 4 ) );
     for( uint32_t i = 0; i < u32( eblc + 4 ); ++i ) {
@@ -214,7 +214,7 @@ TEST_CASE( "terminal_layout_presets_are_terminus_strikes", "[terminal_layout]" )
     }
     CHECK( strike_heights == preset_heights );
 
-    // balance our own TTF_Init, so this test can't hide a fixture that forgets to init
+
     const bool acquired_ttf = TTF_WasInit() == 0;
     REQUIRE( ( !acquired_ttf || TTF_Init() ) );
     on_out_of_scope release_ttf( [acquired_ttf]() {
@@ -263,7 +263,7 @@ TEST_CASE( "terminal_layout_fit_grid", "[terminal_layout]" )
 {
     const point no_caps;
     const point cell( 12, 24 );
-    // 2340x1080 landscape less 130-pixel shortcut strip
+
     const point landscape( 2340, 950 );
     GIVEN( "a portrait area" ) {
         THEN( "cells fill it" ) {

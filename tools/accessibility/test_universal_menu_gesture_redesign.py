@@ -96,7 +96,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
 
     def test_browsing_wraps_bidirectionally_for_every_reader_list(self):
         ctrl = self.controller
-        # All three global reader contexts wrap rather than clamp.
+
         self.assertIn(
             "debugFocus = Math.floorMod(debugFocus + delta, 4);",
             ctrl)
@@ -112,7 +112,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
         self.assertIn(
             "selected = Math.floorMod(index() + delta, filtered.size());",
             ctrl)
-        # Native number editor already wraps and stays short.
+
         self.assertIn(
             "selected = Math.floorMod(selected + delta, items.size());",
             self.editor)
@@ -166,7 +166,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
             world)
         self.assertIn('here.value = current_tile.terrain;', world)
         self.assertIn('!tile.seen_items.empty()', world)
-        # Only observed items, never a raw world scan.
+
         self.assertIn('here.sees_some_items( position, viewer )', perception)
         self.assertIn('here.could_see_items( position, viewer )', perception)
         self.assertIn('result.seen_items.push_back(', perception)

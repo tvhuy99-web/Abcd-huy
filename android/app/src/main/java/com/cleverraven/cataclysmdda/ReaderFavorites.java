@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Reader-only shortcut list. Game saves and gameplay keybindings are untouched.
- * Store stable action/group targets, not menu positions or translated labels.
- */
+
+
+
+
 final class ReaderFavorites {
     private static final String KEY = "hub_favorites_v1";
     private static final int MAX_FAVORITES = 64;

@@ -20,7 +20,7 @@ static const string_id<map_data_summary> map_data_summary_full_omt( "full_omt" )
 TEST_CASE( "default_OMT_is_passable", "[hordes][overmap][map_data]" )
 {
     std::unique_ptr<overmap> test_overmap = std::make_unique<overmap>( point_abs_om() );
-    // Pick an arbitrary OMT.weapname_
+
     tripoint_om_omt arbitrary_omt{ rng( 0, 179 ), rng( 0, 179 ), 0 };
     CAPTURE( test_overmap->ter( arbitrary_omt ) );
     for( point_omt_ms omt_cursor; omt_cursor.y() < 24; ++omt_cursor.y() ) {
@@ -29,7 +29,7 @@ TEST_CASE( "default_OMT_is_passable", "[hordes][overmap][map_data]" )
             CHECK( test_overmap->passable( project_combine( arbitrary_omt, omt_cursor ) ) );
         }
     }
-    // Toggle to impassable.
+
     test_overmap->ter_set( arbitrary_omt, oter_solid_earth );
     CAPTURE( test_overmap->ter( arbitrary_omt ) );
     for( point_omt_ms omt_cursor; omt_cursor.y() < 24; ++omt_cursor.y() ) {
@@ -38,7 +38,7 @@ TEST_CASE( "default_OMT_is_passable", "[hordes][overmap][map_data]" )
             CHECK( !test_overmap->passable( project_combine( arbitrary_omt, omt_cursor ) ) );
         }
     }
-    // Toggle back to passable.
+
     test_overmap->ter_set( arbitrary_omt, oter_road_nesw );
     CAPTURE( test_overmap->ter( arbitrary_omt ) );
     for( point_omt_ms omt_cursor; omt_cursor.y() < 24; ++omt_cursor.y() ) {
@@ -73,11 +73,11 @@ TEST_CASE( "round_trip_bitset_to_base64", "[map_data][hordes]" )
     int bitset_size = test_summary.passable.size();
     REQUIRE( bitset_size == 576 );
     REQUIRE( test_summary.passable.none() );
-    // Set some bits to yes at random.
+
     for( int i = 0; i < bitset_size; ++i ) {
         test_summary.passable.set( i, one_in( 5 ) );
     }
-    // Verify we set at least something.
+
     REQUIRE( test_summary.passable.any() );
     std::string packed_bitset = base64_encode_bitset( test_summary.passable );
     CAPTURE( packed_bitset );

@@ -16,10 +16,10 @@
 
 template <typename E> struct enum_traits;
 
-// An event is something to be passed via the event_bus to subscribers
-// interested in being notified about events.
-//
-// Each event is of a specific type, taken from the event_type enum.
+
+
+
+
 
 enum class event_type : int {
     activates_artifact,
@@ -36,8 +36,8 @@ enum class event_type : int {
     buries_corpse,
     camp_taken_over,
     causes_resonance_cascade,
-    // Eating is always consuming, but consuming also covers medication and
-    // fueling bionics
+
+
     character_casts_spell,
     character_consumes_item,
     character_dies,
@@ -134,7 +134,7 @@ enum class event_type : int {
     u_var_changed,
     vehicle_moves,
     character_butchered_corpse,
-    num_event_types // last
+    num_event_types
 };
 
 template<>
@@ -148,7 +148,7 @@ namespace io
 template<>
 std::string enum_to_string<event_type>( event_type data );
 
-} // namespace io
+}
 
 namespace std
 {
@@ -160,7 +160,7 @@ struct hash<event_type> {
     }
 };
 
-} // namespace std
+}
 
 namespace cata
 {
@@ -168,9 +168,9 @@ namespace cata
 namespace event_detail
 {
 
-// An event has various data stored in a map keyed by strings.  The specific
-// keys and corresponding data types are specified in a specialization of
-// event_spec.
+
+
+
 
 using event_field = std::pair<const char *, cata_variant_type>;
 
@@ -196,9 +196,9 @@ struct event_spec_character_item {
     };
 };
 
-// NOTE: Events are saved to the character file for later memorializing them. It's currently unsafe to ever remove any of these.
-// Removal will cause any save file with one of the saved events to be unable to load.
-// FIXME.
+
+
+
 static_assert( static_cast<int>( event_type::num_event_types ) == 110,
                "This static_assert is to remind you to add a specialization for your new "
                "event_type below" );
@@ -977,15 +977,15 @@ template<>
 struct event_spec<event_type::vehicle_moves> {
     static constexpr std::array<event_field, 11> fields = {{
             { "avatar_on_board", cata_variant_type::bool_ },
-            { "avatar_is_driving", cata_variant_type::bool_ }, // non-remote-control
+            { "avatar_is_driving", cata_variant_type::bool_ },
             { "avatar_remote_control", cata_variant_type::bool_ },
-            { "is_flying_aircraft", cata_variant_type::bool_ }, // actual viable aircraft
-            { "is_floating_watercraft", cata_variant_type::bool_ }, // actual viable boat
-            { "is_on_rails", cata_variant_type::bool_ }, // railway vehicle on rails
-            { "is_falling", cata_variant_type::bool_ }, // not an aircraft, just getting air time
-            { "is_sinking", cata_variant_type::bool_ }, // sinking in water
+            { "is_flying_aircraft", cata_variant_type::bool_ },
+            { "is_floating_watercraft", cata_variant_type::bool_ },
+            { "is_on_rails", cata_variant_type::bool_ },
+            { "is_falling", cata_variant_type::bool_ },
+            { "is_sinking", cata_variant_type::bool_ },
             { "is_skidding", cata_variant_type::bool_ },
-            { "velocity", cata_variant_type::int_ }, // vehicle current velocity, mph * 100
+            { "velocity", cata_variant_type::int_ },
             { "z", cata_variant_type::int_ },
         }
     };
@@ -994,7 +994,7 @@ struct event_spec<event_type::vehicle_moves> {
 template<event_type Type, typename IndexSequence>
 struct make_event_helper;
 
-} // namespace event_detail
+}
 
 class event
 {
@@ -1008,14 +1008,14 @@ class event
         {}
         event() : type_( event_type::num_event_types ) {}
 
-        // Call this to construct an event in a type-safe manner.  It will
-        // verify that the types you pass match the expected types for the
-        // event_type you pass as a template parameter.
+
+
+
         template<event_type Type, typename... Args>
         static event make( Args &&... args ) {
             using Spec = event_detail::event_spec<Type>;
-            // Using is_empty mostly just to verify that the type is defined at
-            // all, but it so happens that it ought to be empty too.
+
+
             static_assert( std::is_empty_v<Spec>,
                            "spec for this event type must be defined and empty" );
             static_assert( sizeof...( Args ) == Spec::fields.size(),
@@ -1026,8 +1026,8 @@ class event
                    > ()( calendar::turn, std::forward<Args>( args )... );
         }
 
-        // Call this to construct an event from a runtime-defined type and string arguments.
-        // All arguments will be converted to the respective types with the same index in the event spec
+
+
         static event make_dyn( event_type type, std::vector<std::string> &args );
 
         using fields_type = std::unordered_map<std::string, cata_variant_type>;
@@ -1082,8 +1082,8 @@ struct make_event_helper<Type, std::index_sequence<I...>> {
     }
 };
 
-} // namespace event_detail
+}
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_EVENT_H
+#endif

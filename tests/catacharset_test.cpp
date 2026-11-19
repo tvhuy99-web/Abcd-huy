@@ -53,7 +53,7 @@ TEST_CASE( "localized_compare", "[catacharset][nogame]" )
     try {
         std::locale::global( std::locale( "en_US.UTF-8" ) );
     } catch( std::runtime_error & ) {
-        // On platforms where we can't set the locale, ignore this test
+
         return;
     }
     CAPTURE( setlocale( LC_ALL, nullptr ) );
@@ -91,10 +91,10 @@ static void check_pure_func( Func &&func, const char32_t ch, const char32_t expe
 
 TEST_CASE( "u32_to_lowercase", "[catacharset][nogame]" )
 {
-    // Punctuations
+
     check_pure_func( u32_to_lowercase, U'!', U'!' );
 
-    // Latin
+
     check_pure_func( u32_to_lowercase, U'a', U'a' );
     check_pure_func( u32_to_lowercase, U'A', U'a' );
     check_pure_func( u32_to_lowercase, U'é', U'é' );
@@ -102,32 +102,32 @@ TEST_CASE( "u32_to_lowercase", "[catacharset][nogame]" )
     check_pure_func( u32_to_lowercase, U'ō', U'ō' );
     check_pure_func( u32_to_lowercase, U'Ō', U'ō' );
 
-    // Greek
+
     check_pure_func( u32_to_lowercase, U'Α', U'α' );
     check_pure_func( u32_to_lowercase, U'α', U'α' );
     check_pure_func( u32_to_lowercase, U'Σ', U'σ' );
     check_pure_func( u32_to_lowercase, U'σ', U'σ' );
 
-    // Cyrillic
+
     check_pure_func( u32_to_lowercase, U'а', U'а' );
     check_pure_func( u32_to_lowercase, U'А', U'а' );
     check_pure_func( u32_to_lowercase, U'б', U'б' );
     check_pure_func( u32_to_lowercase, U'Б', U'б' );
 
-    // CJK
+
     check_pure_func( u32_to_lowercase, U'中', U'中' );
     check_pure_func( u32_to_lowercase, U'の', U'の' );
 
-    // Emoji
+
     check_pure_func( u32_to_lowercase, U'😅', U'😅' );
 }
 
 TEST_CASE( "u32_to_uppercase", "[catacharset][nogame]" )
 {
-    // Punctuations
+
     check_pure_func( u32_to_uppercase, U'!', U'!' );
 
-    // Latin
+
     check_pure_func( u32_to_uppercase, U'a', U'A' );
     check_pure_func( u32_to_uppercase, U'A', U'A' );
     check_pure_func( u32_to_uppercase, U'é', U'É' );
@@ -135,42 +135,42 @@ TEST_CASE( "u32_to_uppercase", "[catacharset][nogame]" )
     check_pure_func( u32_to_uppercase, U'ō', U'Ō' );
     check_pure_func( u32_to_uppercase, U'Ō', U'Ō' );
 
-    // Greek
+
     check_pure_func( u32_to_uppercase, U'α', U'Α' );
     check_pure_func( u32_to_uppercase, U'Α', U'Α' );
     check_pure_func( u32_to_uppercase, U'σ', U'Σ' );
     check_pure_func( u32_to_uppercase, U'Σ', U'Σ' );
 
-    // Cyrillic
+
     check_pure_func( u32_to_uppercase, U'а', U'А' );
     check_pure_func( u32_to_uppercase, U'А', U'А' );
     check_pure_func( u32_to_uppercase, U'б', U'Б' );
     check_pure_func( u32_to_uppercase, U'Б', U'Б' );
 
-    // CJK
+
     check_pure_func( u32_to_uppercase, U'中', U'中' );
     check_pure_func( u32_to_uppercase, U'の', U'の' );
 
-    // Emoji
+
     check_pure_func( u32_to_uppercase, U'😅', U'😅' );
 }
 
 TEST_CASE( "remove_accent", "[catacharset][nogame]" )
 {
-    // Latin
+
     check_in_place_func( remove_accent, U'o', U'o' );
     check_in_place_func( remove_accent, U'ô', U'o' );
     check_in_place_func( remove_accent, U'ö', U'o' );
     check_in_place_func( remove_accent, U'ō', U'o' );
 
-    // Cyrillic
+
     check_in_place_func( remove_accent, U'б', U'б' );
 
-    // CJK
+
     check_in_place_func( remove_accent, U'中', U'中' );
     check_in_place_func( remove_accent, U'の', U'の' );
 
-    // Emoji
+
     check_in_place_func( remove_accent, U'😅', U'😅' );
 }
 
@@ -201,9 +201,9 @@ TEST_CASE( "utf8_view", "[catacharset][nogame]" )
 {
     static const std::string str{"Français中文русский"};
     static const std::vector<char32_t> expected_code_points{
-        0x46, 0x72, 0x61, 0x6e, 0xe7, 0x61, 0x69, 0x73, // Latin
-        0x4e2d, 0x6587, // CJK
-        0x440, 0x443, 0x441, 0x441, 0x43a, 0x438, 0x439 // Cyrillic
+        0x46, 0x72, 0x61, 0x6e, 0xe7, 0x61, 0x69, 0x73,
+        0x4e2d, 0x6587,
+        0x440, 0x443, 0x441, 0x441, 0x43a, 0x438, 0x439
     };
     std::vector<char32_t> actual_code_points;
     for( char32_t c : utf8_view( str ) ) {
@@ -211,4 +211,3 @@ TEST_CASE( "utf8_view", "[catacharset][nogame]" )
     }
     CHECK( actual_code_points == expected_code_points );
 }
-

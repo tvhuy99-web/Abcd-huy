@@ -6,7 +6,7 @@
 namespace
 {
 generic_factory<disease_type> disease_factory( "disease_type" );
-} // namespace
+}
 
 template<>
 const disease_type &string_id<disease_type>::obj() const
@@ -65,4 +65,3 @@ void disease_type::check_disease_consistency()
         }
     }
 }
-

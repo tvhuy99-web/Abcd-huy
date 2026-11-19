@@ -17,4 +17,4 @@ void load_speech( const JsonObject &jo );
 void reset_speech();
 const SpeechBubble &get_speech( const std::string &label );
 
-#endif // CATA_SRC_SPEECH_H
+#endif

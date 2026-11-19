@@ -405,9 +405,9 @@ TEST_CASE( "Wield_time_test", "[wield]" )
         item_location knife_loc( sheath_loc, &sheath_loc->only_item() );
 
         const int knife_obtain_cost = knife_loc.obtain_cost( guy );
-        // This is kind of bad, on linux/OSX this value is 112.
-        // On mingw-64 on wine, and probably on VS this is 111.
-        // Most likely this is due to floating point differences, but I wasn't able to find where.
+
+
+
         CHECK( ( knife_obtain_cost == Approx( 105 ).margin( 1 ) ) );
     }
 
@@ -424,9 +424,9 @@ TEST_CASE( "Wield_time_test", "[wield]" )
     }
 }
 
-// Storing the wielded weapon into a worn container via dispose_item's
-// "Store in <bag>" path must refresh inv_search_caches; otherwise cached
-// lookups miss the item.
+
+
+
 TEST_CASE( "unwield_to_pocket_preserves_inventory_cache",
            "[wield][inventory_cache]" )
 {
@@ -445,12 +445,12 @@ TEST_CASE( "unwield_to_pocket_preserves_inventory_cache",
     REQUIRE( they.wield( halligan ) );
     REQUIRE( they.is_armed() );
 
-    // Prime "HAS TYPE halligan" cache while wielded. The cache stores an
-    // item_location pointing into the wield slot; that reference dies once
-    // the item is moved out.
+
+
+
     REQUIRE( they.cache_has_item_with( itype_halligan ) );
 
-    // Mimic the exact call dispose_item makes for "Store in <worn bag>".
+
     item &wielded_ref = *they.get_wielded_item();
     they.store( *backpack_loc, wielded_ref, false,
                 backpack_loc->insert_cost( wielded_ref ),

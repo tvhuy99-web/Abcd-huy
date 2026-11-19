@@ -59,17 +59,17 @@ using segment_bitset = tname::segment_bitset;
 namespace
 {
 
-std::string noop( item const & /* it */, unsigned int /* quantity */,
-                  segment_bitset const & /* segments */ )
+std::string noop( item const & , unsigned int ,
+                  segment_bitset const & )
 {
     return {};
 }
 
-std::string faults( item const &it, unsigned int /* quantity */,
-                    segment_bitset const &/* segments */ )
+std::string faults( item const &it, unsigned int ,
+                    segment_bitset const & )
 {
     std::string damtext;
-    // add first prefix if item has a fault that defines a prefix (prioritize?)
+
     for( const fault_id &f : it.faults ) {
         const std::string prefix = f->item_prefix();
         if( !prefix.empty() ) {
@@ -81,8 +81,8 @@ std::string faults( item const &it, unsigned int /* quantity */,
     return damtext;
 }
 
-std::string faults_suffix( item const &it, unsigned int /* quantity */,
-                           segment_bitset const &/* segments */ )
+std::string faults_suffix( item const &it, unsigned int ,
+                           segment_bitset const & )
 {
     std::string text;
     for( const fault_id &f : it.faults ) {
@@ -92,7 +92,7 @@ std::string faults_suffix( item const &it, unsigned int /* quantity */,
             break;
         }
     }
-    // remove excess space, add one space before the string
+
     if( !text.empty() ) {
         text.pop_back();
         const std::string ret = " " + text;
@@ -102,29 +102,29 @@ std::string faults_suffix( item const &it, unsigned int /* quantity */,
     }
 }
 
-std::string dirt_symbol( item const &it, unsigned int /* quantity */,
-                         segment_bitset const &/* segments */ )
+std::string dirt_symbol( item const &it, unsigned int ,
+                         segment_bitset const & )
 {
     return it.dirt_symbol();
 }
 
-std::string overheat_symbol( item const &it, unsigned int /* quantity */,
-                             segment_bitset const &/* segments */ )
+std::string overheat_symbol( item const &it, unsigned int ,
+                             segment_bitset const & )
 {
     return it.overheat_symbol();
 }
 
-std::string pre_asterisk( item const &it, unsigned int /* quantity */,
-                          segment_bitset const &/* segments */ )
+std::string pre_asterisk( item const &it, unsigned int ,
+                          segment_bitset const & )
 {
     if( it.is_favorite && get_option<std::string>( "ASTERISK_POSITION" ) == "prefix" ) {
-        return _( "* " ); // Display asterisk for favorite items, before item's name
+        return _( "* " );
     }
     return {};
 }
 
-std::string durability( item const &it, unsigned int /* quantity */,
-                        segment_bitset const &/* segments */ )
+std::string durability( item const &it, unsigned int ,
+                        segment_bitset const & )
 {
     const std::string item_health_option = get_option<std::string>( "ITEM_HEALTH" );
     const bool show_bars = item_health_option == "both" || item_health_option == "bars";
@@ -136,8 +136,8 @@ std::string durability( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string wheel_diameter( item const &it, unsigned int /* quantity */,
-                            segment_bitset const &/* segments */ )
+std::string wheel_diameter( item const &it, unsigned int ,
+                            segment_bitset const & )
 {
     if( it.is_wheel() && it.type->wheel->diameter > 0 ) {
         return string_format( pgettext( "vehicle adjective", "%d\" " ), it.type->wheel->diameter );
@@ -145,8 +145,8 @@ std::string wheel_diameter( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string burn( item const &it, unsigned int /* quantity */,
-                  segment_bitset const &/* segments */ )
+std::string burn( item const &it, unsigned int ,
+                  segment_bitset const & )
 {
     if( !it.made_of_from_type( phase_id::LIQUID ) ) {
         if( it.volume() >= 1_liter && it.burnt * 125_ml >= it.volume() ) {
@@ -159,8 +159,8 @@ std::string burn( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string custom_item_prefix( item const &it, unsigned int /* quantity */,
-                                segment_bitset const &/* segments */ )
+std::string custom_item_prefix( item const &it, unsigned int ,
+                                segment_bitset const & )
 {
     std::string prefix;
     for( const flag_id &f : it.get_prefix_flags() ) {
@@ -169,8 +169,8 @@ std::string custom_item_prefix( item const &it, unsigned int /* quantity */,
     return prefix;
 }
 
-std::string custom_item_suffix( item const &it, unsigned int /* quantity */,
-                                segment_bitset const &/* segments */ )
+std::string custom_item_suffix( item const &it, unsigned int ,
+                                segment_bitset const & )
 {
     std::string suffix;
     for( const flag_id &f : it.get_suffix_flags() ) {
@@ -189,8 +189,8 @@ std::string label( item const &it, unsigned int quantity, segment_bitset const &
     return {};
 }
 
-std::string mods( item const &it, unsigned int /* quantity */,
-                  segment_bitset const &/* segments */ )
+std::string mods( item const &it, unsigned int ,
+                  segment_bitset const & )
 {
     int amt = 0;
     if( it.is_armor() && it.has_clothing_mod() ) {
@@ -213,8 +213,8 @@ std::string mods( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string craft( item const &it, unsigned int /* quantity */,
-                   segment_bitset const &/* segments */ )
+std::string craft( item const &it, unsigned int ,
+                   segment_bitset const & )
 {
     if( it.is_craft() ) {
         std::string maintext;
@@ -235,8 +235,8 @@ std::string craft( item const &it, unsigned int /* quantity */,
         const int start_counter = it.get_passive_start_counter();
         const int end_counter = it.get_passive_end_counter();
         if( pstart != calendar::before_time_starts && ready > pstart && end_counter > start_counter ) {
-            // Freeze projection at pause time so a stalled craft does not
-            // keep ticking up.
+
+
             const time_point pause_start = it.get_pause_started_at();
             const time_point eff_now = pause_start != calendar::before_time_starts
                                        ? pause_start : calendar::turn;
@@ -261,8 +261,8 @@ std::string craft( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string wbl_mark( item const &it, unsigned int /* quantity */,
-                      segment_bitset const &/* segments */ )
+std::string wbl_mark( item const &it, unsigned int ,
+                      segment_bitset const & )
 {
     std::vector<const item_pocket *> pkts = it.get_container_pockets();
     bool wl = false;
@@ -281,7 +281,7 @@ std::string wbl_mark( item const &it, unsigned int /* quantity */,
         wl || bl ? colorize( "⁺", player_wbl ? c_light_gray : c_dark_gray ) : std::string();
 }
 
-std::string contents( item const &it, unsigned int /* quantity */,
+std::string contents( item const &it, unsigned int ,
                       segment_bitset const &segments )
 {
     item_contents const &contents = it.get_contents();
@@ -296,7 +296,7 @@ std::string contents( item const &it, unsigned int /* quantity */,
                                      ? contents_item.charges
                                      : contents.num_item_stacks();
 
-        // without full contents for nested items to prevent excessively long names
+
         segment_bitset abrev( aggi.info.bits );
         abrev.set( tname::segments::CONTENTS_FULL, false );
         abrev.set( tname::segments::CONTENTS_ABREV, aggi_count == 1 );
@@ -307,8 +307,8 @@ std::string contents( item const &it, unsigned int /* quantity */,
                                  ? contents_tname
                                  : colorize( contents_tname, contents_item.color_in_inventory() );
 
-        // Don't append an item count for single items, or items that are ammo-exclusive
-        // (eg: quivers), as they format their own counts.
+
+
         if( total_count > 1 && it.ammo_types().empty() ) {
             if( total_count == aggi_count ) {
                 return string_format(
@@ -341,8 +341,8 @@ std::string contents( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string food_traits( item const &it, unsigned int /* quantity */,
-                         segment_bitset const &/* segments */ )
+std::string food_traits( item const &it, unsigned int ,
+                         segment_bitset const & )
 {
     if( it.is_food() ) {
         if( it.has_flag( flag_HIDDEN_POISON ) &&
@@ -356,8 +356,8 @@ std::string food_traits( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string location_hint( item const &it, unsigned int /* quantity */,
-                           segment_bitset const &/* segments */ )
+std::string location_hint( item const &it, unsigned int ,
+                           segment_bitset const & )
 {
     if( it.has_flag( json_flag_HINT_THE_LOCATION ) && it.has_var( "spawn_location" ) ) {
         tripoint_abs_omt loc( coords::project_to<coords::omt>(
@@ -377,8 +377,8 @@ std::string location_hint( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string location_closest_city( item const &it, unsigned int /* quantity */,
-                                   segment_bitset const &/* segments */ )
+std::string location_closest_city( item const &it, unsigned int ,
+                                   segment_bitset const & )
 {
     if( it.has_flag( json_flag_LOCATION_PRECISE_CLOSEST_CITY ) ) {
         const tripoint_abs_ms map_pos_ms = it.get_var( "spawn_location", tripoint_abs_ms::invalid );
@@ -395,8 +395,8 @@ std::string location_closest_city( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string ethereal( item const &it, unsigned int /* quantity */,
-                      segment_bitset const &/* segments */ )
+std::string ethereal( item const &it, unsigned int ,
+                      segment_bitset const & )
 {
     if( it.ethereal ) {
         const time_duration turns = time_duration::from_turns(
@@ -406,8 +406,8 @@ std::string ethereal( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string food_status( item const &it, unsigned int /* quantity */,
-                         segment_bitset const &/* segments */ )
+std::string food_status( item const &it, unsigned int ,
+                         segment_bitset const & )
 {
     std::string tagtext;
     if( it.goes_bad() || it.is_food() ) {
@@ -426,8 +426,8 @@ std::string food_status( item const &it, unsigned int /* quantity */,
     return tagtext;
 }
 
-std::string food_irradiated( item const &it, unsigned int /* quantity */,
-                             segment_bitset const &/* segments */ )
+std::string food_irradiated( item const &it, unsigned int ,
+                             segment_bitset const & )
 {
     if( it.goes_bad() ) {
         if( it.has_own_flag( flag_IRRADIATED ) ) {
@@ -437,8 +437,8 @@ std::string food_irradiated( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string temperature( item const &it, unsigned int /* quantity */,
-                         segment_bitset const &/* segments */ )
+std::string temperature( item const &it, unsigned int ,
+                         segment_bitset const & )
 {
     std::string ret;
     if( it.has_temperature() ) {
@@ -451,14 +451,14 @@ std::string temperature( item const &it, unsigned int /* quantity */,
         if( it.has_flag( flag_FROZEN ) ) {
             ret += _( " (frozen)" );
         } else if( it.has_flag( flag_MELTS ) ) {
-            ret += _( " (melted)" ); // he melted
+            ret += _( " (melted)" );
         }
     }
     return ret;
 }
 
-std::string clothing_size( item const &it, unsigned int /* quantity */,
-                           segment_bitset const &/* segments */ )
+std::string clothing_size( item const &it, unsigned int ,
+                           segment_bitset const & )
 {
     const item::sizing sizing_level = it.get_sizing( get_avatar() );
 
@@ -477,8 +477,8 @@ std::string clothing_size( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string filthy( item const &it, unsigned int /* quantity */,
-                    segment_bitset const &/* segments */ )
+std::string filthy( item const &it, unsigned int ,
+                    segment_bitset const & )
 {
     if( it.is_filthy() ) {
         return _( " (filthy)" );
@@ -486,8 +486,8 @@ std::string filthy( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string tags( item const &it, unsigned int /* quantity */,
-                  segment_bitset const &/* segments */ )
+std::string tags( item const &it, unsigned int ,
+                  segment_bitset const & )
 {
     std::string ret;
     if( it.is_gun() && ( it.has_flag( flag_COLLAPSED_STOCK ) || it.has_flag( flag_FOLDED_STOCK ) ) ) {
@@ -512,8 +512,8 @@ std::string tags( item const &it, unsigned int /* quantity */,
     return ret;
 }
 
-std::string vars( item const &it, unsigned int /* quantity */,
-                  segment_bitset const &/* segments */ )
+std::string vars( item const &it, unsigned int ,
+                  segment_bitset const & )
 {
     std::string ret;
     if( it.has_var( "NANOFAB_ITEM_ID" ) ) {
@@ -555,8 +555,8 @@ std::string vars( item const &it, unsigned int /* quantity */,
 }
 
 
-std::string traits( item const &it, unsigned int /* quantity */,
-                    segment_bitset const &/* segments */ )
+std::string traits( item const &it, unsigned int ,
+                    segment_bitset const & )
 {
     std::string ret;
     if( it.has_flag( flag_GENE_TECH ) && it.template_traits.size() == 1 ) {
@@ -571,8 +571,8 @@ std::string traits( item const &it, unsigned int /* quantity */,
 
 }
 
-std::string segment_broken( item const &it, unsigned int /* quantity */,
-                            segment_bitset const &/* segments */ )
+std::string segment_broken( item const &it, unsigned int ,
+                            segment_bitset const & )
 {
     if( it.is_broken() ) {
         return _( " (broken)" );
@@ -580,8 +580,8 @@ std::string segment_broken( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string cbm_status( item const &it, unsigned int /* quantity */,
-                        segment_bitset const &/* segments */ )
+std::string cbm_status( item const &it, unsigned int ,
+                        segment_bitset const & )
 {
     if( it.is_bionic() && !it.has_flag( flag_NO_PACKED ) ) {
         if( !it.has_flag( flag_NO_STERILE ) ) {
@@ -592,8 +592,8 @@ std::string cbm_status( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string ups( item const &it, unsigned int /* quantity */,
-                 segment_bitset const &/* segments */ )
+std::string ups( item const &it, unsigned int ,
+                 segment_bitset const & )
 {
     if( it.is_tool() && it.has_flag( flag_USE_UPS ) ) {
         return _( " (UPS)" );
@@ -601,8 +601,8 @@ std::string ups( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string wetness( item const &it, unsigned int /* quantity */,
-                     segment_bitset const &/* segments */ )
+std::string wetness( item const &it, unsigned int ,
+                     segment_bitset const & )
 {
     if( ( it.wetness > 0 ) || it.has_flag( flag_WET ) ) {
         return _( " (wet)" );
@@ -610,27 +610,27 @@ std::string wetness( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string active( item const &it, unsigned int /* quantity */,
-                    segment_bitset const &/* segments */ )
+std::string active( item const &it, unsigned int ,
+                    segment_bitset const & )
 {
     if( it.active && ( !it.has_temperature() || it.type->countdown_interval > 0_seconds ) &&
         !string_ends_with( it.typeId().str(), "_on" ) ) {
-        // Usually the items whose ids end in "_on" have the "active" or "on" string already contained
-        // in their name, also food is active while it rots.
-        // However, food that's being processed passively still get the string.
+
+
+
         return _( " (active)" );
     }
     return {};
 }
-std::string activity_occupany( item const &it, unsigned int /* quantity */,
-                               segment_bitset const &/* segments */ )
+std::string activity_occupany( item const &it, unsigned int ,
+                               segment_bitset const & )
 {
     if( it.has_var( "activity_var" ) ) {
-        // Usually the items whose ids end in "_on" have the "active" or "on" string already contained
-        // in their name, also food is active while it rots.
+
+
         return _( " (in use)" );
     }
-    // Direct mark only, so a container is not labelled for what it holds.
+
     if( get_craft_reservations().is_reserved_uid( it.uid().get_value() ) ) {
         return _( " (in use)" );
     }
@@ -638,8 +638,8 @@ std::string activity_occupany( item const &it, unsigned int /* quantity */,
 }
 
 
-std::string sealed( item const &it, unsigned int /* quantity */,
-                    segment_bitset const &/* segments */ )
+std::string sealed( item const &it, unsigned int ,
+                    segment_bitset const & )
 {
     if( it.all_pockets_sealed() ) {
         return _( " (sealed)" );
@@ -649,8 +649,8 @@ std::string sealed( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string post_asterisk( item const &it, unsigned int /* quantity */,
-                           segment_bitset const &/* segments */ )
+std::string post_asterisk( item const &it, unsigned int ,
+                           segment_bitset const & )
 {
     if( it.is_favorite && get_option<std::string>( "ASTERISK_POSITION" ) == "suffix" ) {
         return _( " *" );
@@ -658,8 +658,8 @@ std::string post_asterisk( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-std::string weapon_mods( item const &it, unsigned int /* quantity */,
-                         segment_bitset const &/* segments */ )
+std::string weapon_mods( item const &it, unsigned int ,
+                         segment_bitset const & )
 {
     std::string modtext;
     if( it.gunmod_find( itype_barrel_small ) != nullptr ) {
@@ -674,8 +674,8 @@ std::string weapon_mods( item const &it, unsigned int /* quantity */,
     return modtext;
 }
 
-std::string relic_charges( item const &it, unsigned int /* quantity */,
-                           segment_bitset const &/* segments */ )
+std::string relic_charges( item const &it, unsigned int ,
+                           segment_bitset const & )
 {
     if( it.is_relic() && it.relic_data->max_charges() > 0 && it.relic_data->charges_per_use() > 0 ) {
         return string_format( " (%d/%d)", it.relic_data->charges(), it.relic_data->max_charges() );
@@ -692,8 +692,8 @@ std::string category( item const &it, unsigned int quantity,
     return colorize( it.get_category_of_contents().name_noun( quantity ), color );
 }
 
-std::string ememory( item const &it, unsigned int /* quantity */,
-                     segment_bitset const &/* segments */ )
+std::string ememory( item const &it, unsigned int ,
+                     segment_bitset const & )
 {
     if( it.is_estorage() && !it.is_broken() ) {
         if( it.is_browsed() ) {
@@ -718,7 +718,7 @@ std::string ememory( item const &it, unsigned int /* quantity */,
     return {};
 }
 
-// function type that prints an element of tname::segments
+
 using decl_f_print_segment = std::string( item const &it, unsigned int quantity,
                              segment_bitset const &segments );
 constexpr size_t num_segments = static_cast<size_t>( tname::segments::last_segment );
@@ -780,7 +780,7 @@ constexpr bool all_segments_have_printers()
     }
     return true;
 }
-} // namespace
+}
 
 static_assert( all_segments_have_printers(),
                "every element of tname::segments (up to tname::segments::last_segment) "
@@ -793,7 +793,7 @@ template<>
 std::string enum_to_string<tname::segments>( tname::segments seg )
 {
     switch( seg ) {
-        // *INDENT-OFF*
+
         case tname::segments::FAULTS: return "FAULTS";
         case tname::segments::FAULTS_SUFFIX: return "FAULTS_SUFFIX";
         case tname::segments::DIRT: return "DIRT";
@@ -845,13 +845,13 @@ std::string enum_to_string<tname::segments>( tname::segments seg )
         case tname::segments::EMEMORY: return "EMEMORY";
         case tname::segments::last: return "last";
         default:
-        // *INDENT-ON*
+
             break;
     }
     return {};
 }
 
-} // namespace io
+}
 
 namespace
 {
@@ -881,7 +881,7 @@ std::optional<std::size_t> str_to_segment_idx( std::string const &str )
     return {};
 }
 
-} // namespace
+}
 namespace tname
 {
 std::string print_segment( tname::segments segment, item const &it, unsigned int quantity,
@@ -939,4 +939,4 @@ tname_set const &get_tname_set()
 
     return tns;
 }
-} // namespace tname
+}

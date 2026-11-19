@@ -19,8 +19,8 @@
 
 namespace a11y
 {
-// State is expressed in words, since removing the UI's colors would otherwise
-// make an unavailable alternative sound identical to an available one.
+
+
 void append_requirements( semantic_snapshot &snapshot, const std::string &prefix,
                           const requirement_data &requirements, const Character &actor,
                           const temp_crafting_inventory &inventory,
@@ -55,12 +55,12 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
     append_groups( requirements.get_tools(), "tool", _( "Tools" ), tools_filter );
     append_groups( requirements.get_components(), "component", _( "Components" ), component_filter );
 
-    // Shared total (R12.1). The per-group lines above judge every group
-    // against the whole inventory on its own, so one physical item can make
-    // two groups both read "Available" while only existing once. The verdict
-    // here is the engine's own whole-set check over the same inventory --
-    // the deduped form when the caller supplies it, which is the form actual
-    // craftability uses -- so a shared item is only counted once overall.
+
+
+
+
+
+
     std::string totals = deduped != nullptr
                          ? ( deduped->can_make_with_inventory( &actor, inventory, component_filter, batch )
                              ? _( "All groups together can be met from the same inventory." )
@@ -68,11 +68,11 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
                          : ( requirements.can_make_with_inventory( &actor, inventory, component_filter, batch )
                              ? _( "All groups together can be met from the same inventory." )
                              : _( "All groups together cannot be met from the same inventory, even if individual groups look available." ) );
-    // Per-type totals are only stated where they are unambiguous: a group
-    // with a single alternative always consumes that type, so summing those
-    // groups counts each shared item exactly once. Types inside choice
-    // groups depend on the player's selection and are covered by the
-    // verdict above, not by an invented sum.
+
+
+
+
+
     std::map<itype_id, int> forced;
     for( const auto &group : requirements.get_components() ) {
         if( group.size() == 1 ) {
@@ -89,4 +89,4 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
     }
     append_document( snapshot, prefix + ":total", _( "Shared total" ), totals );
 }
-} // namespace a11y
+}

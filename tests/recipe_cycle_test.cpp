@@ -11,17 +11,17 @@
 #include "requirements.h"
 #include "type_id.h"
 
-// Detect net-positive craft/uncraft exploits.
-//
-// Two cases:
-// 1. With provenance (player-crafted items remember components):
-//    disassembly of uniform groups (all alts same type) must not
-//    yield more than the minimum craft input.
-// 2. Without provenance (world-spawned items have empty components):
-//    disassembly uses front() of each group, which must not exceed
-//    the maximum the player could have used for that component.
 
-// Sum min or max counts from uniform groups (all alts same type).
+
+
+
+
+
+
+
+
+
+
 static std::map<itype_id, int> uniform_group_counts(
     const requirement_data::alter_item_comp_vector &groups, bool use_max )
 {
@@ -54,7 +54,7 @@ static std::map<itype_id, int> uniform_group_counts(
     return result;
 }
 
-// Max craft input per component: best count per type in each group, summed.
+
 static std::map<itype_id, int> max_possible_counts(
     const requirement_data::alter_item_comp_vector &groups )
 {
@@ -95,7 +95,7 @@ TEST_CASE( "no_net_positive_craft_uncraft_cycles", "[recipe]" )
         std::map<itype_id, int> disas_max =
             uniform_group_counts( disas_comps, true );
 
-        // With-provenance: uniform groups only.
+
         for( const auto &[comp_id, yield] : disas_max ) {
             auto it = craft_min.find( comp_id );
             if( it == craft_min.end() ) {
@@ -108,7 +108,7 @@ TEST_CASE( "no_net_positive_craft_uncraft_cycles", "[recipe]" )
             CHECK( yield <= it->second );
         }
 
-        // No-provenance: front() of each disassembly group vs max craft input.
+
         std::map<itype_id, int> disas_front;
         for( const std::vector<item_comp> &alts : disas_comps ) {
             if( !alts.empty() ) {

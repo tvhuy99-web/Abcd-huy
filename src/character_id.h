@@ -51,4 +51,4 @@ inline bool operator<( character_id l, character_id r )
 
 std::ostream &operator<<( std::ostream &o, character_id id );
 
-#endif // CATA_SRC_CHARACTER_ID_H
+#endif

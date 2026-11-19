@@ -14,7 +14,7 @@
 namespace catacurses
 {
 class window;
-} // namespace catacurses
+}
 
 class sokoban_game
 {
@@ -57,4 +57,4 @@ class sokoban_game
         sokoban_game();
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_SOKOBAN_H
+#endif

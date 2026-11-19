@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-/** Spoken cleanup only removes markup and accidental doubled punctuation. */
+
 public final class ReaderSpokenTextTest {
     @Test
     public void removesDuplicateFullStopBetweenJoinedStatusSentences() {

@@ -34,9 +34,9 @@ std::optional<point> sampled_texel( const draw_case &c, const point &px )
             return texel;
         }
         case transform::rotate_90: {
-            // doubled offsets from the rect center keep pixel centers on integers. a
-            // clockwise turn moves texel offset (u, v) to screen offset (-v, u), so
-            // screen offset (x, y) samples texel offset (y, -x)
+
+
+
             const int dx2 = 2 * ( px.x - c.dst.x ) + 1 - source_width;
             const int dy2 = 2 * ( px.y - c.dst.y ) + 1 - source_height;
             const int u2 = dy2 + source_width;
@@ -50,7 +50,7 @@ std::optional<point> sampled_texel( const draw_case &c, const point &px )
     return std::nullopt;
 }
 
-} // namespace
+}
 
 const std::array<rgba, texel_count> &source_texels()
 {
@@ -64,8 +64,8 @@ const std::array<rgba, texel_count> &source_texels()
 
 const std::array<draw_case, case_count> &draw_cases()
 {
-    // e follows a from the same texture with only the mod changed, so the pair
-    // shows that each queued draw keeps its own mod
+
+
     static const std::array<draw_case, case_count> cases = {{
             { 'a', point( 2, 2 ), transform::none, { 255, 0, 0, 127 } },
             { 'e', point( 2, 6 ), transform::none, { 0, 255, 255, 64 } },
@@ -146,4 +146,4 @@ std::string rgb_string( const rgba &c )
            std::to_string( c.b ) + ")";
 }
 
-} // namespace shader_tint_self_test
+}

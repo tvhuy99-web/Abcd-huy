@@ -27,10 +27,10 @@
 #include "weather.h"
 #include "weather_type.h"
 
-/*
- * A little helper function to tell if you can load one ammo into a gun.
- * Checks if you can load ammo directly into the gun, or if you can load it into a magazine in the gun.
- */
+
+
+
+
 static bool item_can_not_load_ammo( const item &gun )
 {
     return ( gun.is_magazine() && gun.remaining_ammo_capacity() == 0 ) ||
@@ -40,7 +40,7 @@ static bool item_can_not_load_ammo( const item &gun )
 
 namespace io
 {
-    // *INDENT-OFF*
+
     template<>
     std::string enum_to_string<relic_procgen_data::type>( relic_procgen_data::type data )
     {
@@ -54,11 +54,11 @@ namespace io
         }
         cata_fatal( "Invalid relic procgen data type" );
     }
-    // *INDENT-ON*
+
 template<>
 std::string enum_to_string<relic_recharge_type>( relic_recharge_type type )
 {
-    // *INDENT-OFF*
+
     switch( type ) {
         case relic_recharge_type::NONE: return "none";
         case relic_recharge_type::PERIODIC: return "periodic";
@@ -70,29 +70,29 @@ std::string enum_to_string<relic_recharge_type>( relic_recharge_type type )
         case relic_recharge_type::FOREST: return "forest";
         case relic_recharge_type::NUM: break;
     }
-    // *INDENT-ON*
+
     cata_fatal( "Invalid relic recharge type" );
 }
 
 template<>
 std::string enum_to_string<relic_has>( relic_has has )
 {
-    // *INDENT-OFF*
+
     switch (has) {
     case relic_has::WIELD: return "wield";
     case relic_has::WORN: return "worn";
     case relic_has::HELD: return "held";
     case relic_has::NUM: break;
     }
-    // *INDENT-ON*
+
     cata_fatal( "Invalid relic recharge has condition" );
 }
-} // namespace io
+}
 
 namespace
 {
 generic_factory<relic_procgen_data> relic_procgen_data_factory( "relic_procgen_data" );
-} // namespace
+}
 
 template<>
 const relic_procgen_data &string_id<relic_procgen_data>::obj() const
@@ -123,7 +123,7 @@ void relic_procgen_data::check_consistency()
 
 relic::~relic() = default;
 
-// me when
+
 static relic_has ench_to_relic_has( enchantment::has from )
 {
     switch( from ) {
@@ -391,7 +391,7 @@ void relic_charge_info::accumulate_charge( item &parent )
     }
 }
 
-// me when
+
 static enchantment::has relic_has_to_ench( relic_has to )
 {
     switch( to ) {
@@ -425,8 +425,8 @@ void relic::load( const JsonObject &jo )
             enchant_cache ench;
             ench.load( jobj );
             if( !ench.id.is_empty() ) {
-                // for enchantments by id we need to wait till finalize to cast them to objects
-                // for now stash them
+
+
                 passive_enchant_ids.push_back( ench.id );
             } else {
                 add_passive_effect( ench );
@@ -443,7 +443,7 @@ void relic::load( const JsonObject &jo )
 
 void relic::finalize()
 {
-    // add the enchantments that we couldn't earlier in the load
+
     for( const enchantment_id &ench : passive_enchant_ids ) {
         add_passive_effect( ench.obj() );
     }
@@ -459,8 +459,8 @@ void relic::serialize( JsonOut &jsout ) const
     jsout.start_object();
 
     jsout.member( "moves", moves );
-    // item_name_override is not saved, in case the original json text changes:
-    // in such case names read back from a save would no longer be properly translated.
+
+
 
     if( !proc_passive_effects.empty() ) {
         jsout.member( "passive_effects" );
@@ -527,8 +527,8 @@ bool relic::has_recharge() const
     return charge.type != relic_recharge_type::NONE;
 }
 
-// checks if the relic is in the appropriate location to be able to recharge from the weather.
-// does not check the weather type, that job is relegated to the switch in relic::try_recharge()
+
+
 static bool can_recharge_solar( const item &it, Character *carrier, const tripoint_bub_ms &pos )
 {
     return get_map().is_outside( pos ) && is_day( calendar::turn ) &&
@@ -536,8 +536,8 @@ static bool can_recharge_solar( const item &it, Character *carrier, const tripoi
              carrier->is_worn( it ) || carrier->is_wielding( it ) );
 }
 
-// checks if the relic is in the appropriate location to be able to recharge from the weather.
-// does not check the weather type, that job is relegated to the switch in relic::try_recharge()
+
+
 static bool can_recharge_lunar( const item &it, Character *carrier, const tripoint_bub_ms &pos )
 {
     return get_map().is_outside( pos ) && is_night( calendar::turn ) &&
@@ -545,7 +545,7 @@ static bool can_recharge_lunar( const item &it, Character *carrier, const tripoi
              carrier->is_worn( it ) || carrier->is_wielding( it ) );
 }
 
-// checks if the relic is in the appropriate location to be able to recharge from being in a forest.
+
 static bool can_recharge_forest( const tripoint_bub_ms &pos )
 {
     const tripoint_abs_omt omt_were_at = project_to<coords::omt>( get_map().get_abs( pos ) );
@@ -888,7 +888,7 @@ relic relic_procgen_data::generate( const relic_procgen_data::generation_rules &
         }
     }
 
-    //add an optional enchantment of the value of ret's power (the artifact being created) - resonance is equal to its power (min zero)
+
     if( rules.resonant ) {
         enchant_cache resonance;
         int value = std::max( 0, ret.power_level( id ) );

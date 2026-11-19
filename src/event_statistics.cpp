@@ -24,31 +24,31 @@
 #include "string_formatter.h"
 #include "translations.h"
 
-// event_transformation and event_statistic are both objects defined in json
-// and managed via generic_factory.
-// They both use the pimpl idiom and dynamic polymorphism to support their
-// implementation.
-// Their values can be calculated directly, or watched for updates.
-// To register something that watches for updates, call
-// stats_tracker::add_watcher.
-//
-// The way watching works is as follows:
-// - Each event_transformation and event_statistic has a corresponding state
-//   object, which can be stored in the stats_tracker to hold the current
-//   state of that transformation or statistic.
-// - Also, the stats_tracker stores all the watchers; any object watching any
-//   event type or the value of any transformation or statistic.
-// - Each stat object will also register itself as a watcher for any event
-//   type, transformation, or statistic it depends on.
-// - When an event occurs, watchers of that event_type will be informed.
-// - When stats are thus informed, they update their value if appropriate, and
-//   inform the stats_tracker of the new value.
-// - The stats_tracker then notifies watchers again in turn.
-//
-// In this way, the updates cascade to all relevant objects and ultimately the
-// end-users (also in the form of watchers) are informed.  For example, an
-// achievement might watch in this way so that it can trigger itself when its
-// conditions become true.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 namespace
 {
@@ -57,7 +57,7 @@ generic_factory<event_transformation> event_transformation_factory( "event_trans
 generic_factory<event_statistic> event_statistic_factory( "event_statistic" );
 generic_factory<score> score_factory( "score" );
 
-} // namespace
+}
 
 template<>
 const event_transformation &string_id<event_transformation>::obj() const
@@ -166,7 +166,7 @@ class event_transformation::impl
         virtual ~impl() = default;
         virtual event_multiset initialize( stats_tracker & ) const = 0;
         virtual std::unique_ptr<stats_tracker_state> watch( stats_tracker & ) const = 0;
-        virtual void check( const std::string &/*name*/ ) const {}
+        virtual void check( const std::string & ) const {}
         virtual cata::event::fields_type fields() const = 0;
         virtual monotonically monotonicity() const = 0;
         virtual std::unique_ptr<impl> clone() const = 0;
@@ -178,7 +178,7 @@ class event_statistic::impl
         virtual ~impl() = default;
         virtual cata_variant value( stats_tracker & ) const = 0;
         virtual std::unique_ptr<stats_tracker_state> watch( stats_tracker & ) const = 0;
-        virtual void check( const std::string &/*name*/ ) const {}
+        virtual void check( const std::string & ) const {}
         virtual cata_variant_type type() const = 0;
         virtual monotonically monotonicity() const = 0;
         virtual std::unique_ptr<impl> clone() const = 0;
@@ -326,14 +326,14 @@ struct new_field {
         std::vector<cata::event::data_type> result;
         auto it = data.find( input_field );
         if( it == data.end() ) {
-            // Field missing, probably due to stale data.  Reporting an error
-            // would spam, so we rely on the fact that it should already have
-            // been reported at startup time.
+
+
+
             return result;
         }
         if( !it->second.get_string().empty() && !it->second.is_valid() ) {
-            // Field value is non-empty and invalid; event_transformation_functions are not
-            // required to handle invalid values, so just skip it
+
+
             return result;
         }
         for( const cata_variant &v : transformation.function( it->second ) ) {
@@ -343,13 +343,13 @@ struct new_field {
         return result;
     }
 
-    cata_variant_type type( const cata::event::fields_type &/*input*/ ) const {
+    cata_variant_type type( const cata::event::fields_type & ) const {
         return transformation.return_type;
     }
 };
 
-// Interface to abstract the two possible sources of event_multisets:
-// event_types and event_transformations
+
+
 struct event_source {
     static std::unique_ptr<event_source> load( const JsonObject &jo );
 
@@ -432,7 +432,7 @@ struct event_transformation_event_source : event_source {
         return std::make_unique<event_transformation_event_source>( *this );
     }
 };
-} // namespace
+}
 
 std::unique_ptr<event_source> event_source::load( const JsonObject &jo )
 {
@@ -508,10 +508,10 @@ struct event_transformation_impl : public event_transformation::impl {
         std::list<updatable_value_constraint> cached_value_constraints_;
     };
 
-    // This is a helper class that wraps a value_constraint but caches the
-    // value of any target statistic and is notified whenever that statistic
-    // value changes.  This allows us to avoid recomputing the value of that
-    // target statistic.
+
+
+
+
     struct updatable_value_constraint : stat_watcher {
         updatable_value_constraint(
             const std::pair<std::string, value_constraint> &p,
@@ -612,8 +612,8 @@ struct event_transformation_impl : public event_transformation::impl {
 
     std::list<updatable_value_constraint> make_cached_value_constraints(
         state *st, stats_tracker &stats ) const {
-        // Need to use list here rather than vector because
-        // updatable_value_constraint is not movable.
+
+
         std::list<updatable_value_constraint> result;
         for( const auto &p : constraints_ ) {
             result.emplace_back( p, st, stats );
@@ -707,7 +707,7 @@ struct event_transformation_impl : public event_transformation::impl {
         return std::make_unique<event_transformation_impl>( *this );
     }
 };
-} // namespace
+}
 
 event_multiset event_transformation::value( stats_tracker &stats ) const
 {
@@ -813,9 +813,9 @@ struct event_statistic_count : event_statistic::impl {
     }
 };
 
-// A bunch of the event_statistic derived classes below share in common that
-// they operate on a single field of some event_source.  Use this intermediate
-// derived class to contain the common code from those
+
+
+
 template<bool IntField>
 struct event_statistic_field_summary : event_statistic::impl {
     event_statistic_field_summary(
@@ -1010,9 +1010,9 @@ struct event_statistic_minimum : event_statistic_field_summary<true> {
     }
 
     monotonically monotonicity() const override {
-        // If the source is increasing (adding more events)
+
         if( is_increasing( source->monotonicity() ) ) {
-            // Then the minimum value will be decreasing
+
             return monotonically::decreasing;
         } else {
             return monotonically::unknown;
@@ -1226,7 +1226,7 @@ struct event_statistic_last_value : event_statistic_field_summary<false> {
         return std::make_unique<event_statistic_last_value>( *this );
     }
 };
-} // namespace
+}
 
 cata_variant event_statistic::value( stats_tracker &stats ) const
 {

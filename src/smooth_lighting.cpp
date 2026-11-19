@@ -19,7 +19,7 @@
 namespace smooth_lighting
 {
 
-// Character::get_vision_threshold caps the threshold at LIGHT_AMBIENT_LOW
+
 static_assert( LIGHT_AMBIENT_LOW < LIGHT_AMBIENT_LIT );
 
 bool needs_apparent_light( const lit_level ll )
@@ -39,8 +39,8 @@ light_cell classify_light_cell( const lit_level ll, const float apparent_light,
 {
     switch( ll ) {
         case lit_level::BRIGHT:
-            // clairvoyance, a light source's own tile, or light past
-            // LIGHT_SOURCE_BRIGHT: full light, as classic tiles show them
+
+
             return { 1.0f, true };
         case lit_level::LOW:
         case lit_level::LIT:
@@ -71,7 +71,7 @@ bool sprite_stands( const sprite_footprint &f, const tile_geometry &g )
     if( f.flip_vertical ) {
         y0 = f.size.y - y1;
     }
-    // opaque top after the turn, doubled to stay whole
+
     int top2 = 2 * y0;
     switch( f.turn ) {
         case quarter_turn::none:
@@ -170,10 +170,10 @@ void lightmap_keys::forget_all()
     filled_ = {};
 }
 
-// sight edge fades over this band of the in-sight fraction
+
 static constexpr float sight_edge_start = 0.3f;
 static constexpr float sight_edge_end = 0.7f;
-// filter weights below this count as nothing admitted
+
 static constexpr float min_weight = 1.0e-4f;
 
 size_t light_index( const point &p )
@@ -236,14 +236,14 @@ std::array<float, 3> illumination_hue( const light_color_rgb &lc, const float sc
     if( !tint ) {
         return hue;
     }
-    // by the colored light's own strength, its brightest channel: its reach
-    // ends where that falls to LIGHT_AMBIENT_LOW, and other light can keep the
-    // tile lit past that
+
+
+
     const float colored = std::max( { lc.r, lc.g, lc.b } );
     const float t = std::clamp( ( colored - LIGHT_AMBIENT_LOW ) /
                                 ( LIGHT_AMBIENT_LIT - LIGHT_AMBIENT_LOW ), 0.0f, 1.0f );
     const float fade = t * t * ( 3.0f - 2.0f * t );
-    // colored share of the light, 0 to 1
+
     const float s = fade * std::min( 1.0f, tint->a / tint_max_alpha );
     hue[0] = 1.0f + s * ( tint->r / 255.0f - 1.0f );
     hue[1] = 1.0f + s * ( tint->g / 255.0f - 1.0f );
@@ -262,7 +262,7 @@ bool barrier_grid::barrier( const point &p ) const
     return ( texels[static_cast<size_t>( p.y ) * stride + p.x].a & texel_barrier ) != 0;
 }
 
-// one step from `v` toward 0
+
 static int toward_own( const int v )
 {
     return v > 0 ? v - 1 : v < 0 ? v + 1 : 0;
@@ -272,8 +272,8 @@ uint32_t reach_mask( const barrier_grid &grid, const point &at )
 {
     const bool own = grid.barrier( at );
     uint32_t mask = reach_bit( point::zero );
-    // rings of growing distance in steps: a cell is reached when a reached
-    // cell one step closer, along x or along y, joins it in the same class
+
+
     for( int d = 1; d <= 2 * filter_reach; ++d ) {
         for( int dy = -filter_reach; dy <= filter_reach; ++dy ) {
             const int rest = d - std::abs( dy );
@@ -282,7 +282,7 @@ uint32_t reach_mask( const barrier_grid &grid, const point &at )
             }
             for( int dx = -rest; dx <= rest; dx += std::max( 1, 2 * rest ) ) {
                 const point cell = at + point( dx, dy );
-                // outside the map is no cell at all, whatever the own class
+
                 if( !grid.inside( cell ) || grid.barrier( cell ) != own ) {
                     continue;
                 }
@@ -304,8 +304,8 @@ bool encode_lightmap_layer( const map &here, const int z, const lightmap_fill_se
     const level_cache &ch = here.access_cache( z );
     const half_open_rectangle<point> &area = settings.area;
     static const std::array<float, 3> white = { 1.0f, 1.0f, 1.0f };
-    // detail doesn't depend on apparent light, so this pass skips
-    // map::apparent_light_helper; a level with nothing seen stays zero
+
+
     bool any_detail = false;
     for( int y = area.p_min.y; y < area.p_max.y && !any_detail; ++y ) {
         for( int x = area.p_min.x; x < area.p_max.x; ++x ) {
@@ -327,19 +327,19 @@ bool encode_lightmap_layer( const map &here, const int z, const lightmap_fill_se
             const light_cell cell = classify_light_cell( ll, apparent, settings.vision_threshold );
             const std::array<float, 3> hue = settings.tint && cell.detail
                                              ? illumination_hue( ch.light_color_cache[x][y], ch.lm[x][y].max() ) : white;
-            // light barrier, so windows stay open to light
+
             out[light_index( point( x, y ) )] = encode_light_texel( cell, hue,
                                                 ch.transparency_cache[x][y] <= LIGHT_TRANSPARENCY_SOLID );
         }
     }
-    // per tile sampling never reads the masks
+
     if( !settings.masks ) {
         return true;
     }
     const barrier_grid grid{ out.data(), lightmap_width, MAPSIZE_X, MAPSIZE_Y };
     for( int y = area.p_min.y; y < area.p_max.y; ++y ) {
         for( int x = area.p_min.x; x < area.p_max.x; ++x ) {
-            // the filter only reads a cell's mask when the cell is seen
+
             if( ( out[light_index( point( x, y ) )].a & texel_detail ) != 0 ) {
                 out[reach_index( point( x, y ) )] = encode_reach_texel( reach_mask( grid, point( x, y ) ) );
             }
@@ -376,10 +376,10 @@ struct decoded_texel {
     bool detail = false;
     bool barrier = false;
 };
-} // namespace
+}
 
-// light texel at `cell`, empty outside the light columns or the rows of
-// `level`: a sample never leaves its own level
+
+
 static decoded_texel fetch_light( const lightmap_view &view, const point &cell, const int level )
 {
     decoded_texel o;
@@ -397,7 +397,7 @@ static decoded_texel fetch_light( const lightmap_view &view, const point &cell, 
     return o;
 }
 
-// reach mask of a cell fetch_light found valid
+
 static uint32_t fetch_reach( const lightmap_view &view, const point &cell )
 {
     return texel_reach( view.texels[static_cast<size_t>( cell.y ) * view.width + view.reach_column +
@@ -438,22 +438,22 @@ std::array<lit_vertex, 4> lit_quad( const lit_quad_params &p )
         }
         return std::array<float, 2> { x, y };
     };
-    // iso: the height of the diamond's left and right corners; ortho: the
-    // tile's top edge
+
+
     const float ground_y = p.ground_y + ( p.iso ? p.tile_height - p.tile_width / 4.0f : 0.0f );
     const int row = ( p.pos.z() + OVERMAP_DEPTH ) * MAPSIZE_Y + p.pos.y();
-    // own cell for lit_sample.glsl, in texels: column plus the standing
-    // marker, row
+
+
     const float cell_column = static_cast<float>( p.pos.x() ) + ( p.standing ? standing_marker : 0.0f );
     const float cell_row = static_cast<float>( row );
-    // light map position under a screen point; the ground mapping is affine,
-    // so the renderer interpolates it exactly across the quad
+
+
     const auto ground = [&]( const std::array<float, 2> &s ) {
         const float dx = ( s[0] - p.ground_x ) / p.tile_width;
         float mx = dx;
         float my = ( s[1] - ground_y ) / p.tile_height;
         if( p.iso ) {
-            // left (0, 0), top (1, 0), bottom (0, 1), right (1, 1)
+
             const float dy = 2.0f * ( s[1] - ground_y ) / p.tile_width;
             mx = dx - dy;
             my = dx + dy;
@@ -475,15 +475,15 @@ static float mix1( const float a, const float b, const float t )
 
 namespace
 {
-// own cell, level and local position of a lit pixel, as sample_light finds
-// them
+
+
 struct located_pixel {
     point own;
     int level = 0;
     float lx = 0.0f;
     float ly = 0.0f;
 };
-} // namespace
+}
 
 static located_pixel locate( const lightmap_view &view, const sample_params &params,
                              const lit_coords &coords )
@@ -498,7 +498,7 @@ static located_pixel locate( const lightmap_view &view, const sample_params &par
     float lx = coords.x - p.own.x;
     float ly = coords.y - p.own.y;
     if( standing ) {
-        // light along the sprite's base line, the same all the way up
+
         if( params.iso ) {
             lx = ( lx + ly ) * 0.5f;
             ly = lx;
@@ -528,14 +528,14 @@ filter_result reference_filter( const lightmap_view &view, const point &own, con
 {
     const decoded_texel own_texel = fetch_light( view, own, level );
     filter_result r;
-    // texel space: centers at whole numbers
+
     const float stx = own.x + lx - 0.5f;
     const float sty = own.y + ly - 0.5f;
     const point base( static_cast<int>( std::floor( stx ) ), static_cast<int>( std::floor( sty ) ) );
     const float fx = stx - base.x;
     const float fy = sty - base.y;
-    // kernel weights depend only on the point and the tap, so each axis takes
-    // four
+
+
     std::array<float, 4> wx = {};
     std::array<float, 4> wy = {};
     for( int k = 0; k < 4; ++k ) {
@@ -547,18 +547,18 @@ filter_result reference_filter( const lightmap_view &view, const point &own, con
     float blend_weight = 0.0f;
     float sight_sum = 0.0f;
     float sight_weight = 0.0f;
-    // 2x2 cells around the sample point that join the own cell through cells of
-    // its class: a diagonal walled on both sides is not joined
+
+
     std::array<bool, 4> joined = {};
     for( int k = 0; k < 4; ++k ) {
         const decoded_texel ct = fetch_light( view, base + point( k % 2, k / 2 ), level );
         joined[k] = ct.valid && ct.barrier == own_texel.barrier;
     }
     const int own_k = ( own.y - base.y ) * 2 + own.x - base.x;
-    // diagonal joins through either side cell
+
     joined[3 - own_k] = joined[3 - own_k] && ( joined[own_k ^ 1] || joined[own_k ^ 2] );
-    // each joined cell filters with its own mask and their results blend
-    // bilinearly, so neighbours of one class agree
+
+
     for( int cj = 0; cj <= 1; ++cj ) {
         for( int ci = 0; ci <= 1; ++ci ) {
             const point c = base + point( ci, cj );
@@ -590,14 +590,14 @@ filter_result reference_filter( const lightmap_view &view, const point &own, con
                     const float w = wx[i + 1] * wy[j + 1];
                     w_sum += w;
                     l_sum += w * t.light;
-                    // chroma by filter weight alone: weighting it by light
-                    // would give a faint colored cell its full hue
+
+
                     for( int k = 0; k < 3; ++k ) {
                         ch_sum[k] += w * t.chroma[k];
                     }
                 }
             }
-            // a detail cell admits itself, at most one cell from the point
+
             cata_assert( w_sum > 0.0f );
             light_sum += bw * l_sum / w_sum;
             for( int k = 0; k < 3; ++k ) {
@@ -728,7 +728,7 @@ float half_round( const float x )
     }
     int exponent = 0;
     std::frexp( x, &exponent );
-    // a half keeps 11 significant bits; below 2^-14 its steps stay 2^-24
+
     const float step = std::ldexp( 1.0f, std::max( exponent - 11, -24 ) );
     return std::nearbyint( x / step ) * step;
 }
@@ -821,7 +821,7 @@ static float average( const std::array<float, 3> &rgb )
     return ( rgb[0] + rgb[1] + rgb[2] ) / 3.0f;
 }
 
-// memory_presets.glsl's memory_keep_black
+
 static std::array<float, 3> keep_black( const std::array<float, 3> &rgb,
                                         const std::array<float, 3> &result )
 {
@@ -867,7 +867,7 @@ static std::array<float, 3> nightvision_green( const float result )
     return { result * 0.25f, result, result * 0.125f };
 }
 
-// lit_sample.glsl's mix_in_hue
+
 static std::array<float, 3> mix_in_hue( const std::array<float, 3> &rgb,
                                         const std::array<float, 3> &hue )
 {
@@ -879,8 +879,8 @@ static std::array<float, 3> mix_in_hue( const std::array<float, 3> &rgb,
                                          ( hue[1] - 1.0f + strength ) / strength,
                                          ( hue[2] - 1.0f + strength ) / strength
                                        };
-    // the pixel's brightness in the light's color, as far as that fits on
-    // screen: color's brightest channel is 1, so a scale over 1 would clip
+
+
     const float scale = std::min( average( rgb ) / std::max( average( color ), min_weight ), 1.0f );
     return mix3( rgb, { color[0] *scale, color[1] *scale, color[2] *scale }, tint_mix * strength );
 }
@@ -1065,4 +1065,4 @@ void prefilter_cache::publish( const prefilter_inputs &in )
     published_ = in;
 }
 
-} // namespace smooth_lighting
+}

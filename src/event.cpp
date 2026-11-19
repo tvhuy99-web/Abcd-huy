@@ -11,7 +11,7 @@ template<>
 std::string enum_to_string<event_type>( event_type data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case event_type::activates_artifact: return "activates_artifact";
         case event_type::activates_mininuke: return "activates_mininuke";
         case event_type::administers_mutagen: return "administers_mutagen";
@@ -126,14 +126,14 @@ std::string enum_to_string<event_type>( event_type data )
         case event_type::u_var_changed: return "u_var_changed";
         case event_type::vehicle_moves: return "vehicle_moves";
         case event_type::character_butchered_corpse: return "character_butchered_corpse";
-        // *INDENT-ON*
+
         case event_type::num_event_types:
             break;
     }
     cata_fatal( "Invalid event_type" );
 }
 
-} // namespace io
+}
 
 namespace cata
 {
@@ -227,7 +227,7 @@ DEFINE_EVENT_FIELDS( character_butchered_corpse )
 DEFINE_EVENT_FIELDS( dimension_travel )
 DEFINE_EVENT_FIELDS( phase_move )
 
-} // namespace event_detail
+}
 
 template<event_type Type>
 static void get_fields_if_match( event_type type, event::fields_type &out )
@@ -276,4 +276,4 @@ cata_variant event::get_variant_or_void( const std::string &key ) const
     return it->second;
 }
 
-} // namespace cata
+}

@@ -32,7 +32,7 @@ std::string enum_to_string<fault_severity>( fault_severity severity )
     }
     cata_fatal( "Invalid fault_severity" );
 }
-} // namespace io
+}
 
 namespace
 {
@@ -41,19 +41,19 @@ generic_factory<fault> fault_factory( "fault", "id" );
 generic_factory<fault_fix> fault_fixes_factory( "fault_fix", "id" );
 generic_factory<fault_group> fault_group_factory( "fault_group", "id" );
 
-// we'll store requirement_ids here and wait for requirements to load in, then we can actualize them
+
 std::multimap<fault_fix_id, std::pair<std::string, int>> reqs_temp_storage;
 
-// Have a list of faults by type, the type right now is item prefix to avoid adding more JSON data
+
 std::map<std::string, std::vector<fault_id>> faults_by_type;
 
 #if defined(__ANDROID__)
-// requirement_data::finalize() traverses every crafting requirement.
-// Each fault fix must not repeat the global pass for all earlier fixes.
+
+
 bool fault_requirements_finalized = false;
 #endif
 
-} // namespace
+}
 
 std::vector<fault_id> faults::all_of_type( const std::string &type )
 {
@@ -74,7 +74,7 @@ const fault_id &faults::random_of_type_item_has( const item &it, const std::stri
 {
     const std::vector<fault_id> &typed = all_of_type( type );
 
-    // not actually random
+
     for( const fault_id &fid : typed ) {
         if( it.has_fault( fid ) ) {
             return fid;
@@ -141,42 +141,42 @@ void faults::check_consistency()
     fault_fixes_factory.check();
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<fault>::is_valid() const
 {
     return fault_factory.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const fault &string_id<fault>::obj() const
 {
     return fault_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<fault_fix>::is_valid() const
 {
     return fault_fixes_factory.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const fault_fix &string_id<fault_fix>::obj() const
 {
     return fault_fixes_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<fault_group>::is_valid() const
 {
     return fault_group_factory.is_valid( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const fault_group &string_id<fault_group>::obj() const
 {
@@ -369,13 +369,13 @@ void fault_fix::load( const JsonObject &jo, std::string_view )
     if( jo.has_array( "requirements" ) ) {
         for( const JsonValue &jv : jo.get_array( "requirements" ) ) {
             if( jv.test_array() ) {
-                // array of 2 elements filled with [requirement_id, count]
+
                 const JsonArray &req = static_cast<JsonArray>( jv );
                 const std::string req_id = req.get_string( 0 );
                 const int req_amount = req.get_int( 1 );
                 reqs_temp_storage.emplace( id, std::make_pair( req_id, req_amount ) );
             } else if( jv.test_object() ) {
-                // defining single requirement inline
+
                 const JsonObject &req = static_cast<JsonObject>( jv );
                 const requirement_id req_id( "fault_fix_" + id.str() + "_inline_req" );
                 requirement_data::load_requirement( req, req_id );
@@ -404,8 +404,8 @@ void fault_fix::finalize()
         const_cast<fault &>( *fid ).fixes.emplace( id );
     }
 #if defined(__ANDROID__)
-    // Preserve the first fix's original finalization order. The canonical
-    // crafting-requirements pass still runs later in DynamicDataLoader.
+
+
     if( !fault_requirements_finalized ) {
         requirement_data::finalize();
         fault_requirements_finalized = true;

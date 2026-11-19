@@ -29,7 +29,7 @@ struct test_obj {
     std::string value;
 };
 
-} // namespace
+}
 
 static const test_obj_id test_obj_id_0( "id_0" );
 static const test_obj_id test_obj_id_1( "id_1" );
@@ -52,7 +52,7 @@ TEST_CASE( "generic_factory_insert_convert_valid", "[generic_factory]" )
     test_factory.insert( {test_obj_id_1, "value_1"} );
     test_factory.insert( {test_obj_id_2, "value_2"} );
 
-    // testing correctness when finalized was both called and not called
+
     if( GENERATE( false, true ) ) {
         INFO( "Calling finalize" );
         test_factory.finalize();
@@ -79,12 +79,12 @@ TEST_CASE( "generic_factory_insert_convert_valid", "[generic_factory]" )
     CHECK( test_factory.obj( int_id_1 ).value == "value_1" );
 
     test_factory.reset();
-    // factory is be empty, all ids must be invalid
+
     CHECK( test_factory.empty() );
     CHECK( test_factory.size() == 0 ); // NOLINT
 
-    // technically, lookup by non-valid int_id may result undefined behavior, if factory is non-empty
-    // this is expected
+
+
     REQUIRE_FALSE( test_factory.is_valid( int_id_1 ) );
     REQUIRE_FALSE( test_factory.is_valid( id_0 ) );
     REQUIRE_FALSE( test_factory.is_valid( id_1 ) );
@@ -108,7 +108,7 @@ TEST_CASE( "generic_factory_repeated_overwrite", "[generic_factory]" )
 
 TEST_CASE( "generic_factory_repeated_invalidation", "[generic_factory]" )
 {
-    // if id is static, factory must be static (or singleton by other means)
+
     static test_obj_id id_1( "id_1" );
     static generic_factory<test_obj> test_factory( "test_factory" );
 
@@ -160,20 +160,20 @@ TEST_CASE( "generic_factory_version_wrapper", "[generic_factory]" )
 
 TEST_CASE( "string_ids_comparison", "[generic_factory][string_id]" )
 {
-    //  checks equality correctness for the following combinations of parameters:
-    bool equal = GENERATE( true, false ); // whether ids are equal
-    bool first_cached = GENERATE( true, false ); // whether _version is current (first id)
-    bool first_valid = GENERATE( true, false ); // whether id is present in the factory (first id)
-    bool second_cached = GENERATE( true, false ); // --- second id
-    bool second_valid = GENERATE( true, false ); // --- second id
+
+    bool equal = GENERATE( true, false );
+    bool first_cached = GENERATE( true, false );
+    bool first_valid = GENERATE( true, false );
+    bool second_cached = GENERATE( true, false );
+    bool second_valid = GENERATE( true, false );
 
     test_obj_id id1( "id1" );
     test_obj_id id2( ( equal ?  "id1" : "id2" ) );
 
     generic_factory<test_obj> test_factory( "test_factory" );
 
-    // both ids must be inserted first and then cached for the test to be valid
-    // as `insert` invalidates the cache
+
+
     if( first_valid ) {
         test_factory.insert( { id1, "value" } );
     }
@@ -181,7 +181,7 @@ TEST_CASE( "string_ids_comparison", "[generic_factory][string_id]" )
         test_factory.insert( { id2, "value" } );
     }
     if( first_cached ) {
-        // is_valid should update cache internally
+
         test_factory.is_valid( id1 );
     }
     if( second_cached ) {
@@ -206,7 +206,7 @@ TEST_CASE( "string_ids_comparison", "[generic_factory][string_id]" )
     }
 }
 
-// Benchmarks are skipped by default by using [.] tag
+
 TEST_CASE( "generic_factory_lookup_benchmark", "[.][generic_factory][benchmark]" )
 {
     test_obj_id id_200( "id_200" );
@@ -252,7 +252,7 @@ TEST_CASE( "string_id_compare_benchmark", "[.][generic_factory][string_id][bench
     test_factory.insert( {test_obj_id( id_200 ), "value_200"} );
     test_factory.insert( {test_obj_id( id_200_ ), "value_200_"} );
     test_factory.insert( {test_obj_id( id_300 ), "value_300"} );
-    // make _version inside the ids valid
+
     test_factory.is_valid( id_200 );
     test_factory.is_valid( id_200_ );
     test_factory.is_valid( id_300 );
@@ -282,9 +282,9 @@ using stat_int_id = int_id<stat_test_obj>;
 int_id<stat_test_obj> stat_int_id_null( -1 );
 
 generic_factory<stat_test_obj> stat_test_obj_factory( "stat_test_obj" );
-} // namespace
+}
 
-// standard "generic_factory" methods to support the benchmark below
+
 template<> int_id<stat_test_obj> string_id<stat_test_obj>::id() const
 {
     return stat_test_obj_factory.convert( *this, stat_int_id_null );
@@ -295,12 +295,12 @@ template<> const stat_test_obj &string_id<stat_test_obj>::obj() const
     return stat_test_obj_factory.obj( *this );
 }
 
-// mark string_id<dyn_test_obj> as dynamic/non-interned
+
 template<> struct string_id_params<dyn_test_obj> {
     static constexpr bool dynamic = true;
 };
 
-// compares the lookup performance of different flag container implementations
+
 TEST_CASE( "string_and_int_ids_benchmark", "[.][generic_factory][int_id][string_id][benchmark]" )
 {
     stat_test_obj_factory.reset();
@@ -351,7 +351,7 @@ TEST_CASE( "string_and_int_ids_benchmark", "[.][generic_factory][int_id][string_
             flat_set_int_ids.insert( int_id );
             std_set_int_ids.emplace( int_id );
             std_uo_set_int_ids.emplace( int_id );
-            // do not add duplicates
+
             if( std_uo_set_int_ids.size() > vector_int_ids.size() ) {
                 vector_int_ids.emplace_back( flag );
             }
@@ -374,12 +374,12 @@ TEST_CASE( "string_and_int_ids_benchmark", "[.][generic_factory][int_id][string_
     std::vector<stat_str_id> test_flags;
     bool hits = GENERATE( false, true );
     if( hits ) {
-        // populate only with flags that exist in the item
+
         for( const auto &f : item.std_set_string_ids ) {
             test_flags.push_back( f );
         }
     } else {
-        // populate with random flags
+
         for( int i = 0; i < 20; i++ ) {
             test_flags.push_back( all_flags[xor_rand() % all_flags_n].id );
         }

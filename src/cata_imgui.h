@@ -64,22 +64,22 @@ enum class scroll : int {
     page_down
 };
 
-// smallest supported resolution, in px
+
 constexpr int min_screen_res_x = 640;
 constexpr int min_screen_res_y = 384;
 
 #ifndef TUI
-// font rebuild requested between frames; atlas can't change while one is open
+
 class font_reload
 {
     public:
-        // rebuild at current ::fontheight; the last request before a frame wins
+
         void request( const std::vector<font_config> &gui_typefaces,
                       const std::vector<font_config> &mono_typefaces );
         bool pending() const {
             return pending_;
         }
-        // reload the fonts if requested; call only outside a frame. true if it did
+
         bool apply( ImGuiIO &io, bool cjk );
     private:
         bool pending_ = false;
@@ -92,9 +92,9 @@ class client
 {
         std::vector<int> cata_input_trail;
 #ifndef TUI
-        // Backend-active latches for the platform and renderer ImGui
-        // backends. Guard the wrappers so partial teardown + retry is
-        // idempotent.
+
+
+
         bool platform_backend_active_ = false;
         bool renderer_backend_active_ = false;
         font_reload font_reload_;
@@ -112,14 +112,14 @@ class client
 #endif
         ~client();
 
-        // display_buffer_w/h drive ImGui layout (DisplaySize). Pass 0 to fall
-        // back to the bound target's output size (only valid while a draw scope
-        // has display_buffer bound).
+
+
+
         void new_frame( int display_buffer_w = 0, int display_buffer_h = 0 );
         void end_frame();
-        // Close the active ImGui frame without any backend draw commands, for
-        // aborting mid-flight when end_frame() is unsafe (renderer undefined).
-        // The next NewFrame would assert if the frame were left open.
+
+
+
         void abort_frame();
         void process_input( void *input, int display_buffer_w = 0, int display_buffer_h = 0,
                             int scaling_factor = 1 );
@@ -132,23 +132,23 @@ class client
         const SDL_Window_Ptr &sdl_window;
         const GeometryRenderer_Ptr &sdl_geometry;
 
-        // ImGui backend lifecycle wrappers. Each tracks backend-active state so
-        // the vendored Shutdown (which asserts when inactive) is never doubled.
-        // Pair: init platform then renderer; shutdown reverse.
+
+
+
         void init_platform_backend();
         void init_renderer_backend();
         void shutdown_renderer_backend();
         void shutdown_platform_backend();
-        // Drop the renderer backend's GPU device objects (font atlas,
-        // buffers) without tearing down the backend; they recreate
-        // lazily on the next RenderDrawData.
+
+
+
         void destroy_backend_device_objects() const;
-        // applied at the start of the next new_frame
+
         void reload_fonts( const std::vector<font_config> &gui_typefaces,
                            const std::vector<font_config> &mono_typefaces ) {
             font_reload_.request( gui_typefaces, mono_typefaces );
         }
-        // whether the last new_frame rebuilt the fonts, so text measured before it is stale
+
         bool fonts_reloaded_this_frame() const {
             return fonts_reloaded_this_frame_;
         }
@@ -156,23 +156,23 @@ class client
         bool auto_size_frame_active();
         bool any_window_shown();
 
-        // True if ImGui is consuming mouse input (hover / drag / popup).
+
         static bool want_capture_mouse();
-        // True if an ImGui text field or shortcut has keyboard focus.
+
         static bool want_capture_keyboard();
-        // True if an ImGui text-entry widget is focused and wants character input.
+
         static bool want_text_input();
-        // Drop the active ImGui item so a focused text widget releases input.
+
         static void clear_text_focus();
 };
 
 #ifndef TUI
-// Pick the ImGui DisplaySize for a frame: the explicit display-buffer dims when
-// both are positive, else the renderer's output dims. Keeps the terminal-buffer
-// sizing contract when the idle-null target leaves the output reading the window.
+
+
+
 point imgui_frame_display_size( int display_buffer_w, int display_buffer_h,
                                 int renderer_output_w, int renderer_output_h );
-// add gui, mono and (without CJK) 1.5x gui fonts as Fonts[0], [1] and [2]
+
 void add_cata_fonts( ImGuiIO &io, const std::vector<font_config> &gui_typefaces,
                      const std::vector<font_config> &mono_typefaces, bool cjk );
 #endif
@@ -199,9 +199,9 @@ void draw_colored_text( const std::string &original_text,
                         float wrap_width = 0.0F, bool *is_selected = nullptr,
                         bool *is_focused = nullptr, bool *is_hovered = nullptr );
 
-// calculates how much space the text takes horizontally, in pixels, without color tags
+
 size_t get_string_width( std::string_view str );
-// calculates how much space the text takes vertically, in pixels, including the wrapping
+
 size_t get_string_height( std::string_view str, float wrap_width );
 
 class window
@@ -249,7 +249,7 @@ void init_pair( int p, int f, int b );
 void load_colors();
 #endif
 
-// drops the ImGuiInputTextFlags_CharsScientific flag from regular imgui InputFloat because it doesn't allow commas
+
 bool InputFloat( const char *label, float *v, float step = 0.0f, float step_fast = 0.0f,
                  const char *format = "%.3f", ImGuiInputTextFlags flags = 0 );
 
@@ -261,34 +261,34 @@ void PopGuiFont1_5x();
 bool BeginRightAlign( const char *str_id );
 void EndRightAlign();
 
-// wrapper around BeginTabItem() that allows to define if tab should be selected directly,
-// instead of manually passing ImGuiTabItemFlags_SetSelected
+
+
 bool BeginTabItem( const char *label, bool is_selected, bool *p_open = nullptr,
                    ImGuiTabItemFlags flags = 0 );
 
-// Set ImGui theme colors to those chosen by the player.
-// This loads the settings from `config/imgui_style.json` and - optionally - falls back to base colors
-// for elements not explicitly specified.
+
+
+
 void init_colors();
 
-/**
- * Print out key(s) and description for a keybinding
- * e.g. "[/] Filter"
- * @param ctxt input context
- * @param action action name, e.g. "FILTER", "QUIT"
- * @param description action description, e.g. "Do thing", "Whatever else"
- * @param active whether the action should be highlighted
- * @param max_limit no more than this many keys will be printed
- * @param default_color the color to use for non-highlighted actions
- */
+
+
+
+
+
+
+
+
+
+
 void TextKeybinding( const input_context &ctxt,
                      const char *action, const char *description, bool active,
                      int max_limit = 0, const nc_color &default_color = c_light_gray );
 
-/**
- * Print out a list separator, ", " in English
- * The previous and next outputs will appear on the same line.
- */
+
+
+
+
 void TextListSeparator( const nc_color &color = c_light_gray );
 
-} // namespace cataimgui
+}

@@ -19,12 +19,12 @@ class computer_session
     public:
         explicit computer_session( computer &comp );
 
-        /** Handles player use of a computer */
+
         void use();
 
     private:
         computer &comp;
-        // Output window. This class assumes win's size does not change.
+
         catacurses::window win;
         const int left;
         const int top;
@@ -32,45 +32,45 @@ class computer_session
         const int height;
         std::vector<std::pair<int, std::string>> lines;
 
-        /** Returns true if the player successfully hacks the computer. Security = -1 defaults to
-         *  the main system security. */
+
+
         bool hack_attempt( Character &you, int Security = -1 ) const;
 
-        /**
-         * Checks whether the specified action can be activated (has any effect)
-         * @return True for actions that either have an effect or require no special conditions,
-                   otherwise false (e.g. false for COMPACT_UNLOCK if no locked doors are in range).
-        */
+
+
+
+
+
         bool can_activate( computer_action action );
 
-        // Called by use()
+
         void activate_function( computer_action action );
-        // ...but we can also choose a specific failure.
+
         void activate_failure( computer_failure_type fail );
-        // Generally called when we fail a hack attempt
+
         void activate_random_failure();
 
-        // Reset to a blank terminal (e.g. at start of usage loop)
+
         void reset_terminal();
-        // Actually displaying the terminal window
+
         void refresh();
-        // Move the cursor to the beginning of the next line
+
         void print_newline();
-        // Do the actual printing
+
         template<typename ...Args>
         void print_indented_line( int indent, int text_width, const std::string &text, Args &&... args );
-        // Prints code-looking gibberish
+
         void print_gibberish_line();
-        // Prints a line to the terminal (with printf flags)
+
         template<typename ...Args>
         void print_line( const std::string &text, Args &&... args );
-        // For now, the same as print_line but in red ( TODO: change this?)
+
         template<typename ...Args>
         void print_error( const std::string &text, Args &&... args );
-        // Wraps and prints a block of text with a 1-space indent
+
         template<typename ...Args>
         void print_text( const std::string &text, Args &&... args );
-        // Prints a line and waits for Y/N/Q
+
         enum class ynq : int {
             yes,
             no,
@@ -78,22 +78,22 @@ class computer_session
         };
         template<typename ...Args>
         ynq query_ynq( const std::string &text, Args &&... args );
-        // Same as query_ynq, but returns true for y or Y
+
         template<typename ...Args>
         bool query_bool( const std::string &text, Args &&... args );
-        // Simply wait for any key, returns True
+
         template<typename ...Args>
         bool query_any( const std::string &text, Args &&... args );
-        // Wait for any key without new output
+
         bool query_any();
-        // Reader (R17): the terminal text currently in `lines`, joined in
-        // display order with color tags removed, for publication as a
-        // document node. Presentation only: reading it never activates a
-        // computer option.
+
+
+
+
         std::string terminal_text() const;
-        // Backend of both query_any forms. `summary` is the text just
-        // printed for the templated form; the no-output form passes the
-        // whole current terminal text instead.
+
+
+
         bool query_any_impl( std::string_view summary );
 
         void action_amigara_log();
@@ -165,4 +165,4 @@ class computer_session
         computer_failure_functions;
 };
 
-#endif // CATA_SRC_COMPUTER_SESSION_H
+#endif

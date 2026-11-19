@@ -85,7 +85,7 @@
 namespace
 {
 bool accessibility_weapon_auto_stow = false;
-} // namespace
+}
 
 namespace a11y
 {
@@ -98,7 +98,7 @@ bool weapon_auto_stow_enabled()
 {
     return accessibility_weapon_auto_stow;
 }
-} // namespace a11y
+}
 
 static const activity_id ACT_MOVE_ITEMS( "ACT_MOVE_ITEMS" );
 
@@ -172,8 +172,8 @@ void Character::handle_contents_changed( const std::vector<item_location> &conta
         containers.begin(), containers.end() );
     map &m = get_map();
 
-    // unseal and handle containers, from innermost (max depth) to outermost (min depth)
-    // so inner containers are always handled before outer containers are possibly removed.
+
+
     while( !sorted_containers.empty() ) {
         item_location loc = std::prev( sorted_containers.end() )->loc();
         sorted_containers.erase( std::prev( sorted_containers.end() ) );
@@ -186,19 +186,19 @@ void Character::handle_contents_changed( const std::vector<item_location> &conta
         bool drop_unhandled = false;
         for( item_pocket *const pocket : loc->get_container_pockets() ) {
             if( pocket && !pocket->sealed() ) {
-                // pockets are unsealed but on_contents_changed is not called
-                // in contents_change_handler::unseal_pocket_containing
+
+
                 pocket->on_contents_changed();
             }
             if( pocket && handle_drop && pocket->will_spill() ) {
-                // the pocket's contents (with a larger depth value) are not
-                // inside `sorted_containers` and can be safely disposed of.
-                pocket->handle_liquid_or_spill( *this, /*avoid=*/&*loc );
-                // drop the container instead if canceled.
+
+
+                pocket->handle_liquid_or_spill( *this, &*loc );
+
                 if( !pocket->empty() ) {
-                    // drop later since we still need to access the container item
+
                     drop_unhandled = true;
-                    // canceling one pocket cancels spilling for the whole container
+
                     break;
                 }
             }
@@ -223,8 +223,8 @@ void Character::handle_contents_changed( const std::vector<item_location> &conta
         }
 
         if( drop_unhandled ) {
-            // We can drop the unhandled container now since the container and
-            // its contents (with a larger depth) are not inside `sorted_containers`.
+
+
             add_msg_player_or_npc(
                 _( "To avoid spilling its contents, you set your %1$s on the %2$s." ),
                 _( "To avoid spilling its contents, <npcname> sets their %1$s on the %2$s." ),
@@ -232,7 +232,7 @@ void Character::handle_contents_changed( const std::vector<item_location> &conta
             );
             item it_copy( *loc );
             loc.remove_item();
-            // target item of `loc` is invalidated and should not be used from now on
+
             m.add_item_or_charges( pos_bub(), it_copy );
         }
     }
@@ -295,8 +295,8 @@ bool Character::has_software( const itype_id &software_id, int min_charges,
                 return VisitResponse::ABORT;
             }
         }
-        // if we get this far, this item is estorage and doesn't have the file.
-        // we don't need to delve deeper into an estorage item.
+
+
         return VisitResponse::SKIP;
     } );
 
@@ -333,7 +333,7 @@ item_location Character::try_add( item it, const item *avoid, const item *origin
     itype_id item_type_id = it.typeId();
     last_item = item_type_id;
 
-    // if there's a desired invlet for this item type, try to use it
+
     bool keep_invlet = false;
     if( is_avatar() ) {
         const char invlet = as_avatar()->free_assigned_invlet( item_type_id );
@@ -353,7 +353,7 @@ item_location Character::try_add( item it, const item *avoid, const item *origin
             return ret;
         }
     } else {
-        // this will set ret to either it, or to stack where it was placed
+
         item *newit = nullptr;
         pocket.second->add( it, &newit );
         if( is_avatar() && !keep_invlet && ( !it.count_by_charges() || it.charges == newit->charges ) ) {
@@ -383,13 +383,13 @@ item_location Character::try_add( item it, int &copies_remaining, const item *av
     itype_id item_type_id = it.typeId();
     last_item = item_type_id;
 
-    // if there's a desired invlet for this item type, try to use it
+
     char invlet = 0;
     if( is_avatar() ) {
         invlet = as_avatar()->free_assigned_invlet( item_type_id );
     }
 
-    //item copy for test can contain
+
     item temp_it = item( it );
     temp_it.charges = 1;
 
@@ -417,11 +417,11 @@ item_location Character::try_add( item it, int &copies_remaining, const item *av
         pocket.second->add( it, max_copies, newits );
 
         if( newits.empty() ) {
-            // Failed to insert into best pocket - break out to prevent infinite loop.
+
             break;
         }
 
-        // Give invlet to the first item created.
+
         if( !first_item_added ) {
             first_item_added = item_location( pocket.first, newits.front() );
             if( invlet ) {
@@ -472,7 +472,7 @@ bool Character::can_add( const item &it, const item *avoid,
     }
 }
 
-item_location Character::i_add( item it, bool /* should_stack */, const item *avoid,
+item_location Character::i_add( item it, bool , const item *avoid,
                                 const item *original_inventory_item, const bool allow_drop,
                                 const bool allow_wield, bool ignore_pkt_settings )
 {
@@ -497,7 +497,7 @@ item_location Character::i_add( item it, bool /* should_stack */, const item *av
 }
 
 item_location Character::i_add( item it, int &copies_remaining,
-                                bool /* should_stack */, const item *avoid,
+                                bool , const item *avoid,
                                 const item *original_inventory_item, const bool allow_drop,
                                 const bool allow_wield, bool ignore_pkt_settings )
 {
@@ -563,7 +563,7 @@ ret_val<item_location> Character::i_add_or_fill( item &it, bool should_stack, co
     }
 }
 
-// Negative positions indicate weapon/clothing, >=0 is obsolete
+
 const item &Character::i_at( int position ) const
 {
     if( position == -1 ) {
@@ -614,12 +614,12 @@ bool Character::i_add_or_drop( item &it, int qty, const item *avoid,
         if( drop ) {
             retval &= !here.add_item_or_charges( pos_bub(), it ).is_null();
             if( !retval ) {
-                // No need to loop now, we already knew that there isn't enough room for the item.
+
                 break;
             }
         } else if( add ) {
             i_add( it, true, avoid,
-                   original_inventory_item, /*allow_drop=*/true, /*allow_wield=*/!has_wield_conflicts( it ) );
+                   original_inventory_item, true, !has_wield_conflicts( it ) );
         } else {
             retval = false;
             break;
@@ -691,10 +691,10 @@ std::vector<item_location> Character::top_items_loc()
 
 item_location Character::invlet_to_item( const int linvlet ) const
 {
-    // Invlets may come from curses, which may also return any kind of key codes, those being
-    // of type int and they can become valid, but different characters when casted to char.
-    // Example: KEY_NPAGE (returned when the player presses the page-down key) is 0x152,
-    // casted to char would yield 0x52, which happens to be 'R', a valid invlet.
+
+
+
+
     if( linvlet > std::numeric_limits<char>::max() || linvlet < std::numeric_limits<char>::min() ) {
         return item_location();
     }
@@ -765,7 +765,7 @@ void Character::drop( const drop_locations &what, const tripoint_bub_ms &target,
     if( stash ) {
         assign_activity( stash_activity_actor( items, placement ) );
     } else {
-        assign_activity( drop_activity_actor( items, placement, /* force_ground = */ false ) );
+        assign_activity( drop_activity_actor( items, placement, false ) );
     }
 }
 
@@ -781,7 +781,7 @@ void Character::pick_up( const drop_locations &what, Pickup::pick_info &info )
         return;
     }
     invalidate_leak_level_cache();
-    //todo: refactor pickup_activity_actor to just use drop_locations, also rename drop_locations
+
     std::vector<item_location> items;
     std::vector<int> quantities;
     items.reserve( what.size() );
@@ -830,7 +830,7 @@ void outfit::holster_opts( std::vector<dispose_option> &opts, item_location obj,
 {
 
     for( item &e : worn ) {
-        // check for attachable subpockets first (the parent item may be defined as a holster)
+
         if( e.get_contents().has_additional_pockets() && e.can_contain( *obj ).success() ) {
             opts.emplace_back( dispose_option{
                 string_format( _( "Store in %s" ), e.tname() ), true, e.invlet,
@@ -864,8 +864,8 @@ void outfit::holster_opts( std::vector<dispose_option> &opts, item_location obj,
                 string_format( _( "Store in %s" ), e.tname() ), true, e.invlet,
                 guy.item_store_cost( *obj, e, false, e.insert_cost( *obj ) ),
                 [&guy, ptr, &e, obj] {
-                    // *obj by itself attempts to use the const version of the operator (in gcc9),
-                    // so construct a new item_location which allows using the non-const version
+
+
                     return ptr->store( guy, e, *item_location( obj ) );
                 }
             } );
@@ -932,11 +932,11 @@ bool Character::dispose_item( item_location &&obj, const std::string &prompt )
 
     worn.holster_opts( opts, obj, *this );
 
-    // Accessible Fire is already an explicit request to switch weapons.
-    // Prefer the game's existing store-in-inventory action, with its normal
-    // capacity check and time cost, instead of opening an incidental menu.
-    // Never silently drop, spill, wear or destroy a held item. If storage is
-    // impossible, leave the normal decision menu intact.
+
+
+
+
+
     if( a11y::weapon_auto_stow_enabled() && !bucket && opts.front().enabled ) {
         return opts.front().action();
     }
@@ -949,7 +949,7 @@ bool Character::dispose_item( item_location &&obj, const std::string &prompt )
         e.prompt += std::string( w - utf8_width( e.prompt, true ), ' ' );
     }
 
-    menu.text.insert( 0, 2, ' ' ); // add space for UI hotkeys
+    menu.text.insert( 0, 2, ' ' );
     menu.text += std::string( w + 2 - utf8_width( menu.text, true ), ' ' );
     menu.text += _( " | Moves  " );
 
@@ -1116,11 +1116,11 @@ std::vector<intrinsic_quality_source> Character::intrinsic_quality_sources(
 
     for( const bionic &bio : *my_bionics ) {
         int index = 0;
-        // What the bionic actually exposes, which is what a crafting inventory would hold.
-        // The weapon has its own arm below, where the direct route reaches it whether or
-        // not the bionic is on.
+
+
+
         for( const item *pseudo : bio.get_available_pseudo_items( false ) ) {
-            // Crafter-aware, or a charged quality resolves through the avatar.
+
             const int supplied = provider_quality_level( *pseudo, qual, this,
                                  false );
             if( supplied >= level ) {
@@ -1159,9 +1159,9 @@ std::vector<intrinsic_quality_source> Character::intrinsic_quality_sources(
             if( supplied >= level ) {
                 intrinsic_quality_source src;
                 src.owner = intrinsic_quality_source::owner_kind::mutation;
-                // One logical pair however many digging traits are present, matching the
-                // single pair crafting_pseudo_items exposes; with both traits the
-                // attribution is deliberately the first one.
+
+
+
                 src.mut = has_trait( trait_BURROW ) ? trait_BURROW : trait_BURROWLARGE;
                 src.slot = intrinsic_quality_source::slot_kind::trait_item;
                 src.slot_index = index;
@@ -1275,10 +1275,10 @@ units::mass Character::weight_carried_with_tweaks( const item_tweaks &tweaks ) c
     const std::map<const item *, int> &without = tweaks.without_items ? *tweaks.without_items :
             empty;
 
-    // Worn items
+
     units::mass ret = worn.weight_carried_with_tweaks( without );
 
-    // Wielded item
+
     units::mass weaponweight = 0_gram;
     if( !without.count( &weapon ) ) {
         weaponweight += weapon.weight();
@@ -1293,7 +1293,7 @@ units::mass Character::weight_carried_with_tweaks( const item_tweaks &tweaks ) c
         weaponweight += weapon.weight() - get_selected_stack_weight( &weapon, without );
     }
 
-    // Exclude wielded item if using lifting tool
+
     if( ( weaponweight + ret <= weight_capacity() ) || ( g->new_game ||
             best_nearby_lifting_assist() < weaponweight ) ) {
         ret += weaponweight;
@@ -1357,7 +1357,7 @@ bool Character::can_pickWeight_partial( const item &it, bool safe ) const
 ret_val<void> Character::can_unwield( const item &it ) const
 {
     if( it.has_flag( flag_NO_UNWIELD ) ) {
-        // check if "it" is currently wielded fake bionic weapon that can be deactivated
+
         std::optional<bionic *> bio_opt = find_bionic_by_uid( get_weapon_bionic_uid() );
         if( !is_wielding( it ) || it.ethereal || !bio_opt ||
             !can_deactivate_bionic( **bio_opt ).success() ) {
@@ -1410,22 +1410,22 @@ void layer_details::reset()
     *this = layer_details();
 }
 
-// The stacking penalty applies by doubling the encumbrance of
-// each item except the highest encumbrance one.
-// So we add them together and then subtract out the highest.
+
+
+
 int layer_details::layer( const int encumbrance, bool conflicts )
 {
-    /*
-     * We should only get to this point with an encumbrance value of 0
-     * if the item is 'semitangible'. A normal item has a minimum of
-     * 2 encumbrance for layer penalty purposes.
-     * ( even if normally its encumbrance is 0 )
-     */
+
+
+
+
+
+
     if( encumbrance == 0 ) {
-        return total; // skip over the other logic because this item doesn't count
+        return total;
     }
 
-    // if this layer has conflicting pieces then add that information
+
     if( conflicts ) {
         is_conflicting = true;
     }
@@ -1434,7 +1434,7 @@ int layer_details::layer( const int encumbrance, bool conflicts )
 
     int current = total;
     if( encumbrance > max ) {
-        total += max;   // *now* the old max is counted, just ignore the new max
+        total += max;
         max = encumbrance;
     } else {
         total += encumbrance;
@@ -1475,7 +1475,7 @@ void Character::toolmod_add( item_location tool, item_location mod )
         debugmsg( "Tried toolmod installation but mod/tool not available" );
         return;
     }
-    // first check at least the minimum requirements are met
+
     if( !has_trait( trait_DEBUG_HS ) && !can_use( *mod, *tool ) ) {
         return;
     }
@@ -1485,7 +1485,7 @@ void Character::toolmod_add( item_location tool, item_location mod )
                        colorize( mod->tname(), mod->color_in_inventory() ),
                        colorize( tool->tname(), tool->color_in_inventory() ) ) ) {
             add_msg_if_player( _( "Never mind." ) );
-            return; // player canceled installation
+            return;
         }
     }
 
@@ -1497,14 +1497,14 @@ int Character::item_handling_cost( const item &it, bool penalties, int base_cost
 {
     int mv = base_cost;
     if( penalties ) {
-        // 50 moves per liter, up to 200 at 4 liters
+
         mv += std::min( 200, it.volume( false, false, charges_in_it ) / 20_ml );
     }
 
     if( weapon.typeId() == itype_e_handcuffs ) {
         mv *= 4;
     } else if( penalties && has_flag( json_flag_GRAB ) ) {
-        // Grabbed penalty scales for grabbed arms/hands
+
         int pen = 2;
         for( const effect &eff : get_effects_with_flag( json_flag_GRAB ) ) {
             if( eff.get_bp()->primary_limb_type() == bp_type::arm ||
@@ -1515,9 +1515,9 @@ int Character::item_handling_cost( const item &it, bool penalties, int base_cost
         mv *= pen;
     }
 
-    // The following is considered as overhead and is not included in the cost when handling multiple items at once.
+
     if( !bulk_cost ) {
-        // For single handed items use the least encumbered hand
+
         if( it.is_two_handed( *this ) ) {
             for( const bodypart_id &part : get_all_body_parts_of_type( bp_type::hand ) ) {
                 mv += encumb( part );
@@ -1534,17 +1534,17 @@ int Character::item_handling_cost( const item &it, bool penalties, int base_cost
     return std::max( mv, 0 );
 }
 
-int Character::item_store_cost( const item &it, const item & /* container */, bool penalties,
+int Character::item_store_cost( const item &it, const item & , bool penalties,
                                 int base_cost ) const
 {
-    /** @EFFECT_PISTOL decreases time taken to store a pistol */
-    /** @EFFECT_SMG decreases time taken to store an SMG */
-    /** @EFFECT_RIFLE decreases time taken to store a rifle */
-    /** @EFFECT_SHOTGUN decreases time taken to store a shotgun */
-    /** @EFFECT_LAUNCHER decreases time taken to store a launcher */
-    /** @EFFECT_STABBING decreases time taken to store a stabbing weapon */
-    /** @EFFECT_CUTTING decreases time taken to store a cutting weapon */
-    /** @EFFECT_BASHING decreases time taken to store a bashing weapon */
+
+
+
+
+
+
+
+
     float lvl = get_skill_level( it.is_gun() ? it.gun_skill() : it.melee_skill() );
     return item_handling_cost( it, penalties, base_cost ) / ( ( lvl + 10.0f ) / 10.0f );
 }
@@ -1552,17 +1552,17 @@ int Character::item_store_cost( const item &it, const item & /* container */, bo
 int Character::item_retrieve_cost( const item &it, const item &container, bool penalties,
                                    int base_cost ) const
 {
-    // Drawing from a holster use the same formula as storing an item for now
-    /**
-         * @EFFECT_PISTOL decreases time taken to draw pistols from holsters
-         * @EFFECT_SMG decreases time taken to draw smgs from holsters
-         * @EFFECT_RIFLE decreases time taken to draw rifles from holsters
-         * @EFFECT_SHOTGUN decreases time taken to draw shotguns from holsters
-         * @EFFECT_LAUNCHER decreases time taken to draw launchers from holsters
-         * @EFFECT_STABBING decreases time taken to draw stabbing weapons from sheaths
-         * @EFFECT_CUTTING decreases time taken to draw cutting weapons from scabbards
-         * @EFFECT_BASHING decreases time taken to draw bashing weapons from holsters
-         */
+
+
+
+
+
+
+
+
+
+
+
     return item_store_cost( it, container, penalties, base_cost );
 }
 
@@ -1614,7 +1614,7 @@ ret_val<void> Character::can_wield( const item &it ) const
 
     if( two_handed &&
         ( missing_arms || armor_restricts_hands ) &&
-        !( mounted_mech && it.typeId() == mech_weapon ) //ignore this check for mech weapons
+        !( mounted_mech && it.typeId() == mech_weapon )
       ) {
         if( armor_restricts_hands ) {
             return ret_val<void>::make_failure(
@@ -1663,7 +1663,7 @@ bool Character::unwield()
         return false;
     }
 
-    // currently the only way to unwield NO_UNWIELD weapon is if it's a bionic that can be deactivated
+
     if( weapon.has_flag( flag_NO_UNWIELD ) ) {
         std::optional<bionic *> bio_opt = find_bionic_by_uid( get_weapon_bionic_uid() );
         return bio_opt ? deactivate_bionic( **bio_opt ) : false;
@@ -1696,7 +1696,7 @@ std::string Character::weapname( bool color_faults ) const
 
 std::string Character::weapname_simple( bool color_faults ) const
 {
-    //To make wield state consistent, gun_nam; when calling tname, is disabling 'with_collapsed' flag
+
     if( weapon.is_gun() ) {
         gun_mode current_mode = weapon.gun_current_mode();
         const bool no_mode = !current_mode.target;
@@ -1730,9 +1730,9 @@ std::string Character::weapname_mode() const
 
 std::string Character::weapname_ammo() const
 {
-    // Per-pocket summary for multimag guns. Single-well aggregation
-    // resolves ammo_capacity(NULL_ID) == 0 on an empty projectile
-    // pocket and prints "/0".
+
+
+
     if( weapon.uses_firing_requirements() && weapon.is_gun() ) {
         std::vector<std::string> parts;
         for( const item_pocket *p : weapon.get_pockets( []( const item_pocket & ) {
@@ -1799,7 +1799,7 @@ std::string Character::weapname_ammo() const
     if( weapon.is_gun() ) {
         gun_mode current_mode = weapon.gun_current_mode();
         const bool no_mode = !current_mode.target;
-        // only required for empty mags and empty guns
+
         std::string mag_ammo;
 
         if( !no_mode && ( current_mode->uses_magazine() || current_mode->magazine_integral() ) ) {
@@ -1878,7 +1878,7 @@ units::volume Character::free_space( const std::function<bool( const item_pocket
                                      const std::function<bool( const item_pocket & )> &check_pocket_tree ) const
 {
     units::volume expansion =
-        0_ml; // discarded, currently don't care if the character's held item would need to get bigger
+        0_ml;
     return weapon.get_remaining_volume_recursive( include_pocket, check_pocket_tree, expansion )
            + worn.remaining_volume_recursive( include_pocket, check_pocket_tree );
 }
@@ -1905,7 +1905,7 @@ units::volume Character::volume_capacity_recursive(
     const std::function<bool( const item_pocket & )> &check_pocket_tree ) const
 {
     units::volume volume_capacity = 0_ml;
-    // discard, currently don't care if inventory has to grow in overall volume
+
     units::volume expansion = 0_ml;
     volume_capacity += weapon.get_volume_capacity_recursive( include_pocket,
                        check_pocket_tree,
@@ -2038,7 +2038,7 @@ std::string Character::is_snuggling() const
     const item *floor_armor = nullptr;
     int ticker = 0;
 
-    // If there are no items on the floor, return nothing
+
     if( begin == end ) {
         return "nothing";
     }
@@ -2065,20 +2065,20 @@ std::string Character::is_snuggling() const
     return "nothing";
 }
 
-// If the player is not wielding anything big, check if hands can be put in pockets
+
 bool Character::can_use_pockets() const
 {
-    // TODO Check that the pocket actually has enough space for the wielded item?
+
     return weapon.volume() < 500_ml;
 }
 
-// If the player's head is not encumbered, check if hood can be put up
+
 bool Character::can_use_hood() const
 {
     return encumb( body_part_head ) < 10;
 }
 
-// If the player's mouth is not encumbered, check if collar can be put up
+
 bool Character::can_use_collar() const
 {
     return encumb( body_part_mouth ) < 10;
@@ -2107,7 +2107,7 @@ void Character::cache_visit_items_with( const std::string &key, const itype_id &
                                         const flag_id &type_flag, bool( item::*filter_func )() const,
                                         const std::function<void( item_location & )> &do_func )
 {
-    // If the cache already exists, use it. Remove all invalid item references.
+
     auto found_cache = inv_search_caches.find( key );
     if( found_cache != inv_search_caches.end() ) {
         inv_search_caches[key].items.erase( std::remove_if( inv_search_caches[key].items.begin(),
@@ -2120,7 +2120,7 @@ void Character::cache_visit_items_with( const std::string &key, const itype_id &
         } ), inv_search_caches[key].items.end() );
         return;
     } else {
-        // Otherwise, add a new cache and populate with all appropriate items in the inventory. Empty lists are still created.
+
         inv_search_caches[key].type = type;
         inv_search_caches[key].type_flag = type_flag;
         inv_search_caches[key].filter_func = filter_func;
@@ -2160,7 +2160,7 @@ void Character::cache_visit_items_with( const std::string &key, const itype_id &
                                         const flag_id &type_flag, bool( item::*filter_func )() const,
                                         const std::function<void( const item_location & )> &do_func ) const
 {
-    // If the cache already exists, use it. Remove all invalid item references.
+
     auto found_cache = inv_search_caches.find( key );
     if( found_cache != inv_search_caches.end() ) {
         inv_search_caches[key].items.erase( std::remove_if( inv_search_caches[key].items.begin(),
@@ -2173,7 +2173,7 @@ void Character::cache_visit_items_with( const std::string &key, const itype_id &
         } ), inv_search_caches[key].items.end() );
         return;
     } else {
-        // Otherwise, add a new cache and populate with all appropriate items in the inventory. Empty lists are still created.
+
         inv_search_caches[key].type = type;
         inv_search_caches[key].type_flag = type_flag;
         inv_search_caches[key].filter_func = filter_func;
@@ -2215,7 +2215,7 @@ bool Character::cache_has_item_with( const std::string &key, const itype_id &typ
 {
     bool aborted = false;
 
-    // If the cache already exists, use it. Stop iterating if the check_func ever returns true. Remove any invalid item references encountered.
+
     auto found_cache = inv_search_caches.find( key );
     if( found_cache != inv_search_caches.end() ) {
         for( auto iter = found_cache->second.items.begin();
@@ -2231,7 +2231,7 @@ bool Character::cache_has_item_with( const std::string &key, const itype_id &typ
             }
         }
     } else {
-        // Otherwise, add a new cache and populate with all appropriate items in the inventory. Empty lists are still created.
+
         inv_search_caches[key].type = type;
         inv_search_caches[key].type_flag = type_flag;
         inv_search_caches[key].filter_func = filter_func;
@@ -2241,7 +2241,7 @@ bool Character::cache_has_item_with( const std::string &key, const itype_id &typ
                 ( filter_func == nullptr || ( ( *it ).*filter_func )() ) ) {
 
                 inv_search_caches[key].items.push_back( it );
-                // If check_func returns true, stop running it but keep populating the cache.
+
                 if( !aborted && check_func( *it ) ) {
                     aborted = true;
                 }
@@ -2346,7 +2346,7 @@ void Character::add_to_inv_search_caches( const item_location &it ) const
             continue;
         }
 
-        // If item is already in the cache, remove it so it can be re-added in its current state.
+
         for( auto iter = cache.second.items.begin(); iter != cache.second.items.end(); ) {
             if( *iter && iter->get_item() == &*it ) {
                 iter = inv_search_caches[cache.first].items.erase( iter );
@@ -2396,7 +2396,7 @@ item Character::find_firestarter_with_charges( const int quantity ) const
 
 bool Character::has_fire( const int quantity ) const
 {
-    // TODO: Replace this with a "tool produces fire" flag.
+
 
     if( get_map().has_nearby_fire( pos_bub() ) ) {
         return true;
@@ -2408,7 +2408,7 @@ bool Character::has_fire( const int quantity ) const
         return true;
     }
     if( is_npc() ) {
-        // HACK: A hack to make NPCs use their Molotovs
+
         return true;
     }
 
@@ -2464,7 +2464,7 @@ item &Character::best_unreserved_item_with_quality( const quality_id &qid )
         if( !craft_reservation::usable_by_automation( it ) ) {
             return false;
         }
-        // same metric has_unreserved_quality plans with, so the two can't disagree
+
         const int qlvl = provider_quality_level( it, qid, this, false );
         if( qlvl > max_lvl_found ) {
             max_lvl_found = qlvl;
@@ -2512,7 +2512,7 @@ const item &Character::best_item_with_quality( const quality_id &qid ) const
     return null_item_reference();
 }
 
-bool Character::add_or_drop_with_msg( item &it, const bool /*unloading*/, const item *avoid,
+bool Character::add_or_drop_with_msg( item &it, const bool , const item *avoid,
                                       const item *original_inventory_item )
 {
     if( it.made_of( phase_id::LIQUID ) ) {
@@ -2525,8 +2525,8 @@ bool Character::add_or_drop_with_msg( item &it, const bool /*unloading*/, const 
         put_into_vehicle_or_drop( *this, item_drop_reason::too_heavy, { it } );
     } else {
         bool wielded_has_it = false;
-        // Cannot use weapon.has_item(it) because it skips any pockets that
-        // are not containers such as magazines and magazine wells.
+
+
         for( const item *scan_contents : weapon.all_items_top() ) {
             if( scan_contents == &it ) {
                 wielded_has_it = true;
@@ -2539,16 +2539,16 @@ bool Character::add_or_drop_with_msg( item &it, const bool /*unloading*/, const 
         const bool allow_wield = !wielded_has_it && !wielded_mag_collision;
         const int prev_charges = it.charges;
         item_location ni = i_add( it, true, avoid,
-                                  original_inventory_item, /*allow_drop=*/false, /*allow_wield=*/allow_wield );
+                                  original_inventory_item, false, allow_wield );
         if( ni == item_location::nowhere ) {
-            // failed to add
+
             put_into_vehicle_or_drop( *this, item_drop_reason::tumbling, { it } );
         } else if( &*ni == &it ) {
-            // merged into the original stack, restore original charges
+
             it.charges = prev_charges;
             put_into_vehicle_or_drop( *this, item_drop_reason::tumbling, { it } );
         } else {
-            // successfully added
+
             add_msg( _( "You put the %s in your inventory." ), ni->tname() );
             add_msg( m_info, "%c - %s", ni->invlet == 0 ? ' ' : ni->invlet, ni->tname() );
         }
@@ -2580,7 +2580,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
 {
     item &it = *loc;
     drop_locations locs;
-    // Unload a container consuming moves per item successfully removed
+
     if( it.is_container() ) {
         if( it.empty() ) {
             add_msg( m_info, _( "The %s is already empty!" ), it.tname() );
@@ -2609,7 +2609,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
                     }
                     prev_contained = contained;
                 } else {
-                    // redirect to insert actor
+
                     const int count = contained->count_by_charges() ? contained->charges : 1;
                     locs.emplace_back( item_location( loc, contained ), count );
                 }
@@ -2625,7 +2625,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
         return true;
     }
 
-    // If item can be unloaded more than once (currently only guns) prompt user to choose
+
     std::vector<std::string> msgs( 1, it.tname() );
     std::vector<item *> opts( 1, &it );
 
@@ -2655,7 +2655,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
         return false;
     }
 
-    // Next check for any reasons why the item cannot be unloaded
+
     if( !target->has_flag( flag_BRASS_CATCHER ) ) {
         if( !target->is_magazine() && !target->uses_magazine() ) {
             add_msg( m_info, _( "You can't unload a %s!" ), target->tname() );
@@ -2695,14 +2695,14 @@ bool Character::unload( item_location &loc, bool bypass_activity,
             int mv = 0;
             target->visit_contents(
             [&]( item_location node ) {
-                // We use the same cost for both reloading and unloading
+
                 mv += this->item_reload_cost( it, *node, node->charges );
                 return VisitResponse::SKIP;
             },
             targloc, { pocket_type::CONTAINER, pocket_type::MAGAZINE, pocket_type::MAGAZINE_WELL }
             );
             if( it.is_ammo_belt() ) {
-                // Disassembling ammo belts is easier than assembling them
+
                 mv /= 2;
             }
             assign_activity( unload_activity_actor( mv, targloc ) );
@@ -2783,7 +2783,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
             if( !this->add_or_drop_with_msg( *mag, true, nullptr, mag ) ) {
                 return false;
             }
-            // Eject magazine consuming half as much time as required to insert it
+
             this->mod_moves( -this->item_reload_cost( *target, *mag, -1 ) / 2 );
 
             targloc.remove_items_with( [mag]( const item & e ) {
@@ -2826,7 +2826,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
     } else if( target->ammo_remaining( ) ) {
         int qty = target->ammo_remaining( );
 
-        // Construct a new ammo item and try to drop it
+
         item ammo( target->ammo_current(), calendar::turn, qty );
         if( target->is_filthy() ) {
             ammo.set_flag( flag_FILTHY );
@@ -2834,17 +2834,17 @@ bool Character::unload( item_location &loc, bool bypass_activity,
 
         if( ammo.made_of_from_type( phase_id::LIQUID ) ) {
             if( !this->add_or_drop_with_msg( ammo ) ) {
-                qty -= ammo.charges; // only handled part (or none) of the liquid
+                qty -= ammo.charges;
             }
             if( qty <= 0 ) {
-                return false; // no liquid was moved
+                return false;
             }
 
         } else if( !this->add_or_drop_with_msg( ammo, qty > 1 ) ) {
             return false;
         }
 
-        // If successful remove appropriate qty of ammo consuming half as much time as required to load it
+
         this->mod_moves( -this->item_reload_cost( *target, ammo, qty ) / 2 );
 
         target->ammo_set( target->ammo_current(), target->ammo_remaining( ) - qty );
@@ -2852,7 +2852,7 @@ bool Character::unload( item_location &loc, bool bypass_activity,
         target->spill_contents( get_player_character() );
     }
 
-    // Turn off any active tools
+
     if( target->is_tool() && target->active && target->ammo_remaining( ) == 0 ) {
         target->deactivate( this );
     }
@@ -2930,14 +2930,14 @@ void Character::process_items( map *here )
         removed.remove_item();
     }
 
-    // Active item processing done, now we're recharging.
+
     if( worn.check_item_encumbrance_flag( get_check_encumbrance() ) ) {
         calc_encumbrance();
         set_check_encumbrance( false );
     }
 
-    // Load all items that use the UPS and have their own battery to their minimal functional charge,
-    // The tool is not really useful if its charges are below charges_to_use
+
+
     std::vector<item_location> inv_use_ups = cache_get_items_with( flag_USE_UPS, [&here](
     item_location & it ) {
         return ( it->ammo_capacity( ammo_battery ) > it->ammo_remaining_linked( *here, nullptr ) ||
@@ -2947,16 +2947,16 @@ void Character::process_items( map *here )
         const units::energy available_charges = available_ups();
         units::energy ups_used = 0_kJ;
         for( item_location &it : inv_use_ups ) {
-            // For powered armor, an armor-powering bionic should always be preferred over UPS usage.
+
             if( it->is_power_armor() && can_interface_armor() && has_power() ) {
-                // Bionic power costs are handled elsewhere
+
                 continue;
             } else if( it->active && !it->ammo_sufficient( this ) ) {
                 it->deactivate();
                 add_msg_if_player( _( "Your %s shut down due to lack of power." ), it->tname() );
             } else if( available_charges - ups_used >= 1_kJ &&
                        it->ammo_remaining_linked( *here, nullptr ) < it->ammo_capacity( ammo_battery ) ) {
-                // Charge the battery in the UPS modded tool
+
                 ups_used += 1_kJ;
                 it->ammo_set( itype_battery, it->ammo_remaining_linked( *here, nullptr ) + 1 );
             }
@@ -2976,15 +2976,15 @@ void Character::search_surroundings()
         echo_pulse();
     }
     map &here = get_map();
-    // Search for traps in a larger area than before because this is the only
-    // way we can "find" traps that aren't marked as visible.
-    // Detection formula takes care of likelihood of seeing within this range.
+
+
+
     for( const tripoint_bub_ms &tp : here.points_in_radius( pos_bub(), 5 ) ) {
         const trap &tr = here.tr_at( tp );
         if( tr.is_null() || tp == pos_bub() ) {
             continue;
         }
-        // Note that echolocation and SONAR also do this separately in echo_pulse()
+
         if( has_active_bionic( bio_ground_sonar ) && !knows_trap( tp ) && tr.detected_by_ground_sonar() ) {
             const std::string direction = direction_name( direction_from( pos_bub(), tp ) );
             add_msg_if_player( m_warning, _( "Your ground sonar detected a %1$s to the %2$s!" ),
@@ -2995,17 +2995,17 @@ void Character::search_surroundings()
             continue;
         }
         if( tr.can_see( tp, *this ) ) {
-            // Already seen, or can never be seen
+
             continue;
         }
-        // Chance to detect traps we haven't yet seen.
+
         if( tr.detect_trap( tp, *this ) ) {
             if( !tr.is_trivial_to_spot() ) {
-                // Only bug player about traps that aren't trivial to spot.
+
                 const std::string direction = direction_name(
                                                   direction_from( pos_bub(), tp ) );
                 practice_proficiency( proficiency_prof_spotting, 1_minutes );
-                // Seeing a trap set properly gives you a little bonus to trapsetting profs.
+
                 practice_proficiency( proficiency_prof_traps, 10_seconds );
                 practice_proficiency( proficiency_prof_trapsetting, 10_seconds );
                 add_msg_if_player( _( "You've spotted a %1$s to the %2$s!" ),
@@ -3057,14 +3057,14 @@ bool Character::wield( item &it, std::optional<int> obtain_cost, bool combat )
     bool combine_stacks = wielded && it.can_combine( *wielded );
     cached_info.erase( "weapon_value" );
 
-    // Wielding from inventory is relatively slow and does not improve with increasing weapon skill.
-    // Worn items (including guns with shoulder straps) are faster but still slower
-    // than a skilled player with a holster.
-    // There is an additional penalty when wielding items from the inventory whilst currently grabbed.
+
+
+
+
 
     bool worn = is_worn( it );
 
-    // Ideally the cost should be calculated from wield(item_location), but as backup try it here.
+
     const int mv = obtain_cost.value_or( item_handling_cost( it, true,
                                          INVENTORY_HANDLING_PENALTY / ( worn ? 2 : 1 ) ) );
 
@@ -3079,7 +3079,7 @@ bool Character::wield( item &it, std::optional<int> obtain_cost, bool combat )
     if( has_item( it ) ) {
         to_wield = i_rem( &it );
     } else {
-        // is_null means fists
+
         to_wield = it.is_null() ? item() : it;
     }
 
@@ -3089,15 +3089,15 @@ bool Character::wield( item &it, std::optional<int> obtain_cost, bool combat )
         set_wielded_item( to_wield );
     }
 
-    // set_wielded_item invalidates the weapon item_location, so get it again
+
     wielded = get_wielded_item();
-    // Copy-assigned into the weapon slot, so every uid under it is fresh.
+
     if( wielded ) {
         craft_relocated( wielded );
     }
     recoil = MAX_RECOIL;
 
-    // if fists are wielded get_wielded_item returns item_location::nowhere, which is a nullptr
+
     if( wielded ) {
         last_item = wielded->typeId();
         wielded->on_wield( *this, combat );
@@ -3125,7 +3125,7 @@ bool Character::wield( item_location loc, bool remove_old )
     }
 
     if( remove_old && loc ) {
-        // Remove DROPPED_FAVORITES autonote if exists.
+
         if( overmap_buffer.note( pos_abs_omt() ) == loc.get_item()->display_name() ) {
             overmap_buffer.delete_note( pos_abs_omt() );
         }
@@ -3138,7 +3138,7 @@ bool Character::wield( item_location loc, bool remove_old )
 bool Character::wield_contents( item &container, item *internal_item, bool penalties,
                                 int base_cost )
 {
-    // if index not specified and container has multiple items then ask the player to choose one
+
     if( internal_item == nullptr ) {
         debugmsg( "No valid target for wield contents." );
         return false;
@@ -3165,9 +3165,9 @@ bool Character::wield_contents( item &container, item *internal_item, bool penal
         }
     }
 
-    // for holsters, we should not include the cost of wielding the holster itself
-    // The cost of wielding the holster was already added earlier in avatar_action::use_item.
-    // As we couldn't make sure back then what action was going to be used, we remove the cost now.
+
+
+
     mv -= il.obtain_cost( *this );
     mv += item_retrieve_cost( *internal_item, container, penalties, base_cost );
 
@@ -3198,13 +3198,13 @@ bool Character::wield_contents( item &container, item *internal_item, bool penal
 void Character::store( item &container, item &put, bool penalties, int base_cost,
                        pocket_type pk_type, bool check_best_pkt )
 {
-    // Correct only while every caller passes a destination this character holds; one
-    // with a destination elsewhere must thread in its own location.
+
+
     const item_location container_loc( *this, &container );
     mod_moves( -item_store_cost( put, container, penalties, base_cost ) );
     if( check_best_pkt && pk_type == pocket_type::CONTAINER &&
         container.get_container_pockets().size() > 1 ) {
-        // Bypass pocket settings (assuming the item is manually stored)
+
         int charges = put.count_by_charges() ? put.charges : 1;
         container.fill_with( i_rem( &put ), charges, false, false, true, false, true, this );
     } else {

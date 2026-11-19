@@ -40,4 +40,4 @@ class tgz_archiver
         void finalize();
 };
 
-#endif // CATA_SRC_MAP_TGZ_ARCHIVER_H
+#endif

@@ -49,8 +49,8 @@ struct enum_traits<editmap_action> {
 };
 
 enum editmap_mode : int {
-    EMM_DRAWING = 0, // default mode; SELECT places brush features
-    EMM_SELECTING, // for complex brushes; SELECT places target
+    EMM_DRAWING = 0,
+    EMM_SELECTING,
     EMM_LAST
 };
 template<>
@@ -96,48 +96,48 @@ class editmap_ui : public cataimgui::window
 
         void draw_current_point_info();
         void draw_select_menu();
-        // draw a colored symbol followed by a space and another string `info`
+
         void draw_symbol_and_info( nc_color symbol_color, int symbol,
                                    nc_color draw_color, const std::string_view &info );
-        /*
-         * Move point 'editmap.target' via keystroke.
-         * if input or ch are not valid movement keys, do nothing and return false
-         */
+
+
+
+
         bool move_target( const std::string &action, const input_context &ctxt, bool moveorigin ) const;
 
-        /*
-         * apply mapgen to a temporary map and overlay over terrain window, optionally regenerating, rotating, and applying to the real in-game map
-         */
+
+
+
         void edit_mapgen() const;
         void edit_items();
-        /*
-         * Display mapgen results over selected target position, and optionally regenerate / apply / abort
-         */
+
+
+
         void mapgen_preview( const real_coords &tc, oter_id previewed_omt ) const;
 
-        /*
-         * Move mapgen's target, which is different enough from the standard tile edit to warrant it's own function.
-         */
+
+
+
         void mapgen_retarget();
-        /*
-         * Special voodoo sauce required to cleanse vehicles and caches to prevent debugmsg loops when re-applying mapgen.
-         */
+
+
+
         void cleartmpmap( smallmap &tmpmap ) const;
 
-        // use the brush to place features on the map
+
         void brush_apply();
 
     protected:
         cataimgui::bounds get_bounds() override;
 };
 
-/**
-* What are we drawing, in what shape?
-*/
+
+
+
 struct editmap_brush {
-    // the first selected point
+
     tripoint_bub_ms origin = tripoint_bub_ms::invalid;
-    // the second selected point
+
     tripoint_bub_ms target = tripoint_bub_ms::invalid;
 
     ter_id selected_terrain;
@@ -158,23 +158,23 @@ struct editmap_brush {
 
     std::vector<tripoint_bub_ms> brush_points; // NOLINT(cata-serialize)
 
-    //terrain, furniture, trap
+
     template <typename T_t>
     std::optional<int_id<T_t>> select_feature();
     std::optional<field_type_id> select_field();
     int select_radiation() const;
 
-    /*
-     * Interactively select, resize, and move the list of target coordinates
-     */
+
+
+
     void select_shape();
-    /*
-     *  Calculate `brush_points` based on origin and target class variables, and shapetype.
-     */
+
+
+
     void update_brush_points();
 
     void serialize( JsonOut &json ) const;
     void deserialize( const JsonObject &jo );
 };
 
-#endif // CATA_SRC_EDITMAP_H
+#endif

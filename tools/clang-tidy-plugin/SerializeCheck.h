@@ -33,8 +33,8 @@ class SerializeCheck : public ClangTidyCheck
         std::unordered_map<const CXXMethodDecl *, std::vector<const FieldDecl *>> mentioned_decls_;
 };
 
-} // namespace cata
-} // namespace tidy
-} // namespace clang
+}
+}
+}
 
-#endif // CATA_TOOLS_CLANG_TIDY_PLUGIN_SERIALIZECHECK_H
+#endif

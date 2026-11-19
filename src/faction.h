@@ -24,7 +24,7 @@
 
 enum class vitamin_type : int;
 
-// TODO: Redefine?
+
 constexpr int MAX_FAC_NAME_SIZE = 40;
 
 std::string fac_ranking_text( int val );
@@ -50,7 +50,7 @@ enum class relationship : int {
     lets_you_in,
     defend_your_space,
     knows_your_voice,
-    // final value is the count
+
     rel_types
 };
 
@@ -65,7 +65,7 @@ const std::unordered_map<std::string, relationship> relation_strs = { {
         { "knows your voice", npc_factions::relationship::knows_your_voice }
     }
 };
-} // namespace npc_factions
+}
 
 struct faction_price_rule: public icg_entry {
     double markup = 1.0;
@@ -122,55 +122,55 @@ class faction_template
         static void load( const JsonObject &jsobj );
         static void check_consistency();
         static void reset();
-        // summary nutrients of the current food supply
+
         nutrients food_supply() const;
         void add_kcal( int kcal, time_point expires );
         void empty_food_supply();
-        // returns what could not be consumed
+
         nutrients consume_food_supply( const nutrients &consumed );
         nutrients add_to_food_supply( const std::map<time_point, nutrients> &added );
 
-        // remove rotted items in the food supply
+
         void prune_food_supply();
-        // debug access to food supply
+
         cata::list<std::pair<time_point, nutrients>> &debug_food_supply();
 
-        // Returns (hopefully) translated version of the faction's name.
+
         std::string get_name() const;
-        // TODO: Move to faction constructor?
+
         void set_name( std::string new_name );
 
     protected:
-        // TODO: Shouldn't this be a translation object...
+
         std::string name;
 
     public:
         int likes_u;
         int respects_u;
-        int trusts_u; // Determines which item groups are available for trading
+        int trusts_u;
         bool known_by_u;
         faction_id id;
         translation desc;
-        int size; // How big is our sphere of influence?
-        int power; // General measure of our power
-        // Three steal states: Always, Never, Ask
-        // Always = true, Never = false, Ask = std::nullopt
+        int size;
+        int power;
+
+
         std::optional<bool> steal_persist;
     protected:
-        // Sorted list of nutrients and when they expire
-        // The time_point == 0 mod 1_days, and calendar::turn_zero is non-perishable food
-        cata::list<std::pair<time_point, nutrients>> _food_supply; //Total nutritional value held
+
+
+        cata::list<std::pair<time_point, nutrients>> _food_supply;
 
     public:
-        bool consumes_food; //Whether this faction actually draws down the food_supply when eating from it
-        int wealth;  //Total trade currency
-        bool lone_wolf_faction; // is this a faction for just one person?
+        bool consumes_food;
+        int wealth;
+        bool lone_wolf_faction;
         bool limited_area_claim;
-        itype_id currency; // id of the faction currency
-        std::vector<faction_price_rule> price_rules; // additional pricing rules
+        itype_id currency;
+        std::vector<faction_price_rule> price_rules;
         std::map<std::string, std::bitset<static_cast<size_t>( npc_factions::relationship::rel_types )>>
                 relations;
-        mfaction_str_id mon_faction; // mon_faction_id of the monster faction; defaults to human
+        mfaction_str_id mon_faction;
         std::vector<faction_epilogue_data> epilogue_data;
 };
 
@@ -227,4 +227,4 @@ class faction_manager
         faction *get( const faction_id &id, bool complain = true );
 };
 
-#endif // CATA_SRC_FACTION_H
+#endif

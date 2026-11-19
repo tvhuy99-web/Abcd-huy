@@ -89,7 +89,7 @@ TEST_CASE( "belt_reload_option", "[reload] [reload_option] [gun]" )
                                             belt->ammo_capacity( belt_ammo_type ) ) );
     dummy.i_add( item( itype_ammolink308, calendar::turn_zero,
                        belt->ammo_capacity( belt_ammo_type ) ) );
-    // Belt is populated with "charges" rounds by the item constructor.
+
     belt->ammo_unset();
 
     REQUIRE( belt->ammo_remaining( ) == 0 );
@@ -112,7 +112,7 @@ TEST_CASE( "canteen_reload_option", "[reload] [reload_option] [liquid]" )
     item plastic_bottle( itype_bottle_plastic );
     item_location bottle = dummy.i_add( plastic_bottle );
     item water( itype_water_clean, calendar::turn_zero, 2 );
-    // add an extra bottle with water
+
     item_location water_bottle = dummy.i_add( plastic_bottle );
     water_bottle->put_in( water, pocket_type::CONTAINER );
 
@@ -127,4 +127,3 @@ TEST_CASE( "canteen_reload_option", "[reload] [reload_option] [liquid]" )
 
     CHECK( canteen_option.qty() == 2 );
 }
-

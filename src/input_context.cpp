@@ -51,7 +51,7 @@ enum class kb_menu_status {
 
 class keybindings_ui : public cataimgui::window
 {
-        // colors of the keybindings
+
         const nc_color global_key = c_light_gray;
         const nc_color h_global_key = h_light_gray;
         const nc_color local_key = c_light_green;
@@ -61,10 +61,10 @@ class keybindings_ui : public cataimgui::window
         input_context *ctxt;
     public:
         cataimgui::scroll keybinds_scroll = cataimgui::scroll::none;
-        // current status: adding/removing/reseting/executing/showing keybindings
+
         kb_menu_status status = kb_menu_status::show, last_status = kb_menu_status::execute;
 
-        // keybindings help
+
         std::vector<std::string> legend;
         std::vector<std::pair<std::string, std::string>> buttons;
         int width = 0;
@@ -72,7 +72,7 @@ class keybindings_ui : public cataimgui::window
         std::string hotkeys;
         int highlight_row_index = -1;
         int scroll_offset = 0;
-        //std::string filter_text;
+
         keybindings_ui( bool permit_execute_action, input_context *parent );
         void init();
 
@@ -94,12 +94,12 @@ struct ContainsPredicate {
 
     explicit ContainsPredicate( const T1 &container ) : container( container ) { }
 
-    // Operator overload required to leverage std functional interface.
+
     bool operator()( T2 c ) {
         return std::find( container.begin(), container.end(), c ) != container.end();
     }
 };
-} // namespace
+}
 
 bool input_context::action_uses_input( const std::string &action_id,
                                        const input_event &event ) const
@@ -121,9 +121,9 @@ std::string input_context::get_conflicts(
 void input_context::clear_conflicting_keybindings( const input_event &event,
         const std::string &ignore_action )
 {
-    // The default context is always included to cover cases where the same
-    // keybinding exists for the same action in both the global and local
-    // contexts.
+
+
+
     input_manager::t_actions &default_actions = inp_mngr.action_contexts[default_context_id];
     input_manager::t_actions &category_actions = inp_mngr.action_contexts[category];
 
@@ -159,7 +159,7 @@ const std::string &input_context::input_to_action( const input_event &inp ) cons
         const std::string &action = elem;
         const std::vector<input_event> &check_inp = inp_mngr.get_input_for_action( action, category );
 
-        // Does this action have our queried input event in its keybindings?
+
         for( const input_event &check_inp_i : check_inp ) {
             if( check_inp_i == inp ) {
                 return action;
@@ -208,7 +208,7 @@ input_context_stack_impl input_context::input_context_stack;
 #if defined(__ANDROID__)
 void input_context::register_manual_key( manual_key mk )
 {
-    // Prevent duplicates
+
     for( const manual_key &manual_key : registered_manual_keys )
         if( manual_key.key == mk.key ) {
             return;
@@ -219,7 +219,7 @@ void input_context::register_manual_key( manual_key mk )
 
 void input_context::register_manual_key( int key, const std::string text )
 {
-    // Prevent duplicates
+
     for( const manual_key &manual_key : registered_manual_keys )
         if( manual_key.key == key ) {
             return;
@@ -261,7 +261,7 @@ std::vector<input_event> input_context::keys_bound_to( const std::string &action
     const std::vector<input_event> &events = inp_mngr.get_input_for_action( action_descriptor,
             category );
     for( const input_event &events_event : events ) {
-        // Ignore non-keyboard input
+
         if( ( !restrict_to_keyboard || ( events_event.type == input_event_t::keyboard_char
                                          || events_event.type == input_event_t::keyboard_code ) )
             && is_event_type_enabled( events_event.type )
@@ -285,7 +285,7 @@ std::string input_context::get_available_single_char_hotkeys( std::string reques
         const std::vector<input_event> &events = inp_mngr.get_input_for_action( registered_action,
                 category );
         for( const input_event &events_event : events ) {
-            // Only consider keyboard events without modifiers
+
             if( events_event.type == input_event_t::keyboard_char && events_event.modifiers.empty() ) {
                 requested_keys.erase( std::remove_if( requested_keys.begin(), requested_keys.end(),
                                                       ContainsPredicate<std::vector<int>, char>(
@@ -303,8 +303,8 @@ bool input_context::disallow_lower_case_or_non_modified_letters( const input_eve
     const int ch = evt.get_first_input();
     switch( evt.type ) {
         case input_event_t::keyboard_char:
-            // std::lower from <cctype> is undefined outside unsigned char range
-            // and std::lower from <locale> may throw bad_cast for some locales
+
+
             return ch < 'a' || ch > 'z';
         case input_event_t::keyboard_code:
             return !( evt.modifiers.empty() && ( ( ch >= 'a' && ch <= 'z' ) || ( ch >= 'A' && ch <= 'Z' ) ) );
@@ -323,7 +323,7 @@ std::string input_context::get_desc( const std::string &action_descriptor,
                                      const input_context::input_event_filter &evt_filter ) const
 {
     if( action_descriptor == "ANY_INPUT" ) {
-        return "(*)"; // * for wildcard
+        return "(*)";
     }
 
     bool is_local = false;
@@ -359,7 +359,7 @@ std::string input_context::get_desc( const std::string &action_descriptor,
     for( size_t i = 0; i < inputs_to_show.size(); ++i ) {
         rval += inputs_to_show[i].long_description();
 
-        // We're generating a list separated by "," and "or"
+
         if( i + 2 == inputs_to_show.size() ) {
             rval += separator;
         } else if( i + 1 < inputs_to_show.size() ) {
@@ -383,7 +383,7 @@ std::string input_context::get_button_text( const std::string &action_descriptor
         const std::string &action_text ) const
 {
     if( action_descriptor == "ANY_INPUT" ) {
-        return ""; // what sort of crazy button would this be?
+        return "";
     }
 
     bool is_local = false;
@@ -455,14 +455,14 @@ std::string input_context::get_desc(
     const input_event_filter &evt_filter ) const
 {
 
-    // Keybinding tips
+
     static const translation inline_fmt = to_translation(
             //~ %1$s: action description text before key,
             //~ %2$s: key description,
             //~ %3$s: action description text after key.
             "keybinding", "%1$s[<color_light_green>%2$s</color>]%3$s" );
     static const translation separate_fmt = to_translation(
-            // \u00A0 is the non-breaking space
+
             //~ %1$s: key description,
             //~ %2$s: action description.
             "keybinding", "[<color_light_green>%1$s</color>]\u00A0%2$s" );
@@ -490,23 +490,23 @@ const std::string &input_context::handle_input( const int timeout )
     const auto input_started = std::chrono::steady_clock::now();
     std::unique_ptr<a11y::screen_scope> reader_scope;
     const auto install_reader_scope = [&]() {
-    // A dedicated adapter built while the reader was unavailable gets its
-    // screen before the generic command fallback is considered, so an
-    // already-open screen picks up its real adapter in place (R03.3).
+
+
+
     a11y::activate_pending_scopes( this );
     if( a11y::enabled() && !reader_scope && !a11y::bound_to( this ) ) {
         reader_scope = std::make_unique<a11y::screen_scope>( this, category,
         [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-            // Same handler as every adapter built on command_snapshot
-            // (R04.3); the inline copy here had drifted (its cancel
-            // candidates lacked TEXT.QUIT).
+
+
+
             return a11y::registered_intent( *this, intent );
         } );
-        // One shared builder for every command list (R04.3): grouping,
-        // bound-key descriptions and the exclusion list live in
-        // a11y::command_snapshot. The inline copy that used to be here
-        // had already drifted from it (it published SELECT and MOUSE_MOVE
-        // and had no descriptions).
+
+
+
+
+
         a11y::semantic_snapshot snapshot = a11y::command_snapshot( *this,
                                            _( "Commands for the current screen" ) );
         snapshot.summary = _( "These are registered commands. Screen contents may require a dedicated reader. "
@@ -524,11 +524,11 @@ const std::string &input_context::handle_input( const int timeout )
         if( !a11y::enabled() ) { reader_scope.reset(); }
         install_reader_scope();
         if( a11y::enabled() ) {
-            // Open the native walking gate only while the game is really
-            // waiting for an input_context action, not during simulation.
+
+
             a11y::set_world_input_ready( this, true );
             if( auto action = a11y::poll_input( this ) ) {
-                // Raw-key screens need their own adapter; never enqueue fake keys.
+
                 const auto found = std::find( registered_actions.begin(), registered_actions.end(), *action );
                 if( found != registered_actions.end() || *action == "TIMEOUT" ) {
                     next_action = input_event();
@@ -537,7 +537,7 @@ const std::string &input_context::handle_input( const int timeout )
                     break;
                 }
             }
-            // Internal polling must not become a gameplay TIMEOUT or wait for TTS.
+
             int wait = 50;
             if( requested_timeout >= 0 ) {
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -565,14 +565,14 @@ const std::string &input_context::handle_input( const int timeout )
 
         const std::string &action = input_to_action( next_action );
 
-        //Special global key to toggle language to english and back
+
         if( action == "toggle_language_to_en" ) {
             g->toggle_language_to_en();
             ui_manager::invalidate_all_ui_adaptors();
             ui_manager::redraw_invalidated();
         }
 
-        // Special help action
+
         if( action == "HELP_KEYBINDINGS" ) {
             inp_mngr.reset_timeout();
             display_menu();
@@ -583,7 +583,7 @@ const std::string &input_context::handle_input( const int timeout )
 
         if( next_action.type == input_event_t::mouse
             && !handling_coordinate_input && action == CATA_ERROR ) {
-            continue; // Ignore mouse movement.
+            continue;
         }
         coordinate_input_received = true;
         coordinate = next_action.mouse_pos;
@@ -593,15 +593,15 @@ const std::string &input_context::handle_input( const int timeout )
             break;
         }
 
-        // If we registered to receive any input, return ANY_INPUT
-        // to signify that an unregistered key was pressed.
+
+
         if( registered_any_input ) {
             result = &ANY_INPUT;
             break;
         }
 
-        // If it's an invalid key, just keep looping until the user
-        // enters something proper.
+
+
     }
     a11y::set_world_input_ready( this, false );
     inp_mngr.set_timeout( old_timeout );
@@ -647,28 +647,28 @@ void input_context::register_navigate_ui_list()
     register_action( "END", to_translation( "Scroll to bottom" ) );
 }
 
-// rotate a delta direction clockwise
-// dx and dy are -1, 0, or +1. Rotate the indicated direction 1/8 turn clockwise.
+
+
 static void rotate_direction_cw( int &dx, int &dy )
 {
-    // convert to
-    // 0 1 2
-    // 3 4 5
-    // 6 7 8
+
+
+
+
     int dir_num = ( dy + 1 ) * 3 + dx + 1;
-    // rotate to
-    // 1 2 5
-    // 0 4 8
-    // 3 6 7
+
+
+
+
     static const std::array<int, 9> rotate_direction_vec = {{ 1, 2, 5, 0, 4, 8, 3, 6, 7 }};
     dir_num = rotate_direction_vec[dir_num];
-    // convert back to -1,0,+1
+
     dx = dir_num % 3 - 1;
     dy = dir_num / 3 - 1;
 }
 
-// This templating ensures that only coord_point with origin::relative is accepted.
-// See src/coords_fwd.h and src/coordinates.h
+
+
 template<typename Point, coords::scale Scale>
 static std::optional<coords::coord_point<Point, coords::origin::relative, Scale>>
         get_direction( const std::string &action, bool iso_mode )
@@ -716,9 +716,9 @@ const
     return get_direction<tripoint, coords::omt>( action, iso_mode );
 }
 
-// Custom set of hotkeys that explicitly don't include the hardcoded
-// alternative hotkeys, which mustn't be included so that the hardcoded
-// hotkeys do not show up beside entries within the window.
+
+
+
 static const std::string display_help_hotkeys =
     "abcdefghijkpqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:;'\",/<>?!@#$%^&*()_[]\\{}|`~";
 
@@ -731,7 +731,7 @@ enum class fallback_action {
     reset,
     execute,
 };
-} // namespace
+}
 static const std::map<fallback_action, int> fallback_keys = {
     { fallback_action::add_local, '+' },
     { fallback_action::add_global, '=' },
@@ -745,7 +745,7 @@ keybindings_ui::keybindings_ui( bool permit_execute_action,
 {
     this->ctxt = parent;
 
-    // FIXME? These categories aren't translated. It's still useful to display them, even if the viewer can't understand them.
+
     if( parent->category == "DEFAULTMODE" ) {
         legend.emplace_back( _( "Currently showing keys for the main game." ) );
     } else {
@@ -870,12 +870,12 @@ void keybindings_ui::draw_controls()
                 ImGui::TableSetColumnIndex( 3 );
                 ImGui::Text( "%s", ctxt->get_desc( action_id ).c_str() );
 
-                // handle the first column last because
-                // ImGui::IsItemVisble() tells you the status of the most
-                // recent item, not the item you’re about to create. If we
-                // did this column first, then when we call it for the
-                // first row it would tell us that the headers were
-                // hidden, which is not what we want to know.
+
+
+
+
+
+
                 ImGui::TableSetColumnIndex( 0 );
                 char invlet = ' ';
                 if( ImGui::IsItemVisible() ) {
@@ -889,8 +889,8 @@ void keybindings_ui::draw_controls()
                 if( ( status == kb_menu_status::add_global && overwrite_default )
                     || ( status == kb_menu_status::reset && !customized_keybinding )
                   ) {
-                    // We're trying to add a global, but this action has a local
-                    // defined, so gray out the invlet.
+
+
                     ImGui::TextColored( c_dark_gray, "%c", invlet );
                 } else if( status == kb_menu_status::add || status == kb_menu_status::add_global ||
                            status == kb_menu_status::remove || status == kb_menu_status::reset ) {
@@ -918,9 +918,9 @@ void keybindings_ui::init()
 bool input_context::resolve_conflicts( const std::vector<input_event> &events,
                                        const std::string &ignore_action )
 {
-    // FIND CONFLICTS
+
     std::map<std::string, std::vector<input_event>> conflicting_actions_events;
-    // for events we want to add
+
     for( const input_event &event : events ) {
         const std::string conflicting_action = get_conflicts( event, ignore_action );
         const bool has_conflicts = !conflicting_action.empty();
@@ -928,7 +928,7 @@ bool input_context::resolve_conflicts( const std::vector<input_event> &events,
             conflicting_actions_events[conflicting_action].emplace_back( event );
         }
     }
-    // HUMAN READABLE
+
     std::string conflict_list;
     for( const auto &[action, events] : conflicting_actions_events ) {
         conflict_list += action + ": ";
@@ -939,7 +939,7 @@ bool input_context::resolve_conflicts( const std::vector<input_event> &events,
         }
         conflict_list += "\n";
     }
-    // RESOLVE CONFLICTS
+
     if( !conflicting_actions_events.empty() &&
         !query_yn(
             _( "Conflict.  The following keybinding(s) will be removed from the respective action(s):\n" )
@@ -958,7 +958,7 @@ bool input_context::resolve_conflicts( const std::vector<input_event> &events,
 
 bool input_context::action_reset( const std::string &action_id )
 {
-    // FIND CONFLICTS
+
     std::vector<input_event> conflicting_events;
     std::array<std::reference_wrapper<const std::string>, 2> contexts = { default_context_id, category };
     for( const std::string &context : contexts ) {
@@ -978,9 +978,9 @@ bool input_context::action_reset( const std::string &action_id )
         return false;
     }
 
-    // RESET KEY BINDINGS
+
     for( const std::string &context : contexts ) {
-        // reset -> remove from user created keybindings
+
         auto iter_cus = inp_mngr.action_contexts.find( context );
         if( iter_cus != inp_mngr.action_contexts.end() ) {
             if( iter_cus->second.find( action_id ) != iter_cus->second.end() ) {
@@ -988,7 +988,7 @@ bool input_context::action_reset( const std::string &action_id )
             }
         }
 
-        // reset the original keybindings
+
         auto iter_def = inp_mngr.basic_action_contexts.find( context );
         if( iter_def == inp_mngr.basic_action_contexts.end() ) {
             continue;
@@ -998,7 +998,7 @@ bool input_context::action_reset( const std::string &action_id )
             continue;
         }
         if( iter_action->second.input_events.empty() ) {
-            // special case: reset to an empty local keybinding "Unbound locally!"
+
             inp_mngr.get_or_create_event_list( action_id, context );
             continue;
         }
@@ -1012,9 +1012,9 @@ bool input_context::action_reset( const std::string &action_id )
 bool input_context::action_remove( const std::string &name, const std::string &action_id,
                                    bool is_local, bool is_empty )
 {
-    // We don't want to completely delete a global context entry.
-    // Only attempt removal for a local context, or when there's
-    // bindings for the default context.
+
+
+
     if( get_option<bool>( "QUERY_KEYBIND_REMOVAL" )
         && !query_yn( is_local && is_empty
                       ? _( "Reset to global bindings for %s?" )
@@ -1022,10 +1022,10 @@ bool input_context::action_remove( const std::string &name, const std::string &a
       ) {
         return false;
     }
-    // If it's global, reset the global actions.
+
     std::string category_to_access = is_local ? category : default_context_id;
 
-    // Clear potential conflicts for keys this would uncover
+
     input_manager::t_action_contexts old_action_contexts( inp_mngr.action_contexts );
     bool uncovered_global = inp_mngr.remove_input_for_action( action_id, category_to_access );
     if( uncovered_global ) {
@@ -1053,19 +1053,19 @@ bool input_context::action_add( const std::string &name, const std::string &acti
         while( candidate.type != input_event_t::error ) {
             uilist_entry entry( static_cast<int>( key_options.size() ), true, -1,
                                 candidate.long_description() );
-            // Reader-only conflict preview (R19.3), published BEFORE the
-            // reader commits to a key: get_conflicts() alone names the
-            // conflicting actions but not which context holds the key, so
-            // each conflicting action is supplemented with its holder,
-            // determined exactly the way draw_controls() distinguishes
-            // local from global -- inp_mngr.get_input_for_action( action,
-            // "default" ) holds only the global (default context)
-            // bindings, while get_action_attributes( action, category )
-            // reports via overwrite_default whether a local entry for
-            // this screen's context exists and shadows the default. The
-            // uilist reader publishes entry.desc as the node's detail;
-            // resolve_conflicts() below remains the final gate and still
-            // asks before anything is actually removed.
+
+
+
+
+
+
+
+
+
+
+
+
+
             const std::string conflicts = get_conflicts( candidate, action_id );
             if( conflicts.empty() ) {
                 entry.desc = _( "No conflict with any other action." );
@@ -1130,7 +1130,7 @@ bool input_context::action_add( const std::string &name, const std::string &acti
     }
 
     if( action_uses_input( action_id, new_event )
-        // Allow adding keys already used globally to local bindings
+
         && ( status == kb_menu_status::add_global || is_local ) ) {
         popup_getkey( _( "This key is already used for %s." ), name );
         return false;
@@ -1142,7 +1142,7 @@ bool input_context::action_add( const std::string &name, const std::string &acti
         return false;
     }
 
-    // We might be adding a local or global action.
+
     std::string category_to_access = category;
     if( status == kb_menu_status::add_global ) {
         category_to_access = default_context_id;
@@ -1157,7 +1157,7 @@ action_id input_context::display_menu( bool permit_execute_action )
     action_id action_to_execute = ACTION_NULL;
 
     input_context ctxt( "HELP_KEYBINDINGS", keyboard_mode::keychar );
-    // Keybinding menu actions
+
     ctxt.register_action( "COORDINATE" );
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SELECT" );
@@ -1183,16 +1183,16 @@ action_id input_context::display_menu( bool permit_execute_action )
     ctxt.register_action( "ANY_INPUT" );
 
     if( category != "HELP_KEYBINDINGS" ) {
-        // avoiding inception!
+
         ctxt.register_action( "HELP_KEYBINDINGS" );
     }
     ctxt.set_timeout( 50 );
 
-    // has the user changed something?
+
     bool changed = false;
-    // keybindings before the user changed anything.
+
     input_manager::t_action_contexts old_action_contexts( inp_mngr.action_contexts );
-    // copy of registered_actions, but without the ANY_INPUT and COORDINATE, which should not be shown
+
     std::vector<std::string> org_registered_actions( registered_actions );
     org_registered_actions.erase( std::remove_if( org_registered_actions.begin(),
                                   org_registered_actions.end(),
@@ -1207,63 +1207,63 @@ action_id input_context::display_menu( bool permit_execute_action )
     kb_menu.init();
     int raw_input_char = 0;
 
-    // Reader adapter (R19.3), built locally in this function following
-    // the help-screen precedent in help.cpp: a screen_scope bound to the
-    // HELP_KEYBINDINGS context (so ctxt.handle_input() serves these
-    // intents instead of installing the generic command fallback for
-    // this context) plus local lambdas, with no header changes. The
-    // generic fallback already published this context's menu commands
-    // (REMOVE / RESET / ADD_LOCAL / ADD_GLOBAL / FILTER / EXECUTE /
-    // QUIT ...) through a11y::command_snapshot; what it could not
-    // publish is the screen's own content, which is what this adapter
-    // adds:
-    // - one table row (R02) per action in
-    //   kb_menu.filtered_registered_actions (name from
-    //   get_action_name(), current keys from get_desc(), customized
-    //   flag computed exactly as draw_controls() computes it), so the
-    //   reader can pick the action to remove / reset / add a key for;
-    // - a mode node mirroring kb_menu.status, and a filter field (see
-    //   below);
-    // - a "reset all" command (see below).
-    // Focusing a row is observation only. Activating a row while a mode
-    // is armed only sets kb_menu.highlight_row_index and returns
-    // "SELECT", so the existing dispatch branch at the bottom of this
-    // loop runs action_remove / action_reset / action_add itself, sets
-    // `changed` and returns the status to show; no keybinding logic is
-    // duplicated here, every change still goes through
-    // inp_mngr.add/remove_input_for_action, and the save/discard
-    // semantics after the loop are unchanged.
-    //
-    // Filter: cataimgui::window exposes get_filter()/clear_filter()
-    // but no setter, so a reader-typed phrase cannot be written into
-    // the screen's own filter box from here. Like the help adapter,
-    // the reader filter is therefore presentation-only: it narrows
-    // which of the (screen-filtered) rows are published, using the
-    // same lcmatch on action names as filter_strings_by_phrase(). Row
-    // node ids keep the index into kb_menu.filtered_registered_actions,
-    // so activation still targets the exact row the loop would
-    // dispatch. The screen's own filter text is published on the same
-    // node, and activating the node clears both filters (the screen one
-    // through the existing kb_menu.clear_filter()).
-    //
-    // Essential keys are a READER POLICY, not an engine fact: the
-    // engine has no notion of an essential keybinding. The set below is
-    // built from real registrations only -- QUIT, SELECT, TEXT.CONFIRM,
-    // UILIST.UP and UILIST.DOWN of the HELP_KEYBINDINGS context (the
-    // actions this menu itself is operated with), plus CONFIRM and
-    // QUIT of the parent context being edited when they are the
-    // target. Removing or resetting one of these through a row first
-    // publishes a warning and returns TIMEOUT; only a second activation
-    // of the same row in the same mode dispatches.
-    //
-    // Reset all: the engine has no reset-everything operation --
-    // action_reset() resets a single action against
-    // basic_action_contexts, and nothing in the input manager iterates
-    // it. The published "reset all" is therefore a reader-composed
-    // operation, labelled as such on its node: when confirmed (the
-    // same two-step pattern), the loop below calls the engine's own
-    // action_reset() once per registered action, so per-action
-    // conflict prompts and semantics stay the engine's.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     std::string reader_filter;
     std::optional<std::string> reader_filter_draft;
     int reader_last_row = -1;
@@ -1316,8 +1316,8 @@ action_id input_context::display_menu( bool permit_execute_action )
                 return TIMEOUT;
             }
             if( intent.action == "activate" ) {
-                // Clear both filters: the reader one above, and the
-                // screen's own through the existing clear_filter().
+
+
                 reader_filter.clear();
                 reader_filter_draft.reset();
                 reader_last_row = -1;
@@ -1328,7 +1328,7 @@ action_id input_context::display_menu( bool permit_execute_action )
         }
         if( intent.node == "keybindings:mode" || intent.node == "keybindings:warning" ||
             intent.node == "keybindings:no_results" ) {
-            // Readouts: focusing or activating them changes nothing.
+
             if( intent.action == "focus" || intent.action == "activate" ) {
                 return TIMEOUT;
             }
@@ -1347,9 +1347,9 @@ action_id input_context::display_menu( bool permit_execute_action )
                     return TIMEOUT;
                 }
                 reader_reset_all_armed = false;
-                // The resets themselves run in the loop below, on the
-                // other side of handle_input(), like every other
-                // keybinding change in this menu.
+
+
+
                 reader_do_reset_all = true;
                 return TIMEOUT;
             }
@@ -1370,23 +1370,23 @@ action_id input_context::display_menu( bool permit_execute_action )
                 return std::nullopt;
             }
             const std::string &action_id = kb_menu.filtered_registered_actions[index];
-            // The row must still be part of the published (reader
-            // filtered) set, not just of the screen-filtered list.
+
+
             if( !reader_filter.empty() &&
                 !lcmatch( remove_color_tags( get_action_name( action_id ) ), reader_filter ) ) {
                 return std::nullopt;
             }
             reader_last_row = index;
             if( intent.action == "focus" ) {
-                // Observation only: highlight_row_index is left
-                // untouched, so browsing can never arm the dispatch
-                // branch at the bottom of the loop.
+
+
+
                 return TIMEOUT;
             }
             if( kb_menu.status == kb_menu_status::show ||
                 kb_menu.status == kb_menu_status::filter ) {
-                // No operation is armed: a row can only be acted on
-                // after a menu command chose the operation.
+
+
                 return TIMEOUT;
             }
             const bool essential_target = reader_essential.count( action_id ) > 0 &&
@@ -1395,8 +1395,8 @@ action_id input_context::display_menu( bool permit_execute_action )
             if( essential_target ) {
                 if( reader_warning_active && reader_warning_action == action_id &&
                     reader_warning_status == kb_menu.status ) {
-                    // Second activation of the same row in the same
-                    // mode: confirmed, dispatch below.
+
+
                     reader_warning_active = false;
                     kb_menu.highlight_row_index = index;
                     return std::string( "SELECT" );
@@ -1415,9 +1415,9 @@ action_id input_context::display_menu( bool permit_execute_action )
         return a11y::registered_intent( ctxt, intent );
     };
     const auto make_reader_snapshot = [&]() -> a11y::semantic_snapshot {
-        // A warning only survives while the mode it was armed in is
-        // still the current mode; leaving the mode (QUIT returns to
-        // show) drops it instead of confirming a stale target later.
+
+
+
         if( reader_warning_active && kb_menu.status != reader_warning_status ) {
             reader_warning_active = false;
         }
@@ -1426,7 +1426,7 @@ action_id input_context::display_menu( bool permit_execute_action )
         std::vector<a11y::semantic_node> command_nodes = std::move( commands.nodes );
         snapshot.title = _( "Keybindings" );
 
-        // Mode node: what activating a row would do right now.
+
         a11y::semantic_node mode_node;
         mode_node.id = "keybindings:mode";
         mode_node.role = "status";
@@ -1471,7 +1471,7 @@ action_id input_context::display_menu( bool permit_execute_action )
         mode_node.actions = { "focus", "activate" };
         snapshot.nodes.push_back( mode_node );
 
-        // Filter field (reader filter; see the adapter comment above).
+
         a11y::semantic_node filter_node;
         filter_node.id = "keybindings:filter";
         filter_node.role = "text";
@@ -1502,7 +1502,7 @@ action_id input_context::display_menu( bool permit_execute_action )
             snapshot.nodes.push_back( warning_node );
         }
 
-        // Reset all (reader-composed; see the adapter comment above).
+
         a11y::semantic_node reset_all_node;
         reset_all_node.id = "keybindings:reset_all";
         reset_all_node.role = "command";
@@ -1533,8 +1533,8 @@ action_id input_context::display_menu( bool permit_execute_action )
             if( !reader_filter.empty() && !lcmatch( name, reader_filter ) ) {
                 continue;
             }
-            // Same current-vs-basic comparison draw_controls() draws
-            // its colors and "*" marker from.
+
+
             bool overwrite_default;
             const action_attributes &attributes = inp_mngr.get_action_attributes( action_id,
                                                   category, &overwrite_default );
@@ -1623,9 +1623,9 @@ action_id input_context::display_menu( bool permit_execute_action )
     };
     a11y::screen_scope reader_scope( &ctxt, "keybindings", reader_handle_intent );
 
-    //const auto redraw = [&]( ui_adaptor & ui ) {
-    //};
-    //ui.on_redraw( redraw );
+
+
+
 
     while( true ) {
         kb_menu.highlight_row_index = -1;
@@ -1648,11 +1648,11 @@ action_id input_context::display_menu( bool permit_execute_action )
 
         if( reader_do_reset_all ) {
             reader_do_reset_all = false;
-            // Reader-composed reset-all (see the adapter comment
-            // above): the engine's own per-action reset, once per
-            // registered action of this context. `changed` follows the
-            // same rule as the per-row reset branch below, so the
-            // save/discard prompt after the loop covers these too.
+
+
+
+
+
             for( const std::string &reset_id : org_registered_actions ) {
                 if( action_reset( reset_id ) ) {
                     changed = true;
@@ -1665,9 +1665,9 @@ action_id input_context::display_menu( bool permit_execute_action )
         kb_menu.filtered_registered_actions = filter_strings_by_phrase( org_registered_actions,
                                               kb_menu.get_filter() );
 
-        // In addition to the modifiable hotkeys, we also check for hardcoded
-        // keys, e.g. '+', '-', '=', '.' in order to prevent the user from
-        // entering an unrecoverable state.
+
+
+
         if( kb_menu.status == kb_menu_status::filter ) {
             if( action == "QUIT" ) {
                 kb_menu.clear_filter();
@@ -1730,7 +1730,7 @@ action_id input_context::display_menu( bool permit_execute_action )
                 break;
             }
         } else if( action == "HELP_KEYBINDINGS" ) {
-            // update available hotkeys in case they've changed
+
             kb_menu.hotkeys = ctxt.get_available_single_char_hotkeys( display_help_hotkeys );
         } else if( !kb_menu.filtered_registered_actions.empty() &&
                    kb_menu.status != kb_menu_status::show ) {
@@ -1749,21 +1749,21 @@ action_id input_context::display_menu( bool permit_execute_action )
             }
             const std::string &action_id = kb_menu.filtered_registered_actions[action_index];
 
-            // Check if this entry is local or global.
+
             bool is_local = false;
             const action_attributes &actions = inp_mngr.get_action_attributes( action_id, category, &is_local );
             bool is_empty = actions.input_events.empty();
             const std::string name = get_action_name( action_id );
 
-            // We don't want to completely delete a global context entry.
-            // Only attempt removal for a local context, or when there's
-            // bindings for the default context.
+
+
+
             if( kb_menu.status == kb_menu_status::remove && ( is_local || !is_empty ) ) {
                 changed = action_remove( name, action_id, is_local, is_empty );
             } else if( kb_menu.status == kb_menu_status::reset ) {
                 changed = action_reset( action_id );
             } else if( kb_menu.status == kb_menu_status::add_global && is_local ) {
-                // Disallow adding global actions to an action that already has a local defined.
+
                 popup( _( "There are already local keybindings defined for this action, please remove them first." ) );
             } else if( kb_menu.status == kb_menu_status::add ||
                        kb_menu.status == kb_menu_status::add_global ) {
@@ -1795,7 +1795,7 @@ input_event input_context::get_raw_input()
 }
 
 #if defined(TUI)
-// Also specify that we don't have a gamepad plugged in.
+
 std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
         &capture_win, const point &offset, const bool center_cursor ) const
 {
@@ -1811,11 +1811,11 @@ std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses:
     }
 
     point p = coordinate + offset;
-    // If no offset is specified, account for the window location
+
     if( offset == point::zero ) {
         p -= win_min;
     }
-    // Some windows (notably the overmap) want 0,0 to be the center of the screen
+
     if( center_cursor ) {
         p -= view_size / 2;
     }
@@ -1826,7 +1826,7 @@ std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses:
 std::optional<tripoint_rel_omt> input_context::get_coordinates_rel_omt( const catacurses::window
         &capture_win, const point &offset, const bool center_cursor ) const
 {
-    // Sometimes off by one with tiles but I think that's due to the centre changing with zoom level + tileset size so I don't think it can be easily fixed here
+
     const std::optional<tripoint_bub_ms> p = get_coordinates( capture_win, offset, center_cursor );
     if( p ) {
         return tripoint_rel_omt( p->raw() );
@@ -1854,7 +1854,7 @@ std::optional<point> input_context::get_coordinates_text( const catacurses::wind
     int fw = dim.scaled_font_size.x;
     int fh = dim.scaled_font_size.y;
 
-    // convert coordinate and font sizeto logical if UI is scaled
+
     if( scaling_factor > 1 ) {
         logical_coordinate.x /= scaling_factor;
         logical_coordinate.y /= scaling_factor;
@@ -1872,34 +1872,34 @@ std::optional<point> input_context::get_coordinates_text( const catacurses::wind
 
 std::string input_context::get_action_name( const std::string &action_id ) const
 {
-    // 1) Check action name overrides specific to this input_context
+
     const auto action_name_override =
         action_name_overrides.find( action_id );
     if( action_name_override != action_name_overrides.end() ) {
         return action_name_override->second.translated();
     }
 
-    // 2) Check if the hotkey has a name
+
     const action_attributes &attributes = inp_mngr.get_action_attributes( action_id, category, nullptr,
                                           true );
     if( !attributes.name.empty() ) {
         return attributes.name.translated();
     }
 
-    // 3) If the hotkey has no name, the user has created a local hotkey in
-    // this context that is masking the global hotkey. Fallback to the global
-    // hotkey's name.
+
+
+
     const action_attributes &default_attributes = inp_mngr.get_action_attributes( action_id,
             default_context_id, nullptr, true );
     if( !default_attributes.name.empty() ) {
         return default_attributes.name.translated();
     }
 
-    // 4) Unable to find suitable name. Keybindings configuration likely borked
+
     return action_id;
 }
 
-// (Press X (or Y)|Try) to Z
+
 std::string input_context::press_x( const std::string &action_id ) const
 {
     return press_x( action_id, _( "Press " ), "", _( "Try" ) );
@@ -1911,7 +1911,7 @@ std::string input_context::press_x( const std::string &action_id, const std::str
     return press_x( action_id, key_bound, "", key_unbound );
 }
 
-// TODO: merge this with input_context::get_desc
+
 std::string input_context::press_x( const std::string &action_id,
                                     const std::string &key_bound_pre,
                                     const std::string &key_bound_suf, const std::string &key_unbound ) const
@@ -2093,9 +2093,9 @@ input_event hotkey_queue::next( const input_event &prev ) const
 
 const hotkey_queue &hotkey_queue::alphabets()
 {
-    // NOTE: if you want to add any parameters to this function, remove the static
-    // modifier of `queue` and return by value instead of by reference.
-    // NOTE: Removal of conflicting keys is handled by `input_context::next_unassigned_key`.
+
+
+
     static std::unique_ptr<hotkey_queue> queue;
     if( !queue ) {
         queue = std::make_unique<hotkey_queue>();
@@ -2114,9 +2114,9 @@ const hotkey_queue &hotkey_queue::alphabets()
 
 const hotkey_queue &hotkey_queue::alpha_digits()
 {
-    // NOTE: if you want to add any parameters to this function, remove the static
-    // modifier of `queue` and return by value instead of by reference.
-    // NOTE: Removal of conflicting keys is handled by `input_context::next_unassigned_key`.
+
+
+
     static std::unique_ptr<hotkey_queue> queue;
     if( !queue ) {
         queue = std::make_unique<hotkey_queue>();

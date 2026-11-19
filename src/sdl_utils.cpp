@@ -119,7 +119,7 @@ inline SDL_Color color_pixel_darken( const SDL_Color &color )
         return color;
     }
 
-    // 85/256 ~ 1/3
+
     return {
         std::max<Uint8>( 85 * color.r >> 8, 0x01 ),
         std::max<Uint8>( 85 * color.g >> 8, 0x01 ),
@@ -136,10 +136,10 @@ inline SDL_Color color_pixel_mixer( const SDL_Color &color, const float &gammav,
         return color;
     }
 
-    /*
-     *  Objective is to provide a gradient between two color points
-     *  (color_a and color_b) based on the grayscale value.
-     */
+
+
+
+
 
     const Uint8 av = average_pixel_color( color );
     const float pv = av / 255.0f;
@@ -210,4 +210,4 @@ SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer )
     return SDL_Rect{ p.x, p.y, w, h };
 }
 
-#endif // SDL_TILES
+#endif

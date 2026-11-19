@@ -25,10 +25,10 @@ using vspawn_id = string_id<VehicleSpawn>;
 
 extern std::unordered_map<vgroup_id, VehicleGroup> vgroups;
 
-/**
- * This class is used to group vehicles together into groups in much the same way as
- *  item groups work.
- */
+
+
+
+
 class VehicleGroup
 {
     public:
@@ -51,9 +51,9 @@ class VehicleGroup
         weighted_int_list<vproto_id> vehicles;
 };
 
-/**
- * The location and facing data needed to place a vehicle onto the map.
- */
+
+
+
 struct VehicleFacings {
     VehicleFacings( const JsonObject &jo, std::string_view key );
 
@@ -79,9 +79,9 @@ struct VehicleLocation {
     VehicleFacings facings;
 };
 
-/**
- * A list of vehicle locations which are valid for spawning new vehicles.
- */
+
+
+
 struct VehiclePlacement {
     VehiclePlacement() = default;
 
@@ -97,11 +97,11 @@ struct VehiclePlacement {
     LocationMap locations;
 };
 
-/**
- * These classes are used to wrap around a set of vehicle spawning functions. There are
- * currently two methods that can be used to spawn a vehicle. The first is by using a
- * c++ function. The second is by using data loaded from json.
- */
+
+
+
+
+
 
 class VehicleFunction
 {
@@ -118,11 +118,11 @@ class VehicleFunction_builtin : public VehicleFunction
         explicit VehicleFunction_builtin( const vehicle_gen_pointer &func ) : func( func ) {}
         ~VehicleFunction_builtin() override = default;
 
-        /**
-         * This will invoke the vehicle spawning function on the map.
-         * @param m The map on which to add the vehicle.
-         * @param terrainid The name of the terrain being spawned on.
-         */
+
+
+
+
+
         void apply( map &m, const std::string &terrainid ) const override {
             func( m, terrainid );
         }
@@ -137,11 +137,11 @@ class VehicleFunction_json : public VehicleFunction
         explicit VehicleFunction_json( const JsonObject &jo );
         ~VehicleFunction_json() override = default;
 
-        /**
-         * This will invoke the vehicle spawning function on the map.
-         * @param m The map on which to add the vehicle.
-         * @param terrain_name The name of the terrain being spawned on. This is ignored by the json handler.
-         */
+
+
+
+
+
         void apply( map &m, const std::string &terrain_name ) const override;
 
     private:
@@ -154,10 +154,10 @@ class VehicleFunction_json : public VehicleFunction
         std::optional<VehicleLocation> location;
 };
 
-/**
- * This class handles a weighted list of different spawn functions, allowing a single
- * vehicle_spawn to have multiple possibilities.
- */
+
+
+
+
 class VehicleSpawn
 {
     public:
@@ -167,19 +167,19 @@ class VehicleSpawn
             types.add( func, weight );
         }
 
-        /**
-         * This will invoke the vehicle spawn on the map.
-         * @param m The map on which to add the vehicle.
-         * @param terrain_name The name of the terrain being spawned on.
-         */
+
+
+
+
+
         void apply( map &m, const std::string &terrain_name ) const;
 
-        /**
-         * A static helper function. This will invoke the supplied vehicle spawn on the map.
-         * @param id The spawnid to apply
-         * @param m The map on which to add the vehicle.
-         * @param terrain_name The name of the terrain being spawned on.
-         */
+
+
+
+
+
+
         static void apply( const vspawn_id &id, map &m, const std::string &terrain_name );
 
         static void load( const JsonObject &jo );
@@ -192,4 +192,4 @@ class VehicleSpawn
         static FunctionMap builtin_functions;
 };
 
-#endif // CATA_SRC_VEHICLE_GROUP_H
+#endif

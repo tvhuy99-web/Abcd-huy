@@ -89,11 +89,11 @@
 #include "vpart_position.h"
 
 #if defined(TILES)
-#include "cached_options.h"    // for use_tiles
-#include "cata_tiles.h"        // for cata_tiles
-#include "cuboid_rectangle.h"  // for half_open_rectangle
-#include "cursesport.h"        // for get_scaling_factor (??)
-#include "sdltiles.h"          // for tilecontext
+#include "cached_options.h"
+#include "cata_tiles.h"
+#include "cuboid_rectangle.h"
+#include "cursesport.h"
+#include "sdltiles.h"
 #endif
 
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
@@ -175,40 +175,40 @@ static const vproto_id vehicle_prototype_none( "none" );
 
 static const std::string flag_WIRING( "WIRING" );
 
-// Construction functions.
+
 namespace construct
 {
-// Checks for whether terrain mod can proceed
+
 static bool check_nothing( const tripoint_bub_ms & )
 {
     return true;
 }
-static bool check_channel( const tripoint_bub_ms & ); // tile has adjacent flowing water
+static bool check_channel( const tripoint_bub_ms & );
 static bool check_empty_lite( const tripoint_bub_ms & );
-static bool check_empty( const tripoint_bub_ms & ); // tile is empty
-static bool check_unblocked( const tripoint_bub_ms & ); // tile is empty or empty space
+static bool check_empty( const tripoint_bub_ms & );
+static bool check_unblocked( const tripoint_bub_ms & );
 static bool check_support( const tripoint_bub_ms
-                           & ); // at least two orthogonal supports or from below
+                           & );
 static bool check_support_below( const tripoint_bub_ms
-                                 & ); // at least two orthogonal supports at the level below or from below
+                                 & );
 static bool check_single_support( const tripoint_bub_ms
-                                  &p ); // Only support from directly below matters
-static bool check_stable( const tripoint_bub_ms & ); // tile below has a SUPPORTS_ROOF flag
-static bool check_floor_above( const tripoint_bub_ms & ); // tile above doesn't have a NO_FLOOR flag
-static bool check_nofloor_above( const tripoint_bub_ms & ); // tile above has a NO_FLOOR flag
+                                  &p );
+static bool check_stable( const tripoint_bub_ms & );
+static bool check_floor_above( const tripoint_bub_ms & );
+static bool check_nofloor_above( const tripoint_bub_ms & );
 static bool check_deconstruct( const tripoint_bub_ms
-                               & ); // either terrain or furniture must be deconstructible
-static bool check_up_OK( const tripoint_bub_ms & ); // tile is below OVERMAP_HEIGHT
-static bool check_down_OK( const tripoint_bub_ms & ); // tile is above OVERMAP_DEPTH
-static bool check_no_trap( const tripoint_bub_ms & ); // tile doesn't contain any trap
+                               & );
+static bool check_up_OK( const tripoint_bub_ms & );
+static bool check_down_OK( const tripoint_bub_ms & );
+static bool check_no_trap( const tripoint_bub_ms & );
 static bool check_ramp_high( const tripoint_bub_ms
-                             & ); // one of the adjacent tiles on the z-level above has a completed down ramp
+                             & );
 static bool check_no_wiring( const tripoint_bub_ms
-                             & ); // tile doesn't contain appliances/vehicle parts with WIRING flag like ap_wall_wiring
+                             & );
 static bool check_matching_down_above( const tripoint_bub_ms
-                                       &p ); // tile above has the same base name but with the "down suffix
+                                       &p );
 
-// Special actions to be run post-terrain-mod
+
 static void done_nothing( const tripoint_bub_ms &, Character & ) {}
 static void done_trunk_plank( const tripoint_bub_ms &, Character & );
 static void done_grave( const tripoint_bub_ms &, Character & );
@@ -239,12 +239,12 @@ static void do_turn_exhume( const tripoint_bub_ms &, Character & );
 
 static void failure_standard( const tripoint_bub_ms & );
 static void failure_deconstruct( const tripoint_bub_ms & );
-} // namespace construct
+}
 
 namespace
 {
 generic_factory<construction> construction_factory( "construction" );
-} // namespace
+}
 
 template<>
 const construction &string_id<construction>::obj() const
@@ -285,9 +285,9 @@ bool int_id<construction>::is_valid() const
 template<>
 int_id<construction>::int_id( const string_id<construction> &id ) : _id( id.id() ) {}
 
-//static std::map<construction_str_id, construction_id> construction_id_map;
 
-// Helper functions, nobody but us needs to call these.
+
+
 static bool can_construct( const construction &con );
 static std::vector<const construction *> player_can_build_valid_constructions( Character &you,
         const temp_crafting_inventory &inv, const construction_group_str_id &group );
@@ -295,9 +295,9 @@ static bool player_can_build( Character &you, const temp_crafting_inventory &inv
                               const construction_group_str_id &group );
 static bool player_can_see_to_build( Character &you, const construction_group_str_id &group );
 
-// Color standardization for string streams
-static const deferred_color color_title = def_c_light_red; //color for titles
-static const deferred_color color_data = def_c_cyan; //color for data parts
+
+static const deferred_color color_title = def_c_light_red;
+static const deferred_color color_data = def_c_cyan;
 
 static bool has_pre_terrain( const construction &con, const tripoint_bub_ms &p )
 {
@@ -372,9 +372,9 @@ static void load_available_constructions( std::vector<construction_group_str_id>
             continue;
         }
         bool ok = false;
-        // filter_mode: 0 = all,
-        // 1 = ready (skills & materials satisfied, but location not satisfied),
-        // 2 = buildable here (skills & materials satisfied and location satisfied)
+
+
+
         if( filter_mode == 0 ) {
             ok = true;
         } else if( filter_mode == 1 ) {
@@ -408,10 +408,10 @@ static void draw_grid( const catacurses::window &w, const int list_width )
 
     wattron( w, c_light_gray );
 
-    // draw internal lines
+
     mvwvline( w, point( list_width, 1 ), LINE_XOXO, getmaxy( w ) - 2 );
     mvwhline( w, point( 1, 2 ), LINE_OXOX, list_width );
-    // draw intersections
+
     mvwaddch( w, point( list_width, 0 ), LINE_OXXX );
     mvwaddch( w, point( list_width, getmaxy( w ) - 1 ), LINE_XXOX );
     mvwaddch( w, point( 0, 2 ), LINE_XXXO );
@@ -454,15 +454,15 @@ const std::vector<construction> &get_constructions()
 static std::string furniture_qualities_string( const furn_id &fid )
 {
     std::string ret = "\n";
-    // Make a pseudo item instance so we can use qualities_info later
+
     const item pseudo( fid->crafting_pseudo_item );
-    // Set up iteminfo query to show qualities
+
     std::vector<iteminfo_parts> quality_part = { iteminfo_parts::QUALITIES };
     const iteminfo_query quality_query( quality_part );
-    // Render info into info_vec
+
     std::vector<iteminfo> info_vec;
     pseudo.qualities_info( info_vec, &quality_query, 1, false );
-    // Get a newline-separated string of quality info, then parse and print each line
+
     ret += format_item_info( info_vec, {} );
 
     return ret;
@@ -478,7 +478,7 @@ static shared_ptr_fast<game::draw_callback_t> construction_preview_callback(
 {
     return make_shared_fast<game::draw_callback_t>( [&]() {
         map &here = get_map();
-        // Draw construction result preview on valid squares
+
         for( const auto &elem : valid ) {
             const tripoint_bub_ms &loc = elem.first;
             const construction &con = *elem.second;
@@ -529,15 +529,15 @@ static shared_ptr_fast<game::draw_callback_t> construction_preview_callback(
 
 static std::string has_pre_flags_colorize( const construction &con );
 
-// One reader focus per requirement alternative, in group order. The label
-// is the engine's own requirement text -- components add the have-count
-// ("3 wood (have 5)") -- plus the Available/Missing verdict, so every
-// focus announces the requirement and its counts. Nodes keep position 0:
-// Java recomputes "X of Y" from the swipe list then, and the focus fallback
-// on entering the detail screen lands on the name node instead of a
-// mid-list requirement (see GameReaderController.resolveFocusFallback).
-// Twin of the same helper in crafting_gui.cpp; keep both in sync. A shared
-// home in a11y_requirements.cpp needs a sparse-checkout change.
+
+
+
+
+
+
+
+
+
 static int reader_requirement_have( const itype_id &type, const temp_crafting_inventory &inventory,
                                     const std::function<bool( const item & )> &filter )
 {
@@ -620,11 +620,11 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
     }
 }
 
-// Resolve a "…:req:<kind>:<group>:<alt>" node id back to the label the
-// detail screen shows for it and, for tool/component requirements, the
-// required item type whose full info a two-finger tap reads. Quality
-// requirements have no item to describe, so type stays null. Returns
-// false for stale or unknown ids.
+
+
+
+
+
 static bool reader_requirement_detail( const requirement_data &requirements,
                                        const Character &actor, const temp_crafting_inventory &inventory,
                                        const std::function<bool( const item & )> &filter, int batch,
@@ -670,13 +670,13 @@ static bool reader_requirement_detail( const requirement_data &requirements,
 
 construction_id construction_menu( const bool blueprint )
 {
-    // place_construction runs after the scope is reset, so query caches hold
+
     std::optional<temp_crafting_inventory::query_cache_scope> cache_scope;
     cache_scope.emplace();
-    // filter_mode: 0 = all, 1 = ready (skills & materials satisfied, but location not satisfied),
-    // 2 = buildable here (skills & materials satisfied and location satisfied)
+
+
     static int filter_mode = 0;
-    // only display constructions the player can theoretically perform
+
     std::vector<construction_group_str_id> available;
     std::map<construction_category_id, std::vector<construction_group_str_id>> cat_available;
     load_available_constructions( available, cat_available, filter_mode );
@@ -711,7 +711,7 @@ construction_id construction_menu( const bool blueprint )
     bool exit = false;
     construction_category_id category_id;
     std::vector<construction_group_str_id> constructs;
-    //storage for the color text so it can be scrolled
+
     std::vector< std::vector < std::string > > construct_buffers;
     std::vector<std::string> full_construct_buffer;
     std::vector<int> construct_buffer_breakpoints;
@@ -747,7 +747,7 @@ construction_id construction_menu( const bool blueprint )
 #if defined( TILES )
         tilecontext->set_disable_occlusion( false );
 #endif
-        // always needs to restore view
+
         g->invalidate_main_ui_adaptor();
     } );
 #if defined( TILES )
@@ -758,7 +758,7 @@ construction_id construction_menu( const bool blueprint )
                 std::make_unique<restore_on_out_of_scope<tripoint_rel_ms>>( player_character.view_offset );
 
     const auto recalc_buffer = [&]() {
-        //leave room for top and bottom UI text
+
         available_buffer_height = w_height - 3 - 3 - static_cast<int>( notes.size() );
 
         if( !constructs.empty() ) {
@@ -767,9 +767,9 @@ construction_id construction_menu( const bool blueprint )
             }
             const construction_group_str_id &current_group = constructs[select];
 
-            //construct the project list buffer
 
-            // Print stages and their requirement.
+
+
             std::vector<const construction *> options = constructions_by_group( current_group );
 
             construct_buffers.clear();
@@ -782,19 +782,19 @@ construction_id construction_menu( const bool blueprint )
                 stage_counter++;
                 const construction *current_con = *it;
                 if( filter_mode == 1 ) {
-                    // show stages where skills & materials are satisfied but location is not
+
                     if( !( player_can_build( player_character, total_inv, *current_con, true ) &&
                            !can_construct( *current_con ) ) ) {
                         continue;
                     }
                 } else if( filter_mode == 2 ) {
-                    // show stages that are buildable here (skills & materials + location)
+
                     if( !( player_can_build( player_character, total_inv, *current_con, true ) &&
                            can_construct( *current_con ) ) ) {
                         continue;
                     }
                 }
-                // Update the cached availability of components and tools in the requirement object
+
                 current_con->requirements->can_make_with_inventory( &get_player_character(), total_inv,
                         is_crafting_component, 1, craft_flags::none, false );
 
@@ -807,14 +807,14 @@ construction_id construction_menu( const bool blueprint )
                     add_folded( foldstring( line, available_window_width ) );
                 };
 
-                // display final product name only if more than one step.
-                // Assume single stage constructions should be clear
-                // in their title what their result is.
+
+
+
                 if( !current_con->post_terrain.empty() && options.size() > 1 ) {
-                    //also print out stage number when multiple stages are available
+
                     std::string current_line = string_format( _( "Stage/Variant #%d: " ), stage_counter );
 
-                    // print name of the result of each stage
+
                     std::string result_string;
                     if( current_con->post_is_furniture ) {
                         result_string = furn_str_id( current_con->post_terrain ).obj().name();
@@ -824,7 +824,7 @@ construction_id construction_menu( const bool blueprint )
                     current_line += colorize( result_string, color_title );
                     add_line( current_line );
 
-                    // display description of the result for multi-stages
+
                     current_line = _( "Result: " );
                     if( current_con->post_is_furniture ) {
                         current_line += colorize(
@@ -843,7 +843,7 @@ construction_id construction_menu( const bool blueprint )
                     }
                     add_line( current_line );
 
-                    // display description of the result for single stages
+
                 } else if( !current_con->post_terrain.empty() ) {
                     std::string current_line = _( "Result: " );
                     if( current_con->post_is_furniture ) {
@@ -864,7 +864,7 @@ construction_id construction_menu( const bool blueprint )
                     add_line( current_line );
                 }
 
-                // display required skill and difficulty
+
                 if( current_con->required_skills.empty() ) {
                     add_line( _( "N/A" ) );
                 } else {
@@ -886,11 +886,11 @@ construction_id construction_menu( const bool blueprint )
                     add_line( current_line );
                 }
 
-                // TODO: Textify pre_flags to provide a bit more information.
-                // Example: First step of dig pit could say something about
-                // requiring diggable ground.
+
+
+
                 if( !current_con->pre_terrain.empty() ) {
-                    // C++20 will allow this to be generated on demand with a std::ranges::views::transform
+
                     std::vector<std::string> require_names( current_con->pre_terrain.size() );
                     if( current_con->pre_is_furniture ) {
                         std::transform( current_con->pre_terrain.cbegin(), current_con->pre_terrain.cend(),
@@ -903,7 +903,7 @@ construction_id construction_menu( const bool blueprint )
                             return ter_str_id( pre_terrain )->name();
                         } );
                     }
-                    //TODO: per-requirement colorizing like has_pre_flags_colorize
+
                     nc_color pre_color = has_pre_terrain( *current_con ) ? c_green : c_red;
                     add_line( _( "Requires: " ) + colorize( enumerate_as_string( require_names,
                                                             enumeration_conjunction::or_ ), pre_color ) );
@@ -914,9 +914,9 @@ construction_id construction_menu( const bool blueprint )
                 if( !current_con->pre_note.empty() ) {
                     add_line( _( "Annotation: " ) + colorize( current_con->pre_note, color_data ) );
                 }
-                // get pre-folded versions of the rest of the construction project to be displayed later
 
-                // get time needed
+
+
                 add_folded( current_con->get_folded_time_string( available_window_width ) );
 
                 add_folded( current_con->requirements->get_folded_tools_list( &player_character,
@@ -928,14 +928,14 @@ construction_id construction_menu( const bool blueprint )
                 construct_buffers.push_back( current_buffer );
             }
 
-            //determine where the printing starts for each project, so it can be scrolled to those points
+
             size_t current_buffer_location = 0;
             for( size_t i = 0; i < construct_buffers.size(); i++ ) {
                 construct_buffer_breakpoints.push_back( static_cast<int>( current_buffer_location ) );
                 full_construct_buffer.insert( full_construct_buffer.end(), construct_buffers[i].begin(),
                                               construct_buffers[i].end() );
 
-                //handle text too large for one screen
+
                 if( construct_buffers[i].size() > static_cast<size_t>( available_buffer_height ) ) {
                     construct_buffer_breakpoints.push_back( static_cast<int>( current_buffer_location +
                                                             static_cast<size_t>( available_buffer_height ) ) );
@@ -954,8 +954,8 @@ construction_id construction_menu( const bool blueprint )
         const int left_panel_width = panel_manager::get_manager().get_width_left();
         const int right_panel_width = panel_manager::get_manager().get_width_right();
 
-        // 3 tiles of valid construction locations around the player character,
-        // plus 2 tiles of padding.
+
+
         const int reserve_tile_height = 5;
 #if defined( TILES )
         const window_dimensions ter_dims = get_window_dimensions( g->w_terrain );
@@ -966,40 +966,40 @@ construction_id construction_menu( const bool blueprint )
                                       ? tilecontext->get_max_tile_extent().p_max.y * get_scaling_factor()
                                       - tile_height
                                       : 0;
-        // desired number of reserved lines from the construction menu.
+
         const int reserve_height = ( ( reserve_tile_height
-                                       // reserve the minimum number of full tiles that makes the
-                                       // extra tile height visible.
+
+
                                        + ( tile_extra_height + tile_height - 1 ) / tile_height )
-                                     // reserve the minimum number of construction menu lines that
-                                     // makes the reserved tiles visible.
+
+
                                      * tile_height + norm_dims.scaled_font_size.y - 1 )
                                    / norm_dims.scaled_font_size.y;
 #else
-        // desired number of reserved lines from the construction menu.
+
         const int reserve_height = reserve_tile_height;
 #endif
 
         w_height = TERMY - reserve_height;
-        // reduce height to match content
+
         if( static_cast<int>( available.size() ) + 2 < w_height ) {
             w_height = available.size() + 2;
         }
-        // but no lower than FULL_SCREEN_HEIGHT
+
         if( w_height < FULL_SCREEN_HEIGHT ) {
             w_height = FULL_SCREEN_HEIGHT;
         }
-        // if there is no enough space for main UI, hide it
+
         if( w_height + reserve_height > TERMY ) {
             w_height = std::max( TERMY, FULL_SCREEN_HEIGHT );
         }
-        // number of normal lines for main UI (may be larger than reserve_height)
+
         const int w_y0 = TERMY - w_height;
 
-        // keep side panel visible
+
         w_width = TERMX - left_panel_width - right_panel_width;
         int w_x0 = left_panel_width;
-        // unless width is too small
+
         if( w_width < FULL_SCREEN_WIDTH ) {
             w_width = std::max( TERMX, FULL_SCREEN_WIDTH );
             w_x0 = 0;
@@ -1007,12 +1007,12 @@ construction_id construction_menu( const bool blueprint )
 
         w_con = catacurses::newwin( w_height, w_width, point( w_x0, w_y0 ) );
 
-        // center player tile in the visible part of main UI
+
 #if defined( TILES )
         const point visible_center(
             ter_dims.window_size_pixel.x / 2,
             ( norm_dims.scaled_font_size.y * w_y0
-              // shift up to reveal the full height of the topmost tile
+
               + ( tile_extra_height + tile_height - 1 ) / tile_height * tile_height ) / 2 );
         const point_bub_ms target = cata_tiles::screen_to_player(
                                         visible_center,
@@ -1041,15 +1041,15 @@ construction_id construction_menu( const bool blueprint )
     ui.on_redraw( [&]( ui_adaptor & ui ) {
         draw_grid( w_con, w_list_width + w_list_x0 );
 
-        // Erase existing tab selection & list of constructions
+
         mvwhline( w_con, point::south_east, BORDER_COLOR, ' ', w_list_width );
         werase( w_list );
-        // Print new tab listing
+
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         mvwprintz( w_con, point( 1, 1 ), c_yellow, "<< %s >>", construct_cat[tabindex].name() );
-        // Determine where in the master list to start printing
+
         calcStartPos( offset, select, w_list_height, constructs.size() );
-        // Print the constructions between offset and max (or how many will fit)
+
         for( size_t i = 0; static_cast<int>( i ) < w_list_height &&
              ( i + offset ) < constructs.size(); i++ ) {
             int current = i + offset;
@@ -1063,10 +1063,10 @@ construction_id construction_menu( const bool blueprint )
                             construction_color( group, highlight ), group->name() );
         }
 
-        // Clear out lines for tools & materials
+
         mvwrectf( w_con, point( pos_x, 1 ), BORDER_COLOR, ' ', available_window_width, w_height - 2 );
 
-        // print the hotkeys regardless of if there are constructions
+
         for( size_t i = 0; i < notes.size(); ++i ) {
             trim_and_print( w_con, point( pos_x,
                                           w_height - 1 - static_cast<int>( notes.size() ) + static_cast<int>( i ) ),
@@ -1078,29 +1078,29 @@ construction_id construction_menu( const bool blueprint )
                 select = 0;
             }
             const construction_group_str_id &current_group = constructs[select];
-            // Print construction name
+
             trim_and_print( w_con, point( pos_x, 1 ), available_window_width, c_white, current_group->name() );
 
             if( current_construct_breakpoint > 0 ) {
-                // Print previous stage indicator if breakpoint is past the beginning
+
                 trim_and_print( w_con, point( pos_x, 2 ), available_window_width, c_white,
                                 _( "Press [<color_yellow>%s</color>] to show previous stage(s)." ),
                                 ctxt.get_desc( "SCROLL_STAGE_UP" ) );
             }
             if( static_cast<size_t>( construct_buffer_breakpoints[current_construct_breakpoint] ) +
                 available_buffer_height < full_construct_buffer.size() ) {
-                // Print next stage indicator if more breakpoints are remaining after screen height
+
                 trim_and_print( w_con, point( pos_x, w_height - 2 - static_cast<int>( notes.size() ) ),
                                 available_window_width, c_white,
                                 _( "Press [<color_yellow>%s</color>] to show next stage(s)." ),
                                 ctxt.get_desc( "SCROLL_STAGE_DOWN" ) );
             }
-            // Leave room for above/below indicators
+
             int ypos = 3;
             nc_color stored_color = color_stage;
             for( size_t i = static_cast<size_t>( construct_buffer_breakpoints[current_construct_breakpoint] );
                  i < full_construct_buffer.size(); i++ ) {
-                //the value of 3 is from leaving room at the top of window
+
                 if( ypos > available_buffer_height + 3 ) {
                     break;
                 }
@@ -1117,18 +1117,18 @@ construction_id construction_menu( const bool blueprint )
 
     construction_group_str_id con_preview_group = construction_group_str_id::NULL_ID();
     std::map<tripoint_bub_ms, const construction *> con_preview;
-    const std::optional<tripoint_bub_ms> mouse_pos; // dummy
+    const std::optional<tripoint_bub_ms> mouse_pos;
     bool blink = true;
     shared_ptr_fast<game::draw_callback_t> draw_preview = construction_preview_callback(
                 con_preview, mouse_pos, blink );
     g->add_draw_callback( draw_preview );
 
-    // --- Reader detail screen ---
-    // Tapping a construction opens a detail screen instead of building at
-    // once. The list snapshot and the detail snapshot never mix: the detail
-    // screen publishes only its own nodes plus the command tail.
-    // reader_detail_intro/placement cache the description and placement
-    // text of the detail screen's construction for two-finger readouts.
+
+
+
+
+
+
     bool reader_detail_open = false;
     std::string reader_detail_group;
     std::string reader_detail_intro;
@@ -1138,9 +1138,9 @@ construction_id construction_menu( const bool blueprint )
     a11y::screen_scope reader( &ctxt, "construction",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         if( reader_detail_open ) {
-            // Back closes the detail screen, never the whole menu.
-            // The command-tail Back button sends activate on QUIT; the
-            // two-finger back gesture sends the cancel action.
+
+
+
             if( intent.action == "cancel" ||
                 ( intent.action == "activate" && intent.node == "QUIT" ) ) {
                 reader_detail_open = false;
@@ -1151,18 +1151,18 @@ construction_id construction_menu( const bool blueprint )
                 return "TIMEOUT";
             }
             if( intent.action == "activate" && intent.node == "construction:detail:confirm" ) {
-                // The native CONFIRM path below runs the buildability,
-                // darkness and faction checks and then places the
-                // construction; the detail screen only gates it behind
-                // an explicit confirm. Close first so a failed confirm
-                // returns to the list.
+
+
+
+
+
                 reader_detail_open = false;
                 return "CONFIRM";
             }
             if( intent.action == "read_detail" ) {
-                // The detail screen's own two-finger readout. Name and
-                // intro read the full construction detail; a requirement
-                // focus describes the required item itself.
+
+
+
                 if( select < 0 || static_cast<std::size_t>( select ) >= constructs.size() ||
                     constructs[select].str() != reader_detail_group ) {
                     return "TIMEOUT";
@@ -1209,9 +1209,9 @@ construction_id construction_menu( const bool blueprint )
                     if( parsed_group.ec != std::errc() || parsed_alt.ec != std::errc() ) {
                         return "TIMEOUT";
                     }
-                    // Requirements come from the first stage the current
-                    // filter mode shows, the same stage the detail screen
-                    // lists its requirement focuses for.
+
+
+
                     const requirement_data *requirements = nullptr;
                     for( const construction *con : constructions_by_group( constructs[select] ) ) {
                         const bool resources = player_can_build( player_character, total_inv, *con, true );
@@ -1243,11 +1243,11 @@ construction_id construction_menu( const bool blueprint )
                 }
                 return "TIMEOUT";
             }
-            // Focus moves on detail nodes and anything stale while the
-            // detail screen is open never reach the list handlers.
+
+
             // Command-tail activations other than QUIT fall through below
-            // so tab and filter commands keep working; the snapshot guard
-            // closes the detail screen if the selection changes under it.
+
+
             if( intent.action == "focus" ) {
                 return "TIMEOUT";
             }
@@ -1257,20 +1257,20 @@ construction_id construction_menu( const bool blueprint )
         }
         if( intent.action == "activate" && !constructs.empty() &&
             ( intent.node == "construction:page:next" || intent.node == "construction:page:previous" ) ) {
-            // Same 80-row paging as the crafting menu:
-            // crossing a page boundary lands on the new page, wrapping
-            // at either end instead of swiping through the whole list.
+
+
+
             constexpr int page_size = 80;
             const int page = select / page_size;
             const int first = ( page + ( intent.node == "construction:page:next" ? 1 : -1 ) ) * page_size;
             if( intent.node == "construction:page:previous" ) {
-                // Crossing a real page boundary lands on its last entry.
-                // At the first page, wrap directly to the final entry.
+
+
                 select = first < 0 ? static_cast<int>( constructs.size() ) - 1 :
                          std::min( first + page_size - 1, static_cast<int>( constructs.size() ) - 1 );
             } else {
-                // Crossing forward lands on the next page's first entry.
-                // At the final page, wrap to entry 1.
+
+
                 select = first >= static_cast<int>( constructs.size() ) ? 0 : first;
             }
             update_info = true;
@@ -1284,9 +1284,9 @@ construction_id construction_menu( const bool blueprint )
                     update_info = true;
                 }
                 if( intent.action == "activate" ) {
-                    // Tapping a construction opens its detail screen;
-                    // nothing is built until the detail screen's confirm
-                    // button is pressed.
+
+
+
                     reader_detail_open = true;
                     reader_detail_group = constructs[i].str();
                     return "TIMEOUT";
@@ -1340,7 +1340,7 @@ construction_id construction_menu( const bool blueprint )
         isnew = false;
         static int lang_version = detail::get_current_language_version();
 
-        //lang check here is needed to redraw the menu when using "Toggle language to English" option
+
         if( update_info || lang_version != detail::get_current_language_version() ) {
             update_info = false;
             lang_version = detail::get_current_language_version();
@@ -1355,7 +1355,7 @@ construction_id construction_menu( const bool blueprint )
                                             ctxt.get_desc( "RIGHT" ) ) );
             notes.push_back( string_format( _( "Press [<color_yellow>%s</color>] to search." ),
                                             ctxt.get_desc( "FILTER" ) ) );
-            // show the current filter mode in the notes area
+
             std::string mode_name;
             if( filter_mode == 0 ) {
                 mode_name = _( "All" );
@@ -1373,7 +1373,7 @@ construction_id construction_menu( const bool blueprint )
                                  ctxt.get_desc( "HELP_KEYBINDINGS" ) ) );
 
             recalc_buffer();
-        } // Finished updating
+        }
 
         if( select < 0 || static_cast<size_t>( select ) >= constructs.size()
             || con_preview_group != constructs[select] ) {
@@ -1392,7 +1392,7 @@ construction_id construction_menu( const bool blueprint )
 
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Construction" ) );
-            // The detail screen reuses the same command tail as the list.
+
             const std::vector<a11y::semantic_node> command_nodes = snapshot.nodes;
             snapshot.summary = construct_cat[tabindex].name();
             snapshot.summary += ". " + std::string( filter_mode == 0 ? _( "All" ) :
@@ -1401,9 +1401,9 @@ construction_id construction_menu( const bool blueprint )
                 snapshot.summary += ". " + string_format( _( "Filter: %s" ), filter );
             }
             std::vector<a11y::semantic_node> rows;
-            // Same 80-row paging as the crafting menu: only
-            // the page holding the selection is published, plus page
-            // commands below. The visual list is untouched.
+
+
+
             constexpr std::size_t reader_page_size = 80;
             const std::size_t page_start = select >= 0 ?
                                            ( static_cast<std::size_t>( select ) / reader_page_size ) *
@@ -1416,13 +1416,13 @@ construction_id construction_menu( const bool blueprint )
                 node.position = i + 1;
                 node.total = constructs.size();
                 node.selected = static_cast<int>( i ) == select;
-                // player_can_build does not check light, so
-                // "Buildable here" was announced for rows that fail at
-                // CONFIRM with "It is too dark…" and close the menu.
-                // Say so on the row itself, before the player confirms,
-                // mirroring how crafting publishes its conditions up
-                // front. Deconstruction needs no light (same exception
-                // as the CONFIRM check).
+
+
+
+
+
+
+
                 if( blueprint ) {
                     node.value = _( "Blueprint" );
                 } else if( !player_can_build( player_character, total_inv, constructs[i] ) ) {
@@ -1440,7 +1440,7 @@ construction_id construction_menu( const bool blueprint )
                 rows.push_back( std::move( node ) );
             }
             if( constructs.size() > 1 ) {
-                // This command also wraps from entry 1 to the last entry.
+
                 a11y::semantic_node previous_page;
                 previous_page.id = "construction:page:previous";
                 previous_page.role = "button";
@@ -1449,7 +1449,7 @@ construction_id construction_menu( const bool blueprint )
                 rows.push_back( std::move( previous_page ) );
             }
             if( constructs.size() > 1 ) {
-                // This command also wraps from the final entry back to entry 1.
+
                 a11y::semantic_node next_page;
                 next_page.id = "construction:page:next";
                 next_page.role = "button";
@@ -1465,22 +1465,22 @@ construction_id construction_menu( const bool blueprint )
                 for( const std::string &line : full_construct_buffer ) {
                     description += line + "\n";
                 }
-                // The detail screen only makes sense for the construction
-                // it was opened for. Any reselection closes it instead of
-                // showing another construction's detail.
+
+
+
                 if( reader_detail_open && constructs[select].str() != reader_detail_group ) {
                     reader_detail_open = false;
                 }
                 if( !reader_detail_open ) {
                     a11y::append_document( snapshot, "construction:details", _( "Construction details" ), description );
                 }
-                // Valid placement directions (R12.4): con_preview is the
-                // engine's own preview for the selected group -- a point is
-                // present only when can_construct and player_can_build both
-                // pass there -- so publishing its directions states engine
-                // validity, never hidden tile data. The specific reason a
-                // chosen invalid direction fails stays with
-                // place_construction's explain_failure messages.
+
+
+
+
+
+
+
                 std::string placement;
                 if( blueprint ) {
                     placement = _( "Blueprint mode: choosing a construction records it for the zone; nothing is placed." );
@@ -1517,9 +1517,9 @@ construction_id construction_menu( const bool blueprint )
                                             std::string( "\n" ) + ( location ?
                                                     _( "A nearby location meets the construction conditions." ) :
                                                     _( "No nearby location meets the construction conditions." ) );
-                        // Stage facts the visual panel shows (time, required
-                        // skills, annotation) in words, not only via the
-                        // details buffer.
+
+
+
                         state += "\n" + string_format( _( "Time to complete: %s" ),
                                                        to_string( time_duration::from_moves( con->time ) ) );
                         for( const auto &skill : con->required_skills ) {
@@ -1540,10 +1540,10 @@ construction_id construction_menu( const bool blueprint )
                 if( !reader_detail_open ) {
                     snapshot.nodes.insert( snapshot.nodes.end(), reader_documents.begin(), reader_documents.end() );
                 } else {
-                    // The detail screen replaces the list and its
-                    // documents with its own nodes, in swipe order: name,
-                    // introduction, one focus per requirement, quantity,
-                    // cancel, confirm last.
+
+
+
+
                     reader_detail_intro = description;
                     reader_detail_placement = placement;
                     snapshot.summary = constructs[select]->name();
@@ -1572,10 +1572,10 @@ construction_id construction_menu( const bool blueprint )
                     intro.detail = description;
                     intro.actions = { "focus", "read_detail" };
                     detail.push_back( std::move( intro ) );
-                    // Requirements come from the first stage the current
-                    // filter mode shows, the same stage the list documents
-                    // describe. A construction has no batch: every stage
-                    // builds one at a time.
+
+
+
+
                     const requirement_data *stage_requirements = nullptr;
                     for( const construction *con : constructions_by_group( constructs[select] ) ) {
                         const bool resources = player_can_build( player_character, total_inv, *con, true );
@@ -1666,15 +1666,15 @@ construction_id construction_menu( const bool blueprint )
         } else if( action == "TOGGLE_UNAVAILABLE_CONSTRUCTIONS" ) {
             update_info = true;
             update_cat = true;
-            // cycle through filter modes: 0 -> 1 -> 2 -> 0
+
             filter_mode = ( filter_mode + 1 ) % 3;
             offset = 0;
             load_available_constructions( available, cat_available, filter_mode );
-            // force main UI to refresh so the notes update immediately
+
             g->invalidate_main_ui_adaptor();
         } else if( action == "CONFIRM" ) {
             if( constructs.empty() || select >= static_cast<int>( constructs.size() ) ) {
-                // Nothing to be done here
+
                 continue;
             }
             if( !blueprint ) {
@@ -1683,7 +1683,7 @@ construction_id construction_menu( const bool blueprint )
                         !player_can_see_to_build( player_character, constructs[select] ) ) {
                         add_msg( m_info, _( "It is too dark to construct right now." ) );
                     } else if( !g->warn_player_maybe_anger_local_faction( true ) ) {
-                        continue; // player declined to mess with faction's stuff
+                        continue;
                     } else {
                         draw_preview.reset();
                         restore_view.reset();
@@ -1699,7 +1699,7 @@ construction_id construction_menu( const bool blueprint )
                     update_info = true;
                 }
             } else {
-                // get the index of the overall constructions list from current_group
+
                 const std::vector<construction> &list_constructions = get_constructions();
                 for( int i = 0; i < static_cast<int>( list_constructions.size() ); ++i ) {
                     if( constructs[select] == list_constructions[i].group ) {
@@ -1723,8 +1723,8 @@ std::vector<const construction *> player_can_build_valid_constructions( Characte
 {
     std::vector<const construction *> result;
 
-    // check all with the same group to see if player can build any
-    // if so, it will be added to the result
+
+
     std::vector<const construction *> cons = constructions_by_group( group );
     for( const construction *&con : cons ) {
         if( player_can_build( you, inv, *con ) ) {
@@ -1737,7 +1737,7 @@ std::vector<const construction *> player_can_build_valid_constructions( Characte
 bool player_can_build( Character &you, const temp_crafting_inventory &inv,
                        const construction_group_str_id &group )
 {
-    // check all with the same group to see if player can build any
+
     std::vector<const construction *> cons = constructions_by_group( group );
     for( const construction *&con : cons ) {
         if( player_can_build( you, inv, *con ) ) {
@@ -1758,7 +1758,7 @@ bool player_can_build( Character &you, const temp_crafting_inventory &inv, const
         return false;
     }
 
-    // check for construction spot can be skipped by using can_construct_skip
+
     return con.requirements->can_make_with_inventory( &you, inv, is_crafting_component, 1,
             craft_flags::none, false ) &&
            ( can_construct_skip || can_construct( con ) );
@@ -1787,32 +1787,32 @@ bool has_pre_flags( const construction &con, furn_id const &f, ter_id const &t )
     } );
 }
 
-// static bool has_pre_flags( const construction &con, const tripoint_bub_ms &p )
-// {
-//     if( con.pre_flags.empty() ) {
-//         return true;
-//     }
-//     const map &here = get_map();
-//     furn_id f = here.furn( p );
-//     ter_id t = here.ter( p );
-//     return has_pre_flags( con, f, t );
-// }
 
-// static bool has_pre_flags( const construction &con )
-// {
-//     if( con.pre_flags.empty() ) {
-//         return true;
-//     }
-//     const tripoint_bub_ms &avatar_pos = get_player_character().pos_bub();
-//     for( const tripoint_bub_ms &p : get_map().points_in_radius( avatar_pos, 1 ) ) {
-//         if( p != avatar_pos && has_pre_flags( con, p ) ) {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
 
-// Returns a colorized list of pre_flags, red for unmatched flags, green for matched flags.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static std::string has_pre_flags_colorize( const construction &con )
 {
     if( con.pre_flags.empty() ) {
@@ -1825,9 +1825,9 @@ static std::string has_pre_flags_colorize( const construction &con )
 
     const tripoint_bub_ms &avatar_pos = get_player_character().pos_bub();
     const auto points = get_map().points_in_radius( avatar_pos, 1 );
-    // which of the surrounding points have all the necessary flags
+
     std::vector<bool> good_points( 9, true );
-    // can't build in the player's location
+
     good_points[4] = false;
     for( const auto &flag : con.pre_flags ) {
         bool has_flag = false;
@@ -1847,9 +1847,9 @@ static std::string has_pre_flags_colorize( const construction &con )
         const nc_color color = has_flag ? c_green : c_red;
         flags_colorized.emplace_back( colorize( flag_id( flag.first )->name(), color ) );
     }
-    // It's possible that each flag is green because some adjacent location has it
-    // but no single location has every flag. That is represented here by coloring
-    // the commas and conjunction red.
+
+
+
     const bool has_good_point = std::any_of( good_points.begin(), good_points.end(), []( bool a ) {
         return a;
     } );
@@ -1860,7 +1860,7 @@ static std::string has_pre_flags_colorize( const construction &con )
 bool can_construct( const construction &con, const tripoint_bub_ms &p )
 {
     const map &here = get_map();
-    // Both lock kinds: a craft's own tile and any tile supplying it a provider.
+
     const tripoint_abs_ms abs_p = here.get_abs( p );
     if( get_craft_reservations().craft_site_reserved( abs_p ) ||
         get_craft_reservations().provider_tile_reserved( abs_p ) ) {
@@ -1868,17 +1868,17 @@ bool can_construct( const construction &con, const tripoint_bub_ms &p )
     }
     const furn_id &f = here.furn( p );
     const ter_id &t = here.ter( p );
-    // pre-functions
+
     if( !std::all_of( con.pre_specials.begin(), con.pre_specials.end(), [&p]( const auto & fn ) {
     return fn( p );
     } ) ) {
         return false;
     }
-    if( !has_pre_terrain( con, p ) || // terrain type
-        !has_pre_flags( con, f, t ) ) { // flags
+    if( !has_pre_terrain( con, p ) ||
+        !has_pre_flags( con, f, t ) ) {
         return false;
     }
-    if( !con.post_terrain.empty() ) { // make sure the construction would actually do something
+    if( !con.post_terrain.empty() ) {
         if( con.post_is_furniture ) {
             return f != furn_id( con.post_terrain );
         } else {
@@ -1952,9 +1952,9 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
     const tripoint_bub_ms &loc = player_character.pos_bub();
     std::optional<tripoint_bub_ms> pnt_;
     if( a11y::enabled() ) {
-        // The construction preview already evaluated engine legality.
-        // Let the reader choose a valid direction in one activation instead
-        // of exploring invalid tiles with a visual-only cursor.
+
+
+
         if( valid.empty() ) {
             add_msg( m_info, _( "No adjacent location is valid for this construction." ) );
             return;
@@ -1977,7 +1977,7 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
     } else {
         pnt_ = choose_adjacent(
                     loc, _( "Construct where?" ),
-                    /*allow_vertical=*/false, /*timeout=*/get_option<int>( "BLINK_SPEED" ),
+ false, get_option<int>( "BLINK_SPEED" ),
         [&]( const input_context & ctxt, const std::string & action ) {
             if( action == "TIMEOUT" ) {
                 blink = !blink;
@@ -2011,9 +2011,9 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
         cons.front()->explain_failure( pnt );
         return;
     }
-    // Maybe there is already a partial_con on an existing trap, that isn't caught by the usual trap-checking.
-    // because the pre-requisite construction is already a trap anyway.
-    // This shouldn't normally happen, unless it's a spike pit being built on a pit for example.
+
+
+
     partial_con *pre_c = here.partial_con_at( pnt );
     if( pre_c ) {
         prompt_partial_construction( player_character, pnt );
@@ -2021,16 +2021,16 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
     }
     std::list<item> used;
     const construction &con = *valid.find( pnt )->second;
-    // create the partial construction struct
+
     partial_con pc;
     pc.id = con.id;
     if( player_character.has_trait( trait_DEBUG_HS ) ) {
-        // Gift components
+
         for( const auto &it : con.requirements->get_components() ) {
             used.emplace_back( it.front().type );
         }
     } else {
-        // Use up the components
+
         for( const std::vector<item_comp> &it : con.requirements->get_components() ) {
             std::list<item> tmp = player_character.consume_items( it, 1, is_crafting_component,
                                   return_false<itype_id>, true );
@@ -2076,14 +2076,14 @@ void build_construction_activity_actor::complete_construction( player_activity &
     };
 
     award_xp( you );
-    // Other friendly Characters gain exp from assisting or watching...
-    // TODO: Characters watching other Characters do stuff and learning from it
+
+
     if( you.is_avatar() ) {
         for( Character *elem : get_avatar().get_crafting_helpers() ) {
             if( elem->meets_skill_requirements( built ) ) {
                 add_msg( m_info, _( "%s assists you with the work…" ), elem->get_name() );
             } else {
-                //NPC near you isn't skilled enough to help
+
                 add_msg( m_info, _( "%s watches you work…" ), elem->get_name() );
             }
 
@@ -2091,16 +2091,16 @@ void build_construction_activity_actor::complete_construction( player_activity &
         }
     }
 
-    // partial_con contains components for vehicle and appliance construction
-    // it's removal is handled in done_appliance() / done_vehicle
+
+
     if( pc->id->category != construction_category_APPLIANCE &&
         pc->id->id != construction_constr_veh ) {
         here.partial_con_remove( terp );
     }
 
-    // Some constructions are allowed to have items left on the tile.
+
     if( built.post_flags.count( "keep_items" ) == 0 ) {
-        // Move any items that have found their way onto the construction site.
+
         std::vector<tripoint_bub_ms> dump_spots;
         for( const tripoint_bub_ms &pt : here.points_in_radius( terp, 1 ) ) {
             if( here.can_put_items( pt ) && pt != terp ) {
@@ -2118,7 +2118,7 @@ void build_construction_activity_actor::complete_construction( player_activity &
             debugmsg( "No space to displace items from construction finishing" );
         }
     }
-    // Make the terrain change
+
     if( !built.post_terrain.empty() ) {
         if( built.post_is_furniture ) {
             here.furn_set( terp, furn_str_id( built.post_terrain ) );
@@ -2127,7 +2127,7 @@ void build_construction_activity_actor::complete_construction( player_activity &
         }
     }
 
-    // Spawn byproducts
+
     if( built.byproduct_item_group ) {
         here.spawn_items( you.pos_bub(), item_group::items_from( *built.byproduct_item_group,
                           calendar::turn ) );
@@ -2135,16 +2135,16 @@ void build_construction_activity_actor::complete_construction( player_activity &
 
     add_msg( m_info, _( "%s finished construction: %s." ), you.disp_name( false, true ),
              built.group->name() );
-    // clear the activity
+
     act.set_to_null();
     you.recoil = MAX_RECOIL;
 
-    // This comes after clearing the activity, in case the function interrupts
-    // activities
+
+
     for( const auto &special : built.post_specials ) {
         special( terp, you );
     }
-    // Players will not automatically resume backlog, other Characters will.
+
     if( you.is_avatar() && !you.backlog.empty() &&
         you.backlog.front().id() == ACT_MULTIPLE_CONSTRUCTION ) {
         you.backlog.clear();
@@ -2182,8 +2182,8 @@ bool construct::check_empty_lite( const tripoint_bub_ms &p )
 bool construct::check_empty( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    // @TODO should check for *visible* traps only. But calling code must
-    // first know how to handle constructing on top of an invisible trap!
+
+
     return here.has_flag( ter_furn_flag::TFLAG_FLAT, p ) && !here.has_furn( p ) &&
            g->is_empty( p ) && here.tr_at( p ).is_null() &&
            here.i_at( p ).empty() && !here.veh_at( p );
@@ -2192,9 +2192,9 @@ bool construct::check_empty( const tripoint_bub_ms &p )
 bool construct::check_unblocked( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    // @TODO should check for *visible* traps only. But calling code must
-    // first know how to handle constructing on top of an invisible trap!
-    // Should also check for empty space rather than open air, when such a check exists.
+
+
+
     return !here.has_furn( p ) &&
            ( g->is_empty( p ) || here.ter( p ) == ter_t_open_air ) && here.tr_at( p ).is_null() &&
            here.i_at( p ).empty() && !here.veh_at( p );
@@ -2203,15 +2203,15 @@ bool construct::check_unblocked( const tripoint_bub_ms &p )
 bool construct::check_support( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    // need two or more orthogonally adjacent supports
+
     if( here.impassable( p ) ) {
         return false;
     }
 
-    // The current collapse logic is based on the level below supporting a "roof" rather
-    // than the orthogonal tiles supporting a roof tile. Thus, the construction logic
-    // uses similar criteria, which means you may have to first change grass into a dirt
-    // floor before you may be able to build a roof above it.
+
+
+
+
     int num_supports = 0;
     for( const point &offset : four_adjacent_offsets ) {
         if( here.has_flag( ter_furn_flag::TFLAG_SUPPORTS_ROOF, p + offset ) ||
@@ -2221,9 +2221,9 @@ bool construct::check_support( const tripoint_bub_ms &p )
         }
     }
 
-    //TODO: This doesn't make any sense for the original purpose of check_support and should be separated
 
-    // We want to find "walls" below (including windows and doors), but not open rooms and the like.
+
+
     if( here.has_flag( ter_furn_flag::TFLAG_SUPPORTS_ROOF, p + tripoint::below ) &&
         ( here.has_flag( ter_furn_flag::TFLAG_WALL, p + tripoint::below ) ||
           here.has_flag( ter_furn_flag::TFLAG_DOOR, p + tripoint::below ) ||
@@ -2241,17 +2241,17 @@ bool construct::check_support_below( const tripoint_bub_ms &p )
     } ) != nullptr;
 
     map &here = get_map();
-    // These checks are based on check_empty_lite, but accept no floor and the traps associated
-    // with it, i.e. ledge, and various forms of pits.
-    // - Check if there's nothing in the way. The "passable" check rejects tiles you can't
-    //   pass through, but we want air and water to be OK as well (that's what we want to bridge).
-    // - Apart from that, vehicles, items, creatures, traps and furniture also have to be absent.
+
+
+
+
+
     if( !( here.passable( p ) || here.has_flag( ter_furn_flag::TFLAG_LIQUID, p ) ||
            here.has_flag( ter_furn_flag::TFLAG_NO_FLOOR, p ) ) || blocking_creature || here.has_furn( p ) ||
         !here.tr_at( p ).is_null() || !here.i_at( p ).empty() || here.veh_at( p ) ) {
         return false;
     }
-    // need two or more orthogonally adjacent supports at the Z level below
+
     int num_supports = 0;
     for( const point &offset : four_adjacent_offsets ) {
         if( here.has_flag( ter_furn_flag::TFLAG_SUPPORTS_ROOF, p + offset + tripoint::below ) &&
@@ -2259,7 +2259,7 @@ bool construct::check_support_below( const tripoint_bub_ms &p )
             num_supports++;
         }
     }
-    // We want to find "walls" below (including windows and doors), but not open rooms and the like.
+
     if( here.has_flag( ter_furn_flag::TFLAG_SUPPORTS_ROOF, p + tripoint::below ) &&
         ( here.has_flag( ter_furn_flag::TFLAG_WALL, p + tripoint::below ) ||
           here.has_flag( ter_furn_flag::TFLAG_CONNECT_WITH_WALL, p + tripoint::below ) ) ) {
@@ -2296,25 +2296,25 @@ bool construct::check_deconstruct( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     if( here.has_furn( p ) ) {
-        // Can deconstruct furniture here, make sure regular deconstruction isn't available if easy deconstruction is possible
+
         if( here.has_flag_furn( ter_furn_flag::TFLAG_EASY_DECONSTRUCT, p ) ) {
             return false;
         }
         return !!here.furn( p ).obj().deconstruct || !here.furn( p ).obj().base_item.is_null();
     }
-    // terrain can only be deconstructed when there is no furniture in the way
+
     return !!here.ter( p ).obj().deconstruct || !here.furn( p ).obj().base_item.is_null();
 }
 
 bool construct::check_up_OK( const tripoint_bub_ms & )
 {
-    // You're not going above +OVERMAP_HEIGHT.
+
     return ( get_map().get_abs_sub().z() < OVERMAP_HEIGHT );
 }
 
 bool construct::check_down_OK( const tripoint_bub_ms & )
 {
-    // You're not going below -OVERMAP_DEPTH.
+
     return ( get_map().get_abs_sub().z() > -OVERMAP_DEPTH );
 }
 
@@ -2355,7 +2355,7 @@ bool construct::check_matching_down_above( const tripoint_bub_ms &p )
            ter_here.substr( 0, separation + 1 ) + "down" == ter_above;
 }
 
-void construct::done_trunk_plank( const tripoint_bub_ms &/*p*/, Character &/*who*/ )
+void construct::done_trunk_plank( const tripoint_bub_ms & , Character & )
 {
     int num_logs = rng( 2, 3 );
     Character &player_character = get_player_character();
@@ -2414,9 +2414,9 @@ static vpart_id vpart_from_item( const itype_id &item_id )
             return vpi.id;
         }
     }
-    // The INITIAL_PART flag is optional, if no part (based on the given item) has it, just use the
-    // first part that is based in the given item (this is fine for example if there is only one
-    // such type anyway).
+
+
+
     for( const vpart_info &vpi : vehicles::parts::get_all() ) {
         if( vpi.base_item == item_id ) {
             return vpi.id;
@@ -2464,8 +2464,8 @@ void construct::done_vehicle( const tripoint_bub_ms &p, Character & )
                                            item( base ) );
     veh->part( partnum ).set_flag( vp_flag::unsalvageable_flag );
 
-    // Update the vehicle cache immediately,
-    // or the vehicle will be invisible for the first couple of turns.
+
+
     here.add_vehicle_to_cache( veh );
 }
 
@@ -2476,7 +2476,7 @@ void construct::done_wiring( const tripoint_bub_ms &p, Character &who )
 
     place_appliance( here, p, vpart_from_item( itype_wall_wiring ), who );
     if( who.is_avatar() && query_yn( _( "Also reveal all nearby wirings?" ) ) ) {
-        // This is a *really* terrible check to ensure we iterate the current OMT and nothing else.
+
         const tripoint_abs_omt current_omt( coords::project_to<coords::omt>( here.get_abs( p ) ) );
         for( const tripoint_bub_ms &target : here.points_on_zlevel() ) {
             const tripoint_abs_omt target_omt( coords::project_to<coords::omt>( here.get_abs( target ) ) );
@@ -2520,14 +2520,14 @@ void construct::done_deconstruct( const tripoint_bub_ms &p, Character &player_ch
 
     auto deconstruction_practice_skill = [ &player_character ]( auto & skill ) {
         if( player_character.get_skill_level( skill.id ) >= skill.min ) {
-            // Uses a modified version of the complete_construction formula using 20 minutes with halved yield before the multiplier
+
             player_character.practice( skill.id,
                                        static_cast<int>( skill.multiplier * ( 5.0 / 6.0 ) * ( 10 + 7.5 * ( skill.min +
                                                skill.max ) ) ), skill.max );
         }
     };
 
-    // TODO: Make this the argument
+
     if( here.has_furn( p ) ) {
         const furn_t &f = here.furn( p ).obj();
         if( !f.has_disassembly() ) {
@@ -2551,7 +2551,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p, Character &player_ch
         if( f.deconstruct && f.deconstruct->skill.has_value() ) {
             deconstruction_practice_skill( f.deconstruct->skill.value() );
         }
-        // if furniture has liquid in it and deconstructs into watertight containers then fill them
+
         if( f.has_flag( "LIQUIDCONT" ) && item_here.made_of( phase_id::LIQUID ) ) {
             for( item *it : drop ) {
                 if( it->get_remaining_capacity_for_liquid( item_here ) <= 0 ) {
@@ -2564,11 +2564,11 @@ void construct::done_deconstruct( const tripoint_bub_ms &p, Character &player_ch
                 }
             }
         }
-        // HACK: Hack alert.
-        // Signs have cosmetics associated with them on the submap since
-        // furniture can't store dynamic data to disk. To prevent writing
-        // mysteriously appearing for a sign later built here, remove the
-        // writing from the submap.
+
+
+
+
+
         here.delete_signage( p );
     } else {
         const ter_t &t = here.ter( p ).obj();
@@ -2601,12 +2601,12 @@ void construct::done_deconstruct( const tripoint_bub_ms &p, Character &player_ch
 
 static void unroll_digging( const int numer_of_2x4s )
 {
-    // refund components!
+
     item rope( itype_rope_30 );
     map &here = get_map();
     tripoint_bub_ms avatar_pos = get_player_character().pos_bub();
     here.add_item_or_charges( avatar_pos, rope );
-    // presuming 2x4 to conserve lumber.
+
     here.spawn_item( avatar_pos, itype_2x4, numer_of_2x4s );
 }
 
@@ -2627,7 +2627,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig,
 
     if( here.ter( p_below ) == ter_t_lava ) {
         if( !query_yn( _( "The rock feels much warmer than normal.  Proceed?" ) ) ) {
-            here.ter_set( p, ter_t_pit ); // You dug down a bit before detecting the problem
+            here.ter_set( p, ter_t_pit );
             unroll_digging( dig ? 8 : 12 );
         } else {
             add_msg( m_warning, _( "You just tunneled into lava!" ) );
@@ -2646,9 +2646,9 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig,
     } else {
         add_msg( _( "You drill out a passage, heading deeper underground." ) );
     }
-    here.ter_set( p, ter_t_stairs_down ); // There's the top half
+    here.ter_set( p, ter_t_stairs_down );
     here.ter_set( p_below, impassable ? ter_t_stairs_up :
-                  ter_t_ladder_up ); // and there's the bottom half.
+                  ter_t_ladder_up );
 }
 
 void construct::done_dig_grave( const tripoint_bub_ms &p, Character &who )
@@ -2702,7 +2702,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p, Character &player_c
     const tripoint_bub_ms p_above = p + tripoint::above;
 
     if( here.ter( p_above ) == ter_t_lava ) {
-        here.ter_set( p, ter_t_rock_floor ); // You dug a bit before discovering the problem
+        here.ter_set( p, ter_t_rock_floor );
         add_msg( m_warning, _( "The rock overhead feels hot.  You decide *not* to mine magma." ) );
         unroll_digging( 12 );
         return;
@@ -2710,7 +2710,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p, Character &player_c
 
     if( here.has_flag_ter( ter_furn_flag::TFLAG_SHALLOW_WATER, p_above ) ||
         here.has_flag_ter( ter_furn_flag::TFLAG_DEEP_WATER, p_above ) ) {
-        here.ter_set( p, ter_t_rock_floor ); // You dug a bit before discovering the problem
+        here.ter_set( p, ter_t_rock_floor );
         add_msg( m_warning, _( "The rock above is rather damp.  You decide *not* to mine water." ) );
         unroll_digging( 12 );
         return;
@@ -2725,11 +2725,11 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p, Character &player_c
     player_character.mod_sleepiness( 25 + no_mut_penalty );
 
     add_msg( _( "You drill out a passage, heading for the surface." ) );
-    here.ter_set( p, ter_t_stairs_up ); // There's the bottom half
-    here.ter_set( p_above, ter_t_stairs_down ); // and there's the top half.
+    here.ter_set( p, ter_t_stairs_up );
+    here.ter_set( p_above, ter_t_stairs_down );
 }
 
-void construct::done_wood_stairs( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::done_wood_stairs( const tripoint_bub_ms &p, Character & )
 {
     const tripoint_bub_ms top = p + tripoint::above;
     get_map().ter_set( top, ter_t_wood_stairs_down );
@@ -2739,7 +2739,7 @@ void construct::done_window_curtains( const tripoint_bub_ms &, Character &who )
 {
     map &here = get_map();
     tripoint_bub_ms avatar_pos = who.pos_bub();
-    // copied from iexamine::curtains
+
     here.spawn_item( avatar_pos, itype_nail, 1, 4 );
     here.spawn_item( avatar_pos, itype_sheet, 2 );
     here.spawn_item( avatar_pos, itype_stick );
@@ -2747,7 +2747,7 @@ void construct::done_window_curtains( const tripoint_bub_ms &, Character &who )
     add_msg( _( "After boarding up the window the curtains and curtain rod are left." ) );
 }
 
-void construct::done_extract_maybe_revert_to_dirt( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::done_extract_maybe_revert_to_dirt( const tripoint_bub_ms &p, Character & )
 {
     map &here = get_map();
     if( one_in( 10 ) ) {
@@ -2765,29 +2765,29 @@ void construct::done_extract_maybe_revert_to_dirt( const tripoint_bub_ms &p, Cha
     }
 }
 
-void construct::done_mark_firewood( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::done_mark_firewood( const tripoint_bub_ms &p, Character & )
 {
     get_map().trap_set( p, tr_firewood_source );
 }
 
-void construct::done_mark_practice_target( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::done_mark_practice_target( const tripoint_bub_ms &p, Character & )
 {
     get_map().trap_set( p, tr_practice_target );
 }
 
-void construct::done_ramp_low( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::done_ramp_low( const tripoint_bub_ms &p, Character & )
 {
     const tripoint_bub_ms top = p + tripoint::above;
     get_map().ter_set( top, ter_t_ramp_down_low );
 }
 
-void construct::done_ramp_high( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::done_ramp_high( const tripoint_bub_ms &p, Character & )
 {
     const tripoint_bub_ms top = p + tripoint::above;
     get_map().ter_set( top, ter_t_ramp_down_high );
 }
 
-void construct::add_matching_down_above( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::add_matching_down_above( const tripoint_bub_ms &p, Character & )
 {
     map &here = get_map();
     const std::string ter_here = here.ter( p ).id().str();
@@ -2798,13 +2798,13 @@ void construct::add_matching_down_above( const tripoint_bub_ms &p, Character &/*
     }
 }
 
-void construct::remove_above( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::remove_above( const tripoint_bub_ms &p, Character & )
 {
     map &here = get_map();
     here.ter_set( p + tripoint::above, ter_t_open_air );
 }
 
-void construct::add_roof( const tripoint_bub_ms &p, Character &/*who*/ )
+void construct::add_roof( const tripoint_bub_ms &p, Character & )
 {
     map &here = get_map();
     const ter_id &t = here.ter( p );
@@ -2819,7 +2819,7 @@ void construct::add_roof( const tripoint_bub_ms &p, Character &/*who*/ )
 void construct::do_turn_deconstruct( const tripoint_bub_ms &p, Character &who )
 {
     map &here = get_map();
-    // Only run once at the start of construction
+
     if( here.partial_con_at( p )->counter == 0 && who.is_avatar() &&
         get_option<bool>( "QUERY_DECONSTRUCT" ) ) {
         bool cancel_construction = false;
@@ -2924,7 +2924,7 @@ struct construction_special_reader : generic_typed_reader<construction_special_r
         }
     }
 };
-} // namespace
+}
 
 void load_construction( const JsonObject &jo, const std::string &src )
 {
@@ -3125,7 +3125,7 @@ int construction::print_time( const catacurses::window &w, const point &p, int w
 
 float construction::time_scale() const
 {
-    //incorporate construction time scaling
+
     if( get_option<int>( "CONSTRUCTION_SCALING" ) == 0 ) {
         return calendar::season_ratio();
     } else {
@@ -3202,7 +3202,7 @@ void prompt_partial_construction( Character &you, tripoint_bub_ms const &examp )
             return;
         }
         const construction &built = pc->id.obj();
-        // lower case: windows.h defines IGNORE
+
         enum options {
             resume,
             cancel,
@@ -3274,12 +3274,12 @@ bool construction::is_blacklisted() const
     return requirements->is_blacklisted();
 }
 
-// Using BFS to find the shortest route to create target terrain from empty or base terrain,
+
 std::vector<construction_id> find_build_sequence( const std::string &target_id,
         std::function<bool( construction const & )> const &filter,
         std::function<bool( construction const & )> const &can_build )
 {
-    // make a post_terrain->construction multimap for speedy search
+
     std::unordered_multimap<std::string, const construction *> construction_map;
     for( construction const &cons : get_constructions() ) {
         if( !filter( cons ) || cons.is_blacklisted() ) {
@@ -3290,18 +3290,18 @@ std::vector<construction_id> find_build_sequence( const std::string &target_id,
 
     std::queue<std::string> terrain_queue;
     std::unordered_map<std::string, std::pair<const construction *, std::string>>
-            parent; // pre, cons , post
+            parent;
     std::unordered_set<std::string> visited;
 
     terrain_queue.push( target_id );
     visited.insert( target_id );
-    std::string base_terrain; // Does this route require base_ter as pre_terrain or not
+    std::string base_terrain;
     bool found = false;
     while( !terrain_queue.empty() && !found ) {
         std::string cur_terrain = terrain_queue.front();
         terrain_queue.pop();
 
-        // find all constructions whose post_terrain == cur_terrain
+
         const auto &range = construction_map.equal_range( cur_terrain );
         const auto &it = parent.find( cur_terrain );
         if( it != parent.end() ) {
@@ -3314,19 +3314,19 @@ std::vector<construction_id> find_build_sequence( const std::string &target_id,
 
         for( auto it = range.first; it != range.second; ++it ) {
             const construction *cons = it->second;
-            // Does this construction require a pre_terrain or not
+
             std::string pre_terrain = cons->pre_terrain.empty() ? "" : *cons->pre_terrain.begin();
 
-            // skip visited terrain
+
             if( visited.find( pre_terrain ) != visited.end() ) {
                 continue;
             }
-            // keep record that this pre_terrain turns into cur_terrain through cons
+
             visited.insert( pre_terrain );
             parent[pre_terrain] = std::make_pair( cons, cur_terrain );
             terrain_queue.push( pre_terrain );
 
-            // success
+
             if( can_build( *cons ) ) {
                 found = true;
                 base_terrain = pre_terrain;
@@ -3334,15 +3334,15 @@ std::vector<construction_id> find_build_sequence( const std::string &target_id,
             }
         }
     }
-    // reconstruct the route from base_ter or empty string
+
     std::string current_terrain = base_terrain;
-    // count == 0 means we cannot find a valid route to construct this terrain from the ground up
-    // thus skip it.
+
+
     if( !found ) {
         return {};
     }
     std::vector<construction_id> ret;
-    // go through the parent chain until we find target_terrain
+
     while( current_terrain != target_id ) {
         auto it = parent.find( current_terrain );
         const auto& [cons_ptr, next_terrain] = it->second;
@@ -3360,8 +3360,8 @@ build_reqs get_build_reqs_for_furn_ter_ids(
 
     std::map<construction_id, int> total_builds;
 
-    // find the shortest route to create target terrain from empty or base terrain,
-    // adding the constructions to the total_builds map
+
+
     const auto add_builds = [&total_builds, &base_ter]( const std::string & target_id, int count ) {
 
         std::vector<construction_id> construction_chain = find_build_sequence( target_id, [](
@@ -3373,8 +3373,8 @@ build_reqs get_build_reqs_for_furn_ter_ids(
             return cons.pre_terrain.empty() || *cons.pre_terrain.begin() == base_ter.id().str();
         } );
 
-        // count == 0 means we cannot find a valid route to construct this terrain from the ground up
-        // thus skip it.
+
+
         if( construction_chain.empty() ) {
             return;
         }
@@ -3386,12 +3386,12 @@ build_reqs get_build_reqs_for_furn_ter_ids(
         }
     };
 
-    // go through the list of terrains and add their constructions and any pre-constructions
-    // to the map of total builds
+
+
     for( const auto &ter_data : changed_ids.first ) {
         add_builds( ter_data.first.id().str(), ter_data.second );
     }
-    // same, but for furniture
+
     for( const auto &furn_data : changed_ids.second ) {
         add_builds( furn_data.first.id().str(), furn_data.second );
     }

@@ -122,11 +122,11 @@ void tree::add( const node_t *new_node )
     root = new_node;
 }
 
-// Now for the generic_factory definition
+
 
 namespace
 {
-// This struct only exists to hold node data until finalization.
+
 struct node_data {
     string_id<node_t> id;
     std::vector<std::string> children;
@@ -134,9 +134,9 @@ struct node_data {
 
 generic_factory<behavior::node_t> behavior_factory( "behavior" );
 std::list<node_data> temp_node_data;
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 bool string_id<node_t>::is_valid() const
 {
@@ -156,8 +156,8 @@ void behavior::load_behavior( const JsonObject &jo, const std::string &src )
 
 void node_t::load( const JsonObject &jo, std::string_view )
 {
-    // We don't initialize the node unless it has no children (opportunistic optimization).
-    // Instead we initialize a parallel struct that holds the labels until finalization.
+
+
     if( jo.has_array( "children" ) ) {
         temp_node_data.emplace_back();
         node_data &new_data = temp_node_data.back();
@@ -205,7 +205,7 @@ void node_t::load( const JsonObject &jo, std::string_view )
 
 void node_t::check() const
 {
-    // Invariants
+
     if( children.empty() ) {
         if( _goal.empty() ) {
             debugmsg( "Behavior %s must have either children or a goal.",

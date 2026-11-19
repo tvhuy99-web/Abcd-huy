@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Owns each pointer sequence once. Native widgets retain normal TalkBack gestures. */
+
 public final class ReaderGestureSurface extends LinearLayout {
     public interface Listener {
         boolean usesTouchExploration();
@@ -22,31 +22,31 @@ public final class ReaderGestureSurface extends LinearLayout {
         float swipeDistancePx();
         long swipeDurationLimitMs();
         void navigate(int delta);
-        /** Adjust a focused game setting, if it is a numeric or choice field. */
+
         boolean adjustFocusedSetting(int delta);
-        /** Optional date/hour navigation in the character creator calendar. */
+
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
-        /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
+
         default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
-        /** Drive mode: two fingers scan 30 tiles relative to the vehicle heading. */
+
         default boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) { return false; }
-        /** Nearby exploration: vertical changes category, horizontal changes target. */
+
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
-        /** Crafting only: one finger horizontally explores recipes. */
+
         default boolean handleCraftingRecipeSwipe(int horizontal) { return false; }
-        /** Crafting only: one finger vertically switches the active subcategory. */
+
         default boolean handleCraftingSubcategorySwipe(int vertical) { return false; }
-        /** Crafting only: two fingers horizontally switch main categories, including All. */
+
         default boolean handleCraftingMainCategorySwipe(int horizontal) { return false; }
-        /** Back out of a game menu without opening a secondary reader panel. */
+
         void goBack();
-        /** Confirm the current native menu, selection or editor without guessing an action. */
+
         default void confirm() { }
-        /** Open advanced commands without changing the focused gameplay item. */
+
         default void openContextActions() { }
-        /** Read-only gesture help always uses simple focus navigation. */
+
         default boolean gestureGuideActive() { return false; }
-        /** Drive mode continues during the native Explore Places activity. */
+
         default boolean autonomousDriveTravelActive() { return false; }
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
@@ -56,20 +56,20 @@ public final class ReaderGestureSurface extends LinearLayout {
         void scanDirection(int dx, int dy);
         void twoFingerTap(int count);
         void threeFingerTap();
-        /** Fixed shortcut: two three-finger taps read the current character. */
+
         default void characterDetails() { }
-        /** Reserved three-finger triple tap: switch live-world combat/map mode. */
+
         default void toggleCombatMode() { }
-        /** Three sequential single-finger taps open the native action menu. */
+
         void openActionMenu();
         boolean handleCustomGesture(String gestureId);
-        /** An otherwise valid 3/4-finger gesture has no bound action. */
+
         default void unassignedMultiGesture(String gestureId) { }
         void activate();
         void detail();
         void readCurrent();
         void stopSpeech();
-        /** Called once before dispatching a recognized user action. */
+
         default void onUserAction() { }
     }
 
@@ -89,8 +89,8 @@ public final class ReaderGestureSurface extends LinearLayout {
     private String multiTapOwner;
     private final List<float[]> oneFingerPath = new ArrayList<>();
     private int maxPointers;
-    // Per-pointer tracking matches Android's stable pointer IDs, not indices.
-    // Some devices cancel a three/four-finger touch sequence before UP.
+
+
     private static final int MAX_READER_FINGERS = 4;
     private static final long MULTI_FINGER_JOIN_MS = 400L;
     private static final long MULTI_CANCEL_TAP_MS = 700L;
@@ -130,9 +130,9 @@ public final class ReaderGestureSurface extends LinearLayout {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent event) {
-                // Do not consume the first tap while game speech is playing.
-                // Only a *confirmed* solitary tap stops narration; a double
-                // tap, swipe or hold must retain its own gesture action.
+
+
+
                 if( !listener.directWorldGesturesEnabled() && previousTapOwner != null
                         && previousTapOwner.equals(listener.gestureContext()) ) {
                     listener.stopSpeech();
@@ -142,8 +142,8 @@ public final class ReaderGestureSurface extends LinearLayout {
 
             @Override
             public boolean onDoubleTap(MotionEvent event) {
-                // Defer only gameplay's second tap until a third tap is ruled
-                // out. Menus keep immediate double-tap activation.
+
+
                 if (listener.directWorldGesturesEnabled()) { return true; }
                 if (previousTapOwner == null || !previousTapOwner.equals(owner)) {
                     cancelled = true;
@@ -160,8 +160,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                             + " context=" + owner);
                     longPressHandled = true;
                     signalUserAction();
-                    // Holding one finger always opens context actions.
-                    // It cannot be overwritten, even by a legacy binding.
+
+
                     listener.openContextActions();
                 }
             }
@@ -204,7 +204,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         return !cancelled && !multiple && owner != null && owner.equals(listener.gestureContext());
     }
 
-    /** Do not stop TTS merely on DOWN or on cancelled touches. */
+
     private void signalUserAction() {
         if (!userActionSignaled) {
             userActionSignaled = true;
@@ -254,7 +254,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         int index = event.getActionIndex();
         if (multiTrackedCount != event.getPointerCount() - 1 || index < 0
                 || index >= event.getPointerCount()) {
-            multiTrackedCount = 0; // The pointer sequence is not trustworthy.
+            multiTrackedCount = 0;
             return;
         }
         for (int i = 0; i < multiTrackedCount; i++) {
@@ -287,8 +287,8 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     private boolean recoverCancelledMultiTap(MotionEvent event) {
-        // Follow the GnollHack pattern, but only synthesize a *tap*, never
-        // turn a system-cancelled drag or navigation gesture into a command.
+
+
         if (!multiple || cancelled || maxPointers < 3 || maxPointers > 4
                 || maxPointers != event.getPointerCount()
                 || multiTrackedCount != maxPointers || multiFingerMoved
@@ -319,7 +319,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
     }
 
-    /** Stable 2/3-finger holds are independent of Android's 1-finger detector. */
+
     private void scheduleMultiHold(int fingers, String expectedOwner) {
         cancelMultiHold();
         if (fingers < 2 || fingers > 3 || lateMultiFingerJoin
@@ -337,7 +337,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                 return;
             }
             longPressHandled = true;
-            cancelled = true; // A hold must never become a tap, swipe or Back.
+            cancelled = true;
             clearMultiTap();
             clearWorldTaps();
             String gesture = ReaderGestureBindings.idForHold(fingers);
@@ -406,9 +406,9 @@ public final class ReaderGestureSurface extends LinearLayout {
                 if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())
                         && listener.directWorldGesturesEnabled()) {
                     if (count == 1) {
-                        // Resolve single tap only after excluding two and
-                        // three taps, so a tap used to silence TTS never
-                        // blocks activation or the triple-tap action hub.
+
+
+
                         listener.stopSpeech();
                     } else if (count == 2) {
                         signalUserAction();
@@ -420,7 +420,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
     }
 
-    /** One/two/three taps are mutually exclusive, for 2/3/4 fingers. */
+
     private void queueMultiTap(String tapOwner, int fingers) {
         if (multiTapCount > 0 && (!tapOwner.equals(multiTapOwner)
                 || fingers != multiTapFingers)) {
@@ -455,12 +455,12 @@ public final class ReaderGestureSurface extends LinearLayout {
     private void dispatchMultiTap(int fingers, int count) {
         SessionDebugLog.event("GESTURE", "multi_tap fingers=" + fingers
                 + " count=" + count);
-        // All two-finger taps have built-in actions (one tap also works in
-        // menus); the first two three-finger taps are reserved for location
-        // and character status. Handle these BEFORE custom bindings.
-        // Two-finger double-tap re-reads recent notifications on every
-        // screen, not only in the live world. Only the triple tap (the
-        // action hub) stays live-world-only.
+
+
+
+
+
+
         if (fingers == 2) {
             if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()
                     || listener.autonomousDriveTravelActive()) {
@@ -499,11 +499,11 @@ public final class ReaderGestureSurface extends LinearLayout {
         return null;
     }
 
-    /**
-     * Finds one clear change in direction, including out-and-back strokes.
-     * Both legs must pass the physical swipe threshold; diagonal drags never
-     * silently become a command, and straight swipes remain single-stroke.
-     */
+
+
+
+
+
     static String identifyOneFingerSwipe(List<float[]> points, float distance) {
         if (points.size() < 2) { return null; }
         float[] start = points.get(0);
@@ -545,13 +545,13 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() >= 2) {
-            // Disallow parent view interception for the rest of this sequence.
-            // A separate Activity-level hook also protects the outer SDL root.
+
+
             requestParentCapture(true);
         } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
             requestParentCapture(false);
         }
-        // After a handled two-finger Back swipe, consume the remaining UP.
+
         if (ignoreUntilPointersReleased) {
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 ignoreUntilPointersReleased = false;
@@ -587,7 +587,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             cancelGesture(recovered);
             detector.onTouchEvent(event);
             if (recovered) {
-                // Do not let the OS cancellation eat a valid multi-finger tap.
+
                 queueMultiTap(capturedOwner, capturedFingers);
             }
             return true;
@@ -619,7 +619,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             } else {
                 backPointerCount = 0;
             }
-            // Reset origin when the full finger count is reached.
+
             multiStartX = centroidX(event);
             multiStartY = centroidY(event);
             multiLastX = multiStartX;
@@ -635,9 +635,9 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP || multiFingerMoved) {
                 cancelMultiHold();
             }
-            // In crafting, only two-finger LEFT/RIGHT changes the main
-            // category. Leave two-finger UP/DOWN entirely to the established
-            // Confirm/Back handlers below, including within crafting.
+
+
+
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
@@ -664,8 +664,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                     return true;
                 }
             }
-            // Two fingers up confirms on native menus and number editors only.
-            // Keep the world map's existing 16-tile directional scan intact.
+
+
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
@@ -686,8 +686,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                 listener.confirm();
                 return true;
             }
-            // Two fingers down means Back on menus/forms. In active gameplay
-            // it keeps its existing 16-tile scan action.
+
+
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
@@ -718,10 +718,10 @@ public final class ReaderGestureSurface extends LinearLayout {
                         + " duration_ms=" + (event.getEventTime() - downTime)
                         + " dx=" + (multiLastX - multiStartX)
                         + " dy=" + (multiLastY - multiStartY));
-                // Modal two-finger taps also reach the detail dispatcher.
-                // Two-finger up/down remain Back/Confirm above. Horizontal
-                // two-finger crafting switches were handled on POINTER_UP.
-                // Only a live world uses remaining gestures for scanning.
+
+
+
+
                 boolean permitted = !cancelled && owner != null
                         && owner.equals(listener.gestureContext())
                         && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
@@ -735,14 +735,14 @@ public final class ReaderGestureSurface extends LinearLayout {
                         clearMultiTap();
                         signalUserAction();
                         if (maxPointers == 2) {
-                            // Drive scans are vehicle-relative; Map scans use
-                            // the same gestures with absolute map directions.
+
+
                             int horizontal = "right".equals(direction) ? 1
                                     : "left".equals(direction) ? -1 : 0;
                             int vertical = "down".equals(direction) ? 1
                                     : "up".equals(direction) ? -1 : 0;
                             if (listener.handleVehicleTwoFingerSwipe(horizontal, vertical)) {
-                                // Already handled by the dedicated driving mode.
+
                             } else if (listener.directWorldGesturesEnabled()) {
                                 listener.scanDirection("right".equals(direction) ? 1
                                         : "left".equals(direction) ? -1 : 0,
@@ -795,9 +795,9 @@ public final class ReaderGestureSurface extends LinearLayout {
                     signalUserAction();
                     boolean handled = listener.handleCustomGesture(gesture);
                     if (handled) {
-                        // A bent or out-and-back swipe can end at the touch
-                        // origin. Consume it before tap recognition below,
-                        // or reload/weapon inspection could also trigger tap.
+
+
+
                         swipeHandled = true;
                     } else if (gesture.indexOf('_', "swipe_".length()) < 0) {
                         handleSwipe(event.getX() - firstX, event.getY() - firstY);
@@ -821,8 +821,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                     && !activatedByDoubleTap
                     && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()
                     && event.getEventTime() - downTime <= listener.swipeDurationLimitMs();
-            // Retain the first tap even when TTS was active. The second
-            // tap must still activate the focused item.
+
+
             previousTapOwner = tap ? owner : null;
             if (tap && listener.directWorldGesturesEnabled()) {
                 queueWorldTap(event, owner);
@@ -841,8 +841,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         int horizontal = Math.abs(dx) >= Math.abs(dy) * 1.35f ? (dx > 0 ? 1 : -1) : 0;
         int vertical = Math.abs(dy) >= Math.abs(dx) * 1.35f ? (dy > 0 ? 1 : -1) : 0;
         if (listener.gestureGuideActive()) {
-            // Help is always navigable even if the underlying screen
-            // disabled its own configurable swipe-to-navigate action.
+
+
             if (horizontal != 0) { listener.navigate(horizontal); }
             else if (vertical != 0) { listener.navigate(vertical); }
             return;
@@ -869,7 +869,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         if (direction != null && listener.movementPracticeEnabled()) {
             listener.practiceMovementDirection(direction[0], direction[1]);
         } else if (listener.worldMovementEnabled()) {
-            // Walking is four-way and immediately enabled in the live world.
+
             if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
                 listener.moveDirection(dx > 0 ? 1 : -1, 0);
             } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
@@ -879,8 +879,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             performMappedSwipeAction(listener.horizontalSwipeAction(),
                                      navigationDeltaForHorizontalSwipe(dx));
         } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
-            // For numeric/choice fields, vertical swipes change the value;
-            // on ordinary menu items, retain the configured vertical action.
+
+
             if (!listener.adjustFocusedSetting(dy < 0 ? 1 : -1)) {
                 performMappedSwipeAction(listener.verticalSwipeAction(), dy > 0 ? 1 : -1);
             }
@@ -893,8 +893,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                 listener.navigate(navigationDelta);
                 break;
             default:
-                // A disabled mapping is intentionally inert and never becomes
-                // an arbitrary game command.
+
+
                 break;
         }
     }

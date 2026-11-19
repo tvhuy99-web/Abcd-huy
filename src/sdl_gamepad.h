@@ -15,25 +15,25 @@ extern input_event last_input;
 namespace gamepad
 {
 
-// Direction states for left stick
+
 enum class direction : int {
     NONE = 0,
-    N,    // North (up)
-    NE,   // Northeast
-    E,    // East (right)
-    SE,   // Southeast
-    S,    // South (down)
-    SW,   // Southwest
-    W,    // West (left)
-    NW    // Northwest
+    N,
+    NE,
+    E,
+    SE,
+    S,
+    SW,
+    W,
+    NW
 };
 
 void init();
 void quit();
-// Returns true if this event type belongs to the gamepad module.
+
 bool is_gamepad_event( const SDL_Event &event );
-// Dispatch any gamepad-related SDL event. Returns true if UI needs refresh.
-// Handles button, axis, device hotplug, and scheduler events internally.
+
+
 bool handle_event( SDL_Event &event );
 
 
@@ -47,14 +47,13 @@ bool is_alt_held();
 bool is_in_menu();
 bool is_active();
 
-// Convert direction enum to movement offset
+
 tripoint direction_to_offset( direction dir );
 
-// Convert direction to radial joy event
+
 int direction_to_radial_joy( direction dir, int stick_idx );
 
-} // namespace gamepad
+}
 
-#endif // TILES
-#endif // CATA_SRC_SDL_GAMEPAD_H
-
+#endif
+#endif

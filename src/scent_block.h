@@ -38,9 +38,9 @@ struct scent_block {
         return p.xy() - origin.xy();
     }
 
-    // We should be working entirely within the range, so don't range check here
+
     void apply_gas( const tripoint_bub_ms &p, int nintensity = 0 );
     void apply_slime( const tripoint_bub_ms &p, int intensity );
 };
 
-#endif // CATA_SRC_SCENT_BLOCK_H
+#endif

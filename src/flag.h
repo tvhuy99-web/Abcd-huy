@@ -16,8 +16,8 @@
 class JsonObject;
 template <typename T> class generic_factory;
 
-// Bit positions for the flags that drive item::stacks_with.
-// Reload-safe: positions are compile-time constants, not int_ids.
+
+
 enum class hot_flag_bit : uint64_t {
     REMOVED_STOCK      = 1ULL << 0,
     DIAMOND            = 1ULL << 1,
@@ -44,7 +44,7 @@ enum class hot_flag_bit : uint64_t {
     QUARTERED          = 1ULL << 22,
 };
 
-// Returns the hot bit for f, or 0 if f is not in the hot set.
+
 uint64_t hot_bit_for( const flag_id &f ) noexcept;
 
 extern const flag_id flag_NULL;
@@ -438,84 +438,84 @@ extern const flag_id flag_SOFT;
 extern const flag_id flag_HARD;
 extern const flag_id flag_SHREDDED;
 extern const flag_id flag_FROM_FROZEN_LIQUID;
-/**
- * Flags: json entity with "type": "json_flag", defined in flags.json, vp_flags.json
- * Currently used by:
- *   * Items (itype, item), as int flag_id
- *   * Vehicles (vehicle_part), only to display flag info
- *   * Effects (effect_type), as int flag_id
- *   * Recipes (recipe), flag_id in recipe::flags_to_delete
- *
- * When flag is used in any of these places, it must have it's definition in json
- * (otherwise flag_id -> flag_id conversion can't be performed).
- */
+
+
+
+
+
+
+
+
+
+
+
 class json_flag
 {
         friend class DynamicDataLoader;
         friend class generic_factory<json_flag>;
 
     public:
-        // used by generic_factory
+
         flag_id id = flag_NULL;
         std::vector<std::pair<flag_id, mod_id>> src;
         bool was_loaded = false;
 
         json_flag() = default;
 
-        /** Fetches flag definition (or null flag if not found) */
+
         static const json_flag &get( const std::string &id );
 
-        /** Get informative text for display in UI */
+
         std::string info() const {
             return info_.translated();
         }
 
-        /** Get "restriction" phrase, saying what items with this flag must be able to do */
+
         std::string restriction() const {
             return restriction_.translated();
         }
 
-        /** Get name of the flag. */
+
         std::string name() const {
             return name_.translated();
         }
 
-        /** Custom prefix that is added to item name. */
+
         const translation &item_prefix() const {
             return item_prefix_;
         }
 
-        /** Custom suffix that is added to item name. */
+
         const translation &item_suffix() const {
             return item_suffix_;
         }
 
-        /** Is flag inherited by base items from any attached items? */
+
         bool inherit() const {
             return inherit_;
         }
 
-        /** Is flag inherited by crafted items from any component items? */
+
         bool craft_inherit() const {
             return craft_inherit_;
         }
 
-        /** Requires this flag to be installed on vehicle */
+
         const std::string &requires_flag() const {
             return requires_flag_;
         }
 
-        /** The flag's modifier on the fun value of comestibles */
+
         int taste_mod() const {
             return taste_mod_;
         }
 
-        /** Is this a valid (non-null) flag */
+
         explicit operator bool() const;
 
         void check() const;
 
-        /** true, if flags were loaded */
+
         static bool is_ready();
 
         static const std::vector<json_flag> &get_all();
@@ -532,20 +532,20 @@ class json_flag
         std::string requires_flag_;
         int taste_mod_ = 0;
 
-        /** Load flag definition from JSON */
+
         void load( const JsonObject &jo, std::string_view src );
 
-        /** Load all flags from JSON */
+
         static void load_all( const JsonObject &jo, const std::string &src );
 
-        /** finalize */
+
         static void finalize_all( );
 
-        /** Check consistency of all loaded flags */
+
         static void check_consistency();
 
-        /** Clear all loaded flags (invalidating any pointers) */
+
         static void reset();
 };
 
-#endif // CATA_SRC_FLAG_H
+#endif

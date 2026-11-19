@@ -50,17 +50,17 @@ int calc_xp_gain( const vpart_info &vp, const skill_id &sk, const Character &who
         return 0;
     }
 
-    // how many levels are we above the requirement?
+
     const int lvl = std::max( static_cast<int>( who.get_skill_level( sk ) ) - iter->second, 1 );
 
-    // scale xp gain per hour according to relative level
-    // 0-1: 60 xp /h
-    //   2: 15 xp /h
-    //   3:  6 xp /h
-    //   4:  4 xp /h
-    //   5:  3 xp /h
-    //   6:  2 xp /h
-    //  7+:  1 xp /h
+
+
+
+
+
+
+
+
     return std::ceil( to_moves<double>( vp.install_moves ) /
                       to_moves<int>( 1_minutes * std::pow( lvl, 2 ) ) );
 }
@@ -68,7 +68,7 @@ int calc_xp_gain( const vpart_info &vp, const skill_id &sk, const Character &who
 vehicle_part *most_repairable_part( vehicle &veh, Character &who )
 {
     const temp_crafting_inventory &inv = who.crafting_inventory();
-    // no inventory-backed item or power changes in this loop, so query caches hold
+
     temp_crafting_inventory::query_cache_scope cache_scope;
     vehicle_part *vp_broken = nullptr;
     vehicle_part *vp_most_damaged = nullptr;
@@ -115,9 +115,9 @@ bool repair_part( map &here, vehicle &veh, vehicle_part &pt, Character &who )
     const temp_crafting_inventory &inv = who.crafting_inventory( who.pos_bub(), PICKUP_RANGE,
                                          !who.is_npc() );
     temp_crafting_inventory map_inv;
-    // allow NPCs to use welding rigs they can't see ( on the other side of a vehicle )
-    // as they have the handicap of not being able to use the veh interaction menu
-    // or able to drag a welding cart etc.
+
+
+
     map_inv.form_from_map( who.pos_bub(), PICKUP_RANGE, &who, !who.is_npc() );
     if( !reqs.can_make_with_inventory( &who, inv, is_crafting_component ) ) {
         who.add_msg_if_player( m_info, _( "You don't meet the requirements to repair the %s." ),
@@ -125,7 +125,7 @@ bool repair_part( map &here, vehicle &veh, vehicle_part &pt, Character &who )
         return false;
     }
 
-    // consume items extracting any base item (which we will need if replacing broken part)
+
     item base( vp.base_item );
     for( const auto &e : reqs.get_components() ) {
         for( item &obj : who.consume_items( who.select_item_component( e, 1, map_inv ), 1,
@@ -146,7 +146,7 @@ bool repair_part( map &here, vehicle &veh, vehicle_part &pt, Character &who )
         who.practice( sk.first, calc_xp_gain( vp, sk.first, who ) );
     }
 
-    // If part is broken, it will be destroyed and references invalidated
+
     const std::string partname = pt.name( false );
     const std::string startdurability = pt.get_base().damage_indicator();
     if( pt.is_broken() ) {
@@ -195,7 +195,7 @@ bool can_install_anywhere( const Character &who, const temp_crafting_inventory &
 install_candidates list_install_candidates( const Character &who,
         const temp_crafting_inventory &inv, const vehicle &veh )
 {
-    // no inventory-backed item or power changes while the list is built, so query caches hold
+
     temp_crafting_inventory::query_cache_scope cache_scope;
     install_candidates ret;
     std::vector<const vpart_info *> req_missing;
@@ -219,7 +219,7 @@ install_candidates list_install_candidates( const Character &who,
     return ret;
 }
 
-} // namespace veh_utils
+}
 
 veh_menu_item &veh_menu_item::text( const std::string &text )
 {
@@ -282,7 +282,7 @@ static std::optional<input_event> veh_keybind( const std::optional<std::string> 
     }
 
     const std::vector<input_event> hk = input_context( "VEHICLE" )
-                                        .keys_bound_to( *hotkey, /* maximum_modifier_count = */ 1 );
+                                        .keys_bound_to( *hotkey, 1 );
     if( !hk.empty() ) {
         return hk.front();
     }
@@ -449,8 +449,8 @@ class veh_menu_cb : public uilist_callback
         bool draw_trail;
     private:
         const std::vector< tripoint > &points;
-        int last; // to suppress redrawing
-        tripoint_rel_ms last_view; // to reposition the view after selecting
+        int last;
+        tripoint_rel_ms last_view;
         shared_ptr_fast<game::draw_callback_t> terrain_draw_cb;
 
         void select( uilist *menu ) override {
@@ -464,22 +464,22 @@ class veh_menu_cb : public uilist_callback
             } else {
                 const tripoint &center = points[menu->selected];
                 player_character.view_offset = tripoint_rel_ms( center - player_character.pos_bub().raw() );
-                // Remove next line if/when it's wanted/safe to shift view to other zlevels
+
                 player_character.view_offset.z() = 0;
             }
             g->invalidate_main_ui_adaptor();
             if( on_select ) {
                 on_select();
-                map &here = get_map(); // TODO: Handle getting the correct map.
+                map &here = get_map();
                 here.invalidate_map_cache( here.get_abs_sub().z() );
             }
         }
 };
-} // namespace
+}
 
 bool veh_menu::query()
 {
-    map &here = get_map(); // TODO: Handle getting the correct map.
+    map &here = get_map();
 
     if( items.empty() ) {
         debugmsg( "veh_menu::query() called with empty items" );
@@ -512,19 +512,19 @@ bool veh_menu::query()
         }
     };
 
-    if( locations.size() == items.size() ) { // all items have valid location attached
+    if( locations.size() == items.size() ) {
         menu.callback = &cb;
         menu.desired_bounds = { 4.0, -1.0, -1.0, -1.0 };
     } else {
         menu.callback = nullptr;
     }
 
-    if( last_selected.has_value() ) { // have selection from previous query
+    if( last_selected.has_value() ) {
         menu.selected = std::min( static_cast<int>( items.size() ), last_selected.value() );
-    } else { // find first element with select enabled
+    } else {
         for( menu.selected = 0; menu.selected < static_cast<int>( items.size() ); menu.selected++ ) {
             if( items[menu.selected]._selected ) {
-                break; // found first selected element
+                break;
             }
         }
     }
@@ -548,8 +548,8 @@ bool veh_menu::query()
 
     chosen._on_submit();
 
-    // There's probably a better way to detect this?
-    // If we're swapping dimensions the veh reference has been invalidated.
+
+
     if( !g->swapping_dimensions ) {
         veh.refresh( );
         here.invalidate_visibility_cache();

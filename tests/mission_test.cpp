@@ -37,9 +37,9 @@ TEST_CASE( "mission_goal_condition_test", "[mission]" )
         WHEN( "mission_origin_start" ) {
             mission *m = mission::reserve_new( mission_TEST_MISSION_GOAL_CONDITION1, character_id() );
             if( m->get_assigned_player_id() == u.getID() ) {
-                // Due to some bizarre optimization, test binaries compiled with
-                // RELEASE=1 and LTO=1 result in u.getID() == character_id( -1 ).
-                // So set the mission's initial player_id to something else.
+
+
+
                 m->set_assigned_player_id( character_id( -2 ) );
             }
             m->assign( u );
@@ -205,7 +205,7 @@ mission *assign_test_find_item_mission( avatar &dude )
     return m;
 }
 
-} // namespace
+}
 
 TEST_CASE( "automatic_find_item_mission_batch_processing", "[mission]" )
 {

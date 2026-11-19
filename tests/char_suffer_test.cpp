@@ -36,12 +36,12 @@ static const ter_str_id ter_t_rock_wall( "t_rock_wall" );
 static const trait_id trait_ALBINO( "ALBINO" );
 static const trait_id trait_SUNBURN( "SUNBURN" );
 
-// Tests for Character suffering
-//
-// Covers functions:
-// - Character::suffer_from_sunburn
 
-// Make character suffer for a while
+
+
+
+
+
 static void test_suffer( Character &dummy, const time_duration &dur, bool update_body = false )
 {
     const int num_turns = to_turns<int>( dur );
@@ -53,7 +53,7 @@ static void test_suffer( Character &dummy, const time_duration &dur, bool update
     }
 }
 
-// Return total focus lost just from suffering over a given time duration (may exceed maximum focus)
+
 static int test_suffer_focus_lost( Character &dummy, const time_duration &dur )
 {
     int focus_lost = 0;
@@ -66,18 +66,18 @@ static int test_suffer_focus_lost( Character &dummy, const time_duration &dur )
     return focus_lost;
 }
 
-// Return total hit points lost for each body part over a given time duration (may exceed max HP)
+
 static std::map<bodypart_id, int> test_suffer_bodypart_hp_lost( Character &dummy,
         const time_duration &dur )
 {
     const std::vector<bodypart_id> body_parts_with_hp = dummy.get_all_body_parts(
                 get_body_part_flags::only_main );
-    // Total hit points lost for each body part
+
     std::map<bodypart_id, int> bp_hp_lost;
     for( const bodypart_id &bp : body_parts_with_hp ) {
         bp_hp_lost[bp] = 0;
     }
-    // Every turn, heal completely, then suffer and accumulate HP loss for each body part
+
     const int num_turns = to_turns<int>( dur );
     for( int turn = 0; turn < num_turns; ++turn ) {
         dummy.healall( 100 );
@@ -89,7 +89,7 @@ static std::map<bodypart_id, int> test_suffer_bodypart_hp_lost( Character &dummy
     return bp_hp_lost;
 }
 
-// Return total pain points just from suffering over a given time duration
+
 static int test_suffer_pain_felt( Character &dummy, const time_duration &dur )
 {
     int pain_felt = 0;
@@ -102,14 +102,14 @@ static int test_suffer_pain_felt( Character &dummy, const time_duration &dur )
     return pain_felt;
 }
 
-// Suffering from albinism (ALBINO trait)
-//
-// - Albinism suffering effects occur about once per minute (1/60 chance per turn)
-// - If character is wielding an umbrella and wearing sunglasses, all effects are negated
-// - If character has body parts more than 1% exposed, they suffer focus loss or pain
-// - Most of the time (59/60 chance), 1 focus is lost, or 2 without sunglasses
-// - Sometimes (1/60 chance), there is 1 pain instead, or 2 without sunglasses
-//
+
+
+
+
+
+
+
+
 TEST_CASE( "suffering_from_albinism", "[char][suffer][albino]" )
 {
     clear_map_without_vision();
@@ -119,20 +119,20 @@ TEST_CASE( "suffering_from_albinism", "[char][suffer][albino]" )
     avatar &dummy = get_avatar();
 
     int focus_lost = 0;
-    // TODO: The random chance of pain is too unprectable to test reliably.
-    // As a result any test with small non-zero values has been disabled.
-    // The values should still be correct
 
-    // Need sunglasses to protect the eyes, no matter how covered the rest of the body is
+
+
+
+
     item shades( itype_test_sunglasses );
-    // Umbrella can protect completely
+
     item umbrella( itype_test_umbrella );
 
-    // hazmat suit has 100% coverage, but eyes and mouth are exposed
+
     item hazmat( itype_test_hazmat_suit );
-    // zentai has 100% coverage over all body parts
+
     item zentai( itype_test_zentai );
-    // long-sleeve shirt has 90% coverage on torso and arms
+
     item longshirt( itype_test_longshirt );
 
     GIVEN( "avatar is in sunlight with the albino trait" ) {
@@ -144,20 +144,20 @@ TEST_CASE( "suffering_from_albinism", "[char][suffer][albino]" )
         WHEN( "totally naked and exposed" ) {
             dummy.clear_worn();
 
-            // 60 times * 12 bodyparts * 0.25 chance for medium effect
+
             THEN( "they lose 80 to 280 focus per hour" ) {
                 focus_lost = test_suffer_focus_lost( dummy, 1_hours );
                 CHECK( focus_lost == Approx( 180 ).margin( 100 ) );
             }
 
-            // THEN( "they suffer about 2 pain per hour" ) {
-            // 1 pain per hour for unshaded eyes
-            // 1 pain per hour for exposed skin
-            // Without running a long test, chance of pain is too low to measure effectively
-            // This assertion will pass when pain is between 0 and 12 in an hour
-            //pain_felt = test_suffer_pain_felt( dummy, 1_hours );
-            //CHECK( pain_felt == Approx( 2 ).margin( 10 ) );
-            // }
+
+
+
+
+
+
+
+
         }
 
         WHEN( "wielding an umbrella and wearing sunglasses" ) {
@@ -178,20 +178,20 @@ TEST_CASE( "suffering_from_albinism", "[char][suffer][albino]" )
             dummy.clear_worn();
             dummy.wear_item( zentai, false );
 
-            // WHEN( "not wearing sunglasses" ) {
-            //     REQUIRE_FALSE( dummy.worn_with_flag( flag_SUN_GLASSES ) );
 
-            // 60 times * 1 bodyparts * 0.1 chance for severe effect
-            // THEN( "they suffer about 6 pain per hour" ) {
-            //     test_suffer( dummy, 3_hours );
-            //     CHECK( dummy.get_pain() == Approx( 18 ).margin( 17 ) );
-            // }
-            // 60 times * 1 bodyparts * 0.25 chance for medium effect
-            // THEN( "they lose about 15 focus per hour" ) {
-            //     focus_lost = test_suffer_focus_lost( dummy, 1_hours );
-            //     CHECK( focus_lost == Approx( 15 ).margin( 14 ) );
-            // }
-            // }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             WHEN( "wearing sunglasses" ) {
                 dummy.wear_item( shades, false );
@@ -207,14 +207,14 @@ TEST_CASE( "suffering_from_albinism", "[char][suffer][albino]" )
     }
 }
 
-// Suffering from Solar Sensitivity (SUNBURN trait)
-//
-// - Solar Sens. suffering effects occur about 3 times per minute (1/20 chance per turn)
-// - If character is wielding an umbrella and wearing sunglasses, all effects are negated
-// - If character has body parts more than 1% exposed, they suffer pain and loss of HP
-// - Chance of pain and HP loss is directly proportional to skin exposure on each body part
-// -
-//
+
+
+
+
+
+
+
+
 TEST_CASE( "suffering_from_sunburn", "[char][suffer][sunburn]" )
 {
     clear_map_without_vision();
@@ -245,19 +245,19 @@ TEST_CASE( "suffering_from_sunburn", "[char][suffer][sunburn]" )
             dummy.wear_item( shades, false );
             REQUIRE( dummy.worn_with_flag( flag_SUN_GLASSES ) );
 
-            // THEN( "they suffer injuries on every body part" ) {
-            // Should lose an average of 1 HP per minute from each body part with hit points
-            // (head, torso, both arms, both legs)
-            // 60 * 0.1 * 2 (as two body parts contribute to each part with HP, e.g. l. arm + l. hand both damage l. arm)
-            // bp_hp_lost = test_suffer_bodypart_hp_lost( dummy, 1_hours );
-            // for( const bodypart_id &bp : body_parts_with_hp ) {
-            //     CAPTURE( bp.id().str() );
-            //     CHECK( bp_hp_lost[bp] == Approx( 12 ).margin( 11 ) );
-            // }
-            // }
+
+
+
+
+
+
+
+
+
+
 
             THEN( "they suffer pain several times a minute" ) {
-                // 60 * 0.25 * 11 (num body parts, excluding eyes)
+
                 pain_felt = test_suffer_pain_felt( dummy, 1_hours );
                 CHECK( pain_felt == Approx( 15 * 11 ).margin( 14 * 11 ) );
             }
@@ -270,7 +270,7 @@ TEST_CASE( "suffering_from_sunburn", "[char][suffer][sunburn]" )
             dummy.wear_item( shades, false );
             REQUIRE( dummy.worn_with_flag( flag_SUN_GLASSES ) );
 
-            // Umbrella completely shields the skin from exposure when wielded
+
             THEN( "they suffer no injury" ) {
                 bp_hp_lost = test_suffer_bodypart_hp_lost( dummy, 1_hours );
                 for( const bodypart_id &bp : body_parts_with_hp ) {
@@ -293,20 +293,20 @@ TEST_CASE( "suffering_from_sunburn", "[char][suffer][sunburn]" )
                 bp_hp_lost = test_suffer_bodypart_hp_lost( dummy, 1_hours );
                 for( const bodypart_id &bp : body_parts_with_hp ) {
                     CAPTURE( bp.id().str() );
-                    // if( bp == bodypart_id( "head" ) ) {
-                    // 60 * 0.1
-                    // CHECK( bp_hp_lost[bp] == Approx( 6 ).margin( 4 ) );
-                    // } else
+
+
+
+
                     if( bp != bodypart_id( "head" ) ) {
                         CHECK( bp_hp_lost[bp] == 0 );
                     }
                 }
             }
-            // THEN( "they suffer pain" ) {
-            // 60 * 0.25
-            // pain_felt = test_suffer_pain_felt( dummy, 1_hours );
-            // CHECK( pain_felt == Approx( 15 ).margin( 14 ) );
-            // }
+
+
+
+
+
         }
 
         WHEN( "torso and arms are 90% covered" ) {
@@ -322,15 +322,15 @@ TEST_CASE( "suffering_from_sunburn", "[char][suffer][sunburn]" )
                     if( bp.id().str() == "torso" ) {
                         CHECK( bp_hp_lost[bp] == 0 );
                     }
-                    // else if( bp.id().str() == "arm_l" || bp.id().str() == "arm_r" ) {
-                    // Hands are exposed
-                    // 120 * 0.1 * 1
-                    // CHECK( bp_hp_lost[bp] == Approx( 12 ).margin( 11 ) );
-                    // } else {
-                    // legs+feet combine, and head+mouth combine (doubled damage)
-                    // 120 * 0.1 * 2
-                    // CHECK( bp_hp_lost[bp] == Approx( 24 ).margin( 23 ) );
-                    // }
+
+
+
+
+
+
+
+
+
                 }
             }
         }
@@ -343,19 +343,19 @@ TEST_CASE( "suffering_from_sunburn", "[char][suffer][sunburn]" )
                 REQUIRE_FALSE( dummy.worn_with_flag( flag_SUN_GLASSES ) );
 
                 THEN( "they suffer loss of focus" ) {
-                    // Heavy and medium effects take priority.
-                    // Although the chance for focus loss is written as 1.0 it is in reality 0.65 at 100% exposure
-                    // 0.65 = 1.0 - 0.1 - 0.25
-                    // 39 = 0.65 * 1 * 60
+
+
+
+
                     focus_lost = test_suffer_focus_lost( dummy, 1_hours );
                     CHECK( focus_lost == Approx( 39 ).margin( 30 ) );
                 }
-                // THEN( "they suffer pain" ) {
-                // 60 * 0.25
-                // from exposed eyes as they count as a fully exposed body part
-                // pain_felt = test_suffer_pain_felt( dummy, 1_hours );
-                // CHECK( pain_felt == Approx( 15 ).margin( 14 ) );
-                // }
+
+
+
+
+
+
             }
 
             WHEN( "wearing sunglasses" ) {
@@ -470,7 +470,7 @@ TEST_CASE( "suffering_from_asphyxiation", "[char][suffer][oxygen][grab]" )
         REQUIRE( dummy.oxygen == 46 );
         REQUIRE( !dummy.is_underwater() );
         REQUIRE( dummy.get_stamina() == dummy.get_stamina_max() );
-        // Always spawn the first two grabbers, no need for intensity checks
+
         spawn_test_monster( "mon_debug_memory", dummy.pos_bub() + tripoint::east );
         spawn_test_monster( "mon_debug_memory", dummy.pos_bub() + tripoint::west );
         dummy.add_effect( effect_grabbed, 20_turns, body_part_torso, false, 2, true );

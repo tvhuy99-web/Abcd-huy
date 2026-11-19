@@ -58,7 +58,7 @@ static const quality_id qual_SMOKE_PIPE( "SMOKE_PIPE" );
 
 using item_filter = std::function<bool( const item & )>;
 
-/** @relates visitable */
+
 item *read_only_visitable::find_parent( const item &it ) const
 {
     item *res = nullptr;
@@ -74,7 +74,7 @@ item *read_only_visitable::find_parent( const item &it ) const
     return res;
 }
 
-/** @relates visitable */
+
 std::vector<item *> read_only_visitable::parents( const item &it ) const
 {
     std::vector<item *> res;
@@ -84,7 +84,7 @@ std::vector<item *> read_only_visitable::parents( const item &it ) const
     return res;
 }
 
-/** @relates visitable */
+
 bool read_only_visitable::has_item( const item &it ) const
 {
     return visit_items( [&it]( const item_location & node ) {
@@ -92,7 +92,7 @@ bool read_only_visitable::has_item( const item &it ) const
     } ) == VisitResponse::ABORT;
 }
 
-/** @relates visitable */
+
 bool read_only_visitable::has_item_with( const item_filter &filter ) const
 {
     return visit_items( [&filter]( const item_location & node ) {
@@ -100,13 +100,13 @@ bool read_only_visitable::has_item_with( const item_filter &filter ) const
     } ) == VisitResponse::ABORT;
 }
 
-/** Sums the two terms, being careful to not trigger overflow.
- * Doesn't handle underflow.
- *
- * @param a The first addend.
- * @param b The second addend.
- * @return the sum of the addends, but truncated to std::numeric_limits<int>::max().
- */
+
+
+
+
+
+
+
 template <typename T>
 static T sum_no_wrap( T a, T b )
 {
@@ -129,7 +129,7 @@ static int has_quality_internal_item( const item &self, const quality_id &qual, 
         if( supplied >= level ) {
             qty = sum_no_wrap( qty, count ? count( *e ) : static_cast<int>( e->count() ) );
             if( qty >= limit ) {
-                // found sufficient items
+
                 return VisitResponse::ABORT;
             }
         }
@@ -138,8 +138,8 @@ static int has_quality_internal_item( const item &self, const quality_id &qual, 
     return std::min( qty, limit );
 }
 
-// `measure` decides what quality an item supplies, `count` how many providers it is worth.
-// Empty falls back to get_quality and item::count().
+
+
 template <typename T>
 static int has_quality_internal( const T &self, const quality_id &qual, int level, int limit,
                                  const std::function<int( const item & )> &measure = {},
@@ -162,12 +162,12 @@ static int has_quality_from_vpart( const vehicle &veh, int part, const quality_i
     point_rel_ms pos = veh.part( part ).mount;
     for( const int n : veh.parts_at_relative( pos, true ) ) {
         const vehicle_part &vp = veh.part( n );
-        // only unbroken parts can provide tool qualities
+
         if( !vp.is_broken() ) {
             auto tq = vp.info().qualities;
             auto iter = tq.find( qual );
 
-            // does the part provide this quality?
+
             if( iter != tq.end() && iter->second >= level ) {
                 qty = sum_no_wrap( qty, 1 );
             }
@@ -199,7 +199,7 @@ bool read_only_visitable::has_provider_quality( const quality_id &qual, int leve
     return found;
 }
 
-/** @relates visitable */
+
 bool vehicle_selector::has_quality( const quality_id &qual, int level, int qty ) const
 {
     for( const vehicle_cursor &cursor : *this ) {
@@ -215,7 +215,7 @@ bool vehicle_selector::has_quality( const quality_id &qual, int level, int qty )
     return has_quality_internal( *this, qual, level, qty ) == qty;
 }
 
-/** @relates visitable */
+
 bool vehicle_cursor::has_quality( const quality_id &qual, int level, int qty ) const
 {
     if( !ignore_vpart ) {
@@ -224,7 +224,7 @@ bool vehicle_cursor::has_quality( const quality_id &qual, int level, int qty ) c
     return qty <= 0 ? true : has_quality_internal( *this, qual, level, qty ) == qty;
 }
 
-/** @relates visitable */
+
 bool Character::has_quality( const quality_id &qual, int level, int qty ) const
 {
     for( const bionic &bio : *this->my_bionics ) {
@@ -258,11 +258,11 @@ bool Character::has_quality( const quality_id &qual, int level, int qty ) const
 
 bool Character::has_unreserved_quality( const quality_id &qual, int level, int qty ) const
 {
-    // intrinsic branches are not filtered: a bionic or mutation is shared, so no craft can
-    // take one.  only the item walk is, and per item rather than by ancestry, since the
-    // selector returns one item and the action is node-local.
+
+
+
     for( const bionic &bio : *this->my_bionics ) {
-        // Crafter-aware, or a charged bionic quality resolves through the avatar.
+
         if( provider_quality_level( bio.get_weapon(), qual, this,
                                     false ) >= level ) {
             if( qty <= 1 ) {
@@ -272,10 +272,10 @@ bool Character::has_unreserved_quality( const quality_id &qual, int level, int q
         }
     }
 
-    // level/qty are deliberately ignored on this branch, matching Character::has_quality. an
-    // automation caller must answer as that function does when no reservation is involved,
-    // or converting a call site silently changes what an NPC will do. the crafting gate
-    // counts occurrences instead, through has_intrinsic_quality
+
+
+
+
     for( const trait_id &mut : get_functioning_mutations() ) {
         const auto &q = mut->provided_qualities.find( qual );
         if( q != mut->provided_qualities.end() ) {
@@ -295,8 +295,8 @@ bool Character::has_unreserved_quality( const quality_id &qual, int level, int q
     if( qty <= 0 ) {
         return true;
     }
-    // Nonrecursive, so a container is not credited for a tool inside it that the
-    // selector would then decline to return.
+
+
     const auto measure = [&qual, this]( const item & it ) {
         return craft_reservation::usable_by_automation( it )
                ? provider_quality_level( it, qual, this, false )
@@ -347,12 +347,12 @@ static int max_quality_from_vpart( const vehicle &veh, int part, const quality_i
     for( const int &n : veh.parts_at_relative( pos, true ) ) {
         const vehicle_part &vp = veh.part( n );
 
-        // only unbroken parts can provide tool qualities
+
         if( !vp.is_broken() ) {
             auto tq = vp.info().qualities;
             auto iter = tq.find( qual );
 
-            // does the part provide this quality?
+
             if( iter != tq.end() ) {
                 res = std::max( res, iter->second );
             }
@@ -366,7 +366,7 @@ int read_only_visitable::max_quality( const quality_id &qual ) const
     return max_quality_internal( *this, qual );
 }
 
-/** @relates visitable */
+
 int Character::max_quality( const quality_id &qual ) const
 {
     int res = INT_MIN;
@@ -408,14 +408,14 @@ int Character::max_quality( const quality_id &qual, int radius ) const
     return res;
 }
 
-/** @relates visitable */
+
 int vehicle_cursor::max_quality( const quality_id &qual ) const
 {
     int vpart = ignore_vpart ? 0 : max_quality_from_vpart( veh, part, qual );
     return std::max( vpart, max_quality_internal( *this, qual ) );
 }
 
-/** @relates visitable */
+
 int vehicle_selector::max_quality( const quality_id &qual ) const
 {
     int res = INT_MIN;
@@ -439,13 +439,13 @@ static inline std::vector<T> items_with_internal( V &self, const item_filter
     return res;
 }
 
-/** @relates visitable */
+
 std::vector<const item *> read_only_visitable::items_with(
     const item_filter &filter ) const
 {
     return items_with_internal<const item *>( *this, filter );
 }
-/** @relates visitable */
+
 std::vector<item *> read_only_visitable::items_with(
     const item_filter &filter )
 {
@@ -473,7 +473,7 @@ static VisitResponse visit_internal( const std::function<VisitResponse( const it
             return VisitResponse::NEXT;
     }
 
-    /* never reached but suppresses GCC warning */
+
     return VisitResponse::ABORT;
 }
 
@@ -487,7 +487,7 @@ VisitResponse item_location::visit_contents( const
 static VisitResponse visit_internal_legacy( const std::function<VisitResponse( item *, item * )>
         &func, const item *node, item *parent = nullptr, const std::set<pocket_type> &allowed_pockets = { pocket_type::CONTAINER } )
 {
-    // hack to avoid repetition
+
     item *m_node = const_cast<item *>( node );
 
     switch( func( m_node, parent ) ) {
@@ -504,7 +504,7 @@ static VisitResponse visit_internal_legacy( const std::function<VisitResponse( i
             return VisitResponse::NEXT;
     }
 
-    /* never reached but suppresses GCC warning */
+
     return VisitResponse::ABORT;
 }
 
@@ -559,7 +559,7 @@ VisitResponse item_contents::visit_contents( const
 {
     for( item_pocket &pocket : contents ) {
         if( !pocket.is_type( allowed_pockets ) ) {
-            // anything that is not CONTAINER is accessible only via its specific accessor
+
             continue;
         }
         switch( pocket.visit_contents( func, parent, allowed_pockets ) ) {
@@ -622,14 +622,14 @@ bool item::has_item_with( const std::function<bool( const item & )> &filter ) co
     } ) == VisitResponse::ABORT;
 }
 
-/** @relates visitable */
+
 VisitResponse item_location::visit_items(
     const std::function<VisitResponse( const item_location & )> &func ) const
 {
     return visit_internal( func, *this );
 }
 
-/** @relates visitable */
+
 VisitResponse temp_crafting_inventory::visit_items(
     const std::function<VisitResponse( const item_location & )> &func ) const
 {
@@ -651,7 +651,7 @@ VisitResponse outfit::visit_items( const Character &wearer,
 const
 {
     for( const item &e : worn ) {
-        // i'm cheating with const_cast so i don't have to make a bunch of copies of this function
+
         if( visit_internal( func, item_location( const_cast<Character &>( wearer ),
                             const_cast<item *>( &e ) ) ) == VisitResponse::ABORT ) {
             return VisitResponse::ABORT;
@@ -674,7 +674,7 @@ VisitResponse Character::visit_carried( const std::function<VisitResponse( const
     }
     return VisitResponse::NEXT;
 }
-/** @relates visitable */
+
 VisitResponse Character::visit_items( const std::function<VisitResponse( const item_location & )>
                                       &func )
 const
@@ -695,7 +695,7 @@ const
 static VisitResponse visit_items_internal( map *here,
         const tripoint_bub_ms p, const std::function<VisitResponse( const item_location & )> &func )
 {
-    // check furniture pseudo items
+
     if( here->furn( p ) != furn_str_id::NULL_ID() ) {
         itype_id it_id = here->furn( p )->crafting_pseudo_item;
         if( it_id.is_valid() ) {
@@ -706,7 +706,7 @@ static VisitResponse visit_items_internal( map *here,
         }
     }
 
-    // skip inaccessible items
+
     if( here->has_flag( ter_furn_flag::TFLAG_SEALED, p ) &&
         !here->has_flag( ter_furn_flag::TFLAG_LIQUIDCONT, p ) ) {
         return VisitResponse::NEXT;
@@ -720,17 +720,17 @@ static VisitResponse visit_items_internal( map *here,
     return VisitResponse::NEXT;
 }
 
-/** @relates visitable */
+
 VisitResponse map_cursor::visit_items(
     const std::function<VisitResponse( const item_location & )> &func ) const
 {
     if( get_map().inbounds( pos_bub() ) ) {
         return visit_items_internal( &get_map(), pos_bub(), func );
     } else {
-        tinymap here; // Tinymap is sufficient. Only looking at single location, so no Z level need.
-        // pos returns the pos_bub location of the target relative to the reality bubble
-        // even though the location isn't actually inside of it. Thus, we're loading a map
-        // around that location to do our work.
+        tinymap here;
+
+
+
         const tripoint_abs_ms abs_pos = pos_abs();
         here.load( project_to<coords::omt>( abs_pos ), false );
         tripoint_omt_ms p = here.get_omt( abs_pos );
@@ -738,7 +738,7 @@ VisitResponse map_cursor::visit_items(
     }
 }
 
-/** @relates visitable */
+
 VisitResponse map_selector::visit_items(
     const std::function<VisitResponse( const item_location & )> &func ) const
 {
@@ -750,7 +750,7 @@ VisitResponse map_selector::visit_items(
     return VisitResponse::NEXT;
 }
 
-/** @relates visitable */
+
 VisitResponse vehicle_cursor::visit_items(
     const std::function<VisitResponse( const item_location & )> &func ) const
 {
@@ -767,7 +767,7 @@ VisitResponse vehicle_cursor::visit_items(
     return VisitResponse::NEXT;
 }
 
-/** @relates visitable */
+
 VisitResponse vehicle_selector::visit_items(
     const std::function<VisitResponse( const item_location & )> &func ) const
 {
@@ -779,7 +779,7 @@ VisitResponse vehicle_selector::visit_items(
     return VisitResponse::NEXT;
 }
 
-/** @relates visitable */
+
 item visitable::remove_item( item &it )
 {
     auto obj = remove_items_with( [&it]( const item & e ) {
@@ -796,21 +796,21 @@ item visitable::remove_item( item &it )
     }
 }
 
-/** @relates visitable */
+
 std::list<item> item_location::remove_items_with( const std::function<bool( const item &e )>
         &filter, int count )
 {
     std::list<item> res;
 
     if( count <= 0 || !valid() ) {
-        // nothing to do
+
         return res;
     }
 
     get_item()->remove_internal( filter, count, res );
 
-    // updating pockets is only necessary when removing mods,
-    // but no way to determine where something got removed here
+
+
     get_item()->update_modified_pockets();
 
     if( !res.empty() ) {
@@ -847,7 +847,7 @@ std::list<item> temp_crafting_inventory::remove_items_with( const
     std::list<item> res;
 
     if( count <= 0 ) {
-        // nothing to do
+
         return res;
     }
 
@@ -912,25 +912,25 @@ std::list<item> outfit::remove_items_with( Character &guy,
     return res;
 }
 
-/** @relates visitable */
+
 std::list<item> Character::remove_items_with( const
         std::function<bool( const item &e )> &filter, int count )
 {
     std::list<item> res;
 
     if( count <= 0 ) {
-        // nothing to do
+
         return res;
     }
 
     invalidate_weight_carried_cache();
 
-    // then try any worn items
+
     std::list<item> worn_res = worn.remove_items_with( *this, filter, count );
     res.insert( res.end(), worn_res.begin(), worn_res.end() );
 
     if( count > 0 ) {
-        // finally try the currently wielded item (if any)
+
         if( filter( weapon ) ) {
             res.push_back( remove_weapon() );
             count--;
@@ -942,14 +942,14 @@ std::list<item> Character::remove_items_with( const
     return res;
 }
 
-/** @relates visitable */
+
 std::list<item> map_cursor::remove_items_with( const
         std::function<bool( const item &e )> &filter, int count )
 {
     std::list<item> res;
 
     if( count <= 0 ) {
-        // nothing to do
+
         return res;
     }
 
@@ -959,20 +959,20 @@ std::list<item> map_cursor::remove_items_with( const
         return res;
     }
 
-    // fetch the appropriate item stack
+
     point_sm_ms offset;
     submap *sub = here.get_submap_at( pos_bub(), offset );
     cata::colony<item> &stack = sub->get_items( offset );
 
     for( auto iter = stack.begin(); iter != stack.end(); ) {
         if( filter( *iter ) ) {
-            // if necessary remove item from the luminosity map
+
             sub->update_lum_rem( offset, *iter );
             if( iter->is_emissive() ) {
                 here.set_lightmap_cache_dirty( pos_bub().z() );
             }
 
-            // finally remove the item
+
             res.push_back( *iter );
             iter = stack.erase( iter );
 
@@ -990,7 +990,7 @@ std::list<item> map_cursor::remove_items_with( const
     return res;
 }
 
-/** @relates visitable */
+
 std::list<item> map_selector::remove_items_with( const
         std::function<bool( const item &e )> &filter, int count )
 {
@@ -1005,14 +1005,14 @@ std::list<item> map_selector::remove_items_with( const
     return res;
 }
 
-/** @relates visitable */
+
 std::list<item> vehicle_cursor::remove_items_with( const
         std::function<bool( const item &e )> &filter, int count )
 {
     std::list<item> res;
 
     if( count <= 0 ) {
-        // nothing to do
+
         return res;
     }
     const vehicle_part &vp = veh.part( part );
@@ -1044,14 +1044,14 @@ std::list<item> vehicle_cursor::remove_items_with( const
     }
 
     if( !res.empty() ) {
-        // if we removed any items then invalidate the cached mass
+
         veh.invalidate_mass();
     }
 
     return res;
 }
 
-/** @relates visitable */
+
 std::list<item> vehicle_selector::remove_items_with( const
         std::function<bool( const item &e )> &filter, int count )
 {
@@ -1068,9 +1068,9 @@ std::list<item> vehicle_selector::remove_items_with( const
 
 namespace
 {
-// Per-tool stock for charges_of dedup. Legacy contributes local charges;
-// multimag records per-battery-pocket so shared-pool greedy can bill K uses
-// without re-solving firing_requirements.
+
+
+
 struct tool_stock_entry {
     enum class kind_t { LEGACY, MULTIMAG };
     kind_t kind = kind_t::LEGACY;
@@ -1080,7 +1080,7 @@ struct tool_stock_entry {
     const item *src = nullptr;
     std::vector<std::pair<int, int>> battery;
 };
-} // namespace
+}
 
 static tool_stock_entry build_multimag_entry( const item &e )
 {
@@ -1090,7 +1090,7 @@ static tool_stock_entry build_multimag_entry( const item &e )
     out.uses_bionic = e.has_flag( json_flag_USES_BIONIC_POWER );
     out.src = &e;
 
-    // Tools lower consumption_per_use into firing_requirements per_mode[DEFAULT].
+
     const std::vector<pocket_consumption_entry> *entries =
         e.type->firing_requirements.for_mode( gun_mode_DEFAULT );
     if( entries == nullptr ) {
@@ -1190,7 +1190,7 @@ static int apply_external_pools_legacy( const M &main,
         any_ups = any_ups || e.uses_ups;
         any_bionic = any_bionic || e.uses_bionic;
     }
-    // bio_ups: USE_UPS tools also drain active bio_ups bionic energy.
+
     if( any_ups && qty < limit && get_player_character().has_active_bionic( bio_ups ) ) {
         qty = sum_no_wrap( qty, static_cast<int>( units::to_kilojoule(
                                get_player_character().get_power_level() ) ) );
@@ -1219,8 +1219,8 @@ static int apply_external_pools_multimag( const M &main,
         any_ups = any_ups || e.uses_ups;
         any_bionic = any_bionic || e.uses_bionic;
     }
-    // UPS goes through main so ground UPS in crafting_inventory is seen.
-    // Character::charges_of(itype_UPS) strips bio_ups; add it back here.
+
+
     int external = 0;
     if( any_bionic ) {
         external = sum_no_wrap( external, static_cast<int>( units::to_kilojoule(
@@ -1241,14 +1241,14 @@ static int apply_external_pools_multimag( const M &main,
         if( e.src == nullptr ) {
             continue;
         }
-        // Cable to a linked vehicle battery is per-tool, not shared, so it
-        // adds to this tool's budget without affecting the shared external.
+
+
         const int cable_pool = e.src->available_cable_charges( here );
         const int budget = sum_no_wrap( external_remaining, cable_pool );
         const int uses = e.src->feasible_tool_uses( budget );
-        // Battery consumed for K uses is sum max(0, K * per_use - local) over
-        // battery pockets. Drain cable first (matches firing-loop order), then
-        // bill the remainder to the shared external pool.
+
+
+
         int64_t consumed = 0;
         for( const std::pair<int, int> &b : e.battery ) {
             const int64_t per = b.second;
@@ -1339,7 +1339,7 @@ std::pair<int, int> Character::kcal_range( const itype_id &id,
     return kcal_range_of_internal( *this, id, filter, player_character );
 }
 
-/** @relates visitable */
+
 int read_only_visitable::charges_of( const itype_id &what, int limit,
                                      const item_filter &filter,
                                      const std::function<void( int )> &visitor, bool in_tools ) const
@@ -1347,7 +1347,7 @@ int read_only_visitable::charges_of( const itype_id &what, int limit,
     return charges_of_internal( *this, *this, what, limit, filter, visitor, in_tools );
 }
 
-/** @relates visitable */
+
 int Character::charges_of( const itype_id &what, int limit,
                            const item_filter &filter,
                            const std::function<void( int )> &visitor, bool in_tools ) const
@@ -1355,7 +1355,7 @@ int Character::charges_of( const itype_id &what, int limit,
     if( what == itype_UPS ) {
         int ups_power = units::to_kilojoule( available_ups() );
         if( has_active_bionic( bio_ups ) ) {
-            // Subtract bionic UPS as that is not handled here
+
             ups_power -= units::to_kilojoule( get_power_level() );
         }
         return std::min( ups_power, limit );
@@ -1379,7 +1379,7 @@ static int amount_of_internal( const T &self, const itype_id &id, bool pseudo, i
     return qty;
 }
 
-/** @relates visitable */
+
 int read_only_visitable::amount_of( const itype_id &what, bool pseudo, int limit,
                                     const item_filter &filter ) const
 {
@@ -1411,12 +1411,12 @@ int item::charges_of( const itype_id &what, int limit,
     return apply_external_pools( *this, entries, limit, visitor, raw_ups_charges );
 }
 
-/** @relates visitable */
+
 int temp_crafting_inventory::charges_of( const itype_id &what, int limit,
         const item_filter &filter,
         const std::function<void( int )> &visitor, bool in_tools ) const
 {
-    // Loaded ammo and `any` have no index entry, so those queries walk live
+
     if( in_tools || what == itype_any ) {
         return read_only_visitable::charges_of( what, limit, filter, visitor, in_tools );
     }
@@ -1444,11 +1444,11 @@ int temp_crafting_inventory::charges_of( const itype_id &what, int limit,
     return apply_external_pools( *this, entries, limit, visitor, raw_ups_charges );
 }
 
-/** @relates visitable */
+
 int temp_crafting_inventory::amount_of( const itype_id &what, bool pseudo, int limit,
                                         const item_filter &filter ) const
 {
-    // at limit zero the live walk stops early on a mismatch, which the index can't mirror
+
     if( what == itype_any || limit <= 0 ) {
         return read_only_visitable::amount_of( what, pseudo, limit, filter );
     }
@@ -1472,7 +1472,7 @@ int temp_crafting_inventory::amount_of( const itype_id &what, bool pseudo, int l
     return std::min( qty, limit );
 }
 
-/** @relates visitable */
+
 int Character::amount_of( const itype_id &what, bool pseudo, int limit,
                           const item_filter &filter ) const
 {
@@ -1498,7 +1498,7 @@ int Character::amount_of( const itype_id &what, bool pseudo, int limit,
     return amount_of_internal( *this, what, pseudo, limit, filter );
 }
 
-/** @relates visitable */
+
 bool read_only_visitable::has_amount( const itype_id &what, int qty, bool pseudo,
                                       const item_filter &filter ) const
 {

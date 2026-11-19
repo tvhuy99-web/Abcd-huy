@@ -31,7 +31,7 @@ static const bodypart_str_id body_part_all( "all" );
 
 namespace io
 {
-    // *INDENT-OFF*
+
     template<>
     std::string enum_to_string<enchantment::has>( enchantment::has data )
     {
@@ -186,13 +186,13 @@ namespace io
         }
         cata_fatal( "Invalid enchant_vals::mod" );
     }
-    // *INDENT-ON*
-} // namespace io
+
+}
 
 namespace
 {
 generic_factory<enchantment> spell_factory( "enchantment" );
-} // namespace
+}
 
 template<>
 const enchantment &string_id<enchantment>::obj() const
@@ -249,11 +249,11 @@ static void load_add_and_multiply( const JsonObject &jo, std::string_view array_
     if( jo.has_array( array_key ) ) {
         for( const JsonObject value_obj : jo.get_array( array_key ) ) {
 
-            // Migration from accidental corruption, remove after 0.J
+
             const TKey value = !value_obj.has_string( type_key ) && value_obj.has_string( "value" ) ?
                                TKey( value_obj.get_string( "value" ) ) :
                                TKey( value_obj.get_string( type_key ) );
-            // Values of 0 used to be serialised exist (removed in 0.J exp) so for now load based on != 0 rather than on member existance
+
             const double add = value_obj.get_float( "add", 0.0 );
             const double mult = value_obj.get_float( "multiply", 0.0 );
 
@@ -421,10 +421,10 @@ bool enchantment::is_active( const vehicle &veh, const bool active ) const
     return false;
 }
 
-// Returns true if this enchantment is relevant to monsters. Enchantments that are not relevant to monsters are not processed by monsters.
+
 bool enchantment::is_monster_relevant() const
 {
-    // Check add values.
+
     for( const std::pair<const enchant_vals::mod, dbl_or_var> &pair_values :
          values_add ) {
         if( pair_values.first == enchant_vals::mod::ARMOR_ALL ||
@@ -438,7 +438,7 @@ bool enchantment::is_monster_relevant() const
         }
     }
 
-    // Check mult values.
+
     for( const std::pair<const enchant_vals::mod, dbl_or_var> &pair_values :
          values_multiply ) {
         if( pair_values.first == enchant_vals::mod::ARMOR_ALL ||
@@ -452,7 +452,7 @@ bool enchantment::is_monster_relevant() const
         }
     }
 
-    // check for hit you / me effects
+
     if( !hit_you_effect.empty() || !hit_me_effect.empty() ) {
         return true;
     }
@@ -465,10 +465,10 @@ bool enchantment::is_monster_relevant() const
     return false;
 }
 
-// Returns true if this enchantment is relevant to vehicles. Enchantments that are not relevant to vehicles are not processed by vehicles.
+
 bool enchantment::is_vehicle_relevant() const
 {
-    // Check add values.
+
     for( const std::pair<const enchant_vals::mod, dbl_or_var> &pair_values :
          values_add ) {
         if( pair_values.first == enchant_vals::mod::TOTAL_WEIGHT ||
@@ -478,7 +478,7 @@ bool enchantment::is_vehicle_relevant() const
         }
     }
 
-    // Check mult values.
+
     for( const std::pair<const enchant_vals::mod, dbl_or_var> &pair_values :
          values_multiply ) {
         if( pair_values.first == enchant_vals::mod::TOTAL_WEIGHT ||
@@ -632,7 +632,7 @@ void enchant_cache::load( const JsonObject &jo, std::string_view,
     enchantment::load( jo, "", inline_id, true );
     if( jo.has_array( "values" ) ) {
 
-        // enchantments to be silently skipped for recent obsoletion purposes
+
         static const std::set<std::string> legacy_values = { };
 
         for( const JsonObject value_obj : jo.get_array( "values" ) ) {
@@ -851,8 +851,8 @@ void enchant_cache::force_add( const enchant_cache &rhs )
         values_add[pair_values.first] += pair_values.second;
     }
     for( const std::pair<const enchant_vals::mod, double> &pair_values : rhs.values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         values_multiply[pair_values.first] += pair_values.second;
     }
 
@@ -862,8 +862,8 @@ void enchant_cache::force_add( const enchant_cache &rhs )
     }
     for( const std::pair<const skill_id, double> &pair_values :
          rhs.skill_values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         skill_values_multiply[pair_values.first] += pair_values.second;
     }
 
@@ -872,8 +872,8 @@ void enchant_cache::force_add( const enchant_cache &rhs )
     }
     for( const std::pair<const damage_type_id, double> &pair_values :
          rhs.damage_values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         damage_values_multiply[pair_values.first] += pair_values.second;
     }
 
@@ -882,8 +882,8 @@ void enchant_cache::force_add( const enchant_cache &rhs )
     }
     for( const std::pair<const bodypart_str_id, double> &pair_values :
          rhs.encumbrance_values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         encumbrance_values_multiply[pair_values.first] += pair_values.second;
     }
 
@@ -892,8 +892,8 @@ void enchant_cache::force_add( const enchant_cache &rhs )
     }
     for( const std::pair<const damage_type_id, double> &pair_values :
          rhs.armor_values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         armor_values_multiply[pair_values.first] += pair_values.second;
     }
 
@@ -902,11 +902,11 @@ void enchant_cache::force_add( const enchant_cache &rhs )
     }
     for( const std::pair<const damage_type_id, double> &pair_values :
          rhs.extra_damage_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         extra_damage_multiply[pair_values.first] += pair_values.second;
     }
-    // from cache to cache?
+
     for( const special_vision &struc : rhs.special_vision_vector ) {
         special_vision_vector.emplace_back( special_vision{
             struc.special_vision_descriptions_vector, struc.condition, struc.range,
@@ -971,8 +971,8 @@ void enchant_cache::force_add_with_dialogue( const enchantment &rhs, const const
     }
     for( const std::pair<const enchant_vals::mod, dbl_or_var> &pair_values :
          rhs.values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         values_multiply[pair_values.first] += pair_values.second.evaluate( d );
     }
 
@@ -982,8 +982,8 @@ void enchant_cache::force_add_with_dialogue( const enchantment &rhs, const const
     }
     for( const std::pair<const skill_id, dbl_or_var> &pair_values :
          rhs.skill_values_multiply ) {
-        // values do not multiply against each other, they add.
-        // so +10% and -10% will add to 0%
+
+
         skill_values_multiply[pair_values.first] += pair_values.second.evaluate( d );
     }
 
@@ -1103,10 +1103,10 @@ double enchantment::get_value_multiply( const enchant_vals::mod value, const Cha
 
 enchantment::special_vision enchantment::get_vision( const const_dialogue &d ) const
 {
-    // Maybe it's a bad idea to make it part of enchantment code
-    // maybe it should be it's own instance of json
-    // and enchantment code simply adds values to this instance?
-    // `"special_vision" { "id": "nether_vision", "bonus": 20 }`
+
+
+
+
 
     if( special_vision_vector.empty() ) {
         return {};
@@ -1115,9 +1115,9 @@ enchantment::special_vision enchantment::get_vision( const const_dialogue &d ) c
     const double distance = rl_dist_exact( d.const_actor( true )->pos_abs(),
                                            d.const_actor( false )->pos_abs() );
 
-    // first iterate over structs that has ignores_aiming_cone true
-    // to prevent cata_tiles::draw_critter_at() from picking texture
-    // that cannot be rendered because it's behind you while you are aiming
+
+
+
     for( const special_vision &struc : special_vision_vector ) {
         if( struc.ignores_aiming_cone && struc.range.evaluate( d ) >= distance &&  struc.condition( d ) ) {
             return struc;
@@ -1386,7 +1386,7 @@ body_part_set enchantment::modify_bodyparts( const body_part_set &unmodified ) c
 
 void enchant_cache::activate_passive( Character &guy ) const
 {
-    // since it's a modifier, need to remove original value from the math
+
     guy.mod_str_bonus( modify_value( enchant_vals::mod::STRENGTH,
                                      guy.get_str_base() ) - guy.get_str_base() );
 
@@ -1416,7 +1416,7 @@ void enchant_cache::activate_passive( Character &guy ) const
     }
     for( const std::pair<const time_duration, std::vector<fake_spell>> &activation :
          intermittent_activation ) {
-        // a random approximation!
+
         if( one_in( to_seconds<int>( activation.first ) ) ) {
             for( const fake_spell &fake : activation.second ) {
                 fake.get_spell( guy, 0 ).cast_all_effects( guy, guy.pos_bub() );
@@ -1456,7 +1456,7 @@ void enchant_cache::cast_hit_me( Character &caster, const Creature *target ) con
 void enchant_cache::cast_enchantment_spell( Creature &caster, const Creature *target,
         const fake_spell &sp ) const
 {
-    // check the chances
+
     if( !one_in( sp.trigger_once_in ) ) {
         return;
     }
@@ -1486,8 +1486,8 @@ void enchant_cache::cast_enchantment_spell( Creature &caster, const Creature *ta
 
 void enchant_cache::clear()
 {
-    //I'm trusting all of these vectors and maps to have clear functions that avoid memory leaks.
-    //Fingers crossed!
+
+
     values_add.clear();
     values_multiply.clear();
     skill_values_add.clear();

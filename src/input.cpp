@@ -32,7 +32,7 @@ static const std::string default_context_id( "default" );
 
 static int str_to_int( const std::string &number )
 {
-    // ensure user's locale doesn't interfere with number format
+
     std::istringstream buffer( number );
     buffer.imbue( std::locale::classic() );
     int result;
@@ -42,7 +42,7 @@ static int str_to_int( const std::string &number )
 
 static std::string int_to_str( int number )
 {
-    // ensure user's locale doesn't interfere with number format
+
     std::ostringstream buffer;
     buffer.imbue( std::locale::classic() );
     buffer << number;
@@ -67,13 +67,13 @@ bool is_keycode_mode_supported()
 #endif
 }
 
-//helper function for those have problem inputting certain characters.
+
 std::string get_input_string_from_file( const std::string &fname )
 {
     std::string ret;
     read_from_file_optional( fname, [&ret]( std::istream & fin ) {
         getline( fin, ret );
-        //remove utf8 bmm
+
         if( !ret.empty() && static_cast<unsigned char>( ret[0] ) == 0xef ) {
             ret.erase( 0, 3 );
         }
@@ -116,7 +116,7 @@ static const std::vector<std::pair<keymod_t, translation>> keymod_long_desc = {
 std::string input_event::long_description() const
 {
     std::string rval;
-    // test in fixed order to generate consistent description
+
     for( const auto &v : keymod_long_desc ) {
         if( modifiers.count( v.first ) ) {
             rval += v.second.translated();
@@ -130,20 +130,20 @@ std::string input_event::long_description() const
 
 static const std::vector<std::pair<keymod_t, std::string>> keymod_short_desc = {
     { keymod_t::ctrl,  "^" },
-    { keymod_t::alt,   "\u2325" }, // option key
-    { keymod_t::shift, "\u21E7" }, // upwards white arrow
+    { keymod_t::alt,   "\u2325" },
+    { keymod_t::shift, "\u21E7" },
 };
 
 std::string input_event::short_description() const
 {
     std::string rval;
-    // test in fixed order to generate consistent description
+
     for( const auto &v : keymod_short_desc ) {
         if( modifiers.count( v.first ) ) {
             rval += v.second;
         }
     }
-    // TODO: add short description for control keys such as return, tab, etc
+
     for( const int code : sequence ) {
         rval += inp_mngr.get_keyname( code, type );
     }
@@ -177,7 +177,7 @@ void input_manager::init()
     } catch( const JsonError &err ) {
         throw std::runtime_error( err.what() );
     }
-    // save non customized keybindings
+
     basic_action_contexts = action_contexts;
     try {
         load( PATH_INFO::user_keybindings(), true );
@@ -186,47 +186,47 @@ void input_manager::init()
     }
 
     if( keymap_file_loaded_from.empty() || ( keymap.empty() && unbound_keymap.empty() ) ) {
-        // No keymap file was loaded, or the file has no mappings and no unmappings,
-        // we can skip the remaining part of the function, especially the save function
+
+
         return;
     }
     t_actions &actions = action_contexts["DEFAULTMODE"];
     std::set<action_id> touched;
     for( const std::pair<const char, action_id> &a : keymap ) {
         const std::string action_id = action_ident( a.second );
-        // Put the binding from keymap either into the global context
-        // (if an action with that ident already exists there - think movement keys)
-        // or otherwise to the DEFAULTMODE context.
+
+
+
         std::string context = "DEFAULTMODE";
         if( action_contexts[default_context_id].count( action_id ) > 0 ) {
             context = default_context_id;
         } else if( touched.count( a.second ) == 0 ) {
-            // Note: movement keys are somehow special as the default in keymap
-            // does not contain the arrow keys, so we don't clear existing keybindings
-            // for them.
-            // If the keymap contains a binding for this action, erase all the
-            // previously (default!) existing bindings, to only keep the bindings,
-            // the user is used to
+
+
+
+
+
+
             action_contexts[action_id].clear();
             touched.insert( a.second );
         }
         add_input_for_action( action_id, context, input_event( a.first, input_event_t::keyboard_char ) );
     }
-    // Unmap actions that are explicitly not mapped
+
     for( const action_id &elem : unbound_keymap ) {
         const std::string action_id = action_ident( elem );
         actions[action_id].input_events.clear();
     }
-    // Imported old bindings from old keymap file, save those to the new
-    // keybindings.json file.
+
+
     try {
         save();
     } catch( std::exception &err ) {
         debugmsg( "Could not write imported keybindings: %s", err.what() );
         return;
     }
-    // Finally if we did import a file, and saved it to the new keybindings
-    // file, delete the old keymap file to prevent re-importing it.
+
+
     if( !keymap_file_loaded_from.empty() ) {
         remove_file( keymap_file_loaded_from );
     }
@@ -239,8 +239,8 @@ void input_manager::load( const cata_path &file_name, bool is_user_preferences )
     std::optional<JsonValue> jsin_opt = json_loader::from_path_opt( file_name );
 
     if( !jsin_opt.has_value() ) {
-        // Only throw if this is the first file to load, that file _must_ exist,
-        // otherwise the keybindings can not be read at all.
+
+
         if( action_contexts.empty() ) {
             throw std::runtime_error( std::string( "Could not read " ) + file_name.generic_u8string() );
         }
@@ -249,14 +249,14 @@ void input_manager::load( const cata_path &file_name, bool is_user_preferences )
 
     JsonArray actions_json = *jsin_opt;
 
-    //Crawl through once and create an entry for every definition
+
     for( JsonObject action : actions_json ) {
-        // JSON object representing the action
+
 
         int version = current_keybinding_version;
         if( is_user_preferences ) {
-            // if there isn't a "version" value it means the object was written before
-            // introduction of keybinding version, which is denoted by version 0.
+
+
             version = action.get_int( "version", 0 );
         }
 
@@ -319,7 +319,7 @@ void input_manager::load( const cata_path &file_name, bool is_user_preferences )
                         new_event.sequence.push_back( get_keycode( new_event.type, line ) );
                     }
                 }
-            } else { // assume string if not array, and throw if not string
+            } else {
                 for( input_event &new_event : new_events ) {
                     new_event.sequence.push_back(
                         get_keycode( new_event.type, keybinding.get_string( "key" ) )
@@ -334,12 +334,12 @@ void input_manager::load( const cata_path &file_name, bool is_user_preferences )
             }
 
             if( is_user_preferences && version <= 1 ) {
-                // Add keypad enter to old keybindings with return key
+
                 for( const input_event &evt : new_events ) {
                     input_event new_evt = evt;
                     bool has_return = false;
-                    // As of version 2 the key sequence actually only supports
-                    // one key, so we just replace all return with enter
+
+
                     if( new_evt.type == input_event_t::keyboard_char ) {
                         for( int &key : new_evt.sequence ) {
                             if( key == '\n' ) {
@@ -355,14 +355,14 @@ void input_manager::load( const cata_path &file_name, bool is_user_preferences )
             }
         }
 
-        // In case this is the second file containing user preferences,
-        // this replaces the default bindings with the user's preferences.
+
+
         action_attributes &attributes = actions[action_id];
         if( is_user_preferences && version == 0 ) {
-            // version 0 means the keybinding was written prior to the division
-            // of `input_event_t::keyboard_char` and `input_event_t::keyboard_code`,
-            // so we copy any `input_event_t::keyboard_code` event from the default
-            // keybindings to be compatible with old user keybinding files.
+
+
+
+
             for( const input_event &evt : attributes.input_events ) {
                 if( evt.type == input_event_t::keyboard_code ) {
                     events.emplace_back( evt );
@@ -396,7 +396,7 @@ void input_manager::save()
                     jsout.member( "is_user_created", is_user_created );
                 }
 
-                // optimization: no writing if empty
+
                 if( !events.empty() ) {
                     jsout.member( "bindings" );
                     jsout.start_array();
@@ -419,7 +419,7 @@ void input_manager::save()
                                 throw std::runtime_error( "unknown input_event_t" );
                         }
 
-                        // optimization: no writing if empty
+
                         if( !event.modifiers.empty() ) {
                             jsout.member( "mod" );
                             jsout.start_array();
@@ -488,8 +488,8 @@ static constexpr int char_key_end = '~';
 
 void input_manager::init_keycode_mapping()
 {
-    // Between space and tilde, all keys more or less map
-    // to themselves(see ASCII table)
+
+
     for( char c = char_key_beg; c <= char_key_end; c++ ) {
         std::string name( 1, c );
         add_keyboard_char_keycode_pair( c, name );
@@ -517,17 +517,17 @@ void input_manager::init_keycode_mapping()
                                     translate_marker_context( "key name", "KEYPAD_ENTER" ) );
 
     for( int c = 0; IS_CTRL_CHAR( c ); c++ ) {
-        // Some codes fall into this range but have more common names we'd prefer to use.
+
         if( !IS_NAMED_CTRL_CHAR( c ) ) {
-            // These are directly translated in `get_keyname()`
+
             // NOLINTNEXTLINE(cata-translate-string-literal)
             add_keyboard_char_keycode_pair( c, string_format( "CTRL+%c", c + 64 ) );
         }
     }
 
-    // function keys, as defined by ncurses
+
     for( int i = F_KEY_NUM_BEG; i <= F_KEY_NUM_END; i++ ) {
-        // These are directly translated in `get_keyname()`
+
         // NOLINTNEXTLINE(cata-translate-string-literal)
         add_keyboard_char_keycode_pair( KEY_F( i ), string_format( "F%d", i ) );
     }
@@ -647,7 +647,7 @@ void input_manager::init_keycode_mapping()
                               "RS_UP_RIGHT" ) );
     add_gamepad_keycode_pair( JOY_RS_DOWN_RIGHT, translate_marker_context( "key name",
                               "RS_DOWN_RIGHT" ) );
-    // Named gamepad buttons
+
     add_gamepad_keycode_pair( JOY_A,         translate_marker_context( "key name", "A" ) );
     add_gamepad_keycode_pair( JOY_B,         translate_marker_context( "key name", "B" ) );
     add_gamepad_keycode_pair( JOY_X,         translate_marker_context( "key name", "X" ) );
@@ -666,7 +666,7 @@ void input_manager::init_keycode_mapping()
     add_gamepad_keycode_pair( JOY_START,     translate_marker_context( "key name", "START" ) );
     add_gamepad_keycode_pair( JOY_BACK,      translate_marker_context( "key name", "BACK" ) );
 
-    // ALT variants
+
     add_gamepad_keycode_pair( JOY_ALT_A,     translate_marker_context( "key name", "ALT_A" ) );
     add_gamepad_keycode_pair( JOY_ALT_B,     translate_marker_context( "key name", "ALT_B" ) );
     add_gamepad_keycode_pair( JOY_ALT_X,     translate_marker_context( "key name", "ALT_X" ) );
@@ -687,7 +687,7 @@ void input_manager::init_keycode_mapping()
     add_gamepad_keycode_pair( JOY_ALT_START, translate_marker_context( "key name", "ALT_START" ) );
     add_gamepad_keycode_pair( JOY_ALT_BACK,  translate_marker_context( "key name", "ALT_BACK" ) );
 
-    // Left radial menu
+
     add_gamepad_keycode_pair( JOY_L_RADIAL_N,  translate_marker_context( "key name",
                               "L_RADIAL_N" ) );
     add_gamepad_keycode_pair( JOY_L_RADIAL_NE, translate_marker_context( "key name",
@@ -705,7 +705,7 @@ void input_manager::init_keycode_mapping()
     add_gamepad_keycode_pair( JOY_L_RADIAL_NW, translate_marker_context( "key name",
                               "L_RADIAL_NW" ) );
 
-    // Right radial menu
+
     add_gamepad_keycode_pair( JOY_R_RADIAL_N,  translate_marker_context( "key name",
                               "R_RADIAL_N" ) );
     add_gamepad_keycode_pair( JOY_R_RADIAL_NE, translate_marker_context( "key name",
@@ -773,7 +773,7 @@ int input_manager::get_keycode( const input_event_t inp_type, const std::string 
             return it->second;
         }
     }
-    // Not found in map, try to parse as int
+
     if( name.compare( 0, 8, "UNKNOWN_" ) == 0 ) {
         return str_to_int( name.substr( 8 ) );
     }
@@ -805,8 +805,8 @@ std::string input_manager::get_keyname( int ch, input_event_t inp_type, bool por
             switch( inp_type ) {
                 case input_event_t::keyboard_char:
                     if( IS_F_KEY( ch ) ) {
-                        // special case it since F<num> key names are generated using loop
-                        // and not marked individually for translation
+
+
                         if( portable ) {
                             return it->second;
                         } else {
@@ -819,13 +819,13 @@ std::string input_manager::get_keyname( int ch, input_event_t inp_type, bool por
                             return string_format( pgettext( "control key name", "CTRL+%c" ), ch + 64 );
                         }
                     } else if( ch >= char_key_beg && ch <= char_key_end && ch != ' ' ) {
-                        // character keys except space need no translation
+
                         return it->second;
                     }
                     break;
                 case input_event_t::keyboard_code:
                     if( ch >= char_key_beg && ch < char_key_end && ch != ' ' ) {
-                        // character keys except space need no translation
+
                         return it->second;
                     }
                     break;
@@ -881,7 +881,7 @@ const action_attributes &input_manager::get_action_attributes(
             : action_contexts;
 
     if( context != default_context_id ) {
-        // Check if the action exists in the provided context
+
         const t_action_contexts::const_iterator action_context = action_contexts_ref.find( context );
         if( action_context != action_contexts_ref.end() ) {
             const t_actions::const_iterator action = action_context->second.find( action_id );
@@ -895,7 +895,7 @@ const action_attributes &input_manager::get_action_attributes(
         }
     }
 
-    // If not, we use the default binding.
+
     if( overwrites_default ) {
         *overwrites_default = false;
     }
@@ -903,8 +903,8 @@ const action_attributes &input_manager::get_action_attributes(
     t_actions &default_action_context = action_contexts_ref[default_context_id];
     const t_actions::const_iterator default_action = default_action_context.find( action_id );
     if( default_action == default_action_context.end() ) {
-        // A new action is created in the event that the requested action is
-        // not in the keybindings configuration e.g. the entry is missing.
+
+
         default_action_context[action_id].name = get_default_action_name( action_id );
     }
 
@@ -930,13 +930,13 @@ translation input_manager::get_default_action_name( const std::string &action_id
 input_manager::t_input_event_list &input_manager::get_or_create_event_list(
     const std::string &action_descriptor, const std::string &context )
 {
-    // A new context is created in the event that the user creates a local
-    // keymapping in a context that doesn't yet exist e.g. a context without
-    // any pre-existing keybindings.
+
+
+
     t_actions &actions = action_contexts[context];
 
-    // A new action is created in the event that the user creates a local
-    // keymapping that masks a global one.
+
+
     if( actions.find( action_descriptor ) == actions.end() ) {
         action_attributes &attributes = actions[action_descriptor];
         attributes.name = get_default_action_name( action_descriptor );
@@ -959,14 +959,14 @@ bool input_manager::remove_input_for_action(
         return false;
     }
     if( action->second.is_user_created ) {
-        // Since this is a user created hotkey, remove it so that the
-        // user will fallback to the hotkey in the default context.
+
+
         actions.erase( action );
         return true;
     }
-    // If a context no longer has any keybindings remaining for an action but
-    // there's an attempt to remove bindings anyway, presumably the user wants
-    // to fully remove the binding from that context.
+
+
+
     if( action->second.input_events.empty() ) {
         actions.erase( action );
         return true;
@@ -1006,7 +1006,7 @@ void input_manager::wait_for_any_key()
                 }
                 break;
             case input_event_t::keyboard_code:
-            // errors are accepted as well to avoid an infinite loop
+
             case input_event_t::error:
                 return;
             default:

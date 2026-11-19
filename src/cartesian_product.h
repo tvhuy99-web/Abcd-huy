@@ -21,7 +21,7 @@ auto cartesian_product( const RangeOfRanges &input )
     }
 
     while( true ) {
-        // Append the new result
+
         result.emplace_back();
         auto &new_list = result.back();
         new_list.reserve( input.size() );
@@ -29,7 +29,7 @@ auto cartesian_product( const RangeOfRanges &input )
             new_list.push_back( *it );
         }
 
-        // Increment the iterators
+
         std::size_t i = 0;
         for( ; i != input.size(); ++i ) {
             auto &which_it = iterators[i];
@@ -47,6 +47,6 @@ auto cartesian_product( const RangeOfRanges &input )
     }
 }
 
-} // namespace cata
+}
 
-#endif // CATA_SRC_CARTESIAN_PRODUCT_H
+#endif

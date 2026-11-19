@@ -28,9 +28,9 @@ void DeterminismCheck::registerMatchers( MatchFinder *Finder )
             )
         ).bind( "call" ), this );
 
-    // As a heuristic we guess that any record type with a "seed" member
-    // function is a random engine.  Later in the code we also check for
-    // "result_type".
+
+
+
     using TypeMatcher = clang::ast_matchers::internal::Matcher<Decl>;
     const TypeMatcher IsRngCoreDecl = cxxRecordDecl( hasMethod( hasName( "seed" ) ) );
     const TypeMatcher IsRngTypedefDecl =
@@ -91,4 +91,4 @@ void DeterminismCheck::check( const MatchFinder::MatchResult &Result )
     CheckInit( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

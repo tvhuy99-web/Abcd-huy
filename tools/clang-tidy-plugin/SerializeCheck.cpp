@@ -16,7 +16,7 @@ namespace clang
 {
 class MacroArgs;
 class MacroDefinition;
-}  // namespace clang
+}
 
 using namespace clang::ast_matchers;
 
@@ -83,4 +83,4 @@ void SerializeCheck::onEndOfTranslationUnit()
     }
 }
 
-} // namespace clang::tidy::cata
+}

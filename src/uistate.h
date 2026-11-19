@@ -104,7 +104,7 @@ struct overmap_sidebar_uistate {
     bool quickref_header = true;
     bool layers_header = true;
     bool debug_header = true;
-    //expands/collapses all sidebar headers
+
     void set_all( bool state ) {
         quickref_header = state;
         layers_header = state;
@@ -114,18 +114,18 @@ struct overmap_sidebar_uistate {
     void deserialize( const JsonObject &jo );
 };
 
-// the consume menu reopens when done successfully consuming
+
 struct consume_menu_uistate {
-    // values[0] = inventory selector selected column index,
-    // values[1] = inventory selector selected index in column
+
+
     std::vector<uint64_t> consume_menu_selections;
-    // targets[0...x] if collated, a pair of {0, 1}, otherwise all item_locations highlighted
+
     std::vector<item_location> consume_menu_selected_items;
-    // str_values[0] = filter (the one you type in, not the new comestype filter)
+
     std::string consume_menu_filter;
-    // values[2] = inventory selector collated bool
+
     bool collated = false;
-    // new value to unify consume menus; when set, filter items by comestype
+
     std::string consume_menu_comestype;
 
     bool empty() const {
@@ -137,7 +137,7 @@ struct consume_menu_uistate {
         consume_menu_selections.clear();
         consume_menu_selected_items.clear();
         consume_menu_filter.clear();
-        //comestype does not clear
+
     }
     void serialize( JsonOut &json ) const;
     void deserialize( const JsonObject &jo );
@@ -160,16 +160,16 @@ struct editmap_uistate {
     void deserialize( const JsonObject &jo );
 };
 
-/*
-  centralized depot for trivial ui data such as sorting, string_input_popup history, etc.
-  To use this, see the ****notes**** below
-*/
-// There is only one game instance, so losing a few bytes of memory
-// due to padding is not much of a concern.
+
+
+
+
+
+
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
 class uistatedata
 {
-        /**** this will set a default value on startup, however to save, see below ****/
+
     private:
         enum side { left = 0, right = 1, NUM_PANES = 2 };
     public:
@@ -191,17 +191,17 @@ class uistatedata
         bool unload_auto_contain = true;
         std::optional<bool> hide_entries_override = std::nullopt;
 
-        bool overmap_blinking = true;           // toggles active blinking of overlays.
-        bool overmap_show_overlays = false;     // whether overlays are shown or not.
+        bool overmap_blinking = true;
+        bool overmap_show_overlays = false;
         bool overmap_show_map_notes = true;
-        bool overmap_show_land_use_codes = false; // toggle land use code sym/color for terrain
+        bool overmap_show_land_use_codes = false;
         bool overmap_show_city_labels = true;
         bool overmap_show_hordes = true;
         bool overmap_show_revealed_omts = true;
         bool overmap_show_forest_trails = true;
         bool overmap_visible_weather = false;
         bool overmap_debug_weather = false;
-        // draw monster groups on the overmap.
+
         bool overmap_debug_mongroup = false;
         bool overmap_only_auto_travel = false;
         bool overmap_fast_scroll = false;
@@ -214,7 +214,7 @@ class uistatedata
 
         consume_menu_uistate consume_uistate;
 
-        // Distraction manager stuff
+
         bool distraction_noise = true;
         bool distraction_pain = true;
         bool distraction_attack = true;
@@ -234,19 +234,19 @@ class uistatedata
         bool distraction_all = true; // NOLINT(cata-serialize)
         bool numpad_navigation = false;
 
-        // V Menu Stuff
-        // enum serialization relies on string conversion,
-        // which doesn't make too much sense for flag enums
-        // so we store them as ints instead
-        // todo: turn into surroundings_menu_sort_flags
-        // when flag enums can be serialized as numbers
+
+
+
+
+
+
         int vmenu_item_sort = 0;
         int vmenu_monster_sort = 0;
         int vmenu_terfurn_sort = 0;
         std::set<itype_id> read_items;
 
-        // These five aren't serialized because deserialize can extract them
-        // from the history
+
+
         std::string list_item_filter; // NOLINT(cata-serialize)
         std::string list_item_downvote; // NOLINT(cata-serialize)
         std::string list_item_priority; // NOLINT(cata-serialize)
@@ -259,17 +259,17 @@ class uistatedata
         bool list_monster_filter_active = false;
         bool list_terfurn_filter_active = false;
 
-        // construction menu selections
+
         std::string construction_filter;
         construction_group_str_id last_construction = construction_group_str_id::NULL_ID();
         construction_category_id construction_tab = construction_category_id::NULL_ID();
 
-        // overmap editor selections
+
         const oter_t *place_terrain = nullptr; // NOLINT(cata-serialize)
         const overmap_special *place_special = nullptr; // NOLINT(cata-serialize)
         om_direction::type omedit_rotation = om_direction::type::none; // NOLINT(cata-serialize)
 
-        // crafting gui
+
         std::set<recipe_id> hidden_recipes;
         std::set<recipe_id> favorite_recipes;
         std::set<recipe_id> expanded_recipes;
@@ -280,34 +280,34 @@ class uistatedata
 
         bionic_ui_sort_mode bionic_sort_mode = bionic_ui_sort_mode::POWER;
 
-        /* to save input history and make accessible via 'up', you don't need to edit this file, just run:
-           output = string_input_popup(str, int, str, str, std::string("set_a_unique_identifier_here") );
-        */
 
-        // input_history has special serialization
+
+
+
+
         // NOLINTNEXTLINE(cata-serialize)
         std::map<std::string, std::vector<std::string>> input_history;
 
-        std::map<ammotype, itype_id> lastreload; // id of ammo last used when reloading ammotype
+        std::map<ammotype, itype_id> lastreload;
 
-        // internal stuff
-        // internal: whine on json errors. set false if no complaints in 2 weeks.
+
+
         bool _testing_save = true; // NOLINT(cata-serialize)
-        // internal: spammy
+
         bool _really_testing_save = false; // NOLINT(cata-serialize)
 
         std::vector<std::string> &gethistory( const std::string &id ) {
             return input_history[id];
         }
-        /**
-         * A function pointer to be run before the player's next action (but after activities conclude).
-         *
-         * Useful for opening a menu with passed arguments.
-         * As it is not serialized it should not be used for any game state logic! Like moving a character.
-         */
+
+
+
+
+
+
         std::optional<std::function<void()>> open_menu; // NOLINT(cata-serialize)
 
-        // nice little convenience function for serializing an array, regardless of amount. :^)
+
         template<typename T>
         void serialize_array( JsonOut &json, const std::string_view name, T &data ) const {
             json.member( name );
@@ -323,4 +323,4 @@ class uistatedata
 };
 extern uistatedata uistate;
 
-#endif // CATA_SRC_UISTATE_H
+#endif

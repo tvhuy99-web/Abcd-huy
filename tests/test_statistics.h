@@ -11,7 +11,7 @@
 
 #include "cata_catch.h"
 
-// Z-value for confidence interval
+
 constexpr double Z95 = 1.96;
 constexpr double Z99 = 2.576;
 constexpr double Z99_9 = 3.291;
@@ -19,21 +19,21 @@ constexpr double Z99_99 = 3.891;
 constexpr double Z99_999 = 4.5;
 constexpr double Z99_999_9 = 5.0;
 
-// Useful to specify a range using midpoint +/- ε which is easier to parse how
-// wide a range actually is vs just upper and lower
+
+
 struct epsilon_threshold {
     double midpoint;
     double epsilon;
 };
 
-// Upper/lower bound threshold useful for asymmetric thresholds
+
 struct upper_lower_threshold {
     double lower_thresh;
     double upper_thresh;
 };
 
-// we cache the margin of error so when adding a new value we must invalidate
-// it so it gets calculated a again
+
+
 constexpr double invalid_err = -1;
 
 template<typename T>
@@ -67,25 +67,25 @@ class statistics
             samples.push_back( new_val );
         }
 
-        // Adjusted Wald error is only valid for a discrete binary test. Note
-        // because error takes into account population, it is only valid to
-        // test against the upper/lower bound.
-        //
-        // The goal here is to get the most accurate statistics about the
-        // smallest sample size feasible.  The tests end up getting run many
-        // times over a short period, so any real issue may sometimes get a
-        // false positive, but over a series of runs will get shaken out in an
-        // obvious way.
-        //
-        // Outside of this class, this should only be used for debugging
-        // purposes.
+
+
+
+
+
+
+
+
+
+
+
+
         template<typename U = T>
         std::enable_if_t< std::is_same_v< U, bool >, double >
         margin_of_error() const {
             if( _error != invalid_err ) {
                 return _error;
             }
-            // Implementation of outline from https://measuringu.com/ci-five-steps/
+
             const double adj_numerator = ( Zsq_ / 2 ) + _sum;
             const double adj_denominator = Zsq_ + _n;
             const double adj_proportion = adj_numerator / adj_denominator;
@@ -95,12 +95,12 @@ class statistics
             _error = c * Z_;
             return _error;
         }
-        // Standard error is intended to be used with continuous data samples.
-        // We're using an approximation here so it is only appropriate to use
-        // the upper/lower bound to test for reasons similar to adjusted Wald
-        // error.
-        // Outside of this class, this should only be used for debugging purposes.
-        // https://measuringu.com/ci-five-steps/
+
+
+
+
+
+
         template<typename U = T>
         std::enable_if_t < ! std::is_same_v< U, bool >, double >
         margin_of_error() const {
@@ -112,15 +112,15 @@ class statistics
             return _error;
         }
 
-        /** Use to continue testing until we are sure whether the result is
-         * inside or outside the target.
-         *
-         * Returns true if the confidence interval partially overlaps the target region.
-         */
+
+
+
+
+
         bool uncertain_about( const epsilon_threshold &t ) const {
-            return !test_threshold( t ) && // Inside target
-                   t.midpoint - t.epsilon < upper() && // Below target
-                   t.midpoint + t.epsilon > lower(); // Above target
+            return !test_threshold( t ) &&
+                   t.midpoint - t.epsilon < upper() &&
+                   t.midpoint + t.epsilon > lower();
         }
 
         bool test_threshold( const epsilon_threshold &t ) const {
@@ -144,8 +144,8 @@ class statistics
             }
             return result;
         }
-        // Test if some value is a member of the confidence interval of the
-        // sample
+
+
         bool test_confidence_interval( const double v ) const {
             return is_within_epsilon( v, margin_of_error() );
         }
@@ -155,11 +155,11 @@ class statistics
             return( average + epsilon > v ) &&
                   ( average - epsilon < v );
         }
-        // Theoretically a one-pass formula is more efficient, however because
-        // we keep handles onto _sum and _n as class members and calculate them
-        // on the fly, a one-pass formula is unnecessary because we're already
-        // one pass here.  It may not obvious that even though we're calling
-        // the 'average()' function that's what is happening.
+
+
+
+
+
         double variance( const bool sample_variance = true ) const {
             double average = avg();
             double sigma_acc = 0;
@@ -174,10 +174,10 @@ class statistics
             }
             return sigma_acc / static_cast<double>( _n );
         }
-        // We should only be interested in the sample deviation most of the
-        // time because we can always get more samples.  The way we use tests,
-        // we attempt to use the sample data to generalize about the
-        // population.
+
+
+
+
         double stddev( const bool sample_deviation = true ) const {
             return std::sqrt( variance( sample_deviation ) );
         }
@@ -219,13 +219,13 @@ class BinomialMatcher : public Catch::MatcherBase<int>
         double margin_;
 };
 
-// Can be used to test that a value is a plausible observation from a binomial
-// distribution.  Uses a normal approximation to the binomial, and permits a
-// deviation up to max_deviation (measured in standard deviations).
+
+
+
 inline BinomialMatcher IsBinomialObservation(
     const int num_samples, const double p, const double max_deviation = Z99_999 )
 {
     return BinomialMatcher( num_samples, p, max_deviation );
 }
 
-#endif // CATA_TESTS_TEST_STATISTICS_H
+#endif

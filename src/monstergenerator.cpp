@@ -54,12 +54,12 @@ static const spell_id spell_pseudo_dormant_trap_setup( "pseudo_dormant_trap_setu
 namespace
 {
 generic_factory<mon_flag> mon_flags( "monster flags" );
-} // namespace
+}
 
 namespace behavior
 {
 class node_t;
-}  // namespace behavior
+}
 
 namespace io
 {
@@ -68,7 +68,7 @@ template<>
 std::string enum_to_string<mon_trigger>( mon_trigger data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case mon_trigger::STALK: return "STALK";
         case mon_trigger::HOSTILE_WEAK: return "PLAYER_WEAK";
         case mon_trigger::HOSTILE_CLOSE: return "PLAYER_CLOSE";
@@ -81,7 +81,7 @@ std::string enum_to_string<mon_trigger>( mon_trigger data )
         case mon_trigger::PLAYER_NEAR_BABY: return "PLAYER_NEAR_BABY";
         case mon_trigger::MATING_SEASON: return "MATING_SEASON";
         case mon_trigger::BRIGHT_LIGHT: return "BRIGHT_LIGHT";
-        // *INDENT-ON*
+
         case mon_trigger::LAST:
             break;
     }
@@ -106,7 +106,7 @@ std::string enum_to_string<mdeath_type>( mdeath_type data )
     cata_fatal( "Invalid mdeath_type" );
 }
 
-} // namespace io
+}
 
 template<>
 const mtype &int_id<mtype>::obj() const
@@ -126,14 +126,14 @@ const string_id<mtype> &int_id<mtype>::id() const
     return MonsterGenerator::generator().mon_templates->convert( *this );
 }
 
-/** @relates string_id */
+
 template<>
 const mtype &string_id<mtype>::obj() const
 {
     return MonsterGenerator::generator().mon_templates->obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<mtype>::is_valid() const
 {
@@ -146,62 +146,62 @@ int_id<mtype> string_id<mtype>::id() const
     return MonsterGenerator::generator().mon_templates->convert( *this, int_id<mtype>( 0 ) );
 }
 
-/** @relates string_id */
+
 template<>
 const species_type &string_id<species_type>::obj() const
 {
     return MonsterGenerator::generator().mon_species->obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<species_type>::is_valid() const
 {
     return MonsterGenerator::generator().mon_species->is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 bool int_id<mon_flag>::is_valid() const
 {
     return mon_flags.is_valid( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const mon_flag &int_id<mon_flag>::obj() const
 {
     return mon_flags.obj( *this );
 }
 
-/** @relates int_id */
+
 template<>
 const string_id<mon_flag> &int_id<mon_flag>::id() const
 {
     return mon_flags.convert( *this );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<mon_flag> string_id<mon_flag>::id() const
 {
     return mon_flags.convert( *this, int_id<mon_flag>( 0 ) );
 }
 
-/** @relates int_id */
+
 template<>
 int_id<mon_flag>::int_id( const string_id<mon_flag> &id ) : _id( id.id() )
 {
 }
 
-/** @relates string_id */
+
 template<>
 const mon_flag &string_id<mon_flag>::obj() const
 {
     return mon_flags.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<mon_flag>::is_valid() const
 {
@@ -241,16 +241,16 @@ void MonsterGenerator::reset()
     hallucination_monsters.clear();
 
     attack_map.clear();
-    // Hardcode attacks need to be re-added here
-    // TODO: Move initialization from constructor to init()
+
+
     init_attack();
 }
 
 static std::map<damage_type_id, int> calc_bash_skill( const mtype &t )
 {
-    // IOW, the critter's max bashing damage
+
     int ret = t.melee_dice * t.melee_sides;
-    // This is for stuff that goes through solid rock: minerbots, dark wyrms, etc
+
     if( t.has_flag( mon_flag_BORES ) ) {
         ret *= 15;
     } else if( t.has_flag( mon_flag_DESTROYS ) ) {
@@ -287,7 +287,7 @@ struct monster_adjustment {
     std::string special;
     void apply( mtype &mon ) const;
 };
-} // namespace
+}
 
 void monster_adjustment::apply( mtype &mon ) const
 {
@@ -346,7 +346,7 @@ static void build_behavior_tree( mtype &type )
     for( const std::pair<const std::string, mtype_special_attack> &attack : type.special_attacks ) {
         if( string_id<behavior::node_t>( attack.first ).is_valid() ) {
             type.add_goal( attack.first );
-        } /* TODO: Make this an error once all the special attacks are migrated. */
+        }
     }
 }
 
@@ -372,7 +372,7 @@ void MonsterGenerator::finalize_mtypes()
         validate_species_ids( mon );
         mon.size = volume_to_size( mon.volume );
 
-        // adjust for worldgen difficulty parameters
+
         mon.speed *= get_option<int>( "MONSTER_SPEED" )      / 100.0;
         mon.hp    *= get_option<int>( "MONSTER_RESILIENCE" ) / 100.0;
 
@@ -430,17 +430,17 @@ void MonsterGenerator::finalize_mtypes()
             mon.status_chance_multiplier = 0;
         }
 
-        // Check if trap_ids are valid
+
         for( trap_str_id trap_avoid_id : mon.trap_avoids ) {
             if( !trap_avoid_id.is_valid() ) {
                 debugmsg( "Invalid trap '%s'", trap_avoid_id.str() );
             }
         }
 
-        // Lower bound for hp scaling
+
         mon.hp = std::max( mon.hp, 1 );
 
-        //If the result monster is blacklisted no need to have the original monster look like it can revive
+
         if( !mon.zombify_into.is_empty() &&
             MonsterGroupManager::monster_is_blacklisted( mon.zombify_into ) ) {
             mon.zombify_into = mtype_id();
@@ -471,7 +471,7 @@ void MonsterGenerator::finalize_mtypes()
         }
         mon.weakpoints.finalize();
 
-        // check lastly to make extra fake monsters.
+
         if( mon.has_flag( mon_flag_GEN_DORMANT ) ) {
             extra_mtypes.push_back( generate_fake_pseudo_dormant_monster( mon ) );
         }
@@ -483,7 +483,7 @@ void MonsterGenerator::finalize_mtypes()
         }
     }
 
-    // now add the fake monsters to the mon_templates
+
     for( mtype &mon : extra_mtypes ) {
         mon_templates->insert( mon );
     }
@@ -492,34 +492,34 @@ void MonsterGenerator::finalize_mtypes()
 mtype MonsterGenerator::generate_fake_pseudo_dormant_monster( const mtype &mon )
 {
 
-    // this is what we are trying to build. Example for mon_zombie
-    //{
-    //    "id": "pseudo_dormant_mon_zombie",
-    //        "type" : "MONSTER",
-    //        "name" : { "str": "zombie" },
-    //        "description" : "Fake zombie used for spawning dormant zombies.  If you see this, open an issue on github.",
-    //        "copy-from" : "mon_zombie",
-    //        "looks_like" : "corpse_mon_zombie",
-    //        "hp" : 5,
-    //        "speed" : 1,
-    //        "flags" : ["FILTHY", "REVIVES", "DORMANT", "QUIETDEATH"] ,
-    //        "zombify_into" : "mon_zombie",
-    //        "special_attacks" : [
-    //    {
-    //        "id": "pseudo_dormant_trap_setup_attk",
-    //            "type" : "spell",
-    //            "spell_data" : { "id": "pseudo_dormant_trap_setup", "hit_self" : true },
-    //            "cooldown" : 1,
-    //            "allow_no_target" : true,
-    //            "monster_message" : ""
-    //    }
-    //        ]
-    //},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     mtype fake_mon = mtype( mon );
     fake_mon.id = mtype_id( "pseudo_dormant_" + mon.id.str() );
-    // allowed (optional) flags: [ "FILTHY" ],
-    // delete all others.
-    // then add [ "DORMANT", "QUIETDEATH", "REVIVES", "REVIVES_HEALTHY" ]
+
+
+
     bool has_filthy = fake_mon.has_flag( mon_flag_FILTHY );
     fake_mon.flags.clear();
     fake_mon.flags.emplace( mon_flag_DORMANT );
@@ -530,42 +530,42 @@ mtype MonsterGenerator::generate_fake_pseudo_dormant_monster( const mtype &mon )
         fake_mon.flags.emplace( mon_flag_FILTHY );
     }
 
-    // zombify into the original mon
+
     fake_mon.zombify_into = mon.id;
-    // looks like "corpse" + original mon
+
     fake_mon.looks_like = "corpse_" + mon.id.str();
-    // disable upgrades - pseudo-dormant monsters exist briefly and must not
-    // change type before they fire their dormant trap setup attack
+
+
     fake_mon.upgrades = false;
-    // just in case, clear the upgrade targets too
+
     fake_mon.upgrade_into = mtype_id::NULL_ID();
     fake_mon.upgrade_group = mongroup_id::NULL_ID();
-    // set the hp to 5
+
     fake_mon.hp = 5;
-    // set the speed to 1
+
     fake_mon.speed = 1;
-    // now ensure that monster will always die instantly. Nuke all resistances and dodges.
-    // before this monsters like zombie predators could periodically resist the killing effect for a while.
-    // clear dodge
+
+
+
     fake_mon.sk_dodge = 0;
-    // clear regenerate
+
     fake_mon.regenerates = 0;
     fake_mon.regenerates_in_dark = false;
-    // clear armor
+
     for( const auto &dam : fake_mon.armor.resist_vals ) {
         fake_mon.armor.resist_vals[dam.first] = 0;
     }
-    // add the special attack.
-    // first make a new mon_spellcasting_actor actor
+
+
     std::unique_ptr<mon_spellcasting_actor> new_actor = std::make_unique<mon_spellcasting_actor>();
     new_actor->allow_no_target = true;
     new_actor->cooldown = 1;
     new_actor->spell_data.id = spell_pseudo_dormant_trap_setup;
     new_actor->spell_data.self = true;
 
-    // create the special attack now using the actor
-    // use this constructor
-    // explicit mtype_special_attack( std::unique_ptr<mattack_actor> f ) : actor( std::move( f ) ) { }
+
+
+
 
     std::unique_ptr<mattack_actor> base_actor = std::move( new_actor );
     mtype_special_attack new_attack( std::move( base_actor ) );
@@ -713,13 +713,13 @@ void MonsterGenerator::init_attack()
 
 void MonsterGenerator::init_defense()
 {
-    // No special attack-back
+
     defense_map["NONE"] = &mdefense::none;
-    // Shock attacker on hit
+
     defense_map["ZAPBACK"] = &mdefense::zapback;
-    // Splash acid on the attacker
+
     defense_map["ACIDSPLASH"] = &mdefense::acidsplash;
-    // Blind fire on unseen attacker
+
     defense_map["RETURN_FIRE"] = &mdefense::return_fire;
 }
 
@@ -754,7 +754,7 @@ void mon_effect_data::load( const JsonObject &jo )
     optional( jo, false, "affect_hit_bp", affect_hit_bp, false );
     optional( jo, false, "bp", bp, bodypart_str_id::NULL_ID() );
     optional( jo, false, "message", message );
-    // Support shorthand for a single value.
+
     if( jo.has_int( "duration" ) ) {
         int i = 1;
         mandatory( jo, false, "duration", i );
@@ -789,7 +789,7 @@ void mount_item_data::deserialize( const JsonObject &jo )
 
 void revive_type::deserialize( const JsonObject &jo )
 {
-    // FIXME: reader for read_condition
+
     read_condition( jo, "condition", condition, true );
     if( jo.has_string( "monster" ) ) {
         mandatory( jo, false, "monster", revive_mon );
@@ -798,14 +798,14 @@ void revive_type::deserialize( const JsonObject &jo )
     }
 }
 
-// this is a really gross reader - special_attacks and special_attacks_names really need to be one struct
-// Then this gets a lot less gross and a lot more safe!
+
+
 struct special_attacks_reader : generic_typed_reader<special_attacks_reader> {
     friend class MonsterGenerator;
-    // For ordering purposes, we want to also grab the names when we load a special attack
+
     std::vector<std::string> &names;
 
-    // special attacks load with src
+
     std::string_view src;
     mtype_id id;
 
@@ -822,7 +822,7 @@ struct special_attacks_reader : generic_typed_reader<special_attacks_reader> {
 
     std::pair<std::string, mtype_special_attack> get_next( const JsonValue &jv ) const {
         MonsterGenerator &gen = MonsterGenerator::generator();
-        // only for delete
+
         if( jv.test_string() ) {
             std::string name = jv.get_string();
             auto it = std::find( names.begin(), names.end(), name );
@@ -866,7 +866,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
 
     optional( jo, was_loaded, "ascii_picture", picture_id );
 
-    // Assign a default "flesh" material to prevent crash (#48988)
+
     optional( jo, was_loaded, "material", mat, weighted_string_id_reader<material_id, int> {1}, {{{material_flesh, 1}}} );
     mat_portion_total = 0;
     for( const std::pair<const material_id, int> &pr : mat ) {
@@ -876,7 +876,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
     optional( jo, was_loaded, "species", species, string_id_reader<::species_type> {} );
     optional( jo, was_loaded, "categories", categories, auto_flags_reader<> {} );
 
-    // See monfaction.cpp
+
     mandatory( jo, was_loaded, "default_faction", default_faction );
 
     mandatory( jo, was_loaded, "symbol", sym, unicode_symbol_reader );
@@ -904,7 +904,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
     optional( jo, was_loaded, "tracking_distance", tracking_distance, numeric_bound_reader<int> {3},
               8 );
 
-    //In its 1920 Manual of Horse Management, The U.S. Cavalry suggested a horse should not be asked to carry more than 20% of its body weight. This assumed a combined weight of rider, saddle, bridle, and other equipment.
+
     optional( jo, was_loaded, "mountable_weight_ratio", mountable_weight_ratio, 0.2f );
 
     optional( jo, was_loaded, "attack_cost", attack_cost, numeric_bound_reader<int> {0}, 100 );
@@ -917,7 +917,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
 
     optional( jo, was_loaded, "dodge", sk_dodge, numeric_bound_reader<int> {0} );
 
-    // FIXME: load resistances by reader class
+
     if( jo.has_member( "block" ) ) {
         JsonObject block_jo = jo.get_object( "block" );
 
@@ -961,12 +961,12 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
     }
     weakpoints_deferred_deleted.clear();
 
-    // Load each set of weakpoints.
-    // Each subsequent weakpoint set overwrites
-    // matching weakpoints from the previous set.
+
+
+
     optional( jo, was_loaded, "weakpoint_sets", weakpoints_deferred, auto_flags_reader<weakpoints_id> {} );
-    // Finally, inline weakpoints overwrite
-    // any matching weakpoints from the previous sets.
+
+
     optional( jo, was_loaded, "weakpoints", weakpoints_deferred_inline, weakpoints_reader{weakpoints_deferred_deleted} );
 
     optional( jo, was_loaded, "status_chance_multiplier", status_chance_multiplier, numeric_bound_reader{0.0f, 5.0f},
@@ -1032,7 +1032,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
                                          "death_drops for mtype " + id.str() );
     }
 
-    // FIXME: there's code to check if harvest is null, which will never trigger as it defaults to human
+
     optional( jo, was_loaded, "harvest", harvest, harvest_list_human );
 
     optional( jo, was_loaded, "dissect", dissect );
@@ -1059,12 +1059,12 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
         def_chance = 0;
     }
 
-    // this is really gross, and special_attacks + special_attacks_names should be combined into one struct
+
     if( jo.has_member( "special_attacks" ) ) {
         special_attacks_names.clear();
     }
     optional( jo, was_loaded, "special_attacks", special_attacks, special_attacks_reader{special_attacks_names, src, id} );
-    // to be extra safe
+
     for( const std::pair<const std::string, mtype_special_attack> &atk : special_attacks ) {
         if( dynamic_cast<const invalid_mattack_actor *>( atk.second.get() ) != nullptr ) {
             jo.throw_error( string_format( "Invalid special attack format for %s", atk.first ) );
@@ -1074,8 +1074,8 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
     optional( jo, was_loaded, "melee_training_cap", melee_training_cap, std::min( melee_skill + 2,
               MAX_SKILL ) );
     optional( jo, was_loaded, "chat_topics", chat_topics );
-    // Disable upgrading when JSON contains `"upgrades": false`, but fallback to the
-    // normal behavior (including error checking) if "upgrades" is not boolean or not `false`.
+
+
     if( jo.has_bool( "upgrades" ) && !jo.get_bool( "upgrades" ) ) {
         upgrade_group = mongroup_id::NULL_ID();
         upgrade_into = mtype_id::NULL_ID();
@@ -1102,13 +1102,13 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
         } else if( multi ) {
             optional( up, was_loaded, "spawn_range", upgrade_multi_range );
         } else {
-            jo.get_int( "spawn_range", 0 ); // ignore if defined
+            jo.get_int( "spawn_range", 0 );
         }
         optional( up, was_loaded, "despawn_when_null", upgrade_null_despawn, false );
         upgrades = true;
     }
 
-    //Reproduction
+
     if( jo.has_member( "reproduction" ) ) {
         JsonObject repro = jo.get_object( "reproduction" );
         optional( repro, was_loaded, "baby_count", baby_count, -1 );
@@ -1151,7 +1151,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
     }
 
     if( jo.has_member( "baby_flags" ) ) {
-        // Because this determines mating season and some monsters have a mating season but not in-game offspring, declare this separately
+
         baby_flags.clear();
         for( const std::string line : jo.get_array( "baby_flags" ) ) {
             baby_flags.push_back( line );
@@ -1177,7 +1177,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
 
     optional( jo, was_loaded, "flags", pre_flags_, string_id_reader<mon_flag> {} );
 
-    // Can't calculate yet - we want all flags first
+
     if( jo.has_int( "bash_skill" ) ) {
         int skill;
         optional( jo, false, "bash_skill", skill, -1 );
@@ -1195,7 +1195,7 @@ void mtype::load( const JsonObject &jo, const std::string_view src )
 
     if( jo.has_member( "path_settings" ) ) {
         JsonObject jop = jo.get_object( "path_settings" );
-        // Here rather than in pathfinding.cpp because we want monster-specific defaults and was_loaded
+
         optional( jop, was_loaded, "max_dist", path_settings.max_dist, 0 );
         optional( jop, was_loaded, "max_length", path_settings.max_length, -1 );
         optional( jop, was_loaded, "bash_strength", path_settings.bash_strength );
@@ -1288,7 +1288,7 @@ class mattack_hardcoded_wrapper : public mattack_actor
 
         void load_internal( const JsonObject &, const std::string & ) override {}
 };
-} // namespace
+}
 
 mtype_special_attack::mtype_special_attack( const mattack_id &id, const mon_action_attack f )
     : mtype_special_attack( std::make_unique<mattack_hardcoded_wrapper>( id, f ) ) {}
@@ -1319,7 +1319,7 @@ void MonsterGenerator::add_attack( const mtype_special_attack &wrapper )
 mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         const std::string &src ) const
 {
-    // Legacy support: tolerate attack types being specified as the type
+
     const std::string type = obj.get_string( "type", "monster_attack" );
     const std::string attack_type = obj.get_string( "attack_type", type );
 
@@ -1373,7 +1373,7 @@ void mattack_actor::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "cooldown", cooldown );
 
     load_internal( jo, src );
-    // Set was_loaded manually because we don't have generic_factory to do it for us
+
     was_loaded = true;
 }
 
@@ -1535,7 +1535,7 @@ void MonsterGenerator::check_monster_definitions() const
                           mon.baby_count, mon.id.c_str() );
             }
 
-            bool baby_monster = mon.baby_type.baby_monster != mtype_id::NULL_ID(); // if null then false
+            bool baby_monster = mon.baby_type.baby_monster != mtype_id::NULL_ID();
             bool baby_monster_group = mon.baby_type.baby_monster_group != mongroup_id::NULL_ID();
             bool baby_egg = mon.baby_type.baby_egg != itype_id::NULL_ID();
             bool baby_egg_group = mon.baby_type.baby_egg_group != item_group_id::NULL_ID();
@@ -1646,7 +1646,7 @@ void move_skills_data::load( const JsonObject &jo )
 bool move_skills_data::handle_extend( const JsonValue &jv )
 {
     JsonObject jo = jv.get_object();
-    // because this is extend, was_loaded is always true
+
     optional( jo, true, "climb", climb );
     optional( jo, true, "dig", dig );
     optional( jo, true, "swim", swim );
@@ -1660,7 +1660,7 @@ static void check_for_delete( const JsonObject &jo, const std::string_view name,
         return;
     }
     std::optional<int> scratch;
-    // because this is delete, was_loaded is always true
+
     optional( jo, true, name, scratch );
     if( value.has_value() && scratch.has_value() && *scratch == *value ) {
         value = std::nullopt;

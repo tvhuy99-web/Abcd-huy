@@ -32,14 +32,14 @@ static const itype_id itype_knife_combat( "knife_combat" );
 static const itype_id itype_test_9mm_ammo( "test_9mm_ammo" );
 static const itype_id itype_test_heavy_debug_backpack( "test_heavy_debug_backpack" );
 
-/*
-    --------- AIM testing ----------
-    TODO: add more tests
-    To setup the panes, call @ref init_panes with the source and destination @ref aim_location you want to test.
-    After any changes to the items (spawning in) call @ref recalc_panes.
-*/
 
-// the required action to select desired location
+
+
+
+
+
+
+
 static const std::map<aim_location, const std::string> loc_action {
     {aim_location::AIM_INVENTORY, "ITEMS_INVENTORY"},
     {aim_location::AIM_SOUTHWEST, "ITEMS_SW"},
@@ -59,7 +59,7 @@ static const std::map<aim_location, const std::string> loc_action {
 };
 
 
-// recalc when anything in the panels changes (item added etc.)
+
 static void recalc_panes( advanced_inventory &advinv )
 {
     advinv.recalc_pane( advanced_inventory::side::left );
@@ -92,7 +92,7 @@ static void do_activity( advanced_inventory &advinv, const std::string &activity
     recalc_panes( advinv );
 }
 
-/* this should mirror what query_charges returns as max items when transferring to inventory */
+
 static int u_carry_amount( item &it )
 {
     int remaining = INT_MAX;
@@ -106,7 +106,7 @@ static int u_carry_amount( item &it )
         const units::mass overburden_capacity = player_character.max_pickup_capacity() -
                                                 player_character.weight_carried();
 
-        // TODO: have it consider pocket weight_multiplier
+
         const int weightmax = overburden_capacity / unitweight;
         if( weightmax <= 0 ) {
             return 0;
@@ -209,14 +209,14 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                     REQUIRE( spane.get_cur_item_ptr()->stacks == num_items );
                 }
 
-                // TODO: allow different limiting factors, without exploding in code size
+
                 AND_GIVEN( "there is enough space for some, but not all items" ) {
                     u.worn.wear_item( u, backpack, false, false );
 
                     const int expected_transfered = u_carry_amount( knife_combat_map );
                     CAPTURE( expected_transfered );
 
-                    // Returns false if it cannot contain ALL items
+
                     REQUIRE_FALSE( u.can_stash_partial( knife_combat_map, remaining_stash ) );
                     CAPTURE( remaining_stash );
                     REQUIRE( remaining_stash > 0 );
@@ -234,7 +234,7 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                     }
                     WHEN( "transfering variable items" ) {
                         CAPTURE( expected_transfered );
-                        // because we can't input an amount, it will transfer max_possible
+
                         do_activity( advinv, "MOVE_VARIABLE_ITEM" );
 
                         THEN( "an amount of items should be transfered" ) {
@@ -244,14 +244,14 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                             CHECK( u.max_pickup_capacity() > u.weight_carried() + knife_combat.weight() );
                         }
 
-                        // you are volume restricted, not overburden restricted
+
                         AND_THEN( "you cannot fit more" ) {
                             CHECK_FALSE( u.can_stash( knife_combat ) );
                         }
                     }
 
                     WHEN( "transfering item stack" ) {
-                        // because we can't input an amount, it will transfer max_possible
+
                         do_activity( advinv, "MOVE_VARIABLE_ITEM" );
 
                         THEN( "you have that amount of items are in inventory" ) {
@@ -265,8 +265,8 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                         }
                         AND_THEN( "no more items can be transfered" ) {
                             CHECK_FALSE( u.can_stash( knife_combat, 1 ) );
-                            CHECK_FALSE( u.try_add( knife_combat, /**avoid=*/ nullptr,
-                                                    /**original_inventory_item=*/ nullptr, /*allow_wield=*/ false ) );
+                            CHECK_FALSE( u.try_add( knife_combat, nullptr,
+ nullptr, false ) );
                         }
                     }
                 }
@@ -278,12 +278,12 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
 
                     int can_carry = u_carry_amount( knife_combat );
 
-                    // TODO: currently pocket weight_multiplier do not get considered for overburden
-                    // when that changes please reverse this
+
+
                     REQUIRE( can_carry < num_items );
 
                     WHEN( "transfering item stack" ) {
-                        // because we can't input an amount, it will transfer max_possible
+
                         do_activity( advinv, "MOVE_VARIABLE_ITEM" );
 
                         THEN( "some items are in inventory" ) {
@@ -323,7 +323,7 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                         u.can_stash_partial( i_9mm_ammo, left_over );
                         REQUIRE( left_over > 0 );
 
-                        // they should behave exactly the same for charges (atleast until you can enter an amount in query_charges)
+
                         for( std::string activity : {
                                  "MOVE_SINGLE_ITEM", "MOVE_VARIABLE_ITEM", "MOVE_ITEM_STACK"
                              } ) {
@@ -342,12 +342,12 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                     }
 
                     GIVEN( "overburden is the constraining factor" ) {
-                        // has to be an item that fits all items and has a higher pocket weight capacity then the character,
-                        // but still transfers weight to character. No current item fits that, so make a custom one.
+
+
                         u.worn.wear_item( u, debug_heavy_backpack, false, false );
                         const int expected_transfered = u_carry_amount( map_i_9mm_ammo );
                         REQUIRE( u.can_stash_partial( i_9mm_ammo, left_over ) );
-                        // can stash all items ignoring overburden
+
                         REQUIRE( left_over == 0 );
 
                         const units::mass overburden_capacity = u.max_pickup_capacity() -
@@ -355,7 +355,7 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                         REQUIRE( map_i_9mm_ammo.weight() > overburden_capacity );
                         const int num_until_overburden = map_i_9mm_ammo.charges_per_weight( overburden_capacity );
 
-                        // sanity check that u_carry_amount considers overburdening
+
                         REQUIRE( num_until_overburden == expected_transfered );
                         REQUIRE( num_until_overburden < num_charges - left_over );
 
@@ -369,14 +369,14 @@ TEST_CASE( "AIM_basic_move_items", "[items][advanced_inv]" )
                         }
                     }
 
-                    // TODO: other limiting factors
+
                 }
 
                 GIVEN( "you can fit all items" ) {
-                    // debug backpack has weight_multiplier of 0.01, so overburden is not the constraining factor
+
                     u.worn.wear_item( u, debug_backpack, false, false );
 
-                    // still need to reduce the number of charges.
+
                     const int num_can_fit = u_carry_amount( map_i_9mm_ammo );
                     map_i_9mm_ammo.charges = num_can_fit;
                     left_over = num_can_fit;

@@ -19,28 +19,28 @@ bool suspended();
 void synchronize_lifecycle();
 void replace_game_session();
 bool bound_to( const void *input_owner );
-// Open/close the single-flight native world input window on the game thread.
+
 void set_world_input_ready( const void *input_owner, bool ready );
-// Activates scopes that were constructed (and published a snapshot) while
-// the reader was disabled or suspended, so a screen that is already open
-// when the reader becomes available starts serving the reader without
-// being closed and reopened (R03.3). Only scopes bound to input_owner are
-// considered, and only while the reader is enabled and not suspended.
-// Returns true when at least one scope was activated.
+
+
+
+
+
+
 bool activate_pending_scopes( const void *input_owner );
 std::optional<std::string> poll_input( const void *input_owner );
 void announce_game_message( std::string_view text, bool urgent );
 
-// Keep DEFAULTMODE's semantic frame across ordinary game turns. Only its
-// game-thread input handler is rebound at each input wait; none of the
-// character or map state is accessed from an Android callback.
+
+
+
 class screen_scope;
 screen_scope &bind_world_screen( const void *input_owner, intent_handler handler );
 void unbind_world_screen();
 
-// Game-thread scope beside the actual input_context. The pointer is only a
-// local binding identity; it is never serialized, retained by Java or used
-// as the public ID of a node. Destruction invalidates this frame and overlays.
+
+
+
 class screen_scope
 {
     public:
@@ -56,21 +56,21 @@ class screen_scope
 
     private:
         void activate();
-        // Validates and stores a snapshot in this scope's screen record,
-        // publishing it when this screen is the active (top) one.
+
+
         void apply_snapshot( semantic_snapshot snapshot, bool force_revision );
         friend bool activate_pending_scopes( const void *input_owner );
         std::uint64_t frame = 0;
         const void *owner = nullptr;
         std::string screen_category;
         intent_handler intent_callback;
-        // Latest snapshot published while the reader was unavailable and
-        // this scope could not activate. Builders that update only once
-        // (for example query popups) rely on this cache: when the reader
-        // becomes available, activate_pending_scopes() applies it so the
-        // already-open screen gains a reader adapter in place (R03.3).
+
+
+
+
+
         semantic_snapshot pending_snapshot;
         bool has_pending = false;
 };
-} // namespace a11y
-#endif // CATA_SRC_A11Y_RUNTIME_H
+}
+#endif

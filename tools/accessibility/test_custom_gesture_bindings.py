@@ -38,10 +38,10 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("mapping.put(gesture, target)", src)
         self.assertIn("mapping.values().removeAll(", src)
         self.assertIn('putString(KEY, json.toString())', src)
-        # (XOA MA): restoreGestureDefaults() was deleted with the
-        # old setup screen, so there is no restore-defaults path left in
-        # prefs. Custom bindings live only under KEY in
-        # ReaderGestureBindings (loaded on start, saved on change).
+
+
+
+
         prefs = (JAVA / "ReaderPreferences.java").read_text(
             encoding="utf-8"
         )

@@ -7,7 +7,7 @@
 #include "dialogue.h"
 #include "weighted_list.h"
 
-// Works similarly to weighted_list except weights are stored as dbl_or_var, so total_weight isn't constant unless all weights are etc
+
 
 template <typename T> struct weighted_dbl_or_var_list {
         weighted_dbl_or_var_list() = default;
@@ -36,12 +36,12 @@ template <typename T> struct weighted_dbl_or_var_list {
             precalc();
         }
 
-        /**
-         * This will add a new object to the weighted list. Returns a pointer to
-           the added object, or NULL if weight was zero.
-         * @param obj The object that will be added to the list.
-         * @param weight The weight of the object.
-         */
+
+
+
+
+
+
         T *add( const T &obj, const dbl_or_var &weight ) {
             if( weight.is_constant() && weight.constant() <= 0 ) {
                 return nullptr;
@@ -81,14 +81,14 @@ template <typename T> struct weighted_dbl_or_var_list {
             invalidate_precalc();
         }
 
-        /**
-         * This will check to see if the given object is already in the weighted
-           list. If it is, we update its weight with the new weight value, or remove if 0 weight. If it
-           is not, we add it normally. Returns a pointer to the added or updated
-           object, or NULL if weight was zero.
-         * @param obj The object that will be updated or added to the list.
-         * @param weight The new weight of the object.
-         */
+
+
+
+
+
+
+
+
         T *add_or_replace( const T &obj, const dbl_or_var &weight ) {
 
             if( weight.is_constant() && weight.constant() <= 0 ) {
@@ -105,26 +105,26 @@ template <typename T> struct weighted_dbl_or_var_list {
                     return &( itr.first );
                 }
             }
-            // if not found, add to end of list
+
             invalidate_precalc();
             return add( obj, weight );
         }
 
-        /**
-         * This will call the given callback function once for every object in the weighted list.
-         * @param func The callback function.
-         */
+
+
+
+
         void apply( std::function<void( const T & )> func ) const {
             for( const std::pair<T, dbl_or_var> &itr : objects ) {
                 func( itr.first );
             }
         }
 
-        /**
-         * This will call the given callback function once for every object in the weighted list.
-         * This is the non-const version.
-         * @param func The callback function.
-         */
+
+
+
+
+
         void apply( std::function<void( T & )> func ) {
             for( const std::pair<T, dbl_or_var> &itr : objects ) {
                 func( itr.first );
@@ -132,11 +132,11 @@ template <typename T> struct weighted_dbl_or_var_list {
         }
 
 
-        /**
-         * This will return a pointer to an object from the list randomly selected
-         * and biased by weight. If the weighted list is empty or all items in it
-         * have a weight of zero, it will return a NULL pointer.
-         */
+
+
+
+
+
         const T *pick( unsigned int randi ) const {
             if( get_weight() > 0 ) {
                 return &( objects[pick_ent( randi )].first );
@@ -147,12 +147,12 @@ template <typename T> struct weighted_dbl_or_var_list {
             return pick( rng_bits() );
         }
 
-        /**
-         * This will return a pointer to an object from the list randomly selected
-         * and biased by weight. If the weighted list is empty or all items in it
-         * have a weight of zero, it will return a NULL pointer. This is the
-         * non-const version so that the returned result may be modified.
-         */
+
+
+
+
+
+
         T *pick( unsigned int randi ) {
             if( get_weight() > 0 ) {
                 return &( objects[pick_ent( randi )].first );
@@ -163,18 +163,18 @@ template <typename T> struct weighted_dbl_or_var_list {
             return pick( rng_bits() );
         }
 
-        /**
-         * This will remove all objects from the list.
-         */
+
+
+
         void clear() {
             objects.clear();
             invalidate_precalc();
         }
 
-        /**
-         * This will return the weight of a specific object. If the object is not
-         * in the weighted list it will return 0.
-         */
+
+
+
+
         double get_specific_weight( const T &obj ) const {
             for( const std::pair<T, dbl_or_var> &itr : objects ) {
                 if( itr.first == obj ) {
@@ -184,9 +184,9 @@ template <typename T> struct weighted_dbl_or_var_list {
             return 0;
         }
 
-        /**
-         * This will return the sum of all the object's weights in the list.
-         */
+
+
+
         double get_weight() const {
             if( is_constant() ) {
                 return _constant_total_weight;
@@ -247,7 +247,7 @@ template <typename T> struct weighted_dbl_or_var_list {
 
     protected:
         double _constant_total_weight = 0.0;
-        bool _precalced = true; // True for empty lists
+        bool _precalced = true;
         bool _is_constant = true;
         std::vector<std::pair<T, dbl_or_var>> objects;
 
@@ -284,4 +284,4 @@ template <typename T> struct weighted_dbl_or_var_list {
         }
 };
 
-#endif // CATA_SRC_WEIGHTED_DBL_OR_VAR_LIST_H
+#endif

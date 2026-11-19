@@ -49,9 +49,9 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-#
-# Windows basic types
-#
+
+
+
 LPCWSTR = ctypes.c_wchar_p
 BOOL = ctypes.c_long
 HANDLE = ctypes.c_void_p
@@ -67,13 +67,13 @@ LPVOID = PVOID
 LPDWORD = ctypes.POINTER(DWORD)
 PULONG_PTR = ctypes.POINTER(ULONG_PTR)
 
-#
-# Windows defines
-#
+
+
+
 CREATE_SUSPENDED = 0x4
 CREATE_BREAKAWAY_FROM_JOB = 0x01000000
 
-# -1 on 32 or 64-bit.
+
 INVALID_HANDLE_VALUE = 2 ** (ctypes.sizeof(ctypes.c_void_p) * 8) - 1
 JobObjectAssociateCompletionPortInformation = 7
 JobObjectExtendedLimitInformation = 9
@@ -82,7 +82,7 @@ PROCESS_SET_QUOTA = 0x100
 PROCESS_TERMINATE = 0x1
 INFINITE = 0xFFFFFFFF
 
-# Completion Port Messages for job objects
+
 JOB_OBJECT_MSG_END_OF_JOB_TIME = 1
 JOB_OBJECT_MSG_END_OF_PROCESS_TIME = 2
 JOB_OBJECT_MSG_ACTIVE_PROCESS_LIMIT = 3
@@ -96,9 +96,9 @@ JOB_OBJECT_MSG_NOTIFICATION_LIMIT = 11
 JOB_OBJECT_MSG_JOB_CYCLE_TIME_LIMIT = 12
 JOB_OBJECT_MSG_SILO_TERMINATED = 13
 
-#
-# Windows Structures
-#
+
+
+
 
 
 class SECURITY_ATTRIBUTES(ctypes.Structure):
@@ -192,13 +192,13 @@ class Kernel32Wrapper:
     def __init__(self) -> None:
         """Initialization.
         """
-        # get kernel32 instance
+
         self._kernel32: ctypes.WinDLL = ctypes.WinDLL(
             "kernel32", use_last_error=True)
 
-        #
-        # fetch functions
-        #
+
+
+
 
         self._create_job_object = self._kernel32.CreateJobObjectW
         self._create_job_object.argtypes = (LPSECURITY_ATTRIBUTES, LPCWSTR)
@@ -423,7 +423,7 @@ class ProcessLimiter:
             Returns the given structure filled with the job limit or state
             information.
         """
-        # query its default properties
+
         return_length = DWORD(0)
         logger.debug("Querying job object.")
         ret_val = self._kernel32.QueryInformationJobObject(
@@ -447,22 +447,22 @@ class ProcessLimiter:
         """
         if not self._handle_thread:
             raise ValueError("Thread handle is NULL.")
-        # resume the main thread and let the process run.
+
         logger.debug("Resuming main thread.")
         ret_val = self._kernel32.ResumeThread(self._handle_thread)
         if ret_val == -1:
-            # oops, we now have a zombie process... we'll try to kill it
-            # nonetheless.
+
+
             logger.error(
                 "Error: ResumeThread failed but the process is started!")
-            # try to kill it
+
             if 0 != self._kernel32.TerminateProcess(self._handle_process,
                                                     0xDEADBEEF):
                 logger.info("Successfully killed the zombie process.")
             else:
                 logger.warning("The zombie process is sitll alive. Try to "
                                "kill it manually.")
-            # we tried to kill the process, now raise.
+
             raise ctypes.WinError(ctypes.get_last_error())
 
     def _set_information_job_object(self, structure: ctypes.Structure,
@@ -524,7 +524,7 @@ class ProcessLimiter:
         logger.debug(f"Job object: {handle_job:#x}")
         self._handle_job = handle_job
 
-        # associate io port completion, if any
+
         if not self._handle_io_port:
             return
         job_completion_port = JOBOBJECT_ASSOCIATE_COMPLETION_PORT()
@@ -549,7 +549,7 @@ class ProcessLimiter:
         Notes:
             The command line is prepended with the full binary path.
         """
-        # create the process with its main thread in a suspended state
+
         logger.debug("Creating suspended process.")
         si = STARTUPINFO()
         si.cb = ctypes.sizeof(STARTUPINFO)
@@ -563,16 +563,16 @@ class ProcessLimiter:
         current_dir = self._kernel32.create_buffer(str(full_proc_path.parent))
 
         ret_val = self._kernel32.CreateProcess(
-            None,  # lpApplicationName
-            cmd_line,  # lpCommandLine
-            None,  # lpProcessAttributes
-            None,  # lpThreadAttributes
-            False,  # bInheritHandles
-            CREATE_SUSPENDED,  # dwCreationFlags
-            None,  # lpEnvironment
-            current_dir,  # lpCurrentDirectory
-            ctypes.byref(si),  # lpStartupInfo
-            ctypes.byref(pi),  # lpProcessInformation
+            None,
+            cmd_line,
+            None,
+            None,
+            False,
+            CREATE_SUSPENDED,
+            None,
+            current_dir,
+            ctypes.byref(si),
+            ctypes.byref(pi),
         )
         if ret_val == 0:
             raise ctypes.WinError(ctypes.get_last_error())
@@ -619,16 +619,16 @@ class ProcessLimiter:
                              f"{memory_limit}")
         if not self._handle_job:
             raise ValueError("Job handle is NULL.")
-        # query current job object
+
         job_info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
         job_info = self._query_information_job_object(
             job_info, JobObjectExtendedLimitInformation)
 
-        # limit the process memory; note: not the job memory!
+
         logger.debug("Setting job information.")
         job_info.BasicLimitInformation.LimitFlags |= \
             JOB_OBJECT_LIMIT_PROCESS_MEMORY
-        # MiB to bytes
+
         job_info.ProcessMemoryLimit = memory_limit * 1024 * 1024
         self._set_information_job_object(
             job_info, JobObjectExtendedLimitInformation)
@@ -646,7 +646,7 @@ class ProcessLimiter:
         """
         logger.info("Waiting for the job.")
         if self.is_started_process:
-            # resume the main thread, as we started the process ourselves.
+
             self._resume_main_thread()
         if not self.has_io_port:
             return False
@@ -687,20 +687,20 @@ class ProcessLimiter:
                 INFINITE,
             )
             if ret_val == 0:
-                # error from GetQueuedCompletionStatus
+
                 logger.error(f"Error GetQueuedCompletionStatus: "
                              f"{ctypes.get_last_error():#x}")
                 break
             if completion_key.value != self._handle_job:
-                # we received an event, but it's not from our job; we can
-                # ignore it!
+
+
                 continue
-            # message
+
             msg = msg_map.get(completion_code.value)
             if msg:
                 logger.info(f"IO Port Message: {msg}")
             if completion_code.value == JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO:
-                # no more processes in the job, we can exit.
+
                 return_val = True
                 break
         logger.info("Job wait finished")
@@ -708,19 +708,19 @@ class ProcessLimiter:
 
 
 def main(args: argparse.Namespace) -> int:
-    # runs only on Windows
+
     if platform.system().lower() != "windows":
         logger.error("This script only works on Microsoft Windows systems.")
         return -1
 
-    # check the memory limit
+
     if args.memory <= 0:
         logger.debug(f"Memory limit must be above 0, got: {args.memory}")
         return -1
 
-    # check the command type
+
     if args.command_name == "process":
-        # check the binary file exists
+
         if not args.process.is_file():
             logger.debug(f"The given file path '{args.process}' is not a file "
                          f"or doesn't exist.")
@@ -728,7 +728,7 @@ def main(args: argparse.Namespace) -> int:
         logger.info(f"Process Path: {args.process}; Memory limit (MiB): "
                     f"{args.memory}")
     elif args.command_name == "pid":
-        # pid to int
+
         if args.pid.startswith("0x") or args.pid.startswith("0X"):
             base = 16
         else:
@@ -760,9 +760,9 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         description="C:DDA Memory Limit test script.")
 
-    #
-    # options for all sub-commands
-    #
+
+
+
     arg_parser.add_argument(
         "-l",
         "--log-level",
@@ -775,9 +775,9 @@ if __name__ == "__main__":
         help="Maximum process memory size in MiB."
     )
 
-    #
-    # sub-commands
-    #
+
+
+
     subparsers = arg_parser.add_subparsers(help='help for sub-commands',
                                            dest="command_name")
 

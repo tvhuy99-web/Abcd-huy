@@ -30,27 +30,27 @@ struct character_modifier {
         void load( const JsonObject &jo, std::string_view src );
         static const std::vector<character_modifier> &get_all();
 
-        // Use this to obtain the calculated modifier
+
         float modifier( const Character &c, const skill_id &skill = skill_id::NULL_ID() ) const;
 
         const character_modifier_id &getId() const {
             return id;
         }
-        // Description of the modifier to display in the UI
+
         const translation &description() const {
             return desc;
         }
-        // Whether the modifier is added or multiplied
+
         const mod_type &modifier_type() const {
             return modtype;
         }
-        // Same as above, but for displaying in the UI
+
         std::string mod_type_str() const;
-        // Does this modifier use a built-in function to calculate the modifier?
+
         bool is_builtin() const {
             return !builtin.empty();
         }
-        // Which limb score is used to calculate this modifier (if any)
+
         const std::map<limb_score_id, float> &use_limb_scores() const {
             return limbscores;
         }
@@ -76,4 +76,4 @@ struct character_modifier {
         friend struct mod_tracker;
 };
 
-#endif // CATA_SRC_CHARACTER_MODIFIER_H
+#endif

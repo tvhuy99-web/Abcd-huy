@@ -22,7 +22,7 @@ generic_factory<shopkeeper_cons_rates> shop_cons_rate_factory( SHOPKEEPER_CONSUM
 generic_factory<shopkeeper_blacklist> shop_blacklist_factory( SHOPKEEPER_BLACKLIST );
 generic_factory<shopkeeper_whitelist> shop_whitelist_factory( SHOPKEEPER_WHITELIST );
 
-} // namespace
+}
 
 bool icg_entry::operator==( icg_entry const &rhs ) const
 {
@@ -39,14 +39,14 @@ bool icg_entry::matches( item const &it, npc const &beta ) const
              item_group::group_contains_item( item_group, it.typeId() ) );
 }
 
-/** @relates string_id */
+
 template<>
 shopkeeper_blacklist const &string_id<shopkeeper_blacklist>::obj() const
 {
     return shop_blacklist_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<shopkeeper_blacklist>::is_valid() const
 {
@@ -63,14 +63,14 @@ std::vector<shopkeeper_blacklist> const &shopkeeper_blacklist::get_all()
     return shop_blacklist_factory.get_all();
 }
 
-/** @relates string_id */
+
 template<>
 shopkeeper_whitelist const &string_id<shopkeeper_whitelist>::obj() const
 {
     return shop_whitelist_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<shopkeeper_whitelist>::is_valid() const
 {
@@ -87,14 +87,14 @@ std::vector<shopkeeper_whitelist> const &shopkeeper_whitelist::get_all()
     return shop_whitelist_factory.get_all();
 }
 
-/** @relates string_id */
+
 template<>
 shopkeeper_cons_rates const &string_id<shopkeeper_cons_rates>::obj() const
 {
     return shop_cons_rate_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<shopkeeper_cons_rates>::is_valid() const
 {
@@ -177,26 +177,26 @@ class shopkeeper_cons_rates_reader : public generic_typed_reader<shopkeeper_cons
             return ret;
         }
 };
-} // namespace
+}
 
 bool shopkeeper_cons_rate_entry::operator==( shopkeeper_cons_rate_entry const &rhs ) const
 {
     return icg_entry::operator==( rhs ) && rate == rhs.rate;
 }
 
-void shopkeeper_blacklist::load( JsonObject const &jo, std::string_view/*src*/ )
+void shopkeeper_blacklist::load( JsonObject const &jo, std::string_view )
 {
     optional( jo, was_loaded, "entries", entries, icg_entry_reader {} );
 }
 
-void shopkeeper_whitelist::load( JsonObject const &jo, std::string_view/*src*/ )
+void shopkeeper_whitelist::load( JsonObject const &jo, std::string_view )
 {
     optional( jo, was_loaded, "entries", entries, icg_entry_reader {} );
     optional( jo, was_loaded, "message", message,
               to_translation( "<npcname> will never buy this." ) );
 }
 
-void shopkeeper_cons_rates::load( JsonObject const &jo, std::string_view/*src*/ )
+void shopkeeper_cons_rates::load( JsonObject const &jo, std::string_view )
 {
     optional( jo, was_loaded, "default_rate", default_rate );
     optional( jo, was_loaded, "junk_threshold", junk_threshold, money_reader {}, 1_cent );

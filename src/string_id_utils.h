@@ -6,14 +6,14 @@
 #include <algorithm>
 #include <vector>
 
-// Helper methods that sort collections of string_ids lexicographically into a temporary vector
-// Slow (relative), but convenient to use for UI purposes
 
-/**
- * Returns vector sorted by lexicographic order of string_id
- * @param col collection that supports iterators of std::pair<string_id<T>, V>
- * @return sorted (using string_id::LexCmp by std::pair::first) `std::vector<std::pair<string_id<T>, V>>`
- */
+
+
+
+
+
+
+
 template<typename Col,
          typename El = std::decay_t<decltype( *std::declval<const Col &>().begin() )>,
          typename K =  std::decay_t<typename El::first_type>,
@@ -29,11 +29,11 @@ std::vector<std::pair<K, V>> sorted_lex( Col col )
     return ret;
 }
 
-/**
- * Returns vector sorted by lexicographic order of string_id
- * @param col collection that supports iterators of string_id<T>
- * @return sorted (using string_id::LexCmp) `std::vector<string_id<T>>`
- */
+
+
+
+
+
 template<typename Col,
          typename El = std::decay_t<decltype( *std::declval<const Col &>().begin() )>,
          std::enable_if_t<std::is_same_v<El, string_id<typename El::value_type>>, int> = 0>
@@ -45,4 +45,4 @@ std::vector<El> sorted_lex( const Col &col )
     return ret;
 }
 
-#endif // CATA_SRC_STRING_ID_UTILS_H
+#endif

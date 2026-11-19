@@ -99,7 +99,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
 {
     player_activity &act_ref = *act;
     try {
-        // 1. Gather the source item.
+
         vehicle *source_veh = nullptr;
         map &here = get_map();
         const tripoint_bub_ms source_pos = here.get_bub( act_ref.coords.at( 0 ) );
@@ -144,7 +144,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
                 break;
         }
 
-        // Vehicle siphoning is slower than other liquid transfers
+
         const units::volume volume_per_second = source_type == liquid_source_type::VEHICLE
                                                 ? units::from_liter( 0.25F )
                                                 : units::from_liter( 4.0F / 6.0F );
@@ -156,7 +156,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
                                                    temperatures::cold ) );
         }
 
-        // 2. Transfer charges.
+
         const vehicle *veh = nullptr;
         size_t part;
         switch( static_cast<liquid_target_type>( act_ref.values.at( 2 ) ) ) {
@@ -201,26 +201,26 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
 
         const int removed_charges = original_charges - liquid.charges;
         if( removed_charges == 0 ) {
-            // Nothing has been transferred, target must be full.
+
             act_ref.set_to_null();
             return;
         }
 
-        // 3. Remove charges from source.
+
         switch( source_type ) {
             case liquid_source_type::VEHICLE:
                 if( part_num != -1 ) {
                     const vehicle_part &pt = source_veh->part( part_num );
                     if( pt.is_leaking() && !pt.ammo_remaining( ) ) {
-                        act_ref.set_to_null(); // leaky tank spilled while we were transferring
+                        act_ref.set_to_null();
                         return;
                     }
                     source_veh->drain( here, part_num, removed_charges );
                     liquid.charges = veh_charges - removed_charges;
-                    // If there's no liquid left in this tank we're done, otherwise
-                    // we need to update our liquid serialization to reflect how
-                    // many charges are actually left for the next time we come
-                    // around this loop.
+
+
+
+
                     if( !liquid.charges ) {
                         act_ref.set_to_null();
                     } else {
@@ -273,10 +273,10 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
                 }
                 break;
             case liquid_source_type::INFINITE_MAP:
-                // nothing, the liquid source is infinite
+
                 break;
             case liquid_source_type::MONSTER:
-                // liquid source charges handled in monexamine::milk_source
+
                 if( liquid.charges == 0 ) {
                     act_ref.set_to_null();
                 }
@@ -284,7 +284,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
         }
 
         if( removed_charges < original_charges ) {
-            // Transferred less than the available charges -> target must be full
+
             act_ref.set_to_null();
         }
 
@@ -298,15 +298,15 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, Character *yo
 namespace
 {
 enum class repeat_type : int {
-    // INIT should be zero. In some scenarios (vehicle welder), activity value default to zero.
-    INIT = 0,       // Haven't found repeat value yet.
-    ONCE = 1,       // Attempt repair (and refit if possible) just once
-    // value 2 obsolete - previously used for reinforcement
-    FULL = 3,       // Continue repairing until damage==0 (and until refitted if possible)
-    EVENT = 4,      // Continue repairing (and refit if possible) until something interesting happens
-    REFIT_ONCE = 5, // Try refitting once, but don't repair
-    REFIT_FULL = 6, // Continue refitting until item fits, but don't repair
-    CANCEL = 7,     // Stop repeating
+
+    INIT = 0,
+    ONCE = 1,
+
+    FULL = 3,
+    EVENT = 4,
+    REFIT_ONCE = 5,
+    REFIT_FULL = 6,
+    CANCEL = 7,
 };
 
 using I = std::underlying_type_t<repeat_type>;
@@ -324,7 +324,7 @@ constexpr I operator-( const repeat_type &lhs, const repeat_type &rhs )
 {
     return static_cast<I>( lhs ) - static_cast<I>( rhs );
 }
-} // namespace
+}
 
 static repeat_type repeat_menu( const std::string &title, repeat_type last_selection,
                                 const bool can_refit )
@@ -355,9 +355,9 @@ static repeat_type repeat_menu( const std::string &title, repeat_type last_selec
     return repeat_type::CANCEL;
 }
 
-// HACK: This is a part of a hack to provide pseudo items for long repair activity
-// Note: similar hack could be used to implement all sorts of vehicle pseudo-items
-//  and possibly CBM pseudo-items too.
+
+
+
 namespace
 {
 struct weldrig_hack {
@@ -387,7 +387,7 @@ struct weldrig_hack {
         map &here = get_map();
 
         if( !part ) {
-            // null item should be handled just fine
+
             return null_item_reference();
         }
         pseudo.set_flag( json_flag_PSEUDO );
@@ -404,7 +404,7 @@ struct weldrig_hack {
             mag_type = pseudo.magazine_default();
         }
         item mag( mag_type );
-        mag.clear_items(); // no initial ammo
+        mag.clear_items();
         if( !pseudo.put_in( mag, pocket_type::MAGAZINE_WELL ).success() ) {
             debugmsg( "inserting %s into %s's MAGAZINE_WELL pocket failed",
                       mag.typeId().str(), pseudo.typeId().str() );
@@ -412,7 +412,7 @@ struct weldrig_hack {
         }
         pseudo.ammo_set( itype_battery, part->vehicle().drain( here,  itype_battery,
                          pseudo.ammo_capacity( ammo_battery ),
-                         return_true< vehicle_part &>, false ) ); // no cable loss since all of this is virtual
+                         return_true< vehicle_part &>, false ) );
         return pseudo;
     }
 
@@ -424,14 +424,14 @@ struct weldrig_hack {
         map &here = get_map();
 
         part->vehicle().charge_battery( here, pseudo.ammo_remaining( ),
-                                        false ); // return unused charges without cable loss
+                                        false );
     }
 
     ~weldrig_hack() {
         clean_up();
     }
 };
-} // namespace
+}
 
 void activity_handlers::repair_item_finish( player_activity *act, Character *you )
 {
@@ -466,7 +466,7 @@ void repair_item_finish( player_activity *act, Character *you, bool no_menu )
     }
 
     const use_function *use_fun = used_tool->get_use( iuse_name_string );
-    // TODO: De-uglify this block. Something like get_use<iuse_actor_type>() maybe?
+
     const repair_item_actor *actor = dynamic_cast<const repair_item_actor *>
                                      ( use_fun->get_actor_ptr() );
     if( actor == nullptr ) {
@@ -475,30 +475,30 @@ void repair_item_finish( player_activity *act, Character *you, bool no_menu )
         return;
     }
 
-    // Valid Repeat choice and target, attempt repair.
+
     if( repeat != repeat_type::INIT && act->targets.size() >= 2 ) {
         item_location &fix_location = act->targets[1];
         if( !fix_location ) {
-            // The item could disappear for various reasons: moved by follower, burned up, eaten by a grue, etc.
+
             you->add_msg_if_player( m_warning, _( "You can no longer find the item to repair." ) );
             act->set_to_null();
             return;
         }
 
-        // Remember our level: we want to stop retrying on level up
+
         const int old_level = you->get_skill_level( actor->used_skill );
         const repair_item_actor::attempt_hint attempt = actor->repair( *you, *used_tool,
                 fix_location, repeat == repeat_type::REFIT_ONCE || repeat == repeat_type::REFIT_FULL );
-        // Warning: The above call to `repair_item_actor::repair` might
-        // invalidate the item and the item_location, for example when
-        // spilling items from spillable containers. It is therefore
-        // important that we don't use `fix_location` in code below
-        // here without first checking whether it is still valid.
 
-        // If the item being repaired has been destroyed stop further
-        // processing in case the items being used for the repair was
-        // contained by the item being repaired, which will result
-        // in the tool being invalid
+
+
+
+
+
+
+
+
+
         if( attempt == repair_item_actor::AS_DESTROYED ) {
             act->set_to_null();
             return;
@@ -511,23 +511,23 @@ void repair_item_finish( player_activity *act, Character *you, bool no_menu )
             used_tool->consume_tool_uses( 1, here, tool_pos, you );
         }
 
-        // TODO: Allow setting this in the actor
-        // TODO: Don't use charges_to_use: welder has 50 charges per use, soldering iron has 1
+
+
         if( !used_tool->ammo_sufficient( you ) ) {
             you->add_msg_if_player( _( "Your %1$s ran out of charges." ), used_tool->tname() );
             act->set_to_null();
             return;
         }
 
-        // Print message explaining why we stopped
-        // But only if we didn't destroy the item (because then it's obvious)
+
+
         const bool destroyed = attempt == repair_item_actor::AS_DESTROYED;
         const bool cannot_continue_repair = attempt == repair_item_actor::AS_CANT || destroyed ||
                                             !fix_location ||
                                             !actor->can_repair_target( *you, *fix_location, !destroyed, true );
         if( cannot_continue_repair ) {
-            // Cannot continue to repair target, select another target.
-            // **Warning**: as soon as the item is popped back, it is destroyed and can't be used anymore!
+
+
             act->targets.pop_back();
         }
 
@@ -552,13 +552,13 @@ void repair_item_finish( player_activity *act, Character *you, bool no_menu )
             }
         }
     }
-    // Check tool is valid before we query target and Repeat choice.
+
     if( !actor->can_use_tool( *you, *used_tool, true ) ) {
         act->set_to_null();
         return;
     }
 
-    // target selection and validation.
+
     while( act->targets.size() < 2 ) {
         item_location item_loc = game_menus::inv::repair( *you, actor, main_tool );
 
@@ -661,7 +661,7 @@ void repair_item_finish( player_activity *act, Character *you, bool no_menu )
                 return;
             }
             act->values[0] = static_cast<int>( repeat );
-            // BACK selected, redo target selection next.
+
             if( repeat == repeat_type::INIT ) {
                 you->activity.targets.pop_back();
                 return;
@@ -675,7 +675,7 @@ void repair_item_finish( player_activity *act, Character *you, bool no_menu )
             }
         } while( repeat == repeat_type::INIT );
     }
-    // Otherwise keep retrying
+
     act->moves_left = actor->move_cost;
 }
 
@@ -692,10 +692,10 @@ void activity_handlers::travel_do_turn( player_activity *act, Character *you )
         const tripoint_abs_omt next_omt = you->omt_path.back();
         tripoint_abs_ms waypoint;
         if( you->omt_path.size() == 1 ) {
-            // if next omt is the final one, target its midpoint
+
             waypoint = midpoint( project_bounds<coords::ms>( next_omt ) );
         } else {
-            // otherwise target the middle of the edge nearest to our current location
+
             const tripoint_abs_ms cur_omt_mid = midpoint( project_bounds<coords::ms>
                                                 ( you->pos_abs_omt() ) );
             waypoint = clamp( cur_omt_mid, project_bounds<coords::ms>( next_omt ) );
@@ -720,7 +720,7 @@ void activity_handlers::travel_do_turn( player_activity *act, Character *you )
 
 void activity_handlers::repair_item_do_turn( player_activity *act, Character *you )
 {
-    // Moves are decremented based on a combination of speed and good vision (not in the dark, farsighted, etc)
+
     const float exertion_mult = you->exertion_adjusted_move_multiplier( act->exertion_level() );
     const int effective_moves = you->get_moves() / ( you->fine_detail_vision_mod() * exertion_mult );
     if( effective_moves <= act->moves_left ) {

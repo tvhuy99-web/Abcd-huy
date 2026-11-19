@@ -43,4 +43,4 @@ struct printf_converter<std::string> {
     }
 };
 
-#endif // CATA_SRC_PRINTF_CONVERTER_H
+#endif

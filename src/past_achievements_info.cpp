@@ -29,7 +29,7 @@ std::vector<std::string> past_achievements_info::avatars_completed(
     if( it != completed_achievements_.end() ) {
         completed = it->second;
     }
-    // Legacy data from memorials
+
     const achievement_completion_info *legacy = get_past_games().legacy_achievement( ach );
     if( legacy ) {
         for( const past_game_info *const info : legacy->games_completed ) {
@@ -60,7 +60,7 @@ void past_achievements_info::load()
         JsonObject jo = jsin.get_object();
         jo.read( "achievement_version", version );
         if( version == 0 ) {
-            // version 0 has no `avatar_name` member, skip them
+
             continue;
         } else if( version != 1 ) {
             throw JsonError( string_format( "unexpected past achievements version %d", version ) );
@@ -72,7 +72,7 @@ void past_achievements_info::load()
         }
     }
 
-    // Ensure memorial data are also loaded for legacy dead character achievements
+
     get_past_games();
 }
 

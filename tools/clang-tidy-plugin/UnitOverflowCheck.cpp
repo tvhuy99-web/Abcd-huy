@@ -85,4 +85,4 @@ void UnitOverflowCheck::emitDiag( const SourceLocation &loc, const std::string_v
             << QuantityType << ValueType << FunctionName << fix;
 }
 
-} // namespace clang::tidy::cata
+}

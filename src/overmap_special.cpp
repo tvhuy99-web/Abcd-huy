@@ -37,7 +37,7 @@ namespace
 generic_factory<overmap_special> specials( "overmap special" );
 generic_factory<overmap_special_migration> migrations( "overmap special migration" );
 
-} // namespace
+}
 
 template<>
 const overmap_special &overmap_special_id::obj() const
@@ -64,7 +64,7 @@ void overmap_specials::finalize()
 void overmap_specials::finalize_mapgen_parameters()
 {
     for( const overmap_special &elem : specials.get_all() ) {
-        // This cast is ugly, but safe.
+
         const_cast<overmap_special &>( elem ).finalize_mapgen_parameters();
     }
 }
@@ -77,7 +77,7 @@ void overmap_specials::check_consistency()
     []( size_t sum, const overmap_special & elem ) {
         size_t min_occur = static_cast<size_t>( std::max( elem.get_constraints().occurrences.min, 0 ) );
         const bool unique = elem.has_flag( "OVERMAP_UNIQUE" ) || elem.has_flag( "GLOBALLY_UNIQUE" );
-        //: Don't check EXTRADIMENSIONAL specials, which by definition don't spawn in the main dimension
+
         const bool extradimensional = elem.has_flag( "EXTRADIMENSIONAL" );
         return sum + ( unique || extradimensional ? 0 : min_occur );
     } );
@@ -208,11 +208,11 @@ bool overmap_special::can_belong_to_city( const tripoint_om_omt &p, const city &
         return false;
     }
     if( constraints_.city_distance.max > std::max( OMAPX, OMAPY ) ) {
-        // Only care that we're more than min away from a city
+
         return !omap.approx_distance_to_city( p, constraints_.city_distance.min ).has_value();
     }
     const std::optional<int> dist = omap.approx_distance_to_city( p, constraints_.city_distance.max );
-    // Found a city within max and it's greater than min away
+
     return dist.has_value() && constraints_.city_distance.min < *dist;
 }
 
@@ -223,8 +223,8 @@ bool overmap_special::has_flag( const std::string &flag ) const
 
 int overmap_special::longest_side() const
 {
-    // Figure out the longest side of the special for purposes of determining our sector size
-    // when attempting placements.
+
+
     std::vector<overmap_special_locations> req_locations = required_locations();
     auto min_max_x = std::minmax_element( req_locations.begin(), req_locations.end(),
     []( const overmap_special_locations & lhs, const overmap_special_locations & rhs ) {
@@ -292,23 +292,23 @@ mapgen_arguments overmap_special::get_args( const mapgendata &md ) const
 
 void overmap_special::load( const JsonObject &jo, const std::string_view src )
 {
-    // city_building is just an alias of overmap_special
-    // TODO: This comparison is a hack. Separate them properly.
+
+
     const bool is_special = jo.get_string( "type", "" ) == "overmap_special";
 
     optional( jo, was_loaded, "subtype", subtype_, overmap_special_subtype::fixed );
     optional( jo, was_loaded, "locations", default_locations_ );
-    // FIXME: eoc reader for generic factory
+
     if( jo.has_member( "eoc" ) ) {
         eoc = effect_on_conditions::load_inline_eoc( jo.get_member( "eoc" ), src );
         has_eoc_ = true;
     }
     switch( subtype_ ) {
         case overmap_special_subtype::fixed: {
-            // take existing data (from copy-from) if it exists
+
             const fixed_overmap_special_data *existing =
                 std::dynamic_pointer_cast<const fixed_overmap_special_data>( data_ ).get();
-            // then initialize loaded data correctly
+
             shared_ptr_fast<fixed_overmap_special_data> fixed_data = !!existing ?
                     make_shared_fast<fixed_overmap_special_data>( *existing ) :
                     make_shared_fast<fixed_overmap_special_data>();
@@ -320,14 +320,14 @@ void overmap_special::load( const JsonObject &jo, const std::string_view src )
             break;
         }
         case overmap_special_subtype::mutable_: {
-            // take existing data (from copy-from) if it exists
+
             const mutable_overmap_special_data *existing =
                 std::dynamic_pointer_cast<const mutable_overmap_special_data>( data_ ).get();
-            // then initialize loaded data correctly
+
             shared_ptr_fast<mutable_overmap_special_data> mutable_data = !!existing ?
                     make_shared_fast<mutable_overmap_special_data>( *existing ) :
                     make_shared_fast<mutable_overmap_special_data>( id );
-            // If existing, then id may have changed on this load
+
             mutable_data->parent_id = id;
             mutable_data->load( jo, was_loaded );
             data_ = std::move( mutable_data );
@@ -360,8 +360,8 @@ void overmap_special::finalize()
 
 void overmap_special::finalize_mapgen_parameters()
 {
-    // Extract all the map_special-scoped params from the constituent terrains
-    // and put them here
+
+
     std::string context = string_format( "overmap_special %s", id.str() );
     data_->finalize_mapgen_parameters( mapgen_params_, context );
 }
@@ -373,7 +373,7 @@ void overmap_special::check() const
 
 overmap_special_id overmap_specials::create_building_from( const string_id<oter_type_t> &base )
 {
-    // TODO: Get rid of the hard-coded ids.
+
     overmap_special_terrain ter;
     ter.terrain = base.obj().get_first().id();
     ter.locations.insert( overmap_location_land );

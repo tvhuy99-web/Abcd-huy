@@ -73,7 +73,7 @@ static void test_repair( const std::vector<item> &tools, bool plug_in_tools, boo
                                          veh_spawn_status::UNDAMAGED );
 
     REQUIRE( veh_ptr != nullptr );
-    // Find the frame at the origin.
+
     vehicle_part *origin_frame = nullptr;
     for( vehicle_part *part : veh_ptr->get_parts_at( &here, vehicle_origin, "",
             part_status_flag::any ) ) {
@@ -86,13 +86,13 @@ static void test_repair( const std::vector<item> &tools, bool plug_in_tools, boo
     REQUIRE( origin_frame->hp() == origin_frame->info().durability );
     veh_ptr->mod_hp( *origin_frame, -50 );
     REQUIRE( origin_frame->hp() < origin_frame->info().durability );
-    // for a steel frame, one quadrant of damage takes 1000 kJ, 5 chunks of steel and 50 welding wires/rods to fix. (it has 400 max hp)
+
 
     const vpart_info &vp = origin_frame->info();
-    // Assertions about frame part?
+
 
     requirement_data reqs = vp.repair_requirements();
-    // Bust cache on crafting_inventory()
+
     player_character.mod_moves( 1 );
     temp_crafting_inventory crafting_inv = player_character.crafting_inventory();
     bool can_repair = vp.repair_requirements().can_make_with_inventory( &player_character,

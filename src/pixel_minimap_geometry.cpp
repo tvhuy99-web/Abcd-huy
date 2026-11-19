@@ -23,8 +23,8 @@ minimap_transform compute_minimap_transform( const point &native,
     } else {
         const point d( ( native.x - screen_rect.w ) / 2,
                        ( native.y - screen_rect.h ) / 2 );
-        // Positive d crops the native image; negative d centers it on the
-        // screen rect.
+
+
         tf.dest_rect = SDL_Rect{
             screen_rect.x - std::min( d.x, 0 ),
             screen_rect.y - std::min( d.y, 0 ),
@@ -62,4 +62,4 @@ void append_beacon( quad_batch &batch, const SDL_Rect &rect,
     }
 }
 
-#endif // TILES
+#endif

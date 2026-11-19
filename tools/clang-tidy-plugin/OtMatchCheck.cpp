@@ -78,4 +78,4 @@ void OtMatchCheck::check( const MatchFinder::MatchResult &Result )
     CheckCall( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

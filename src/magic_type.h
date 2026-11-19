@@ -49,7 +49,7 @@ class magic_type
         void load( const JsonObject &jo, std::string_view src );
         void serialize( JsonOut &json ) const;
 
-        // these two formulas should be the inverse of eachother.  The spell xp will break if this is not the case.
+
         std::optional<jmath_func_id> get_level_formula_id;
         std::optional<jmath_func_id> exp_for_level_formula_id;
 
@@ -58,7 +58,7 @@ class magic_type
         std::optional<magic_energy_type> energy_source;
         std::optional<vitamin_id> vitamin_energy_source_; // NOLINT(cata-serialize)
         std::optional<nc_color> energy_color_; // NOLINT(cata-serialize)
-        std::set<std::string> cannot_cast_flags; // string flags
+        std::set<std::string> cannot_cast_flags;
         std::optional<std::string> cannot_cast_message;
         std::optional<int> max_book_level;
         dbl_or_var failure_cost_percent;
@@ -72,4 +72,4 @@ class magic_type
 
 };
 
-#endif // CATA_SRC_MAGIC_TYPE_H
+#endif

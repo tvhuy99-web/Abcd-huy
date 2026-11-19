@@ -33,7 +33,7 @@ namespace
 
 generic_factory<anatomy> anatomy_factory( "anatomy" );
 
-} // namespace
+}
 
 template<>
 bool anatomy_id::is_valid() const
@@ -101,7 +101,7 @@ void anatomy::check() const
 
     for( const bodypart_str_id &bp : unloaded_bps ) {
         if( !id.is_valid() ) {
-            // Error already reported in finalize
+
             continue;
         }
         if( !all_parts.count( bp->main_part ) ) {
@@ -184,7 +184,7 @@ void anatomy::add_body_part( const bodypart_str_id &new_bp )
     size_sum += bp_struct.hit_size;
 }
 
-// TODO: get_function_with_better_name
+
 bodypart_str_id anatomy::get_part_with_cumulative_hit_size( float size ) const
 {
     for( const bodypart_id &part : cached_bps ) {
@@ -209,7 +209,7 @@ bodypart_id anatomy::select_body_part( int min_hit, int max_hit, bool can_attack
     weighted_float_list<bodypart_id> hit_weights;
     for( const bodypart_id &bp : cached_bps ) {
         float weight = bp->hit_size;
-        //Filter out too-large or too-small bodyparts
+
         if( weight < min_hit || ( max_hit > -1 && weight > max_hit ) ) {
             add_msg_debug( debugmode::DF_ANATOMY_BP, "BP %s discarded - hitsize %.1f( min %d max %d )",
                            body_part_name( bp ), weight, min_hit, max_hit );
@@ -237,7 +237,7 @@ bodypart_id anatomy::select_body_part( int min_hit, int max_hit, bool can_attack
         hit_weights.add( bp, weight );
     }
 
-    // Debug for seeing weights.
+
     for( const std::pair<bodypart_id, double> &pr : hit_weights ) {
         add_msg_debug( debugmode::DF_ANATOMY_BP, "%s = %.3f", pr.first.obj().name, pr.second );
     }
@@ -260,18 +260,18 @@ bodypart_id anatomy::select_blocking_part( const Creature *blocker, bool arm, bo
         float block_score = bp->get_limb_score( limb_score_block );
         if( const Character *u = dynamic_cast<const Character *>( blocker ) ) {
             block_score = u->get_part( bp )->get_limb_score( *blocker, limb_score_block );
-            // Weigh shielded bodyparts higher
+
             block_score *= u->worn_with_flag( flag_BLOCK_WHILE_WORN, bp ) ? 5 : 1;
         }
 
-        // Filter out nonblocking / broken limbs
+
         if( block_score == 0 ) {
             add_msg_debug( debugmode::DF_MELEE, "BP %s discarded, no blocking score",
                            body_part_name( bp ) );
             continue;
         }
 
-        // Always blocking limbs block always (if they have a block score)
+
         if( bp->has_flag( json_flag_ALWAYS_BLOCK ) ) {
             block_scores.add( bp, block_score );
             add_msg_debug( debugmode::DF_MELEE, "BP %s always blocks",
@@ -279,19 +279,19 @@ bodypart_id anatomy::select_blocking_part( const Creature *blocker, bool arm, bo
             continue;
         }
 
-        // Can we block with our normal boring arm?
+
         if( bp->has_type( bp_type::arm ) && !bp->has_flag( json_flag_NONSTANDARD_BLOCK ) &&
             !arm ) {
             add_msg_debug( debugmode::DF_MELEE, "BP %s discarded, no arm blocks allowed",
                            body_part_name( bp ) );
             continue;
-            // Can we block with our normal boring legs?
+
         } else if( bp->has_type( bp_type::leg ) &&
                    !bp->has_flag( json_flag_NONSTANDARD_BLOCK ) && !leg ) {
             add_msg_debug( debugmode::DF_MELEE, "BP %s discarded, no leg blocks allowed",
                            body_part_name( bp ) );
             continue;
-            // Can we block with our non-normal non-arms/non-legs?
+
         } else if( ( ( !bp->has_type( bp_type::arm ) &&
                        !bp->has_type( bp_type::leg ) ) || bp->has_flag( json_flag_NONSTANDARD_BLOCK ) ) &&
                    !nonstandard ) {
@@ -303,7 +303,7 @@ bodypart_id anatomy::select_blocking_part( const Creature *blocker, bool arm, bo
         block_scores.add( bp, block_score );
     }
 
-    // Debug for seeing weights.
+
     for( const std::pair<bodypart_id, double > &pr : block_scores ) {
         add_msg_debug( debugmode::DF_MELEE, "%s = %.3f", pr.first.obj().name, pr.second );
     }
@@ -345,7 +345,7 @@ bodypart_id anatomy::select_body_part_projectile_attack( const double range_min,
 {
     const bodypart_id biggest_bp = get_max_hitsize_bodypart();
 
-    // A little wrapper telling the targeting graph how to connect and weight bodypart_ids
+
     struct bp_wrapper {
         static bodypart_id connection( const bodypart_id &id ) {
             return id->connected_to.id();
@@ -355,11 +355,11 @@ bodypart_id anatomy::select_body_part_projectile_attack( const double range_min,
         }
     };
 
-    // Create a graph
+
     targeting_graph<bodypart_id, bp_wrapper> graph;
-    // Fill it in with our body parts
+
     graph.generate( biggest_bp, cached_bps );
 
-    // And now, select the right body part
+
     return graph.select( range_min, range_max, value );
 }

@@ -28,7 +28,7 @@ void nested_test( map &m, tripoint_abs_omt const &loc )
     manual_mapgen( loc, manual_nested_mapgen, nested_mapgen_test_nested_place_shopping_cart );
     REQUIRE( m.veh_at( m.get_bub( project_to<coords::ms>( loc ) ) ) );
 }
-} // namespace
+}
 
 TEST_CASE( "mapgen_place_vehicles" )
 {

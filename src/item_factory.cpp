@@ -74,10 +74,10 @@
 
 template <typename T> struct enum_traits;
 
-// Reader for item qualities that accepts both legacy array ["CUT", 1] and
-// new object {"id": "CUT", "level": 1, "speed": 0.5} formats.
-// Produces std::pair<quality_id, itype::item_quality> for use with optional()
-// so that copy-from / extend / delete / proportional / relative all work.
+
+
+
+
 namespace
 {
 class item_quality_reader : public generic_typed_reader<item_quality_reader>
@@ -87,7 +87,7 @@ class item_quality_reader : public generic_typed_reader<item_quality_reader>
 
         std::pair<quality_id, itype::item_quality> get_next( const JsonValue &val ) const {
             if( val.test_array() ) {
-                // Legacy: ["CUT", 1]
+
                 JsonArray arr = val.get_array();
                 if( arr.size() != 2 ) {
                     arr.throw_error( "quality array must have exactly 2 entries [id, level]" );
@@ -95,7 +95,7 @@ class item_quality_reader : public generic_typed_reader<item_quality_reader>
                 return { quality_id( arr[0].get_string() ),
                          itype::item_quality{ arr[1].get_int(), 1.0f } };
             } else if( val.test_object() ) {
-                // New: {"id": "CUT", "level": 1, "speed": 0.5}
+
                 JsonObject obj = val.get_object();
                 quality_id qid( obj.get_string( "id" ) );
                 int level = obj.get_int( "level" );
@@ -105,10 +105,10 @@ class item_quality_reader : public generic_typed_reader<item_quality_reader>
                 }
                 return { qid, itype::item_quality{ level, speed } };
             } else if( val.test_string() ) {
-                // Bare string: "COOK" (used in "delete" context)
+
                 return { quality_id( val.get_string() ), itype::item_quality{ 0, 1.0f } };
             } else if( val.is_member() ) {
-                // Map format: { "CUT": 1 }
+
                 const JsonMember &jm = dynamic_cast<const JsonMember &>( val );
                 return { quality_id( jm.name() ),
                          itype::item_quality{ static_cast<int>( val.get_float() ), 1.0f } };
@@ -116,9 +116,9 @@ class item_quality_reader : public generic_typed_reader<item_quality_reader>
             val.throw_error( "quality entry must be an array, object, or string" );
         }
 
-        // Override relative_next to bypass the supports_relative<item_quality> trait
-        // which the PCH may evaluate before item_quality has operator+=.
-        // "relative" on qualities means add to level, leave speed unchanged.
+
+
+
         template<typename C>
         void relative_next( JsonValue &jv, C &container ) const {
             auto parsed = get_next( jv );
@@ -130,7 +130,7 @@ class item_quality_reader : public generic_typed_reader<item_quality_reader>
             iter->second.level += parsed.second.level;
         }
 };
-} // namespace
+}
 
 static const ammo_effect_str_id ammo_effect_COOKOFF( "COOKOFF" );
 static const ammo_effect_str_id ammo_effect_INCENDIARY( "INCENDIARY" );
@@ -263,14 +263,14 @@ const itype &itype_id::obj() const
     return result ? *result : dummy;
 }
 
-/** @relates string_id */
+
 template<>
 bool itype_id::is_valid() const
 {
     return item_controller->has_template( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<Item_spawn_data>::is_valid() const
 {
@@ -336,12 +336,12 @@ static bool load_min_max( std::pair<T, T> &pa, const JsonObject &obj, const std:
 {
     bool result = false;
     if( obj.has_array( name ) ) {
-        // An array means first is min, second entry is max. Both are mandatory.
+
         JsonArray arr = obj.get_array( name );
         result |= arr.read_next( pa.first );
         result |= arr.read_next( pa.second );
     } else {
-        // Not an array, should be a single numeric value, which is set as min and max.
+
         result |= obj.read( name, pa.first );
         result |= obj.read( name, pa.second );
     }
@@ -352,7 +352,7 @@ static bool load_min_max( std::pair<T, T> &pa, const JsonObject &obj, const std:
 
 void Item_factory::finalize_pre( itype &obj )
 {
-    //a gunmod slot needs a toolmod slot even if one wasn't loaded
+
     if( obj.gunmod && !obj.mod ) {
         obj.mod = cata::make_value<islot_mod>();
     }
@@ -360,12 +360,12 @@ void Item_factory::finalize_pre( itype &obj )
     check_and_create_magazine_pockets( obj );
     add_special_pockets( obj );
 
-    //migrate magazines
+
     if( obj.magazines.empty() ) {
         migrate_mag_from_pockets( obj );
     }
 
-    //set default magazine capacity
+
     if( obj.magazine && obj.magazine->capacity == 0 ) {
         int largest = 0;
         for( pocket_data &pocket : obj.pockets ) {
@@ -377,7 +377,7 @@ void Item_factory::finalize_pre( itype &obj )
         obj.magazine->capacity = largest;
     }
 
-    // Add relic data by ID we defered
+
     if( obj.relic_data ) {
         obj.relic_data->finalize();
     }
@@ -395,8 +395,8 @@ void Item_factory::finalize_pre( itype &obj )
                   obj.id.c_str() );
     }
 
-    // if variant omit it's name or description,
-    // pick it from the item instead
+
+
     for( itype_variant_data &var : obj.variants ) {
         if( var.alt_name.empty() ) {
             var.alt_name = obj.name;
@@ -406,15 +406,15 @@ void Item_factory::finalize_pre( itype &obj )
         }
     }
 
-    // add usage methods (with default values) based upon qualities
-    // if a method was already set the specific values remain unchanged
+
+
     for( const auto &q : obj.qualities ) {
         for( const auto &u : q.first.obj().usages ) {
             if( q.second.level >= u.first ) {
                 emplace_usage( obj.use_methods, u.second );
-                // As far as I know all the actions provided by quality level do not consume ammo
-                // So it is safe to set all to 0
-                // To do: read the json file of this item again and get for each quality a scale number
+
+
+
                 obj.ammo_scale.emplace( u.second, 0 );
             }
         }
@@ -423,7 +423,7 @@ void Item_factory::finalize_pre( itype &obj )
         for( const auto &u : q.first.obj().usages ) {
             if( q.second.level >= u.first ) {
                 emplace_usage( obj.use_methods, u.second );
-                // I do not know how to get the ammo scale, so hopefully it naturally comes with the item's scale?
+
             }
         }
     }
@@ -442,7 +442,7 @@ void Item_factory::finalize_pre( itype &obj )
     }
 
     if( obj.gunmod ) {
-        // convert aim_speed to FoV and aim_speed_modifier automatically, if FoV is not set
+
         if( obj.gunmod->aim_speed >= 0 && obj.gunmod->field_of_view <= 0 ) {
             if( obj.gunmod->aim_speed > 6 ) {
                 obj.gunmod->aim_speed_modifier = 5 * ( obj.gunmod->aim_speed - 6 );
@@ -457,25 +457,25 @@ void Item_factory::finalize_pre( itype &obj )
         obj.faults.clear();
     }
 
-    // If no category was forced via JSON automatically calculate one now
+
     if( !obj.category_force.is_valid() || obj.category_force.is_empty() ) {
         obj.category_force = calc_category( obj );
     }
 
-    // use pre-Cataclysm price as default if post-cataclysm price unspecified
+
     if( obj.price_post < 0_cent ) {
         obj.price_post = obj.price;
     }
-    // use base volume if integral volume unspecified
+
     if( obj.integral_volume < 0_ml ) {
         obj.integral_volume = obj.volume;
     }
-    // use base weight if integral weight unspecified
+
     if( obj.integral_weight < 0_gram ) {
         obj.integral_weight = obj.weight;
     }
-    // for ammo and comestibles stack size defaults to count of initial charges
-    // Set max stack size to 200 to prevent integer overflow
+
+
     if( obj.count_by_charges() ) {
         if( obj.comestible ) {
             obj.stack_size = obj.comestible->stack_size;
@@ -490,15 +490,15 @@ void Item_factory::finalize_pre( itype &obj )
         }
     }
 
-    //limit tool charges
+
     if( obj.tool ) {
         if( obj.tool->def_charges > obj.tool->max_charges ) {
             debugmsg( "initial_charges is larger than max_charges for %s", obj.id.str() );
         }
     }
 
-    // Items always should have some volume.
-    // TODO: handle possible exception software?
+
+
     if( obj.volume <= 0_ml ) {
         if( is_physical( obj ) ) {
             debugmsg( "item %s has zero volume (if zero volume is intentional "
@@ -508,9 +508,9 @@ void Item_factory::finalize_pre( itype &obj )
         obj.volume = units::from_milliliter( 1 );
     }
 
-    // Finalize vitamins in food
+
     if( obj.comestible ) {
-        // The value here is in kcal, but is stored as simply calories
+
         obj.comestible->default_nutrition.calories *= 1000;
         obj.comestible->default_nutrition.finalize_vitamins();
 
@@ -533,12 +533,12 @@ void Item_factory::finalize_pre( itype &obj )
             add_spi( pair.first, pair.second );
         }
 
-        // Average based on number of materials.
+
         obj.comestible->specific_heat_liquid = specific_heat_liquid / mat_total;
         obj.comestible->specific_heat_solid = specific_heat_solid / mat_total;
         obj.comestible->latent_heat = latent_heat / mat_total;
 
-        // Junk food never gets old by default, but this can still be overridden.
+
         if( obj.comestible->monotony_penalty == -1 ) {
             obj.comestible->monotony_penalty = is_not_boring ? 0 : 2;
         }
@@ -548,7 +548,7 @@ void Item_factory::finalize_pre( itype &obj )
         obj.bionic->id = bionic_id( obj.id.str() );
     }
 
-    // for ammo not specifying loudness derive value from other properties
+
     if( obj.ammo ) {
         if( obj.ammo->loudness < 0 ) {
             obj.ammo->loudness = obj.ammo->range * 2;
@@ -568,11 +568,11 @@ void Item_factory::finalize_pre( itype &obj )
             obj.ammo->cookoff = false;
             obj.ammo->special_cookoff = false;
         }
-        // Special casing for shot, since the damage per pellet can be tiny.
-        // Instead of handling fractional damage values, we scale the effective number
-        // of projectiles based on the damage so that they end up at 1.
+
+
+
         if( obj.ammo->count > 1 && obj.ammo->shot_damage.total_damage() < 1.0f ) {
-            // Patch to fixup shot without shot_damage until I get all the definitions consistent.
+
             if( obj.ammo->shot_damage.damage_units.empty() ) {
                 obj.ammo->shot_damage.damage_units.emplace_back( damage_bullet, 0.1f );
             }
@@ -581,7 +581,7 @@ void Item_factory::finalize_pre( itype &obj )
         }
     }
 
-    // Helper for ammo migration in following sections
+
     auto migrate_ammo_set = [this]( std::set<ammotype> &ammoset ) {
         for( auto ammo_type_it = ammoset.begin(); ammo_type_it != ammoset.end(); ) {
             const itype_id default_ammo_type = ammo_type_it->obj().default_ammotype();
@@ -610,16 +610,16 @@ void Item_factory::finalize_pre( itype &obj )
     };
 
     if( obj.magazine ) {
-        // ensure default_ammo is set
+
         if( obj.magazine->default_ammo.is_null() ) {
             obj.magazine->default_ammo = ammotype( *obj.magazine->type.begin() )->default_ammotype();
         }
 
-        // If the magazine has ammo types for which the default ammo has been migrated, we need to
-        // replace those ammo types with that of the migrated ammo
+
+
         migrate_ammo_set( obj.magazine->type );
 
-        // ensure default_ammo is migrated if need be
+
         auto maybe_migrated = migrated_ammo.find( obj.magazine->default_ammo );
         if( maybe_migrated != migrated_ammo.end() ) {
             obj.magazine->default_ammo = maybe_migrated->second.obj().default_ammotype();
@@ -632,7 +632,7 @@ void Item_factory::finalize_pre( itype &obj )
             migrate_ammo_map( magazine.ammo_restriction );
         }
 
-        // list all the ammo types that work
+
         for( const ammotype &am : obj.magazine->type ) {
             auto temp_vec = Item_factory::find( [obj, am]( const itype & e ) {
                 if( !e.ammo || item_is_blacklisted( e.get_id() ) ) {
@@ -649,7 +649,7 @@ void Item_factory::finalize_pre( itype &obj )
 
     }
 
-    // Migrate compatible magazines
+
     for( auto kv : obj.magazines ) {
         for( auto mag_it = kv.second.begin(); mag_it != kv.second.end(); ) {
             auto maybe_migrated = migrated_magazines.find( *mag_it );
@@ -662,7 +662,7 @@ void Item_factory::finalize_pre( itype &obj )
         }
     }
 
-    // Migrate default magazines
+
     for( auto kv : obj.magazine_default ) {
         auto maybe_migrated = migrated_magazines.find( kv.second );
         if( maybe_migrated != migrated_magazines.end() ) {
@@ -671,7 +671,7 @@ void Item_factory::finalize_pre( itype &obj )
     }
 
     if( obj.mod ) {
-        // Migrate acceptable ammo and ammo modifiers
+
         migrate_ammo_set( obj.mod->acceptable_ammo );
         migrate_ammo_set( obj.mod->ammo_modifier );
 
@@ -689,17 +689,17 @@ void Item_factory::finalize_pre( itype &obj )
     }
 
     if( obj.gun ) {
-        // If the gun has ammo types for which the default ammo has been migrated, we need to
-        // replace those ammo types with that of the migrated ammo
+
+
         for( auto ammo_type_it = obj.gun->ammo.begin(); ammo_type_it != obj.gun->ammo.end(); ) {
             auto maybe_migrated = migrated_ammo.find( ammo_type_it->obj().default_ammotype() );
             if( maybe_migrated != migrated_ammo.end() ) {
                 const ammotype old_ammo = *ammo_type_it;
-                // Remove the old ammotype add the migrated version
+
                 ammo_type_it = obj.gun->ammo.erase( ammo_type_it );
                 const ammotype &new_ammo = maybe_migrated->second;
                 obj.gun->ammo.insert( obj.gun->ammo.begin(), new_ammo );
-                // Migrate the compatible magazines
+
                 auto old_mag_it = obj.magazines.find( old_ammo );
                 if( old_mag_it != obj.magazines.end() ) {
                     for( const itype_id &old_mag : old_mag_it->second ) {
@@ -707,7 +707,7 @@ void Item_factory::finalize_pre( itype &obj )
                     }
                     obj.magazines.erase( old_ammo );
                 }
-                // And the default magazines for each magazine type
+
                 auto old_default_mag_it = obj.magazine_default.find( old_ammo );
                 if( old_default_mag_it != obj.magazine_default.end() ) {
                     const itype_id &old_default_mag = old_default_mag_it->second;
@@ -719,7 +719,7 @@ void Item_factory::finalize_pre( itype &obj )
             }
         }
 
-        // generate cached map for [mag type_id] -> [set of compatible guns]
+
         for( const pocket_data &pocket : obj.pockets ) {
             if( pocket.type != pocket_type::MAGAZINE_WELL ) {
                 continue;
@@ -739,10 +739,10 @@ void Item_factory::finalize_pre( itype &obj )
             migrate_ammo_map( magazine.ammo_restriction );
         }
 
-        // TODO: add explicit action field to gun definitions
+
         const auto defmode_name = [&]() {
             if( obj.gun->clip == 1 ) {
-                return to_translation( "manual" ); // break-type actions
+                return to_translation( "manual" );
             } else if( obj.gun->skill_used == skill_pistol && obj.has_flag( flag_RELOAD_ONE ) ) {
                 return to_translation( "revolver" );
             } else {
@@ -750,11 +750,11 @@ void Item_factory::finalize_pre( itype &obj )
             }
         };
 
-        // if the gun doesn't have a DEFAULT mode then add one now
+
         obj.gun->modes.emplace( gun_mode_DEFAULT,
                                 gun_modifier_data( defmode_name(), 1, std::set<std::string>() ) );
 
-        // If a "gun" has a reach attack, give it an additional melee mode.
+
         if( obj.has_flag( flag_REACH_ATTACK ) ) {
             obj.gun->modes.emplace( gun_mode_MELEE,
                                     gun_modifier_data( to_translation( "melee" ), 1,
@@ -762,7 +762,7 @@ void Item_factory::finalize_pre( itype &obj )
         }
 
         if( obj.gun->handling < 0 ) {
-            // TODO: specify in JSON via classes
+
             if( obj.gun->skill_used == skill_rifle ||
                 obj.gun->skill_used == skill_smg ||
                 obj.gun->skill_used == skill_shotgun ) {
@@ -772,7 +772,7 @@ void Item_factory::finalize_pre( itype &obj )
             }
         }
 
-        // list all the ammo types that work
+
         for( const ammotype &am : obj.gun->ammo ) {
             auto temp_vec = Item_factory::find( [obj, am]( const itype & e ) {
                 if( !e.ammo || item_is_blacklisted( e.get_id() ) ) {
@@ -809,11 +809,11 @@ void Item_factory::finalize_pre( itype &obj )
                 }
             }
         } else if( vitamins.empty() && obj.comestible->healthy >= 0 ) {
-            // Default vitamins of healthy comestibles to their edible base materials if none explicitly specified.
+
             int healthy = std::max( obj.comestible->healthy, 1 ) * 10;
             auto mat = obj.materials;
 
-            // For comestibles composed of multiple edible materials we calculate the average.
+
             for( const auto &v : vitamin::all() ) {
                 if( !vitamins.count( v.first ) ) {
                     for( const auto &m : mat ) {
@@ -825,7 +825,7 @@ void Item_factory::finalize_pre( itype &obj )
         }
     }
 
-    // recurse into subtypes, adding self as substitution for all items in the subtypes chain
+
     for( itype_id it = obj.id; it->tool && it->tool->subtype.is_valid(); it = it->tool->subtype ) {
         tool_subtypes[ it->tool->subtype ].insert( obj.id );
     }
@@ -840,15 +840,15 @@ void Item_factory::finalize_pre( itype &obj )
 
     if( obj.book ) {
         if( obj.ememory_size == 0_KB ) {
-            //PDF size varies wildly depending on page:image ratio
+
             obj.ememory_size = 20_KB * item::pages_in_book( obj );
         }
     }
 
     if( obj.can_use( "MA_MANUAL" ) && obj.book && obj.book->martial_art.is_null() &&
         string_starts_with( obj.get_id().str(), "manual_" ) ) {
-        // HACK: Legacy martial arts books rely on a hack whereby the name of the
-        // martial art is derived from the item id
+
+
         obj.book->martial_art = matype_id( "style_" + obj.get_id().str().substr( 7 ) );
     }
 
@@ -866,12 +866,12 @@ void Item_factory::finalize_pre( itype &obj )
 void Item_factory::register_cached_uses( const itype &obj )
 {
     for( const auto &e : obj.use_methods ) {
-        // can this item function as a repair tool?
+
         if( repair_actions.count( e.first ) ) {
             repair_tools.insert( obj.id );
         }
 
-        // can this item be used to repair complex firearms?
+
         if( e.first == "GUN_REPAIR" ) {
             gun_tools.insert( obj.id );
         }
@@ -904,7 +904,7 @@ void Item_factory::finalize_post( itype &obj,
         }
     }
 
-    // handle complex firearms as a special case
+
     if( obj.gun && !obj.has_flag( flag_PRIMITIVE_RANGED_WEAPON ) ) {
         std::copy( gun_tools.begin(), gun_tools.end(), std::inserter( obj.repair, obj.repair.begin() ) );
         return;
@@ -914,16 +914,16 @@ void Item_factory::finalize_post( itype &obj,
         finalize_post_armor( obj );
     }
 
-    // if we haven't set what the item can be repaired with calculate it now
+
     if( obj.repairs_with.empty() ) {
         for( const auto &mats : obj.materials ) {
             obj.repairs_with.insert( mats.first );
         }
     }
 
-    // A repair tool's supported materials depend on its use actor, not the
-    // target item. Build this lookup once for all items instead of repeatedly
-    // resolving actors for every item / tool / action combination.
+
+
+
     for( const auto &tool_and_materials : materials_by_tool ) {
         const auto &allowed = tool_and_materials.second;
         if( std::any_of( obj.repairs_with.begin(), obj.repairs_with.end(),
@@ -946,7 +946,7 @@ void Item_factory::finalize_post( itype &obj,
         }
     }
 
-    // go through each pocket and assign the name as a fallback definition
+
     for( pocket_data &pocket : obj.pockets ) {
         pocket.name = obj.name;
     }
@@ -961,12 +961,12 @@ void Item_factory::finalize_post( itype &obj,
         }
     }
 
-    // weight_override, weight_add, weight_mult, group_id
+
     for( const std::tuple<int, int, float, std::string> &fault_groups : obj.fault_groups ) {
         const int weight_override = std::get<0>( fault_groups );
         fault_group_id fault_g = fault_group_id( std::get<3>( fault_groups ) );
         if( weight_override == -1 ) {
-            // just add and multiply existing weight
+
             const int weight_add = std::get<1>( fault_groups );
             const float weight_mult = std::get<2>( fault_groups );
             for( const auto &id_and_weight : fault_g.obj().get_weighted_list() ) {
@@ -974,7 +974,7 @@ void Item_factory::finalize_post( itype &obj,
                                            ( id_and_weight.second + weight_add ) * weight_mult );
             }
         } else {
-            // weight_override is not -1, override the weight
+
             for( const std::pair<fault_id, int> &id_and_weight : fault_g.obj().get_weighted_list() ) {
                 obj.faults.add( id_and_weight.first, std::get<0>( fault_groups ) );
             }
@@ -984,7 +984,7 @@ void Item_factory::finalize_post( itype &obj,
 
 void Item_factory::finalize_post_armor( itype &obj )
 {
-    // Collect all explicitly-covered BPs across all armor portions
+
     body_part_set all_explicit_covers;
     for( const armor_portion_data &data : obj.armor->sub_data ) {
         if( data.covers.has_value() ) {
@@ -992,18 +992,18 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // Tally up all the hard-defined similar BPs
+
     for( armor_portion_data &data : obj.armor->sub_data ) {
         body_part_set similar_bp;
         if( data.covers.has_value() ) {
             for( const bodypart_str_id &bp : data.covers.value() ) {
                 for( const bodypart_str_id &combined : bp->get_all_combined_similar_bodyparts() ) {
-                    // skip if already explicitly covered in any portion
+
                     if( all_explicit_covers.test( combined ) ) {
                         continue;
                     }
-                    // skip if this similar BP bridges multiple portions:
-                    // its own similar BPs include explicit BPs from a different portion
+
+
                     bool bridges_portions = false;
                     for( const bodypart_str_id &sibling :
                          combined->get_all_combined_similar_bodyparts() ) {
@@ -1022,13 +1022,13 @@ void Item_factory::finalize_post_armor( itype &obj )
         data.covers->unify_set( similar_bp );
     }
 
-    // Add sublimb coverage when missing explicit definition
+
     for( armor_portion_data &data : obj.armor->sub_data ) {
-        // if no sub locations are specified assume it covers everything
+
         if( data.covers.has_value() && data.sub_coverage.empty() ) {
             for( const bodypart_str_id &bp : data.covers.value() ) {
                 for( const sub_bodypart_str_id &sbp : bp->sub_parts ) {
-                    // only assume to add the non hanging locations
+
                     if( !sbp->secondary ) {
                         data.sub_coverage.insert( sbp );
                     }
@@ -1037,24 +1037,24 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // Collect all explicitly-covered sub-BPs across all armor portions
+
     std::set<sub_bodypart_str_id> all_explicit_sub_covers;
     for( const armor_portion_data &data : obj.armor->sub_data ) {
         all_explicit_sub_covers.insert( data.sub_coverage.begin(), data.sub_coverage.end() );
     }
 
 
-    // Include similar sublimbs as well (after populating sub coverage)
+
     for( armor_portion_data &data : obj.armor->sub_data ) {
         std::set<sub_bodypart_str_id> similar_sbp;
         if( !data.sub_coverage.empty() ) {
             for( const sub_bodypart_str_id &sbp : data.sub_coverage ) {
                 for( const sub_bodypart_str_id &combined : sbp->get_all_combined_similar_sub_bodyparts() ) {
-                    // skip if already covered in any portion
+
                     if( all_explicit_sub_covers.count( combined ) ) {
                         continue;
                     }
-                    // skip if this similar sub-BP bridges multiple portions
+
                     bool bridges_portions = false;
                     for( const sub_bodypart_str_id &sibling :
                          combined->get_all_combined_similar_sub_bodyparts() ) {
@@ -1071,8 +1071,8 @@ void Item_factory::finalize_post_armor( itype &obj )
             }
         }
         data.sub_coverage.merge( similar_sbp );
-        // We populated substitutes
-        // Handle incomplete matches (ie defined sub coverage without parent coverage)
+
+
         if( !data.sub_coverage.empty() ) {
             for( const sub_bodypart_str_id &sbp : data.sub_coverage ) {
                 if( !data.covers->test( sbp->parent ) ) {
@@ -1083,36 +1083,36 @@ void Item_factory::finalize_post_armor( itype &obj )
     }
 
 
-    // if this armor doesn't have material info should try to populate it with base item materials
+
     for( armor_portion_data &data : obj.armor->sub_data ) {
         if( data.materials.empty() ) {
-            // if no portion info defined skip scaling for portions
+
             bool skip_scale = obj.mat_portion_total == 0;
             for( const auto &m : obj.materials ) {
                 float factor = skip_scale
                                ? obj.materials.size()
                                : static_cast<float>( m.second ) / static_cast<float>( obj.mat_portion_total );
                 part_material pm( m.first, 100, factor * data.avg_thickness );
-                // need to ignore sheet thickness since inferred thicknesses are not gonna be perfect
+
                 pm.ignore_sheet_thickness = true;
                 data.materials.push_back( pm );
             }
         }
     }
 
-    // cache some values and entries before consolidating info per limb
+
     for( armor_portion_data &data : obj.armor->sub_data ) {
-        // Setting max_encumber must be in finalize_post because it relies on
-        // stack_size being set for all ammo, which happens in finalize_pre.
+
+
         if( data.max_encumber == -1 ) {
             units::volume total_nonrigid_volume = 0_ml;
             for( const pocket_data &pocket : obj.pockets ) {
-                // Reimplementation of item_pocket::is_standard_type()
+
                 bool pocket_is_standard = pocket.type == pocket_type::CONTAINER ||
                                           pocket.type == pocket_type::MAGAZINE ||
                                           pocket.type == pocket_type::MAGAZINE_WELL;
                 if( !pocket.rigid && pocket_is_standard ) {
-                    // include the modifier for each individual pocket
+
                     total_nonrigid_volume += pocket.volume_capacity() * pocket.volume_encumber_modifier;
                 }
             }
@@ -1120,7 +1120,7 @@ void Item_factory::finalize_post_armor( itype &obj )
                                 armor_portion_data::volume_per_encumbrance;
         }
 
-        // Precalc average thickness per portion
+
         int data_count = 0;
         float thic_acc = 0.0f;
         for( part_material &m : data.materials ) {
@@ -1131,7 +1131,7 @@ void Item_factory::finalize_post_armor( itype &obj )
             data.avg_thickness = thic_acc;
         }
 
-        // Precalc hardness and comfort for these parts of the armor. uncomfortable material supersedes softness (all rigid materials are assumed to be uncomfy)
+
         for( const part_material &m : data.materials ) {
             if( m.cover > islot_armor::test_threshold ) {
                 if( m.id->soft() ) {
@@ -1147,12 +1147,12 @@ void Item_factory::finalize_post_armor( itype &obj )
     }
 
     for( auto itt = obj.armor->sub_data.begin(); itt != obj.armor->sub_data.end(); ++itt ) {
-        // using empty to signify it has already been consolidated
+
         if( !itt->sub_coverage.empty() ) {
-            //check if any further entries should be combined with this one
+
             for( auto comp_itt = std::next( itt ); comp_itt != obj.armor->sub_data.end(); ++comp_itt ) {
                 if( armor_portion_data::should_consolidate( *itt, *comp_itt ) ) {
-                    // they are the same so add the covers and sub covers to the original and then clear them from the other
+
                     itt->covers->unify_set( comp_itt->covers.value() );
                     itt->sub_coverage.insert( comp_itt->sub_coverage.begin(), comp_itt->sub_coverage.end() );
                     comp_itt->covers->clear();
@@ -1161,27 +1161,27 @@ void Item_factory::finalize_post_armor( itype &obj )
             }
         }
     }
-    //remove any now empty entries
+
     auto remove_itt = std::remove_if( obj.armor->sub_data.begin(),
     obj.armor->sub_data.end(), [&]( const armor_portion_data & data ) {
         return data.sub_coverage.empty() && data.covers.value().none();
     } );
     obj.armor->sub_data.erase( remove_itt, obj.armor->sub_data.end() );
 
-    // now consolidate all the loaded sub_data to one entry per body part
+
     for( const armor_portion_data &sub_armor : obj.armor->sub_data ) {
-        // for each body part this covers we need to add to the overall data for that bp
+
         if( sub_armor.covers.has_value() ) {
             for( const bodypart_str_id &bp : sub_armor.covers.value() ) {
                 bool found = false;
-                // go through and find if the body part already exists
+
 
                 for( armor_portion_data &it : obj.armor->data ) {
-                    // if it contains the body part update the values with data from this
-                    //body_part_set set = it.covers.value();
+
+
                     if( it.covers->test( bp ) ) {
                         found = true;
-                        // modify the values with additional info
+
 
                         it.encumber += sub_armor.encumber;
                         it.max_encumber += sub_armor.max_encumber;
@@ -1190,8 +1190,8 @@ void Item_factory::finalize_post_armor( itype &obj )
                             it.encumber_modifiers.push_back( en );
                         }
 
-                        // get the amount of the limb that is covered with sublocations
-                        // for overall coverage we need to scale coverage by that
+
+
                         float scale = sub_armor.max_coverage( bp ) / 100.0;
 
                         float it_scale = it.max_coverage( bp ) / 100.0;
@@ -1201,7 +1201,7 @@ void Item_factory::finalize_post_armor( itype &obj )
                         it.cover_ranged += sub_armor.cover_ranged * scale;
                         it.cover_vitals += sub_armor.cover_vitals;
 
-                        // these values need to be averaged based on proportion covered
+
                         it.avg_thickness = ( sub_armor.avg_thickness * scale + it.avg_thickness * it_scale ) /
                                            ( scale + it_scale );
                         it.env_resist = ( sub_armor.env_resist * scale + it.env_resist * it_scale ) /
@@ -1209,82 +1209,82 @@ void Item_factory::finalize_post_armor( itype &obj )
                         it.env_resist_w_filter = ( sub_armor.env_resist_w_filter * scale + it.env_resist_w_filter *
                                                    it_scale ) / ( scale + it_scale );
 
-                        // add layers that are covered by sublimbs
+
                         for( const layer_level &ll : sub_armor.layers ) {
                             it.layers.insert( ll );
                         }
 
-                        // if you are trying to add a new data entry and either the original data
-                        // or the new data has an empty sublocations list then say that you are
-                        // redefining a limb
+
+
+
                         if( it.sub_coverage.empty() || sub_armor.sub_coverage.empty() ) {
                             debugmsg( "item %s has multiple entries for %s.",
                                       obj.id.str(), bp.str() );
                         }
 
-                        // go through the materials list and update data
+
                         for( const part_material &new_mat : sub_armor.materials ) {
                             bool mat_found = false;
                             for( part_material &old_mat : it.materials ) {
                                 if( old_mat.id == new_mat.id ) {
                                     mat_found = true;
-                                    // values should be averaged
+
                                     float max_coverage_new = sub_armor.max_coverage( bp );
                                     float max_coverage_mats = it.max_coverage( bp );
 
-                                    // the percent of the coverable bits that this armor does cover
+
                                     float coverage_multiplier = sub_armor.coverage * max_coverage_new / 100.0f;
 
-                                    // portion should be handled as the portion scaled by relative coverage
+
                                     old_mat.cover = old_mat.cover + static_cast<float>( new_mat.cover ) * coverage_multiplier / 100.0f;
 
-                                    // with the max values we can get the weight that each should have
+
                                     old_mat.thickness = ( max_coverage_new * new_mat.thickness + max_coverage_mats *
                                                           old_mat.thickness ) / ( max_coverage_mats + max_coverage_new );
                                 }
                             }
-                            // if we didn't find an entry for this material
-                            // create new entry with a scaled material coverage
+
+
                             if( !mat_found ) {
                                 float max_coverage_new = sub_armor.max_coverage( bp );
 
-                                // the percent of the coverable bits that this armor does cover
+
                                 float coverage_multiplier = sub_armor.coverage * max_coverage_new / 100.0f;
 
                                 part_material modified_mat = new_mat;
-                                // if for example your elbow was covered in plastic but none of the rest of the arm
-                                // this should be represented correctly in the UI with the covers for plastic being 5%
-                                // of the arm. Similarily 50% covered in plastic covering only 30% of the arm should lead to
-                                // 15% covered for the arm overall
+
+
+
+
                                 modified_mat.cover = static_cast<float>( new_mat.cover ) * coverage_multiplier / 100.0f;
                                 it.materials.push_back( modified_mat );
                             }
                         }
 
-                        // add additional sub coverage locations to the original list
+
                         for( const sub_bodypart_str_id &sbp : sub_armor.sub_coverage ) {
                             it.sub_coverage.insert( sbp );
                         }
                     }
                 }
 
-                // if not found create a new bp entry
+
                 if( !found ) {
-                    // copy values to data but only have one limb
+
                     armor_portion_data new_limb = sub_armor;
                     new_limb.covers->clear();
                     new_limb.covers->set( bp );
 
-                    // get the amount of the limb that is covered with sublocations
-                    // for overall coverage we need to scale coverage by that
+
+
                     float scale = new_limb.max_coverage( bp ) / 100.0;
 
                     new_limb.coverage = new_limb.coverage * scale;
                     new_limb.cover_melee = new_limb.cover_melee * scale;
                     new_limb.cover_ranged = new_limb.cover_ranged * scale;
 
-                    // need to scale each material coverage the same way since they will after this be
-                    // scaled back up at the end of the amalgamation
+
+
                     for( part_material &mat : new_limb.materials ) {
                         mat.cover = static_cast<float>( mat.cover ) * new_limb.coverage / 100.0f;
                     }
@@ -1296,22 +1296,22 @@ void Item_factory::finalize_post_armor( itype &obj )
 
     }
 
-    // calculate encumbrance data per limb if done by description
+
     for( armor_portion_data &data : obj.armor->data ) {
         if( !data.encumber_modifiers.empty() ) {
-            // we know that the data entry covers a single bp
+
             data.encumber = data.calc_encumbrance( obj.weight, *data.covers.value().begin() );
 
-            // need to account for varsize stuff here and double encumbrance if so
+
             if( obj.has_flag( flag_VARSIZE ) ) {
                 data.encumber = std::min( data.encumber * 2, data.encumber + 10 );
             }
 
-            // Recalc max encumber as well
+
             units::volume total_nonrigid_volume = 0_ml;
             for( const pocket_data &pocket : obj.pockets ) {
                 if( !pocket.rigid ) {
-                    // include the modifier for each individual pocket
+
                     total_nonrigid_volume += pocket.volume_capacity() * pocket.volume_encumber_modifier;
                 }
             }
@@ -1320,15 +1320,15 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // need to scale amalgamized portion data based on total coverage.
-    // 3% of 48% needs to be scaled to 6% of 100%
+
+
     for( armor_portion_data &it : obj.armor->data ) {
         for( part_material &mat : it.materials ) {
-            // scale the value of portion covered based on how much total is covered
-            // if you proportionally only cover 5% of the arm but overall cover 50%
-            // you actually proportionally cover 10% of the armor
 
-            // in case of 0 coverage just say the mats cover it all
+
+
+
+
             if( it.coverage == 0 ) {
                 mat.cover = 100;
             } else {
@@ -1338,25 +1338,25 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // store a shorthand var for if the item has notable sub coverage data
+
     for( const armor_portion_data &armor_data : obj.armor->data ) {
         if( obj.armor->has_sub_coverage ) {
-            // if we already know it has subcoverage break from the loop
+
             break;
         }
 
-        // if the item covers everything it doesn't have specific sub coverage
-        // so don't need to display it in the UI and do tests for it
-        if( !armor_data.sub_coverage.empty() ) {
-            // go through and see if we are missing any sublocations
-            // if we are missing some then the item does cover specific locations
-            // this flag is mostly used to skip itterating and testing
-            // if UI should be displayed
 
-            // each armor data entry covers exactly 1 body part
+
+        if( !armor_data.sub_coverage.empty() ) {
+
+
+
+
+
+
             for( const sub_bodypart_str_id &compare_sbp : armor_data.covers->begin()->obj().sub_parts ) {
                 if( compare_sbp->secondary ) {
-                    // don't care about secondary locations
+
                     continue;
                 }
                 bool found = false;
@@ -1365,7 +1365,7 @@ void Item_factory::finalize_post_armor( itype &obj )
                         found = true;
                     }
                 }
-                // if an entry is not found we cover specific parts so this item has sub_coverage
+
                 if( !found ) {
                     obj.armor->has_sub_coverage = true;
                 }
@@ -1373,30 +1373,30 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // calculate worst case and best case protection %
+
     for( armor_portion_data &armor_data : obj.armor->data ) {
-        // go through each material and contribute its values
+
         float tempbest = 1.0f;
         float tempworst = 1.0f;
         for( const part_material &mat : armor_data.materials ) {
-            // the percent chance the material is not hit
+
             float cover = mat.cover * .01f;
             float cover_invert = 1.0f - cover;
 
             tempbest *= cover;
-            // just interested in cover values that can fail.
-            // multiplying by 0 would make this value pointless
+
+
             if( cover_invert > 0 ) {
                 tempworst *= cover_invert;
             }
         }
 
-        // if tempworst is 1 then the item is homogenous so it only has a single option for damage
+
         if( tempworst == 1 ) {
             tempworst = 0;
         }
 
-        // if not exactly 0 it should display as at least 1
+
         if( tempworst > 0 ) {
             armor_data.worst_protection_chance = std::max( 1.0f, tempworst * 100.0f );
         } else {
@@ -1409,30 +1409,30 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // calculate worst case and best case protection %
+
     for( armor_portion_data &armor_data : obj.armor->sub_data ) {
-        // go through each material and contribute its values
+
         float tempbest = 1.0f;
         float tempworst = 1.0f;
         for( const part_material &mat : armor_data.materials ) {
-            // the percent chance the material is not hit
+
             float cover = mat.cover * .01f;
             float cover_invert = 1.0f - cover;
 
             tempbest *= cover;
-            // just interested in cover values that can fail.
-            // multiplying by 0 would make this value pointless
+
+
             if( cover_invert > 0 ) {
                 tempworst *= cover_invert;
             }
         }
 
-        // if tempworst is 1 then the item is homogenous so it only has a single option for damage
+
         if( tempworst == 1 ) {
             tempworst = 0;
         }
 
-        // if not exactly 0 it should display as at least 1
+
         if( tempworst > 0 ) {
             armor_data.worst_protection_chance = std::max( 1.0f, tempworst * 100.0f );
         } else {
@@ -1445,7 +1445,7 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // create the vector of all layers
+
     if( obj.has_flag( flag_PERSONAL ) ) {
         obj.armor->all_layers.push_back( layer_level::PERSONAL );
     }
@@ -1467,23 +1467,23 @@ void Item_factory::finalize_post_armor( itype &obj )
     if( obj.has_flag( flag_AURA ) ) {
         obj.armor->all_layers.push_back( layer_level::AURA );
     }
-    // fallback for old way of doing items
+
     if( obj.armor->all_layers.empty() ) {
         obj.armor->all_layers.push_back( layer_level::NORMAL );
     }
 
-    // generate the vector of flags that the item will default to if not override
+
     std::vector<layer_level> default_layers = obj.armor->all_layers;
 
     for( armor_portion_data &armor_data : obj.armor->data ) {
-        // if an item or location has no layer data then default to the flags for the item
+
         if( armor_data.layers.empty() ) {
             for( const layer_level &ll : default_layers ) {
                 armor_data.layers.insert( ll );
             }
         } else {
             armor_data.has_unique_layering = true;
-            // add any unique layer entries to the items total layer info
+
             for( const layer_level &ll : armor_data.layers ) {
                 if( std::count( obj.armor->all_layers.begin(), obj.armor->all_layers.end(), ll ) == 0 ) {
                     obj.armor->all_layers.push_back( ll );
@@ -1492,7 +1492,7 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
     for( armor_portion_data &armor_data : obj.armor->sub_data ) {
-        // if an item or location has no layer data then default to the flags for the item
+
         if( armor_data.layers.empty() ) {
             for( const layer_level &ll : default_layers ) {
                 armor_data.layers.insert( ll );
@@ -1502,7 +1502,7 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // anything on a non traditional clothing layer can't be "rigid" as well since it's storage pouches and stuff
+
     for( armor_portion_data &armor_data : obj.armor->sub_data ) {
         auto clothing_layer = std::find_if( armor_data.layers.begin(),
         armor_data.layers.end(), []( const layer_level ll ) {
@@ -1516,14 +1516,14 @@ void Item_factory::finalize_post_armor( itype &obj )
     bool all_rigid = true;
     bool all_comfortable = true;
     for( armor_portion_data &data : obj.armor->sub_data ) {
-        // check if everything on this armor is still rigid / comfortable
+
         all_rigid = all_rigid && data.rigid;
         all_comfortable = all_comfortable && data.comfortable;
     }
     obj.armor->rigid = all_rigid;
     obj.armor->comfortable = all_comfortable;
 
-    // go through the pockets and apply some characteristics
+
     for( const pocket_data &pocket : obj.pockets ) {
         if( pocket.ablative ) {
             obj.armor->ablative = true;
@@ -1540,14 +1540,14 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // update the items materials based on the materials defined by the armor
-    // this isn't perfect but neither is the usual definition so this should at
-    // least give a good ballpark
+
+
+
     if( obj.materials.empty() ) {
         obj.mat_portion_total = 0;
         for( const armor_portion_data &armor_data : obj.armor->data ) {
             for( const part_material &mat : armor_data.materials ) {
-                // if the material isn't in the map yet
+
                 if( obj.materials.find( mat.id ) == obj.materials.end() ) {
                     obj.materials[mat.id] = mat.thickness * 100;
                 } else {
@@ -1558,11 +1558,11 @@ void Item_factory::finalize_post_armor( itype &obj )
         }
     }
 
-    // calculate each body part breathability of the armor
-    // breathability is the worst breathability of any material on that portion
+
+
     for( armor_portion_data &armor_data : obj.armor->data ) {
-        // only recalculate the breathability when the value is not set in JSON
-        // or when the value in JSON is invalid
+
+
         if( armor_data.breathability < 0 ) {
 
             std::vector<part_material> sorted_mats = armor_data.materials;
@@ -1571,25 +1571,25 @@ void Item_factory::finalize_post_armor( itype &obj )
                 return lhs.id->breathability() < rhs.id->breathability();
             } );
 
-            // now that mats are sorted least breathable to most
+
             int coverage_counted = 0;
             int combined_breathability = 0;
 
-            // only calcuate the breathability if the armor has no valid loaded value
+
             for( const part_material &mat : sorted_mats ) {
-                // this isn't perfect since its impossible to know the positions of each material relatively
-                // so some guessing is done
-                // specifically count the worst breathability then then next best with additional coverage
-                // and repeat until out of matts or fully covering.
+
+
+
+
                 combined_breathability += std::max( ( mat.cover - coverage_counted ) * mat.id->breathability(), 0 );
                 coverage_counted = std::max( mat.cover, coverage_counted );
 
-                // this covers the whole piece of armor so we can stop counting better breathability
+
                 if( coverage_counted == 100 ) {
                     break;
                 }
             }
-            // whatever isn't covered is as good as skin so 100%
+
             armor_data.breathability = ( combined_breathability / 100 ) + ( 100 - coverage_counted );
         }
     }
@@ -1612,7 +1612,7 @@ void Item_factory::finalize()
 
     finalize_item_blacklist();
 
-    // we can no longer add or adjust static item templates
+
     frozen = true;
 
     for( const itype &e : item_factory.get_all() ) {
@@ -1651,14 +1651,14 @@ void Item_factory::finalize()
                               " repair_tools=" << repair_tools.size();
 #endif
 
-    // We may actually have some runtimes here - ones loaded from saved game
-    // TODO: support for runtimes that repair
+
+
     for( auto &e : m_runtimes ) {
         finalize_pre( *e.second );
         finalize_post( *e.second, materials_by_tool );
     }
 
-    // for each item register all (non-obsolete) potential recipes
+
     for( const std::pair<const recipe_id, recipe> &p : recipe_dict ) {
         const recipe &rec = p.second;
         if( rec.obsolete || rec.will_be_blacklisted() ) {
@@ -1679,10 +1679,10 @@ void item_blacklist_t::clear()
 
 void Item_factory::finalize_item_blacklist()
 {
-    // Populate a whitelist, and a blacklist with items on whitelists and items on blacklists
+
     std::set<itype_id> whitelist;
     for( const std::pair<bool, std::set<itype_id>> &blacklist : item_blacklist.sub_blacklist ) {
-        // True == whitelist, false == blacklist
+
         if( blacklist.first ) {
             whitelist.insert( blacklist.second.begin(), blacklist.second.end() );
         } else {
@@ -1691,7 +1691,7 @@ void Item_factory::finalize_item_blacklist()
     }
 
     bool whitelist_exists = !whitelist.empty();
-    // Remove all blacklisted items on the whitelist
+
     std::set<itype_id> &blacklist = item_blacklist.blacklist;
     for( const itype_id &it : whitelist ) {
         if( blacklist.count( it ) ) {
@@ -1699,7 +1699,7 @@ void Item_factory::finalize_item_blacklist()
         }
     }
 
-    // Now, populate the blacklist with all the items that aren't whitelists, but only if a whitelist exists.
+
     if( whitelist_exists ) {
         blacklist.clear();
         for( const itype &item : item_factory.get_all() ) {
@@ -1709,7 +1709,7 @@ void Item_factory::finalize_item_blacklist()
         }
     }
 
-    // And clear the blacklists we made in-between
+
     item_blacklist.sub_blacklist.clear();
 
     for( const itype_id &blackout : item_blacklist.blacklist ) {
@@ -1723,12 +1723,12 @@ void Item_factory::finalize_item_blacklist()
             g.second->remove_item( blackout );
         }
 
-        // remove any blacklisted items from requirements
+
         for( const std::pair<const requirement_id, requirement_data> &r : requirement_data::all() ) {
             const_cast<requirement_data &>( r.second ).blacklist_item( blackout );
         }
 
-        // remove any recipes used to craft the blacklisted item
+
         recipe_dictionary::delete_if( [&blackout]( const recipe & r ) {
             return r.result() == blackout;
         } );
@@ -1745,17 +1745,17 @@ void Item_factory::finalize_item_blacklist()
         }
     }
 
-    // Construct a map for batch item replace
+
     std::unordered_map<itype_id, itype_id> replacements;
     for( const std::pair<const itype_id, std::vector<migration>> &migrate : migrations ) {
-        // The valid migration entry
+
         const migration *valid = nullptr;
         for( const migration &cand : migrate.second ) {
-            // This can only be applied to items, not itypes
+
             if( cand.from_variant ) {
                 continue;
             }
-            // There can only be one migration entry
+
             if( valid == nullptr ) {
                 valid = &cand;
             } else {
@@ -1763,22 +1763,22 @@ void Item_factory::finalize_item_blacklist()
                 break;
             }
         }
-        // Either there are no migrations, or too many migrations
-        // Errors are reported below
+
+
         if( valid == nullptr ) {
             continue;
         }
         if( !template_list_contains( valid->replace ) ) {
-            // Errors for missing item templates will be reported below
+
             continue;
         }
         replacements[migrate.first] = valid->replace;
     }
-    // Replace items in item template groups
+
     for( std::pair<const item_group_id, std::unique_ptr<Item_spawn_data>> &g : m_template_groups ) {
         g.second->replace_items( replacements );
     }
-    // Replace templates in recipe/part/etc. requirements
+
     for( const std::pair<const requirement_id, requirement_data> &r : requirement_data::all() ) {
         const_cast<requirement_data &>( r.second ).replace_items( replacements );
     }
@@ -1791,8 +1791,8 @@ void Item_factory::finalize_item_blacklist()
                           migrate.first.c_str() );
                 continue;
             }
-            // The rest of this only applies to blanket migrations
-            // Not migrations looking for a particular variant
+
+
             if( migrant.from_variant ) {
                 continue;
             }
@@ -1801,22 +1801,22 @@ void Item_factory::finalize_item_blacklist()
             }
             parent = &migrant;
         }
-        // Only variant migrations exist, abort
+
         if( parent == nullptr ) {
             continue;
         }
 
-        // remove any recipes used to craft the migrated item
-        // if there's a valid recipe, it will be for the replacement
+
+
         recipe_dictionary::delete_if( [&migrate]( const recipe & r ) {
             return !r.obsolete && r.result() == migrate.first;
         } );
 
-        // If the default ammo of an ammo_type gets migrated, we migrate all guns using that ammo
-        // type to the ammo type of whatever that default ammo was migrated to.
-        // To do that we need to store a map of ammo to the migration replacement thereof.
+
+
+
         auto maybe_ammo = find_template_list_const( migrate.first );
-        // If the itype_id is valid and the itype has ammo data
+
         if( maybe_ammo.has_value() && maybe_ammo->get().ammo ) {
             auto replacement = find_template_list_const( parent->replace );
             if( replacement->get().ammo ) {
@@ -1827,7 +1827,7 @@ void Item_factory::finalize_item_blacklist()
             }
         }
 
-        // migrate magazines as well
+
         auto maybe_mag = find_template_list_const( migrate.first );
         if( maybe_mag.has_value() && maybe_mag->get().magazine ) {
             auto replacement = find_template_list_const( parent->replace );
@@ -1852,16 +1852,16 @@ void Item_factory::finalize_item_blacklist()
                 const migration *parent = nullptr;
                 for( const migration &migrant : replacement->second ) {
                     if( !template_list_contains( migrant.replace ) ) {
-                        // Error reported above
+
                         continue;
                     }
-                    // The rest of this only applies to blanket migrations
-                    // Not migrations looking for a particular variant
+
+
                     if( migrant.from_variant ) {
                         continue;
                     }
                     if( parent != nullptr ) {
-                        // Error reported above
+
                         parent = nullptr;
                         break;
                     }
@@ -1899,9 +1899,9 @@ class iuse_function_wrapper : public iuse_actor
             : iuse_actor( type ), cpp_function( f ) { }
 
         ~iuse_function_wrapper() override = default;
-        std::optional<int> use( Character *p, item &it, map */*here*/,
+        std::optional<int> use( Character *p, item &it, map * ,
                                 const tripoint_bub_ms &pos ) const override {
-            // TODO: Change cpp_function to be map aware.
+
             return cpp_function( p, &it, pos );
         }
         std::unique_ptr<iuse_actor> clone() const override {
@@ -1927,7 +1927,7 @@ class iuse_function_wrapper_with_info : public iuse_function_wrapper
             return std::make_unique<iuse_function_wrapper_with_info>( *this );
         }
 };
-} // namespace
+}
 
 use_function::use_function( const std::string &type, const use_function_pointer f )
     : use_function( std::make_unique<iuse_function_wrapper>( type, f ) ) {}
@@ -1962,12 +1962,12 @@ use_function Item_factory::usage_from_string( const std::string &type )
         return func->second;
     }
 
-    // Otherwise, return a hardcoded function we know exists (hopefully)
+
     debugmsg( "Received unrecognized iuse function %s, using iuse::none instead", type.c_str() );
     return use_function();
 }
 
-// Helper to safely look up and store iuse actions.
+
 void Item_factory::emplace_usage( std::map<std::string, use_function> &container,
                                   const std::string &iuse_id )
 {
@@ -1982,7 +1982,7 @@ use_function Item_factory::read_use_function( const JsonObject &jo,
         std::string &type )
 {
     if( type == "repair_item" ) {
-        type = jo.get_string( "item_action_type" ); //NOTE: replaces type
+        type = jo.get_string( "item_action_type" );
         if( !has_iuse( type ) ) {
             add_actor( std::make_unique<repair_item_actor>( type ) );
             repair_actions.insert( type );
@@ -1998,7 +1998,7 @@ use_function Item_factory::read_use_function( const JsonObject &jo,
     return method;
 }
 
-//reads a single use_function from the provided JsonValue
+
 static std::pair<std::string, use_function> use_function_reader_helper(
     std::map<std::string, int> &ammo_scale,
     std::string_view src, const JsonValue &val )
@@ -2028,7 +2028,7 @@ static std::pair<std::string, use_function> use_function_reader_helper(
     return std::make_pair( "", use_function() );
 }
 
-//reads use_function as either an object, array, or string into a map
+
 namespace
 {
 class use_function_reader_map : public generic_typed_reader<use_function_reader_map>
@@ -2042,9 +2042,9 @@ class use_function_reader_map : public generic_typed_reader<use_function_reader_
             return use_function_reader_helper( ammo_scale, src, val );
         }
 };
-} // namespace
+}
 
-//reads use_function as either an object, array, or string
+
 namespace
 {
 class use_function_reader_single : public generic_typed_reader<use_function_reader_single>
@@ -2059,7 +2059,7 @@ class use_function_reader_single : public generic_typed_reader<use_function_read
             return use_function_reader_helper( ammo_scale, src, val ).second;
         }
 };
-} // namespace
+}
 
 void Item_factory::init()
 {
@@ -2270,13 +2270,13 @@ void Item_factory::init()
     add_actor( std::make_unique<weigh_self_actor>() );
     add_actor( std::make_unique<sew_advanced_actor>() );
     add_actor( std::make_unique<effect_on_conditions_actor>() );
-    // An empty dummy group, it will not spawn anything. However, it makes that item group
-    // id valid, so it can be used all over the place without need to explicitly check for it.
+
+
     m_template_groups[Item_spawn_data_EMPTY_GROUP] =
         std::make_unique<Item_group>( Item_group::G_COLLECTION, 100, 0, 0, "EMPTY_GROUP" );
 }
 
-//reads snippet as array or string
+
 namespace
 {
 class snippet_reader : public generic_typed_reader<snippet_reader>
@@ -2288,8 +2288,8 @@ class snippet_reader : public generic_typed_reader<snippet_reader>
             src( src ) {};
         std::string get_next( const JsonValue &val ) const {
             if( val.test_array() ) {
-                // auto-create a category that is unlikely to already be used and put the
-                // snippets in it.
+
+
                 std::string snippet_category = "auto:" + def.get_id().str();
                 SNIPPET.add_snippets_from_json( snippet_category, val.get_array(), std::string( src ) );
                 return snippet_category;
@@ -2300,7 +2300,7 @@ class snippet_reader : public generic_typed_reader<snippet_reader>
             return "";
         }
 };
-} // namespace
+}
 
 void conditional_name::deserialize( const JsonObject &jo )
 {
@@ -2341,7 +2341,7 @@ void Item_factory::check_definitions() const
         for( const pocket_data &pocket : t->pockets ) {
             if( pocket.type == pocket_type::CONTAINER ) {
                 am_container = true;
-                // no need to look further
+
                 break;
             }
         }
@@ -2375,8 +2375,8 @@ void Item_factory::check_definitions() const
             }
         }
 
-        // Pocket id uniqueness applies to every item so future mods or
-        // follow-ups can reference an id added on a not-yet-multimag pocket.
+
+
         std::set<std::string> seen_pocket_ids;
         for( const pocket_data &p : type->pockets ) {
             if( p.pocket_id.empty() ) {
@@ -2418,9 +2418,9 @@ void Item_factory::check_definitions() const
                     referenced.insert( e.pocket );
                 }
             }
-            // Every base-gun mode needs an explicit firing_requirements entry
-            // so authors can't silently underconsume by omitting BURST or AUTO.
-            // Gunmod-added modes (mode_modifier) inherit DEFAULT at runtime.
+
+
+
             if( type->gun ) {
                 for( const auto &m : type->gun->modes ) {
                     if( !type->firing_requirements.per_mode.count( m.first ) ) {
@@ -2462,7 +2462,7 @@ void Item_factory::check_definitions() const
             }
         }
 
-        // Keys must be modes the mod owns via mode_modifier; flag add+hide of one mode.
+
         if( type->gunmod ) {
             for( const auto &mode_pair : type->gunmod->firing_requirements.per_mode ) {
                 if( !type->gunmod->mode_modifier.count( mode_pair.first ) ) {
@@ -2506,7 +2506,7 @@ void Item_factory::check_definitions() const
                 }
             }
 
-            // do tests for the sub bp armor data arrays
+
             std::vector<sub_bodypart_str_id> observed_sub_bps;
             for( const armor_portion_data &portion : type->armor->sub_data ) {
                 for( const sub_bodypart_str_id &bp : portion.sub_coverage ) {
@@ -2522,7 +2522,7 @@ void Item_factory::check_definitions() const
                 }
             }
 
-            // check the hanging location aren't being used on the non strapped layer
+
             if( std::find( type->armor->all_layers.begin(), type->armor->all_layers.end(),
                            layer_level::BELTED ) == type->armor->all_layers.end() ) {
                 for( const armor_portion_data &portion : type->armor->sub_data ) {
@@ -2535,12 +2535,12 @@ void Item_factory::check_definitions() const
                 }
             }
 
-            // waist is deprecated
+
             if( type->has_flag( flag_WAIST ) ) {
                 msg += string_format( "Waist has been deprecated as an armor layer and is now a sublocation of the torso on the BELTED layer.  If you are making new content make it BELTED specifically covering the torso_waist.  If you are loading an old mod you are probably safe to ignore this.\n" );
             }
 
-            // check that no item has more coverage on any location than the max coverage (100)
+
             for( const armor_portion_data &portion : type->armor->sub_data ) {
                 if( 100 < portion.coverage || 100 < portion.cover_melee ||
                     100 < portion.cover_ranged ) {
@@ -2548,7 +2548,7 @@ void Item_factory::check_definitions() const
                                           portion.coverage );
                 }
             }
-            // check that no item has more coverage on any location than the max coverage (100)
+
             for( const armor_portion_data &portion : type->armor->data ) {
                 if( 100 < portion.coverage || 100 < portion.cover_melee ||
                     100 < portion.cover_ranged ) {
@@ -2556,7 +2556,7 @@ void Item_factory::check_definitions() const
                                           portion.coverage );
                 }
             }
-            // check that all materials are between 0-100 proportional coverage
+
             for( const armor_portion_data &portion : type->armor->sub_data ) {
                 for( const part_material &mat : portion.materials ) {
                     if( mat.cover < 0 || mat.cover > 100 ) {
@@ -2566,9 +2566,9 @@ void Item_factory::check_definitions() const
                 }
             }
 
-            // check that at least 1 material has 100% coverage on each item
+
             for( const armor_portion_data &portion : type->armor->sub_data ) {
-                // if the advanced materials entry is empty skip this stuff
+
                 if( !portion.materials.empty() ) {
                     bool found = false;
                     for( const part_material &mat : portion.materials ) {
@@ -2582,8 +2582,8 @@ void Item_factory::check_definitions() const
                     }
                 }
             }
-            // check each original definition had a valid material thickness
-            // valid thickness is a multiple of sheet thickness
+
+
             for( const armor_portion_data &portion : type->armor->sub_data ) {
                 for( const part_material &mat : portion.materials ) {
                     if( !mat.ignore_sheet_thickness && !mat.id->is_valid_thickness( mat.thickness ) ) {
@@ -2664,8 +2664,8 @@ void Item_factory::check_definitions() const
         }
         if( type->default_container && !type->default_container->is_null() ) {
             if( has_template( *type->default_container ) ) {
-                // Spawn the item in its default container to generate an error
-                // if it doesn't fit.
+
+
                 item( type ).in_its_container();
             } else {
                 msg += string_format( "invalid container property %s\n",
@@ -2708,7 +2708,7 @@ void Item_factory::check_definitions() const
                 }
             }
 
-            // TODO: Remove invalid, just make those items not comestibles
+
             static const std::set<std::string> allowed_ctypes = { "FOOD", "DRINK", "MED", "INVALID" };
             if( allowed_ctypes.count( type->comestible->comesttype ) == 0 ) {
                 msg += string_format( "Invalid comestible type %s\n", type->comestible->comesttype );
@@ -2861,7 +2861,7 @@ void Item_factory::check_definitions() const
                 check_ammo_type( msg, at );
             }
             if( type->gun->ammo.empty() ) {
-                // if gun doesn't use ammo forbid both integral or detachable magazines
+
                 if( static_cast<bool>( type->gun->clip ) || !type->magazines.empty() ) {
                     msg += "cannot specify clip_size or magazine without ammo type\n";
                 }
@@ -2953,8 +2953,8 @@ void Item_factory::check_definitions() const
             const itype *da = find_template( default_ammo );
             if( da->ammo && type->magazine->type.count( da->ammo->type ) ) {
                 if( !migrations.count( type->id ) && !item_is_blacklisted( type->id ) ) {
-                    // Verify that the default amnmo can actually be put in this
-                    // item
+
+
                     item( type ).ammo_set( default_ammo, 1 );
                 }
             } else {
@@ -2992,8 +2992,8 @@ void Item_factory::check_definitions() const
                                "speedloader %s capacity (%d) does not match gun capacity (%d).\n",
                                magazine.str(), mag_ptr->magazine->capacity, type->gun->clip );
                 } else {
-                    // Verify that every magazine type can actually be put in
-                    // this item
+
+
                     item( type ).put_in( item( magazine ), pocket_type::MAGAZINE_WELL );
                 }
             }
@@ -3026,7 +3026,7 @@ void Item_factory::check_definitions() const
         }
 
         if( !migrations.count( type->id ) && !item_is_blacklisted( type->id ) ) {
-            // If type has a default ammo then check it can fit within
+
             item tmp_item( type );
             if( tmp_item.is_gun() || tmp_item.is_magazine() ) {
                 if( itype_id ammo_id = tmp_item.ammo_default() ) {
@@ -3073,13 +3073,13 @@ const itype *Item_factory::add_runtime( const itype_id &id, translation name,
     def->description = std::move( description );
     m_runtimes[ id ].reset( def );
     m_runtimes_dirty = true;
-    // Clear armor_containers cache. It is probably not needed (added runtime will not be a container),
-    // but as this almost never hapens and the cost is next to none, we can afford to be correct.
+
+
     armor_containers.clear();
     return def;
 }
 
-//Returns the template with the given identification tag
+
 const itype *Item_factory::find_template( const itype_id &id ) const
 {
     cata_assert( frozen );
@@ -3094,13 +3094,13 @@ const itype *Item_factory::find_template( const itype_id &id ) const
         return rt->second.get();
     }
 
-    //If we didn't find the item maybe it is a building instead!
+
     const recipe_id &making_id = recipe_id( id.c_str() );
     const bool oter_match = oter_str_id( id.c_str() ).is_valid();
     if( oter_match || ( making_id.is_valid() && making_id.obj().is_blueprint() ) ) {
-        // oter match alone makes the outer condition true; guard the
-        // making_id.obj() call so an invalid recipe id does not trigger
-        // a spurious "invalid recipe id" debugmsg.
+
+
+
         translation desc;
         if( making_id.is_valid() ) {
             desc = making_id.obj().description;
@@ -3122,15 +3122,15 @@ Item_spawn_data *Item_factory::get_group( const item_group_id &group_tag )
     return nullptr;
 }
 
-///////////////////////
-// DATA FILE READING //
-///////////////////////
+
+
+
 
 template<typename SlotType>
 void Item_factory::load_slot( const JsonObject &jo, bool was_loaded,
                               cata::value_ptr<SlotType> &slotptr )
 {
-    //make a slot if one doesn't already exist
+
     if( !was_loaded || !slotptr ) {
         slotptr = cata::make_value<SlotType>();
     }
@@ -3380,10 +3380,10 @@ void firing_requirement_set::deserialize_consumption_per_use(
 }
 
 
-/*
-* Reads an array of gun modes in the following format:
-* [ gun_mode_id, display name, shots, flag ]
-*/
+
+
+
+
 namespace
 {
 class gun_modes_reader : public generic_typed_reader<gun_modes_reader>
@@ -3397,7 +3397,7 @@ class gun_modes_reader : public generic_typed_reader<gun_modes_reader>
                     arr.throw_error( "gun mode array must be in format [ gun_mode_id, display name, shots, *flag ]" );
                 }
                 std::set<std::string> flags;
-                // flags can be an array of strings or a single flag string
+
                 if( arr_size == 4 ) {
                     const JsonValue &flag_opt = arr[3];
                     if( flag_opt.test_array() ) {
@@ -3418,7 +3418,7 @@ class gun_modes_reader : public generic_typed_reader<gun_modes_reader>
             return std::pair<gun_mode_id, gun_modifier_data>( gun_mode_id::NULL_ID(), gun_modifier_data() );
         }
 };
-} // namespace
+}
 
 void islot_gun::deserialize( const JsonObject &jo )
 {
@@ -3428,7 +3428,7 @@ void islot_gun::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "skill", skill_used, skill_id::NULL_ID() );
     optional( jo, was_loaded, "ammo", ammo, auto_flags_reader<ammotype> {} );
     optional( jo, was_loaded, "range", range );
-    // Damage instance optional reader handles pierce
+
     optional( jo, was_loaded, "ranged_damage", damage );
     optional( jo, was_loaded, "dispersion", dispersion );
     optional( jo, was_loaded, "sight_dispersion", sight_dispersion, 30 );
@@ -3486,7 +3486,7 @@ std::string enum_to_string<layer_level>( layer_level data )
     }
     cata_fatal( "Invalid layer_level" );
 }
-} // namespace io
+}
 
 void part_material::deserialize( const JsonObject &jo )
 {
@@ -3506,7 +3506,7 @@ void armor_portion_data::deserialize( const JsonObject &jo )
     }
     optional( jo, false, "coverage", coverage, 0 );
 
-    // load a breathability override
+
     breathability_rating temp_enum = breathability_rating::last;
     optional( jo, false, "breathability", temp_enum, breathability_rating::last );
     if( temp_enum != breathability_rating::last ) {
@@ -3521,7 +3521,7 @@ void armor_portion_data::deserialize( const JsonObject &jo )
     optional( jo, false, "rigid_layer_only", rigid_layer_only, false );
 
     if( jo.has_array( "encumbrance_modifiers" ) ) {
-        // instead of reading encumbrance calculate it by weight
+
         optional( jo, false, "encumbrance_modifiers", encumber_modifiers );
     } else if( jo.has_array( "encumbrance" ) ) {
         encumber = jo.get_array( "encumbrance" ).get_int( 0 );
@@ -3534,13 +3534,13 @@ void armor_portion_data::deserialize( const JsonObject &jo )
     optional( jo, false, "environmental_protection_with_filter", env_resist_w_filter, 0 );
     optional( jo, false, "volume_encumber_modifier", volume_encumber_modifier, 1 );
 
-    // TODO: Make mandatory - once we remove the old loading below
+
     if( jo.has_member( "material" ) ) {
         if( jo.has_array( "material" ) && jo.get_array( "material" ).test_object() ) {
             mandatory( jo, false, "material", materials );
         } else {
-            // Old style material definition ( ex: "material": [ "cotton", "plastic" ] )
-            // TODO: Deprecate and remove
+
+
             for( const std::string &mat : jo.get_tags( "material" ) ) {
                 materials.emplace_back( mat, 100, 0.0f );
             }
@@ -3558,8 +3558,8 @@ static void apply_optional( T &value, const std::optional<T> &applied )
     }
 }
 
-// Gets around the issue that std::optional doesn't support
-// the *= and += operators required for "proportional" and "relative".
+
+
 template<typename T>
 static void get_optional( const JsonObject &jo, bool was_loaded, const std::string &member,
                           std::optional<T> &value )
@@ -3632,7 +3632,7 @@ void islot_armor::deserialize( const JsonObject &jo )
             armor.covers = covers;
         }
 
-        // pass down relative and proportional encumbrance
+
         if( armor.encumber > 0 ) {
             armor.encumber += _rel_encumb;
             armor.encumber *= _prop_encumb;
@@ -3690,10 +3690,10 @@ void islot_tool::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "e_ports_banned", e_ports_banned, auto_flags_reader<std::string> {} );
 }
 
-/*
-* Reads an array of toolmod ammo-to-itype maps in the following format:
-* [ [ ammotype, [itype1, itype2, ..] ], .. ]
-*/
+
+
+
+
 namespace
 {
 class magazine_adaptor_reader : public generic_typed_reader<magazine_adaptor_reader>
@@ -3707,7 +3707,7 @@ class magazine_adaptor_reader : public generic_typed_reader<magazine_adaptor_rea
             return ret;
         }
 };
-} // namespace
+}
 
 void islot_mod::deserialize( const JsonObject &jo )
 {
@@ -3737,11 +3737,11 @@ void islot_book::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "scannable", is_scannable, true );
 }
 
-/**
- * Loads vitamin JSON for generic_factory
- * Format must be an array of array-pairs: [[a,b],[c,d]]
- * where a/c are string_id, b/d are int OR vitamin_units::mass string
- */
+
+
+
+
+
 namespace
 {
 class vitamins_reader : public generic_typed_reader<vitamins_reader>
@@ -3766,7 +3766,7 @@ class vitamins_reader : public generic_typed_reader<vitamins_reader>
             val.throw_error( "vitamins reader read non-array" );
         }
 };
-} // namespace
+}
 
 void islot_comestible::deserialize( const JsonObject &jo )
 {
@@ -3817,19 +3817,19 @@ struct generic_result_reader : generic_typed_reader<generic_result_reader> {
     static constexpr bool read_objects = true;
     std::pair<std::pair<itype_id, std::string>, int> get_next( const JsonValue &jv ) const {
         std::pair<std::pair<itype_id, std::string>, int> ret;
-        // "yeast": 2,
+
         if( const JsonMember *jm = dynamic_cast<const JsonMember *>( &jv ) ) {
             ret.first.first = itype_id( jm->name() );
             jm->read( ret.second );
             return ret;
         }
-        // "yeast"
+
         if( jv.test_string() ) {
             jv.read( ret.first.first );
             ret.second = 1;
             return ret;
         }
-        // { "item": "yeast", "count": 2, "variant": "foo" }
+
         JsonObject jo = jv.get_object();
         mandatory( jo, false, "item", ret.first.first );
         optional( jo, false, "variant", ret.first.second, "" );
@@ -3837,7 +3837,7 @@ struct generic_result_reader : generic_typed_reader<generic_result_reader> {
         return ret;
     }
 };
-} // namespace
+}
 
 void islot_brewable::deserialize( const JsonObject &jo )
 {
@@ -3898,7 +3898,7 @@ void islot_gunmod::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "heat_per_shot_modifier", heat_per_shot_modifier );
     optional( jo, was_loaded, "heat_per_shot_multiplier", heat_per_shot_multiplier, 1.0f );
     optional( jo, was_loaded, "mode_modifier", mode_modifier, gun_modes_reader{} );
-    // Distinct key so it never collides with itype-level firing_requirements.
+
     if( jo.has_member( "mode_firing_requirements" ) ) {
         firing_requirements.deserialize_firing_requirements( jo, "mode_firing_requirements" );
     }
@@ -3939,13 +3939,13 @@ void islot_bionic::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "installation_data", installation_data );
 }
 
-// Adds allergy flags to items with allergenic materials
-// Set for all items (not just food and clothing) to avoid edge cases
+
+
 void Item_factory::set_allergy_flags( itype &item_template )
 {
     static const std::array<std::pair<material_id, flag_id>, 29> all_pairs = { {
-            // First allergens:
-            // An item is an allergen even if it has trace amounts of allergenic material
+
+
             { material_hflesh, flag_ALLERGEN_MEAT },
             { material_iflesh, flag_ALLERGEN_MEAT },
             { material_bread, flag_ALLERGEN_BREAD },
@@ -3966,9 +3966,9 @@ void Item_factory::set_allergy_flags( itype &item_template )
             { material_milk, flag_ALLERGEN_MILK },
             { material_egg, flag_ALLERGEN_EGG },
             { material_junk, flag_ALLERGEN_JUNK },
-            // Not food, but we can keep it here
+
             { material_wool, flag_ALLERGEN_WOOL },
-            // Now "made of". Those flags should not be passed
+
             { material_flesh, flag_CARNIVORE_OK },
             { material_hflesh, flag_CARNIVORE_OK },
             { material_iflesh, flag_CARNIVORE_OK },
@@ -3988,9 +3988,9 @@ void Item_factory::set_allergy_flags( itype &item_template )
     }
 }
 
-// Migration helper: turns human flesh into generic flesh
-// Don't call before making sure that the cannibalism flag is set
-// Cannibalism is vitamin based now but how old is this? Is it still useful?
+
+
+
 void hflesh_to_flesh( itype &item_template )
 {
     auto &mats = item_template.materials;
@@ -4004,7 +4004,7 @@ void hflesh_to_flesh( itype &item_template )
             mat++;
         }
     }
-    // Only add "flesh" material if not already present
+
     if( old_size != mats.size() &&
         mats.find( material_flesh ) == mats.end() ) {
         mats.emplace( "flesh", ports );
@@ -4052,10 +4052,10 @@ static bool has_pocket_type( const std::vector<pocket_data> &data, pocket_type p
 
 static bool has_only_special_pockets( const itype &def )
 {
-    // There are some places where we need to know whether any non-special
-    // pockets have been added.  There might be no pockets, or there might be
-    // just the special ones, depending on whether the definition is
-    // copied-from another or not.
+
+
+
+
     if( def.pockets.empty() ) {
         return true;
     }
@@ -4074,30 +4074,30 @@ static bool has_only_special_pockets( const itype &def )
 
 void Item_factory::check_and_create_magazine_pockets( itype &def )
 {
-    // the item we're trying to migrate must actually have data for ammo
+
     if( def.magazines.empty() && !( def.magazine || def.tool ) ) {
         return;
     }
     if( def.tool && def.tool->ammo_id.empty() ) {
-        // If tool has no ammo type it needs no magazine.
+
         return;
     }
     if( def.tool && def.tool->max_charges == 0 && def.magazines.empty() ) {
-        // If tool has no charges nor magazines, it needs no magazine.
+
         return;
     }
     if( !has_only_special_pockets( def ) ) {
-        // this means pockets were defined in json already
-        // we assume they're good to go, or error elsewhere
+
+
         if( def.tool && def.tool->max_charges != 0 ) {
-            // warn about redundant max_charges definition
+
             debugmsg( "Redundant max charge value specified for %s with magazine pocket.",
                       def.get_id().str() );
         }
         return;
     }
 
-    // Thing uses no ammo
+
     if( def.magazine && def.magazine->type.empty() ) {
         return;
     }
@@ -4184,7 +4184,7 @@ enum class grip_val : int {
     WEAPON = 3,
     LAST = 4
 };
-} // namespace
+}
 template<>
 struct enum_traits<grip_val> {
     static constexpr grip_val last = grip_val::LAST;
@@ -4197,7 +4197,7 @@ enum class length_val : int {
     LONG = 2,
     LAST = 3
 };
-} // namespace
+}
 template<>
 struct enum_traits<length_val> {
     static constexpr length_val last = length_val::LAST;
@@ -4211,7 +4211,7 @@ enum class surface_val : int {
     EVERY = 3,
     LAST = 4
 };
-} // namespace
+}
 template<>
 struct enum_traits<surface_val> {
     static constexpr surface_val last = surface_val::LAST;
@@ -4225,7 +4225,7 @@ enum class balance_val : int {
     GOOD = 3,
     LAST = 4
 };
-} // namespace
+}
 template<>
 struct enum_traits<balance_val> {
     static constexpr balance_val last = balance_val::LAST;
@@ -4250,11 +4250,11 @@ std::string enum_to_string<encumbrance_modifier>( encumbrance_modifier data )
     }
     cata_fatal( "Invalid encumbrance descriptor" );
 }
-} // namespace io
+}
 
 namespace io
 {
-// *INDENT-OFF*
+
 template<>
 std::string enum_to_string<link_state>( link_state data )
 {
@@ -4351,10 +4351,10 @@ std::string enum_to_string<balance_val>( balance_val val )
     }
     cata_fatal( "Invalid balance val" );
 }
-// *INDENT-ON*
-} // namespace io
 
-//a collection of int values that are summed to determine melee to_hit
+}
+
+
 namespace
 {
 struct melee_accuracy {
@@ -4363,15 +4363,15 @@ struct melee_accuracy {
     surface_val surface = surface_val::ANY;
     balance_val balance = balance_val::NEUTRAL;
 
-    // all items have a basic accuracy of -2, per GAME_BALANCE.md
+
     static constexpr int base_acc = -2;
-    // grip val should go from -1 to 2 but enum_to_string wants to start at 0
+
     static constexpr int grip_offset = -1;
-    // surface val should from from -2 to 1 but enum_to_string wants to start at 0
+
     static constexpr int surface_offset = -2;
-    // balance val should from from -2 to 1 but enum_to_string wants to start at 0
+
     static constexpr int balance_offset = -2;
-    // all the constant offsets and the base accuracy together
+
     static constexpr int acc_offset = base_acc + grip_offset + surface_offset + balance_offset;
     int sum_values() const {
         return acc_offset + static_cast<int>( grip ) + static_cast<int>( length ) +
@@ -4390,14 +4390,14 @@ void melee_accuracy::deserialize( const JsonObject &jo )
 }
 
 
-//TO-DO: remove when legacy int-only JSON is removed
+
 class melee_accuracy_reader : public generic_typed_reader<melee_accuracy_reader>
 {
     public:
         itype &used_itype;
         explicit melee_accuracy_reader( itype &used_itype ) : used_itype( used_itype ) {};
         int get_next( const JsonValue &val ) const {
-            // Reset to false so inherited legacy to_hit s aren't flagged
+
             used_itype.using_legacy_to_hit = false;
             if( val.test_int() ) {
                 used_itype.using_legacy_to_hit = true;
@@ -4414,22 +4414,22 @@ class melee_accuracy_reader : public generic_typed_reader<melee_accuracy_reader>
             if( jo.has_object( "relative" ) ) {
                 JsonObject relative = jo.get_object( "relative" );
                 relative.allow_omitted_members();
-                // This needs to happen here, otherwise we get unvisited members
+
                 if( !relative.has_member( name ) ) {
                     return false;
                 }
-                used_itype.using_legacy_to_hit = false; //inherited to-hit is false
+                used_itype.using_legacy_to_hit = false;
                 member += relative.get_int( name );
                 return true;
             }
             return false;
         }
 };
-} // namespace
+}
 
 static void replace_materials( const JsonObject &jo, itype &def )
 {
-    // itterate through material replacements
+
     for( JsonMember jv : jo ) {
         material_id to_replace = material_id( jv.name() );
         material_id replacement = material_id( jv.get_string() );
@@ -4437,7 +4437,7 @@ static void replace_materials( const JsonObject &jo, itype &def )
         units::mass original_weight = def.weight;
         int mat_portion = def.materials[to_replace];
 
-        // make repairs_with act the same way
+
         if( !def.repairs_with.empty() ) {
             const auto iter = def.repairs_with.find( to_replace );
             if( iter != def.repairs_with.end() ) {
@@ -4446,27 +4446,27 @@ static void replace_materials( const JsonObject &jo, itype &def )
             }
         }
 
-        // material is defined
+
         if( mat_portion != 0 ) {
             double mat_percent = static_cast<double>( mat_portion ) / static_cast<double>
                                  ( def.mat_portion_total );
 
             float density_percent = replacement->density() / to_replace->density();
 
-            // add the portion for the replaced material
+
             def.materials[replacement] += mat_portion;
 
-            // delete the old data
+
             def.materials.erase( to_replace );
 
-            // change the weight relative
+
             units::mass material_weight = original_weight * mat_percent;
             units::mass weight_dif = material_weight * density_percent - material_weight;
 
             def.weight += weight_dif;
         }
 
-        // update the armor defs
+
         if( def.armor ) {
             for( armor_portion_data &data : def.armor->sub_data ) {
                 std::vector<part_material>::iterator entry;
@@ -4540,11 +4540,11 @@ void itype::load( const JsonObject &jo, std::string_view src )
     optional( jo, was_loaded, "melee_damage", melee );
     optional( jo, was_loaded, "thrown_damage", thrown_damage );
     optional( jo, was_loaded, "explosion", explosion );
-    using_legacy_to_hit = false; //required for inherited but undefined "to_hit" field
+    using_legacy_to_hit = false;
     optional( jo, was_loaded, "to_hit", m_to_hit, melee_accuracy_reader{ *this }, -2 );
     float degrade_mult = 1.0f;
     optional( jo, false, "degradation_multiplier", degrade_mult, 1.0f );
-    // TODO: remove condition once degradation is ready to be applied to all items
+
     if( count_by_charges() || category_force != item_category_veh_parts ) {
         degrade_mult = 0.0f;
     }
@@ -4559,7 +4559,7 @@ void itype::load( const JsonObject &jo, std::string_view src )
     mandatory( jo, was_loaded, "name", name );
     optional( jo, was_loaded, "conditional_names", conditional_names );
     optional( jo, was_loaded, "description", description );
-    //ACTION (use_function)
+
     optional( jo, was_loaded, "use_action", use_methods, use_function_reader_map{ ammo_scale, src } );
     optional( jo, was_loaded, "tick_action", tick_action, use_function_reader_map{ ammo_scale, src } );
     optional( jo, was_loaded, "countdown_action", countdown_action, use_function_reader_single{ ammo_scale, src } );
@@ -4637,14 +4637,14 @@ void itype::load( const JsonObject &jo, std::string_view src )
                            "Item specified both transform_into and revert_to: they're mutually exclusive" );
     }
 
-    //First, check for copy-from
+
     if( jo.has_member( "copy-from" ) ) {
         itype_id copy_from_looks_like = itype_id( jo.get_string( "copy-from" ) );
         if( item_controller->has_template( copy_from_looks_like ) ) {
             looks_like = copy_from_looks_like;
         }
     }
-    //then check for an overriding looks_like field
+
     jo.read( "looks_like", looks_like );
 
     if( jo.has_string( "abstract" ) ) {
@@ -4653,7 +4653,7 @@ void itype::load( const JsonObject &jo, std::string_view src )
         mandatory( jo, was_loaded, "id", id );
     }
 
-    // snippet_category should be loaded after def.id is determined
+
     optional( jo, was_loaded, "snippet_category", snippet_category, snippet_reader{ *this, src } );
 
     optional( jo, was_loaded, "pocket_data", pockets );
@@ -4670,7 +4670,7 @@ void itype::load( const JsonObject &jo, std::string_view src )
 
     optional( jo, was_loaded, "expand_snippets", expand_snippets );
 
-    // potentially replace materials and update their values
+
     JsonObject replace_val = jo.get_object( "replace_materials" );
     replace_val.allow_omitted_members();
     replace_materials( replace_val, *this );
@@ -4688,12 +4688,12 @@ void Item_factory::add_migration( const migration &m )
         if( old.from_variant ) {
             continue;
         }
-        // If we find one that isn't from variant, overwrite it
+
         old = m;
         return;
     }
 
-    // Otherwise, we're specifying a new one.
+
     it->second.push_back( m );
 }
 
@@ -4751,7 +4751,7 @@ itype_id Item_factory::migrate_id( const itype_id &id )
     }
     const migration *parent = nullptr;
     for( const migration &m : iter->second ) {
-        // from-variant migrations do not apply to itypes
+
         if( m.from_variant ) {
             continue;
         }
@@ -4811,12 +4811,12 @@ void Item_factory::migrate_item( const itype_id &id, item &obj )
     for( const migration &m : iter->second ) {
         if( m.from_variant && obj.has_itype_variant() && obj.itype_variant().id == *m.from_variant ) {
             migrant = &m;
-            // This is not the variant that the item has already been convert to
-            // So we'll convert it again.
+
+
             convert = true;
             break;
         }
-        // When we find a migration that doesn't care about variants, keep it around
+
         if( !m.from_variant ) {
             migrant = &m;
         }
@@ -4924,7 +4924,7 @@ bool Item_factory::load_sub_ref( std::unique_ptr<Item_spawn_data> &ptr, const Js
     const std::string iname( name + "-item" );
     const std::string gname( name + "-group" );
 
-    // pair.second is true for groups, false for items
+
     std::vector< std::pair<std::string, bool> > entries;
     const int prob = 100;
 
@@ -5118,7 +5118,7 @@ void Item_factory::add_entry( Item_group &ig, const JsonObject &obj,
     ig.add_entry( std::move( sptr ) );
 }
 
-// Load an item group from JSON
+
 void Item_factory::load_item_group( const JsonObject &jsobj )
 {
     const item_group_id group_id( jsobj.get_string( "id" ) );
@@ -5149,15 +5149,15 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
     if( context.empty() ) {
         context = group_id.str();
     }
-    // Check if the copy-from target exists BEFORE we get a reference to it!
-    // std::map's [] operator inserts a reference if one isn't found!
+
+
     const bool already_exists = m_template_groups.find( group_id ) != m_template_groups.end();
     std::unique_ptr<Item_spawn_data> &isd = m_template_groups[group_id];
-    // If we copy-from, do copy-from
-    // Otherwise, unconditionally overwrite
+
+
     if( jsobj.has_member( "copy-from" ) ) {
         const std::string target_grp_str = jsobj.get_string( "copy-from" );
-        // We can only copy-from a group with the same id (for now)
+
         if( target_grp_str != group_id.str() ) {
             debugmsg( "Item group '%s' tries to copy from different group '%s'", group_id.str(),
                       target_grp_str );
@@ -5180,9 +5180,9 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
     Item_group *ig = make_group_or_throw( group_id, isd, type, jsobj.get_int( "ammo", 0 ),
                                           jsobj.get_int( "magazine", 0 ), context );
 
-    // If it extends, read from the extends block (and extend our itemgroup)
-    // Otherwise, read from the object into the fresh itemgroup
-    // And don't read if it has copy-from because it will not handle that correctly.
+
+
+
     if( jsobj.has_member( "extend" ) ) {
         load_item_group_data( jsobj.get_object( "extend" ), ig, subtype );
     } else if( !jsobj.has_member( "copy-from" ) ) {
@@ -5272,19 +5272,19 @@ template<>
 std::string enum_to_string<phase_id>( phase_id data )
 {
     switch( data ) {
-        // *INDENT-OFF*
+
         case phase_id::PNULL: return "null";
         case phase_id::LIQUID: return "liquid";
         case phase_id::SOLID: return "solid";
         case phase_id::GAS: return "gas";
         case phase_id::PLASMA: return "plasma";
-        // *INDENT-ON*
+
         case phase_id::num_phases:
             break;
     }
     cata_fatal( "Invalid phase" );
 }
-} // namespace io
+}
 
 item_category_id calc_category( const itype &obj )
 {
@@ -5342,8 +5342,8 @@ bool Item_factory::has_template( const itype_id &id ) const
 const std::vector<const itype *> &Item_factory::all() const
 {
     cata_assert( frozen );
-    // if (!m_runtimes_dirty) then runtimes haven't changed.
-    // Since frozen == true, m_templates haven't changed either.
+
+
     if( m_runtimes_dirty ) {
         templates_all_cache.clear();
         templates_all_cache.reserve( item_factory.get_all().size() + m_runtimes.size() );
@@ -5360,7 +5360,7 @@ const std::vector<const itype *> &Item_factory::all() const
     return templates_all_cache;
 }
 
-/** Find all templates matching the UnaryPredicate function */
+
 std::vector<const itype *> Item_factory::find( const std::function<bool( const itype & )> &func )
 {
     std::vector<const itype *> res;
@@ -5379,7 +5379,7 @@ std::pair<std::vector<item>::const_iterator, std::vector<item>::const_iterator>
 Item_factory::get_armor_containers( units::volume min_volume ) const
 {
     if( armor_containers.empty() ) {
-        // Prepare armor_containers for contained_in cache.
+
         using item_volumes = std::tuple<item, units::volume>;
         std::vector<item_volumes> vols;
         for( const itype *ity : all() ) {
@@ -5397,25 +5397,25 @@ Item_factory::get_armor_containers( units::volume min_volume ) const
             vols.emplace_back( std::move( itm ), vol );
         }
 
-        // Sort armor_containers based on the biggest pocket volume.
+
         std::sort( vols.begin(), vols.end(), []( const item_volumes & a, const item_volumes & b ) {
             return std::get<1>( a ) < std::get<1>( b );
         } );
 
-        // Add them in ascending order.
+
         armor_containers.clear();
         volumes.clear();
         armor_containers.reserve( vols.size() );
         volumes.reserve( vols.size() );
-        // TODO move the elements instead
+
         for( const item_volumes &iv : vols ) {
             armor_containers.emplace_back( std::get<0>( iv ) );
             volumes.emplace_back( std::get<1>( iv ) );
         }
     }
 
-    // Iterator in volumes coresponds to iterator in armor_containers.
-    // Binary find the first holster that has enough volume.
+
+
     return { armor_containers.begin() + static_cast<size_t>( lower_bound(
                  volumes.begin(), volumes.end(), min_volume ) - volumes.begin() ),
              armor_containers.end()};
@@ -5454,6 +5454,6 @@ void items::reset()
 
 void items::check_consistency()
 {
-    //item_controller->get_generic_factory().check();
+
     item_controller->check_definitions();
 }

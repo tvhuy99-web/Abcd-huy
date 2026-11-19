@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
 
-/** Two-step safe backup workflow extracted from the retired reader setup UI. */
+
 public final class BackupRestoreActivity extends Activity {
     private static final String BACKUP_JOURNAL_FILE = "reader_backup_journal.txt";
     private static final int REQUEST_BACKUP_EXPORT = 4201;
@@ -33,16 +33,16 @@ public final class BackupRestoreActivity extends Activity {
     private Button backupCancelRestore;
     private int pendingBackupAction = BACKUP_ACTION_NONE;
     private boolean stagedBackupReady;
-    // a staged import the user explicitly confirmed while the
-    // engine was running, waiting to be applied at the next launch.
+
+
     private boolean deferredRestorePending;
     private boolean backupBusy;
     private int backupOperationSequence;
     private TextView status;
-    // Failure found while opening this screen (recovery failed, or no
-    // storage): onCreate runs before the screen is foreground and before
-    // speech is ready, so it cannot be announced yet. It is spoken once
-    // speech becomes ready, instead of the heading.
+
+
+
+
     private int pendingOpenAnnouncement;
 
     @Override protected void onCreate(Bundle state) {
@@ -76,11 +76,11 @@ public final class BackupRestoreActivity extends Activity {
                     new File(getFilesDir(), BACKUP_JOURNAL_FILE));
             try {
                 backupArchive.recoverInterruptedSwap();
-                // A merely staged import still dies with its screen
-                // instance (R20.3) — but never discard one the user
-                // already confirmed for deferred restore: that
-                // confirmation is what the next launch applies, and
-                // dropping it here would silently void it.
+
+
+
+
+
                 if (ReaderGameSession.canRestore()
                         && !ReaderGameSession.hasDeferredRestore(backupRoot)) {
                     backupArchive.cancelStagedImport();
@@ -90,13 +90,13 @@ public final class BackupRestoreActivity extends Activity {
                 status.setText(R.string.a11yBackupRecoveryFailed);
                 pendingOpenAnnouncement = R.string.a11yBackupRecoveryFailed;
             }
-            // A deferred restore confirmed earlier in this session (or in
-            // a previous process, if this screen is ever reached before
-            // the game starts): show it as pending instead of as a fresh
-            // stage, and keep Cancel available. Confirm stays enabled
-            // when the engine has not started, so the already-confirmed
-            // stage can be restored immediately here instead of waiting
-            // for the next launch.
+
+
+
+
+
+
+
             if (backupArchive != null && backupArchive.hasStagedImport()
                     && ReaderGameSession.hasDeferredRestore(backupRoot)) {
                 deferredRestorePending = true;
@@ -136,21 +136,21 @@ public final class BackupRestoreActivity extends Activity {
         }
     }
 
-    // ---- Backup and restore (R20.2) ----
 
-    /**
-     * Step one of export/import: speak the whole guidance while this
-     * screen still owns speech, and only arm the Continue button. The
-     * system file picker is a separate, deliberate second activation, so
-     * the user has heard what the picker takeover means, what choosing a
-     * file there does, and that returning here announces the result
-     * before the picker ever opens.
-     */
+
+
+
+
+
+
+
+
+
     private void chooseBackupPicker(boolean export) {
-        // import may be staged while the engine runs. Staging
-        // only copies the chosen archive into the staging directory and
-        // verifies it; no live tree is touched, so the running engine
-        // cannot be disturbed. Only the restore itself is deferred.
+
+
+
+
         if (backupBusy) {
             return;
         }
@@ -166,7 +166,7 @@ public final class BackupRestoreActivity extends Activity {
                 : R.string.a11yBackupImportGuidance), true);
     }
 
-    /** Step two: hand the screen to the system picker and nothing else. */
+
     private void openBackupPicker() {
         if (backupBusy || pendingBackupAction == BACKUP_ACTION_NONE) {
             return;
@@ -200,8 +200,8 @@ public final class BackupRestoreActivity extends Activity {
         updateBackupButtons();
         Uri uri = resultCode == RESULT_OK && data != null ? data.getData() : null;
         if (uri == null) {
-            // Returning without a choice is announced on this screen, the
-            // clear way back the pre-picker guidance promised.
+
+
             showStatus(R.string.a11yBackupPickerCancelled, true);
             return;
         }
@@ -246,10 +246,10 @@ public final class BackupRestoreActivity extends Activity {
                 }
             }, summary -> {
                 stagedBackupReady = true;
-                // A newly staged import is unconfirmed: staging a new
-                // file voids any earlier deferred confirmation (the
-                // marker died with the old staging directory, and this
-                // flag must not claim otherwise).
+
+
+
+
                 deferredRestorePending = false;
                 updateBackupButtons();
                 showStatusText(getString(R.string.a11yBackupImportReady,
@@ -258,16 +258,16 @@ public final class BackupRestoreActivity extends Activity {
         }
     }
 
-    /**
-     * The only restore trigger: an explicit activation of the Confirm
-     * button for the import staged and announced in this same screen
-     * instance. Nothing in onResume/onActivityResult restores on its own,
-     * and a merely staged, unconfirmed import is never restored anywhere.
-     * The one exception is the deferred execution of this same
-     * confirmation: when the engine is already running, Confirm records
-     * itself on disk and SplashScreen applies that exact staged import at
-     * the next launch, before the engine starts.
-     */
+
+
+
+
+
+
+
+
+
+
     private void confirmBackupRestore() {
         if (backupBusy || !stagedBackupReady || backupArchive == null) {
             return;
@@ -284,20 +284,20 @@ public final class BackupRestoreActivity extends Activity {
         });
     }
 
-    /**
-     * (deferred restore): the engine is running, so the swap
-     * itself cannot run now. Record this explicit Confirm on disk as a
-     * deferred restore and apply nothing yet: SplashScreen applies the
-     * staged import at the next launch, before reserveGameStart(). No
-     * live tree changes here, and the staged import can still be
-     * cancelled from this screen until the app is closed.
-     */
+
+
+
+
+
+
+
+
     private void confirmDeferredRestore() {
         try {
             ReaderGameSession.markDeferredRestore(backupRoot);
         } catch (IOException failure) {
-            // The confirmation was not recorded, so nothing is pending:
-            // keep the staged import so the user can try Confirm again.
+
+
             showStatusText(getString(R.string.a11yBackupFailed,
                     ReaderBackupArchive.ERR_IO), true);
             return;
@@ -305,17 +305,17 @@ public final class BackupRestoreActivity extends Activity {
         deferredRestorePending = true;
         stagedBackupReady = false;
         updateBackupButtons();
-        // dedicated deferred-restore string — the restore now
-        // applies automatically on reopen, so the old "restore there"
-        // wording of a11yBackupRequiresRestart no longer applies here.
+
+
+
         showStatus(R.string.a11yBackupRestoreDeferred, true);
     }
 
     private void cancelBackupRestore() {
         if (backupArchive != null) {
-            // Also deletes the deferred marker (it lives inside the
-            // staging directory), so a cancelled deferred restore is
-            // never applied at the next launch.
+
+
+
             backupArchive.cancelStagedImport();
         }
         stagedBackupReady = false;
@@ -334,8 +334,8 @@ public final class BackupRestoreActivity extends Activity {
         backupImport.setEnabled(!backupBusy && backupArchive != null);
         backupOpenPicker.setEnabled(!backupBusy && pendingBackupAction != BACKUP_ACTION_NONE);
         backupConfirmRestore.setEnabled(!backupBusy && stagedBackupReady && ReaderGameSession.canRestore());
-        // Cancel stays available while a deferred restore is pending, so
-        // the user can still void the confirmation before restarting.
+
+
         backupCancelRestore.setEnabled(!backupBusy && (stagedBackupReady || deferredRestorePending));
     }
 
@@ -347,12 +347,12 @@ public final class BackupRestoreActivity extends Activity {
         void onDone(ReaderBackupArchive.Summary summary);
     }
 
-    /**
-     * Backup file work runs off the main thread; its result is only
-     * announced if this exact screen instance is still alive and still
-     * owns the operation, so a completion from before a recreate can
-     * never speak or change state in the new instance.
-     */
+
+
+
+
+
+
     private void runBackupOperation(BackupWork work, BackupDone done) {
         backupBusy = true;
         updateBackupButtons();
@@ -394,7 +394,7 @@ public final class BackupRestoreActivity extends Activity {
         }).start();
     }
 
-    /** Every backup failure is spoken and states that nothing changed. */
+
     private void announceBackupError(ReaderBackupArchive.BackupException failure) {
         switch (failure.code) {
             case ReaderBackupArchive.ERR_NO_SPACE:
@@ -486,8 +486,8 @@ public final class BackupRestoreActivity extends Activity {
                     preferences.getSpeechVoiceName(), preferences.getPitch(),
                     preferences.getVolume());
         }
-        // TalkBack without the internal reader never gets a speech READY
-        // callback, so announce an open failure here instead.
+
+
         if (pendingOpenAnnouncement != 0 && usesTalkBack()) {
             int announcement = pendingOpenAnnouncement;
             pendingOpenAnnouncement = 0;

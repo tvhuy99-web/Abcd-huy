@@ -126,7 +126,7 @@ void computer::set_mission( const int id )
     mission_id = id;
 }
 
-// Methods for setting/getting misc key/value pairs.
+
 void computer::set_value( const std::string &key, diag_value value )
 {
     values[ key ] = std::move( value );
@@ -157,7 +157,7 @@ void computer::load_legacy_data( const std::string &data )
 
     name = string_replace( name, "_", " " );
 
-    // Pull in options
+
     int optsize;
     dump >> optsize;
     for( int n = 0; n < optsize; n++ ) {
@@ -167,9 +167,9 @@ void computer::load_legacy_data( const std::string &data )
         int tmpsec;
 
         dump >> tmpname >> tmpaction >> tmpsec;
-        // Legacy missile launch option that got removed before `computer_action` was
-        // refactored to be saved and loaded as string ids. Do not change this number:
-        // `computer_action` now has different underlying values from back then!
+
+
+
         if( tmpaction == 15 ) {
             continue;
         }
@@ -177,7 +177,7 @@ void computer::load_legacy_data( const std::string &data )
                     tmpsec );
     }
 
-    // Pull in failures
+
     int failsize;
     dump >> failsize;
     for( int n = 0; n < failsize; n++ ) {
@@ -189,9 +189,9 @@ void computer::load_legacy_data( const std::string &data )
     std::string tmp_access_denied;
     dump >> tmp_access_denied;
 
-    // For backwards compatibility, only set the access denied message if it
-    // isn't empty. This is to avoid the message becoming blank when people
-    // load old saves.
+
+
+
     if( !tmp_access_denied.empty() ) {
         access_denied = string_replace( tmp_access_denied, "_", " " );
     }
@@ -233,7 +233,7 @@ void computer::deserialize( const JsonValue &jv )
         jo.read( "chat_topics", chat_topics );
         jo.read( "values", values );
         if( !jo.read( "location", loc ) ) {
-            // Backward compatibility code for change made 2025-02-19.
+
             tripoint_bub_ms temp;
             jo.read( "loc", temp );
             loc = get_map().get_abs( temp );
@@ -254,8 +254,8 @@ void computer::remove_option( computer_action const action )
 static computer_action computer_action_from_legacy_enum( const int val )
 {
     switch( val ) {
-        // Used to migrate old saves. Do not change the numbers!
-        // *INDENT-OFF*
+
+
         default:
         case 0: return COMPACT_NULL;
         case 1: return COMPACT_OPEN;
@@ -272,7 +272,7 @@ static computer_action computer_action_from_legacy_enum( const int val )
         case 12: return COMPACT_MAPS;
         case 13: return COMPACT_MAP_SEWER;
         case 14: return COMPACT_MAP_SUBWAY;
-        // options with action enum 15 are removed in load_legacy_data()
+
         case 16: return COMPACT_MISS_DISARM;
         case 17: return COMPACT_LIST_BIONICS;
         case 18: return COMPACT_ELEVATOR_ON;
@@ -307,15 +307,15 @@ static computer_action computer_action_from_legacy_enum( const int val )
         case 47: return COMPACT_EXTRACT_RAD_SOURCE;
         case 48: return COMPACT_DEACTIVATE_SHOCK_VENT;
         case 49: return COMPACT_RADIO_ARCHIVE;
-        // *INDENT-ON*
+
     }
 }
 
 static computer_failure_type computer_failure_type_from_legacy_enum( const int val )
 {
     switch( val ) {
-        // Used to migrate old saves. Do not change the numbers!
-        // *INDENT-OFF*
+
+
         default:
         case 0: return COMPFAIL_NULL;
         case 1: return COMPFAIL_SHUTDOWN;
@@ -328,7 +328,7 @@ static computer_failure_type computer_failure_type_from_legacy_enum( const int v
         case 8: return COMPFAIL_AMIGARA;
         case 9: return COMPFAIL_DESTROY_BLOOD;
         case 10: return COMPFAIL_DESTROY_DATA;
-        // *INDENT-ON*
+
     }
 }
 
@@ -338,7 +338,7 @@ template<>
 std::string enum_to_string<computer_action>( const computer_action act )
 {
     switch( act ) {
-        // *INDENT-OFF*
+
         case COMPACT_NULL: return "null";
         case COMPACT_AMIGARA_LOG: return "amigara_log";
         case COMPACT_AMIGARA_START: return "amigara_start";
@@ -392,7 +392,7 @@ std::string enum_to_string<computer_action>( const computer_action act )
         case COMPACT_TOWER_UNRESPONSIVE: return "tower_unresponsive";
         case COMPACT_UNLOCK: return "unlock";
         case COMPACT_UNLOCK_DISARM: return "unlock_disarm";
-        // *INDENT-OFF*
+
         case NUM_COMPUTER_ACTIONS:
             break;
     }
@@ -403,7 +403,7 @@ template<>
 std::string enum_to_string<computer_failure_type>( const computer_failure_type fail )
 {
     switch( fail ){
-        // *INDENT-OFF*
+
         case COMPFAIL_NULL: return "null";
         case COMPFAIL_ALARM: return "alarm";
         case COMPFAIL_AMIGARA: return "amigara";
@@ -415,13 +415,13 @@ std::string enum_to_string<computer_failure_type>( const computer_failure_type f
         case COMPFAIL_PUMP_LEAK: return "pump_leak";
         case COMPFAIL_SECUBOTS: return "secubots";
         case COMPFAIL_SHUTDOWN: return "shutdown";
-        // *INDENT-ON*
+
         case NUM_COMPUTER_FAILURES:
             break;
     }
     cata_fatal( "Invalid computer_failure_type" );
 }
-} // namespace io
+}
 
 template<>
 struct enum_traits<computer_action> {

@@ -211,7 +211,7 @@ TEST_CASE( "stats_tracker_event_time_bounds", "[stats]" )
 static void send_game_start( event_bus &b, const character_id &u_id )
 {
     b.send<event_type::game_start>( "VERION_STRING" );
-    b.send<event_type::game_avatar_new>( /*is_new_game=*/true, /*is_debug=*/false, u_id, "Avatar name",
+    b.send<event_type::game_avatar_new>( true, false, u_id, "Avatar name",
             "CUSTOM_PROFESSION" );
 }
 
@@ -421,7 +421,7 @@ struct watch_stat : stat_watcher {
     cata_variant value;
 };
 
-} // namespace
+}
 
 TEST_CASE( "stats_tracker_watchers", "[stats]" )
 {
@@ -591,10 +591,10 @@ TEST_CASE( "achievements_tracker", "[stats]" )
     event_bus b;
     stats_tracker s;
     b.subscribe( &s );
-    achievements_tracker a( s, [&]( const achievement * a, bool /*achievements_enabled*/ ) {
+    achievements_tracker a( s, [&]( const achievement * a, bool ) {
         achievements_completed.emplace( a->id, a );
     },
-    [&]( const achievement * a, bool /*achievements_enabled*/ ) {
+    [&]( const achievement * a, bool ) {
         achievements_failed.emplace( a->id, a );
     }, true );
     b.subscribe( &a );
@@ -611,11 +611,11 @@ TEST_CASE( "achievements_tracker", "[stats]" )
 
         send_game_start( b, u_id );
 
-        // Waking up before the time in question should do nothing
+
         b.send( avatar_wakes_up );
         CHECK( !achievements_completed.count( a_survive_one_day ) );
 
-        // Waking up after a day has passed should get the achievement
+
         calendar::turn += 2_days;
         b.send( avatar_wakes_up );
         CHECK( achievements_completed.count( a_survive_one_day ) );
@@ -777,7 +777,7 @@ TEST_CASE( "achievements_tracker", "[stats]" )
         CHECK( achievements_failed.count( c_pacifist ) );
         CHECK( !achievements_failed.count( c_merciful ) );
 
-        // Advance a minute and kill again
+
         calendar::turn += 1_minutes;
         b.send( avatar_zombie_kill );
 
@@ -943,7 +943,7 @@ struct stats_test_subscriber : public event_subscriber {
     std::vector<cata::event> events;
 };
 
-} // namespace
+}
 
 TEST_CASE( "achievements_tracker_in_game", "[stats]" )
 {

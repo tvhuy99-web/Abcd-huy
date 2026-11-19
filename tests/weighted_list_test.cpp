@@ -4,13 +4,13 @@
 #include "test_statistics.h"
 #include "weighted_list.h"
 
-// Cap the convergence loops so a genuinely broken distribution fails the avg
-// checks instead of hanging. At Z99_9 and MARGIN_OF_ERROR=0.01 the worst-case
-// bool confidence interval (CI) fits inside the target band well below 100k
-// samples.
+
+
+
+
 static constexpr int MAX_CONVERGENCE_TRIALS = 100000;
 
-// returns true if T is picked from list in trials attempts
+
 template<typename W, typename T>
 static bool picked_in_trials( const weighted_list<W, T> &list, T value, int trials )
 {
@@ -85,7 +85,7 @@ TEST_CASE( "weighted_list_basic_function", "[weighted_list]" )
     SECTION( "clearing list" ) {
         list.clear();
 
-        // ensure this test fails if clearing the list does not work
+
         REQUIRE( list.get_weight() == 0 );
         REQUIRE( list.pick() == nullptr );
     }
@@ -99,7 +99,7 @@ TEST_CASE( "weighted_list_basic_function", "[weighted_list]" )
         REQUIRE( list.get_weight() == B_weight + C_weight );
         REQUIRE( list.get_specific_weight( B ) == B_weight );
         REQUIRE( list.get_specific_weight( C ) == C_weight );
-        // 0.001% chance of random failure with 20 trials
+
         CHECK( picked_in_trials<int, int>( list, B, 20 ) );
 
         list.remove( B );
@@ -141,16 +141,16 @@ TEST_CASE( "weighted_list_distribution", "[weighted_list]" )
         REQUIRE( list.get_specific_weight( J ) == J_weight );
         REQUIRE( list.get_specific_weight( K ) == K_weight );
 
-        // each is at 25%
+
         const epsilon_threshold threshold{ 0.25, MARGIN_OF_ERROR };
         statistics<bool> H_stats;
         statistics<bool> I_stats;
         statistics<bool> J_stats;
         statistics<bool> K_stats;
-        // Loop until CI is fully inside the target band, not merely outside
-        // uncertain. The `uncertain_about` exit also fires when CI lies fully
-        // outside the band, which would then fail the avg checks below by
-        // construction on unlucky seeds.
+
+
+
+
         do {
             int *picked = list.pick();
             REQUIRE( picked != nullptr );
@@ -175,7 +175,7 @@ TEST_CASE( "weighted_list_distribution", "[weighted_list]" )
         constexpr int I_weight = 3;
         constexpr int J_weight = 9;
         constexpr int K_weight = 5;
-        // use add_replace to adjust weights
+
         list_check_add_replace<int, int>( list, H, H_weight, true );
         list_check_add_replace<int, int>( list, I, I_weight, true );
         list_check_add_replace<int, int>( list, J, J_weight, true );
@@ -187,7 +187,7 @@ TEST_CASE( "weighted_list_distribution", "[weighted_list]" )
         REQUIRE( list.get_specific_weight( J ) == J_weight );
         REQUIRE( list.get_specific_weight( K ) == K_weight );
 
-        // each is at 25%
+
         constexpr double total_weight = H_weight + I_weight + J_weight + K_weight;
         const epsilon_threshold H_threshold{ H_weight / total_weight, MARGIN_OF_ERROR };
         const epsilon_threshold I_threshold{ I_weight / total_weight, MARGIN_OF_ERROR };

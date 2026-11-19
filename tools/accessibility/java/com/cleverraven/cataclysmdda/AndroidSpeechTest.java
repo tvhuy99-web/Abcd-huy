@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Runs the real driver with deterministic Android API test doubles. */
+
 public final class AndroidSpeechTest {
     private static int assertions;
     private static AndroidSpeech speech;

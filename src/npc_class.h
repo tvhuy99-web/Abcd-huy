@@ -29,9 +29,9 @@ namespace trait_group
 
 using Trait_group_tag = string_id<Trait_group>;
 
-} // namespace trait_group
+}
 
-// TODO: Move to better suited file (rng.h/.cpp?)
+
 class distribution
 {
     private:
@@ -60,7 +60,7 @@ struct shopkeeper_item_group {
     translation refusal;
     std::function<bool( const_dialogue const & )> condition;
 
-    // Rigid shopkeeper groups will be processed a single time. Default groups are not rigid, and will be processed until the shopkeeper has no more room or remaining value to populate goods with.
+
     bool rigid = false;
 
     shopkeeper_item_group() = default;
@@ -94,18 +94,18 @@ class npc_class
         distribution bonus_altruism;
 
         std::map<skill_id, distribution> skills;
-        // Just for finalization
+
         std::map<skill_id, distribution> bonus_skills;
 
-        // first -> item group, second -> trust
+
         std::vector<shopkeeper_item_group> shop_item_groups;
         std::vector<faction_price_rule> shop_price_rules;
         shopkeeper_cons_rates_id shop_cons_rates_id = shopkeeper_cons_rates_id::NULL_ID();
         shopkeeper_blacklist_id shop_blacklist_id = shopkeeper_blacklist_id::NULL_ID();
         shopkeeper_whitelist_id shop_whitelist_id = shopkeeper_whitelist_id::NULL_ID();
         time_duration restock_interval = 6_days;
-        // Work shift hours [start, end). Default [0,24] = always on duty.
-        // Wraps midnight: [22,6] means 10pm-6am.
+
+
         std::pair<int, int> work_hours_ = { 0, 24 };
 
     public:
@@ -113,19 +113,19 @@ class npc_class
         std::vector<std::pair<npc_class_id, mod_id>> src;
         bool was_loaded = false;
 
-        // By default, NPCs will be open to trade anything in their inventory, including worn items. If this is set to false, they won't sell items that they're directly wearing or wielding. Items inside of pockets/bags/etc are still fair game.
+
         bool sells_belongings = true;
 
         item_group_id worn_override;
         item_group_id carry_override;
         item_group_id weapon_override;
 
-        // category of snippet, from which bye message should be picked, if should be replaced
+
         std::optional<std::string> bye_message_override;
 
         std::map<mutation_category_id, distribution> mutation_rounds;
         trait_group::Trait_group_tag traits = trait_group::Trait_group_tag( "EMPTY_GROUP" );
-        // the int is what level the spell starts at
+
         std::map<spell_id, int> _starting_spells;
         std::map<bionic_id, int> bionic_list;
         std::vector<proficiency_id> _starting_proficiencies;
@@ -175,8 +175,8 @@ class npc_class
         static void check_consistency();
 };
 
-// Check if an hour falls within [start, end) work hours,
-// handling midnight wrap (e.g., [22, 6) means 10pm to 6am).
+
+
 bool is_within_work_hours( int hour, int start, int end );
 
-#endif // CATA_SRC_NPC_CLASS_H
+#endif

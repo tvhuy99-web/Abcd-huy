@@ -149,7 +149,7 @@ static void CheckSortCall( UseLocalizedSortingCheck &Check, const MatchFinder::M
     QualType ValueType;
 
     if( IteratorDecl ) {
-        //Check.diag( Call->getBeginLoc(), "Iterator type %0" ) << IteratorDecl;
+
 
         for( const Decl *D : IteratorDecl->decls() ) {
             if( const TypedefNameDecl *ND = dyn_cast<TypedefNameDecl>( D ) ) {
@@ -180,4 +180,4 @@ void UseLocalizedSortingCheck::check( const MatchFinder::MatchResult &Result )
     CheckSortCall( *this, Result );
 }
 
-} // namespace clang::tidy::cata
+}

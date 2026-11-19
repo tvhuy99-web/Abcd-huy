@@ -51,63 +51,63 @@ class start_location
         omt_types_parameters random_target() const;
         const std::set<std::string> &flags() const;
 
-        /**
-         * Find a suitable start location on the overmap.
-         * @return Global, absolute overmap terrain coordinates where the player should spawn.
-         * It may return `tripoint_abs_omt::invalid` if no suitable starting location could be found
-         * in the world.
-         */
+
+
+
+
+
+
         std::pair<tripoint_abs_omt, std::unordered_map<std::string, std::string>>
                 find_player_initial_location( const point_abs_om &origin ) const;
-        /**
-         * Find a suitable start location on the overmap in specific city.
-         * @return Global, absolute overmap terrain coordinates where the player should spawn.
-         * It may return `tripoint_abs_omt::invalid` if no suitable starting location could be found
-         * in the world.
-         */
+
+
+
+
+
+
         std::pair<tripoint_abs_omt, std::unordered_map<std::string, std::string>>
                 find_player_initial_location( const city &origin ) const;
-        /**
-         * Set any parameters assigned to the chosen start location
-         */
+
+
+
         void set_parameters( const tripoint_abs_omt &omtstart,
                              const std::unordered_map<std::string, std::string> &parameters_to_set ) const;
-        /**
-         * Initialize the map at players start location using @ref prepare_map.
-         * @param omtstart Global overmap terrain coordinates where the player is to be spawned.
-         */
+
+
+
+
         void prepare_map( const tripoint_abs_omt &omtstart ) const;
-        /**
-         * Place the player somewhere in the reality bubble (g->m).
-         */
+
+
+
         void place_player( avatar &you, const tripoint_abs_omt &omtstart ) const;
-        /**
-         * Burn random terrain / furniture with FLAMMABLE or FLAMMABLE_ASH tag.
-         * Doors and windows are excluded.
-         * @param omtstart Global overmap terrain coordinates where the player is to be spawned.
-         * @param rad safe radius area to prevent player spawn next to burning wall.
-         * @param count number of fire on the map.
-         */
+
+
+
+
+
+
+
         void burn( const tripoint_abs_omt &omtstart, size_t count, int rad ) const;
-        /**
-         * Adds a map extra, see map_extras.h and map_extras.cpp. Look at the namespace MapExtras and class map_extras.
-         */
+
+
+
         void add_map_extra( const tripoint_abs_omt &omtstart, const map_extra_id &map_extra ) const;
 
         void handle_heli_crash( avatar &you ) const;
 
-        /**
-         * Adds surround start monsters.
-         * @param expected_points Expected value of "monster points" (map tiles times density from @ref map::place_spawns).
-         */
+
+
+
+
         void surround_with_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &type,
                                      float expected_points ) const;
         const start_location_placement_constraints &get_constraints() const {
             return constraints_;
         }
-        /** @returns true if this start location requires a city */
+
         bool requires_city() const;
-        /** @returns whether the start location at specified tripoint can belong to the specified city. */
+
         bool can_belong_to_city( const tripoint_om_omt &p, const city &cit ) const;
     private:
         translation _name;
@@ -128,6 +128,6 @@ void reset();
 
 const std::vector<start_location> &get_all();
 
-} // namespace start_locations
+}
 
-#endif // CATA_SRC_START_LOCATION_H
+#endif

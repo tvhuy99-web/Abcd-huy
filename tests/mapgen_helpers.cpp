@@ -26,7 +26,7 @@ void common_mapgen_prep( tripoint_abs_omt const &pos, fprep_t const &prep )
 
 void manual_update_mapgen( tripoint_abs_omt const &pos, update_mapgen_id const &id )
 {
-    // make sure we don't rotate the update
+
     overmap_buffer.ter_set( pos, oter_field.id() );
     run_mapgen_update_func( id, pos, {}, nullptr, false );
 }

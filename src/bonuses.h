@@ -57,7 +57,7 @@ enum class affected_stat : int {
     NUM_AFFECTED
 };
 
-// We'll be indexing bonuses with this
+
 struct affected_type {
     public:
         explicit affected_type( affected_stat s );
@@ -78,7 +78,7 @@ struct affected_type {
         damage_type_id type;
 };
 
-// This is the bonus we are indexing
+
 struct effect_scaling {
     scaling_stat stat;
     float scale;
@@ -106,9 +106,9 @@ class bonus_container
         void load( const JsonArray &jarr, bool mult );
 
         using bonus_map = std::map<affected_type, std::vector<effect_scaling>>;
-        /** All kinds of bonuses by types to damage, hit etc. */
+
         bonus_map bonuses_flat;
         bonus_map bonuses_mult;
 };
 
-#endif // CATA_SRC_BONUSES_H
+#endif

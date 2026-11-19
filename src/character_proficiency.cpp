@@ -71,7 +71,7 @@ std::vector<display_proficiency> Character::display_proficiencies() const
 bool Character::practice_proficiency( const proficiency_id &prof, const time_duration &amount,
                                       const std::optional<time_duration> &max )
 {
-    // Proficiencies can ignore focus using the `ignore_focus` JSON property
+
     const bool ignore_focus = prof->ignore_focus();
     float focus_adjusted = adjust_for_focus( to_seconds<float>( amount ) );
     const time_duration &focused_amount = ignore_focus ? amount : time_duration::from_seconds(
@@ -82,7 +82,7 @@ bool Character::practice_proficiency( const proficiency_id &prof, const time_dur
                          ignore_focus ? 0.f : std::fmod( focus_adjusted, 1.f ), max );
     const float pct_after = _proficiencies->pct_practiced( prof );
 
-    // Drain focus if necessary
+
     if( !ignore_focus && pct_after > pct_before ) {
         focus_pool -= focus_pool / 100;
     }

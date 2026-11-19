@@ -63,14 +63,14 @@ static const trait_id trait_SAPROVORE( "SAPROVORE" );
 
 std::string talker_npc_const::distance_to_goal() const
 {
-    // TODO: this ignores the z-component
+
     int dist = rl_dist( me_npc->pos_abs_omt(), me_npc->goal );
     std::string response;
     dist *= 100;
     if( dist >= 1300 ) {
-        int miles = dist / 25; // *100, e.g. quarter mile is "25"
-        miles -= miles % 25; // Round to nearest quarter-mile
-        int fullmiles = ( miles - miles % 100 ) / 100; // Left of the decimal point
+        int miles = dist / 25;
+        miles -= miles % 25;
+        int fullmiles = ( miles - miles % 100 ) / 100;
         if( fullmiles < 0 ) {
             fullmiles = 0;
         }
@@ -93,7 +93,7 @@ bool talker_npc::will_talk_to_u( const Character &you, bool force ) const
         }
         me_npc->set_known_to_u( true );
     }
-    // This is necessary so that we don't bug the player over and over
+
     if( me_npc->get_attitude() == NPCATT_TALK ) {
         me_npc->set_attitude( NPCATT_NULL );
     } else if( !force && ( me_npc->get_attitude() == NPCATT_FLEE ||
@@ -111,7 +111,7 @@ std::vector<std::string> talker_npc::get_topics( bool radio_contact ) const
 {
     avatar &player_character = get_avatar();
     std::vector<std::string> add_topics;
-    // For each active mission we have, let the mission know we talked to this NPC.
+
     for( mission *&mission : player_character.get_active_missions() ) {
         mission->on_talk_with_npc( me_npc->getID() );
     }
@@ -139,7 +139,7 @@ std::vector<std::string> talker_npc::get_topics( bool radio_contact ) const
     bool chosen_urgent = false;
     for( mission *&mission : me_npc->chatbin.missions_assigned ) {
         if( mission->get_assigned_player_id() != player_character.getID() ) {
-            // Not assigned to the player that is currently talking to the npc
+
             continue;
         }
         const mission_type &type = mission->get_type();
@@ -152,7 +152,7 @@ std::vector<std::string> talker_npc::get_topics( bool radio_contact ) const
         }
     }
 
-    // Needs
+
     if( me_npc->has_effect( effect_npc_suspend ) ) {
         add_topics.emplace_back( "TALK_REBOOT" );
     }
@@ -218,7 +218,7 @@ void talker_npc::check_missions()
 void talker_npc::update_missions( const std::vector<mission *> &missions_assigned )
 {
     if( me_npc->chatbin.mission_selected == nullptr ) {
-        // if possible, select a mission to talk about
+
         if( !me_npc->chatbin.missions.empty() ) {
             me_npc->chatbin.mission_selected = me_npc->chatbin.missions.front();
         } else if( !missions_assigned.empty() ) {
@@ -232,7 +232,7 @@ bool talker_npc_const::check_hostile_response( const int anger ) const
     return me_npc->op_of_u.anger + anger > me_npc->hostile_anger_level();
 }
 
-// Every OWED_VAL that the NPC owes you counts as +1 towards convincing
+
 static constexpr int OWED_VAL = 1000;
 int talker_npc_const::parse_mod( const std::string &attribute, const int factor ) const
 {
@@ -264,9 +264,9 @@ int talker_npc_const::parse_mod( const std::string &attribute, const int factor 
     } else if( attribute == "NPC_INTIMIDATE" ) {
         modifier = me_npc->intimidation();
     } else if( attribute.find( "npc_has_trait" ) != std::string::npos ) {
-        // shim/hack, reusing the syntax from EOCs
 
-        // Nasty string handling.
+
+
         const std::string after = "npc_has_trait: ";
         trait_id checked_trait = trait_id( attribute.substr( after.size() ) );
         modifier = me_npc->has_trait( checked_trait ) ? 1 : 0;
@@ -331,16 +331,16 @@ namespace
 {
 enum consumption_result {
     REFUSED = 0,
-    CONSUMED_SOME, // Consumption didn't fail, but don't delete the item
-    CONSUMED_ALL   // Consumption succeeded, delete the item
+    CONSUMED_SOME,
+    CONSUMED_ALL
 };
-} // namespace
+}
 
-// Returns true if we destroyed the item through consumption
-// does not try to consume contents
+
+
 static consumption_result try_consume( npc &p, item &it, std::string &reason )
 {
-    // TODO: Unify this with 'player::consume_item()'
+
     item &to_eat = it;
     if( to_eat.is_null() ) {
         debugmsg( "Null item to try_consume." );
@@ -348,7 +348,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
     }
     const auto &comest = to_eat.get_comestible();
     if( !comest ) {
-        // Don't inform the player that we don't want to eat the lighter
+
         return REFUSED;
     }
 
@@ -357,7 +357,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
         return REFUSED;
     }
 
-    // TODO: Make it not a copy+paste from player::consume_item
+
     int amount_used = 1;
     if( to_eat.is_food() ) {
         if( !p.can_consume_as_is( to_eat ) ) {
@@ -365,7 +365,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             return REFUSED;
         } else {
             if( to_eat.rotten() && !p.as_character()->has_trait( trait_SAPROVORE ) ) {
-                //TODO: once npc needs are operational again check npc hunger state and allow eating if desperate
+
                 reason = p.chat_snippets().snip_consume_rotten.translated();
                 return REFUSED;
             }
@@ -411,7 +411,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
         return CONSUMED_SOME;
     }
 
-    // If not consuming contents and charge <= 0, we just ate the last charge from the stack
+
     return CONSUMED_ALL;
 }
 
@@ -433,7 +433,7 @@ std::string talker_npc::give_item_to( const bool to_use )
         ( player_character.is_worn( given ) &&
           ( given.has_flag( json_flag_NO_TAKEOFF ) ||
             given.has_flag( json_flag_INTEGRATED ) ) ) ) {
-        // Integrated item or shackles
+
         return _( "How?" );
     }
 
@@ -452,7 +452,7 @@ std::string talker_npc::give_item_to( const bool to_use )
     add_msg_debug( debugmode::DF_TALKER, "NPC evaluates your %s: %0.1f",
                    given.typeId().str(), new_weapon_value );
     if( to_use ) {
-        // Eating first, to avoid evaluating bread as a weapon
+
         const consumption_result consume_res = try_consume( *me_npc, given, reason );
         if( consume_res != REFUSED ) {
             player_character.mod_moves( -to_moves<int>( 1_seconds ) );
@@ -461,19 +461,19 @@ std::string talker_npc::give_item_to( const bool to_use )
             } else if( given.is_container() ) {
                 given.on_contents_changed();
             }
-        }// wield it if its a weapon
+        }
         else if( new_weapon_value > cur_weapon_value ) {
             me_npc->wield( given );
             reason = me_npc->chat_snippets().snip_give_wield.translated();
             taken = true;
-        }// HACK: is_gun here is a hack to prevent NPCs wearing guns if they don't want to use them
+        }
         else if( !given.is_gun() && given.is_armor() ) {
-            //if it is impossible to wear return why
+
             ret_val<void> can_wear = me_npc->can_wear( given, true );
             if( !can_wear.success() ) {
                 reason = can_wear.str();
             } else {
-                //if we can wear it with equip changes prompt first
+
                 can_wear = me_npc->can_wear( given );
                 if( ( can_wear.success() ||
                       query_yn( can_wear.str() + _( " Should I take something off?" ) ) )
@@ -487,10 +487,10 @@ std::string talker_npc::give_item_to( const bool to_use )
             reason += " " + string_format( me_npc->chat_snippets().snip_give_weapon_weak.translated() +
                                            _( "(new weapon value: %.1f vs %.1f)." ), new_weapon_value, cur_weapon_value );
         }
-    } else {//allow_use is false so try to carry instead
+    } else {
         if( me_npc->can_pickVolume( given ) && me_npc->can_pickWeight( given ) ) {
             reason = me_npc->chat_snippets().snip_give_carry.translated();
-            // set the item given to be favorited so it's not dropped automatically
+
             given.set_favorite( true );
             taken = true;
             me_npc->i_add( given );
@@ -711,7 +711,7 @@ std::string talker_npc_const::get_job_description() const
 std::string talker_npc_const::view_personality_traits() const
 {
     std::string assessment;
-    // We can't use <npc_name> tag here, because nothing ever checks to replace it. So just put the display name in manually.
+
     assessment += string_format( _( "%s seems to be:" ), me_npc->display_name() );
     bool found_personality_trait = false;
     for( const auto &trait_data_pairs : me_npc->cached_mutations ) {
@@ -723,17 +723,17 @@ std::string talker_npc_const::view_personality_traits() const
             assessment += string_format( _( "%1$s - %2$s" ),
                                          me_npc->mutation_name( mdata.id ),
                                          me_npc->mutation_desc( mdata.id ) );
-            // Example output:
-            // John Doe seems to be:
-            // Coward - John Doe flinches at the thought of fighting, whether it be other people or the undead.
-            // Nice - John Doe has a higher than average altruism.
-            // TRAIT NAME - TRAIT DESCRIPTION
+
+
+
+
+
         }
     }
-    // Fallback
+
     if( !found_personality_trait ) {
         assessment += "\n";
-        // We can't use <npc_name> tag here, because nothing ever checks to replace it. So just put the display name in manually.
+
         assessment += string_format( _( "Normal person - %s seems to be pretty normal." ),
                                      me_npc->display_name() );
     }
@@ -746,9 +746,9 @@ std::string talker_npc_const::evaluation_by( const_talker const &alpha ) const
         return _( "You're blind and can't make anything out." );
     }
 
-    ///\EFFECT_PER affects whether player can size up NPCs
 
-    ///\EFFECT_INT slightly affects whether player can size up NPCs
+
+
     int ability = alpha.per_cur() * 3 + alpha.int_cur();
     if( ability <= 10 ) {
         return string_format( _( "You can't make anything out about %s." ), me_npc->display_name() );

@@ -20,7 +20,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "flexbuffer_json.h"
-#include "game.h" // TODO: This is a circular dependency
+#include "game.h"
 #include "generic_factory.h"
 #include "iexamine.h"
 #include "item.h"
@@ -44,7 +44,7 @@ static const fault_id fault_broken_window( "fault_broken_window" );
 
 static const material_id material_glass( "glass" );
 
-// Gates namespace
+
 
 namespace
 {
@@ -89,7 +89,7 @@ gate_id get_gate_id( const tripoint_bub_ms &pos )
 
 generic_factory<gate_data> gates_data( "gate type" );
 
-} // namespace
+}
 
 void gate_data::load( const JsonObject &jo, std::string_view )
 {
@@ -171,17 +171,17 @@ void gates::reset()
     gates_data.reset();
 }
 
-// A gate handle is adjacent to a wall section, and next to that wall section on one side or
-// another is the gate.  There may be a handle on the other side, but this is optional.
-// The gate continues until it reaches a non-floor tile, so they can be arbitrary length.
-//
-//   |  !|!  -++-++-  !|++++-
-//   +   +      !      +
-//   +   +   -++-++-   +
-//   +   +             +
-//   +   +   !|++++-   +
-//  !|   |!        !   |
-//
+
+
+
+
+
+
+
+
+
+
+
 
 void gates::open_gate( const tripoint_bub_ms &pos )
 {
@@ -209,10 +209,10 @@ void gates::open_gate( const tripoint_bub_ms &pos )
             const tripoint_bub_ms gate_pos = wall_pos + gate_offset;
 
             if( gate_pos == pos ) {
-                continue; // Never comes back
+                continue;
             }
 
-            if( !open ) { // Closing the gate...
+            if( !open ) {
                 tripoint_bub_ms cur_pos = gate_pos;
                 std::vector<tripoint_bub_ms> all_gate_tiles;
                 while( here.ter( cur_pos ) == gate.floor.id() ) {
@@ -228,7 +228,7 @@ void gates::open_gate( const tripoint_bub_ms &pos )
                 }
             }
 
-            if( !close ) { // Opening the gate...
+            if( !close ) {
                 tripoint_bub_ms cur_pos = gate_pos;
                 while( true ) {
                     const ter_id &ter = here.ter( cur_pos );
@@ -273,8 +273,8 @@ void gates::open_gate( const tripoint_bub_ms &pos, Character &p )
     p.assign_activity( open_gate_activity_actor( gate.moves, pos ) );
 }
 
-// Doors namespace
-// TODO: move door functions from maps namespace here, or vice versa.
+
+
 
 bool doors::check_mon_blocking_door( const Creature &who, const tripoint_abs_ms &p )
 {
@@ -283,7 +283,7 @@ bool doors::check_mon_blocking_door( const Creature &who, const tripoint_abs_ms 
         if( mon->is_avatar() ) {
             who.add_msg_if_player( m_info, _( "There's some buffoon in the way!" ) );
         } else if( mon->is_monster() ) {
-            // TODO: Houseflies, mosquitoes, etc shouldn't count
+
             who.add_msg_if_player( m_info, _( "The %s is in the way!" ), mon->get_name() );
         } else {
             who.add_msg_if_player( m_info, _( "%s is in the way!" ), mon->disp_name() );
@@ -308,11 +308,11 @@ bool doors::forced_door_closing( const tripoint_bub_ms &p,
     const std::optional<tripoint_bub_ms> pos = random_point( m.points_in_radius( p, 2 ),
             valid_location );
     if( !pos.has_value() ) {
-        // can't pushback any creatures anywhere, that means the door can't close.
+
         return false;
     }
     const tripoint_bub_ms displace = pos.value();
-    //knockback trajectory requires the line be flipped
+
     const tripoint_bub_ms kbp( -displace.x() + x * 2, -displace.y() + y * 2, displace.z() );
     const bool can_see = u.sees( m, kbp );
     creature_tracker &creatures = get_creature_tracker();
@@ -329,11 +329,11 @@ bool doors::forced_door_closing( const tripoint_bub_ms &p,
         if( npc_or_player->activity ) {
             npc_or_player->cancel_activity();
         }
-        // TODO: make the npc angry?
+
         npc_or_player->hitall( bash_dmg, 0, nullptr );
         g->knockback( kbp, p, std::max( 1, bash_dmg / 10 ), -1, 1 );
-        // TODO: perhaps damage/destroy the gate
-        // if the npc was really big?
+
+
         if( creatures.creature_at<Character>( p, false ) != nullptr ) {
             return false;
         }
@@ -353,13 +353,13 @@ bool doors::forced_door_closing( const tripoint_bub_ms &p,
             critter.check_dead_state( &m );
         }
         if( !critter.is_dead() && critter.get_size() >= creature_size::huge ) {
-            // big critters simply prevent the gate from closing
-            // TODO: perhaps damage/destroy the gate
-            // if the critter was really big?
+
+
+
             return false;
         }
         if( !critter.is_dead() ) {
-            // Still alive? Move the critter away so the door can close
+
             g->knockback( kbp, p, std::max( 1, bash_dmg / 10 ), -1, 1 );
             if( creatures.creature_at( p ) ) {
                 return false;
@@ -372,9 +372,9 @@ bool doors::forced_door_closing( const tripoint_bub_ms &p,
         }
         vp->vehicle().damage( m, vp->part_index(), bash_dmg );
         if( m.veh_at( p ) ) {
-            // Check again in case all parts at the door tile
-            // have been destroyed, if there is still a vehicle
-            // there, the door can not be closed
+
+
+
             return false;
         }
     }
@@ -384,14 +384,14 @@ bool doors::forced_door_closing( const tripoint_bub_ms &p,
     if( bash_dmg == 0 ) {
         for( item &elem : m.i_at( point_bub_ms( x, y ) ) ) {
             if( elem.made_of( phase_id::LIQUID ) ) {
-                // Liquids are OK, will be destroyed later
+
                 continue;
             }
             if( elem.volume() < 250_ml ) {
-                // Dito for small items, will be moved away
+
                 continue;
             }
-            // Everything else prevents the door from closing
+
             return false;
         }
     }
@@ -422,7 +422,7 @@ bool doors::forced_door_closing( const tripoint_bub_ms &p,
     return true;
 }
 
-// If you update this, look at doors::can_lock_door too.
+
 bool doors::lock_door( map &m, Creature &who, const tripoint_bub_ms &lockp )
 {
     bool didit = false;
@@ -477,7 +477,7 @@ bool doors::can_lock_door( const map &m, const Creature &who, const tripoint_bub
     return lockable >= 0;
 }
 
-// If you update this, look at doors::can_unlock_door too.
+
 bool doors::unlock_door( map &m, Creature &who, const tripoint_bub_ms &lockp )
 {
     bool didit = false;
@@ -496,9 +496,9 @@ bool doors::unlock_door( map &m, Creature &who, const tripoint_bub_ms &lockp )
             if( who.as_character() && !veh->handle_potential_theft( *who.as_character() ) ) {
                 return false;
             }
-            // For various... reasons, we are forced to manually check if a broken window was responsible for letting us unlock the door.
-            // TODO: Separate this out into a function or something not awful.
-            // It's a lambda right now so we don't have to check it unless we need it.
+
+
+
             auto has_broken_window = [&]() {
                 std::vector<vehicle_part *> parts_at_target = veh->get_parts_at( &m, lockp, "LOCKABLE_DOOR",
                         part_status_flag::available );

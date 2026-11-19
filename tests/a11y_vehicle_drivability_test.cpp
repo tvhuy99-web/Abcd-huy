@@ -13,8 +13,8 @@
 #include "vehicle_autodrive_tiles.h"
 #include "vpart_position.h"
 
-// Both native A* and the accessible obstacle guard must call this SAME
-// classifier, never duplicate collision rules in the reader.
+
+
 TEST_CASE( "vehicle_driving_uses_shared_tile_classifier", "[vehicle][a11y][autodrive]" )
 {
     clear_avatar();
@@ -67,8 +67,8 @@ TEST_CASE( "vehicle_driving_uses_shared_tile_classifier", "[vehicle][a11y][autod
 
         REQUIRE( here.furn_set( target, furn_str_id::NULL_ID().id() ) );
         here.add_item_or_charges( target, item( itype_id( "rock" ) ) );
-        // Loose rocks do not obstruct the real vehicle A* footprint.
-        // They must not trigger phantom emergency braking.
+
+
         CHECK( classify( road ) == tile_blocker::none );
 
         here.i_clear( target );

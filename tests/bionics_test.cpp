@@ -23,7 +23,7 @@
 #include "units.h"
 
 static const bionic_id bio_batteries( "bio_batteries" );
-// Change to some other weapon CBM if bio_blade is ever removed
+
 static const bionic_id bio_blade( "bio_blade" );
 static const bionic_id bio_cable( "bio_cable" );
 static const bionic_id bio_earplugs( "bio_earplugs" );
@@ -32,9 +32,9 @@ static const bionic_id bio_fuel_cell_gasoline( "bio_fuel_cell_gasoline" );
 static const bionic_id bio_fuel_wood( "bio_fuel_wood" );
 static const bionic_id bio_metabolics( "bio_metabolics" );
 static const bionic_id bio_power_storage( "bio_power_storage" );
-// Change to some other weapon CBM if bio_surgical_razor is ever removed
+
 static const bionic_id bio_surgical_razor( "bio_surgical_razor" );
-// Any item that can be wielded
+
 
 static const flag_id json_flag_PSEUDO( "PSEUDO" );
 
@@ -188,28 +188,28 @@ TEST_CASE( "bionic_weapons", "[bionics] [weapon] [item]" )
             }
         }
 
-        // Test can't be executed because dispose_item creates a query window
-        /*
-        AND_GIVEN("character is wielding a regular item")
-        {
-            item real_item(itype_real_item);
-            REQUIRE(dummy.can_wield(real_item).success());
-            dummy.wield(real_item);
-            REQUIRE(dummy.get_wielded_item().typeId() == itype_real_item);
 
-            WHEN("the weapon CBM is activated")
-            {
-                REQUIRE(dummy.activate_bionic(installed_index));
 
-                THEN("current CBM UID is stored and fake weapon is wielded by the character")
-                {
-                    std::optional<int> cbm_index = dummy.active_bionic_weapon_index();
-                    REQUIRE(cbm_index);
-                    CHECK(*cbm_index == installed_index);
-                    CHECK(dummy.get_wielded_item().typeId() == weapon_bionic->fake_weapon);
-                }
-            }
-        }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
     GIVEN( "character has a customizable weapon CBM" ) {
@@ -376,9 +376,9 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
     avatar &dummy = get_avatar();
     clear_avatar();
 
-    // 500kJ ought to be enough for everybody, make sure not to add any bionics in the
-    // tests after taking reference to a bionic, if bionics vector is too small and gets
-    // reallocated the references become invalid
+
+
+
     dummy.add_bionic( bio_power_storage );
     dummy.add_bionic( bio_power_storage );
     dummy.add_bionic( bio_power_storage );
@@ -392,7 +392,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         bionic &bio = *dummy.find_bionic_by_uid( dummy.add_bionic( bio_fuel_cell_gasoline ) ).value();
         item_location gasoline_tank = dummy.top_items_loc().front();
 
-        // There should be no fuel available, can't turn bionic on and no power is produced
+
         CHECK( dummy.get_bionic_fuels( bio.id ).empty() );
         CHECK( dummy.get_cable_ups().empty() );
         CHECK( dummy.get_cable_solar().empty() );
@@ -401,7 +401,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Add fuel. Now it turns on and generates power.
+
         item gasoline = item( fuel_type_gasoline );
         gasoline.charges = 2;
         CHECK( gasoline_tank->can_reload_with( gasoline, true ) );
@@ -417,7 +417,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( units::to_joule( dummy.get_power_level() ) == 17100 );
         CHECK( gasoline_tank->empty_container() );
 
-        // Run out of fuel
+
         dummy.suffer();
         CHECK( units::to_joule( dummy.get_power_level() ) == 17100 );
     }
@@ -426,7 +426,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         bionic &bio = *dummy.find_bionic_by_uid( dummy.add_bionic( bio_batteries ) ).value();
         item_location bat_compartment = dummy.top_items_loc().front();
 
-        // There should be no fuel available, can't turn bionic on and no power is produced
+
         REQUIRE( bat_compartment->ammo_remaining( ) == 0 );
         CHECK( dummy.get_bionic_fuels( bio.id ).empty() );
         CHECK( dummy.get_cable_ups().empty() );
@@ -436,7 +436,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Add empty battery. Still won't work
+
         item battery = item( itype_light_battery_cell );
         CHECK( bat_compartment->can_reload_with( battery, true ) );
         bat_compartment->put_in( battery, pocket_type::MAGAZINE_WELL );
@@ -449,7 +449,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Add fuel. Now it turns on and generates power.
+
         bat_compartment->magazine_current()->ammo_set( battery.ammo_default(), 2 );
         REQUIRE( bat_compartment->ammo_remaining( ) == 2 );
         CHECK( dummy.activate_bionic( bio ) );
@@ -462,7 +462,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( units::to_joule( dummy.get_power_level() ) == 2000 );
         CHECK( bat_compartment->ammo_remaining( ) == 0 );
 
-        // Run out of ammo
+
         dummy.suffer();
         CHECK( units::to_joule( dummy.get_power_level() ) == 2000 );
     }
@@ -470,7 +470,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
     SECTION( "bio_cable ups" ) {
         bionic &bio = *dummy.find_bionic_by_uid( dummy.add_bionic( bio_cable ) ).value();
 
-        // There should be no fuel available, can't turn bionic on and no power is produced
+
         CHECK( dummy.get_bionic_fuels( bio.id ).empty() );
         CHECK( dummy.get_cable_ups().empty() );
         CHECK( dummy.get_cable_solar().empty() );
@@ -479,7 +479,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Connect to empty ups. Bionic shouldn't work
+
         dummy.worn.wear_item( dummy, item( itype_backpack ), false, false );
         item_location ups = dummy.i_add( item( itype_UPS_ON ) );
         item_location cable = dummy.i_add( item( itype_jumper_cable ) );
@@ -497,7 +497,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Put empty battery into ups. Still does not work.
+
         item ups_mag( ups->magazine_default() );
         ups->put_in( ups_mag, pocket_type::MAGAZINE_WELL );
         REQUIRE( ups->ammo_remaining( ) == 0 );
@@ -506,7 +506,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Fill the battery. Works now.
+
         ups->magazine_current()->ammo_set( ups_mag.ammo_default(), 2 );
         REQUIRE( ups->ammo_remaining( ) == 2 );
         CHECK( dummy.activate_bionic( bio ) );
@@ -519,7 +519,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( ups->ammo_remaining( ) == 0 );
         CHECK( units::to_joule( dummy.get_power_level() ) == 2000 );
 
-        // Run out of fuel
+
         dummy.suffer();
         CHECK( units::to_joule( dummy.get_power_level() ) == 2000 );
     }
@@ -528,16 +528,16 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         bionic &bio = *dummy.find_bionic_by_uid( dummy.add_bionic( bio_fuel_wood ) ).value();
         item_location woodshed = dummy.top_items_loc().front();
 
-        // Turn safe fuel off since log produces too much energy
+
         bio.set_safe_fuel_thresh( -1.0f );
 
-        // There should be no fuel available, can't turn bionic on and no power is produced
+
         CHECK( dummy.get_bionic_fuels( bio.id ).empty() );
         CHECK_FALSE( dummy.activate_bionic( bio ) );
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Add two splints. Now it turns on and generates power.
+
         item wood = item( itype_splinter );
         item wood_2 = item( itype_splinter );
         REQUIRE_FALSE( wood.count_by_charges() );
@@ -554,7 +554,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( units::to_joule( dummy.get_power_level() ) == 125000 );
         CHECK( woodshed->empty_container() );
 
-        // Run out of fuel
+
         dummy.suffer();
         CHECK( units::to_joule( dummy.get_power_level() ) == 125000 );
     }
@@ -562,8 +562,8 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
     SECTION( "bio_metabolics" ) {
         bionic &bio = *dummy.find_bionic_by_uid( dummy.add_bionic( bio_metabolics ) ).value();
 
-        // Set stored energy below safe threshold (80%)
-        // There should be no fuel available, can't turn bionic on and no power is produced
+
+
         int kcal_threshold = static_cast<int>( 0.8f * dummy.get_healthy_kcal() );
         int kcal_bad = kcal_threshold - 1;
         dummy.set_stored_kcal( kcal_bad );
@@ -576,7 +576,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         dummy.suffer();
         REQUIRE( !dummy.has_power() );
 
-        // Set stored energy 2 kcal above safe threshold. Bionic turns on and produces power
+
         int kcal_good = kcal_threshold + 2;
         dummy.set_stored_kcal( kcal_good );
         REQUIRE( dummy.get_stored_kcal( ) == kcal_good );
@@ -593,7 +593,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( units::to_joule( dummy.get_power_level() ) == 2092 );
         CHECK( dummy.get_stored_kcal( ) == kcal_good - 2 );
 
-        // Stored energy goes below safe level. Bionic turns off for safety.
+
         dummy.suffer();
         CHECK_FALSE( dummy.deactivate_bionic( bio ) );
     }
@@ -603,7 +603,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         item_location gasoline_tank = dummy.top_items_loc().front();
         bio.auto_shutdown = false;
 
-        // There should be no fuel available, can turn bionic on and off but no power is produced
+
         CHECK( dummy.get_bionic_fuels( bio.id ).empty() );
         CHECK( dummy.get_cable_ups().empty() );
         CHECK( dummy.get_cable_solar().empty() );
@@ -613,7 +613,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( dummy.deactivate_bionic( bio ) );
         REQUIRE( !dummy.has_power() );
 
-        // Add fuel. Now it turns on and generates power.
+
         item gasoline = item( fuel_type_gasoline );
         gasoline.charges = 2;
         CHECK( gasoline_tank->can_reload_with( gasoline, true ) );
@@ -629,7 +629,7 @@ TEST_CASE( "fueled_bionics", "[bionics] [item]" )
         CHECK( units::to_joule( dummy.get_power_level() ) == 17100 );
         CHECK( gasoline_tank->empty_container() );
 
-        // Run out of fuel. Bionic stays on and can be deactivated manually.
+
         dummy.suffer();
         CHECK( units::to_joule( dummy.get_power_level() ) == 17100 );
         CHECK( dummy.deactivate_bionic( bio ) );

@@ -30,7 +30,7 @@
 
 namespace
 {
-/**print list scrollable, printed std::vector<std::string> as list with scrollbar*/
+
 void print_list_scrollable( catacurses::window *win, const std::vector<std::string> &list,
                             int *selection, int entries_per_page, int xoffset, int width,
                             bool active, bool border, const report_color_error color_error )
@@ -86,7 +86,7 @@ text_to_list_scrollable( catacurses::window &win, const std::string &text, const
 {
     const int width = getmaxx( win );
     const int borderspace = border ? 1 : 0;
-    // -1 on the left for scroll bar and another -1 on the right reserved for cursor
+
     return foldstring( text, width - 2 - borderspace * 2 );
 }
 
@@ -98,7 +98,7 @@ void print_list_scrollable( catacurses::window *win, const std::string &text, in
     print_list_scrollable( win, list, selection, active, border, color_error );
 }
 
-// Print multiple strings, stacked vertically downwards from the specified point
+
 template<typename ...Ts>
 void mvwprintwa( const catacurses::window &win, point p, Ts... args )
 {
@@ -117,51 +117,51 @@ void draw_diary_border( catacurses::window &win )
 
     wattron( win, BORDER_COLOR );
 
-    // left, right vertical lines
+
     for( int i = 0; i < 4; i++ ) {
         mvwvline( win, point( 0     + i, 4 ), '|', max.y - 4 - 4 + 1 );
         mvwvline( win, point( max.x - i, 4 ), '|', max.y - 4 - 4 + 1 );
     }
-    // middle vertical line
+
     mvwvline( win,     point( mid.x,     4 ), '|', max.y - 4 - 4 + 1 );
-    // top horizontal line
+
     mvwhline( win,     point( 4,         0 ), '_', max.x - 4 - 4 + 1 );
-    // bottom horizontal lines
+
     mvwhline( win,     point( 4, max.y - 2 ), '_', max.x - 4 - 4 + 1 );
     mvwhline( win,     point( 4, max.y - 1 ), '=', max.x - 4 - 4 + 1 );
     mvwhline( win,     point( 4, max.y - 0 ), '-', max.x - 4 - 4 + 1 );
 
-    //top left corner
+
     mvwprintwa( win, point::zero,
                 "    ",
                 ".-/|",
                 "||||",
                 "||||" );
-    // bottom left corner
+
     mvwprintwa( win, point( 0, max.y - 3 ),
                 "||||",
                 "||||",
                 "||/=",
                 "`'--" );
-    // top right corner
+
     mvwprintwa( win, point( max.x - 3, 0 ),
                 "    ",
                 "|\\-.",
                 "||||",
                 "||||" );
-    // bottom right corner
+
     mvwprintwa( win, max + point( -3, -3 ),
                 "||||",
                 "||||",
                 "=\\||",
                 "--''" );
-    // top middle
+
     mvwprintwa( win, point( mid.x - 1, 0 ),
                 "   ",
                 "\\ /",
                 " | ",
                 " | " );
-    // bottom middle
+
     mvwprintwa( win, point( mid.x - 1, max.y - 3 ),
                 " | ",
                 " | ",
@@ -170,7 +170,7 @@ void draw_diary_border( catacurses::window &win )
 
     wattroff( win, BORDER_COLOR );
 }
-} // namespace
+}
 
 static std::pair<point, point> diary_window_position()
 {
@@ -499,7 +499,7 @@ void diary::show_diary_ui( diary *c_diary )
         }
         const std::string action = ctxt.handle_input();
         if( action == "LEFT" || action == "PREV_TAB" || action == "RIGHT" || action == "NEXT_TAB" ) {
-            // necessary to use inc_clamp_wrap()
+
             static_assert( static_cast<int>( window_mode::FIRST_WIN ) == 0 );
             currwin = inc_clamp_wrap( currwin, action == "RIGHT" || action == "NEXT_TAB",
                                       window_mode::NUM_WIN );
@@ -511,7 +511,7 @@ void diary::show_diary_ui( diary *c_diary )
                                              c_diary->get_desc_or_page_text( selected[window_mode::CHANGE_WIN] ),
                                              false ).size(),
                                      true ) ) {
-            // size in navigate_ui_list above is redundant with print_list_scrollable's wrapping effect during redraw
+
             if( currwin == window_mode::PAGE_WIN ) {
                 selected[window_mode::CHANGE_WIN] = 0;
                 selected[window_mode::TEXT_WIN] = 0;
@@ -561,8 +561,8 @@ void diary::edit_page_ui( const std::function<catacurses::window()> &create_wind
     if( get_page_ptr()->is_summary() ) {
         return;
     }
-    // Modify the stored text so the new text is displayed after exiting from
-    // the editor window and before confirming or canceling the y/n query.
+
+
     std::string &new_text = get_page_ptr()->m_text;
     const std::string old_text = new_text;
 
@@ -572,7 +572,7 @@ void diary::edit_page_ui( const std::function<catacurses::window()> &create_wind
         const std::pair<bool, std::string> result = ed.query_string();
         new_text = result.second;
 
-        // Confirmed or unchanged
+
         if( result.first || old_text == new_text ) {
             break;
         }

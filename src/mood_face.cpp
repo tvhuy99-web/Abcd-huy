@@ -14,7 +14,7 @@ static const mood_face_id mood_face_DEFAULT_HORIZONTAL( "DEFAULT_HORIZONTAL" );
 namespace
 {
 generic_factory<mood_face> mood_face_factory( "mood_face" );
-} // namespace
+}
 
 template<>
 const mood_face &mood_face_id::obj() const
@@ -22,7 +22,7 @@ const mood_face &mood_face_id::obj() const
     return mood_face_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool mood_face_id::is_valid() const
 {
@@ -93,7 +93,7 @@ const mood_face_id &avatar::character_mood_face( bool clear_cache ) const
         break;
     }
 
-    // Valid: DEFAULT and DEFAULT_HORIZONTAL
+
     if( face_type.empty() ) {
         face_type = "DEFAULT";
     }
@@ -102,8 +102,8 @@ const mood_face_id &avatar::character_mood_face( bool clear_cache ) const
         face_type.append( "_HORIZONTAL" );
     }
 
-    // Valid: THRESH_MUT and THRESH_MUT_HORIZONTAL
-    // Example: THRESH_BIRD and THRESH_BIRD_HORIZONTAL
+
+
     for( const mood_face &face_id : mood_face::get_all() ) {
         if( face_id.getId().str() == face_type ) {
             mood_face_cache = face_id.getId();
@@ -111,7 +111,7 @@ const mood_face_id &avatar::character_mood_face( bool clear_cache ) const
         }
     }
 
-    // If we didn't get it first try, we're not getting it again
+
     if( !mood_face_cache.has_value() ) {
         if( mood_face_horizontal ) {
             mood_face_cache = mood_face_DEFAULT_HORIZONTAL;

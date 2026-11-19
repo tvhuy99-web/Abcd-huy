@@ -91,7 +91,7 @@ bool mapbuffer::add_submap( const tripoint_abs_sm &p, std::unique_ptr<submap> &s
 
 bool mapbuffer::add_submap( const tripoint_abs_sm &p, submap *sm )
 {
-    // FIXME: get rid of this overload and make submap ownership semantics sane.
+
     std::unique_ptr<submap> temp( sm );
     bool result = add_submap( p, temp );
     if( !result ) {
@@ -131,7 +131,7 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
 
 bool mapbuffer::submap_exists( const tripoint_abs_sm &p )
 {
-    // Could so with a second check against a std::unordered_set<tripoint_abs_sm> of already checked existing but not loaded submaps before resorting to unserializing?
+
     const auto iter = submaps.find( p );
     if( iter == submaps.end() ) {
         try {
@@ -185,7 +185,7 @@ void mapbuffer::save( bool delete_after_save )
 
     static_popup popup;
 
-    // A set of already-saved submaps, in global overmap coordinates.
+
     std::set<tripoint_abs_omt> saved_submaps;
     std::list<tripoint_abs_sm> submaps_to_delete;
     static constexpr std::chrono::milliseconds update_interval( 500 );
@@ -201,26 +201,26 @@ void mapbuffer::save( bool delete_after_save )
             inp_mngr.pump_events();
             last_update = now;
         }
-        // Whatever the coordinates of the current submap are,
-        // we're saving a 2x2 quad of submaps at a time.
-        // Submaps are generated in quads, so we know if we have one member of a quad,
-        // we have the rest of it, if that assumption is broken we have REAL problems.
+
+
+
+
         const tripoint_abs_omt om_addr = project_to<coords::omt>( elem.first );
         if( saved_submaps.count( om_addr ) != 0 ) {
-            // Already handled this one.
+
             continue;
         }
         saved_submaps.insert( om_addr );
 
-        // A segment is a chunk of 32x32 submap quads.
-        // We're breaking them into subdirectories so there aren't too many files per directory.
-        // Might want to make a set for this one too so it's only checked once per save().
+
+
+
         const cata_path dirname = find_dirname( om_addr );
         const cata_path quad_path = dirname / quad_file_name( om_addr );
 
         bool inside_reality_bubble = here.inbounds( om_addr );
-        // delete_on_save deletes everything, otherwise delete submaps
-        // outside the current map.
+
+
         save_quad( dirname, quad_path, om_addr, submaps_to_delete,
                    delete_after_save || !inside_reality_bubble );
         num_saved_submaps += 4;
@@ -250,9 +250,9 @@ void mapbuffer::save_quad(
     std::optional<zzip> z;
     cata_path zzip_name = dirname;
     zzip_name += zzip_suffix;
-    // The number of uniform submaps is so enormous that the filesystem overhead
-    // for this step of just checking if the quad exists approaches 70% of the
-    // total cost of saving the mapbuffer, in one test save I had.
+
+
+
     if( world_generator->active_world->has_compression_enabled() ) {
         z = zzip::load( zzip_name.get_unrelative_path(),
                         ( PATH_INFO::world_base_save_path() / "maps.dict" ).get_unrelative_path() );
@@ -267,7 +267,7 @@ void mapbuffer::save_quad(
 
     for( point_rel_sm &offsets_offset : offsets ) {
         tripoint_abs_sm submap_addr = project_to<coords::sm>( om_addr );
-        submap_addr += offsets_offset.raw(); // TODO: Make += etc. available to relative parameters as well.
+        submap_addr += offsets_offset.raw();
         submap_addrs.push_back( submap_addr );
         submap *sm = submaps[submap_addr].get();
         if( sm != nullptr ) {
@@ -280,7 +280,7 @@ void mapbuffer::save_quad(
     }
 
     if( all_uniform ) {
-        // Nothing to save - this quad will be regenerated faster than it would be re-read
+
         if( delete_after_save ) {
             for( auto &submap_addr : submap_addrs ) {
                 if( submaps.count( submap_addr ) > 0 && submaps[submap_addr] != nullptr ) {
@@ -289,8 +289,8 @@ void mapbuffer::save_quad(
             }
         }
 
-        // deleting the file might fail on some platforms in some edge cases so force serialize this
-        // uniform quad
+
+
         if( !reverted_to_uniform ) {
             return;
         }
@@ -337,7 +337,7 @@ void mapbuffer::save_quad(
     if( z ) {
         z->add_file( filename.get_relative_path().filename(), s );
     } else {
-        // Don't create the directory if it would be empty
+
         assure_dir_exist( dirname );
         write_to_file( filename, [&]( std::ostream & fout ) {
             fout << s;
@@ -360,11 +360,11 @@ void mapbuffer::save_quad(
     }
 }
 
-// We're reading in way too many entities here to mess around with creating sub-objects and
-// seeking around in them, so we're using the json streaming API.
+
+
 submap *mapbuffer::unserialize_submaps( const tripoint_abs_sm &p )
 {
-    // Map the tripoint to the submap quad that stores it.
+
     const tripoint_abs_omt om_addr = project_to<coords::omt>( p );
     const cata_path dirname = find_dirname( om_addr );
     std::string file_name = quad_file_name( om_addr );
@@ -412,8 +412,8 @@ submap *mapbuffer::unserialize_submaps( const tripoint_abs_sm &p )
         return nullptr;
     }
 
-    // fill in uniform submaps that were not serialized. Note that failure as a result of it
-    // not being uniform is OK and results in any missing uniform submaps being generated.
+
+
     oter_id const oid = overmap_buffer.ter( om_addr );
     generate_uniform_omt( project_to<coords::sm>( om_addr ), oid );
     if( submaps.count( p ) == 0 ) {
@@ -430,7 +430,7 @@ void mapbuffer::deserialize( const JsonArray &ja )
         std::unique_ptr<submap> sm = std::make_unique<submap>();
         tripoint_abs_sm submap_coordinates;
         int version = 0;
-        // We have to read version first because the iteration order of json members is undefined.
+
         if( submap_json.has_int( "version" ) ) {
             version = submap_json.get_int( "version" );
         }

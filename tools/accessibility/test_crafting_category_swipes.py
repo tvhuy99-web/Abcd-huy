@@ -26,12 +26,12 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn('"All categories"', CRAFT)
         self.assertIn("reader_all_categories ? std::string", CRAFT)
         self.assertIn('!reader_all_categories && ( subtab.cur() == "CSC_*_RECENT" )', CRAFT)
-        # CC_* is the internal wildcard recipe category with nested group
-        # placeholders; it must not inflate All or trap main-category swipes.
+
+
         self.assertIn("( !a11y::enabled() || !cat.is_wildcard )", CRAFT)
         self.assertIn("entry->category.str() ) != crafting_cats.end()", CRAFT)
         self.assertNotIn("picking.insert( picking.end(), available_recipes->begin(),", CRAFT)
-        # Preserve native visual-mode special Favorites/Recent/Hidden tabs.
+
         self.assertIn("!a11y::enabled() || !cat.is_wildcard", CRAFT)
 
     def test_reader_list_is_bounded_for_large_global_all(self):
@@ -59,11 +59,11 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("TwoFingerBackGesture.matchesRight", GESTURES)
         self.assertIn("static boolean isLeftSwipe", TWO_FINGER)
         self.assertIn("static boolean isRightSwipe", TWO_FINGER)
-        # Main categories must no longer override the two-finger vertical actions.
+
         self.assertNotIn("handleCraftingMainCategorySwipe(up ? -1 : 1)", GESTURES)
         self.assertIn('vertical < 0 ? "LEFT" : "RIGHT"', READER)
         self.assertIn("navigate(int delta)", READER)
-        # Existing non-crafting two-finger confirm/back is still present.
+
         self.assertIn("listener.confirm();", GESTURES)
         self.assertIn("listener.goBack();", GESTURES)
 
@@ -97,8 +97,8 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("reader_all_categories = true;", CRAFT)
 
     def test_native_category_selection_cannot_be_reverted_by_imgui(self):
-        # In the 539b0655 phone log PREV_TAB produced a 20-recipe native
-        # category and ImGui immediately restored All with 1121 recipes.
+
+
         self.assertIn("reader_all_categories = a11y::enabled() && !goto_recipe.is_valid();", CRAFT)
         self.assertIn("ImGui::IsItemClicked() && !reader_all_categories", CRAFT)
         self.assertIn("( !a11y::enabled() || ImGui::IsItemClicked() )", CRAFT)
@@ -106,8 +106,8 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("category=", CRAFT)
 
     def test_swipe_left_at_first_recipe_wraps_to_last_without_detail_rows(self):
-        # Page controls are present even on first/last page so the native
-        # engine, not local Java focus, selects the last real recipe.
+
+
         self.assertIn("if( current.size() > 1 )", CRAFT)
         self.assertIn("line = first < 0 ? static_cast<int>( current.size() ) - 1 :", CRAFT)
         self.assertIn("line = first >= static_cast<int>( current.size() ) ? 0 : first;", CRAFT)

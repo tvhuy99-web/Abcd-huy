@@ -227,18 +227,18 @@ static void TextEx( std::string_view str, float wrap_width, uint32_t color )
                               widthRemaining );
         if( textStart == drawEnd ) {
             ImGui::NewLine();
-            // NewLine assumes that we are done with one item and are
-            // adding another so it advances CursorPos.y by
-            // ItemSpacing.y. Since we know that this is just part of
-            // a paragraph, undo just that small extra spacing.
+
+
+
+
             window->DC.CursorPos.y -= ImGui::GetStyle().ItemSpacing.y;
             widthRemaining = ImGui::CalcWrapWidthForPos( ImGui::GetCursorScreenPos(), wrap_width );
             drawEnd = Font->CalcWordWrapPosition( ImGui::GetFontSize(), textStart, textEnd, widthRemaining );
         } else if( drawEnd > textStart && drawEnd < textEnd
                    && !ImCharIsBlankA( *( drawEnd - 1 ) ) && !ImCharIsBlankA( *drawEnd ) ) {
-            // Word was cut because it exceeds widthRemaining, but it
-            // may fit on a full line. Wrap and retry unless already at
-            // line start (word is genuinely too long).
+
+
+
             float lineStartX = IM_TRUNC( window->Pos.x + window->DC.Indent.x +
                                          window->DC.ColumnsOffset.x );
             if( window->DC.CursorPos.x > lineStartX + 1.0f ) {
@@ -253,7 +253,7 @@ static void TextEx( std::string_view str, float wrap_width, uint32_t color )
                 ImGui::PushStyleColor( ImGuiCol_Text, color );
             }
             ImGui::TextUnformatted( textStart, drawEnd );
-            // see above
+
             window->DC.CursorPos.y -= ImGui::GetStyle().ItemSpacing.y;
             if( color ) {
                 ImGui::PopStyleColor();
@@ -323,8 +323,8 @@ void TextColoredParagraph( nc_color default_color, std::string_view str,
         TextEx( str.substr( s, e - s ), wrap_width, colors.back() );
         size_t ce = str.find_first_of( "<>", e + 1 );
         if( std::string::npos != ce ) {
-            // back up by one if we find the start of another tag instead of the end of this one
-            // an annoying example from help.json: "<color_light_green>^>v<</color>"
+
+
             if( str[ ce ] == '<' ) {
                 ce -= 1;
             }
@@ -372,24 +372,24 @@ static std::string trim_substring( std::string_view text, float width )
         return ellipsis;
     }
 
-    // estimate number of visible characters by ellipsis width
+
     int visible_chars = width / ellipsis_width;
     std::string trimmed_str = utf8_truncate( std::string( text ), visible_chars );
     trimmed_str += ellipsis;
     float trimmed_width = ImGui::CalcTextSize( trimmed_str.c_str(), nullptr, true ).x;
 
-    // only shrink or grow the guesstimated string to avoid infinite loops
+
     bool shrink = trimmed_width > width;
 
     while( true ) {
         if( shrink && trimmed_width > width ) {
-            // we're still too long, so shrink
+
             visible_chars--;
         } else if( !shrink && width > trimmed_width ) {
-            // we didn't reach available width yet, so grow
+
             visible_chars++;
         } else if( !shrink && width < trimmed_width ) {
-            // we overshot, so go back one and switch mode to shrinking to hit the else branch next time
+
             visible_chars--;
             shrink = true;
         } else {
@@ -426,8 +426,8 @@ static std::string trim_by_width( std::string_view text, float width )
     for( size_t i = 0; i < color_segments.size(); ++i ) {
         const std::string &seg = color_segments[i];
         if( seg.empty() ) {
-            // TODO: Check is required right now because, for a fully-color-tagged string, split_by_color
-            // returns an empty string first
+
+
             continue;
         }
         color_open_tag.clear();
@@ -455,23 +455,23 @@ static std::string trim_by_width( std::string_view text, float width )
 
         bool trimmed = false;
         if( str_width > width || ( str_width == width && i + 1 < color_segments.size() ) ) {
-            // This segment won't fit OR
-            // This segment just fits and there's another segment coming
-            // trim_substring already appends the ellipsis
+
+
+
             temp_str = color_open_tag
                        .append( trim_substring( temp_str, temp_width - ( str_width - width ) ) )
                        .append( color_close_tag );
             trimmed = true;
         } else if( str_width + next_char_width >= width ) {
-            // This segments fits, but the next segment starts with a wide character
+
             temp_str = color_open_tag.append( temp_str ).append( color_close_tag ).append( ellipsis );
             trimmed = true;
         }
 
         if( trimmed ) {
-            trunc_str += temp_str; // Color tags were handled when the segment was trimmed
+            trunc_str += temp_str;
             break;
-        } else { // This segment fits, and the next one has room to start
+        } else {
             trunc_str += color_open_tag.append( temp_str ).append( color_close_tag );
         }
     }
@@ -485,4 +485,4 @@ void TextColoredTrimmed( std::string_view text, nc_color default_color, float wi
                        is_hovered );
 }
 
-} // namespace cataimgui
+}

@@ -20,10 +20,10 @@
 #include "units.h"
 #include "units_utility.h"
 
-/** How much light moon provides per lit-up quarter (Full-moon light is four times this value) */
+
 static constexpr float moonlight_per_quarter = 1.5f;
 
-// Divided by 100 to prevent overflowing when converted to moves
+
 const int calendar::INDEFINITELY_LONG( std::numeric_limits<int>::max() / 100 );
 static bool is_eternal_season = false;
 static bool is_eternal_night = false;
@@ -36,7 +36,7 @@ time_point calendar::start_of_game = calendar::turn_zero;
 time_point calendar::turn = calendar::turn_zero;
 season_type calendar::initial_season = SPRING;
 
-// The solar altitudes at which light changes in various ways
+
 static constexpr units::angle astronomical_dawn = -18_degrees;
 static constexpr units::angle nautical_dawn = -12_degrees;
 static constexpr units::angle civil_dawn = -6_degrees;
@@ -59,7 +59,7 @@ time_duration lunar_month()
 
 namespace io
 {
-// *INDENT-OFF*
+
 template<>
 std::string enum_to_string<moon_phase>( moon_phase phase_num )
 {
@@ -90,13 +90,13 @@ std::string enum_to_string<time_accuracy>( time_accuracy acc )
     }
     return "NONE";
 }
-// *INDENT-ON*
-} // namespace io
+
+}
 
 moon_phase get_moon_phase( const time_point &p )
 {
     const time_duration moon_phase_duration = calendar::season_from_default_ratio() * lunar_month();
-    // Switch moon phase at noon so it stays the same all night
+
     const int num_middays = to_days<int>( p - calendar::turn_zero + 1_days / 2 );
     const time_duration nearest_midnight = num_middays * 1_days;
     const double phase_change = nearest_midnight / moon_phase_duration;
@@ -124,42 +124,42 @@ season_effective_time::season_effective_time( const time_point &t_ )
 static std::pair<units::angle, units::angle> sun_ra_declination(
     season_effective_time t, time_duration timezone )
 {
-    // This derivation is mostly from
-    // https://en.wikipedia.org/wiki/Position_of_the_Sun
-    // https://en.wikipedia.org/wiki/Celestial_coordinate_system#Notes_on_conversion
 
-    // The computation is inspired by the derivation based on J2000 (Greenwich
-    // noon, 2000-01-01), but because we want to be capable of handling a
-    // different year length than the real Earth, we don't use the same exact
-    // values.
-    // Instead we use as our epoch a point that won't change arbitrarily with a
-    // different year length - Greenwich midnight on the vernal equinox
-    // (note that the vernal equinox happens to be Spring day 1 in the game
-    // calendar, which is convenient).
+
+
+
+
+
+
+
+
+
+
+
     const double days_since_epoch = to_days<double>( t.t - calendar::turn_zero - timezone );
 
-    // The angle per day the Earth moves around the Sun
+
     const units::angle angle_per_day = 360_degrees / to_days<int>( calendar::year_length() );
 
-    // It turns out that we want mean longitude to be zero at the vernal
-    // equinox, which simplifies the calculations.
+
+
     const units::angle mean_long = angle_per_day * days_since_epoch;
-    // Roughly 77 degrees offset between mean longitude and mean anomaly at
-    // J2000, so use that as our offset too.  The relative drift is slow, so we
-    // neglect it.
+
+
+
     const units::angle mean_anomaly = 77_degrees + mean_long;
-    // The two arbitrary constants in the calculation of ecliptic longitude
-    // relate to the non-circularity of the Earth's orbit.
+
+
     const units::angle ecliptic_longitude =
         mean_long + 1.915_degrees * sin( mean_anomaly ) + 0.020_degrees * sin( 2 * mean_anomaly );
 
-    // Obliquity does vary slightly, but for simplicity we'll keep it fixed at
-    // its J2000 value.
+
+
     static constexpr units::angle obliquity = 23.439279_degrees;
 
-    // ecliptic rectangular coordinates
+
     const rl_vec2d eclip( cos( ecliptic_longitude ), sin( ecliptic_longitude ) );
-    // rotate to equatorial coordinates
+
     const rl_vec3d rot( eclip.x, eclip.y * cos( obliquity ), eclip.y * sin( obliquity ) );
     const units::angle right_ascension = atan2( rot.xy() );
     const units::angle declination = units::asin( rot.z );
@@ -169,17 +169,17 @@ static std::pair<units::angle, units::angle> sun_ra_declination(
 static units::angle sidereal_time_at( season_effective_time t, units::angle longitude,
                                       time_duration timezone )
 {
-    // Repeat some calculations from sun_ra_declination
+
     const double days_since_epoch = to_days<double>( t.t - calendar::turn_zero - timezone );
     const units::angle angle_per_day = 360_degrees / to_days<int>( calendar::year_length() );
 
-    // Sidereal Time
-    //
-    // For the origin of sidereal time consider that at the epoch at Greenwich,
-    // it's midnight on the vernal equinox so sidereal time should be 180°.
-    // Timezone and longitude are both zero here, so L0 = 180°.
+
+
+
+
+
     const units::angle L0 = 180_degrees;
-    // Sidereal time advances by 360° per day plus an additional 360° per year
+
     const units::angle L1 = 360_degrees + angle_per_day;
     return L0 + L1 * days_since_epoch + longitude;
 }
@@ -196,9 +196,9 @@ std::pair<units::angle, units::angle> sun_azimuth_altitude(
 
     const units::angle hour_angle = sidereal_time - right_ascension;
 
-    // Use a two-step transformation to convert equatorial coordinates to
-    // horizontal.
-    // https://en.wikipedia.org/wiki/Celestial_coordinate_system#Equatorial_%E2%86%94_horizontal
+
+
+
     const rl_vec3d intermediate(
         cos( hour_angle ) * cos( declination ),
         sin( hour_angle ) * cos( declination ),
@@ -212,7 +212,7 @@ std::pair<units::angle, units::angle> sun_azimuth_altitude(
         intermediate.z * sin( location.latitude )
     );
 
-    // Azimuth is from the South, turning positive to the west
+
     const units::angle azimuth = normalize( -atan2( horizontal.xy() ) + 180_degrees );
     units::angle altitude = units::asin( horizontal.z );
 
@@ -223,14 +223,14 @@ std::pair<units::angle, units::angle> sun_azimuth_altitude(
         altitude = astronomical_dawn - 10_degrees;
     }
 
-    /*printf(
-        "\n"
-        "right_ascension = %f, declination = %f\n"
-        "sidereal_time = %f, hour_angle = %f\n"
-        "aziumth = %f, altitude = %f\n",
-        to_degrees( right_ascension ), to_degrees( declination ),
-        to_degrees( sidereal_time ), to_degrees( hour_angle ),
-        to_degrees( azimuth ), to_degrees( altitude ) );*/
+
+
+
+
+
+
+
+
 
     return std::make_pair( azimuth, altitude );
 }
@@ -246,7 +246,7 @@ std::optional<rl_vec2d> sunlight_angle( const time_point &t )
     units::angle altitude;
     std::tie( azimuth, altitude ) = sun_azimuth_altitude( t );
     if( altitude <= sunrise_angle ) {
-        // Sun below horizon
+
         return std::nullopt;
     }
     rl_vec2d horizontal_direction( -sin( azimuth ), cos( azimuth ) );
@@ -259,10 +259,10 @@ static time_point solar_noon_near( const time_point &t )
 {
     const time_point prior_midnight = t - time_past_midnight( t );
     return prior_midnight + 12_hours;
-    // If we were using a timezone rather than local solar time this would be
-    // calculated as follows:
-    //constexpr time_duration longitude_hours = angle_to_time( location_boston.longitude );
-    //return prior_midnight + 12_hours - longitude_hours + timezone;
+
+
+
+
 }
 
 static units::angle offset_to_sun_altitude(
@@ -277,8 +277,8 @@ static units::angle offset_to_sun_altitude(
         ( sin( altitude ) - sin( location.latitude ) * sin( declination ) ) /
         cos( location.latitude ) / cos( declination );
     if( std::abs( cos_hour_angle ) > 1 ) {
-        // It doesn't actually reach that angle, so we pretend that it does at
-        // its maximum possible angle
+
+
         cos_hour_angle = cos_hour_angle > 0 ? 1 : -1;
     }
     units::angle hour_angle = units::acos( cos_hour_angle );
@@ -302,8 +302,8 @@ static time_point sun_at_altitude( const units::angle &altitude, const units::an
     }
     const time_duration initial_offset_time = angle_to_time( initial_offset );
     const time_point initial_approximation = solar_noon + initial_offset_time;
-    // Now we should have the correct time to within a few minutes; iterate to
-    // get a more precise estimate
+
+
     units::angle correction_offset =
         offset_to_sun_altitude( altitude, longitude, season_effective_time( initial_approximation ),
                                 evening );
@@ -386,16 +386,16 @@ float sun_light_at( const time_point &p )
     if( solar_alt < astronomical_dawn ) {
         return 0;
     } else if( solar_alt <= nautical_dawn ) {
-        // Sunlight rises exponentially from 0 to 3.7f as sun rises from -18° to -12°
+
         return 3.7f * ( std::exp2( to_degrees( solar_alt - astronomical_dawn ) / 6.f ) - 1 );
     } else if( solar_alt <= civil_dawn ) {
-        // Sunlight rises exponentially from 3.7f to 5.0f as sun rises from -12° to -6°
+
         return ( 5.0f - 3.7f ) * ( std::exp2( to_degrees( solar_alt - nautical_dawn ) / 6.f ) - 1 ) + 3.7f;
     } else if( solar_alt <= sunrise_angle ) {
-        // Sunlight rises exponentially from 5.0f to 60 as sun rises from -6° to -1°
+
         return ( 60 - 5.0f ) * ( std::exp2( to_degrees( solar_alt - civil_dawn ) / 5.f ) - 1 ) + 5.0f;
     } else if( solar_alt <= 60_degrees ) {
-        // Linear increase from -1° to 60° degrees light increases from 60 to 125 brightness.
+
         return ( 65.f / 61 ) * to_degrees( solar_alt ) + 65.f / 61  + 60;
     } else {
         return 125.f;
@@ -518,18 +518,18 @@ std::pair<int, clipped_unit> clipped_time( const time_duration &d )
         const int day = to_days<int>( d );
         return { day, clipped_unit::day };
     } else if( d < calendar::season_length() || calendar::eternal_season() ) {
-        // eternal seasons means one season is indistinguishable from the next,
-        // therefore no way to count them
+
+
         const int week = to_weeks<int>( d );
         return { week, clipped_unit::week };
     } else if( d < calendar::year_length() && !calendar::eternal_season() ) {
-        // TODO: consider a to_season function, but season length is variable, so
-        // this might be misleading
+
+
         const int season = to_turns<int>( d ) / to_turns<int>( calendar::season_length() );
         return { season, clipped_unit::season };
     } else {
-        // TODO: consider a to_year function, but year length is variable, so
-        // this might be misleading
+
+
         const int year = to_turns<int>( d ) / to_turns<int>( calendar::year_length() );
         return { year, clipped_unit::year };
     }
@@ -594,7 +594,7 @@ std::string to_string_approx( const time_duration &dur, const bool verbose )
     time_duration divider = 0_turns;
     time_duration vicinity = 0_turns;
 
-    // Minutes and seconds can be estimated precisely.
+
     if( d > 1_days ) {
         divider = 1_days;
         vicinity = 2_hours;
@@ -652,7 +652,7 @@ std::string to_string_time_of_day( const time_point &p )
         if( hour_param == 0 ) {
             hour_param = 12;
         }
-        // Padding is removed as necessary to prevent clipping with SAFE notification in wide sidebar mode
+
         const std::string padding = hour_param < 10 ? " " : "";
         if( hour < 12 ) {
             return string_format( _( "%d:%02d:%02d%sAM" ), hour_param, minute, second, padding );
@@ -664,29 +664,29 @@ std::string to_string_time_of_day( const time_point &p )
 
 weekdays day_of_week( const time_point &p )
 {
-    /* Design rationale:
-     * <mayagranade> here's a question
-     * <mayagranade> what day of the week is day 0?
-     * <wito> Sunday
-     * <GlyphGryph> Why does it matter?
-     * <GlyphGryph> For like where people are and stuff?
-     * <wito> 7 is also Sunday
-     * <mayagranade> NOAA weather forecasts include day of week
-     * <GlyphGryph> Also by day0 do you mean the day people start day 0
-     * <GlyphGryph> Or actual day 0
-     * <mayagranade> good point, turn 0
-     * <GlyphGryph> So day 5
-     * <wito> Oh, I thought we were talking about week day numbering in general.
-     * <wito> Day 5 is a thursday, I think.
-     * <wito> Nah, Day 5 feels like a thursday. :P
-     * <wito> Which would put the apocalypse on a saturday?
-     * <Starfyre> must be a thursday.  I was never able to get the hang of those.
-     * <ZChris13> wito: seems about right to me
-     * <wito> mayagranade: add four for thursday. ;)
-     * <mayagranade> sounds like consensus to me
-     * <mayagranade> Thursday it is */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     int day_since_game_start = to_days<int>( p - calendar::start_of_game );
-    // % 7 gives (negative) days before, add 7 to get positive
+
     if( day_since_game_start < 0 ) {
         day_since_game_start = ( day_since_game_start % 7 ) + 7;
     }
@@ -806,8 +806,8 @@ constexpr const std::array<std::pair<std::string_view, time_duration>, 15> time_
         { "days", 1_days },
         { "day", 1_days },
         { "d", 1_days },
-        // TODO: maybe add seasons?
-        // TODO: maybe add years? Those two things depend on season length!
+
+
     }
 };
 
@@ -819,8 +819,8 @@ season_type season_of_year( const time_point &p )
     if( p != prev_turn ) {
         prev_turn = p;
         if( calendar::eternal_season() ) {
-            // If we use calendar::start to determine the initial season, and the user shortens the season length
-            // mid-game, the result could be the wrong season!
+
+
             return prev_season = calendar::initial_season;
         }
         return prev_season = static_cast<season_type>(
@@ -855,13 +855,13 @@ std::string to_string( const time_point &p )
 
 time_duration calendar::turn_zero_offset()
 {
-    // turn zero is the first day of spring, so the winter part of the year is otherwise not counted
-    // Jan 31 days, Feb 30 days, seasons start on the 21th (so Mar 21)
+
+
     time_duration winter_at_start = 31_days + 30_days + 20_days;
     if( calendar::year_length() == 364_days ) {
         return winter_at_start;
     }
-    // just do something proportional for non-standard settings
+
     const time_duration season_length = calendar::season_length();
     double fraction = to_days<double>( winter_at_start ) / 91.0;
     return fraction * season_length;
@@ -877,23 +877,23 @@ std::pair<month, int> month_and_day( time_point turn )
     if( calendar::year_length() != 364_days ) {
         return std::make_pair( month::UNKNOWN, to_days<int>( time_past_new_year( turn ) ) );
     }
-    // months are:
-    // Dec Jan Feb  Mar Apr May  Jun Jul Aug  Sep Oct Nov
-    // each month has 30 days, except Jan/Apr/Jul/Oct have 31
-    // seasons are:
-    // Winter: Dec 21-Mar 20
-    // Spring: Mar 21-Jun 20
-    // Summer: Jun 21-Sep 20
-    // Autumn: Sep 21-Dec 20
+
+
+
+
+
+
+
+
     static std::array<month, 12> months = {
         month::JANUARY, month::FEBRUARY, month::MARCH, month::APRIL, month::MAY, month::JUNE,
         month::JULY, month::AUGUST, month::SEPTEMBER, month::OCTOBER, month::NOVEMBER, month::DECEMBER
     };
 
     int day = to_days<int>( time_past_new_year( turn ) );
-    // calculate which group (jan/feb/mar, apr/may/jun, etc) of month it is
+
     int month = ( day / 91 ) * 3;
-    // then within the group, determine the actual month and day
+
     day %= 91;
     if( day < 31 ) {
         day += 1;
@@ -985,7 +985,7 @@ std::string get_diary_time_str( const time_point &turn, time_accuracy acc )
             return to_string( turn );
         case time_accuracy::PARTIAL:
             if( get_option<bool>( "SHOW_MONTHS" ) ) {
-                // partial accuracy, able to see the sky
+
                 //~ Time of year:
                 //~ $1 = year since Cataclysm
                 //~ $2 = month
@@ -1010,7 +1010,7 @@ std::string get_diary_time_str( const time_point &turn, time_accuracy acc )
             [[fallthrough]];
         case time_accuracy::NUM_TIME_ACCURACY:
         case time_accuracy::NONE: {
-            // normalized to 100 day seasons
+
             const int day_norm = ( month_day.second * 100 ) / to_days<int>( calendar::season_length() );
             std::string seas_point;
             if( day_norm < 33 ) {

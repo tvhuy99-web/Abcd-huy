@@ -35,8 +35,8 @@
 #include "get_version.h"
 #include "path_info.h"
 
-// signal handlers are expected to have C linkage, and only use the
-// common subset of C & C++
+
+
 extern "C" {
 
 #if defined(_WIN32)
@@ -44,8 +44,8 @@ extern "C" {
     {
         HANDLE handle = CreateFile( file, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
                                     FILE_ATTRIBUTE_NORMAL, nullptr );
-        // TODO: call from a separate process as suggested by the documentation
-        // TODO: capture stack trace and pass as parameter as suggested by the documentation
+
+
         MiniDumpWriteDump( GetCurrentProcess(),
                            GetCurrentProcessId(),
                            handle,
@@ -57,19 +57,19 @@ extern "C" {
 
     static void log_crash( const char *type, const char *msg )
     {
-        // This implementation is not technically async-signal-safe for many
-        // reasons, including the memory allocations and the SDL message box.
-        // But it should usually work in practice, unless for example the
-        // program segfaults inside malloc.
+
+
+
+
 #if defined(_WIN32)
         dump_to( ".core" );
 #endif
         const std::string crash_log_file = PATH_INFO::crash();
         std::ostringstream log_text;
 #if defined(__ANDROID__)
-        // At this point, Android JVM is already doomed
-        // No further UI interaction (including the SDL message box)
-        // Show a dialogue at next launch
+
+
+
         log_text << "VERSION: " << getVersionString()
                  << '\n' << type << ' ' << msg;
 #else
@@ -100,8 +100,8 @@ extern "C" {
             }
         }
 #if defined(__ANDROID__)
-        // Create a placeholder dummy file "config/crash.log.prompt"
-        // to let the app show a dialog box at next start
+
+
         file = fopen( ( crash_log_file + ".prompt" ).c_str(), "w" );
         if( file ) {
             fwrite( "0", 1, 1, file );
@@ -154,15 +154,15 @@ extern "C" {
 #pragma GCC diagnostic pop
         abort(); // NOLINT(cata-assert)
     }
-} // extern "C"
+}
 
 [[noreturn]] static void crash_terminate_handler()
 {
-    // TODO: thread-safety?
+
     const char *type;
     const char *msg;
     try {
-        auto &&ex = std::current_exception(); // *NOPAD*
+        auto &&ex = std::current_exception();
         if( ex ) {
             std::rethrow_exception( ex );
         } else {
@@ -172,7 +172,7 @@ extern "C" {
         if( !isDebuggerActive() ) {
             type = typeid( e ).name();
             msg = e.what();
-            // call here to avoid `msg = e.what()` going out of scope
+
             log_crash( type, msg );
         }
 #pragma GCC diagnostic push
@@ -201,7 +201,7 @@ extern "C" {
 void init_crash_handlers()
 {
 #if defined(__ANDROID__)
-    // Clean dummy file crash.log.prompt
+
     remove( ( PATH_INFO::crash() + ".prompt" ).c_str() );
 #endif
     for( int sig : {
@@ -219,7 +219,7 @@ void init_crash_handlers()
     std::set_terminate( crash_terminate_handler );
 }
 
-#else // !BACKTRACE
+#else
 
 void init_crash_handlers()
 {

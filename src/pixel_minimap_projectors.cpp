@@ -31,7 +31,7 @@ point pixel_minimap_ortho_projector::get_tiles_size( const point &tiles_count ) 
 }
 
 point pixel_minimap_ortho_projector::get_tile_pos( const point &p,
-        const point &/*tiles_count*/ ) const
+        const point & ) const
 {
     return { p.x * tile_size.x, p.y * tile_size.y };
 }
@@ -72,4 +72,4 @@ point pixel_minimap_iso_projector::get_tile_pos( const point &p, const point &ti
     };
 }
 
-#endif // TILES
+#endif

@@ -13,12 +13,12 @@
 static const species_id species_FERAL( "FERAL" );
 static const species_id species_ZOMBIE( "ZOMBIE" );
 
-// Is just entity enough or do we need to wrap it in a tuple with a coordinate?
-// Or worse an iterator?
+
+
 horde_entity *horde_map::entity_at( const tripoint_om_ms &p )
 {
     tripoint_om_sm submap_offset = project_to<coords::sm>( p );
-    // TODO reconsider pruning p down to tripoint_om_ms in the first place.
+
     tripoint_abs_ms entity_loc = project_combine( location, p );
     std::unordered_map<tripoint_om_sm, std::unordered_map<tripoint_abs_ms, horde_entity>>::iterator
             active_monster_submap = active_monster_map.find( submap_offset );
@@ -67,15 +67,15 @@ horde_entity *horde_map::entity_at( const tripoint_om_ms &p )
     return nullptr;
 }
 
-// TODO: if callers want to filter for dormant vs idle vs active, etc we can do it cheaply.
+
 std::vector < std::unordered_map<tripoint_abs_ms, horde_entity> *> horde_map::entity_group_at(
     const tripoint_om_omt &p, int filter )
 {
-    // TODO: It might be worthwhile to have a single top level map of per-submap containers,
-    // and each entry of that map holds each variant container.
-    // This eliminates multiple top-level lookups.
+
+
+
     std::vector<std::unordered_map<tripoint_abs_ms, horde_entity>*> horde_chunk;
-    // TODO: Find all 4 submaps worth of monsters and return them.
+
     for( int y = 0; y <= 1; ++y ) {
         for( int x = 0; x <= 1; ++x ) {
             tripoint_om_sm target_submap = project_to<coords::sm>( p ) + point{ x, y };
@@ -122,21 +122,21 @@ std::vector<std::unordered_map<tripoint_abs_ms, horde_entity> *> horde_map::enti
     return horde_chunk;
 }
 
-// Helper because this is too much to inline.
-// This essentially means "these should get sounds broadcast to them".
+
+
 static bool is_alert( const mtype &type )
 {
     bool aggro = type.in_species( species_ZOMBIE ) || type.in_species( species_FERAL );
     return aggro && type.has_flag( mon_flag_HEARS );
 }
 
-// These have no goal so they can't go in the active map.
+
 std::optional<std::unordered_map<tripoint_abs_ms, horde_entity>::iterator> horde_map::spawn_entity(
     const tripoint_abs_ms &p, mtype_id id )
 {
     std::optional<std::unordered_map<tripoint_abs_ms, horde_entity>::iterator> result;
     if( id.is_null() || !id.is_valid() ) {
-        return result; // Bail out, blacklisted monster or something's wrong.
+        return result;
     }
     std::unordered_map <tripoint_om_sm, std::unordered_map<tripoint_abs_ms, horde_entity>> &target_map =
                 id->has_flag( mon_flag_DORMANT ) ? dormant_monster_map :
@@ -146,12 +146,12 @@ std::optional<std::unordered_map<tripoint_abs_ms, horde_entity>::iterator> horde
     tripoint_om_sm sm;
     std::tie( omp, sm ) = project_remain<coords::om>( project_to<coords::sm>( p ) );
     bool inserted;
-    // The [] operator creates a nested std::map if not present already.
+
     std::tie( result, inserted ) = target_map[sm].emplace( p, id );
     return result;
 }
 
-// TODO: check for a goal in horde_entity and put in active vs idle.
+
 std::optional<std::unordered_map<tripoint_abs_ms, horde_entity>::iterator> horde_map::spawn_entity(
     const tripoint_abs_ms &p, const monster &mon )
 {
@@ -165,7 +165,7 @@ std::optional<std::unordered_map<tripoint_abs_ms, horde_entity>::iterator> horde
     tripoint_om_sm sm;
     std::tie( omp, sm ) = project_remain<coords::om>( project_to<coords::sm>( p ) );
     bool inserted;
-    // The [] operator creates a nested std::map if not present already.
+
     std::tie( result, inserted ) = target_map[sm].emplace( p, mon );
     if( inserted ) {
         ( *result )->second.monster_data->set_pos_abs_only( p );
@@ -190,12 +190,12 @@ static void signal_sm( const tripoint_abs_ms &origin, const tripoint_abs_sm &sm_
     int scaled_eff_power = eff_power * SEEX;
     for( std::unordered_map<tripoint_abs_ms, horde_entity>::iterator mon = sm_iter->second.begin();
          mon != sm_iter->second.end(); ) {
-        // Avoid unecessary extract/insert for already-active horde entities.
+
         if( !active ) {
             mon->second.destination = origin;
             mon->second.tracking_intensity = scaled_eff_power;
             std::unordered_map<tripoint_abs_ms, horde_entity>::iterator moving_mon = mon;
-            // Advance the loop iterator past the current node, which we will be removing.
+
             mon++;
             auto monster_node = sm_iter->second.extract( moving_mon );
             migrating_hordes.insert( std::move( monster_node ) );
@@ -209,8 +209,8 @@ static void signal_sm( const tripoint_abs_ms &origin, const tripoint_abs_sm &sm_
     }
 }
 
-// Volume is scaled down by SEEX so it matches the scale of tripoint_om_sm
-// dormant_monster_map and immobile_monster_map are intentionally excluded here.
+
+
 void horde_map::signal_entities( const tripoint_abs_ms &origin, int volume )
 {
     std::unordered_map<tripoint_abs_ms, horde_entity> migrating_hordes;
@@ -244,7 +244,7 @@ void horde_map::insert( std::unordered_map<tripoint_abs_ms, horde_entity>::node_
     point_abs_om omp;
     tripoint_om_sm sm;
     std::tie( omp, sm ) = project_remain<coords::om>( project_to<coords::sm> ( node.key() ) );
-    // The [] operator creates a nested std::map if not present already.
+
     target_map[sm].insert( std::move( node ) );
 }
 
@@ -264,7 +264,7 @@ void horde_map::clear_chunk( const tripoint_om_sm &p )
     immobile_monster_map.erase( p );
 }
 
-// horde_map::iterator definitions
+
 
 void horde_map::iterator::next_map()
 {
@@ -293,15 +293,15 @@ void horde_map::iterator::next_map()
             outer_map = nullptr;
         }
     } else {
-        // At the end.
+
         outer_map = nullptr;
     }
 }
 
-// This helper insures that a freshly created iterator is in a valid state.
+
 void horde_map::iterator::insure_valid()
 {
-    // Iterate forward if we don't have a valid initial state.
+
     if( !( filter & horde_map_flavors::active ) || outer_map->empty() ) {
         do {
             next_map();
@@ -311,10 +311,10 @@ void horde_map::iterator::insure_valid()
         } while( outer_map->empty() );
         outer_iter = outer_map->begin();
     }
-    // This is not obviously correct, but it is correct because
-    // horde_map::erase() insures that we cull empty maps, so if
-    // outer_map is not empty, outer_map->begin() is valid and so is
-    // outer_map->begin()->second.begin()
+
+
+
+
     inner_iter = outer_iter->second.begin();
 }
 

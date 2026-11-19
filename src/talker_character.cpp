@@ -341,13 +341,13 @@ void talker_character::mutate_towards( const trait_id &trait, const mutation_cat
 
 void talker_character::set_trait_purifiability( const trait_id &trait, const bool &purifiable )
 {
-    // If we want to set it non-purifiable and we didn't already do that and we really do have the trait
+
     if( me_chr->has_trait( trait ) ) {
         if( !purifiable && !me_chr->my_intrinsic_mutations.count( trait ) ) {
             me_chr->my_intrinsic_mutations.insert( trait );
             add_msg_debug( debugmode::DF_MUTATION, "Setting trait %s unpurifiable", trait.c_str() );
         };
-        // If we want to set it purifiable
+
         if( purifiable && me_chr->my_intrinsic_mutations.count( trait ) ) {
             me_chr->my_intrinsic_mutations.erase( trait );
             add_msg_debug( debugmode::DF_MUTATION, "Setting trait %s purifiable", trait.c_str() );
@@ -391,8 +391,8 @@ bool talker_character_const::bodytype( const bodytype_id &bt ) const
 {
     add_msg_debug( debugmode::DF_TALKER, "Character %s checked for bodytype %s", me_chr_const->name,
                    bt );
-    // All characters are human-bodytyped for now
-    // TODO: Change that for very limby characters
+
+
     return bt == "human";
 }
 
@@ -684,7 +684,7 @@ void talker_character::i_add_or_drop( item &new_item, bool force_equip )
             me_chr->wear_item( new_item, false );
             return;
         } else if( !me_chr->has_wield_conflicts( new_item ) &&
-                   !me_chr->martial_arts_data->keep_hands_free && //No wield if hands free
+                   !me_chr->martial_arts_data->keep_hands_free &&
                    me_chr->wield( new_item ) ) {
             return;
         }
@@ -1278,7 +1278,7 @@ std::string talker_character_const::skill_training_text( const_talker const &stu
     SkillLevel teacher_skill_level = me_chr_const->get_skill_level_object( skill );
     const int cur_level = skill_level_obj.knowledgeLevel();
     const int cur_level_exercise = skill_level_obj.knowledgeExperience();
-    // knowledge_train will adjust level xp based on the difference between your understanding and the NPC's.
+
     skill_level_obj.knowledge_train( 10000, teacher_skill_level.knowledgeLevel() );
     const int next_level = skill_level_obj.knowledgeLevel();
     const int next_level_exercise = skill_level_obj.knowledgeExperience();

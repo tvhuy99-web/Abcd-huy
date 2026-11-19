@@ -30,4 +30,4 @@ class ammunition_type
         static void check_consistency();
 };
 
-#endif // CATA_SRC_AMMO_H
+#endif

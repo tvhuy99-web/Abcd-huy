@@ -75,12 +75,12 @@ void uilist_impl::draw_controls()
         }
     }
 
-    // An invisible table with three columns. Used to create a sidebar effect.
-    // Ideally we would use a layout engine for this, but ImGui does not natively support any.
-    // TODO: Investigate using Stack Layout (https://github.com/thedmd/imgui/tree/feature/layout-external)
-    // Center column is for the menu, left and right are usually invisible. Caller may use
-    // left/right column to add additional content to the
-    // window. There should only ever be one row.
+
+
+
+
+
+
     if( ImGui::BeginTable( "table", 3,
                            ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX |
                            ImGuiTableFlags_Hideable ) ) {
@@ -110,9 +110,9 @@ void uilist_impl::draw_controls()
                 clipper.Begin( parent.fentries.size(), entry_height );
                 clipper.IncludeItemsByIndex( parent.fselected, parent.fselected + 1 );
                 while( clipper.Step() ) {
-                    // It would be natural to make the entries into buttons, or
-                    // combos, or other pre-built ui elements. For now I am mostly
-                    // going to copy the style of the original textual ui elements.
+
+
+
                     for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++ ) {
                         auto entry = parent.entries[parent.fentries[i]];
                         bool is_selected = i == parent.fselected;
@@ -121,7 +121,7 @@ void uilist_impl::draw_controls()
                         ImGui::TableSetColumnIndex( 0 );
 
                         if( is_selected && parent.need_to_scroll ) {
-                            // this is the selected row, and the user just changed the selection; scroll it into view
+
                             ImGui::SetScrollHereY();
                             parent.need_to_scroll = false;
                         }
@@ -133,10 +133,10 @@ void uilist_impl::draw_controls()
                         if( ImGui::Selectable( "##s", is_selected, flags ) ) {
                             parent.fselected = i;
                             parent.selected = parent.previewing = parent.fentries[ parent.fselected ];
-                            // We are going to return now that the user clicked on something, so scrolling seems
-                            // unnecessary. However, the debug spawn item function reuses the same menu to let the
-                            // user spawn multiple items and it’s weird if the correct item isn’t scrolled into view
-                            // the next time around.
+
+
+
+
                             parent.need_to_scroll = true;
                             is_selected = parent.clicked = true;
                         }
@@ -144,11 +144,11 @@ void uilist_impl::draw_controls()
                         bool mouse_moved = ImGui::GetCurrentContext()->HoveredId !=
                                            ImGui::GetCurrentContext()->HoveredIdPreviousFrame;
                         if( is_hovered && mouse_moved ) {
-                            // this row is hovered and the hover state just changed, show context for it
+
                             parent.previewing = parent.fentries[ i ];
                         }
 
-                        // Force the spacing to be set to the padding value.
+
                         ImGui::SameLine( 0, style.CellPadding.x );
                         if( entry.hotkey.has_value() ) {
                             cataimgui::draw_colored_text( entry.hotkey.value().short_description(),
@@ -168,9 +168,9 @@ void uilist_impl::draw_controls()
                         cataimgui::draw_colored_text( str1, color );
 
                         ImGui::TableSetColumnIndex( 2 );
-                        // Right-align text.
+
                         ImVec2 curPos = ImGui::GetCursorScreenPos();
-                        // Remove the edge padding so that the last pixel just touches the border.
+
                         ImGui::SetCursorScreenPos( ImVec2( ImMax( 0.0f, curPos.x + style.CellPadding.x ), curPos.y ) );
                         cataimgui::draw_colored_text( str2, color );
 
@@ -208,10 +208,10 @@ catacurses::window new_centered_win( int nlines, int ncols )
     return catacurses::newwin( height, width, pos );
 }
 
-/**
-* \defgroup UI "The UI Menu."
-* @{
-*/
+
+
+
+
 
 static std::optional<input_event> hotkey_from_char( const int ch )
 {
@@ -423,20 +423,20 @@ void uilist::color_error( const bool report )
     }
 }
 
-/*
- * Enables oneshot construction -> running -> exit
- */
+
+
+
 uilist::operator int() const
 {
     return ret;
 }
 
-/**
- * Sane defaults on initialization
- */
+
+
+
 void uilist::init()
 {
-    cata_assert( !test_mode ); // uilist should not be used in tests where there's no place for it
+    cata_assert( !test_mode );
     desired_bounds = std::nullopt;
     calculated_bounds = { -1.f, -1.f, -1.f, -1.f };
     calculated_menu_size = { 0.0, 0.0 };
@@ -446,39 +446,39 @@ void uilist::init()
     extra_space_left = 0.0;
     extra_space_right = 0.0;
     ret = UILIST_WAIT_INPUT;
-    text.clear();          // header text, after (maybe) folding, populates:
-    title.clear();         // Makes use of the top border, no folding, sets min width if w_width is auto
-    ret_evt = input_event(); // last input event
-    keymap.clear();        // keymap[input_event] == index, for entries[index]
-    selected = 0;          // current highlight, for entries[index]
-    previewing = 0;           // current mouse highlight, for entries[index]
-    entries.clear();       // uilist_entry(int returnval, bool enabled, int keycode, std::string text, ... TODO: submenu stuff)
-    started = false;       // set to true when width and key calculations are done, and window is generated.
-    desc_enabled = false;  // don't show option description by default
-    footer_text.clear();   // takes precedence over per-entry descriptions.
-    border_color = c_magenta; // border color
-    text_color = c_light_gray;  // text color
-    title_color = c_green;  // title color
-    hilight_color = h_white; // highlight for up/down selection bar
-    hotkey_color = c_light_green; // hotkey text to the right of menu entry's text
-    disabled_color = c_dark_gray; // disabled menu entry
-    allow_disabled = false;  // disallow selecting disabled options
-    allow_anykey = false;    // do not return on unbound keys
-    allow_cancel = true;     // allow canceling with "UILIST.QUIT" action
-    allow_confirm = true;     // allow confirming with confirm action
-    allow_additional = false; // do not return on unhandled additional actions
+    text.clear();
+    title.clear();
+    ret_evt = input_event();
+    keymap.clear();
+    selected = 0;
+    previewing = 0;
+    entries.clear();
+    started = false;
+    desc_enabled = false;
+    footer_text.clear();
+    border_color = c_magenta;
+    text_color = c_light_gray;
+    title_color = c_green;
+    hilight_color = h_white;
+    hotkey_color = c_light_green;
+    disabled_color = c_dark_gray;
+    allow_disabled = false;
+    allow_anykey = false;
+    allow_cancel = true;
+    allow_confirm = true;
+    allow_additional = false;
     hilight_disabled =
-        false; // if false, hitting 'down' onto a disabled entry will advance downward to the first enabled entry
-    vshift = 0;              // scrolling menu offset
-    vmax = 0;                // max entries area rows
-    callback = nullptr;         // * uilist_callback
-    filter.clear();          // filter string. If "", show everything
-    fentries.clear();        // fentries is the actual display after filtering, and maps displayed entry number to actual entry number
-    fselected = 0;           // selected = fentries[fselected]
-    filtering = true;        // enable list display filtering via '/' or '.'
-    filtering_nocase = true; // ignore case when filtering
+        false;
+    vshift = 0;
+    vmax = 0;
+    callback = nullptr;
+    filter.clear();
+    fentries.clear();
+    fselected = 0;
+    filtering = true;
+    filtering_nocase = true;
     max_entry_len = 0;
-    max_column_len = 0;      // for calculating space for second column
+    max_column_len = 0;
 
     categories.clear();
     switch_to_category = current_category = 0;
@@ -517,18 +517,18 @@ void uilist::register_uilist_inputs( input_context &ctxt ) const
     }
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    //TODO: redundant, remove
+
     for( const auto &additional_action : additional_actions ) {
         ctxt.register_action( additional_action.first, additional_action.second );
     }
 }
 
-/**
- * repopulate filtered entries list (fentries) and set fselected accordingly
- */
+
+
+
 void uilist::filterlist()
 {
-    // TODO: && is_all_lc( filter )
+
     fentries.clear();
     fselected = -1;
     int f = 0;
@@ -539,10 +539,10 @@ void uilist::filterlist()
         }
         if( filtering && !filter.empty() ) {
             if( filtering_nocase ) {
-                // case-insensitive match
+
                 visible = lcmatch( entries[i].txt, filter );
             } else {
-                // case-sensitive match
+
                 visible = entries[i].txt.find( filter ) != std::string::npos;
             }
         }
@@ -550,8 +550,8 @@ void uilist::filterlist()
             fentries.push_back( static_cast<int>( i ) );
             if( hilight_disabled || entries[i].enabled ) {
                 if( static_cast<int>( i ) == selected || ( static_cast<int>( i ) > selected && fselected == -1 ) ) {
-                    // Either this is selected, or we are past the previously selected entry,
-                    // which has been filtered out, so choose another nearby entry instead.
+
+
                     fselected = f;
                 }
             }
@@ -571,7 +571,7 @@ void uilist::filterlist()
     } else {
         previewing = fselected = selected = -1;
     }
-    // scroll to top of screen if all remaining entries fit the screen.
+
     if( static_cast<int>( fentries.size() ) <= vmax ) {
         vshift = 0;
     }
@@ -798,9 +798,9 @@ uilist::scroll_amount uilist::scroll_amount_from_action( const std::string &acti
     }
 }
 
-/**
- * check for valid scrolling keypress and handle. return false if invalid keypress
- */
+
+
+
 bool uilist::scrollby( const uilist::scroll_amount scrollby )
 {
     bool is_relative = scrollby.type == uilist::scroll_amount::relative_wrapped ||
@@ -825,7 +825,7 @@ bool uilist::scrollby( const uilist::scroll_amount scrollby )
     }
 
     if( !may_wrap ) {
-        // if wrapping is not allowed then clamp to the bounds of the list
+
         if( fselected < 0 ) {
             fselected = 0;
         } else if( fselected >= recmax ) {
@@ -833,8 +833,8 @@ bool uilist::scrollby( const uilist::scroll_amount scrollby )
         }
     }
 
-    // if the current selected entry is disabled, find the next
-    // enabled entry in the direction of movement
+
+
     if( backwards ) {
         if( fselected < 0 ) {
             fselected = fentries.size() - 1;
@@ -893,10 +893,10 @@ std::unique_ptr<a11y::screen_scope> uilist::create_reader_scope( input_context &
         if( intent.action == "cancel" ) {
             return allow_cancel ? std::optional<std::string>( "UILIST.QUIT" ) : std::nullopt;
         }
-        // Shared menu state nodes (R04.1): filter, category tabs and the
-        // explicit empty state are published by update_reader alongside the
-        // entries. They never confirm an entry; acting on them only changes
-        // which entries are published next.
+
+
+
+
         if( intent.node == "filter" ) {
             if( intent.action == "activate" && filtering ) {
                 return std::optional<std::string>( "UILIST.FILTER" );
@@ -958,11 +958,11 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
         a11y::semantic_snapshot snapshot;
         snapshot.title = remove_color_tags( title.empty() ? _( "Menu" ) : title );
         snapshot.summary = remove_color_tags( text );
-        // Shared menu state (R04.1): the reader must be able to hear which
-        // subset of the menu it is browsing. position/total on each entry
-        // already count the filtered set; the summary additionally names
-        // the category, the active filter text and the unfiltered total,
-        // none of which were published anywhere before.
+
+
+
+
+
         const bool subset_active = !categories.empty() || ( filtering && !filter.empty() ) ||
                                    fentries.size() != entries.size();
         if( subset_active ) {
@@ -995,9 +995,9 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             node.value = remove_color_tags( entry.a11y_value.empty() ? entry.ctxt : entry.a11y_value );
             node.checked = entry.a11y_checked.value_or( false );
             node.detail = remove_color_tags( entry.desc );
-            // Character creator steps announce unavailable choices and their
-            // reason on focus. Other UILIST dialogs retain allow_disabled's
-            // existing behavior, including optional confirm-time popups.
+
+
+
             const bool creator_step = input_category.rfind( "character-creator-step-", 0 ) == 0;
             node.enabled = allow_confirm && ( entry.enabled || ( allow_disabled && !creator_step ) );
             node.selected = selected == index;
@@ -1017,9 +1017,9 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             }
             snapshot.nodes.push_back( std::move( node ) );
         }
-        // Category tabs (R04.1): one node per category, named by its
-        // display name, so the reader can hear where it is and switch by
-        // name instead of blind left/right actions.
+
+
+
         for( std::size_t i = 0; i < categories.size(); ++i ) {
             a11y::semantic_node node;
             node.id = "category:" + categories[i].first;
@@ -1030,9 +1030,9 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             node.total = static_cast<int>( categories.size() );
             snapshot.nodes.push_back( std::move( node ) );
         }
-        // Filter state (R04.1): the node names the active filter text and
-        // the filtered/unfiltered counts; activating it opens the existing
-        // filter popup, and a separate node clears the filter in place.
+
+
+
         if( filtering ) {
             a11y::semantic_node node;
             node.id = "filter";
@@ -1050,8 +1050,8 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
                 snapshot.nodes.push_back( std::move( clear ) );
             }
         }
-        // Explicit empty state (R04.1): without this node an empty result
-        // set published only command nodes and a dangling "entry:-1" focus.
+
+
         if( fentries.empty() ) {
             a11y::semantic_node node;
             node.id = "empty";
@@ -1080,8 +1080,8 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             }
             snapshot.nodes.push_back( std::move( node ) );
         }
-        // A callback can rebuild entries with identical display text but a
-        // different logical object. Every query iteration is a new revision.
+
+
         reader.update( std::move( snapshot ), ret_act != "TIMEOUT" );
     }
 }
@@ -1111,10 +1111,10 @@ shared_ptr_fast<uilist_impl> uilist::query( bool loop, int timeout, bool allow_u
     return ui;
 }
 
-/**
- * Handle input and update display
- *
- */
+
+
+
+
 bool uilist::query_setup()
 {
 #if defined(__ANDROID__)
@@ -1217,8 +1217,8 @@ void uilist::query_once( input_context &ctxt, int timeout,
             if( it != fentries.end() ) {
                 const bool enabled = entries[*it].enabled;
                 if( enabled || allow_disabled || hilight_disabled ) {
-                    // Change the selection to display correctly when this function
-                    // is called again.
+
+
                     fselected = std::distance( fentries.begin(), it );
                     selected = *it;
                     if( enabled || allow_disabled ) {
@@ -1243,7 +1243,7 @@ void uilist::query_once( input_context &ctxt, int timeout,
     } else if( ret_act == "TIMEOUT" ) {
         ret = UILIST_WAIT_INPUT;
     } else {
-        // including HELP_KEYBINDINGS, in case the caller wants to refresh their contents
+
         bool unhandled = callback == nullptr || !callback->key( ctxt, event, selected, this );
         if( unhandled && allow_anykey ) {
             ret = UILIST_UNBOUND;
@@ -1258,7 +1258,7 @@ void uilist::query_once( input_context &ctxt, int timeout,
     }
 }
 
-///@}
+
 #if defined(TILES)
 void uilist::set_hide( bool val )
 {
@@ -1270,9 +1270,9 @@ void uilist::hide_if_hidden()
     create_or_get_ui()->hide_if_hidden();
 }
 #endif
-/**
- * cleanup
- */
+
+
+
 void uilist::reset()
 {
     init();
@@ -1340,11 +1340,11 @@ void uilist::settext( const std::string &str )
 void uilist::set_selected( int index )
 {
     selected = previewing = std::clamp( index, 0, static_cast<int>( entries.size() - 1 ) );
-    // Keep the filtered-space cursor in sync with the logical (unfiltered)
-    // index: callers pass a logical index here, while fselected indexes
-    // fentries. Without this, a later scrollby(abs(...)) with the same
-    // logical index silently lands on a different entry whenever a
-    // category or filter is active (R04.1).
+
+
+
+
+
     const auto found = std::find( fentries.begin(), fentries.end(), selected );
     if( found != fentries.end() ) {
         fselected = static_cast<int>( std::distance( fentries.begin(), found ) );
@@ -1381,7 +1381,7 @@ void uimenu::finalize_addentries()
 {
     menu.entries.clear();
     std::vector<int> maxes( col_count, 0 );
-    // get max width of each column
+
     for( col &c : cols ) {
         int i = 0;
         for( const std::string &entry : c.col_content ) {
@@ -1389,7 +1389,7 @@ void uimenu::finalize_addentries()
             ++i;
         }
     }
-    // adding spacing between columns
+
     int free_width = suggest_width - std::reduce( maxes.begin(), maxes.end() );
     int spacing = std::min( 3, col_count > 1 ? free_width / ( col_count - 1 ) : 0 );
     if( spacing > 0 ) {
@@ -1402,10 +1402,10 @@ void uimenu::finalize_addentries()
         std::string row;
         int i = 0;
         for( const std::string &entry : c.col_content ) {
-            // Pad with spaces
-            // Add length of tags to number of spaces to pad with
-            // That is length(entry_with_tags) - length(entry_without_tags)
-            // Otherwise the entry padding will be shorter by number of chars in tags
+
+
+
+
             int entry_len_plus_tags = maxes[i] + utf8_width( entry, false ) - utf8_width( entry, true );
             row += string_format( "%-*s", entry_len_plus_tags, entry );
             ++i;
@@ -1433,8 +1433,8 @@ int uimenu::query()
 
 struct pointmenu_cb::impl_t {
     const std::vector< tripoint_bub_ms > &points;
-    int last; // to suppress redrawing
-    tripoint_rel_ms last_view; // to reposition the view after selecting
+    int last;
+    tripoint_rel_ms last_view;
     shared_ptr_fast<game::draw_callback_t> terrain_draw_cb;
 
     explicit impl_t( const std::vector<tripoint_bub_ms> &pts );
@@ -1473,7 +1473,7 @@ void pointmenu_cb::impl_t::select( uilist *const menu )
     } else {
         const tripoint_bub_ms &center = points[menu->selected];
         player_character.view_offset = center - player_character.pos_bub();
-        // TODO: Remove this line when it's safe
+
         player_character.view_offset.z() = 0;
     }
     g->invalidate_main_ui_adaptor();
@@ -1501,7 +1501,7 @@ template bool navigate_ui_list<unsigned int, unsigned int>( const std::string &a
         unsigned int &val,
         int page_delta, unsigned int size, bool wrap );
 
-// Templating of existing `unsigned int` triggers linter rules against `unsigned long`
+
 // NOLINTs below are to address
 template<typename V, typename S>
 bool navigate_ui_list( const std::string &action, V &val, int page_delta, S size, bool wrap )
@@ -1516,7 +1516,7 @@ bool navigate_ui_list( const std::string &action, V &val, int page_delta, S size
                              static_cast<V>( size ? size - 1 : 0 ) );
         }
     } else if( ( action == "PAGE_UP" || action == "PAGE_DOWN" ) && page_delta ) {
-        // page navigation never wraps
+
         val = inc_clamp( val, action == "PAGE_UP" ? -page_delta : page_delta,
                          // NOLINTNEXTLINE(cata-no-long)
                          static_cast<V>( size ? size - 1 : 0 ) );

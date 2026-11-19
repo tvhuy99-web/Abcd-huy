@@ -23,11 +23,11 @@ semantic_snapshot text_snapshot( std::string title, std::string description,
     field.value = std::move( value );
     field.actions = { "focus", "set_text" };
     if( numeric ) {
-        // Form contract (R04.2): a number popup has no min/max in the game
-        // UI, but number_input_popup does have an edit step. Publish the
-        // step (without a range) so the reader's editor can offer
-        // step increment/decrement and format the value correctly; the
-        // popup's own parser remains the authority on validity.
+
+
+
+
+
         field.field_type = integer ? "int" : "float";
         field.applied_value = field.value;
         field.field_step = field_step;
@@ -43,4 +43,4 @@ semantic_snapshot text_snapshot( std::string title, std::string description,
     snapshot.nodes.push_back( std::move( cancel ) );
     return snapshot;
 }
-} // namespace a11y
+}

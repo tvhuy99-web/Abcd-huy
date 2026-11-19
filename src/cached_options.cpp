@@ -28,7 +28,7 @@ namespace cata::options
 {
 std::vector<std::string> damage_indicators;
 mouse_t mouse;
-} // namespace cata::options
+}
 
 #ifndef CATA_IN_TOOL
 error_log_format_t error_log_format = error_log_format_t::human_readable;

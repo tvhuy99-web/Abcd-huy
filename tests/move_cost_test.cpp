@@ -13,20 +13,20 @@
 #include "player_helpers.h"
 #include "type_id.h"
 
-// Test cases related to movement cost
-//
-// Functions:
-// - Character::run_cost - Modified base movement cost, with effects of mutations and footwear
-//
-// Mutation fields:
-// - movecost_obstacle_modifier
-// - movecost_modifier
-// - movecost_flatground_modifier
-// - stamina_move_cost_mod
-//
-// TODO:
-// - Shoe only on one foot
-// - Mycus on fungus
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static const character_modifier_id
 character_modifier_limb_footing_movecost_mod( "limb_footing_movecost_mod" );
@@ -62,7 +62,7 @@ TEST_CASE( "being_knocked_down_triples_movement_cost", "[move_cost][downed]" )
     avatar &ava = get_avatar();
     clear_avatar();
 
-    // Put on sneakers to normalize run cost to 100
+
     ava.wear_item( item( itype_sneakers ) );
     REQUIRE( ava.run_cost( 100 ) == 100 );
 
@@ -80,7 +80,7 @@ TEST_CASE( "footwear_may_affect_movement_cost", "[move_cost][shoes]" )
     clear_avatar();
     clear_map_without_vision();
 
-    // Ensure expected base modifiers
+
     REQUIRE( ava.get_modifier( character_modifier_limb_run_cost_mod ) == 1 );
     REQUIRE( ava.get_modifier( character_modifier_limb_speed_movecost_mod ) == 1 );
     REQUIRE( ava.get_modifier( character_modifier_limb_footing_movecost_mod ) == 1 );
@@ -88,7 +88,7 @@ TEST_CASE( "footwear_may_affect_movement_cost", "[move_cost][shoes]" )
     SECTION( "without shoes" ) {
         ava.clear_worn();
         REQUIRE_FALSE( ava.is_wearing_shoes() );
-        // Having no shoes adds +8 per foot to base run cost
+
         CHECK( ava.run_cost( 100 ) == 116 );
     }
 
@@ -97,7 +97,7 @@ TEST_CASE( "footwear_may_affect_movement_cost", "[move_cost][shoes]" )
         ava.wear_item( item( itype_sneakers ) );
         REQUIRE( ava.is_wearing_shoes() );
         REQUIRE( ava.get_modifier( character_modifier_limb_run_cost_mod ) == Approx( 1.0 ) );
-        // Sneakers eliminate the no-shoes penalty
+
         CHECK( ava.run_cost( 100 ) == 100 );
     }
 
@@ -106,7 +106,7 @@ TEST_CASE( "footwear_may_affect_movement_cost", "[move_cost][shoes]" )
         ava.wear_item( item( itype_swim_fins ) );
         REQUIRE( ava.is_wearing_shoes() );
         REQUIRE( ava.get_modifier( character_modifier_limb_run_cost_mod ) == Approx( 1.11696 ) );
-        // Swim fins multiply cost by 1.5
+
         CHECK( ava.run_cost( 100 ) == 167 );
     }
 
@@ -176,8 +176,8 @@ TEST_CASE( "mutations_may_affect_movement_cost", "[move_cost][mutation]" )
     avatar &ava = get_avatar();
     clear_avatar();
 
-    // Base movement cost for relative comparisons
-    // This is the speed of an unmutated character wearing sneakers on both feet
+
+
     const int base_cost = 100;
 
     GIVEN( "no mutations" ) {
@@ -227,7 +227,7 @@ TEST_CASE( "mutations_may_affect_movement_cost", "[move_cost][mutation]" )
 
 TEST_CASE( "Crawl_score_effects_on_movement_cost", "[move_cost]" )
 {
-    // No limb damage
+
     GIVEN( "Character is uninjured and unencumbered" ) {
         avatar &u = get_avatar();
         clear_avatar();
@@ -332,7 +332,7 @@ TEST_CASE( "Crawl_score_effects_on_movement_cost", "[move_cost]" )
             }
         }
     }
-    // Damaged arm
+
     GIVEN( "Character has damaged arm and is unencumbered" ) {
         avatar &u = get_avatar();
         clear_avatar();
@@ -439,7 +439,7 @@ TEST_CASE( "Crawl_score_effects_on_movement_cost", "[move_cost]" )
             }
         }
     }
-    // Broken legs
+
     GIVEN( "Character has 2 broken legs and is unencumbered" ) {
         avatar &u = get_avatar();
         clear_avatar();
@@ -448,7 +448,7 @@ TEST_CASE( "Crawl_score_effects_on_movement_cost", "[move_cost]" )
         u.set_part_hp_cur( body_part_leg_r, 0 );
         u.set_moves( 0 );
 
-        // Can't walk or couch w/ broken legs
+
         WHEN( "is prone" ) {
             u.set_movement_mode( move_mode_prone );
             REQUIRE( u.get_moves() == 0 );
@@ -468,7 +468,7 @@ TEST_CASE( "Crawl_score_effects_on_movement_cost", "[move_cost]" )
         u.set_part_hp_cur( body_part_leg_r, 0 );
         u.set_moves( 0 );
 
-        // Can't walk or couch w/ broken legs
+
         WHEN( "is prone" ) {
             u.set_movement_mode( move_mode_prone );
             REQUIRE( u.get_moves() == 0 );
@@ -487,7 +487,7 @@ TEST_CASE( "Crawl_score_effects_on_movement_cost", "[move_cost]" )
         u.set_part_hp_cur( body_part_leg_r, 0 );
         u.set_moves( 0 );
 
-        // Can't walk or couch w/ broken legs
+
         WHEN( "is prone" ) {
             u.set_movement_mode( move_mode_prone );
             REQUIRE( u.get_moves() == 0 );

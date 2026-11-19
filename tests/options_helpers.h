@@ -5,8 +5,8 @@
 #include <string> // IWYU pragma: keep
 #include "type_id.h"
 
-// RAII class to temporarily override a particular option value
-// The previous value will be restored in the destructor
+
+
 class override_option
 {
     public:
@@ -19,8 +19,8 @@ class override_option
         std::string old_value_;
 };
 
-// RAII class to temporarily override the game's weather and restore it to
-// default weather in the destructor.
+
+
 class scoped_weather_override
 {
     public:
@@ -31,4 +31,4 @@ class scoped_weather_override
         ~scoped_weather_override();
 };
 
-#endif // CATA_TESTS_OPTIONS_HELPERS_H
+#endif

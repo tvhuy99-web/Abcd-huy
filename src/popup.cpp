@@ -92,40 +92,40 @@ void query_popup_impl::on_resized()
 {
     size_t frame_padding = size_t( ImGui::GetStyle().FramePadding.x * 2 );
     size_t item_padding = size_t( ImGui::GetStyle().ItemSpacing.x );
-    // constexpr size_t vert_padding = 1;
+
     size_t max_line_width = str_width_to_pixels( FULL_SCREEN_WIDTH - 3 );
 
-    // Fold message text
+
     parent->folded_msg = foldstring( parent->text, FULL_SCREEN_WIDTH - 3 );
 
-    // Fold query buttons
+
     const auto &folded_query = fold_query( parent->category, parent->pref_kbd_mode,
                                            parent->options, max_line_width,
                                            frame_padding + item_padding );
 
-    // Calculate size of message part
+
     msg_width = 0;
     for( const auto &line : parent->folded_msg ) {
         msg_width = std::max( msg_width,
-                              get_text_width( remove_color_tags( line ) ) ); //utf8_width( line, true ) );
+                              get_text_width( remove_color_tags( line ) ) );
     }
     auto btn_padding = [&frame_padding, &item_padding]( size_t num_buttons ) {
         return ( frame_padding * ( num_buttons - 1 ) ) + ( item_padding * ( num_buttons - 1 ) );
     };
-    // Calculate width with query buttons
+
     for( const auto &line : folded_query ) {
         if( !line.empty() ) {
             int button_width = 0;
             for( const auto &opt : line ) {
                 button_width += get_text_width( remove_color_tags( opt ) );
             }
-            // extra item padding needed here to account for space left at the beginning of the window by ImGui
+
             msg_width = std::max( msg_width, button_width + btn_padding( line.size() ) + item_padding );
         }
     }
     msg_width = std::min( msg_width, max_line_width );
 
-    // Calculate height with query buttons & button positions
+
     parent->buttons.clear();
     size_t line_idx = 0;
     if( !folded_query.empty() ) {
@@ -136,8 +136,8 @@ void query_popup_impl::on_resized()
                     button_width += get_text_width( remove_color_tags( opt ) );
                 }
                 button_width += btn_padding( line.size() );
-                // Right align.
-                // TODO: multi-line buttons
+
+
                 size_t button_x = button_width > int( msg_width ) ? size_t( 0 ) :
                                   size_t( msg_width - button_width );
                 for( const auto &opt : line ) {
@@ -182,14 +182,14 @@ query_popup &query_popup::option( const std::string &opt,
 
 query_popup &query_popup::allow_anykey( bool allow )
 {
-    // Change does not affect cache, do not invalidate the window
+
     anykey = allow;
     return *this;
 }
 
 query_popup &query_popup::allow_cancel( bool allow )
 {
-    // Change does not affect cache, do not invalidate the window
+
     cancel = allow;
     return *this;
 }
@@ -210,7 +210,7 @@ query_popup &query_popup::full_screen( bool full )
 
 query_popup &query_popup::cursor( size_t pos )
 {
-    // Change does not affect cache, do not invalidate window
+
     cur = pos;
     std::shared_ptr<query_popup_impl> impl = p_impl.lock();
     if( impl ) {
@@ -253,13 +253,13 @@ std::vector<std::vector<std::string>> query_popup_impl::fold_query(
         query_width += this_query_width;
         if( query_width > max_width + horz_padding ) {
             if( query_cnt == 1 ) {
-                // Each line has at least one query, so keep this query in the current line
+
                 folded_query.back().emplace_back( desc );
                 folded_query.emplace_back();
                 query_cnt = 0;
                 query_width = 0;
             } else {
-                // Wrap this query to the next line
+
                 folded_query.emplace_back();
                 folded_query.back().emplace_back( desc );
                 query_cnt = 1;
@@ -298,7 +298,7 @@ query_popup::result query_popup::query_once()
 
     std::shared_ptr<query_popup_impl> impl = create_or_get_impl();
 
-    // ImGui doesn't like to show the window on the first drawn frame, so we do this
+
     ui_manager::redraw();
 
     input_context ctxt( category, pref_kbd_mode );
@@ -310,7 +310,7 @@ query_popup::result query_popup::query_once()
         for( const query_popup::query_option &opt : options ) {
             ctxt.register_action( opt.action );
         }
-        // Mouse movement and button
+
         ctxt.register_action( "SELECT" );
         ctxt.register_action( "MOUSE_MOVE" );
         ctxt.register_action( "LEFT" );
@@ -318,7 +318,7 @@ query_popup::result query_popup::query_once()
     }
     if( anykey ) {
         ctxt.register_action( "ANY_INPUT" );
-        // Mouse movement, button, and wheel
+
         ctxt.register_action( "COORDINATE" );
     }
     if( cancel ) {
@@ -346,10 +346,10 @@ query_popup::result query_popup::query_once()
     reader_snapshot.title = _( "Dialog" );
     reader_snapshot.summary = remove_color_tags( text );
     reader_snapshot.focus = "option:" + std::to_string( cur );
-    // Yes/No questions are spoken once at entry, then their actual choices
-    // are the whole swipe list (1 of 2, 2 of 2). Do not insert a fictitious
-    // "Dialog message" third item. Detail on either choice can still reread
-    // the exact original question whenever the player requests it.
+
+
+
+
     const bool yes_no_prompt = category == "YESNO" || category == "YESNOQUIT";
     if( !reader_snapshot.summary.empty() && !yes_no_prompt ) {
         a11y::semantic_node question;
@@ -379,26 +379,26 @@ query_popup::result query_popup::query_once()
     }
     reader.update( std::move( reader_snapshot ) );
     result res;
-    // Assign outside construction of `res` to ensure execution order
+
     res.wait_input = !anykey;
     do {
         ui_manager::redraw();
         res.action = ctxt.handle_input( 50 );
         res.evt = ctxt.get_raw_input();
 
-        // If we're tracking mouse movement
+
         if( !options.empty() && res.action == "SELECT" && impl->get_mouse_selected_option() != -1 ) {
-            // Left-click to confirm selection
+
             res.action = "CONFIRM";
             cur = size_t( impl->get_mouse_selected_option() );
         } else if( res.action == "CONFIRM" && impl->keyboard_selected_option != -1 ) {
             cur = size_t( impl->keyboard_selected_option );
         }
     } while(
-        // Always ignore mouse movement
+
         ( res.evt.type == input_event_t::mouse &&
           res.evt.get_first_input() == static_cast<int>( MouseInput::Move ) ) ||
-        // Ignore window losing focus in SDL
+
         ( res.evt.type == input_event_t::keyboard_char && res.evt.sequence.empty() ) ||
         res.evt.type == input_event_t::timeout || res.action == "TIMEOUT"
     );
@@ -423,12 +423,12 @@ query_popup::result query_popup::query_once()
             impl->keyboard_selected_option = 0;
         }
     } else if( res.action == "HELP_KEYBINDINGS" ) {
-        // Keybindings may have changed, regenerate the UI
+
         std::shared_ptr<query_popup_impl> impl = p_impl.lock();
         if( impl ) {
             impl->on_resized();
         }
-        //init();
+
     } else {
         for( size_t ind = 0; ind < options.size(); ++ind ) {
             if( res.action == options[ind].action ) {
@@ -458,11 +458,11 @@ std::shared_ptr<query_popup_impl> query_popup::create_or_get_impl()
 }
 query_popup::result query_popup::query()
 {
-    // The common confirmation layer handles explicit "NO" refusals for
-    // dialogs beyond the built-in interruption prompts. Remember only an
-    // identical question during the SAME ongoing task, never across new
-    // player actions. This does not apply to ordinary confirmation dialogs
-    // outside an activity, irreversible operations or prompts without NO.
+
+
+
+
+
     const bool has_no_option = std::any_of( options.begin(), options.end(),
     []( const query_option &option ) {
         return option.action == "NO";

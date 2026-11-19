@@ -50,4 +50,4 @@ using pdiag_func = dialogue_func const *;
 
 std::map<std::string_view, dialogue_func> const &get_all_diag_funcs();
 
-#endif // CATA_SRC_MATH_PARSER_DIAG_H
+#endif

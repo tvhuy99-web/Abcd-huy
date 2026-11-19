@@ -45,11 +45,11 @@ class cardreader_examine_actor : public iexamine_actor
         bool allow_hacking = true;
         bool despawn_monsters = true;
 
-        // Option 1: walk the map, do some stuff
+
         int radius = 3;
         std::map<ter_str_id, ter_str_id> terrain_changes;
         std::map<furn_str_id, furn_str_id> furn_changes;
-        // Option 2: Regenerate entire current overmap tile
+
         update_mapgen_id mapgen_id;
 
         std::optional<int> omt_allowed_radius;
@@ -116,4 +116,4 @@ class mortar_examine_actor : public iexamine_actor
         std::unique_ptr<iexamine_actor> clone() const override;
 };
 
-#endif // CATA_SRC_IEXAMINE_ACTORS_H
+#endif

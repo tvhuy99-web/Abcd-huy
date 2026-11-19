@@ -12,7 +12,7 @@
 namespace
 {
 std::atomic_bool report_unvisited_members{true};
-} // namespace
+}
 
 bool Json::globally_report_unvisited_members( bool do_report )
 {
@@ -55,7 +55,7 @@ const std::string &Json::flexbuffer_type_to_string( flexbuffers::Type t )
     return type_map[static_cast<unsigned int>( t )];
 }
 
-// Advances the given jsin according to the passed JsonPath
+
 static void advance_jsin( TextJsonIn *jsin, flexbuffers::Reference root, const JsonPath &path )
 {
     for( JsonPath::index_type idx : path ) {
@@ -158,7 +158,7 @@ bool JsonValue::read( signed char &c, bool throw_on_error ) const
     if( !test_int() ) {
         return error_or_false( throw_on_error, "Syntax error.  Expected integer" );
     }
-    // TODO: test for overflow
+
     c = get_int();
     return true;
 }
@@ -167,7 +167,7 @@ bool JsonValue::read( unsigned char &c, bool throw_on_error ) const
     if( !test_int() ) {
         return error_or_false( throw_on_error, "Syntax error.  Expected integer" );
     }
-    // TODO: test for overflow
+
     c = get_int();
     return true;
 }
@@ -176,7 +176,7 @@ bool JsonValue::read( short unsigned int &s, bool throw_on_error ) const
     if( !test_int() ) {
         return error_or_false( throw_on_error, "Syntax error.  Expected integer" );
     }
-    // TODO: test for overflow
+
     s = get_int();
     return true;
 }
@@ -185,7 +185,7 @@ bool JsonValue::read( short int &s, bool throw_on_error ) const
     if( !test_int() ) {
         return error_or_false( throw_on_error, "Syntax error.  Expected integer" );
     }
-    // TODO: test for overflow
+
     s = get_int();
     return true;
 }
@@ -276,7 +276,7 @@ void JsonObject::report_unvisited() const
             mask >>= 1;
         }
 
-        // Don't error on skipped comments.
+
         skipped_members.erase( std::remove_if( skipped_members.begin(),
         skipped_members.end(), [this]( size_t idx ) {
             flexbuffers::String name = keys_[idx].AsString();
@@ -302,7 +302,7 @@ void JsonObject::error_no_member( std::string_view member ) const
     TextJsonObject jo = jsin.get_object();
     jo.allow_omitted_members();
     jo.get_member( member );
-    // Just to make sure the compiler understands we will error earlier.
+
     jo.throw_error( str_cat( "Failed to report missing member ", member ) );
 }
 

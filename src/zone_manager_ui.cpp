@@ -67,10 +67,10 @@ shared_ptr_fast<game::draw_callback_t> zone_manager_ui::create_zone_callback(
             tripoint_rel_ms offset;
 #if defined(TILES)
             if( use_tiles ) {
-                offset = tripoint_rel_ms::zero; //TILES
+                offset = tripoint_rel_ms::zero;
             } else {
 #endif
-                offset = { offset2, 0 }; //CURSES
+                offset = { offset2, 0 };
 #if defined(TILES)
             }
 #endif
@@ -135,17 +135,17 @@ void zone_manager_ui::zones_manager_draw_borders( const catacurses::window &w_bo
 {
     wattron( w_border, c_light_gray );
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    mvwhline( w_border, point( 1, 0 ), LINE_OXOX, width - 1 ); // -
-    mvwhline( w_border, point( 1, TERMY - iInfoHeight - 1 ), LINE_OXOX, width - 1 ); // -
+    mvwhline( w_border, point( 1, 0 ), LINE_OXOX, width - 1 );
+    mvwhline( w_border, point( 1, TERMY - iInfoHeight - 1 ), LINE_OXOX, width - 1 );
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    mvwvline( w_border, point( 0, 1 ), LINE_XOXO, TERMY - iInfoHeight - 1 ); // |
-    mvwvline( w_border, point( width - 1, 1 ), LINE_XOXO, TERMY - iInfoHeight - 1 ); // |
+    mvwvline( w_border, point( 0, 1 ), LINE_XOXO, TERMY - iInfoHeight - 1 );
+    mvwvline( w_border, point( width - 1, 1 ), LINE_XOXO, TERMY - iInfoHeight - 1 );
 
-    mvwaddch( w_border, point::zero, LINE_OXXO ); // |^
-    mvwaddch( w_border, point( width - 1, 0 ), LINE_OOXX ); // ^|
+    mvwaddch( w_border, point::zero, LINE_OXXO );
+    mvwaddch( w_border, point( width - 1, 0 ), LINE_OOXX );
 
-    mvwaddch( w_border, point( 0, TERMY - iInfoHeight - 1 ), LINE_XXXO ); // |-
-    mvwaddch( w_border, point( width - 1, TERMY - iInfoHeight - 1 ), LINE_XOXX ); // -|
+    mvwaddch( w_border, point( 0, TERMY - iInfoHeight - 1 ), LINE_XXXO );
+    mvwaddch( w_border, point( width - 1, TERMY - iInfoHeight - 1 ), LINE_XOXX );
     wattroff( w_border, c_light_gray );
 
     mvwprintz( w_border, point( 2, 0 ), c_white, _( "Zones manager" ) );
@@ -167,8 +167,8 @@ void zone_manager_ui::zones_manager_draw_borders( const catacurses::window &w_bo
 
 namespace
 {
-// Axis-by-axis offset of an absolute point from the player, in
-// the same wording a11y_world's relative_position_name uses.
+
+
 std::string corner_offset( const tripoint_abs_ms &player_pos, const tripoint_abs_ms &corner )
 {
     const tripoint delta = ( corner - player_pos ).raw();
@@ -258,7 +258,7 @@ a11y::semantic_node zone_reader_row( const zone_data &zone, const std::string &r
                  };
     return node;
 }
-} // namespace
+}
 
 void zone_manager_ui::display_zone_manager()
 {
@@ -349,16 +349,16 @@ void zone_manager_ui::display_zone_manager()
     int zone_cnt = 0;
     faction_id zones_faction( your_fac );
 
-    // reset any zones that were temporarily disabled for an activity
+
     mgr.reset_disabled();
 
-    // cache the players location for person zones
+
     if( mgr.has_personal_zones() ) {
         mgr.cache_avatar_location();
     }
 
-    // get zones with distance between player and
-    // zone center point <= MAX_VIEW_DISTANCE or all zones, if show_all_zones is true
+
+
     auto get_zones = [&]() {
         std::vector<zone_manager::ref_zone_data> zones;
         if( show_all_zones ) {
@@ -384,15 +384,15 @@ void zone_manager_ui::display_zone_manager()
 
     auto zones = get_zones();
 
-    // Reader adapter (R16): this screen is a ui_adaptor that draws the
-    // zone list itself, so the generic command fallback would never
-    // publish the zones. Rows are published as one R02 table; selecting
-    // a row only moves active_index (focus) or returns the screen's own
-    // CONFIRM (activate), which opens the original edit uilist. A row's
-    // identity is re-resolved against the live zones vector at intent
-    // time (veh_interact reader_session precedent): the list is rebuilt
-    // by get_zones() after most actions, so a stale row must not act on
-    // whatever happens to sit at its old position.
+
+
+
+
+
+
+
+
+
     struct zone_reader_binding {
         std::string id;
         std::string name;
@@ -434,8 +434,8 @@ void zone_manager_ui::display_zone_manager()
                 if( !armed_index ) {
                     return std::nullopt;
                 }
-                // The original REMOVE_ZONE handling removes
-                // zones[active_index], so point it at the armed zone.
+
+
                 active_index = *armed_index;
                 return std::string( "REMOVE_ZONE" );
             }
@@ -445,17 +445,17 @@ void zone_manager_ui::display_zone_manager()
             if( zone_cnt == 0 || active_index < 0 || active_index >= zone_cnt ) {
                 return std::nullopt;
             }
-            // Removal has its own confirmation node (published by the
-            // builder while this zone is armed and active); the first
-            // activation only arms it and never returns REMOVE_ZONE.
+
+
+
             zone_reader_armed_remove = zone_reader_make_binding(
                                            "zone:row:" + std::to_string( active_index ),
                                            zones[active_index].get() );
             return std::string( "TIMEOUT" );
         }
         if( intent.action == "activate" ) {
-            // Activating anything else disarms a pending removal.
-            // Focusing does not.
+
+
             zone_reader_armed_remove.reset();
         }
         for( const zone_reader_binding &binding : zone_reader_bindings ) {
@@ -619,10 +619,10 @@ void zone_manager_ui::display_zone_manager()
                 zone_start, zone_end, zone_blink, zone_cursor );
     g->add_draw_callback( zone_cb );
 
-    // This lambda returns either absolute coordinates or relative-to-player
-    // coordinates, depending on whether personal is false or true respectively.
-    // In C++20 we could have the return type depend on the parameter using
-    // if constexpr( personal ) but for now it will just return tripoints.
+
+
+
+
     auto query_position =
     [&]() -> std::optional<std::pair<tripoint_abs_ms, tripoint_abs_ms>> {
         on_out_of_scope invalidate_current_ui( [&]()
@@ -644,12 +644,12 @@ void zone_manager_ui::display_zone_manager()
         tripoint_bub_ms center = pos + u.view_offset;
 
         const look_around_result first =
-        g->look_around( /*show_window=*/false, center, center, false, true, false );
+        g->look_around( false, center, center, false, true, false );
         if( first.position )
         {
             popup.message( "%s", _( "Select second point." ) );
 
-            const look_around_result second = g->look_around( /*show_window=*/false, center, *first.position,
+            const look_around_result second = g->look_around( false, center, *first.position,
                     true, true, false );
             if( second.position ) {
                 tripoint_abs_ms first_abs =
@@ -693,12 +693,12 @@ void zone_manager_ui::display_zone_manager()
         tripoint_bub_ms center = pos + u.view_offset;
 
         const look_around_result first =
-        g->look_around( /*show_window=*/false, center, center, false, true, false );
+        g->look_around( false, center, center, false, true, false );
         if( first.position )
         {
             popup.message( "%s", _( "Select second point." ) );
 
-            const look_around_result second = g->look_around( /*show_window=*/false, center, *first.position,
+            const look_around_result second = g->look_around( false, center, *first.position,
                     true, true, false );
             if( second.position ) {
                 tripoint_rel_ms first_rel(
@@ -739,7 +739,7 @@ void zone_manager_ui::display_zone_manager()
 
             tripoint_abs_ms player_absolute_pos = u.pos_abs();
 
-            //Display saved zones
+
             for( auto &i : zones ) {
                 if( iNum >= start_index &&
                     iNum < start_index + ( ( max_rows > zone_cnt ) ? zone_cnt : max_rows ) ) {
@@ -752,7 +752,7 @@ void zone_manager_ui::display_zone_manager()
                         colorLine = zone.get_enabled() ? c_light_green : c_green;
                     }
 
-                    //Draw Zone name
+
                     mvwprintz( w_zones, point( 3, iNum - start_index ), colorLine,
                                //~ "P: <Zone Name>" represents a personal zone
                                trim_by_length( ( zone.get_is_personal() ? _( "P: " ) : "" ) + zone.get_name(),
@@ -760,20 +760,20 @@ void zone_manager_ui::display_zone_manager()
 
                     tripoint_abs_ms center = zone.get_center_point();
 
-                    //Draw direction + distance
+
                     mvwprintz( w_zones, point( zone_ui_width - 13, iNum - start_index ), colorLine, "%*d %s",
                                5, static_cast<int>( trig_dist( player_absolute_pos, center ) ),
                                direction_name_short( direction_from( player_absolute_pos,
                                                      center ) ) );
 
-                    //Draw Vehicle Indicator
+
                     mvwprintz( w_zones, point( zone_ui_width - 4, iNum - start_index ), colorLine,
                                zone.get_is_vehicle() ? "*" : "" );
                 }
                 iNum++;
             }
 
-            // Display zone options
+
             zones_manager_options();
         }
 
@@ -798,8 +798,8 @@ void zone_manager_ui::display_zone_manager()
             ctxt.reset_timeout();
         }
 
-        // Actually accessed from the terrain overlay callback `zone_cb` in the
-        // call to `ui_manager::redraw`.
+
+
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         zone_blink = blink;
         g->invalidate_main_ui_adaptor();
@@ -810,11 +810,11 @@ void zone_manager_ui::display_zone_manager()
             reader.update( build_snapshot() );
         }
 
-        //Wait for input
+
         const std::string action = ctxt.handle_input();
 
         if( action == "ADD_ZONE" ) {
-            do { // not a loop, just for quick bailing out if canceled
+            do {
                 const auto maybe_id = mgr.query_type();
                 if( !maybe_id.has_value() ) {
                     break;
@@ -831,8 +831,8 @@ void zone_manager_ui::display_zone_manager()
                 if( default_name.empty() ) {
                     default_name = mgr.get_name_from_type( id );
                 }
-                // Reader mode accepts the suggested name immediately;
-                // it remains editable in the existing zone detail menu.
+
+
                 const std::optional<std::string> maybe_name = a11y::enabled() ?
                         std::optional<std::string>( default_name ) : mgr.query_name( default_name );
                 if( !maybe_name.has_value() ) {
@@ -877,7 +877,7 @@ void zone_manager_ui::display_zone_manager()
 
             blink = false;
         } else if( action == "ADD_PERSONAL_ZONE" ) {
-            do { // not a loop, just for quick bailing out if canceled
+            do {
                 const auto maybe_id = mgr.query_type( true );
                 if( !maybe_id.has_value() ) {
                     break;
@@ -894,8 +894,8 @@ void zone_manager_ui::display_zone_manager()
                 if( default_name.empty() ) {
                     default_name = mgr.get_name_from_type( id );
                 }
-                // Reader mode accepts the suggested name immediately;
-                // it remains editable in the existing zone detail menu.
+
+
                 const std::optional<std::string> maybe_name = a11y::enabled() ?
                         std::optional<std::string>( default_name ) : mgr.query_name( default_name );
                 if( !maybe_name.has_value() ) {
@@ -909,7 +909,7 @@ void zone_manager_ui::display_zone_manager()
                     break;
                 }
 
-                //add a zone that is relative to the avatar position
+
                 mgr.add( name, id, get_player_character().get_faction()->id, false, true,
                          position->first, position->second, options );
                 if( a11y::enabled() ) {
@@ -1044,8 +1044,8 @@ void zone_manager_ui::display_zone_manager()
                         message_pop.message( "%s", _( "Moving zone." ) );
                         const tripoint_bub_ms zone_local_start_point = here.get_bub( zone.get_start_point() );
                         const tripoint_bub_ms zone_local_end_point = here.get_bub( zone.get_end_point() );
-                        // local position of the zone center, used to calculate the u.view_offset,
-                        // could center the screen to the position it represents
+
+
                         tripoint_bub_ms view_center = here.get_bub( zone.get_center_point() );
                         const look_around_result result_local = g->look_around( false, view_center,
                                                                 zone_local_start_point, false, false,
@@ -1055,7 +1055,7 @@ void zone_manager_ui::display_zone_manager()
                             const tripoint_abs_ms new_end_point = zone.get_end_point() - zone.get_start_point() +
                                                                   new_start_point;
                             if( new_start_point == zone.get_start_point() ) {
-                                break; // Nothing changed, don't save
+                                break;
                             }
                             if( zone.get_is_personal() ) {
                                 const tripoint_rel_ms new_start_point_rl = new_start_point - u.pos_abs();
@@ -1092,7 +1092,7 @@ void zone_manager_ui::display_zone_manager()
                 stuff_changed = true;
 
             } else if( action == "SHOW_ZONE_ON_MAP" ) {
-                //show zone position on overmap;
+
                 tripoint_abs_omt player_overmap_position = u.pos_abs_omt();
                 tripoint_abs_omt zone_overmap =
                     project_to<coords::omt>( zones[active_index].get().get_center_point() );

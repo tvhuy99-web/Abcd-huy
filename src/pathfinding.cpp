@@ -38,7 +38,7 @@
 
 class field;
 
-// Turns two indexed to a 2D array into an index to equivalent 1D array
+
 static constexpr int flat_index( const point_bub_ms &p )
 {
     return ( p.x() * MAPSIZE_Y ) + p.y();
@@ -46,9 +46,9 @@ static constexpr int flat_index( const point_bub_ms &p )
 
 namespace
 {
-// Flattened 2D array representing a single z-level worth of pathfinding data
+
 struct path_data_layer {
-    // Closed/open is accessed way more often than all other values here
+
     std::bitset< MAPSIZE_X *MAPSIZE_Y > closed;
     std::bitset< MAPSIZE_X *MAPSIZE_Y > open;
     std::array< int, MAPSIZE_X *MAPSIZE_Y > score;
@@ -127,13 +127,13 @@ struct pathfinder {
         layer.closed[index] = false;
     }
 };
-} // namespace
+}
 
 static pathfinder pf;
 
-// Modifies `t` to point to a tile with `flag` in a 1-submap radius of `t`'s original value,
-// searching nearest points first (starting with `t` itself).
-// return false if it could not find a suitable point
+
+
+
 static bool vertical_move_destination( const map &m, ter_furn_flag flag, tripoint_bub_ms &t )
 {
     const pathfinding_cache &pf_cache = m.get_pathfinding_cache_ref( t.z() );
@@ -149,8 +149,8 @@ static bool vertical_move_destination( const map &m, ter_furn_flag flag, tripoin
     return false;
 }
 
-// step( dest, cost ) for each tile in z_min..z_max that route() reaches from cur by stairs
-// (far end can be several tiles away) or by ramp
+
+
 template<typename Step>
 static void for_each_vertical_step( const map &m, const tripoint_bub_ms &cur,
                                     const pathfinding_settings &settings, const int z_min, const int z_max,
@@ -158,7 +158,7 @@ static void for_each_vertical_step( const map &m, const tripoint_bub_ms &cur,
 {
     const PathfindingFlags cur_special = m.get_pathfinding_cache_ref(
             cur.z() ).special[cur.x()][cur.y()];
-    // TODO: We should be able to go up ramps even if we can't climb stairs.
+
     if( !( cur_special & ( PathfindingFlag::GoesUp | PathfindingFlag::GoesDown ) ) ||
         !settings.allow_climb_stairs ) {
         return;
@@ -193,7 +193,7 @@ static void for_each_vertical_step( const map &m, const tripoint_bub_ms &cur,
             step( dest, 2 );
         }
     }
-    // a ramp leads to any of the 8 tiles around the one above or below it
+
     constexpr std::array<int, 8> x_offset{ { -1,  1,  0,  0,  1, -1, -1, 1 } };
     constexpr std::array<int, 8> y_offset{ {  0,  0, -1,  1, -1,  1, -1, 1 } };
     const auto ramp_steps = [&]( const int dz ) {
@@ -264,7 +264,7 @@ std::vector<tripoint_bub_ms> map::straight_route( const tripoint_bub_ms &f,
     if( f.z() == t.z() ) {
         ret = line_to( f, t );
         const pathfinding_cache &pf_cache = get_pathfinding_cache_ref( f.z() );
-        // Check all points for any special case (including just hard terrain)
+
         if( std::any_of( ret.begin(), ret.end(), [&pf_cache]( const tripoint_bub_ms & p ) {
         constexpr PathfindingFlags non_normal = PathfindingFlag::Slow |
                                                 PathfindingFlag::Obstacle | PathfindingFlag::Vehicle | PathfindingFlag::DangerousTrap |
@@ -287,7 +287,7 @@ int map::cost_to_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
                                             PathfindingFlag::Obstacle | PathfindingFlag::Vehicle | PathfindingFlag::DangerousTrap |
                                             PathfindingFlag::Sharp;
     if( !( p_special & non_normal ) ) {
-        // Boring flat dirt - the most common case above the ground
+
         return 2;
     }
 
@@ -299,7 +299,7 @@ int map::cost_to_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
         return PF_IMPASSABLE;
     }
 
-    // RestrictTiny isn't checked since it's unclear how it would actually work as there's no category smaller than tiny
+
     if( settings.size && (
             ( p_special & PathfindingFlag::RestrictSmall && settings.size > creature_size::tiny ) ||
             ( p_special & PathfindingFlag::RestrictMedium && settings.size > creature_size::small ) ||
@@ -322,15 +322,15 @@ int map::cost_to_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
 
     const int cost = move_cost_internal( furniture, terrain, field, veh, part );
 
-    // If we can just walk into the tile, great. That's the cost.
+
     if( cost != 0 ) {
         return cost;
     }
 
-    // Otherwise we'll consider climbing, opening doors, and bashing, in that order.
-    // Should match logic in monster::move_to and npc::move_to.
 
-    // If there's a vehicle here, we need to assess that instead of the terrain.
+
+
+
     if( veh != nullptr ) {
         const auto vpobst = vpart_position( const_cast<vehicle &>( *veh ), part ).obstacle_at_part();
         part = vpobst ? vpobst->part_index() : -1;
@@ -339,23 +339,23 @@ int map::cost_to_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
 
         if( part >= 0 ) {
             if( allow_open_doors && veh->next_part_to_open( part, is_outside_veh ) != -1 ) {
-                // Handle car doors, but don't try to path through curtains
-                return 10; // One turn to open, 4 to move there
+
+                return 10;
             } else if( allow_unlock_doors && veh->next_part_to_unlock( part, is_outside_veh ) != -1 ) {
-                return 12; // 2 turns to open, 4 to move there
+                return 12;
             } else if( !bash.empty() ) {
                 int damage = std::accumulate( bash.begin(), bash.end(), 0, []( int so_far,
                 const std::pair<damage_type_id, int> &pr ) {
                     return so_far + static_cast<int>( pr.second * pr.first->bash_conversion_factor );
                 } );
-                // Car obstacle that isn't a door
-                // TODO: Account for armor
+
+
                 int hp = veh->part( part ).hp();
                 if( hp / 20 > damage ) {
-                    // Threshold damage thing means we just can't bash this down
+
                     return PF_IMPASSABLE;
                 } else if( hp / 10 > damage ) {
-                    // Threshold damage thing means we will fail to deal damage pretty often
+
                     hp *= 2;
                 }
 
@@ -366,70 +366,70 @@ int map::cost_to_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
             } else {
                 const vehicle_part &vp = veh->part( part );
                 if( allow_open_doors && vp.info().has_flag( VPFLAG_OPENABLE ) ) {
-                    // If we can open doors in general but weren't
-                    // able to open this one, we might be able to
-                    // open it if we try from another direction.
+
+
+
                     return PF_IMPASSABLE_FROM_HERE;
                 } else {
-                    // Won't be openable, don't try from other sides
+
                     return PF_IMPASSABLE;
                 }
             }
         }
     }
 
-    // If we can climb it, great!
+
     if( climb_cost > 0 && p_special & PathfindingFlag::Climbable ) {
         return climb_cost;
     }
 
-    // If terrain/furniture is openable but we can't fit through the open version, ignore the tile
+
     if( settings.size && allow_open_doors &&
         ( ( terrain.open && terrain.open->has_flag( ter_furn_flag::TFLAG_SMALL_PASSAGE ) ) ||
           ( furniture.open && furniture.open->has_flag( ter_furn_flag::TFLAG_SMALL_PASSAGE ) ) ||
-          // Windows with curtains need to be opened twice
+
           ( terrain.open->open && terrain.open->open->has_flag( ter_furn_flag::TFLAG_SMALL_PASSAGE ) ) ) &&
         settings.size > creature_size::medium
       ) {
         return PF_IMPASSABLE;
     }
 
-    // If it's a door and we can open it from the tile we're on, cool.
-    // But only if opening actually makes the tile passable. Shutters over
-    // reinforced glass open to reveal impassable glass -- no point opening.
+
+
+
     if( allow_open_doors && ( terrain.open || furniture.open ) &&
         ( ( !terrain.has_flag( ter_furn_flag::TFLAG_OPENCLOSE_INSIDE ) &&
             !furniture.has_flag( ter_furn_flag::TFLAG_OPENCLOSE_INSIDE ) ) ||
           !is_outside( cur ) ) ) {
-        // Check that opening leads to a passable tile (or a tile that can
-        // itself be opened, like curtains over a window).
+
+
         const ter_t &opened_ter = terrain.open ? *terrain.open : terrain;
         const furn_t &opened_furn = furniture.open ? *furniture.open : furniture;
         if( opened_ter.movecost > 0 || opened_furn.open || opened_ter.open ) {
-            // Only try to open INSIDE doors from the inside
-            // To open and then move onto the tile
+
+
             return 4;
         }
     }
 
-    // Otherwise, if we can bash, we'll consider that.
+
     if( !bash.empty() ) {
         const int rating = bash_rating_internal( bash, furniture, terrain, false, veh, part );
 
         if( rating > 1 ) {
-            // Expected number of turns to bash it down, 1 turn to move there
-            // and 5 turns of penalty not to trash everything just because we can
+
+
             return ( 20 / rating ) + 2 + 10;
         }
 
         if( rating == 1 ) {
-            // Desperate measures, avoid whenever possible
+
             return 500;
         }
     }
 
-    // If we can open doors generally but couldn't open this one, maybe we can
-    // try from another direction. But only if opening would actually help.
+
+
     if( allow_open_doors && ( terrain.open || furniture.open ) ) {
         const ter_t &opened_ter = terrain.open ? *terrain.open : terrain;
         const furn_t &opened_furn = furniture.open ? *furniture.open : furniture;
@@ -461,7 +461,7 @@ bool map::can_pass( const tripoint_bub_ms &cur, const tripoint_bub_ms &p,
     return cost_to_pass( cur, p, settings, pf_cache.special[p.x()][p.y()] ) >= 0;
 }
 
-int map::cost_to_avoid( const tripoint_bub_ms & /*cur*/, const tripoint_bub_ms &p,
+int map::cost_to_avoid( const tripoint_bub_ms & , const tripoint_bub_ms &p,
                         const pathfinding_settings &settings, PathfindingFlags p_special ) const
 {
     if( settings.avoid_traps && ( p_special & PathfindingFlag::DangerousTrap ) ) {
@@ -470,14 +470,14 @@ int map::cost_to_avoid( const tripoint_bub_ms & /*cur*/, const tripoint_bub_ms &
         const trap &ter_trp = terrain.trap.obj();
         const trap &trp = ter_trp.is_benign() ? tile.get_trap_t() : ter_trp;
 
-        // NO_FLOOR is a special case handled in map::route
+
         if( !trp.is_benign() && !terrain.has_flag( ter_furn_flag::TFLAG_NO_FLOOR ) ) {
             return 500;
         }
     }
 
     if( settings.avoid_dangerous_fields && ( p_special & PathfindingFlag::DangerousField ) ) {
-        // We'll walk through even known-dangerous fields if we absolutely have to.
+
         return 500;
     }
 
@@ -511,9 +511,9 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
         const pathfinding_settings &settings,
         const std::function<bool( const tripoint_bub_ms & )> &avoid ) const
 {
-    /* TODO: If the origin or destination is out of bound, figure out the closest
-     * in-bounds point and go to that, then to the real origin/destination.
-     */
+
+
+
     std::vector<tripoint_bub_ms> ret;
     const tripoint_bub_ms &t = target.center;
 
@@ -527,8 +527,8 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
         const pathfinding_target clipped_target = { clipped, target.r };
         return route( f, clipped_target, settings, avoid );
     }
-    // First, check for a simple straight line on flat ground
-    // Except when the line contains a pre-closed tile - we need to do regular pathing then
+
+
     if( f.z() == t.z() ) {
         auto line_path = straight_route( f, t );
         if( !line_path.empty() ) {
@@ -537,9 +537,9 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
                 PathfindingFlags flags_copy = PathfindingFlags( pf_cache.special[p.xy()] );
                 flags_copy.set_clear( PathfindingFlag::Ground );
                 if( flags_copy.is_any_set() ) {
-                    // If the straight line goes through any tile with any sort of special, then we
-                    // don't use the straight-line optimization. Instead, we fall back to regular
-                    // pathfinding. The costs might make the pathfinder pick a different path.
+
+
+
                     return true;
                 }
                 return avoid( p );
@@ -550,14 +550,14 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
         }
     }
 
-    // If expected path length is greater than max distance, allow only line path, like above
+
     if( rl_dist( f, t ) > settings.max_dist ) {
         return ret;
     }
 
     const int max_length = settings.max_length;
 
-    const int pad = 16;  // Should be much bigger - low value makes pathfinders dumb!
+    const int pad = 16;
     tripoint_bub_ms min( std::min( f.x(), t.x() ) - pad, std::min( f.y(), t.y() ) - pad,
                          std::min( f.z(), t.z() ) );
     tripoint_bub_ms max( std::max( f.x(), t.x() ) + pad, std::max( f.y(), t.y() ) + pad,
@@ -582,7 +582,7 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
         }
 
         if( layer.gscore[parent_index] > max_length ) {
-            // Shortest path would be too long, return empty vector
+
             return std::vector<tripoint_bub_ms>();
         }
 
@@ -596,16 +596,16 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
 
         const pathfinding_cache &pf_cache = get_pathfinding_cache_ref( cur.z() );
 
-        // 7 3 5
-        // 1 . 2
-        // 6 4 8
+
+
+
         constexpr std::array<int, 8> x_offset{ { -1,  1,  0,  0,  1, -1, -1, 1 } };
         constexpr std::array<int, 8> y_offset{ {  0,  0, -1,  1, -1,  1, -1, 1 } };
         for( size_t i = 0; i < 8; i++ ) {
             const tripoint_bub_ms p( cur.x() + x_offset[i], cur.y() + y_offset[i], cur.z() );
             const int index = flat_index( p.xy() );
 
-            // TODO: Remove this and instead have sentinels at the edges
+
             if( p.x() < min.x() || p.x() >= max.x() || p.y() < min.y() || p.y() >= max.y() ) {
                 continue;
             }
@@ -619,7 +619,7 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
                 continue;
             }
 
-            // Penalize for diagonals or the path will look "unnatural"
+
             int newg = layer.gscore[parent_index] + ( ( cur.x() != p.x() && cur.y() != p.y() ) ? 1 : 0 );
 
             const PathfindingFlags p_special = pf_cache.special[p.x()][p.y()];
@@ -632,35 +632,35 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
             }
             newg += cost;
 
-            // Special case: pathfinders that avoid traps can avoid ledges by
-            // climbing down. This can't be covered by |extra_cost| because it
-            // can add a new point to the search.
+
+
+
             if( settings.avoid_traps && ( p_special & PathfindingFlag::DangerousTrap ) ) {
                 const const_maptile &tile = maptile_at_internal( p );
                 const ter_t &terrain = tile.get_ter_t();
                 const trap &ter_trp = terrain.trap.obj();
                 const trap &trp = ter_trp.is_benign() ? tile.get_trap_t() : ter_trp;
                 if( !trp.is_benign() && terrain.has_flag( ter_furn_flag::TFLAG_NO_FLOOR ) ) {
-                    // Warning: really expensive, needs a cache
+
                     tripoint_bub_ms below( p + tripoint::below );
                     if( valid_move( p, below, false, true ) ) {
                         if( !has_flag( ter_furn_flag::TFLAG_NO_FLOOR, below ) ) {
-                            // From cur, not p, because we won't be walking on air.
-                            // Use outer layer (cur.z()) for gscore -- the destination
-                            // layer may contain stale data at parent_index.
+
+
+
                             int new_g = layer.gscore[parent_index] + 10;
                             pf.add_point( new_g, new_g + 2 * rl_dist( below, t ),
                                           cur, below );
                         }
 
-                        // Close p on the current z-level -- we won't walk on air
+
                         layer.closed[index] = true;
                         continue;
                     }
                 }
             }
 
-            // Bare NO_FLOOR tiles without a trap: try to climb down, then close.
+
             if( settings.avoid_traps && ( p_special & PathfindingFlag::Air ) ) {
                 tripoint_bub_ms below( p + tripoint::below );
                 if( valid_move( p, below, false, true ) ) {
@@ -679,7 +679,7 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
 
         for_each_vertical_step( *this, cur, settings, min.z(), max.z(),
         [&]( const tripoint_bub_ms & dest, const int step_cost ) {
-            // cur's layer: the destination layer may hold stale gscore at parent_index
+
             const int new_g = layer.gscore[parent_index] + step_cost;
             pf.add_point( new_g, new_g + 2 * rl_dist( dest, t ), cur, dest );
         } );
@@ -688,7 +688,7 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
     if( done ) {
         ret.reserve( rl_dist( f, found_target ) * 2 );
         tripoint_bub_ms cur = found_target;
-        // Just to limit max distance, in case something weird happens
+
         for( int fdist = max_length; fdist != 0; fdist-- ) {
             const int cur_index = flat_index( cur.xy() );
             const path_data_layer &layer = pf.get_layer( cur.z() );
@@ -698,8 +698,8 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
             }
 
             ret.push_back( cur );
-            // Jumps are acceptable on 1 z-level changes
-            // This is because stairs teleport the player too
+
+
             if( rl_dist( cur, par ) > 1 && std::abs( cur.z() - par.z() ) != 1 ) {
                 debugmsg( "Jump in our route!  %d:%d:%d->%d:%d:%d",
                           cur.x(), cur.y(), cur.z(), par.x(), par.y(), par.z() );
@@ -715,9 +715,9 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f,
     return ret;
 }
 
-// --- Grab-aware pathfinding helpers ---
 
-// Number of grab direction slots: 3x3 grid encoding (x+1)*3 + (y+1), index 4 = center = unused.
+
+
 static constexpr int GRAB_DIRS = 9;
 
 static int grab_to_idx( const tripoint_rel_ms &g )
@@ -741,8 +741,8 @@ static point_bub_ms state_to_pos( int state_idx )
     return point_bub_ms( pos_idx / MAPSIZE_Y, pos_idx % MAPSIZE_Y );
 }
 
-// Estimate vehicle drag difficulty using FLAT/ROAD terrain flags (matching
-// wheel terrain_modifiers): non-FLAT +4, FLAT non-ROAD +3, FLAT+ROAD +0.
+
+
 static int veh_drag_cost( const map &here, const tripoint_bub_ms &pos )
 {
     const int base = here.move_cost_ter_furn( pos );
@@ -758,19 +758,19 @@ static int veh_drag_cost( const map &here, const tripoint_bub_ms &pos )
     return base;
 }
 
-// Check if a tile would cause a vehicle collision, matching part_collision
-// logic: impassable tiles block, bashable non-flat terrain/furniture blocks.
-// allow_doors: pull moves pass true (vehicle follows player through opened
-// doors); push/zigzag pass false (vehicle goes to unvisited tiles).
+
+
+
+
 static bool tile_blocks_vehicle( const map &here, const tripoint_bub_ms &pos,
                                  bool allow_doors = true )
 {
     const int ter_furn_cost = here.move_cost_ter_furn( pos );
 
-    // Impassable terrain (walls, closed windows, locked doors).
+
     if( ter_furn_cost == 0 ) {
         if( allow_doors ) {
-            // Openable doors: player opens them during auto-move, vehicle follows.
+
             const bool is_door = ( here.ter( pos ).obj().open &&
                                    here.ter( pos ).obj().has_flag( ter_furn_flag::TFLAG_DOOR ) ) ||
                                  ( here.has_furn( pos ) && here.furn( pos ).obj().open &&
@@ -782,18 +782,18 @@ static bool tile_blocks_vehicle( const map &here, const tripoint_bub_ms &pos,
         return true;
     }
 
-    // No-floor tiles (open air) -- vehicle would fall
+
     if( here.has_flag( ter_furn_flag::TFLAG_NO_FLOOR, pos ) ) {
         return true;
     }
 
-    // Flat ground (move_cost 2) never causes collision.
+
     if( ter_furn_cost == 2 ) {
         return false;
     }
 
-    // Bashable non-flat terrain/furniture causes collision (bushes, open
-    // windows, fences). NOCOLLIDE excluded (e.g. railroad tracks).
+
+
     if( here.is_bashable_ter_furn( pos, false ) &&
         !here.has_flag_ter_or_furn( ter_furn_flag::TFLAG_NOCOLLIDE, pos ) ) {
         return true;
@@ -802,8 +802,8 @@ static bool tile_blocks_vehicle( const map &here, const tripoint_bub_ms &pos,
     return false;
 }
 
-// Returns the danger cost for a tile based on pathfinding flags and settings.
-// 0 = safe, 500 = dangerous (trap or field), PF_IMPASSABLE = sharp.
+
+
 static int tile_danger_cost( const pathfinding_settings &settings,
                              PathfindingFlags p_special )
 {
@@ -822,11 +822,11 @@ static int tile_danger_cost( const pathfinding_settings &settings,
     return 0;
 }
 
-// Check if a straight push or pull path works, skipping the full A*.
-// Only applies when grab direction is aligned with travel direction
-// (push) or opposite (pull), and every tile on the line is passable
-// for both the player and the dragged vehicle.
-// Assumes a single-tile vehicle (caller gates on this).
+
+
+
+
+
 static std::vector<tripoint_bub_ms> try_straight_grab_path(
     map &here, const tripoint_bub_ms &start, const pathfinding_target &target,
     const tripoint_rel_ms &cur_grab, vehicle &grabbed_veh,
@@ -838,7 +838,7 @@ static std::vector<tripoint_bub_ms> try_straight_grab_path(
     const point d( dest.x() - start.x(), dest.y() - start.y() );
     const point ad( std::abs( d.x ), std::abs( d.y ) );
 
-    // Must be a pure cardinal or diagonal direction
+
     if( ( ad.x != ad.y && ad.x > 0 && ad.y > 0 ) || ( ad.x == 0 && ad.y == 0 ) ) {
         return {};
     }
@@ -861,12 +861,12 @@ static std::vector<tripoint_bub_ms> try_straight_grab_path(
 
     for( int step = 0; step < num_steps; step++ ) {
         const tripoint_bub_ms next_player = player + dir;
-        // Push: vehicle advances one step in travel direction.
-        // Pull: vehicle follows to player's old position, which is
-        // also vehicle_pos + dir (vehicle is one step behind player).
+
+
+
         const tripoint_bub_ms next_vehicle = vehicle_pos + dir;
 
-        // Player passability (grabbed vehicle vacates the tile on push)
+
         if( here.move_cost( next_player, &grabbed_veh ) == 0 ) {
             return {};
         }
@@ -874,29 +874,29 @@ static std::vector<tripoint_bub_ms> try_straight_grab_path(
             return {};
         }
 
-        // Danger check on player tile
+
         const PathfindingFlags p_special =
             pf_cache.special[next_player.x()][next_player.y()];
         if( tile_danger_cost( settings, p_special ) != 0 ) {
             return {};
         }
 
-        // Avoid callback (matching map::route semantics)
+
         if( !target.contains( next_player ) && avoid && avoid( next_player ) ) {
             return {};
         }
 
-        // Vehicle passability
+
         if( tile_blocks_vehicle( here, next_vehicle, is_pull ) ) {
             return {};
         }
-        // The grabbed vehicle is always at vehicle_pos (its current position),
-        // so any vehicle found at next_vehicle is necessarily a different one.
+
+
         if( here.veh_at( next_vehicle ) ) {
             return {};
         }
 
-        // Strength check: vehicle moves for both push and pull
+
         const int req_cur = grabbed_veh.drag_str_req_at( here, vehicle_pos );
         const int req_new = grabbed_veh.drag_str_req_at( here, next_vehicle );
         if( req_cur > cached_arm_str || req_new > cached_arm_str ) {
@@ -925,11 +925,11 @@ bool has_grabbed_single_tile_vehicle( const Character &you, const map &here )
     return ovp && ovp->vehicle().get_points().size() == 1;
 }
 
-// State is (player_position, grab_direction), so it finds routes where
-// both the player and the dragged vehicle can physically move.
-// Returns an empty vector if no path exists or if the player isn't
-// dragging a single-tile vehicle.
-// TODO: XY-only -- no ramp/stair support.
+
+
+
+
+
 std::vector<tripoint_bub_ms> route_with_grab(
     map &here, const Character &you, const pathfinding_target &target,
     const std::function<bool( const tripoint_bub_ms & )> &avoid )
@@ -964,16 +964,16 @@ std::vector<tripoint_bub_ms> route_with_grab(
                    target.center.to_string_writable(), target.r );
 
     pathfinding_settings settings = you.get_pathfinding_settings();
-    // Always avoid dangerous fields when dragging a vehicle -- there is
-    // no scenario where routing through fire with a cart is desirable.
+
+
     settings.avoid_dangerous_fields = true;
     const pathfinding_cache &pf_cache = here.get_pathfinding_cache_ref( start.z() );
 
-    // Cache arm strength for strength checks
+
     const int cached_arm_str = you.get_arm_str();
 
-    // Fast path: if grab is aligned with travel direction, check the
-    // straight line before spinning up the full A* with its 157K-state arrays.
+
+
     ret = try_straight_grab_path( here, start, target, start_grab, grabbed_veh,
                                   settings, pf_cache, cached_arm_str, avoid );
     if( !ret.empty() ) {
@@ -997,7 +997,7 @@ std::vector<tripoint_bub_ms> route_with_grab(
 
     const int total_states = MAPSIZE_X * MAPSIZE_Y * GRAB_DIRS;
 
-    // Reuse heap-allocated arrays across calls
+
     static std::vector<bool> closed;
     static std::vector<bool> open;
     static std::vector<int> gscore;
@@ -1010,12 +1010,12 @@ std::vector<tripoint_bub_ms> route_with_grab(
         parent.resize( total_states );
     }
 
-    // Only closed and open need clearing; gscore and parent are only read
-    // for states where open[state] is true.
+
+
     std::fill( closed.begin(), closed.end(), false );
     std::fill( open.begin(), open.end(), false );
 
-    // Priority queue: (f-score, state_index), smallest f-score first
+
     using pq_entry = std::pair<int, int>;
     std::priority_queue<pq_entry, std::vector<pq_entry>, std::greater<>> pq;
 
@@ -1024,11 +1024,11 @@ std::vector<tripoint_bub_ms> route_with_grab(
     gscore[start_state] = 0;
     open[start_state] = true;
     parent[start_state] = start_state;
-    // Heuristic: 4 * chebyshev - 2 (one sideways move costs only 2).
-    // Uses square_dist to stay admissible regardless of trigdist setting.
+
+
     pq.emplace( std::max( 0, 4 * square_dist( start, t ) - 2 ), start_state );
 
-    // Movement offsets: W, E, N, S, NE, SW, NW, SE
+
     constexpr std::array<int, 8> x_off{ { -1,  1,  0,  0,  1, -1, -1, 1 } };
     constexpr std::array<int, 8> y_off{ {  0,  0, -1,  1, -1,  1, -1, 1 } };
 
@@ -1076,26 +1076,26 @@ std::vector<tripoint_bub_ms> route_with_grab(
 
             const tripoint_bub_ms next3d( next_pos, start.z() );
 
-            // Avoid callback (matching map::route semantics)
+
             if( !target.contains( next3d ) && avoid && avoid( next3d ) ) {
                 continue;
             }
 
-            // Danger check on player's next position
+
             const PathfindingFlags p_special = pf_cache.special[next_pos.x()][next_pos.y()];
             const int danger = tile_danger_cost( settings, p_special );
             if( danger == PF_IMPASSABLE ) {
                 continue;
             }
 
-            // Player passability (grabbed vehicle vacates the tile on push)
+
             if( here.has_flag( ter_furn_flag::TFLAG_NO_FLOOR, next3d ) ) {
                 continue;
             }
             int tile_cost = here.move_cost( next3d, &grabbed_veh );
             if( tile_cost == 0 ) {
-                // Closed doors cost 4 (auto-move opens them).
-                // Windows excluded - multi-step open, vehicle can't follow.
+
+
                 const bool is_door = ( here.ter( next3d ).obj().open &&
                                        here.ter( next3d ).obj().has_flag( ter_furn_flag::TFLAG_DOOR ) ) ||
                                      ( here.furn( next3d ).obj().open &&
@@ -1119,41 +1119,41 @@ std::vector<tripoint_bub_ms> route_with_grab(
             bool is_push = false;
 
             if( dp == cur_grab ) {
-                // PUSH: vehicle moves in same direction as player
+
                 dp_veh = dp;
                 is_push = true;
             } else if( std::abs( dp.x() + dp_veh.x() ) != 2 &&
                        std::abs( dp.y() + dp_veh.y() ) != 2 ) {
-                // SIDEWAYS: vehicle stays put, grab rotates
+
                 next_grab = -( dp + dp_veh );
                 vehicle_moves = false;
             } else if( ( dp.x() == cur_grab.x() || dp.y() == cur_grab.y() ) &&
                        cur_grab.x() != 0 && cur_grab.y() != 0 ) {
-                // ZIGZAG: player is diagonal to vehicle, moves partially away
+
                 dp_veh.x() = dp.x() == -dp_veh.x() ? 0 : dp_veh.x();
                 dp_veh.y() = dp.y() == -dp_veh.y() ? 0 : dp_veh.y();
                 next_grab = -dp_veh;
                 is_zigzag = true;
             } else {
-                // PULL: vehicle moves to player's old position
+
                 next_grab = -dp;
-                // dp_veh stays as -cur_grab (initialized above)
+
             }
 
-            // FLAT/ROAD drag penalty for vehicle terrain
+
             int veh_terrain_cost = 0;
 
             if( vehicle_moves ) {
                 const tripoint_bub_ms veh_new( cur_pos + cur_grab.xy() + dp_veh.xy(), start.z() );
-                // veh_at() needed because other vehicles (e.g. ambulance aisles)
-                // have passable move_cost but still block placement. dp_veh is
-                // always non-zero here, so veh_new != current vehicle position.
+
+
+
                 const bool other_veh = static_cast<bool>( here.veh_at( veh_new ) );
-                // Push/zigzag: doors stay closed (vehicle goes to unvisited tiles)
+
                 const bool allow_doors = !( is_push || is_zigzag );
                 const bool veh_blocked = other_veh || tile_blocks_vehicle( here, veh_new, allow_doors );
                 if( veh_blocked ) {
-                    // Zigzag recovery: fall back to pull when vehicle collides
+
                     if( is_zigzag ) {
                         dp_veh = -cur_grab;
                         next_grab = -dp;
@@ -1162,7 +1162,7 @@ std::vector<tripoint_bub_ms> route_with_grab(
                         if( here.veh_at( veh_recover ) || tile_blocks_vehicle( here, veh_recover ) ) {
                             continue;
                         }
-                        // Strength check on recovery position
+
                         {
                             const tripoint_bub_ms veh_cur( cur_pos + cur_grab.xy(), start.z() );
                             const int req_cur = grabbed_veh.drag_str_req_at( here, veh_cur );
@@ -1176,7 +1176,7 @@ std::vector<tripoint_bub_ms> route_with_grab(
                         continue;
                     }
                 } else {
-                    // Strength check: both current and new vehicle positions
+
                     {
                         const tripoint_bub_ms veh_cur( cur_pos + cur_grab.xy(), start.z() );
                         const int req_cur = grabbed_veh.drag_str_req_at( here, veh_cur );
@@ -1196,7 +1196,7 @@ std::vector<tripoint_bub_ms> route_with_grab(
                 continue;
             }
 
-            // Diagonal penalty
+
             const bool diagonal = cur_pos.x() != next_pos.x() && cur_pos.y() != next_pos.y();
             const int newg = cur_g + tile_cost + veh_terrain_cost + ( diagonal ? 1 : 0 );
 
@@ -1221,7 +1221,7 @@ std::vector<tripoint_bub_ms> route_with_grab(
         return ret;
     }
 
-    // Reconstruct path
+
     int trace = found_state;
     while( trace != start_state ) {
         const point_bub_ms pos = state_to_pos( trace );

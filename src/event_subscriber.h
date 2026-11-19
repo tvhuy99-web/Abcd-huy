@@ -7,7 +7,7 @@
 namespace cata
 {
 class event;
-}  // namespace cata
+}
 class event_bus;
 class talker;
 
@@ -27,4 +27,4 @@ class event_subscriber
         event_bus *subscribed_to = nullptr;
 };
 
-#endif // CATA_SRC_EVENT_SUBSCRIBER_H
+#endif

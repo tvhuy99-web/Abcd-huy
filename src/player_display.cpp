@@ -91,7 +91,7 @@ static const std::string title_PROFICIENCIES = translate_marker( "PROFICIENCIES"
 
 static const unsigned int grid_width = 26;
 
-// Rescale temperature value to one that the player sees
+
 static int temperature_print_rescaling( units::temperature temp )
 {
     return ( units::to_legacy_bodypart_temp( temp ) / 100.0 ) * 2 - 100;
@@ -100,15 +100,15 @@ static int temperature_print_rescaling( units::temperature temp )
 static bool should_combine_bps( const Character &p, const bodypart_id &l, const bodypart_id &r,
                                 const item *selected_clothing )
 {
-    return l != r && // are different parts
-           l ==  r->opposite_part && r == l->opposite_part && // are complementary parts
-           // same encumbrance & temperature
+    return l != r &&
+           l ==  r->opposite_part && r == l->opposite_part &&
+
            p.compare_encumbrance_data( l, r ) &&
            temperature_print_rescaling( p.get_part_temp_conv( l ) ) == temperature_print_rescaling(
                p.get_part_temp_conv( r ) ) &&
-           // selected_clothing covers both or neither parts
+
            ( !selected_clothing || ( selected_clothing->covers( l ) == selected_clothing->covers( r ) ) ) &&
-           // they have the same HP
+
            p.get_part_hp_cur( l ) == p.get_part_hp_cur( r );
 
 }
@@ -116,14 +116,14 @@ static bool should_combine_bps( const Character &p, const bodypart_id &l, const 
 static std::vector<std::pair<bodypart_id, bool>> list_and_combine_bps( const Character &p,
         const item *selected_clothing )
 {
-    // bool represents whether the part has been combined with its other half
+
     std::vector<std::pair<bodypart_id, bool>> bps;
     for( const bodypart_id &bp : p.get_all_body_parts( get_body_part_flags::sorted ) ) {
-        // assuming that a body part has at most one other half
+
         if( should_combine_bps( p, bp, bp->opposite_part.id(), selected_clothing ) ) {
             if( std::find( bps.begin(), bps.end(), std::pair<bodypart_id, bool>( bp->opposite_part.id(),
                            true ) ) == bps.end() ) {
-                // only add one
+
                 bps.emplace_back( bp, true );
             }
         } else {
@@ -136,22 +136,22 @@ static std::vector<std::pair<bodypart_id, bool>> list_and_combine_bps( const Cha
 void Character::print_encumbrance( ui_adaptor &ui, const catacurses::window &win,
                                    const int line, const item *const selected_clothing ) const
 {
-    // bool represents whether the part has been combined with its other half
+
     const std::vector<std::pair<bodypart_id, bool>> bps = list_and_combine_bps( *this,
             selected_clothing );
 
-    // width/height excluding title & scrollbar
+
     const int height = getmaxy( win ) - 1;
     const bool do_draw_scrollbar = height < static_cast<int>( bps.size() );
     const int width = getmaxx( win ) - ( do_draw_scrollbar ? 1 : 0 );
-    // index of the first printed bodypart from `bps`
+
     const int firstline = clamp( line - height / 2, 0, std::max( 0,
                                  static_cast<int>( bps.size() ) - height ) );
 
-    /*** I chose to instead only display X+Y instead of X+Y=Z. More room was needed ***
-     *** for displaying triple digit encumbrance, due to new encumbrance system.    ***
-     *** If the player wants to see the total without having to do them maths, the  ***
-     *** armor layers ui shows everything they want :-) -Davek                      ***/
+
+
+
+
     for( int i = 0; i < height; ++i ) {
         int thisline = firstline + i;
         if( thisline < 0 ) {
@@ -172,8 +172,8 @@ void Character::print_encumbrance( ui_adaptor &ui, const catacurses::window &win
             out = utf8_truncate( out, 7 );
         }
 
-        // Two different highlighting schemes, highlight if the line is selected as per line being set.
-        // Make the text green if this part is covered by the passed in item.
+
+
         const bool highlight_line = thisline == line;
         nc_color limb_color = highlight_line ?
                               ( highlighted ? h_green : h_light_gray ) :
@@ -183,18 +183,18 @@ void Character::print_encumbrance( ui_adaptor &ui, const catacurses::window &win
             ui.set_cursor( win, point( 1, y_pos ) );
         }
         mvwprintz( win, point( 1, y_pos ), limb_color, "%s", out );
-        // accumulated encumbrance from clothing, plus extra encumbrance from layering
-        int column = std::max( 10, ( width / 2 ) - 3 ); //Ideally the encumbrance data is centred
+
+        int column = std::max( 10, ( width / 2 ) - 3 );
         mvwprintz( win, point( column, y_pos ), display::encumb_color( encumbrance ), "%3d",
                    encumbrance - layer_penalty );
-        // separator in low toned color
-        column += 3; //Prepared for 3-digit encumbrance
+
+        column += 3;
         mvwprintz( win, point( column, y_pos ), c_light_gray, "+" );
-        column += 1; // "+"
-        // take into account the new encumbrance system for layers
+        column += 1;
+
         mvwprintz( win, point( column, y_pos ), display::encumb_color( encumbrance ), "%-3d",
                    layer_penalty );
-        // print warmth, tethered to right hand side of the window
+
         mvwprintz( win, point( width - 6, y_pos ), display::bodytemp_color( *this, bp ), "(% 3d)",
                    temperature_print_rescaling( get_part_temp_conv( bp ) ) );
     }
@@ -246,11 +246,11 @@ static std::vector<std::string> get_encumbrance_description( const Character &yo
         }
         float cur_score = part->get_limb_score( you, sc.getId() );
         float bp_score = bp->get_limb_score( sc.getId() );
-        // Check for any global limb score modifiers
+
         for( const effect &eff : you.get_effects_with_flag( flag_EFFECT_LIMB_SCORE_MOD ) ) {
             cur_score *= eff.get_limb_score_mod( sc.getId(), you.resists_effect( eff ) );
         }
-        // Check for local score-modifying effects only if we have any
+
         if( you.has_flag( flag_EFFECT_LIMB_SCORE_MOD_LOCAL ) ) {
             for( const effect &local : you.get_effects_from_bp( part->get_id() ) ) {
                 float local_mul = 1.0f;
@@ -279,9 +279,9 @@ static std::vector<std::string> get_encumbrance_description( const Character &yo
 
 static bool is_cqb_skill( const skill_id &id )
 {
-    // TODO: this skill list here is used in other places as well. Useless redundancy and
-    // dependency. Maybe change it into a flag of the skill that indicates it's a skill used
-    // by the bionic?
+
+
+
     static const std::array<skill_id, 5> cqb_skills = { {
             skill_melee, skill_unarmed, skill_cutting,
             skill_bashing, skill_stabbing,
@@ -303,7 +303,7 @@ enum class player_display_tab : int {
     proficiencies,
     num_tabs,
 };
-} // namespace
+}
 
 static void draw_x_info( const catacurses::window &w_info, const std::string &description,
                          const unsigned info_line )
@@ -341,7 +341,7 @@ static void draw_proficiencies_tab( ui_adaptor &ui, const catacurses::window &wi
 
     const int height = getmaxy( win ) - 1;
     const bool do_draw_scrollbar = height < static_cast<int>( profs.size() );
-    const int width = getmaxx( win ) - 1 - ( do_draw_scrollbar ? 1 : 0 );  // -1 for beginning space
+    const int width = getmaxx( win ) - 1 - ( do_draw_scrollbar ? 1 : 0 );
 
     const auto& [i_start, i_end] = subindex_around_cursor( profs.size(), height, line, focused );
     for( size_t i = i_start; i < static_cast<size_t>( i_end ); ++i ) {
@@ -356,7 +356,7 @@ static void draw_proficiencies_tab( ui_adaptor &ui, const catacurses::window &wi
         }
         const bool highlight_line = focused && i == line;
         const nc_color col = highlight_line ? hilite( cur.color ) : cur.color;
-        nc_color col_cur = col;  // make non const copy
+        nc_color col_cur = col;
         const point pos( 1, 1 + i - i_start );
         if( highlight_line ) {
             ui.set_cursor( win, pos );
@@ -429,7 +429,7 @@ static void draw_stats_tab( ui_adaptor &ui, const catacurses::window &w_stats, c
         }
     };
 
-    // Stats
+
     const auto display_stat = [&line_color, &set_highlight_cursor, &w_stats]
     ( const char *name, const int cur, const int max, const unsigned line_to_draw ) {
         nc_color cstatus;
@@ -672,7 +672,7 @@ struct bionic_grouping {
     const translation description;
     const int installed_count;
 };
-} // namespace
+}
 
 static void draw_bionics_tab( ui_adaptor &ui, const catacurses::window &w_bionics,
                               const Character &you, const unsigned line,
@@ -706,7 +706,7 @@ static void draw_bionics_tab( ui_adaptor &ui, const catacurses::window &w_bionic
                     string_format( _( "Power: <color_light_blue>%1$d %2$s</color>"
                                       " / <color_light_blue>%3$d kJ</color>" ),
                                    power_amount, power_unit, units::to_kilojoule( you.get_max_power_level() ) ) );
-    const int height = getmaxy( w_bionics ) - 2;  // -2 for headline and power_level
+    const int height = getmaxy( w_bionics ) - 2;
     const bool do_draw_scrollbar = height < static_cast<int>( bionicslist.size() );
     const int width = getmaxx( w_bionics ) - 1 - ( do_draw_scrollbar ? 1 : 0 );
     const auto& [i_start, i_end] = subindex_around_cursor( bionicslist.size(), height, line,
@@ -887,7 +887,7 @@ struct speedlist_entry {
     int val;
     bool percent;
 };
-} // namespace
+}
 
 static void draw_speed_info( const catacurses::window &w_info,
                              unsigned int line,
@@ -984,10 +984,10 @@ static std::vector<speedlist_entry> get_speedlist_entries( const Character &you,
 
     float movecost = 100;
     for( const run_cost_effect &effect : you.run_cost_effects( movecost ) ) {
-        const int percent = std::trunc( effect.times * 100 - 100 ); // truncate toward 0%
-        const int constant = std::trunc( effect.plus ); // truncate toward 0
+        const int percent = std::trunc( effect.times * 100 - 100 );
+        const int constant = std::trunc( effect.plus );
         if( ( effect.times != 1.0 && percent == 0 ) || ( effect.plus != 0 && constant == 0 ) ) {
-            continue; // negligible effect
+            continue;
         }
         const speedlist_entry entry { false, effect.description, percent != 0 ? percent : constant, percent != 0 };
         entries.push_back( entry );
@@ -1028,7 +1028,7 @@ static void draw_speed_tab( ui_adaptor &ui, const catacurses::window &w_speed,
         }
         const speedlist_entry &entry = speedlist[i];
 
-        // +speed is good, -movecost is good
+
         const nc_color col = entry.is_speed == ( entry.val > 0 ) ? c_light_green : c_red;
         const nc_color hcol = highlight_line ? hilite( col ) : col;
         mvwprintz( w_speed, pos, hcol, "%s", entry.description );
@@ -1040,7 +1040,7 @@ static void draw_speed_tab( ui_adaptor &ui, const catacurses::window &w_speed,
             if( std::abs( entry.val ) < 1000 ) {
                 mvwprintz( w_speed, pos + point( 19, 0 ), hcol, "%c%3d%c", prefix, std::abs( entry.val ), suffix );
             } else {
-                // broken limbs or very big numbers can cause this
+
                 mvwprintz( w_speed, pos + point( 19, 0 ), hcol, "%c!!!%c", prefix, suffix );
             }
         }
@@ -1098,7 +1098,7 @@ static void draw_tip( const catacurses::window &w_tip, const Character &you,
 {
     werase( w_tip );
 
-    // Print name and header
+
     if( you.crossed_threshold() ) {
         //~ player info window: 1s - name, 2s - gender, 3s - Prof or Mutation name
         mvwprintz( w_tip, point::zero, c_white, _( " %1$s | %2$s | %3$s" ), you.get_name(),
@@ -1307,7 +1307,7 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
             ui_tip.invalidate_ui();
         }
         if( curtab == player_display_tab::skills ) {
-            // including actios "PAGE_UP", and "HOME", because these shouldn't wrap
+
             const bool inc = action == "DOWN" || action == "PAGE_DOWN" || action == "PAGE_UP" ||
                              action == "SCROLL_DOWN" || action == "HOME";
             skip_skill_headers( skillslist, line, inc );
@@ -1355,7 +1355,7 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
         curtab = inc_clamp_wrap( curtab, action == "RIGHT" || action == "NEXT_TAB",
                                  player_display_tab::num_tabs );
         invalidate_tab( curtab );
-        line = curtab == player_display_tab::skills ? 1 : 0; // avoid a call to skip_skill_headers
+        line = curtab == player_display_tab::skills ? 1 : 0;
         info_line = 0;
         ui_info.invalidate_ui();
     } else if( action == "SELECT_TRAIT_VARIANT" ) {
@@ -1467,7 +1467,7 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
         invalidate_tab( curtab );
         curtab = player_display_tab::skills;
         invalidate_tab( curtab );
-        line = 1; // avoid a call to skip_skill_headers
+        line = 1;
         info_line = 0;
         ui_info.invalidate_ui();
     } else if( action == "SELECT_TRAITS_TAB" ) {
@@ -1506,22 +1506,22 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
 
 static std::pair<unsigned, unsigned> calculate_shared_column_win_height(
     const unsigned available_height, unsigned first_win_size_y_max, unsigned second_win_size_y_max )
-/**
- * Calculate max allowed height of two windows sharing column space.
- */
+
+
+
 {
     if( ( second_win_size_y_max + 1 + first_win_size_y_max ) > available_height ) {
-        // maximum space for either window if they're both the same size
+
         unsigned max_shared_y = ( available_height - 1 ) / 2;
         if( std::min( second_win_size_y_max, first_win_size_y_max ) > max_shared_y ) {
-            // both are larger than the shared size
+
             second_win_size_y_max = max_shared_y;
             first_win_size_y_max = available_height - 1 - second_win_size_y_max;
         } else if( first_win_size_y_max <= max_shared_y ) {
-            // first window is less than the shared size, so give space to second window
+
             second_win_size_y_max = available_height - 1 - first_win_size_y_max;
         } else {
-            // second window is less than the shared size
+
             first_win_size_y_max = available_height - 1 - second_win_size_y_max;
         }
     }
@@ -1530,23 +1530,23 @@ static std::pair<unsigned, unsigned> calculate_shared_column_win_height(
 
 namespace
 {
-// Reader adapter for the character sheet (R10.1). Everything published
-// here is data this screen itself prints: the four stats, the encumbrance
-// numbers, the speed list and move cost, and the EFFECTS tab's own
-// name/description pairs (which include pain, malnutrition, sunlight and
-// addiction entries the screen synthesises). Temperature is published as
-// the same qualitative word display::temp_text_color gives the sidebar
-// and this screen's warmth column -- the color that used to carry its
-// severity is redundant once the word is spoken. Morale is the total the
-// morale screen prints. No hit points or other numbers this screen does
-// not show are introduced.
-//
-// R19.1 adds the SKILLS, TRAITS and PROFICIENCIES rows the R10 snapshot
-// only had tab nodes for. Skills come from the same skillslist disp_info
-// built with skill_ui's get_HeaderSkills (skill_ui.cpp itself has no
-// screen, input context or loop -- it is only the header/skip helper for
-// this tab), traits from the same traitslist, proficiencies from
-// display_proficiencies(), all in the order the tabs print them.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 a11y::semantic_snapshot player_display_reader_snapshot(
     const input_context &ctxt, const Character &you, const player_display_tab curtab,
     const unsigned int line,
@@ -1584,7 +1584,7 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         }
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // Readable health overview before navigating all the character tabs.
+
     const std::string needs = string_format( _( "Hunger: %s" ),
                                         display::hunger_text_color( you ).first ) + ". " +
                         string_format( _( "Thirst: %s" ),
@@ -1632,9 +1632,9 @@ a11y::semantic_snapshot player_display_reader_snapshot(
                            stat_text( _( "Dexterity" ), you.get_dex(), you.get_dex_base() ) + ". " +
                            stat_text( _( "Intelligence" ), you.get_int(), you.get_int_base() ) + ". " +
                            stat_text( _( "Perception" ), you.get_per(), you.get_per_base() ) + ". " +
-                           // The stats tab also prints these as words/strings;
-                           // the raw BMI and lifestyle numbers behind the
-                           // words are not shown there and are not read here.
+
+
+
                            string_format( _( "Weight: %s" ), display::weight_string( you ) ) + ". " +
                            string_format( _( "Lifestyle: %s" ), display::health_string( you ) ) + ". " +
                            string_format( _( "Height: %s" ), you.height_string() ) + ". " +
@@ -1662,16 +1662,16 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         a11y::semantic_node node;
         node.id = "pd:warmth:" + bp.id().str();
         node.label = body_part_name( bp );
-        // The tab prints encumbrance as two numbers -- base + layer
-        // penalty -- so the cell keeps both instead of only the total.
+
+
         const std::string encumb = string_format( "%1$d + %2$d",
                                  you.get_part_encumbrance( bp ) - you.get_part_layer_penalty( bp ),
                                  you.get_part_layer_penalty( bp ) );
-        // The tab's warmth color classifies get_part_temp_conv, while
-        // display::temp_text_color classifies get_part_temp_cur; to stay
-        // truthful to what this tab shows, the word is derived from the
-        // converged temperature with the same thresholds and vocabulary
-        // temp_text_color itself uses.
+
+
+
+
+
         const units::temperature conv = you.get_part_temp_conv( bp );
         const std::string temp = conv > BODYTEMP_SCORCHING ? _( "Scorching!" ) :
                                  conv > BODYTEMP_VERY_HOT ? _( "Very hot!" ) :
@@ -1690,9 +1690,9 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.total = bps.size();
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // The native Bionics tab already presents power and installed bionic
-    // descriptions, but the reader previously published only an empty tab.
-    // Keep these real character facts in the flat readable list.
+
+
+
     int power_amount;
     std::string power_unit;
     if( you.get_power_level() < 1_J ) {
@@ -1721,19 +1721,19 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.detail = remove_color_tags( bio.description.translated() );
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // Skills (R19.1). draw_skills_tab prints, per skill row, the name,
-    // the knowledge level and the knowledge exercise as "level (NN%)"
-    // (for dodge, the current dodge value first), under a category
-    // header from SkillDisplayType. draw_skills_info prints the skill
-    // description, the theory and practice level descriptions, and --
-    // only when the skill isRusty() -- the practical level/exercise and
-    // a learning bonus. The tab carries three states by color alone,
-    // restated here in words from the same predicates the tab tests:
-    // CQB-locked, !can_train(), and knowledge ahead of practice
-    // (skill_gap / skill_small_gap). The exercise>=100 highlight needs
-    // no word: the tab already prints that percentage as text. The
-    // skills info pane names no proficiencies, so none are published
-    // here; proficiencies are the separate tab/window below.
+
+
+
+
+
+
+
+
+
+
+
+
+
     a11y::semantic_table skills_table;
     skills_table.id = "pd:skills";
     skills_table.columns = { { "skill", _( "Skill" ), "" },
@@ -1757,11 +1757,11 @@ a11y::semantic_snapshot player_display_reader_snapshot(
             skill_category = SkillDisplayType::get_skill_type(
                                  entry.skill->display_category() ).display_string();
             a11y::semantic_node header;
-            // The id carries the list index, not just the category:
-            // get_HeaderSkills emits a header whenever the category
-            // changes in sort-rank order, so one category could in
-            // principle head two runs and a category-only id could
-            // duplicate (which validate_snapshot would reject).
+
+
+
+
+
             header.id = "pd:skill:category:" + std::to_string( i );
             header.role = "status";
             header.label = skill_category;
@@ -1847,16 +1847,16 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         ++skill_row;
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // Traits (R19.1). The name is trait_and_var::name() exactly as
-    // draw_traits_tab prints it (variant-aware); the description source
-    // is Character::mutation_desc(trait) exactly as draw_traits_info
-    // uses for this tab (variant resolved from cached_mutations, tags
-    // parsed), plus that pane's own purifier note when !purifiable() --
-    // the one state this tab's info pane states in text. The tab's
-    // get_display_color() has no legend text on this screen and doubles
-    // as the list's sort key; following the R17 precedent it is not
-    // restated as a category word, and the printed order (which the
-    // color determines) is preserved as published.
+
+
+
+
+
+
+
+
+
+
     for( std::size_t i = 0; i < traitslist.size(); ++i ) {
         const trait_and_var &cur = traitslist[i];
         a11y::semantic_node node;
@@ -1874,13 +1874,13 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.total = static_cast<int>( traitslist.size() );
         snapshot.nodes.push_back( std::move( node ) );
     }
-    // Proficiencies tab (R19.1): the summary list of the dedicated
-    // proficiencies window (proficiency_ui.cpp). The tab prints the name
-    // (plus the floored practice percentage for a learnable proficiency
-    // still being learned); its info pane prints the known/progress
-    // sentence and the description. The full per-proficiency record
-    // (time to learn, category, pre-requisites, leads-to) lives in that
-    // window's adapter, not here.
+
+
+
+
+
+
+
     a11y::semantic_table profs_table;
     profs_table.id = "pd:proficiencies";
     profs_table.columns = { { "proficiency", _( "Proficiency" ), "" },
@@ -1957,11 +1957,11 @@ std::optional<player_display_tab> player_display_tab_for_node( const std::string
     return found == by_id.end() ? std::nullopt
            : std::optional<player_display_tab>( found->second );
 }
-} // namespace
+}
 
 void Character::disp_info( bool customize_character )
 {
-    // Customizing any character is always enabled in debug mode
+
     customize_character |= debug_mode;
 
     std::vector<std::pair<std::string, std::string>> effect_name_and_text;
@@ -2055,8 +2055,8 @@ void Character::disp_info( bool customize_character )
         effect_name_and_text.emplace_back( detail );
     }
 
-    // If any effects with no names have cropped up, let's remove them.
-    //   NB: This can happen if an effect no longer exists.
+
+
     effect_name_and_text.erase( std::remove_if( effect_name_and_text.begin(),
     effect_name_and_text.end(), []( const std::pair<std::string, std::string> &e ) {
         return e.first.empty();
@@ -2071,7 +2071,7 @@ void Character::disp_info( bool customize_character )
 
     std::vector<bionic_grouping> bionicslist;
     {
-        // count installed bionics by type and sort by localized name
+
         const auto bio_comp = []( const bionic_data & lhs, const bionic_data & rhs ) {
             return lhs.name.translated_lt( rhs.name );
         };
@@ -2099,9 +2099,9 @@ void Character::disp_info( bool customize_character )
     const unsigned int infooffsetytop = grid_height + 2;
     unsigned int infooffsetybottom = infooffsetytop + 1 + info_win_size_y;
 
-    // Print name and header
-    // Post-humanity trumps your pre-Cataclysm life
-    // Unless you have a custom profession.
+
+
+
     std::string race;
     if( custom_profession.empty() && crossed_threshold() ) {
         for( const trait_and_var &mut : get_mutations_variants() ) {
@@ -2161,9 +2161,9 @@ void Character::disp_info( bool customize_character )
     border_helper borders;
 
     player_display_tab curtab = player_display_tab::stats;
-    // line marks at which line is selection in tab window, could be named tab_line
+
     unsigned int line = 0;
-    // info_line marks at which line is selection in info window
+
     unsigned int info_line = 0;
     int tip_btn_highlight = -1;
 
@@ -2179,7 +2179,7 @@ void Character::disp_info( bool customize_character )
         draw_tip( w_tip, *this, race, ctxt, customize_character, tip_btn_highlight );
     } );
 
-    // STATS
+
     catacurses::window w_stats;
     catacurses::window w_stats_border;
     border_helper::border_info &border_stats = borders.add_border();
@@ -2187,12 +2187,12 @@ void Character::disp_info( bool customize_character )
     ui_stats.on_screen_resize( [&]( ui_adaptor & ui_stats ) {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         w_stats = catacurses::newwin( grid_height, grid_width, point( 0, 1 ) );
-        // Every grid draws the bottom and right borders. The top and left borders
-        // are either not displayed or drawn by another grid.
+
+
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         w_stats_border = catacurses::newwin( grid_height + 1, grid_width + 1, point( 0, 1 ) );
-        // But we need to specify the full border for border_helper to calculate the
-        // border connection.
+
+
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         border_stats.set( point( -1, 0 ), point( grid_width + 2, grid_height + 2 ) );
         ui_stats.position_from_window( w_stats_border );
@@ -2205,10 +2205,10 @@ void Character::disp_info( bool customize_character )
         draw_stats_tab( ui_stats, w_stats, *this, line, curtab, ctxt );
     } );
 
-    // TRAITS & BIONICS
+
     unsigned trait_win_size_y;
     unsigned bionics_win_size_y;
-    // TRAITS
+
     catacurses::window w_traits;
     catacurses::window w_traits_border;
     border_helper::border_info &border_traits = borders.add_border();
@@ -2232,7 +2232,7 @@ void Character::disp_info( bool customize_character )
         draw_traits_tab( ui_traits, w_traits, line, curtab, traitslist, ctxt );
     } );
 
-    // BIONICS
+
     catacurses::window w_bionics;
     catacurses::window w_bionics_border;
     border_helper::border_info &border_bionics = borders.add_border();
@@ -2257,7 +2257,7 @@ void Character::disp_info( bool customize_character )
         draw_bionics_tab( ui_bionics, w_bionics, *this, line, curtab, bionicslist, ctxt );
     } );
 
-    // ENCUMBRANCE
+
     catacurses::window w_encumb;
     catacurses::window w_encumb_border;
     border_helper::border_info &border_encumb = borders.add_border();
@@ -2276,10 +2276,10 @@ void Character::disp_info( bool customize_character )
         draw_encumbrance_tab( ui_encumb, w_encumb, *this, line, curtab, ctxt );
     } );
 
-    // EFFECTS & PROFICIENCIES
+
     unsigned effect_win_size_y;
     unsigned proficiency_win_size_y;
-    // EFFECTS
+
     catacurses::window w_effects;
     catacurses::window w_effects_border;
     border_helper::border_info &border_effects = borders.add_border();
@@ -2303,7 +2303,7 @@ void Character::disp_info( bool customize_character )
         draw_effects_tab( ui_effects, w_effects, line, curtab, effect_name_and_text, ctxt );
     } );
 
-    // PROFICIENCIES
+
     catacurses::window w_proficiencies;
     catacurses::window w_proficiencies_border;
     border_helper::border_info &border_proficiencies = borders.add_border();
@@ -2328,7 +2328,7 @@ void Character::disp_info( bool customize_character )
         draw_proficiencies_tab( ui_proficiencies, w_proficiencies, line, *this, curtab, ctxt );
     } );
 
-    // SKILLS
+
     unsigned int skill_win_size_y = 0;
     catacurses::window w_skills;
     catacurses::window w_skills_border;
@@ -2356,7 +2356,7 @@ void Character::disp_info( bool customize_character )
         draw_skills_tab( ui_skills, w_skills, *this, line, curtab, skillslist, ctxt );
     } );
 
-    // info panel
+
     catacurses::window w_info;
     catacurses::window w_info_border;
     border_helper::border_info &border_info = borders.add_border();
@@ -2379,7 +2379,7 @@ void Character::disp_info( bool customize_character )
                           speedlist, traitslist, bionicslist, effect_name_and_text, skillslist );
     } );
 
-    // SPEED
+
     catacurses::window w_speed;
     catacurses::window w_speed_border;
     border_helper::border_info &border_speed = borders.add_border();
@@ -2402,14 +2402,14 @@ void Character::disp_info( bool customize_character )
 
     bool done = false;
 
-    // needs to have the same windows in the same order as player_display_tab so that mouse scrolling can work
+
     std::vector<catacurses::window *> windows{ &w_stats, &w_encumb, &w_speed, &w_skills, &w_traits, &w_bionics, &w_effects, &w_proficiencies };
 
-    // Reader adapter (R10.1): tab activation only moves this screen's own
-    // tab/line state, exactly like the LEFT/RIGHT keys in
-    // handle_player_display_action; every other intent (including QUIT)
-    // goes through the registered commands of this context. Browsing this
-    // screen never starts treatment or any other gameplay action.
+
+
+
+
+
     a11y::screen_scope reader( &ctxt, "player_display",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "activate" ) {

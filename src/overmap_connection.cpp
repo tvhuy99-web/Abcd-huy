@@ -15,7 +15,7 @@ namespace
 
 generic_factory<overmap_connection> connections( "overmap connection" );
 
-} // namespace
+}
 
 static const std::unordered_map<std::string, overmap_connection::subtype::flag>
 connection_subtype_flag_map = {
@@ -38,7 +38,7 @@ const overmap_connection &string_id<overmap_connection>::obj() const
 bool overmap_connection::subtype::allows_terrain( const int_id<oter_t> &oter ) const
 {
     if( oter->type_is( terrain ) ) {
-        return true;    // Can be built on similar terrains.
+        return true;
     }
 
     return std::any_of( locations.cbegin(),

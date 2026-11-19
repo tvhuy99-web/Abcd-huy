@@ -78,7 +78,7 @@ void event_summary::deserialize( const JsonObject &jo )
 
 void event_multiset::set_type( event_type type )
 {
-    // Used during stats_tracker deserialization to set the type
+
     cata_assert( type_ == event_type::num_event_types );
     type_ = type;
 }
@@ -164,7 +164,7 @@ struct compare_times {
         return l.second.*Member < r.second.*Member;
     }
 };
-} // namespace
+}
 
 std::optional<event_multiset::summaries_type::value_type> event_multiset::first() const
 {
@@ -279,8 +279,8 @@ const cata_variant &stats_tracker::add_watcher(
 
 void stats_tracker::unwatch( base_watcher *watcher )
 {
-    // Use a slow O(n) approach for now; if it proves problematic we can build
-    // an index, but that seems over-complex.
+
+
     auto erase_from = [watcher]( auto & map_of_watcher_sets ) {
         for( auto &p : map_of_watcher_sets ) {
             auto &set = p.second;

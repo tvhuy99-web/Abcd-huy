@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/** Only an actual SDL error may draw the self-voicing recovery controls. */
+
 @RunWith(AndroidJUnit4.class)
 public final class ReaderDebugRecoveryTest {
     private static final class AttachedGameActivity extends CataclysmDDA {

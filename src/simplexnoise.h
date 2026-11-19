@@ -45,9 +45,9 @@ dimension, you can ensure that each gets a unique noise value and they don't
 all look identical.
 */
 
-// Multi-octave Simplex noise
-// For each octave, a higher frequency/lower amplitude function will be added to the original.
-// The higher the persistence [0-1], the more of each succeeding octave will be added.
+
+
+
 float octave_noise_2d( float octaves,
                        float persistence,
                        float scale,
@@ -67,8 +67,8 @@ float octave_noise_4d( float octaves,
                        float z,
                        float w );
 
-// Scaled Multi-octave Simplex noise
-// The result will be between the two parameters passed.
+
+
 float scaled_octave_noise_2d( float octaves,
                               float persistence,
                               float scale,
@@ -94,8 +94,8 @@ float scaled_octave_noise_4d( float octaves,
                               float z,
                               float w );
 
-// Scaled Raw Simplex noise
-// The result will be between the two parameters passed.
+
+
 float scaled_raw_noise_2d( float loBound,
                            float hiBound,
                            float x,
@@ -112,7 +112,7 @@ float scaled_raw_noise_4d( float loBound,
                            float z,
                            float w );
 
-// Raw Simplex noise - a single noise value.
+
 float raw_noise_2d( float x, float y );
 float raw_noise_3d( float x, float y, float z );
 float raw_noise_4d( float x, float y, float, float w );
@@ -123,7 +123,7 @@ float dot( const std::array<int, 3> &g, float x, float y );
 float dot( const std::array<int, 3> &g, float x, float y, float z );
 float dot( const std::array<int, 4> &g, float x, float y, float z, float w );
 
-// The gradients are the midpoints of the vertices of a cube.
+
 inline constexpr std::array<std::array<int, 3>, 12> grad3 = { {
         {1, 1, 0}, {-1, 1, 0}, {1, -1, 0}, {-1, -1, 0},
         {1, 0, 1}, {-1, 0, 1}, {1, 0, -1}, {-1, 0, -1},
@@ -131,7 +131,7 @@ inline constexpr std::array<std::array<int, 3>, 12> grad3 = { {
     }
 };
 
-// The gradients are the midpoints of the vertices of a hypercube.
+
 inline constexpr std::array<std::array<int, 4>, 32> grad4 = { {
         {0, 1, 1, 1},  {0, 1, 1, -1},  {0, 1, -1, 1},  {0, 1, -1, -1},
         {0, -1, 1, 1}, {0, -1, 1, -1}, {0, -1, -1, 1}, {0, -1, -1, -1},
@@ -144,7 +144,7 @@ inline constexpr std::array<std::array<int, 4>, 32> grad4 = { {
     }
 };
 
-// Permutation table.  The same list is repeated twice.
+
 inline const std::array<int, 512> perm = {
     151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142,
     8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117,
@@ -173,7 +173,7 @@ inline const std::array<int, 512> perm = {
     138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
 };
 
-// A lookup table to traverse the simplex around a given point in 4D.
+
 inline constexpr std::array<std::array<int, 4>, 64> simplex = { {
         {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 0, 0, 0}, {0, 2, 3, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {1, 2, 3, 0},
         {0, 2, 1, 3}, {0, 0, 0, 0}, {0, 3, 1, 2}, {0, 3, 2, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {1, 3, 2, 0},
@@ -186,4 +186,4 @@ inline constexpr std::array<std::array<int, 4>, 64> simplex = { {
     }
 };
 
-#endif // CATA_SRC_SIMPLEXNOISE_H
+#endif

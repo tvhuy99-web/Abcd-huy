@@ -41,7 +41,7 @@ class mood_face
         std::vector<std::pair<mood_face_id, mod_id>> src;
         bool was_loaded = false;
 
-        // Always sorted with highest value first
+
         std::vector<mood_face_value> values_;
 };
 
@@ -65,4 +65,4 @@ class mood_face_value
         std::string face_;
 };
 
-#endif // CATA_SRC_MOOD_FACE_H
+#endif

@@ -17,14 +17,14 @@ class morale_type_data
 {
     private:
         bool permanent = false;
-        // May contain '%s' format string
+
         translation text;
     public:
         morale_type id;
         std::vector<std::pair<morale_type, mod_id>> src;
         bool was_loaded = false;
 
-        /** Describes this morale type, with item type to replace wildcard with. */
+
         std::string describe( const itype *it = nullptr ) const;
         bool is_permanent() const {
             return permanent;
@@ -39,4 +39,4 @@ class morale_type_data
         static void reset();
 };
 
-#endif // CATA_SRC_MORALE_TYPES_H
+#endif

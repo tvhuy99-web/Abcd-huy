@@ -15,7 +15,7 @@ import android.widget.Toast;
 import java.io.OutputStream;
 import java.util.Locale;
 
-/** One manual recording switch, spoken-only toggle, export and clear. */
+
 public final class DebugLogActivity extends Activity {
     private static final int EXPORT_FILE_REQUEST = 1917;
     private BootstrapSelfVoiceSurface surface;
@@ -59,14 +59,14 @@ public final class DebugLogActivity extends Activity {
         enabled.setChecked(SessionDebugLog.enabled(this));
         enabled.setOnCheckedChangeListener((button, checked) -> {
             SessionDebugLog.setEnabled(this, checked);
-            // Stop/start the native timing switch immediately, even though
-            // the game activity is paused behind this Android settings UI.
-            // This JNI method changes atomics only, not world/game state.
+
+
+
             try {
                 CataclysmDDA.nativeConfigureReaderPerformance(
                         reader.isSpokenOnlyWorldEnabled(), checked);
             } catch (UnsatisfiedLinkError unavailable) {
-                // The next foreground reader rebind also applies the switch.
+
             }
         });
         mainControls.addView(enabled);
@@ -94,10 +94,10 @@ public final class DebugLogActivity extends Activity {
         });
     }
 
-    /** Keep confirmation inside the same self-voiced gesture surface.
-     * A platform AlertDialog steals touches and leaves the internal reader
-     * unable to activate the positive or negative button.
-     */
+
+
+
+
     private void showClearConfirmation() {
         confirmingClear = true;
         clearButton.setText(R.string.a11yDebugLogClear);
@@ -113,7 +113,7 @@ public final class DebugLogActivity extends Activity {
             SessionDebugLog.clear(this);
             Toast.makeText(this, R.string.a11yDebugLogCleared,
                     Toast.LENGTH_SHORT).show();
-            // Speak the result when focus returns, even without TalkBack.
+
             clearButton.setText(getString(R.string.a11yDebugLogCleared)
                     + ". " + getString(R.string.a11yDebugLogClear));
             showMainControls();
@@ -129,8 +129,8 @@ public final class DebugLogActivity extends Activity {
 
     private void showMainControls() {
         confirmingClear = false;
-        // The third control remains Clear. Returning to it avoids making the
-        // user navigate from the checkbox after cancelling a confirmation.
+
+
         surface.setContent(mainControls, 2);
     }
 
@@ -144,8 +144,8 @@ public final class DebugLogActivity extends Activity {
     }
 
     private void exportLog() {
-        // Export includes only events explicitly captured in this launch.
-        // It remains available after recording is manually switched off.
+
+
         byte[] bytes = SessionDebugLog.snapshot(this);
         if (bytes.length == 0) {
             Toast.makeText(this, R.string.a11yDebugLogEmpty, Toast.LENGTH_SHORT).show();

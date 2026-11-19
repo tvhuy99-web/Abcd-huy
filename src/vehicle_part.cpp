@@ -35,9 +35,9 @@ static const itype_id fuel_type_none( "null" );
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_seed_buckwheat( "seed_buckwheat" );
 
-/*-----------------------------------------------------------------------------
- *                              VEHICLE_PART
- *-----------------------------------------------------------------------------*/
+
+
+
 vehicle_part::vehicle_part()
     : vehicle_part( vpart_id::NULL_ID(), item( vpart_id::NULL_ID()->base_item ) ) { }
 
@@ -74,7 +74,7 @@ std::vector<item> vehicle_part::get_salvageable() const
     if( !salvageable.empty() ) {
         return salvageable;
     }
-    // Get default install component
+
     const requirement_data reqs = info().install_requirements();
     for( const auto &altercomps : reqs.get_components() ) {
         const item_comp &comp = altercomps.front();
@@ -111,24 +111,24 @@ std::string vehicle_part::name( bool with_prefix ) const
     if( with_prefix ) {
         res += base.damage_indicator() + base.degradation_symbol() + " ";
         if( !base.type->degrade_increments() ) {
-            res += " "; // aligns names when printing degrading and non-degrading parts with prefixes
+            res += " ";
         }
     }
     if( base.is_wheel() ) {
         res += string_format( _( "%d\" " ), base.type->wheel->diameter );
     }
     res += info().name();
-    // animal carrier
+
     if( base.has_var( "contained_name" ) ) {
         res += string_format( _( " holding %s" ), base.get_var( "contained_name" ) );
     }
-    // furniture tiedown
+
     if( base.has_var( "tied_down_furniture" ) ) {
         furn_str_id stored_furniture( base.get_var( "tied_down_furniture" ) );
         if( stored_furniture.is_valid() ) {
             res += string_format( _( " holding %s" ), stored_furniture->name() );
         } else {
-            // no debugmsg or else it will trigger every frame, essentially forcing (i)gnore error to exit the menu at all
+
             //~Invalid here means it doesn't refer to a real furn_str_id, i.e. something is wrong with the game. This is not a state the player should normally encounter.
             res += _( " holding invalid furniture" );
         }
@@ -208,7 +208,7 @@ double vehicle_part::damage_percent() const
     return static_cast<double>( damage() ) / max_damage();
 }
 
-/** parts are considered broken at zero health */
+
 bool vehicle_part::is_broken() const
 {
     return base.damage() >= base.max_damage();
@@ -326,13 +326,13 @@ int vehicle_part::remaining_ammo_capacity() const
 
 int vehicle_part::ammo_set( const itype_id &ammo, int qty )
 {
-    // We often check if ammo is set to see if tank is empty, if qty == 0 don't set ammo
+
     if( is_tank() && qty != 0 ) {
         const itype *ammo_itype = item::find_type( ammo );
         if( ammo_itype && ammo_itype->phase >= phase_id::LIQUID ) {
             base.clear_items();
             const int limit = item_capacity( ammo );
-            // assuming "ammo" isn't really going into a magazine as this is a vehicle part
+
             const int amount = qty > 0 ? std::min( qty, limit ) : limit;
             base.put_in( item( ammo, calendar::turn, amount ), pocket_type::CONTAINER );
             return amount;
@@ -412,7 +412,7 @@ units::energy vehicle_part::consume_energy( const vehicle_cursor &cur, const ity
 
 bool vehicle_part::can_reload( const item &obj ) const
 {
-    // first check part is not destroyed and can contain ammo
+
     if( !is_fuel_store() ) {
         return false;
     }
@@ -427,23 +427,23 @@ bool vehicle_part::can_reload( const item &obj ) const
             return base.can_reload_with( obj, true );
         }
 
-        // forbid filling tanks with solids or non-material things
+
         if( is_tank() && ( obj.made_of( phase_id::SOLID ) || obj.made_of( phase_id::PNULL ) ) ) {
             return false;
         }
-        // forbid putting liquids, gasses, and plasma in things that aren't tanks
+
         if( !obj.made_of( phase_id::SOLID ) && !is_tank() ) {
             return false;
         }
-        // prevent mixing of different ammo
+
         if( !ammo_current().is_null() && ammo_current() != obj_type ) {
             return false;
         }
-        // For storage with set type, prevent filling with different types
+
         if( info().fuel_type != fuel_type_none && info().fuel_type != obj_type ) {
             return false;
         }
-        // don't fill magazines with inappropriate fuel
+
         if( !is_tank() && !base.can_reload_with( obj, true ) ) {
             return false;
         }
@@ -457,22 +457,22 @@ bool vehicle_part::can_reload( const item &obj ) const
     }
 
     if( ammo_current().is_null() ) {
-        return true; // empty tank
+        return true;
     }
 
-    // Despite checking for an empty tank, item::find_type can still turn up with an empty ammo pointer
+
     if( cata::value_ptr<islot_ammo> a_val = item::find_type( ammo_current() )->ammo ) {
         return ammo_remaining( ) < ammo_capacity( a_val->type );
     }
 
-    // Nothing in tank
+
     return ammo_capacity( obj.ammo_type() ) > 0;
 }
 
 void vehicle_part::process_contents( map &here, const tripoint_bub_ms &pos, const bool e_heater )
 {
-    // for now we only care about processing food containers since things like
-    // fuel don't care about temperature yet
+
+
     temperature_flag flag = temperature_flag::NORMAL;
     if( e_heater ) {
         flag = temperature_flag::HEATER;
@@ -497,7 +497,7 @@ bool vehicle_part::fill_with( item &liquid, int qty )
     if( cata::value_ptr<islot_ammo> a_val = item::find_type( ammo_current() )->ammo ) {
         charges_max = ammo_capacity( a_val->type ) - ammo_remaining( );
     } else {
-        // Nothing in tank
+
         charges_max = ammo_capacity( liquid.ammo_type() );
     }
     qty = qty < liquid.charges ? qty : liquid.charges;
@@ -570,7 +570,7 @@ void vehicle_part::load_furniture( map &here, const tripoint_bub_ms &from )
         return;
     }
 
-    // The awful hack that makes this all work. We store the furniture's string id directly on the item as an item var.
+
     base.set_var( "tied_down_furniture", here.furn( from ).id().str() );
     here.furn_clear( from );
 }
@@ -746,7 +746,7 @@ bool vehicle::can_enable( map &here, const vehicle_part &pt, bool alert ) const
         return false;
     }
 
-    // FIXME/HACK: Always checks buckwheat seeds!
+
     ret_val<void>can_plant = warm_enough_to_plant( get_player_character().pos_bub(),
                              itype_seed_buckwheat );
     if( pt.info().has_flag( "PLANTER" ) && !can_plant.success() ) {
@@ -756,7 +756,7 @@ bool vehicle::can_enable( map &here, const vehicle_part &pt, bool alert ) const
         return false;
     }
 
-    // TODO: check fuel for combustion engines
+
 
     if( pt.info().epower < 0_W && fuel_left( here, fuel_type_battery ) <= 0 ) {
         if( alert ) {
@@ -774,10 +774,10 @@ bool vehicle::assign_seat( vehicle_part &pt, const npc &who )
         return false;
     }
 
-    // NPC's can only be assigned to one seat in the vehicle
+
     for( vehicle_part &e : parts ) {
         if( &e == &pt ) {
-            // skip this part
+
             continue;
         }
 

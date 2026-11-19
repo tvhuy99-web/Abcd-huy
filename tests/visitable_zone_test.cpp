@@ -18,7 +18,7 @@
 #include "rng.h"
 #include "type_id.h"
 
-// The area of the whole map from two below to one above ground level.
+
 static const tripoint_bub_ms p1( 0, 0, -2 );
 static const tripoint_bub_ms p2( ( MAPSIZE *SEEX ) - 1, ( MAPSIZE *SEEY ) - 1, 1 );
 
@@ -36,7 +36,7 @@ struct structure {
     std::string name_;
 };
 
-} // namespace
+}
 
 static void place_structures( const std::vector<structure> &spawn_areas,
                               std::vector<std::vector<tripoint_bub_ms>> &interior_areas,
@@ -47,11 +47,11 @@ static void place_structures( const std::vector<structure> &spawn_areas,
     for( const tripoint_bub_ms &p : here.points_in_rectangle( p1, p2 ) ) {
         bool found = false;
         for( unsigned int i = 0; i < spawn_areas.size(); ++i ) {
-            // Indexing so these can pair up with interior_areas.
+
             const structure &spawn_area = spawn_areas[i];
             if( spawn_area.contains( p ) ) {
                 found = true;
-                // Uppermost level (if any) gets a roof covering the whole footprint.
+
                 if( spawn_area.area.p_max.z() != spawn_area.area.p_min.z() && p.z() == spawn_area.area.p_max.z() ) {
                     rooftop_area.emplace_back( p );
                     here.ter_set( p, ter_id( "t_flat_roof" ) );
@@ -79,7 +79,7 @@ static void place_structures( const std::vector<structure> &spawn_areas,
     }
 }
 
-// Just make all the buildings the same size.
+
 static constexpr int building_width = 7;
 static constexpr int building_height = 1;
 static constexpr tripoint_rel_ms building_offset{ building_width, building_width, building_height };
@@ -92,24 +92,24 @@ TEST_CASE( "visitable_zone_surface_test" )
 
     std::string mon_type = "mon_zombie";
     std::vector<monster *> monsters;
-    // All of these origins must be building_width + 3 away from each other.
-    // Surface building locations.
+
+
     const tripoint_bub_ms enclosed_building{ 30, 30, 0 };
     const tripoint_bub_ms closed_door = enclosed_building + tripoint::east * 2;
-    // Surface building with a door.
+
     const tripoint_bub_ms door_building{ 40, 30, 0 };
     const tripoint_bub_ms open_door = door_building + tripoint::east * 2;
-    // Surface building with a window.
+
     const tripoint_bub_ms window_building{ 50, 30, 0 };
     const tripoint_bub_ms window = window_building + tripoint::south * 2;
-    // Underground room.
+
     const tripoint_bub_ms underground_room{ 60, 30, -1 };
-    // Underground room.
+
     const tripoint_bub_ms underground_stairs_room{ 70, 30, -1 };
     const tripoint_bub_ms underground_stairs_up = underground_stairs_room +
             tripoint::south_east * 3;
     const tripoint_bub_ms underground_stairs_down = underground_stairs_up + tripoint::above;
-    // Elevated building with stairs to the surface.
+
     const tripoint_bub_ms stilts_building{ 80, 30, 1 };
     const tripoint_bub_ms stilts_stairs_down = stilts_building + tripoint::south_east * 3;
     const tripoint_bub_ms stilts_stairs_up = stilts_stairs_down + tripoint::below;
@@ -135,13 +135,13 @@ TEST_CASE( "visitable_zone_surface_test" )
     here.ter_set( stilts_stairs_up, ter_id( "t_wood_stairs_up" ) );
     here.ter_set( stilts_stairs_down, ter_id( "t_wood_stairs_down" ) );
 
-    // Reset all the map caches after editing the map.
+
     for( int i = OVERMAP_HEIGHT; i >= -OVERMAP_DEPTH; --i ) {
         here.invalidate_map_cache( i );
         here.build_map_cache( i, true );
     }
 
-    // Some spot checks of our map edits.
+
     REQUIRE( !here.passable( enclosed_building + point::east ) );
     REQUIRE( !here.passable( door_building + point::south ) );
     REQUIRE( !here.is_transparent_wo_fields( tripoint_bub_ms( enclosed_building + point::east ) ) );
@@ -203,7 +203,7 @@ TEST_CASE( "visitable_zone_surface_test" )
         int visited_count = 0;
         tracker.for_each_reachable( *mon, [zone, &visited_count]( Creature * creature ) {
             CHECK( zone == creature->get_reachable_zone() );
-            // Don't count the player.
+
             if( creature->is_monster() ) {
                 ++visited_count;
             }

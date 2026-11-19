@@ -7,12 +7,12 @@
 #include "cata_catch.h"
 #include "point.h"
 
-// A larger number for this would be GREAT, but the test isn't efficient enough to make it larger.
-// Previously tried inserting into an unordered_set,
-// but that was slower than appending to a vector and doing the sort+unique manually.
-// This should be dramatically faster (but approximate) if we insert into a HyperLogLog instead.
+
+
+
+
 #ifdef _GLIBCXX_DEBUG
-// Smaller test on libstdc++ debug containers because otherwise this takes ~1 minute.
+
 constexpr int MAX_COORDINATE = 30;
 #else
 static constexpr int MAX_COORDINATE = 300;

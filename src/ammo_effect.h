@@ -72,33 +72,33 @@ struct ammo_effect {
         void load( const JsonObject &jo, std::string_view src );
         void check() const;
 
-        // x in 100
+
         int trigger_chance = 100;
-        // apply_ammo_effects()
+
         bool do_flashbang = false;
-        // apply_ammo_effects()
+
         bool do_emp_blast = false;
-        // apply_ammo_effects()
+
         bool foamcrete_build = false;
-        // if true, spell is castes no matter if creature was hit or not
+
         bool always_cast_spell = false;
 
-        // apply_ammo_effects()
+
         explosion_data aoe_explosion_data;
-        // apply_ammo_effects()
+
         std::vector<aoe_field_effect> aoe_field_types;
-        // map::shoot()
+
         std::vector<trail_field_effect> trail_field_types;
-        // apply_effects_nodamage()
+
         std::vector<on_hit_effect> on_hit_effects;
-        // apply_effects_nodamage()
+
         std::vector<aoe_effect> aoe_effects;
-        // apply_ammo_effects()
+
         std::vector<fake_spell> spell_data;
-        // apply_ammo_effects()
+
         std::vector<effect_on_condition_id> eoc;
 
-        // Used by generic_factory
+
         ammo_effect_str_id id;
         std::vector<std::pair<ammo_effect_str_id, mod_id>> src;
         bool was_loaded = false;
@@ -116,8 +116,8 @@ void reset();
 
 const std::vector<ammo_effect> &get_all();
 
-} // namespace ammo_effects
+}
 
 extern ammo_effect_id AE_NULL;
 
-#endif // CATA_SRC_AMMO_EFFECT_H
+#endif

@@ -80,6 +80,6 @@ class ememory_in_kilobytes_tag
 
 using ememory = quantity<std::int64_t, ememory_in_kilobytes_tag>;
 
-} // namespace units
+}
 
-#endif // CATA_SRC_UNITS_FWD_H
+#endif

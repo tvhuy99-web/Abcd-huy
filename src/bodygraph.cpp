@@ -50,16 +50,16 @@ namespace
 
 generic_factory<bodygraph> bodygraph_factory( "bodygraph" );
 
-} // namespace
+}
 
-/** @relates string_id */
+
 template<>
 const bodygraph &string_id<bodygraph>::obj() const
 {
     return bodygraph_factory.obj( *this );
 }
 
-/** @relates string_id */
+
 template<>
 bool string_id<bodygraph>::is_valid() const
 {
@@ -228,23 +228,23 @@ void bodygraph::check() const
     }
 }
 
-/***************************** Display routines *****************************/
 
-/* Basic layout. Not accurate or final, but illustrates the basic idea.
 
-     parts list                      body graph                  part info
-<- variable width -><------------ fixed width (40) --------><- variable width ->
 
-+------------------+----------------Body Status-------------+------------------+
-| >Head            |                                        | Worn:            |
-|  Torso           |                     O                  |  Baseball cap,   |
-|  L. Arm          |                   #####                |  Eyeglasses      |
-|  R. Arm          |                  #######               | Coverage: ~60%   |
-|  L. Hand         |                 ## ### ##              | Encumbrance: 8   |
-|  R. Hand         |                 #  ###  #              | Protection:      |
-...
 
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 using part_tuple =
     std::tuple<bodypart_id, const sub_body_part_type *, const bodygraph_part *, bool>;
@@ -261,11 +261,11 @@ struct bodygraph_display {
     catacurses::window w_partlist;
     catacurses::window w_graph;
     catacurses::window w_info;
-    // For each tuple:
-    //   0 = bodypart or parent of subpart
-    //   1 = subpart (if viewing a sub part)
-    //   2 = bodygraph data for this part
-    //   3 = part is present on character
+
+
+
+
+
     std::vector<part_tuple> partlist;
     bodygraph_info info;
     std::vector<std::string> info_txt;
@@ -293,7 +293,7 @@ struct bodygraph_display {
     void draw_info();
     void display();
 };
-} // namespace
+}
 
 bodygraph_display::bodygraph_display( const Character *u, const bodygraph_id &id ) :
     u( u ), id( id ), ctxt( "BODYGRAPH" )
@@ -320,7 +320,7 @@ void bodygraph_display::init_ui_windows()
 
     int base_width = BPGRAPH_MAXCOLS + partlist_width + info_width + 4;
     all_width = clamp( base_width + 40, 0, TERMX );
-    // distribute extra horizontal space to the parts/info columns
+
     for( int i = base_width; i < all_width; i++ ) {
         if( i % 4 == 0 ) {
             partlist_width++;
@@ -354,12 +354,12 @@ void bodygraph_display::draw_borders()
         return 2 + first_win_width + ( BPGRAPH_MAXCOLS / 2 - utf8_width( txt, true ) / 2 );
     };
 
-    // window title
+
     const std::string title_txt = string_format( "< %s >", colorize( _( "Body status" ), c_yellow ) );
     trim_and_print( w_border, point( center_txt_start( title_txt ), 0 ),
                     BPGRAPH_MAXCOLS, c_white, title_txt );
 
-    // body part subtitle
+
     if( id->parent_bp.has_value() ) {
         const std::string bpname = string_format( "\\_ %s _/",
                                    colorize( to_upper_case( id->parent_bp.value()->name.translated() ), c_yellow ) );
@@ -414,7 +414,7 @@ static const bodygraph_id &get_bg_rows( const bodygraph_id &bgid )
     if( !!bgid->mirror ) {
         return get_bg_rows( bgid->mirror.value() );
     }
-    // bodygraph_id is a string_id with stable storage; callers do not pass temporaries.
+
     // NOLINTNEXTLINE(bugprone-return-const-ref-from-parameter)
     return bgid;
 }
@@ -482,26 +482,26 @@ void bodygraph_display::prepare_partlist()
 
 void bodygraph_display::prepare_infolist()
 {
-    // reset info for a new read
+
     info = bodygraph_info();
     info_txt.clear();
 
-    // if character doesn't have this part, don't generate info
+
     if( !std::get<3>( partlist[sel_part] ) ) {
         return;
     }
 
     const bodypart_id &bp = std::get<0>( partlist[sel_part] );
 
-    // sbps will either be a group for a body part and we'll need to do averages OR a single sub part
+
     std::set<sub_bodypart_id> sub_parts;
 
-    // this might be null need to test for nullbp as this all continues
+
     if( std::get<1>( partlist[sel_part] ) != nullptr ) {
         sub_parts.emplace( std::get<1>( partlist[sel_part] )->id );
     } else {
         for( const sub_bodypart_str_id &sbp : bp->sub_parts ) {
-            // don't worry about secondary sub parts would just make things confusing
+
             if( !sbp->secondary ) {
                 sub_parts.emplace( sbp.id() );
             }
@@ -510,7 +510,7 @@ void bodygraph_display::prepare_infolist()
 
     u->worn.prepare_bodymap_info( info, bp, sub_parts, *u );
 
-    // update info text cache
+
     prepare_infotext( true );
 }
 
@@ -518,18 +518,18 @@ void bodygraph_display::prepare_infotext( bool reset_pos )
 {
     top_info = reset_pos ? 0 : top_info;
     if( info.specific_sublimb ) {
-        // parent part
+
         info_txt.emplace_back( string_format( "%s: %s", colorize( _( "Sub part of" ), c_magenta ),
                                               info.parent_bp_name ) );
     }
-    // part health
+
     std::pair<std::string, nc_color> hpbar = get_hp_bar( info.part_hp_cur, info.part_hp_max );
     info_txt.emplace_back( string_format( "%s: %s", colorize( _( "Health" ), c_magenta ),
                                           colorize( hpbar.first, hpbar.second ) ) );
-    // part wetness
+
     info_txt.emplace_back( string_format( "%s: %d%%", colorize( _( "Wetness" ), c_magenta ),
                                           static_cast<int>( info.wetness * 100.0f ) ) );
-    // part temperature
+
     const bool temp_precise = u->cache_has_item_with( json_flag_THERMOMETER ) ||
                               u->has_flag( json_flag_THERMOMETER );
     const units::temperature temp = units::from_legacy_bodypart_temp( info.temperature.first );
@@ -537,7 +537,7 @@ void bodygraph_display::prepare_infotext( bool reset_pos )
                                           temp_precise ? colorize( print_temperature( temp ),
                                                   info.temperature.second ) : info.temp_approx ) );
     info_txt.emplace_back( "--" );
-    // part effects
+
     info_txt.emplace_back( string_format( "%s:", colorize( _( "Effects" ), c_magenta ) ) );
     for( const effect &eff : info.effects ) {
         if( eff.get_id()->is_show_in_info() ) {
@@ -547,18 +547,18 @@ void bodygraph_display::prepare_infotext( bool reset_pos )
         }
     }
     info_txt.emplace_back( "--" );
-    // worn armor
+
     info_txt.emplace_back( string_format( "%s:", colorize( _( "Worn" ), c_magenta ) ) );
     for( const std::string &worn : info.worn_names ) {
         info_txt.emplace_back( string_format( "  %s", worn ) );
     }
     info_txt.emplace_back( "--" );
-    // coverage
+
     info_txt.emplace_back( string_format( "%s: %d%%",
                                           colorize( info.specific_sublimb ? _( "Coverage" ) : _( "Coverage (Avg.)" ), c_magenta ),
                                           info.avg_coverage ) );
     info_txt.emplace_back( "--" );
-    // Env protection
+
     info_txt.emplace_back(
         string_format(
             "%s: %d",
@@ -570,11 +570,11 @@ void bodygraph_display::prepare_infotext( bool reset_pos )
         )
     );
     info_txt.emplace_back( "--" );
-    // encumbrance
+
     info_txt.emplace_back( string_format( "%s: %d", colorize( _( "Encumbrance" ), c_magenta ),
                                           info.total_encumbrance ) );
     info_txt.emplace_back( "--" );
-    // protection
+
     info_txt.emplace_back( string_format( "%s:",
                                           colorize( info.specific_sublimb ? _( "Protection" ) : _( "Protection (Avg.)" ), c_magenta ) ) );
     std::string prot_legend = string_format( "%s %s %s", colorize( _( "worst" ), c_red ),
@@ -632,8 +632,8 @@ void bodygraph_display::display()
     prepare_partlist();
     prepare_infolist();
 
-    // The graphic is still drawn normally; the reader gets a complete
-    // navigable list and the currently highlighted part's real details.
+
+
     a11y::screen_scope reader( &ctxt, "body-status",
     [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         for( std::size_t i = 0; i < partlist.size(); ++i ) {
@@ -742,7 +742,7 @@ std::vector<std::string> get_bodygraph_lines( const Character &u,
 
     std::vector<std::string> ret;
 
-    // Bodypart not present on character
+
     if( !!id->parent_bp && !u.has_part( *id->parent_bp, body_part_filter::equivalent ) ) {
         std::string txt = string_format( u.is_avatar() ?
                                          //~ 1$ = 2nd person pronoun (You), 2$ = body part (left arm)

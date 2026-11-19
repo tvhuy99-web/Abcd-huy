@@ -33,6 +33,6 @@ class TranslationManager
                                                 const char *plural, std::size_t n ) const;
 };
 
-#endif // defined(LOCALIZE)
+#endif
 
-#endif // CATA_SRC_TRANSLATION_MANAGER_H
+#endif

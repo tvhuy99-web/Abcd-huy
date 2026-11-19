@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-# decompose.py
-# Split a gfx tile_config.json into 1000s of little directories,
-# each with their own config file and tile image.
+
+
+
 
 """Split a tileset's tile_config.json into one directory per tile
 containing the tile data and png.
@@ -47,7 +47,7 @@ def find_or_make_dir(pathname):
 class TileSheetData(object):
     def __init__(self, tilesheet_data, refs):
         self.ts_filename = tilesheet_data.get("file", "")
-        #print("working on {}".format(self.ts_filename))
+
         self.tile_entries = {}
         self.sprite_height = tilesheet_data.get(
             "sprite_height", refs.default_height)
@@ -80,9 +80,9 @@ class TileSheetData(object):
         self.pngnum_min = refs.last_pngnum
         self.pngnum_max = \
             refs.last_pngnum + self.ts_tiles_per_row * self.ts_rows - 1
-        #print("\t{}x{}; {} rows; spans {} to {}".format(
-        #    self.ts_width, self.ts_height, self.ts_rows,
-        #    self.pngnum_min, self.pngnum_max))
+
+
+
         self.expansions = []
         self.fallback = tilesheet_data.get("ascii")
         refs.last_pngnum = self.pngnum_max + 1
@@ -98,7 +98,7 @@ class TileSheetData(object):
     def check_id_valid(self, tile_id):
         if not tile_id:
             return True
-        # wielded terrain isn't valid
+
         if tile_id.startswith("overlay_wielded_t_"):
             return False
         if tile_id.startswith("overlay_wielded_mon_"):
@@ -107,7 +107,7 @@ class TileSheetData(object):
             return False
         if tile_id.startswith("overlay_wielded_f_"):
             return False
-        # wielding or wearing overlays makes no sense
+
         if tile_id.startswith("overlay_wielded_overlay"):
             return False
         if tile_id.startswith("overlay_worn_overlay"):
@@ -131,7 +131,7 @@ class TileSheetData(object):
             return None, None
         if not all_tile_ids:
             return "background", ["background"]
-        #print("tile {}".format(all_tile_ids[0]))
+
         return all_tile_ids[0], all_tile_ids
 
     def parse_index(self, read_pngnums, all_pngnums, refs):
@@ -184,7 +184,7 @@ class TileSheetData(object):
             for add_pngnum in add_pngnums:
                 if add_pngnum not in all_pngnums:
                     all_pngnums.append(add_pngnum)
-        # print("\tpngs: {}".format(all_pngnums))
+
         return all_pngnums
 
     def parse_tile_entry(self, tile_entry, refs):
@@ -192,7 +192,7 @@ class TileSheetData(object):
             return None
         tile_id, all_tile_ids = self.parse_id(tile_entry)
         if not tile_id:
-            # print("no id for {}".format(tile_entry))
+
             return None
         tile_id = tile_id.replace("/", "_")
         all_pngnums = self.parse_png(tile_entry, refs)
@@ -216,9 +216,9 @@ class TileSheetData(object):
         return tile_id
 
     def summarize(self, tile_info, refs):
-        #debug statement to verify pngnum_min and pngnum_max
-        #print("{} from {} to {}".format(
-        #    self.ts_filename, self.pngnum_min, self.pngnum_max))
+
+
+
         if self.fallback:
             refs.ts_data[self.ts_filename] = self
             ts_tile_info = {
@@ -246,8 +246,8 @@ class TileSheetData(object):
                         self.sprite_offset_y_retracted
             if self.pixelscale != 1.0:
                 ts_tile_info["pixelscale"] = self.pixelscale
-            #print("{}: {}".format(
-            #    self.ts_filename, json.dumps(ts_tile_info, indent=2)))
+
+
             tile_info.append({self.ts_filename: ts_tile_info})
 
 
@@ -320,19 +320,19 @@ class ExtractionData(object):
 
 class PngRefs(object):
     def __init__(self):
-        # dict of png absolute numbers to png names
+
         self.pngnum_to_pngname = {}
-        # dict of pngnames to png numbers; used to control uniqueness
+
         self.pngname_to_pngnum = {}
-        # dict of png absolute numbers to tilesheet paths,
-        # used to know where to extract images
+
+
         self.pngnum_to_tspathname = {}
         self.tspathname_to_tsfilename = {}
-        # list of pngs written out
+
         self.extracted_pngnums = {}
-        # list of pngs to not use
+
         self.delete_pngnums = []
-        # misc data
+
         self.tileset_pathname = ""
         self.default_width = 16
         self.default_height = 16
@@ -424,9 +424,9 @@ class PngRefs(object):
         new_id = ""
         entity_id = tile_entry["id"]
         if isinstance(entity_id, list):
-            # we have to truncate the name since it could get really long,
-            # which means this still may not be unique in the case of a
-            # bunch instances like this but it's better than nothing...
+
+
+
             new_id = "_".join(entity_id)[0:150]
         else:
             new_id = entity_id
@@ -484,13 +484,13 @@ if __name__ == '__main__':
                 tile_entries[tile_id].append(tile_entry)
         ts_data.tile_entries = tile_entries
 
-    #debug statements to verify pngnum_to_pngname and pngname_to_pngnum
-    #print("pngnum_to_pngname: {}".format(
-    #    json.dumps(refs.pngnum_to_pngname, sort_keys=True, indent=2)))
-    #print("pngname_to_pngnum: {}".format(
-    #    json.dumps(refs.pngname_to_pngnum, sort_keys=True, indent=2)))
-    #print("{}".format(json.dumps(file_tile_id_to_tile_entrys, indent=2)))
-    #print("{}".format(json.dumps(refs.pngnum_to_tspathname, indent=2)))
+
+
+
+
+
+
+
 
     for ts_filename in ts_sequence:
         out_data = ExtractionData(ts_filename, refs)
@@ -500,8 +500,8 @@ if __name__ == '__main__':
         out_data.write_expansions()
 
         for tile_id, tile_entrys in out_data.ts_data.tile_entries.items():
-            #print("tile id {} with {} entries".format(
-            #    tile_id, len(tile_entrys)))
+
+
             for idx, tile_entry in enumerate(tile_entrys):
                 subdir_pathname = out_data.increment_dir()
                 tile_entry_name, tile_entry = \
@@ -511,8 +511,8 @@ if __name__ == '__main__':
                 tile_entry_pathname = "{}/{}_{}.json".format(
                     subdir_pathname, tile_entry_name, idx)
 
-                #if os.path.isfile(tile_entry_pathname):
-                #    print("overwriting {}".format(tile_entry_pathname))
+
+
                 write_to_json(tile_entry_pathname, tile_entry)
         out_data.write_images(refs)
 

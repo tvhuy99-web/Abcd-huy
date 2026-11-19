@@ -223,9 +223,9 @@ static const trait_id trait_PHEROMONE_MAMMAL( "PHEROMONE_MAMMAL" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
-// Limit the number of iterations for next upgrade_time calculations.
-// This also sets the percentage of monsters that will never upgrade.
-// The rough formula is 2^(-x), e.g. for x = 5 it's 0.03125 (~ 3%).
+
+
+
 static constexpr int UPGRADE_MAX_ITERS = 5;
 
 static const std::map<creature_size, translation> size_names {
@@ -365,8 +365,8 @@ float monster::luminance() const
     return calculate_by_enchantment( type->luminance, enchant_vals::mod::LUMINATION, true );
 }
 
-void monster::on_effect_int_change( const efftype_id &/*eid*/, int /*intensity*/,
-                                    const bodypart_id &/*bp*/ )
+void monster::on_effect_int_change( const efftype_id & , int ,
+                                    const bodypart_id & )
 {
     map &here = get_map();
     if( here.inbounds( pos_bub() ) ) {
@@ -417,7 +417,7 @@ void monster::gravity_check( map *here )
     }
 }
 
-// For master special attack.
+
 void monster::hasten_upgrade()
 {
     if( !can_upgrade() || upgrade_time < 1 ) {
@@ -436,21 +436,21 @@ int monster::get_upgrade_time() const
     return upgrade_time;
 }
 
-// Sets time to upgrade to 0.
+
 void monster::allow_upgrade()
 {
     upgrade_time = 0;
 }
 
-// This will disable upgrades in case max iters have been reached.
-// Checking for return value of -1 is necessary.
+
+
 int monster::next_upgrade_time()
 {
     if( type->age_grow > 0 ) {
         return type->age_grow;
     }
     const int scaled_half_life = type->half_life * get_option<float>( "EVOLUTION_INVERSE_MULTIPLIER" );
-    int day = 1; // 1 day of guaranteed evolve time
+    int day = 1;
     for( int i = 0; i < UPGRADE_MAX_ITERS; i++ ) {
         if( one_in( 2 ) ) {
             day += rng( 0, scaled_half_life );
@@ -459,7 +459,7 @@ int monster::next_upgrade_time()
             day += scaled_half_life;
         }
     }
-    // didn't manage to upgrade, shouldn't ever then
+
     upgrades = false;
     return -1;
 }
@@ -473,33 +473,33 @@ void monster::try_upgrade( bool pin_time )
     }
 
     const int current_day = to_days<int>( calendar::turn - calendar::turn_zero );
-    //This should only occur when a monster is created or upgraded to a new form
+
     if( upgrade_time < 0 ) {
         upgrade_time = next_upgrade_time();
         if( upgrade_time < 0 ) {
             return;
         }
         if( pin_time || type->age_grow > 0 ) {
-            // offset by today, always true for growing creatures
+
             upgrade_time += current_day;
         } else {
-            // offset by starting season
-            // TODO: revisit this and make it simpler
+
+
             upgrade_time += to_days<int>( calendar::start_of_cataclysm - calendar::turn_zero );
         }
     }
 
-    // Here we iterate until we either are before upgrade_time or can't upgrade any more.
-    // This is so that late into game new monsters can 'catch up' with all that half-life
-    // upgrades they'd get if we were simulating whole world.
+
+
+
     while( true ) {
         if( upgrade_time > current_day ) {
-            // not yet
+
             return;
         }
 
         if( type->upgrade_into ) {
-            //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
+
             if( MonsterGroupManager::monster_is_blacklisted( type->upgrade_into ) ) {
                 return;
             }
@@ -511,7 +511,7 @@ void monster::try_upgrade( bool pin_time )
                 std::vector<MonsterGroupResult> res = MonsterGroupManager::GetResultFromGroup(
                         type->upgrade_group, nullptr, nullptr, false, &ret_default );
                 if( !res.empty() && !ret_default ) {
-                    // Set the type to poly the current monster (preserves inventory)
+
                     new_type = res.front().id;
                     res.front().pack_size--;
                     for( const MonsterGroupResult &mgr : res ) {
@@ -537,7 +537,7 @@ void monster::try_upgrade( bool pin_time )
                 if( new_type ) {
                     poly( new_type );
                 } else {
-                    // "upgrading" to mon_null
+
                     if( type->upgrade_null_despawn ) {
                         g->remove_zombie( *this );
                     } else {
@@ -549,13 +549,13 @@ void monster::try_upgrade( bool pin_time )
         }
 
         if( !upgrades ) {
-            // upgraded into a non-upgradeable monster
+
             return;
         }
 
         const int next_upgrade = next_upgrade_time();
         if( next_upgrade < 0 ) {
-            // hit never_upgrade
+
             return;
         }
         upgrade_time += next_upgrade;
@@ -572,7 +572,7 @@ void monster::try_reproduce()
     if( !reproduces ) {
         return;
     }
-    // This can happen if the monster type has changed (from reproducing to non-reproducing monster)
+
     if( !type->baby_timer ) {
         return;
     }
@@ -580,7 +580,7 @@ void monster::try_reproduce()
     bool season_spawn = false;
     bool season_match = true;
 
-    // only 50% of animals should reproduce
+
     bool female = one_in( 2 );
     for( const std::string &elem : type->baby_flags ) {
         if( elem == "SUMMER" || elem == "WINTER" || elem == "SPRING" || elem == "AUTUMN" ) {
@@ -589,7 +589,7 @@ void monster::try_reproduce()
     }
 
     map &here = get_map();
-    // add a decreasing chance of additional spawns when "catching up" an existing animal.
+
     int chance = -1;
     while( true ) {
         if( !baby_timer.has_value() || *baby_timer > calendar::turn ) {
@@ -643,26 +643,26 @@ void monster::refill_udders()
         return;
     }
     if( ammo.empty() ) {
-        // legacy animals got empty ammo map, fill them up now if needed.
+
         ammo[type->starting_ammo.begin()->first] = type->starting_ammo.begin()->second;
     }
     auto current_milk = ammo.find( itype_milk_raw );
     if( current_milk == ammo.end() ) {
         current_milk = ammo.find( itype_milk );
         if( current_milk != ammo.end() ) {
-            // take this opportunity to update milk udders to raw_milk
+
             ammo[itype_milk_raw] = current_milk->second;
-            // Erase old key-value from map
+
             ammo.erase( current_milk );
         }
     }
-    // if we got here, we got milk.
+
     if( current_milk->second == type->starting_ammo.begin()->second ) {
-        // already full up
+
         return;
     }
     if( calendar::turn - udder_timer > 1_days ) {
-        // You milk once a day.
+
         ammo.begin()->second = type->starting_ammo.begin()->second;
         udder_timer = calendar::turn;
     }
@@ -687,8 +687,8 @@ void monster::try_biosignature()
     map &here = get_map();
     int counter = 0;
     while( true ) {
-        // don't catch up too much, otherwise on some scenarios,
-        // we could have years worth of poop just deposited on the floor.
+
+
         if( *biosig_timer > calendar::turn || counter > 50 ) {
             return;
         }
@@ -739,7 +739,7 @@ std::string monster::name( unsigned int quantity ) const
     return result;
 }
 
-// TODO: MATERIALS put description in materials.json?
+
 std::string monster::name_with_armor() const
 {
     std::string ret;
@@ -844,7 +844,7 @@ std::string monster::speed_description( float mon_speed_rating,
         player_runcost = 0.01f;
     }
 
-    // tpt = tiles per turn
+
     const double player_tpt = ply.get_speed() / player_runcost;
     double ratio_tpt = player_tpt == 0.00 ?
                        100.00 : mon_speed_rating / player_tpt;
@@ -867,9 +867,9 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     const int max_width = getmaxx( w ) - column - 1;
     std::ostringstream oss;
 
-    // This header specifically refers to them as a somewhat-misleading "Creatures" instead of "Monsters".
-    // This is because many of our "Monster" objects do not represent things that are pejorative monsters.
-    // Therefore the header is intentionally *neutral* on the language.
+
+
+
     mvwprintz( w, point( column, vStart++ ), c_light_blue, _( "-----CREATURE-----" ) );
 
     if( debug_mode ) {
@@ -881,7 +881,7 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     }
     oss << "\n";
 
-    // Print health bar, monster name, then statuses on the first line.
+
     nc_color bar_color = c_white;
     std::string bar_str;
     get_HP_Bar( bar_color, bar_str );
@@ -895,19 +895,19 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     bool sees_player = sees( here, pc );
     const bool player_knows = !pc.has_trait( trait_INATTENTIVE );
 
-    // Hostility indicator on the second line.
+
     std::pair<std::string, nc_color> att = get_attitude();
     if( player_knows ) {
         mvwprintz( w, point( column, vStart++ ), att.second, att.first );
     }
 
-    // Difficulty indicator in the third line.
+
     const std::string difficulty_str = debug_mode ?
                                        _( "Difficulty " ) + std::to_string( type->get_total_difficulty() ) :
                                        type->get_difficulty_description();
     vStart += fold_and_print( w, point( column, vStart ), max_width, c_white, difficulty_str );
 
-    // Awareness indicator in the fourth line.
+
     std::string senses_str = sees_player ? _( "Can see to your current location" ) :
                              _( "Can't see to your current location" );
 
@@ -923,7 +923,7 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
                                        type->speed_desc );
     vStart += fold_and_print( w, point( column, vStart ), max_width, c_white, speed_desc );
 
-    // Monster description on following lines.
+
     std::vector<std::string> lines = foldstring( type->get_description(), max_width );
     int numlines = lines.size();
     wattron( w, c_light_gray );
@@ -932,7 +932,7 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     }
 
     if( !mission_fused.empty() ) {
-        // Mission monsters fused into this monster
+
         const std::string fused_desc = string_format( _( "Parts of %s protrude from its body." ),
                                        enumerate_as_string( mission_fused ) );
         lines = foldstring( fused_desc, max_width );
@@ -943,7 +943,7 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     }
     wattroff( w, c_light_gray );
 
-    // Print "taming" food information
+
     if( !type->petfood.food.empty() ) {
         vStart += fold_and_print( w, point( column, vStart ), max_width, c_light_blue,
                                   _( "Seems to be familiar with people and could be tamed with:" ) );
@@ -959,12 +959,12 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
         }
     }
 
-    // Riding indicator on next line after description.
+
     if( has_effect( effect_ridden ) && mounted_player ) {
         mvwprintz( w, point( column, ++vStart ), c_white, _( "Rider: %s" ), mounted_player->disp_name() );
     }
 
-    // Show monster size on the last line
+
     if( size_bonus > 0 ) {
         mvwprintz( w, point( column, ++vStart ), c_light_gray, _( " It is %s." ),
                    size_names.at( get_size() ) );
@@ -993,7 +993,7 @@ void monster::print_info_imgui() const
     }
     ImGui::NewLine();
 
-    // Print health bar, monster name, then statuses on the first line.
+
     nc_color bar_color = c_white;
     std::string bar_str;
     get_HP_Bar( bar_color, bar_str );
@@ -1017,13 +1017,13 @@ void monster::print_info_imgui() const
     bool sees_player = sees( here, pc );
     const bool player_knows = !pc.has_trait( trait_INATTENTIVE );
 
-    // Hostility indicator on the second line.
+
     std::pair<std::string, nc_color> att = get_attitude();
     if( player_knows ) {
         ImGui::TextColored( att.second, "%s", att.first.c_str() );
     }
 
-    // Awareness indicator in the third line.
+
     std::string senses_str = sees_player ? _( "Can see to your current location" ) :
                              _( "Can't see to your current location" );
 
@@ -1037,24 +1037,24 @@ void monster::print_info_imgui() const
                                        type->speed_desc );
     cataimgui::draw_colored_text( speed_desc, c_white );
 
-    // Monster description on following lines.
+
     ImGui::NewLine();
     ImGui::TextWrapped( "%s", type->get_description().c_str() );
     ImGui::NewLine();
 
     if( !mission_fused.empty() ) {
-        // Mission monsters fused into this monster
+
         const std::string fused_desc = string_format( _( "Parts of %s protrude from its body." ),
                                        enumerate_as_string( mission_fused ) );
         ImGui::TextWrapped( "%s", fused_desc.c_str() );
     }
 
-    // Riding indicator on next line after description.
+
     if( has_effect( effect_ridden ) && mounted_player ) {
         ImGui::Text( _( "Rider: %s" ), mounted_player->disp_name().c_str() );
     }
 
-    // Show monster size on the last line
+
     if( size_bonus > 0 ) {
         ImGui::Text( _( " It is %s." ), size_names.at( get_size() ).translated().c_str() );
     }
@@ -1076,9 +1076,9 @@ std::vector<std::string> monster::extended_description() const
     const map &here = get_map();
 
     std::vector<std::string> tmp;
-    // Reserve the number of elements we know we will need.
-    // Likely we will need more, but it's best to leave that to
-    // exponential growth.
+
+
+
     tmp.reserve( 12 );
 
     if( debug_mode ) {
@@ -1141,7 +1141,7 @@ std::vector<std::string> monster::extended_description() const
                                        type->speed_desc );
     tmp.emplace_back( speed_desc );
 
-    // Print "taming" food information
+
     if( !type->petfood.food.empty() ) {
         tmp.emplace_back( colorize( _( "Seems to be familiar with people and could be tamed with:" ),
                                     c_light_blue ) );
@@ -1161,7 +1161,7 @@ std::vector<std::string> monster::extended_description() const
     tmp.emplace_back( string_format( "<dark>%s</dark>", type->get_description() ) );
     tmp.emplace_back( "--" );
     if( !mission_fused.empty() ) {
-        // Mission monsters fused into this monster
+
         const std::string fused_desc = string_format( _( "Parts of %s protrude from its body." ),
                                        enumerate_as_string( mission_fused ) );
         tmp.emplace_back( string_format( "<dark>%s</dark>", fused_desc ) );
@@ -1354,11 +1354,11 @@ nc_color monster::color_with_effects() const
     return ret;
 }
 
-bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) const
+bool monster::avoid_trap( const tripoint_bub_ms & , const trap &tr ) const
 {
-    // The trap position is not used, monsters are to stupid to remember traps. Actually, they do
-    // not even see them.
-    // Traps are on the ground, digging monsters go below, fliers and climbers go above.
+
+
+
     if( digging() || flies() ) {
         return true;
     }
@@ -1439,7 +1439,7 @@ int monster::get_dig_mod() const
         return 1;
     }
 
-    // cannot dig
+
     return -1;
 }
 
@@ -1471,11 +1471,11 @@ int monster::get_climb_mod() const
         int percentile = type->move_skills.climb.value() * ( move_skills_data::max_movemod_penalty / 10 );
         return move_skills_data::max_movemod_penalty - percentile;
     } else if( has_flag( mon_flag_CLIMBS ) ) {
-        // only for backwards compatibility. In future move away from flags
+
         return 1;
     }
 
-    // cannot climb
+
     return -1;
 }
 
@@ -1490,10 +1490,10 @@ int monster::swim_skill() const
     if( type->move_skills.swim.has_value() ) {
         return type->move_skills.swim.value();
     } else if( has_flag( mon_flag_SWIMS ) ) {
-        // Backwardscompatibility only
+
         return 10;
     } else if( has_flag( mon_flag_AQUATIC ) ) {
-        // arbitrary value, if a specific speed is desired, use move_skills
+
         return 6;
     }
     return -1;
@@ -1506,15 +1506,15 @@ int monster::get_swim_mod() const
         return move_skills_data::max_movemod_penalty - percentile;
 
     } else if( has_flag( mon_flag_SWIMS ) ) {
-        // only for backwards compatibility. In future move away from flags
-        // vanilla fish have fastest possible swimspeed
+
+
         return 0;
     } else if( can_submerge() ) {
-        // monsters that can submerge can walk underwater. Simulated with min swimskill
+
         return move_skills_data::max_movemod_penalty;
     }
 
-    // cannot swim
+
     return -1;
 }
 
@@ -1528,7 +1528,7 @@ bool monster::can_act() const
 
 int monster::sight_range( const float light_level ) const
 {
-    // Non-aquatic monsters can't see much when submerged
+
     if( !can_see() || effect_cache[VISION_IMPAIRED] ||
         ( underwater && !swims() && !has_flag( mon_flag_AQUATIC ) && !digging() ) ) {
         return 1;
@@ -1608,7 +1608,7 @@ void monster::set_patrol_route( const std::vector<point_rel_ms> &patrol_pts_rel_
 
 void monster::shift( const point_rel_sm & )
 {
-    // TODO: migrate this to absolute coords and get rid of shift()
+
     path.clear();
 }
 
@@ -1698,7 +1698,7 @@ bool monster::is_fleeing( Character &u ) const
     if( att != MATT_FOLLOW ) {
         return false;
     }
-    // Scale vertical separation for fliers (one z is roughly four meters).
+
     constexpr int FLIER_Z_PENALTY = 4;
     int effective;
     if( flies() ) {
@@ -1723,16 +1723,16 @@ Creature::Attitude monster::attitude_to( const Creature &other ) const
         mf_attitude faction_att = faction.obj().attitude( m->faction );
         if( ( friendly != 0 && m->friendly != 0 ) ||
             ( friendly == 0 && m->friendly == 0 && faction_att == MFA_FRIENDLY ) ) {
-            // Friendly (to player) monsters are friendly to each other
-            // Unfriendly monsters go by faction attitude
+
+
             return Attitude::FRIENDLY;
             // NOLINTNEXTLINE(bugprone-branch-clone)
         } else if( friendly == 0 && m->friendly == 0 && faction_att == MFA_HATE ) {
-            // Stuff that hates a specific faction will always attack that faction
+
             return Attitude::HOSTILE;
         } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_NEUTRAL ) ||
                    morale < 0 || anger < 10 ) {
-            // Stuff that won't attack is neutral to everything
+
             return Attitude::NEUTRAL;
         } else {
             return Attitude::HOSTILE;
@@ -1753,17 +1753,17 @@ Creature::Attitude monster::attitude_to( const Creature &other ) const
                 break;
         }
     }
-    // Should not happen!, creature should be either player or monster
+
     return Attitude::NEUTRAL;
 }
 
 monster_attitude monster::attitude( const Character *u ) const
 {
-    // override for the Personal Portal Storms Mod
-    // if the monster is a nether portal monster and the character is an NPC then ignore
+
+
     if( u != nullptr && faction == monfaction_nether_player_hate && u->is_npc() &&
         get_option<bool>( "PORTAL_STORM_IGNORE_NPC" ) ) {
-        // portal storm creatures ignore NPCs no matter what with this mod on
+
         return MATT_FPASSIVE;
     }
 
@@ -1776,7 +1776,7 @@ monster_attitude monster::attitude( const Character *u ) const
                 return MATT_FRIEND;
             }
             if( u->is_npc() ) {
-                // Zombies don't understand not attacking NPCs, but dogs and bots should.
+
                 if( u->get_attitude() != NPCATT_KILL && !type->in_species( species_ZOMBIE ) ) {
                     return MATT_FRIEND;
                 }
@@ -1791,7 +1791,7 @@ monster_attitude monster::attitude( const Character *u ) const
         return MATT_FLEE;
     }
 
-    // CHECK FOR ANGER RELATIONS **HERE**
+
     bool target_has_anger_relation = false;
     if( u != nullptr ) {
         for( const trait_id &mut : u->get_functioning_mutations() ) {
@@ -1807,12 +1807,12 @@ monster_attitude monster::attitude( const Character *u ) const
             }
         }
     }
-    // ONLY IGNORE IF NEITHER AGGRO NOR ANGER-RELATION
+
     if( u != nullptr && !aggro_character && !u->is_monster() && !target_has_anger_relation ) {
         return MATT_IGNORE;
     }
 
-    // Now proceed to calculate anger/morale
+
     int effective_anger  = anger;
     int effective_morale = morale;
 
@@ -1853,8 +1853,8 @@ monster_attitude monster::attitude( const Character *u ) const
             effective_morale -= 10;
         }
 
-        // Animal Discord/Empathy
-        // Check for Discord first so we can apply temporary effects that make animals hate you
+
+
         if( has_flag( mon_flag_ANIMAL ) ) {
             if( u->has_flag( json_flag_ANIMALDISCORD ) ) {
                 if( effective_anger >= 10 ) {
@@ -1957,10 +1957,10 @@ void monster::process_triggers()
     process_trigger( mon_trigger::FIRE, [this]() {
         int ret = 0;
         map &here = get_map();
-        const field_type_id fd_fire = ::fd_fire; // convert to int_id once
+        const field_type_id fd_fire = ::fd_fire;
         for( const tripoint_bub_ms &p : here.points_in_radius( pos_bub(), 3 ) ) {
-            // note using `has_field_at` without bound checks,
-            // as points that come from `points_in_radius` are guaranteed to be in bounds
+
+
             const int fire_intensity =
                 here.has_field_at( p, false ) ? 5 * here.get_field_intensity( p, fd_fire ) : 0;
             ret += fire_intensity;
@@ -1986,18 +1986,18 @@ void monster::process_triggers()
         }
     }
 
-    // If we got angry at characters have a chance at calming down
+
     if( anger == type->agro && aggro_character && !type->aggro_character && !x_in_y( anger, 100 ) ) {
         add_msg_debug( debugmode::DF_MONSTER, "%s's character aggro reset", name() );
         aggro_character = false;
     }
 
-    // Cap values at [-100, 100] to prevent perma-angry moose etc.
+
     morale = std::min( 100, std::max( -100, morale ) );
     anger  = std::min( 100, std::max( -100, anger ) );
 }
 
-// This adjusts anger/morale levels given a single trigger.
+
 void monster::process_trigger( mon_trigger trig, int amount )
 {
     if( type->has_anger_trigger( trig ) ) {
@@ -2031,14 +2031,14 @@ bool monster::is_underwater() const
 
 bool monster::is_on_ground() const
 {
-    // TODO: actually make this work
+
     return false;
 }
 
 bool monster::has_weapon() const
 {
     return has_flag( mon_flag_WIELDED_WEAPON ) && !has_effect( effect_disarmed ) &&
-           !has_effect( effect_maimed_arm ); // monsters can actually have weapons, silly
+           !has_effect( effect_maimed_arm );
 }
 
 bool monster::is_warm() const
@@ -2129,7 +2129,7 @@ bool monster::is_immune_damage( const damage_type_id &dt ) const
             }
         }
     }
-    // FIXME: Hardcoded damage type specific immunities
+
     if( dt == damage_heat && ( made_of( material_steel ) || made_of( material_stone ) ) ) {
         return true;
     }
@@ -2234,21 +2234,21 @@ bool monster::melee_attack( Creature &target )
 
 bool monster::melee_attack( Creature &target, float accuracy )
 {
-    // NPC and monster fights still occur in full, but their combat chatter
-    // does not delay the player's own attack and defense announcements.
+
+
     Messages::mute_combat_speech unrelated_speech( !target.is_avatar() );
     map &here = get_map();
-    // Note: currently this method must consume move even if attack hasn't actually happen
-    // otherwise infinite loop will happen
+
+
     mod_moves( -type->attack_cost );
-    if( /*This happens sometimes*/ this == &target || !is_adjacent( &target, true ) ) {
+    if( this == &target || !is_adjacent( &target, true ) ) {
         return false;
     }
     if( !sees( here, target ) && !target.is_hallucination() ) {
         debugmsg( "Z-Level view violation: %s tried to attack %s.", disp_name(), target.disp_name() );
         return false;
     }
-    // Prevent monsters from attacking THROUGH terrain if they are submerged under it & target isn't.
+
     if( is_underwater() && !target.is_underwater() &&
         ( here.has_flag( ter_furn_flag::TFLAG_SWIM_UNDER, pos_bub() ) ||
           here.has_flag( ter_furn_flag::TFLAG_SWIM_UNDER, target.pos_bub() ) ) ) {
@@ -2258,14 +2258,14 @@ bool monster::melee_attack( Creature &target, float accuracy )
     const int monster_hit_roll = melee::melee_hit_range( accuracy );
     int hitspread = target.deal_melee_attack( this, monster_hit_roll );
     if( type->melee_dice == 0 ) {
-        // We don't hit, so just return
+
         return true;
     }
 
     Character &player_character = get_player_character();
     if( target.is_avatar() ||
         ( target.is_npc() && player_character.attitude_to( target ) == Attitude::FRIENDLY ) ) {
-        // Make us a valid target for a few turns
+
         add_effect( effect_hit_by_player, 3_turns );
     }
 
@@ -2293,7 +2293,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
     const int total_dealt = dealt_dam.total_damage();
     if( hitspread < 0 ) {
         bool monster_missed = monster_hit_roll < 0.0;
-        // Miss
+
         if( has_flag( mon_flag_CLUMSY_ATTACKS ) && one_in( 4 ) ) {
             add_effect( effect_downed, 2_turns, true );
             if( target.is_avatar() && u_see_my_spot && !target.in_sleep_state() ) {
@@ -2321,19 +2321,19 @@ bool monster::melee_attack( Creature &target, float accuracy )
             add_msg( _( "You dodge an attack from an unseen source." ) );
         }
     } else if( is_hallucination() || total_dealt > 0 ) {
-        // Hallucinations always produce messages but never actually deal damage
+
         if( u_see_my_spot ) {
             if( target.is_avatar() ) {
                 sfx::play_variant_sound( "melee_attack", "monster_melee_hit",
                                          sfx::get_heard_volume( target.pos_bub() ) );
-                // don't make a pain yelp if our limb is a bionic
+
                 if( !dealt_dam.bp_hit->has_flag( json_flag_BIONIC_LIMB ) ) {
                     sfx::do_player_death_hurt( dynamic_cast<Character &>( target ), false );
                 }
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
                 if( a11y::enabled() && !is_hallucination() ) {
-                    // The attack's post-armor damage is authoritative. Do not
-                    // read a small bodypart's HP as if it were the parent limb.
+
+
                     add_msg( m_bad, _( "%1$s hits your %2$s. You lose %3$d HP." ),
                              u_see_me ? disp_name( false, true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ), total_dealt );
@@ -2378,7 +2378,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
                      body_part_name_accusative( dealt_dam.bp_hit ) );
         }
     } else {
-        // No damage dealt
+
         if( u_see_my_spot ) {
             if( target.is_avatar() ) {
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative, 3$s is armor name
@@ -2433,7 +2433,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
         return true;
     }
 
-    // Add any on damage effects
+
     for( const mon_effect_data &eff : type->atk_effs ) {
         if( x_in_y( eff.chance, 100 ) ) {
             const bodypart_id affected_bp = eff.affect_hit_bp ? dealt_dam.bp_hit :  eff.bp.id();
@@ -2471,20 +2471,20 @@ void monster::deal_projectile_attack( map *here, Creature *source, dealt_project
     const projectile &proj = attack.proj;
     const auto &effects = proj.proj_effects;
 
-    // Whip has a chance to scare wildlife even if it misses
+
     if( effects.count( ammo_effect_WHIP ) && type->in_category( "WILDLIFE" ) && one_in( 3 ) ) {
         add_effect( effect_run, rng( 3_turns, 5_turns ) );
     }
 
     if( missed_by > 1.0 ) {
-        // Total miss
+
         return;
     }
 
     Creature::deal_projectile_attack( here, source, attack, missed_by, print_messages, wp_attack );
 
     if( !is_hallucination() && attack.last_hit_critter == this ) {
-        // Maybe TODO: Get difficulty from projectile speed/size/missed_by
+
         on_hit( here, source, bodypart_id( "torso" ), INT_MIN, &attack );
     }
 }
@@ -2494,12 +2494,12 @@ void monster::deal_damage_handle_type( const effect_source &source, const damage
 {
     const int adjusted_damage = du.amount * du.damage_multiplier * du.unconditional_damage_mult;
     if( is_immune_damage( du.type ) ) {
-        return; // immunity
+        return;
     }
-    // FIXME: Hardcoded damage type effects (bash, bullet)
+
     if( du.type == damage_bash ) {
         if( has_flag( mon_flag_PLASTIC ) ) {
-            damage += du.amount / rng( 2, 4 ); // lessened effect
+            damage += du.amount / rng( 2, 4 );
             pain += du.amount / 4;
             return;
         }
@@ -2531,13 +2531,13 @@ void monster::set_hp( const int hp )
     this->hp = hp;
 }
 
-void monster::apply_damage( Creature *source, bodypart_id /*bp*/, int dam,
-                            const bool /*bypass_med*/ )
+void monster::apply_damage( Creature *source, bodypart_id , int dam,
+                            const bool )
 {
     if( is_dead_state() || has_flag( json_flag_CANNOT_TAKE_DAMAGE ) ) {
         return;
     }
-    // Ensure we can try to get at what hit us.
+
     reset_pathfinding_cd();
     hp -= dam;
 
@@ -2552,7 +2552,7 @@ void monster::apply_damage( Creature *source, bodypart_id /*bp*/, int dam,
         set_killer( source );
     } else if( dam > 0 ) {
         process_trigger( mon_trigger::HURT, 1 + static_cast<int>( dam / 3 ) );
-        // Get angry at characters if hurt by one
+
         if( source != nullptr && !aggro_character && !source->is_monster() && !source->is_fake() ) {
             aggro_character = true;
         }
@@ -2563,7 +2563,7 @@ void monster::die_in_explosion( Creature *source )
 {
     map &here = get_map();
 
-    hp = -9999; // huge to trigger explosion and prevent corpse item
+    hp = -9999;
     die( &here, source );
 }
 
@@ -2579,15 +2579,15 @@ bool monster::movement_impaired()
 
 bool monster::move_effects( bool )
 {
-    // This function is relatively expensive, we want that cached
-    // IMPORTANT: If adding any new effects here, make SURE to
-    // add them to hardcoded_movement_impairing in effect.cpp
+
+
+
     if( !effect_cache[MOVEMENT_IMPAIRED] ) {
         return true;
     }
 
-    // If the monster has the CANNOT_MOVE flag, they can't
-    // perform any move effects, so skip this step
+
+
     if( has_effect_with_flag( json_flag_CANNOT_MOVE ) ) {
         return false;
     }
@@ -2595,12 +2595,12 @@ bool monster::move_effects( bool )
     map &here = get_map();
     bool u_see_me = get_player_view().sees( here, *this );
     if( has_effect( effect_tied ) ) {
-        // friendly pet, will stay tied down and obey.
+
         if( friendly == -1 ) {
             return false;
         }
-        // non-friendly monster will struggle to get free occasionally.
-        // some monsters can't be tangled up with a net/bolas/lasso etc.
+
+
         bool immediate_break = type->in_species( species_FISH ) || type->in_species( species_MOLLUSK ) ||
                                type->in_species( species_ROBOT ) || type->bodytype == "snake" || type->bodytype == "blob";
         if( !immediate_break && rng( 0, 900 ) > type->melee_dice * type->melee_sides * 1.5 ) {
@@ -2705,8 +2705,8 @@ bool monster::move_effects( bool )
         return false;
     }
 
-    // If we ever get more effects that force movement on success this will need to be reworked to
-    // only trigger success effects if /all/ rolls succeed
+
+
     if( has_effect( effect_in_pit ) ) {
         if( rng( 0, 40 ) > type->melee_dice * type->melee_sides ) {
             return false;
@@ -2718,16 +2718,16 @@ bool monster::move_effects( bool )
         }
     }
     if( has_effect_with_flag( json_flag_GRAB ) ) {
-        // Pretty hacky, but monsters have no stats
+
         map &here = get_map();
         creature_tracker &creatures = get_creature_tracker();
         const tripoint_range<tripoint_bub_ms> &surrounding = here.points_in_radius( pos_bub(), 1, 0 );
         for( const effect &grab : get_effects_with_flag( json_flag_GRAB ) ) {
-            // Is our grabber around?
+
             monster *grabber = nullptr;
             for( const tripoint_bub_ms loc : surrounding ) {
-                // In an edge case when two monsters grab each other
-                // Don't consider grabbed monster to be its own grabber
+
+
                 if( loc == pos_bub() ) {
                     continue;
                 }
@@ -2789,7 +2789,7 @@ int monster::get_worn_armor_val( const damage_type_id &dt ) const
     return 0;
 }
 
-int monster::get_armor_type( const damage_type_id &dt, bodypart_id /*bp*/ ) const
+int monster::get_armor_type( const damage_type_id &dt, bodypart_id ) const
 {
     return get_worn_armor_val( dt ) + type->armor.type_resist( dt ) + get_armor_res_bonus( dt );
 }
@@ -2836,7 +2836,7 @@ float monster::stability_roll() const
             size_bonus += 10;
             break;
         case creature_size::medium:
-            break; // keep default
+            break;
         case creature_size::num_sizes:
             debugmsg( "ERROR: Invalid Creature size class." );
             break;
@@ -2967,7 +2967,7 @@ void monster::reset_bonuses()
 
 void monster::reset_stats()
 {
-    // Nothing here yet
+
 }
 
 void monster::reset_special( const std::string &special_name )
@@ -3009,8 +3009,8 @@ bool monster::has_special( const std::string &special_name ) const
 
 void monster::explode()
 {
-    // Handled in mondeath::normal
-    // +1 to avoid overflow when evaluating -hp
+
+
     hp = INT_MIN + 1;
 }
 
@@ -3027,7 +3027,7 @@ void monster::process_turn()
             const emit_id emid = e.first;
             if( emid == emit_emit_shock_cloud ) {
                 if( has_effect( effect_emp ) ) {
-                    continue; // don't emit electricity while EMPed
+                    continue;
                 } else if( has_effect( effect_supercharged ) ) {
                     here.emit_field( pos_bub(), emit_emit_shock_cloud_big );
                     continue;
@@ -3037,8 +3037,8 @@ void monster::process_turn()
         }
     }
 
-    // Special attack cooldowns are updated here.
-    // Loop through the monster's special attacks, same as monster::move.
+
+
     for( const auto &sp_type : type->special_attacks ) {
         const std::string &special_name = sp_type.first;
         const auto local_iter = special_attacks.find( special_name );
@@ -3055,7 +3055,7 @@ void monster::process_turn()
         }
     }
     creature_tracker &creatures = get_creature_tracker();
-    // Persist grabs as long as there's an adjacent target.
+
     if( has_effect_with_flag( json_flag_GRAB_FILTER ) ) {
         bool remove = true;
         for( const tripoint_bub_ms &dest : here.points_in_radius( pos_bub(), 1, 0 ) ) {
@@ -3074,7 +3074,7 @@ void monster::process_turn()
             }
         }
     }
-    // We update electrical fields here since they act every turn.
+
     if( has_flag( mon_flag_ELECTRIC_FIELD ) && !is_hallucination() ) {
         if( has_effect( effect_emp ) ) {
             if( calendar::once_every( 10_turns ) ) {
@@ -3086,14 +3086,14 @@ void monster::process_turn()
             for( const tripoint_bub_ms &zap : here.points_in_radius( pos_bub(), 1 ) ) {
                 const map_stack items = here.i_at( zap );
                 for( const item &item : items ) {
-                    if( item.made_of( phase_id::LIQUID ) && item.flammable() ) { // start a fire!
+                    if( item.made_of( phase_id::LIQUID ) && item.flammable() ) {
                         here.add_field( zap, fd_fire, 2, 1_minutes );
                         sounds::sound( pos_bub(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire", "ignition" );
                         break;
                     }
                 }
                 if( zap != pos_bub() ) {
-                    explosion_handler::emp_blast( zap ); // Fries electronics due to the intensity of the field
+                    explosion_handler::emp_blast( zap );
                 }
                 const ter_id &t = here.ter( zap );
                 if( t == ter_t_gas_pump || t == ter_t_gas_pump_a ) {
@@ -3110,7 +3110,7 @@ void monster::process_turn()
             }
             if( weather.lightning_active && !has_effect( effect_supercharged ) &&
                 here.is_outside( pos_bub() ) ) {
-                weather.lightning_active = false; // only one supercharge per strike
+                weather.lightning_active = false;
                 sounds::sound( pos_bub(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false, "environment",
                                "thunder_near" );
                 sounds::sound( pos_bub(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false,
@@ -3136,17 +3136,17 @@ void monster::process_turn()
 void monster::die( map *here, Creature *nkiller )
 {
     if( dead ) {
-        // We are already dead, don't die again, note that monster::dead is
-        // *only* set to true in this function!
+
+
         return;
     }
-    // We were carrying a creature, deposit the rider
+
     if( has_effect( effect_ridden ) && mounted_player ) {
         mounted_player->forced_dismount();
     }
-    // A nearby NPC may finish the exact creature the player last targeted.
-    // Report only that the target died, not the unrelated NPC's attack log.
-    // Gate this on visibility to avoid revealing a death outside perception.
+
+
+
     if( a11y::enabled() && nkiller && nkiller->is_npc() &&
         get_avatar().last_target.lock().get() == this &&
         get_player_view().sees( *here, *this ) ) {
@@ -3161,7 +3161,7 @@ void monster::die( map *here, Creature *nkiller )
             ch = get_killer()->get_summoner()->as_character();
         }
         if( !is_hallucination() && ch != nullptr ) {
-            // Revived creatures never grant any kill xp.
+
             const int kill_xp = has_effect( effect_revived_marker ) ? 0 : compute_kill_xp( type->id );
             cata::event e = cata::event::make<event_type::character_kills_monster>( ch->getID(), type->id,
                             kill_xp );
@@ -3170,18 +3170,18 @@ void monster::die( map *here, Creature *nkiller )
     }
     creature_tracker &creatures = get_creature_tracker();
     if( has_effect_with_flag( json_flag_GRAB_FILTER ) ) {
-        // Need to filter out which limb we were grabbing before death
+
         for( const tripoint_bub_ms &player_pos : here->points_in_radius( pos_bub( *here ), 1,
                 0 ) ) {
             Creature *you = creatures.creature_at( here->get_abs( player_pos ) );
             if( !you || !you->has_effect_with_flag( json_flag_GRAB ) ) {
                 continue;
             }
-            // ...but if there are no grabbers around we can just skip to the end
+
             bool grabbed = false;
             for( const tripoint_bub_ms &mon_pos : here->points_in_radius( player_pos, 1, 0 ) ) {
                 const monster *const mon = creatures.creature_at<monster>( here->get_abs( mon_pos ) );
-                // No persisting our grabs from beyond the grave, but we also don't get to remove the effect early
+
                 if( mon && mon->has_effect_with_flag( json_flag_GRAB_FILTER ) && mon != this ) {
                     grabbed = true;
                     break;
@@ -3190,13 +3190,13 @@ void monster::die( map *here, Creature *nkiller )
             if( !grabbed ) {
                 you->add_msg_player_or_npc( m_good, _( "The last enemy holding you collapses!" ),
                                             _( "The last enemy holding <npcname> collapses!" ) );
-                // A loop for safety
+
                 for( const effect &grab : you->get_effects_with_flag( json_flag_GRAB ) ) {
                     you->remove_effect( grab.get_id() );
                 }
                 continue;
             }
-            // Iterate through all your grabs to figure out which one this critter held
+
             for( const effect &grab : you->get_effects_with_flag( json_flag_GRAB ) ) {
                 if( is_grabbing( grab.get_bp().id() ) ) {
                     const effect_type effid = *grab.get_effect_type();
@@ -3206,12 +3206,12 @@ void monster::die( map *here, Creature *nkiller )
         }
     }
 
-    // If we're a queen, make nearby groups of our type start to die out
+
     if( !is_hallucination() && has_flag( mon_flag_QUEEN ) ) {
-        // The submap coordinates of this monster, monster groups coordinates are
-        // submap coordinates.
+
+
         const tripoint_abs_sm abssub = coords::project_to<coords::sm>( pos_abs() );
-        // Do it for overmap above/below too
+
         for( const tripoint_abs_sm &p : points_in_radius( abssub, HALF_MAPSIZE, 1 ) ) {
             for( mongroup *&mgp : overmap_buffer.groups_at( p ) ) {
                 if( MonsterGroupManager::IsMonsterInGroup( mgp->type, type->id ) ) {
@@ -3222,7 +3222,7 @@ void monster::die( map *here, Creature *nkiller )
     }
     mission::on_creature_death( *this );
 
-    // Hallucinations always just disappear
+
     if( is_hallucination() ) {
         mdeath::disappear( *this );
         return;
@@ -3231,26 +3231,26 @@ void monster::die( map *here, Creature *nkiller )
     add_msg_if_player_sees( *this, m_good, type->mdeath_effect.death_message.translated(), name() );
 
     if( type->mdeath_effect.has_effect ) {
-        //Not a hallucination, go process the death effects.
+
         spell death_spell = type->mdeath_effect.sp.get_spell( *this );
         if( killer != nullptr && !type->mdeath_effect.sp.self &&
-            // TODO: Get the death_spell stuff to work on any map.
+
             death_spell.is_target_in_range( *this,
-                                            killer->pos_bub() ) ) { // The operation called uses reality bubble internally
+                                            killer->pos_bub() ) ) {
             death_spell.cast_all_effects( *this,
-                                          killer->pos_bub() );      // ditto, so we should feed them pos_bub().
+                                          killer->pos_bub() );
         } else if( type->mdeath_effect.sp.self ) {
-            death_spell.cast_all_effects( *this, pos_bub() );              // ditto.
+            death_spell.cast_all_effects( *this, pos_bub() );
         }
     }
 
-    // This is special-cased "death guilt" for human "monsters". They apply full murder penalties, it's quite a bit different to kill a living human than to re-kill the corpse of a child.
+
     if( type->has_flag( mon_flag_GUILT_HUMAN ) && get_killer() == &get_player_character() ) {
         get_player_character().apply_murder_penalties( this );
     }
 
     if( type->mdeath_effect.eoc.has_value() ) {
-        //Not a hallucination, go process the death effects.
+
         if( type->mdeath_effect.eoc.value().is_valid() ) {
             dialogue d( killer == nullptr ? nullptr : get_talker_for( killer ), get_talker_for( *this ) );
             type->mdeath_effect.eoc.value()->activate( d );
@@ -3259,7 +3259,7 @@ void monster::die( map *here, Creature *nkiller )
         }
     }
 
-    // scale overkill damage by enchantments
+
     if( nkiller && ( nkiller->is_npc() || nkiller->is_avatar() ) ) {
         int current_hp = get_hp();
         current_hp = nkiller->as_character()->enchantment_cache->modify_value(
@@ -3269,8 +3269,8 @@ void monster::die( map *here, Creature *nkiller )
 
     item_location corpse;
 
-    // If this monster dies underwater in swim-under terrain and is aquatic (fish),
-    // do not create a corpse on the tile (prevent corpse drop).
+
+
     bool suppress_corpse = false;
     if( here != nullptr ) {
         const tripoint_bub_ms death_pos = pos_bub( *here );
@@ -3279,7 +3279,7 @@ void monster::die( map *here, Creature *nkiller )
             suppress_corpse = true;
         }
     }
-    // drop a corpse, or not - this needs to happen after the spell, for e.g. revivification effects
+
     if( !suppress_corpse ) {
         switch( type->mdeath_effect.corpse_type ) {
             case mdeath_type::NORMAL:
@@ -3297,7 +3297,7 @@ void monster::die( map *here, Creature *nkiller )
     }
 
     if( death_drops ) {
-        // Drop items stored in optionals
+
         move_special_item_to_inv( tack_item );
         move_special_item_to_inv( armor_item );
         move_special_item_to_inv( storage_item );
@@ -3338,14 +3338,14 @@ void monster::die( map *here, Creature *nkiller )
         }
     }
     if( corpse ) {
-        // We re-acquire killer here, in case of shenanigans earlier in the function (summoner kill credit assignment, etc)
+
         Creature *killer = get_killer();
         basecamp *camp = basecamp::any_claim_at( pos_abs_omt() );
 
-        // Corpse ownership priority: If on faction territory, the faction always owns the resulting corpse and items. No buts.
-        // If not in a faction's territory, the killer owns the resulting corpse and items.
-        // If no killer, or the killer is not in a faction, then it's set to unowned and is owned by the first person to pick it up. Finders keepers. (Standard spawned item rules)
-        // FIXME: Exodii quadrupeds/monsters/etc do not set ownership.
+
+
+
+
         if( camp ) {
             corpse->set_owner( camp->get_owner() );
         } else if( killer && killer->as_character() ) {
@@ -3358,8 +3358,8 @@ void monster::die( map *here, Creature *nkiller )
         }
     }
 
-    // Adjust anger/morale of nearby monsters, if they have the appropriate trigger and are friendly
-    // Keep filtering on the dying monsters' triggers to preserve current functionality
+
+
     bool trigger = type->has_anger_trigger( mon_trigger::FRIEND_DIED ) ||
                    type->has_fear_trigger( mon_trigger::FRIEND_DIED ) ||
                    type->has_placate_trigger( mon_trigger::FRIEND_DIED );
@@ -3368,17 +3368,17 @@ void monster::die( map *here, Creature *nkiller )
         int light = g->light_level( posz() );
         map &here = get_map();
         for( monster &critter : g->all_monsters() ) {
-            // Do we actually care about this faction?
+
             if( critter.faction->attitude( faction ) != MFA_FRIENDLY ) {
                 continue;
             }
 
             if( here.sees( critter.pos_bub(), pos_bub(), light ) ) {
-                // Anger trumps fear trumps ennui
+
                 if( critter.type->has_anger_trigger( mon_trigger::FRIEND_DIED ) ) {
                     critter.anger += 15;
                     if( nkiller != nullptr && !nkiller->is_monster() && !nkiller->is_fake() ) {
-                        // A character killed our friend
+
                         add_msg_debug( debugmode::DF_MONSTER, "%s's character aggro triggered by killing a friendly %s",
                                        critter.name(), name() );
                         critter.aggro_character = true;
@@ -3441,7 +3441,7 @@ void monster::generate_inventory( bool disableDrops )
     for( item &it : new_items ) {
         if( has_flag( mon_flag_FILTHY ) ) {
             if( ( it.is_armor() || it.is_pet_armor() ) && !it.is_gun() ) {
-                // handle wearable guns as a special case
+
                 it.set_flag( json_flag_FILTHY );
                 for( item *pocket : it.get_contents().get_added_pockets_mutable() ) {
                     pocket->set_flag( json_flag_FILTHY );
@@ -3471,7 +3471,7 @@ void monster::drop_items_on_death( map *here, item *corpse ) const
         e.preserve_location( pos_abs() );
     }
 
-    // for non corpses this is much simpler
+
     if( !corpse ) {
         for( item &it : new_items ) {
             here->add_item_or_charges( pos_bub( *here ), it );
@@ -3479,11 +3479,11 @@ void monster::drop_items_on_death( map *here, item *corpse ) const
         return;
     }
 
-    // first put "on" things that are wearable
+
     for( item &it : new_items ) {
         if( has_flag( mon_flag_FILTHY ) ) {
             if( ( it.is_armor() || it.is_pet_armor() ) && !it.is_gun() ) {
-                // handle wearable guns as a special case
+
                 it.set_flag( json_flag_FILTHY );
                 for( item *pocket : it.get_contents().get_added_pockets_mutable() ) {
                     pocket->set_flag( json_flag_FILTHY );
@@ -3491,16 +3491,16 @@ void monster::drop_items_on_death( map *here, item *corpse ) const
             }
         }
 
-        // add stuff that could be worn or strapped to the creature
+
         if( it.is_armor() ) {
             corpse->force_insert_item( it, pocket_type::CONTAINER );
         }
     }
 
-    // then nest the rest in those "worn" items if possible
-    // TODO: disable the backup, only spawn items here that actually fit in something
+
+
     for( item &it : new_items ) {
-        // add stuff that could be worn or strapped to the creature
+
         if( !it.is_armor() ) {
             std::pair<item_location, item_pocket *> current_best;
             for( item *worn_it : corpse->all_items_top() ) {
@@ -3557,7 +3557,7 @@ void monster::process_one_effect( effect &it, bool is_new )
 {
     map &here = get_map();
 
-    // Monsters don't get trait-based reduction, but they do get effect based reduction
+
     bool reduced = resists_effect( it );
     const auto get_effect = [&it, is_new]( const std::string & arg, bool reduced ) {
         if( is_new ) {
@@ -3581,7 +3581,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     const efftype_id &id = it.get_id();
-    // TODO: MATERIALS use fire resistance
+
     if( it.impairs_movement() ) {
         effect_cache[MOVEMENT_IMPAIRED] = true;
     } else if( id == effect_onfire ) {
@@ -3607,7 +3607,7 @@ void monster::process_one_effect( effect &it, bool is_new )
                x_in_y( it.get_intensity(), it.get_max_intensity() ) ) {
         bleed( here );
         if( id == effect_bleed ) {
-            // monsters are simplified so they just take damage from bleeding
+
             apply_damage( it.get_source().resolve_creature(), bodypart_id( "torso" ), 1 );
         }
     } else if( id == effect_fake_common_cold ) {
@@ -3616,24 +3616,24 @@ void monster::process_one_effect( effect &it, bool is_new )
                            "cough" );
         }
 
-        avatar &you = get_avatar(); // No NPCs for now.
+        avatar &you = get_avatar();
         if( rl_dist( pos_bub(), you.pos_bub() ) <= 1 ) {
             you.get_sick( false );
         }
     } else if( id == effect_fake_flu ) {
-        // Need to define the two separately because it's theoretically (and realistically) possible to have both flu and cold at once, both for players and monsters.
+
         if( calendar::once_every( time_duration::from_seconds( rng( 30, 300 ) ) ) && one_in( 2 ) ) {
             sounds::sound( pos_bub(), 4, sounds::sound_t::speech, _( "a hacking cough." ), false, "misc",
                            "cough" );
         }
 
-        avatar &you = get_avatar(); // No NPCs for now.
+        avatar &you = get_avatar();
         if( rl_dist( pos_bub(), you.pos_bub() ) <= 1 ) {
             you.get_sick( true );
         }
     }
 
-    //Process enchantments that apply to monsters.
+
     enchantment_cache->clear();
 
     for( const auto &elem : *effects ) {
@@ -3644,7 +3644,7 @@ void monster::process_one_effect( effect &it, bool is_new )
             }
         }
     }
-    //Reset max speed
+
     set_speed_bonus( calculate_by_enchantment( get_speed_base(), enchant_vals::mod::SPEED,
                      true ) - get_speed_base() );
 }
@@ -3653,32 +3653,32 @@ void monster::process_effects()
 {
     map &here = get_map();
 
-    // Monster only effects
+
     for( auto &elem : *effects ) {
         for( auto &_effect_it : elem.second ) {
             process_one_effect( _effect_it.second, false );
         }
     }
 
-    // Like with player/NPCs - keep the speed above 0
+
     const int min_speed_bonus = -0.75 * get_speed_base();
     if( get_speed_bonus() < min_speed_bonus ) {
         set_speed_bonus( min_speed_bonus );
     }
 
     Character &player_character = get_player_character();
-    //If this monster has the ability to heal in combat, do it now.
+
     int regeneration_amount = type->regenerates;
-    //Apply effect-triggered regeneartion modifiers
+
     for( const auto &regeneration_modifier : type->regeneration_modifiers ) {
         if( has_effect( regeneration_modifier.first ) ) {
             regeneration_amount += regeneration_modifier.second;
         }
     }
-    //Apply enchantment modifiers
+
     regeneration_amount = calculate_by_enchantment( regeneration_amount, enchant_vals::mod::REGEN_HP,
                           true );
-    //Prevent negative regeneration
+
     if( regeneration_amount < 0 ) {
         regeneration_amount = 0;
     }
@@ -3697,15 +3697,15 @@ void monster::process_effects()
 
     if( type->regenerates_in_dark && !g->is_in_sunlight( pos_bub() ) ) {
         const float light = here.ambient_light_at( pos_bub() );
-        // Magic number 10000 was chosen so that a floodlight prevents regeneration in a range of 20 tiles
+
         const float dHP = 50.0 * std::exp( - light * light / 10000 );
         if( heal( static_cast<int>( dHP ) ) > 0 && one_in( 2 ) ) {
             add_msg_if_player_sees( *this, m_warning, _( "The %s uses the darkness to regenerate." ), name() );
         }
     }
 
-    //Monster will regen morale and aggression if it is at/above max HP
-    //It regens more morale and aggression if is currently fleeing.
+
+
     if( type->regen_morale && hp >= type->hp ) {
         if( is_fleeing( player_character ) ) {
             morale = type->morale;
@@ -3775,7 +3775,7 @@ void monster::process_effects()
         add_effect( effect_photophobia, 5_turns, true );
     }
 
-    // If this critter dies in sunlight, check & assess damage.
+
     if( has_flag( mon_flag_SUNDEATH ) && g->is_in_sunlight( pos_bub() ) ) {
         add_msg_if_player_sees( *this, m_good, _( "The %s burns horribly in the sunlight!" ), name() );
         apply_damage( nullptr, bodypart_id( "torso" ), 100 );
@@ -3796,17 +3796,17 @@ bool monster::make_fungus()
     if( is_hallucination() ) {
         return true;
     }
-    if( type->in_species( species_FUNGUS ) ) { // No friendly-fungalizing ;-)
+    if( type->in_species( species_FUNGUS ) ) {
         return true;
     }
     if( !made_of( material_flesh ) && !made_of( material_hflesh ) &&
         !made_of( material_veggy ) && !made_of( material_iflesh ) &&
         !made_of( material_bone ) ) {
-        // No fungalizing robots or weird stuff (mi-gos are technically fungi, blobs are goo)
+
         return true;
     }
     if( type->has_flag( mon_flag_NO_FUNG_DMG ) ) {
-        return true; // Return true when monster is immune to fungal damage.
+        return true;
     }
     if( type->fungalize_into.is_empty() ) {
         return false;
@@ -3860,7 +3860,7 @@ bool monster::is_nether() const
            in_species( species_nether_player_hate );
 }
 
-// The logic is If PSI_NULL, no -> If HAS_MIND, yes -> if ZOMBIE, no -> if HUMAN, yes -> else, no, and monsters temporarily immune to telepathy cannot be seen
+
 bool monster::has_mind() const
 {
     return ( ( !in_species( species_PSI_NULL ) && has_flag( mon_flag_HAS_MIND ) ) ||
@@ -3910,7 +3910,7 @@ void monster::add_msg_if_npc( const std::string &msg ) const
     add_msg_if_player_sees( *this, replace_with_npc_name( msg ) );
 }
 
-void monster::add_msg_player_or_npc( const std::string &/*player_msg*/,
+void monster::add_msg_player_or_npc( const std::string & ,
                                      const std::string &npc_msg ) const
 {
     add_msg_if_player_sees( *this, replace_with_npc_name( npc_msg ) );
@@ -3922,7 +3922,7 @@ void monster::add_msg_if_npc( const game_message_params &params, const std::stri
 }
 
 void monster::add_msg_player_or_npc( const game_message_params &params,
-                                     const std::string &/*player_msg*/, const std::string &npc_msg ) const
+                                     const std::string & , const std::string &npc_msg ) const
 {
     add_msg_if_player_sees( *this, params, replace_with_npc_name( npc_msg ) );
 }
@@ -3986,12 +3986,12 @@ void monster::init_from_item( item_location loc )
 
         hp -= burnt_penalty;
 
-        // HP can be 0 or less, in this case revive_corpse will just deactivate the corpse
+
         if( hp > 0 && type->has_flag( mon_flag_REVIVES_HEALTHY ) ) {
             hp = type->hp;
             set_speed_base( type->speed );
         }
-        // if parent corpse is revives healthy *and* dormant, so will the monster
+
         const mtype *corpse_mtype = itm.get_mtype();
         if( hp > 0 && corpse_mtype->has_flag( mon_flag_REVIVES_HEALTHY ) &&
             corpse_mtype->has_flag( mon_flag_DORMANT ) ) {
@@ -4009,15 +4009,15 @@ void monster::init_from_item( item_location loc )
             inv.push_back( *it );
             loc.remove_item( *it );
         }
-        //Move dissectables (installed bionics, etc)
+
         for( item *dissectable : itm.all_items_top( pocket_type::CORPSE ) ) {
             dissectable_inv.push_back( *dissectable );
             loc.remove_item( *dissectable );
         }
     } else {
-        // must be a robot
+
         const int damfac = itm.max_damage() - std::max( 0, itm.damage() ) + 1;
-        // One hp at least, everything else would be unfair (happens only to monster with *very* low hp),
+
         hp = std::max( 1, hp * damfac / ( itm.max_damage() + 1 ) );
     }
 }
@@ -4027,7 +4027,7 @@ item monster::to_item() const
     if( type->revert_to_itype.is_empty() ) {
         return item();
     }
-    // Birthday is wrong, but the item created here does not use it anyway (I hope).
+
     item result( type->revert_to_itype, calendar::turn );
     const int damfac = std::max( 1, ( result.max_damage() + 1 ) * hp / type->hp );
     result.set_damage( std::max( 0, ( result.max_damage() + 1 ) - damfac ) );
@@ -4036,12 +4036,12 @@ item monster::to_item() const
 
 float monster::power_rating() const
 {
-    // This should probably be replaced by something based on difficulty,
-    // at least for smarter critters using it for evaluation.
-    float ret = get_size() - 2.0f; // Zed gets 1, cat -1, hulk 3
+
+
+    float ret = get_size() - 2.0f;
     ret += is_ranged_attacker() ? 2.0f : 0.0f;
-    // Hostile stuff gets a big boost
-    // Neutral moose will still get burned if it comes close
+
+
     return ret;
 }
 
@@ -4050,7 +4050,7 @@ float monster::speed_rating() const
     float ret = get_speed() / 100.0f;
     const auto leap = type->special_attacks.find( "leap" );
     if( leap != type->special_attacks.end() ) {
-        // TODO: Make this calculate sane values here
+
         ret += 0.5f;
     }
 
@@ -4059,7 +4059,7 @@ float monster::speed_rating() const
 
 void monster::on_dodge( Creature *, float, float )
 {
-    // Currently does nothing, later should handle faction relations
+
 }
 
 void monster::on_hit( map *here, Creature *source, bodypart_id,
@@ -4073,8 +4073,8 @@ void monster::on_hit( map *here, Creature *source, bodypart_id,
         type->sp_defense( *this, source, proj );
     }
 
-    // Adjust anger/morale of nearby monsters, if they have the appropriate trigger and are friendly
-    // Keep filtering on the hit monsters' triggers to preserve current functionality
+
+
     bool trigger = type->has_anger_trigger( mon_trigger::FRIEND_ATTACKED ) ||
                    type->has_fear_trigger( mon_trigger::FRIEND_ATTACKED ) ||
                    type->has_placate_trigger( mon_trigger::FRIEND_ATTACKED );
@@ -4082,17 +4082,17 @@ void monster::on_hit( map *here, Creature *source, bodypart_id,
     if( trigger ) {
         int light = g->light_level( posz() );
         for( monster &critter : g->all_monsters() ) {
-            // Do we actually care about this faction?
+
             if( critter.faction->attitude( faction ) != MFA_FRIENDLY ) {
                 continue;
             }
 
             if( here->sees( critter.pos_bub( *here ), pos_bub( *here ), light ) ) {
-                // Anger trumps fear trumps ennui
+
                 if( critter.type->has_anger_trigger( mon_trigger::FRIEND_ATTACKED ) ) {
                     critter.anger += 15;
                     if( source != nullptr && !source->is_monster() && !source->is_fake() ) {
-                        // A character attacked our friend
+
                         add_msg_debug( debugmode::DF_MONSTER, "%s's character aggro triggered by attacking a friendly %s",
                                        critter.name(), name() );
                         critter.aggro_character = true;
@@ -4114,7 +4114,7 @@ void monster::on_hit( map *here, Creature *source, bodypart_id,
     enchantment_cache->cast_hit_me( *this, source );
 
     check_dead_state( here );
-    // TODO: Faction relations
+
 }
 
 int monster::get_hp_max( const bodypart_id & ) const
@@ -4151,18 +4151,18 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
 
     const bool goodhearing = has_flag( mon_flag_GOODHEARING );
     const int volume = goodhearing ? 2 * vol - dist : vol - dist;
-    // Error is based on volume, louder sound = less error
+
     if( volume <= 0 ) {
         return;
     }
 
-    // Kind of nasty, but this prevents zombies from being attracted to collapsing on-fire buildings.
-    // The rationale for this is simple: Without it, one burning building would wipe out every zed in several blocks. So how did any of them survive the riots?
+
+
     bool probably_a_fire = false;
     map &here = get_map();
     for( const tripoint_bub_ms &pt : here.points_in_radius( source, 1, 1 ) ) {
         const field_entry *fire_fld = here.get_field( pt, fd_fire );
-        // Only large, uncontained fires cause sounds to be ignored.
+
         if( fire_fld && fire_fld->get_field_intensity() > 1 &&
             !here.has_flag_ter_or_furn( ter_furn_flag::TFLAG_FIRE_CONTAINER, pt ) ) {
             probably_a_fire = true;
@@ -4172,12 +4172,12 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
 
     int tmp_provocative = !probably_a_fire && ( provocative || volume >= normal_roll( 30, 5 ) );
 
-    // Not interesting sound, nothing to do here
+
     if( !tmp_provocative ) {
         return;
     }
-    // already following a more interesting sound,
-    // so 50% will try to stick to it, and 50% will move in direction of a new sound
+
+
     if( provocative_sound && wandf > 0 && rng( 0, 1 ) ) {
         return;
     }
@@ -4195,30 +4195,30 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
 
     tripoint_abs_ms target = get_map().get_abs( source ) + point( rng( -max_error, max_error ),
                              rng( -max_error, max_error ) );
-    // target_z will require some special check due to soil muffling sounds
+
 
     const int wander_turns = volume * ( goodhearing ? 6 : 1 );
-    // The sound was interesting, but not interesting enough to *want* to follow it.
+
     if( wander_turns < wandf ) {
         return;
     }
-    // only trigger this if the monster is not friendly or the source isn't the player
+
     if( friendly == 0 || source != get_player_character().pos_bub() ) {
         process_trigger( mon_trigger::SOUND, volume );
     }
     provocative_sound = tmp_provocative;
     if( morale >= 0 && anger >= 10 ) {
-        // TODO: Add a proper check for fleeing attitude
-        // but cache it nicely, because this part is called a lot
+
+
         wander_to( target, wander_turns );
     } else if( morale < 0 ) {
-        // Monsters afraid of sound should not go towards sound.
-        // Move towards a point on the opposite side of us from the target.
-        // TODO: make the destination scale with the sound and handle
-        // the case when (x,y) is the same by picking a random direction
+
+
+
+
         tripoint_abs_ms away = pos_abs() + ( pos_abs() - target );
-        // Aloft fliers descend, grounded fliers take off; non-fliers stay at
-        // current z. Mirror in monster::plan.
+
+
         int chosen_z = posz();
         if( flies() ) {
             map &here = get_map();
@@ -4255,7 +4255,7 @@ bool monster::will_join_horde( int size )
     const monster_horde_attraction mha = get_horde_attraction();
     if( this->has_flag( mon_flag_IMMOBILE ) || this->has_flag( mon_flag_NEVER_WANDER ) ||
         this->has_flag( json_flag_CANNOT_MOVE ) ) {
-        return false; //immobile monsters should never join a horde. Same with Never Wander monsters.
+        return false;
     }
     if( mha == MHA_NEVER ) {
         return false;
@@ -4294,7 +4294,7 @@ void monster::on_load()
         return;
     }
 
-    if( morale != type->morale ) { // if works, will put into helper function
+    if( morale != type->morale ) {
         int dt_left_m = to_turns<int>( dt );
 
         if( std::abs( morale - type->morale ) > 15 ) {
@@ -4308,7 +4308,7 @@ void monster::on_load()
             }
         }
 
-        // Avoiding roll_remainder - PC out of situation, monster can calm down
+
         if( morale < type->morale ) {
             morale += std::min( static_cast<int>( std::ceil( dt_left_m / 8.0 ) ),
                                 std::abs( morale - type->morale ) );
@@ -4338,21 +4338,21 @@ void monster::on_load()
             anger += std::min( ( dt_left_a / 8 ),
                                std::abs( anger - type->agro ) );
         }
-        // If we got angry at characters have a chance at calming down
+
         if( aggro_character && !type->aggro_character && !x_in_y( anger, 100 ) ) {
             add_msg_debug( debugmode::DF_MONSTER, "%s's character aggro reset", name() );
             aggro_character = false;
         }
     }
 
-    // TODO: regen_morale
+
     float regen = type->regenerates;
     if( regen <= 0 ) {
         if( has_flag( mon_flag_REVIVES ) && !has_flag( mon_flag_DORMANT ) ) {
             regen = 0.02f * type->hp / to_turns<int>( 1_hours );
         } else if( made_of( material_flesh ) || made_of( material_iflesh ) ||
                    made_of( material_veggy ) ) {
-            // Most living stuff here
+
             regen = 0.005f * type->hp / to_turns<int>( 1_hours );
         }
     }
@@ -4370,7 +4370,7 @@ void monster::on_load()
         healed_speed = get_speed_base() - old_speed;
     }
 
-    // Update special attacks' cooldown
+
     for( const auto &sp_type : type->special_attacks ) {
         const std::string &special_name = sp_type.first;
         const auto local_iter = special_attacks.find( special_name );
@@ -4400,12 +4400,12 @@ std::function<bool( const tripoint_bub_ms & )> monster::get_path_avoid() const
 {
     return [this]( const tripoint_bub_ms & p ) {
         map &here = get_map();
-        // If we can't move there and can't bash it, don't path through it.
+
         if( !can_move_to( p ) && ( !bash_skill().empty() || !here.is_bashable( p ) ) ) {
             return true;
         }
 
-        // Avoid nearby creatures if we have the flag.
+
         int radius;
         if( has_flag( mon_flag_PRIORITIZE_TARGETS ) ) {
             radius = 2;
@@ -4450,11 +4450,11 @@ std::vector<std::pair<std::string, std::string>> monster::get_overlay_ids() cons
 {
     std::vector<std::pair<std::string, std::string>> rval;
 
-    // get effects
-    // at this moment we share id for effect overlay for character and for monster
+
+
     if( show_creature_overlay_icons ) {
-        // if at one point there would be more overlay types than one
-        // someone would need to tinker pre-allocation
+
+
         rval.reserve( effects->size() );
         for( const auto &eff_pr : *effects ) {
             rval.emplace_back( "effect_" + eff_pr.first.str(), "" );

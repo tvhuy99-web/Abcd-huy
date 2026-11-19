@@ -38,8 +38,8 @@ static const skill_id skill_melee( "melee" );
 static const skill_id skill_stabbing( "stabbing" );
 static const skill_id skill_unarmed( "unarmed" );
 
-// Run a large number of trials of a player attacking a monster with a given weapon,
-// and return the average damage done per second.
+
+
 static double weapon_dps_trials( avatar &attacker, monster &defender, item &weapon )
 {
     constexpr int trials = 1000;
@@ -79,29 +79,29 @@ static double weapon_dps_trials( avatar &attacker, monster &defender, item &weap
 
             int before_moves = attacker.get_moves();
 
-            // Keep the defender at maximum health
+
             const int starting_hp = defender.get_hp_max();
             defender.set_hp( starting_hp );
 
-            // Attack once
+
             attacker.melee_attack_abstract( defender, false, matec_id( "" ) );
 
-            // Tally total damage and moves
+
             total_damage += std::max( 0, starting_hp - defender.get_hp() );
             total_moves += std::abs( attacker.get_moves() - before_moves );
 
-            // Every hit or miss enqueues a new sound
-            // Ideally, we'd have sound vector get cleared after every test, but it's not easy
+
+
             sounds::reset_sounds();
         }
     }
 
-    // Scale damage-per-move to damage-per-second
-    // 1 second == 100 moves
+
+
     return 100.0f * total_damage / total_moves;
 }
 
-// Compare actual DPS with estimated effective DPS for an attacker/defender/weapon combo.
+
 static void check_actual_dps( avatar &attacker, monster &defender, item &weapon )
 {
     clear_character( attacker );
@@ -291,15 +291,15 @@ static void make_experienced_tester( avatar &test_guy )
     REQUIRE( static_cast<int>( test_guy.get_skill_level( skill_melee ) ) == 4 );
 }
 
-/*
- * A super tedious set of test cases to make sure that weapon values do not drift too far out
- * of range without anyone noticing them and adjusting them.
- * The weapons that *must* be enumerated include anything with a DPS over 25,
- * essentially candidates for pushing into the top tier of weapons.
- * Additionally we want to test a bunch of misc makeshift items to get coverage of
- * shifts in the lwer tiers of weapons.
- * Used expected_dps(), which should make actual dps because of the calculations above.
- */
+
+
+
+
+
+
+
+
+
 TEST_CASE( "expected_weapon_dps", "[expected][dps]" )
 {
     avatar &test_guy = get_avatar();

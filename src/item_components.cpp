@@ -179,7 +179,7 @@ void item_components::serialize( JsonOut &jsout ) const
 void item_components::deserialize( const JsonValue &jv )
 {
     comps.clear();
-    // read legacy arrays
+
     if( jv.test_array() ) {
         std::list<item> temp;
         jv.read( temp );
