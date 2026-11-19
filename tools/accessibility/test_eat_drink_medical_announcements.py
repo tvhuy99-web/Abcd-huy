@@ -239,5 +239,49 @@ class UpstreamNativeLinkageContracts(unittest.TestCase):
         self.assertIn("sub_bodyparts.begin(), sub_bodyparts.end()", bodygraph)
 
 
+class BodyStatusNativeLinkageContracts(unittest.TestCase):
+    """Keep the integrated status and armor UI linkable without losing a11y."""
+
+    def test_bodygraph_and_status_tabs_provide_real_data(self):
+        cpp = (SRC / "body_status_ui.cpp").read_text("utf-8")
+        self.assertIn("void body_status_uistate::prepare_partlist()", cpp)
+        self.assertIn("void body_status_uistate::prepare_infolist()", cpp)
+        self.assertIn("displayed_graph_id->parts", cpp)
+        self.assertIn("worn.prepare_bodymap_info( info, bp, sub_parts", cpp)
+        self.assertIn("void body_status_ui_impl::draw_graph_imgui(", cpp)
+        self.assertIn("prepare_bodygraph_text( bodypart_or_subpart_id )", cpp)
+        self.assertIn("void body_status_ui_impl::draw_info_imgui(", cpp)
+
+    def test_armor_reordering_stays_on_real_item_list(self):
+        outfit = (SRC / "character_attire.cpp").read_text("utf-8")
+        self.assertIn("outfit::filter_by_bodypart(", outfit)
+        self.assertIn("outfit::items_cover_opposite_bp(", outfit)
+        self.assertIn("void outfit::splice(", outfit)
+        self.assertIn("worn.splice( to, worn, pos );", outfit)
+        self.assertIn("void outfit::sort()", outfit)
+        self.assertIn("void outfit::assign_invlets(", outfit)
+        self.assertIn("add_invlet_to_new_item( garment );", outfit)
+
+    def test_clothing_descriptions_have_details_instead_of_linker_stubs(self):
+        outfit = (SRC / "character_attire.cpp").read_text("utf-8")
+        for method in (
+            "clothing_layer(", "clothing_flags_description(",
+            "clothing_properties(", "clothing_protection(",
+        ):
+            self.assertIn(method, outfit)
+        self.assertIn("get_avg_encumber( who )", outfit)
+        self.assertIn("worn_item.get_env_resist()", outfit)
+
+    def test_medical_status_integration_preserves_reader_screen(self):
+        cpp = (SRC / "body_status_ui.cpp").read_text("utf-8")
+        medical = (SRC / "medical_ui.cpp").read_text("utf-8")
+        self.assertIn("medical_ui::get_modified_limb_name(", cpp)
+        self.assertIn("medical_ui::get_limb_wounds(", cpp)
+        self.assertIn("medical_ui::draw_limbs_details(", cpp)
+        self.assertIn("medical_ui::summary_tab(", cpp)
+        self.assertIn("bool Character::disp_medical()", medical)
+        self.assertIn("a11y::semantic_snapshot medical_ui::reader_snapshot()", medical)
+
+
 if __name__ == "__main__":
     unittest.main()
