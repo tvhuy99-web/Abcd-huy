@@ -6415,3 +6415,21 @@ msgstr "Sinh vật gần nhất được phát hiện"
 
 msgid "Ground-item stack limit reached. Additional ground items were not counted."
 msgstr "Đã chạm giới hạn đếm chồng vật phẩm trên mặt đất. Những vật phẩm tiếp theo chưa được tính."
+
+#, c-format
+msgid "%1$s to the %2$s, %3$d tiles away."
+msgstr "%1$s ở phía %2$s, cách %3$d ô."
+
+#, c-format
+msgid "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles."
+msgstr "Có %1$d %2$s mới trong phạm vi rađa, gần nhất ở phía %3$s, cách %4$d ô."
+
+#, c-format
+msgid "%d more new radar groups were combined."
+msgstr "Có thêm %d nhóm đối tượng mới đã được gộp trong thông báo."
+
+msgid "Stairs up"
+msgstr "Cầu thang đi lên"
+
+msgid "Stairs down"
+msgstr "Cầu thang đi xuống"

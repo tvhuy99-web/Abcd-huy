@@ -28,6 +28,8 @@ final class GameActionHub {
     // Keep native group numbers stable for existing saved gesture targets.
     static final int DIRECTIONS = 16;
     static final int FAVORITES = 17;
+    static final int RADAR_SETTINGS = 18;
+    static final int RADAR_OPTION = 12;
     static final int COMBAT = 8;
 
     static final class Entry {
@@ -123,7 +125,7 @@ final class GameActionHub {
             { "missions", "diary", "factions", "chat", "map" },
             { "control_vehicle", "auto_travel_mode", "map",
                     "grab", "examine", "LEVEL_UP", "LEVEL_DOWN" },
-            { "zones", "loot", "haul", "haul_toggle", "open_autopickup", "open_autonotes",
+            { "reader:radar:toggle", "zones", "loot", "haul", "haul_toggle", "open_autopickup", "open_autonotes",
                     "safemode", "autosafe", "toggle_auto_features",
                     "toggle_auto_pulp_butcher", "toggle_auto_mining",
                     "toggle_auto_foraging", "toggle_auto_pickup", "toggle_thief_mode",

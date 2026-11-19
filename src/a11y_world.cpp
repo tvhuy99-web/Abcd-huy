@@ -30,6 +30,7 @@
 #include "a11y_body.h"
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
+#include "a11y_radar.h"
 #include "a11y_runtime.h"
 #include "action.h"
 #include "avatar.h"
@@ -677,6 +678,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                     avatar_position.x(), avatar_position.y(), avatar_position.z() );
     location.actions = { "focus" };
     result.nodes.push_back( std::move( location ) );
+    if( a11y::android::automatic_radar_mask() != 0 && !explore_active && !camera_offset &&
+        context.category_id() == "DEFAULTMODE" ) {
+        a11y::update_automatic_radar( avatar_origin );
+    }
     for( int distance = 1; distance <= scan_depth; ++distance ) {
         for( const int dz : { distance, -distance } ) {
             const tile_observation vertical = observe_memory_tile(
@@ -1158,6 +1163,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( button( "reader:scan:south", _( "Scan 30 tiles south" ), "" ) );
     result.nodes.push_back( button( "reader:scan:west", _( "Scan 30 tiles west" ), "" ) );
     result.nodes.push_back( button( "reader:scan:east", _( "Scan 30 tiles east" ), "" ) );
+    result.nodes.push_back( button( "reader:radar:toggle", _( "Automatic spoken radar" ),
+                                    _( "Toggle spoken announcements when objects enter eight tiles." ) ) );
     result.nodes.push_back( button( "reader:scene:survey", _( "Detailed place survey" ),
                                     _( "Survey the loaded place beyond line of sight and read one complete description." ) ) );
     result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );

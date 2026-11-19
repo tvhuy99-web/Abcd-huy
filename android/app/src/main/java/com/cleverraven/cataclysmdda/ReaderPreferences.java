@@ -153,6 +153,49 @@ public final class ReaderPreferences {
                 .putBoolean(SONAR_ITEMS, enabled).apply();
     }
 
+    // Independent spoken radar, not the existing repeating 16-tile audio
+    // sonar. Eight Chebyshev tiles, one announcement per boundary entry.
+    static final int RADAR_CHANNEL_ITEMS = 1 << 0;
+    static final int RADAR_CHANNEL_MONSTERS = 1 << 1;
+    static final int RADAR_CHANNEL_PLACES = 1 << 2;
+    static final int RADAR_CHANNEL_NPCS = 1 << 3;
+    static final int RADAR_CHANNEL_DOORS = 1 << 4;
+    static final int RADAR_CHANNEL_HAZARDS = 1 << 5;
+    static final int RADAR_CHANNEL_VEHICLES = 1 << 6;
+    static final int RADAR_CHANNEL_LANDMARKS = 1 << 7;
+    static final int RADAR_CHANNEL_ALL = (1 << 8) - 1;
+    static final int RADAR_DEFAULT_CHANNELS = RADAR_CHANNEL_MONSTERS
+            | RADAR_CHANNEL_NPCS | RADAR_CHANNEL_DOORS | RADAR_CHANNEL_HAZARDS;
+    private static final String RADAR_MASTER = "automatic_radar_enabled";
+    private static final String RADAR_CHANNELS = "automatic_radar_channels";
+
+    public boolean isRadarEnabled() {
+        return values.getBoolean(RADAR_MASTER, false);
+    }
+
+    public void setRadarEnabled(boolean enabled) {
+        values.edit().putBoolean(RADAR_MASTER, enabled).apply();
+    }
+
+    public int radarChannels() {
+        return values.getInt(RADAR_CHANNELS, RADAR_DEFAULT_CHANNELS) & RADAR_CHANNEL_ALL;
+    }
+
+    public boolean radarChannelEnabled(int bit) {
+        return (radarChannels() & bit) != 0;
+    }
+
+    public void setRadarChannelEnabled(int bit, boolean enabled) {
+        if (bit == 0 || (bit & RADAR_CHANNEL_ALL) != bit) { return; }
+        int channels = radarChannels();
+        values.edit().putInt(RADAR_CHANNELS,
+                enabled ? channels | bit : channels & ~bit).apply();
+    }
+
+    public int activeRadarMask() {
+        return isRadarEnabled() ? radarChannels() : 0;
+    }
+
     public void disable() {
         values.edit().putBoolean("enabled", false).apply();
     }
