@@ -4021,14 +4021,27 @@ talk_effect_fun_t::func f_add_wound( const JsonObject &jo, std::string_view memb
     str_or_var wound_to_be_added_var;
     optional( jo, false, "wound_id", wound_to_be_added_var );
 
-    return [is_npc, bodypart_var, wound_to_be_added_var]( dialogue & d ) {
+    str_or_var damage_type;
+    optional( jo, false, "damage_type", damage_type );
 
-        bodypart *bp =
-            d.actor( is_npc )->get_character()->get_part( bodypart_id( bodypart_var.evaluate( d ) ) );
+    dbl_or_var damage_amount;
+    optional( jo, false, "damage_amount", damage_amount, 0 );
 
-        wound_type_id wound_to_be_added = wound_type_id( wound_to_be_added_var.evaluate( d ) );
+    bool may_worsen = jo.get_bool( "may_worsen", false );
 
-        bp->add_or_worsen_wound( wound_to_be_added );
+    return [is_npc, bodypart_var, wound_to_be_added_var, damage_type, damage_amount,
+            may_worsen]( dialogue &d ) {
+        Character &who = *d.actor( is_npc )->get_character();
+        bodypart *bp = who.get_part( bodypart_id( bodypart_var.evaluate( d ) ) );
+        const wound_type_id wound_to_be_added( wound_to_be_added_var.evaluate( d ) );
+
+        if( may_worsen ) {
+            dealt_damage_instance ddi;
+            ddi.set_damage( damage_type_id( damage_type.evaluate( d ) ), damage_amount.evaluate( d ) );
+            bp->add_or_worsen_wound( wound_to_be_added, &who, ddi );
+        } else {
+            bp->add_wound( wound_to_be_added, who, damage_amount.evaluate( d ) );
+        }
     };
 }
 
