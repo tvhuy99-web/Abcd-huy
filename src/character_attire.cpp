@@ -2749,3 +2749,92 @@ void outfit::organize_items_menu( Character &guy )
 {
     pocket_management_menu( _( "Inventory Organization" ), top_items_loc( guy ) );
 }
+
+
+namespace clothing_info
+{
+std::string clothing_layer( const item &worn_item )
+{
+    std::vector<std::string> names;
+    for( const layer_level layer : worn_item.get_layer() ) {
+        switch( layer ) {
+            case layer_level::PERSONAL: names.emplace_back( _( "Personal" ) ); break;
+            case layer_level::SKINTIGHT: names.emplace_back( _( "Close to skin" ) ); break;
+            case layer_level::NORMAL: names.emplace_back( _( "Normal" ) ); break;
+            case layer_level::WAIST: names.emplace_back( _( "Waist" ) ); break;
+            case layer_level::OUTER: names.emplace_back( _( "Outer" ) ); break;
+            case layer_level::BELTED: names.emplace_back( _( "Strapped" ) ); break;
+            case layer_level::AURA: names.emplace_back( _( "Aura" ) ); break;
+            case layer_level::NUM_LAYER_LEVELS: break;
+        }
+    }
+    std::string result = _( "Layer: " );
+    for( size_t i = 0; i < names.size(); ++i ) {
+        if( i > 0 ) {
+            result += ", ";
+        }
+        result += names[i];
+    }
+    return result;
+}
+
+std::vector<std::string> clothing_flags_description( const item &worn_item )
+{
+    std::vector<std::string> lines;
+    if( worn_item.has_flag( flag_INTEGRATED ) ) {
+        lines.emplace_back( _( "Integrated armor" ) );
+    }
+    if( worn_item.is_rigid() ) {
+        lines.emplace_back( _( "Rigid armor" ) );
+    }
+    if( worn_item.is_ablative() ) {
+        lines.emplace_back( _( "Ablative armor" ) );
+    }
+    if( worn_item.has_flag( json_flag_HIDDEN ) ) {
+        lines.emplace_back( _( "Hidden from the character display" ) );
+    }
+    if( worn_item.is_favorite ) {
+        lines.emplace_back( _( "Favorite item" ) );
+    }
+    return lines;
+}
+
+std::vector<std::string> clothing_properties( const item &worn_item, const Character &who,
+        const bodypart_id &bp )
+{
+    std::vector<std::string> lines;
+    const bool specific_part = bp != bodypart_str_id::NULL_ID();
+    const int encumbrance = specific_part ? worn_item.get_encumber( who, bp ) :
+                            worn_item.get_avg_encumber( who );
+    lines.emplace_back( string_format( _( "Encumbrance: %d" ), encumbrance ) );
+    if( specific_part ) {
+        lines.emplace_back( string_format( _( "Coverage: %d%%" ), worn_item.get_coverage( bp ) ) );
+    }
+    return lines;
+}
+
+std::vector<std::string> clothing_protection( const item &worn_item, const bodypart_id &bp )
+{
+    std::vector<std::string> lines;
+    lines.emplace_back( string_format( _( "Environmental protection: %d" ),
+                                       worn_item.get_env_resist() ) );
+    if( bp != bodypart_str_id::NULL_ID() ) {
+        lines.emplace_back( string_format( _( "Coverage of selected limb: %d%%" ),
+                                           worn_item.get_coverage( bp ) ) );
+    }
+    return lines;
+}
+
+void add_category_and_values( std::vector<std::string> &current_text,
+                              const std::string &category_name,
+                              const std::vector<std::pair<std::string, std::string>> &names_and_values )
+{
+    if( names_and_values.empty() ) {
+        return;
+    }
+    current_text.emplace_back( category_name );
+    for( const auto &entry : names_and_values ) {
+        current_text.emplace_back( string_format( "%1$s: %2$s", entry.first, entry.second ) );
+    }
+}
+} // namespace clothing_info
