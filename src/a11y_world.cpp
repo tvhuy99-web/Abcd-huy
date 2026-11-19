@@ -26,6 +26,7 @@
 #include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_item_text.h"
+#include "a11y_location.h"
 #include "a11y_body.h"
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
@@ -1988,8 +1989,14 @@ void announce_player_coordinates()
 {
     const avatar &viewer = get_avatar();
     const tripoint_abs_ms pos = viewer.pos_abs();
-    const std::string coordinates = string_format( _( "Coordinates.  X %1$d. Y %2$d. Z %3$d." ),
-                                            pos.x(), pos.y(), pos.z() );
+    // A location may span several OMTs. Resolve its fixed origin on the game
+    // thread, and keep CDDA's original absolute coordinates in the same read.
+    const std::optional<local_place_coordinates> local = local_coordinates_at( pos );
+    const std::string coordinates = local ?
+        string_format( _( "Local coordinates X %1$d, Y %2$d. World map X %3$d, Y %4$d, Z %5$d." ),
+                       local->x, local->y, pos.x(), pos.y(), pos.z() ) :
+        string_format( _( "Coordinates.  X %1$d. Y %2$d. Z %3$d." ),
+                       pos.x(), pos.y(), pos.z() );
     // Speak the known overmap place first. Never reveal undiscovered
     // terrain when the current overmap location has not been seen.
     std::string spoken = string_format( _( "Area: %1$s. %2$s" ), _( "Unknown" ), coordinates );

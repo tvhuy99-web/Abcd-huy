@@ -6181,3 +6181,7 @@ msgstr "Đã hủy lái tự động: quá trình lên xe hoặc khởi động 
 
 msgid "No safe route found. Vehicle paused."
 msgstr "Không tìm được đường đi an toàn. Xe đã tạm dừng."
+
+#, c-format
+msgid "Local coordinates X %1$d, Y %2$d. World map X %3$d, Y %4$d, Z %5$d."
+msgstr "Tọa độ khu vực X%1$d, Y%2$d. Bản đồ chung X%3$d, Y%4$d, Z%5$d."
