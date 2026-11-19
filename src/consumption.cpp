@@ -1675,6 +1675,12 @@ void Character::modify_morale( item &food, const int nutr )
     }
 }
 
+bool Character::can_stomach( const units::volume &serving ) const
+{
+    return !stomach.would_be_engorged_with( *this, serving, has_calorie_deficit() ) &&
+           !has_effect( effect_hunger_full ) && !has_effect( effect_hunger_engorged );
+}
+
 // Used when determining stomach fullness from eating.
 double Character::compute_effective_food_volume_ratio( const item &food ) const
 {
@@ -1934,6 +1940,16 @@ item_location Character::get_consumable_from( const item_location &it ) const
     } );
 
     return ret;
+}
+
+bool Character::wants_to_consume_now( const item &food ) const
+{
+    if( !needs_food() || !food.is_food() || !will_eat( food ).success() ) {
+        return false;
+    }
+    const bool hungry = get_hunger() > 0 || has_calorie_deficit();
+    return ( food.get_comestible()->get_default_nutr() > 0 && hungry ) ||
+           ( food.get_comestible()->quench > 0 && get_thirst() > 0 );
 }
 
 time_duration Character::get_consume_time( const item &it ) const
