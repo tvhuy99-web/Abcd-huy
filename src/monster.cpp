@@ -2298,12 +2298,12 @@ bool monster::melee_attack( Creature &target, float accuracy )
 
     dealt_damage_instance dealt_dam;
 
-    if( hitspread >= 0 ) {
+    if( Creature::melee_attack_hit( hitspread ) ) {
         target.deal_melee_hit( this, hitspread, false, damage, dealt_dam );
     }
 
     const int total_dealt = dealt_dam.total_damage();
-    if( hitspread < 0 ) {
+    if( !Creature::melee_attack_hit( hitspread ) ) {
         bool monster_missed = monster_hit_roll < 0.0;
         // Miss
         if( has_flag( mon_flag_CLUMSY_ATTACKS ) && one_in( 4 ) ) {
@@ -2435,7 +2435,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
         return true;
     }
 
-    if( hitspread >= 0 && !is_hallucination() ) {
+    if( Creature::melee_attack_hit( hitspread ) && !is_hallucination() ) {
         enchantment_cache->cast_hit_you( *this, target );
     }
 
