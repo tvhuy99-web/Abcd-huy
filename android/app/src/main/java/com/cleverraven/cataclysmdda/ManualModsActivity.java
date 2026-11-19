@@ -202,7 +202,7 @@ public final class ManualModsActivity extends Activity {
      * action, including the file picker's own confirmation/help panels.
      */
     private void showContextActions() {
-        if (busy) { return; }
+        // The Gesture guide remains available even during file I/O.
         final LinearLayout previous = visibleControls;
         LinearLayout menu = newControls(R.string.a11yContextCommands);
         addButton(menu, R.string.a11yManualModCancel, view -> showControls(previous));
