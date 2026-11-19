@@ -81,7 +81,7 @@ struct site_region {
     scene_detail::extent envelope;
 };
 
-bool is_road( const oter_id &terrain )
+bool is_survey_road( const oter_id &terrain )
 {
     if( !terrain.is_valid() ) {
         return false;
@@ -178,7 +178,7 @@ site_region find_site( const tripoint_abs_omt &where )
         }
     }
 
-    if( !is_road( owner.om->ter( owner.local ) ) ) {
+    if( !is_survey_road( owner.om->ter( owner.local ) ) ) {
         return result;
     }
     const auto road_at = [z = where.z()]( const point &p ) -> std::optional<bool> {
@@ -187,7 +187,7 @@ site_region find_site( const tripoint_abs_omt &where )
         if( !probe.om ) {
             return std::nullopt;
         }
-        return is_road( probe.om->ter( probe.local ) );
+        return is_survey_road( probe.om->ter( probe.local ) );
     };
     const location_detail::road_section segment = location_detail::find_road_section(
                 point( where.x(), where.y() ), road_at, maximum_site_omts );
