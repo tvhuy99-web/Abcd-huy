@@ -111,6 +111,11 @@ msgstr "%s chảy máu nặng hơn."
 msgid "Bleeding stopped at %s."
 msgstr "%s hết chảy máu."
 
+msgid ""
+"Bleeding wound.  Fix from the wounds menu.\n"
+msgstr ""
+"Vết thương đang chảy máu. Hãy xử lý trong mục Vết thương.\n"
+
 #, c-format
 msgid "%s is broken."
 msgstr "%s bị gãy."
