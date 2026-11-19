@@ -305,12 +305,13 @@ std::string medical_ui::get_limb_wounds( const bodypart_id &part ) const
                 detail_str += string_format( "%s (%s) - %s\n",
                                              colorize( wd.type->get_name(), c_cyan ), wd.type.str(), wd.type->get_description() );
                 detail_str += string_format( "healing time: %s\n", to_string( wd.get_healing_time() ) );
-                detail_str += string_format( "lifetime: %s\n", to_string( wd.get_healing_progress() ) );
+                detail_str += string_format( "lifetime: %s\n", to_string( time_duration::from_seconds( wd.get_healing_progress() ) ) );
                 detail_str += string_format( "healing percentage: %.3f%%\n", wd.healing_percentage() );
-                detail_str += string_format( "gives pain: %d\n", wd.get_pain() );
+                detail_str += string_format( "gives pain: %d\n", wd.get_pain( you ) );
                 if( wd.wound_progress_timer.has_value() ) {
                     detail_str += string_format( "progresses into: %s, in %s\n", wd.wound_progress_timer->first.str(),
-                                                 to_string( wd.wound_progress_timer->second - wd.get_healing_progress() ) );
+                                                 to_string( wd.wound_progress_timer->second -
+                                                            time_duration::from_seconds( wd.get_healing_progress() ) ) );
                 }
                 detail_str += string_format( "%s\n", limb_score_output );
             }
@@ -983,7 +984,7 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
                     if( opts[menu.ret].second ) {
                         bp->remove_wound( opts[menu.ret].first );
                     } else {
-                        bp->add_wound( opts[menu.ret].first );
+                        bp->add_wound( opts[menu.ret].first, *this, 0 );
                     }
                 }
             } while( menu.ret >= 0 );
@@ -995,10 +996,12 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         for( const wound_fix_id &fix_id : wd.type->fixes ) {
             healing_option opt{wd.type, fix_id, true, fix_id->time};
 
-            for( const auto &[skill_id, level] : fix_id->skills ) {
-                if( get_greater_skill_or_knowledge_level( skill_id ) < level ) {
+            for( const wound_skill &req : fix_id->skills ) {
+                const bool has_skill = get_greater_skill_or_knowledge_level( req.skill ) >= req.level;
+                if( req.is_mandatory && !has_skill ) {
                     opt.doable = false;
-                    break;
+                } else if( has_skill ) {
+                    opt.time_to_apply *= req.time_save;
                 }
             }
 
