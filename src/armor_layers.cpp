@@ -452,7 +452,7 @@ std::vector<std::string> clothing_flags_description( const item &worn_item, cons
 
 // Figure out encumbrance penalties this clothing is involved in
 item_penalties outfit::get_item_penalties( std::list<item>::const_iterator worn_item_it,
-        const Character &c, const bodypart_id &_bp )
+        const Character &c, const bodypart_id &_bp ) const
 {
     std::vector<layer_level> layer = worn_item_it->get_layer();
 
@@ -560,7 +560,7 @@ item_penalties outfit::get_item_penalties( std::list<item>::const_iterator worn_
              std::move( lists_of_bad_items_within[0] ) };
 }
 
-std::vector<layering_item_info> outfit::items_cover_bp( const Character &c, const bodypart_id &bp )
+std::vector<layering_item_info> outfit::items_cover_bp( const Character &c, const bodypart_id &bp ) const
 {
     std::vector<layering_item_info> s;
     for( auto elem_it = worn.begin(); elem_it != worn.end(); ++elem_it ) {
