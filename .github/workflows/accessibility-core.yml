@@ -25,6 +25,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            android/gradle/wrapper/gradle-wrapper.properties
+            android/build.gradle
+            android/app/build.gradle
       - run: python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v
       - run: bash tools/accessibility/run_core_tests.sh
       - run: bash tools/accessibility/run_speech_tests.sh
@@ -48,6 +53,17 @@ jobs:
       - name: Compile Android UI and resources without native rebuild
         working-directory: android
         run: |
-          bash ./gradlew --no-daemon --console=plain \
-            -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false \
-            compileAccessibilityDebugJavaWithJavac
+          for attempt in 1 2 3; do
+            log="$RUNNER_TEMP/android-ui-gradle-${attempt}.log"
+            if bash ./gradlew --no-daemon --console=plain \
+              -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false \
+              compileAccessibilityDebugJavaWithJavac >"$log" 2>&1; then
+              tail -n 45 "$log"
+              exit 0
+            fi
+            tail -n 100 "$log"
+            if ! grep -Eq 'Received status code 429|HTTP.*429|Too Many Requests' "$log" || [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((30 * attempt))
+          done
