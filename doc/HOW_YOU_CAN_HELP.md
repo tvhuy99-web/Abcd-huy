@@ -42,7 +42,7 @@ release.
 
 If you have a GitHub account, you may know you can [open issues](../ISSUES.md) and create pull
 requests to [contribute code changes](../CONTRIBUTING.md). But you can also use your GitHub
-account to help [manage and triage](ISSUE_TRIAGE.md) the existing issues and pull requests, and participate in
+account to help manage and triage upstream issues and pull requests, and participate in
 the discovery, discussion, and testing processes that surround game development.
 
 Ways to help with issues:

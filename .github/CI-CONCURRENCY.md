@@ -42,7 +42,7 @@ controls the number of **runs**, not CPU threads inside each build.
 ## Events which must not be discarded
 
 Automations that **apply a change to GitHub**, such as per-comment commands,
-one-time contributor labels, scheduled issue triage, post-build PR feedback,
+one-time contributor labels, post-build PR feedback,
 release publication and reusable release assets, are scoped to their own
 comment/PR/upstream-run or source ref and use `cancel-in-progress: false`
 as appropriate. Do not lose a distinct user's command just because a later
