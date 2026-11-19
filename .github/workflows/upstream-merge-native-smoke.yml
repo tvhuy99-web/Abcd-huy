@@ -38,6 +38,7 @@ jobs:
             obj/game.o obj/handle_action.o obj/inventory_ui.o \
             obj/vehicle.o obj/vehicle_autodrive.o obj/advanced_inv.o obj/flexbuffer_cache.o \
             obj/activity_actor.o obj/body_status_ui.o \
+            obj/bodygraph.o obj/character_inventory.o obj/crafting.o \
             CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
 
@@ -51,8 +52,16 @@ jobs:
           persist-credentials: false
       - name: Install GCC 16 and native build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y g++-16 libncursesw5-dev gettext
+          for attempt in 1 2 3; do
+            if sudo apt-get -o Acquire::Retries=2 update &&
+               sudo apt-get -o Acquire::Retries=2 install -y g++-16 libncursesw5-dev gettext; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((20 * attempt))
+          done
           g++-16 --version
       - name: Compile merged source without producing a release
         run: |
@@ -62,5 +71,6 @@ jobs:
             obj/game.o obj/handle_action.o obj/inventory_ui.o \
             obj/vehicle.o obj/vehicle_autodrive.o obj/advanced_inv.o obj/flexbuffer_cache.o \
             obj/activity_actor.o obj/body_status_ui.o \
+            obj/bodygraph.o obj/character_inventory.o obj/crafting.o \
             CXX=g++-16 RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=1 LINTJSON=0 CCACHE=0
