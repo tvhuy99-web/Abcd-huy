@@ -4046,6 +4046,45 @@ std::unique_ptr<activity_actor> ebooksave_activity_actor::deserialize( JsonValue
 namespace io
 {
 template<>
+std::string enum_to_string<do_activity_reason>( do_activity_reason reason )
+{
+    switch( reason ) {
+        case do_activity_reason::CAN_DO_CONSTRUCTION: return "CAN_DO_CONSTRUCTION";
+        case do_activity_reason::CAN_DO_FETCH: return "CAN_DO_FETCH";
+        case do_activity_reason::NO_COMPONENTS: return "NO_COMPONENTS";
+        case do_activity_reason::DONT_HAVE_SKILL: return "DONT_HAVE_SKILL";
+        case do_activity_reason::NO_ZONE: return "NO_ZONE";
+        case do_activity_reason::NO_VEHICLE: return "NO_VEHICLE";
+        case do_activity_reason::ALREADY_DONE: return "ALREADY_DONE";
+        case do_activity_reason::UNKNOWN_ACTIVITY: return "UNKNOWN_ACTIVITY";
+        case do_activity_reason::NEEDS_CLEARING: return "NEEDS_CLEARING";
+        case do_activity_reason::NEEDS_HARVESTING: return "NEEDS_HARVESTING";
+        case do_activity_reason::NEEDS_PLANTING: return "NEEDS_PLANTING";
+        case do_activity_reason::NEEDS_TILLING: return "NEEDS_TILLING";
+        case do_activity_reason::NEEDS_FERTILIZING: return "NEEDS_FERTILIZING";
+        case do_activity_reason::BLOCKING_TILE: return "BLOCKING_TILE";
+        case do_activity_reason::NEEDS_BOOK_TO_LEARN: return "NEEDS_BOOK_TO_LEARN";
+        case do_activity_reason::NEEDS_CHOPPING: return "NEEDS_CHOPPING";
+        case do_activity_reason::NEEDS_TREE_CHOPPING: return "NEEDS_TREE_CHOPPING";
+        case do_activity_reason::NEEDS_BIG_BUTCHERING: return "NEEDS_BIG_BUTCHERING";
+        case do_activity_reason::NEEDS_BUTCHERING: return "NEEDS_BUTCHERING";
+        case do_activity_reason::NEEDS_DISSECTING: return "NEEDS_DISSECTING";
+        case do_activity_reason::NEEDS_CUT_HARVESTING: return "NEEDS_CUT_HARVESTING";
+        case do_activity_reason::ALREADY_WORKING: return "ALREADY_WORKING";
+        case do_activity_reason::NEEDS_VEH_DECONST: return "NEEDS_VEH_DECONST";
+        case do_activity_reason::NEEDS_VEH_REPAIR: return "NEEDS_VEH_REPAIR";
+        case do_activity_reason::WOULD_PREVENT_VEH_FLYING: return "WOULD_PREVENT_VEH_FLYING";
+        case do_activity_reason::NEEDS_MINING: return "NEEDS_MINING";
+        case do_activity_reason::NEEDS_MOP: return "NEEDS_MOP";
+        case do_activity_reason::NEEDS_FISHING: return "NEEDS_FISHING";
+        case do_activity_reason::NEEDS_CRAFT: return "NEEDS_CRAFT";
+        case do_activity_reason::NEEDS_DISASSEMBLE: return "NEEDS_DISASSEMBLE";
+        case do_activity_reason::REFUSES_THIS_WORK: return "REFUSES_THIS_WORK";
+    }
+    cata_fatal( "Invalid do_activity_reason in enum_to_string" );
+}
+
+template<>
 std::string enum_to_string<zone_activity_stage>( zone_activity_stage stage )
 {
     switch( stage ) {
