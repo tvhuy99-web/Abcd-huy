@@ -72,7 +72,10 @@ class ManualModImportContracts(unittest.TestCase):
 
     def test_delete_has_explicit_world_warning_and_confirmation(self):
         self.assertIn("a11yManualModConfirmDelete", self.activity)
-        self.assertIn("setNegativeButton(", self.activity)
+        self.assertIn("addButton(page, R.string.a11yManualModCancel", self.activity)
+        self.assertIn("addButton(page, R.string.a11yGestureGuideTitle", self.activity)
+        self.assertNotIn("new AlertDialog.Builder(", self.activity)
+        self.assertIn("showControls(homeControls)", self.activity)
         self.assertIn("ManualModArchive.deleteMod(", self.activity)
 
 
