@@ -282,6 +282,8 @@ void body_status_uistate::update_sorted_armor()
     for( bodypart_id bp_id : all_bodyparts ) {
         sort_armor_categories.emplace_back( bp_id );
     }
+    sort_armor_category_index = std::clamp( sort_armor_category_index, 0,
+                                           static_cast<int>( sort_armor_categories.size() ) - 1 );
     sort_armor_category = sort_armor_categories[sort_armor_category_index];
 
     worn_subset = displayed_character.worn.filter_by_bodypart( sort_armor_category );
@@ -618,14 +620,16 @@ bool body_status_ui::handle_action( const std::string &action )
         * and moving the selected item inwards in `Character::worn`
         */
         int inner_item_index = bs_uistate.selected_index - 1;
-        if( inner_item_index >= 0 ) {
+        if( inner_item_index >= 0 &&
+            bs_uistate.selected_index < static_cast<int>( bs_uistate.worn_subset.size() ) ) {
             std::list<item>::iterator selected_item = bs_uistate.worn_subset[bs_uistate.selected_index];
             std::list<item>::iterator inner_item = bs_uistate.worn_subset[inner_item_index];
             splice_worn_item( selected_item, inner_item, inner_item_index, false );
         }
     } else if( action == "MOVE_ARMOR_OUT" ) {
         int outer_item_index = bs_uistate.selected_index + 1;
-        if( outer_item_index < static_cast<int>( bs_uistate.worn_subset.size() ) ) {
+        if( bs_uistate.selected_index >= 0 &&
+            outer_item_index < static_cast<int>( bs_uistate.worn_subset.size() ) ) {
             std::list<item>::iterator selected_item = bs_uistate.worn_subset[bs_uistate.selected_index];
             std::list<item>::iterator outer_item = bs_uistate.worn_subset[outer_item_index];
             splice_worn_item( selected_item, outer_item, outer_item_index, true );
@@ -786,12 +790,11 @@ void body_status_callback::confirm( uilist *menu )
     select( menu );
     switch( bs_uistate.selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY: {
-            if( !bs_uistate.parent_bodypart.has_value() ) {
-                // if in the top-level bodypart list, open the sub-bodypart list
-                bs_uistate.parent_bodypart = bs_uistate.selected_bodypart;
-                // get nested graph of original part
+            if( !bs_uistate.parent_bodypart.has_value() && !bs_uistate.partlist.empty() ) {
+                // Enter a nested graph only when the destination is valid.
                 const bodygraph_id next_graph = bs_uistate.get_selected_partlist().bg_part->nested_graph;
-                if( next_graph != bodygraph_id::NULL_ID() ) {
+                if( next_graph != bodygraph_id::NULL_ID() && next_graph.is_valid() ) {
+                    bs_uistate.parent_bodypart = bs_uistate.selected_bodypart;
                     bs_uistate.displayed_graph_id = next_graph;
                     bs_uistate.prepare_partlist();
                     ui_parent->reset_list_entries = true;
@@ -831,17 +834,23 @@ void body_status_uistate::update_selected( int index )
     selected_index = index;
     switch( selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY: {
-            bodypart_id selected_bp = get_selected_partlist().bp_id;
-            selected_bodypart = selected_bp;
+            if( index < 0 || index >= static_cast<int>( partlist.size() ) ) {
+                selected_bodypart = bodypart_str_id::NULL_ID();
+                info_txt.clear();
+                break;
+            }
+            selected_bodypart = get_selected_partlist().bp_id;
             prepare_infolist();
             break;
         }
         case body_status_tab::BS_TAB_MEDICAL: {
-            selected_bodypart = all_bodyparts[index];
+            if( index >= 0 && index < static_cast<int>( all_bodyparts.size() ) ) {
+                selected_bodypart = all_bodyparts[index];
+            }
             break;
         }
         case body_status_tab::BS_TAB_SORT_ARMOR:
-            selected_armor = index > -1 && !worn_subset.empty() ?
+            selected_armor = index >= 0 && index < static_cast<int>( worn_subset.size() ) ?
                              item_location( displayed_character, &*worn_subset[index] )
                              : item_location::nowhere;
             break;
@@ -954,7 +963,9 @@ void body_status_ui_impl::draw_info()
 
     switch( bs_uistate.selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY:
-            if( bs_uistate.get_selected_partlist().present_on_character ) {
+            if( bs_uistate.selected_index >= 0 &&
+                bs_uistate.selected_index < static_cast<int>( bs_uistate.partlist.size() ) &&
+                bs_uistate.get_selected_partlist().present_on_character ) {
                 draw_info_imgui( bs_uistate.info_txt );
             }
             break;
@@ -1077,9 +1088,12 @@ void body_status_ui_impl::draw_bodygraph()
 
     switch( bs_uistate.selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY:
-            bodypart_or_subpart_id = bs_uistate.parent_bodypart.has_value() ?
-                                     bs_uistate.get_selected_partlist().sbp_id.str() :
-                                     bs_uistate.selected_bodypart->id.str();
+            if( bs_uistate.selected_index >= 0 &&
+                bs_uistate.selected_index < static_cast<int>( bs_uistate.partlist.size() ) ) {
+                bodypart_or_subpart_id = bs_uistate.parent_bodypart.has_value() ?
+                                         bs_uistate.get_selected_partlist().sbp_id.str() :
+                                         bs_uistate.selected_bodypart->id.str();
+            }
             break;
         case body_status_tab::BS_TAB_MEDICAL:
             bodypart_or_subpart_id = bs_uistate.selected_bodypart.id().str();
