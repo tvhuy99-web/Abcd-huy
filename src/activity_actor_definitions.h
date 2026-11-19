@@ -2021,6 +2021,45 @@ class consume_activity_actor : public activity_actor
             return std::make_unique<consume_activity_actor>( *this );
         }
 
+        // NPC AI needs to know whether a queued meal still exists and is reachable.
+        item_location location() const {
+            return consume_location;
+        }
+
+        bool has_food() const {
+            return static_cast<bool>( consume_location ) || !consume_item.is_null();
+        }
+
+        void serialize( JsonOut &jsout ) const override;
+        static std::unique_ptr<activity_actor> deserialize( JsonValue &jsin );
+};
+
+// A personal NPC meal from a camp's shared larder.  Food is not deducted
+// until the activity finishes, so interrupted meals do not consume supplies.
+class camp_meal_activity_actor : public activity_actor
+{
+    private:
+        tripoint_abs_omt camp_position;
+        int meal_kcals = 0;
+
+    public:
+        camp_meal_activity_actor() = default;
+        camp_meal_activity_actor( tripoint_abs_omt camp_position, int meal_kcals ) :
+            camp_position( camp_position ), meal_kcals( meal_kcals ) {}
+
+        const activity_id &get_type() const override {
+            static const activity_id ACT_CAMP_MEAL( "ACT_CAMP_MEAL" );
+            return ACT_CAMP_MEAL;
+        }
+
+        void start( player_activity &act, Character &who ) override;
+        void do_turn( player_activity &, Character & ) override {}
+        void finish( player_activity &act, Character &who ) override;
+
+        std::unique_ptr<activity_actor> clone() const override {
+            return std::make_unique<camp_meal_activity_actor>( *this );
+        }
+
         void serialize( JsonOut &jsout ) const override;
         static std::unique_ptr<activity_actor> deserialize( JsonValue &jsin );
 };
