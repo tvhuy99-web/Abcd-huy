@@ -398,11 +398,15 @@ void vehicle::build_electronics_menu( map &here, veh_menu &menu )
     for( const vpart_reference &arc_vp : get_any_parts( "ARCADE" ) ) {
         if( arc_vp.part().enabled ) {
             item *arc_itm = &arc_vp.part().base;
+            vehicle_cursor vc( *this, arc_vp.part_index() );
+            item_location loc( vc, arc_itm );
 
             menu.add( _( "Play arcade machine" ) )
             .hotkey( "ARCADE" )
             .enable( !!arc_itm )
-            .on_submit( [arc_itm] { iuse::portable_game( &get_avatar(), arc_itm, tripoint_bub_ms::zero ); } );
+            .on_submit( [loc]() mutable {
+                iuse::portable_game( &get_avatar(), loc, tripoint_bub_ms::zero );
+            } );
             break;
         }
     }
