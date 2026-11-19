@@ -90,6 +90,9 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - name: Install build dependencies with Ubuntu mirror fallback
         run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
+      - name: Include four licensed community content mods in candidate APK
+        if: matrix.name == 'candidate'
+        run: python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
       - name: Compile Vulkan shader artifacts for Android assets
         run: |
           python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
