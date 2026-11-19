@@ -29,3 +29,30 @@ Each extra mod is optional. These sources are not automatically added to data/mo
 Compatibility caveat: the pinned external mod data has NOT YET passed the game engine's full JSON and gameplay loader for the exact Abcd-huy revision. Installing it and successfully creating and reloading a disposable world must precede inclusion in a public APK. In particular, modified items, monsters, effects, vehicles and EOCs may conflict with the rapidly changing experimental CDDA code.
 
 Vietnamese translation: translate text fields after the data has passed loading checks. Preserve object IDs and JSON keys. Translation may require the game's gettext extraction/localization build and game-specific context; never translate raw JSON blindly.
+
+## Vietnamese community translation overlays
+
+The candidate/test APK builds download the pinned upstream CDDA mods first, then
+apply Vietnamese text-only overlays from `tools/mods/translations/`. All game
+IDs, item mechanics, recipes, mod dependencies and numerical parameters remain
+those of the pinned source. These translations are community-supplied and still
+require native-game loading and voice/accessibility acceptance testing.
+
+- **MST Extra** and **Blazemod**: user-provided Vietnamese text overlays.
+- **Cataclysm++**: 1,656 Vietnamese strings in 52 JSON files from the
+  `nocts_cata_mod_DDA` folder at commit
+  `46982a63da25b064c8d0fdee9b68c23dccc1f671`. The separate
+  Bright Nights version in the uploaded ZIP is deliberately excluded.
+- **Arcana**: not translated yet.
+
+To check and apply the three overlays to installed pinned mods:
+
+```sh
+python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
+python3 tools/mods/apply_vi_overlays.py --target data/mods
+```
+
+The dry run rejects missing JSON pointer targets, altered technical fields,
+corrupt overlay checksums, changed source revisions and broken format/colour
+tags. Do not translate JSON property names or IDs. Changes in gameplay data
+or additional upstream mod revisions require a new compatibility review.

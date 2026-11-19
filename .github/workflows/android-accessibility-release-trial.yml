@@ -90,7 +90,7 @@ jobs:
         run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
       - name: Include four licensed community content mods in test APK
         run: python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
-      - name: Replace original MST Extra and Blazemod text with Vietnamese
+      - name: Apply Vietnamese translations for Cataclysm++, MST Extra and Blazemod
         run: |
           python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
           python3 tools/mods/apply_vi_overlays.py --target data/mods

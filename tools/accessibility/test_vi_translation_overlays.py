@@ -24,6 +24,10 @@ class VietnameseModOverlaysTest(unittest.TestCase):
                             for name in strings))
         self.assertEqual(overlays.OVERLAYS["cataplusplus"]["id"], "Cata++")
 
+    def test_literal_percentages_are_not_printf_tokens(self):
+        self.assertEqual(overlays.TOKEN.findall("10% slower, 30% slower"), [])
+        self.assertEqual(overlays.TOKEN.findall("%s and %d"), ["%s", "%d"])
+
     def test_technical_id_cannot_be_changed(self):
         for pointer in ["/0/id", "/0/type", "/0/copy-from", "/0/dependencies"]:
             with self.assertRaises(ValueError):
