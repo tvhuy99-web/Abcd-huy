@@ -118,20 +118,21 @@ def strip_clike(source: str) -> tuple[str, int]:
 
 
 def strip_python(source: str) -> tuple[str, int]:
-    items = []
+    lines = source.splitlines(keepends=True)
     removed = 0
     for token in tokenize.generate_tokens(io.StringIO(source).readline):
-        if token.type == tokenize.COMMENT:
-            comment = token.string
-            if (token.start[0] in (1, 2) and
-                    (comment.startswith('#!') or 'coding' in comment)) or keep_comment(comment):
-                items.append(token)
-            else:
-                removed += 1
-                items.append(token._replace(string=''))
-        else:
-            items.append(token)
-    result = tokenize.untokenize(items)
+        if token.type != tokenize.COMMENT:
+            continue
+        comment = token.string
+        if (token.start[0] in (1, 2) and
+                (comment.startswith('#!') or 'coding' in comment)) or keep_comment(comment):
+            continue
+        line_idx = token.start[0] - 1
+        line = lines[line_idx]
+        lines[line_idx] = (line[:token.start[1]].rstrip(' \t')
+                           + line[token.end[1]:])
+        removed += 1
+    result = ''.join(lines)
     if removed:
         ast.parse(result)
     return result, removed
