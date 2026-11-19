@@ -11,7 +11,7 @@ class DebugPromptAccessibility(unittest.TestCase):
         source = (ROOT / "src/flexbuffer_cache.cpp").read_text(encoding="utf-8")
         self.assertIn('#if defined(__ANDROID__)', source)
         self.assertIn("Regenerating stale Android JSON cache", source)
-        self.assertIn("remove_file( disk_entry->second.flexbuffer_path.u8string() );",
+        self.assertIn("remove_file( from_u8string( disk_entry->second.flexbuffer_path.u8string() ) );",
                       source)
 
     def test_native_bridge_includes_actions_and_wake_event(self):
