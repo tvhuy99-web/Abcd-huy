@@ -229,6 +229,11 @@ int fault::instant_damage() const
     return instant_damage_;
 }
 
+double fault::attack_cost_modifier() const
+{
+    return attack_cost_modifier_;
+}
+
 std::vector<std::tuple<int, float, damage_type_id>> fault::melee_damage_mod() const
 {
     return melee_damage_mod_;
