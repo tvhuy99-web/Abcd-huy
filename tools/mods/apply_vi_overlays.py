@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply Vietnamese text-only overlays to three pinned CDDA mods.
+"""Apply Vietnamese text-only overlays to four pinned CDDA mods.
 
 Only string values change. Game logic, identifiers, arrays and numeric
 fields always come from the original pinned upstream revision.
@@ -15,6 +15,15 @@ import re
 
 HERE = Path(__file__).resolve().parent
 OVERLAYS = {
+    "arcana": {
+        "folder": "Arcana_StrangeAeons", "id": "Arcana",
+        "revision": "080d8e9e454d2179bc98eb07de075f74e58bcbd1",
+        "file": "translations/arcana_vi_overlay.b64",
+        "sha256": "ffcfe0ad2c43f627febe1f456dab3c442549a48ba7611726b7d89b9d6aaeaa1d",
+        "max_bytes": 1_500_000, "max_files": 339,
+        "source_blobs": "translations/arcana_upstream_blob_shas.json",
+        "expected_strings": 6546,
+    },
     "cataplusplus": {
         "folder": "CataclysmPlusPlus", "id": "Cata++",
         "revision": "46982a63da25b064c8d0fdee9b68c23dccc1f671",
@@ -44,13 +53,14 @@ def load_overlay(kind):
         raise ValueError("Overlay checksum mismatch: " + kind)
     compressed = base64.b64decode(content, validate=True)
     decoder = lzma.LZMADecompressor()
-    decoded = decoder.decompress(compressed, max_length=250001)
-    if len(decoded) > 250000 or not decoder.eof or decoder.unused_data:
+    limit = info.get("max_bytes", 250000)
+    decoded = decoder.decompress(compressed, max_length=limit + 1)
+    if len(decoded) > limit or not decoder.eof or decoder.unused_data:
         raise ValueError("Invalid or oversized translation overlay: " + kind)
     doc = json.loads(decoded)
     if doc["format"] != 1 or doc["mod"] != kind or doc["upstream_revision"] != info["revision"]:
         raise ValueError("Translation source revision mismatch: " + kind)
-    if not isinstance(doc["files"], dict) or len(doc["files"]) > 100:
+    if not isinstance(doc["files"], dict) or len(doc["files"]) > info.get("max_files", 100):
         raise ValueError("Invalid overlay manifest")
     return doc["files"]
 
@@ -68,6 +78,44 @@ def target_for_pointer(obj, pointer):
     return parent, key
 
 
+
+def allowed_arcana_pointer(name, pointer):
+    """Prevent accidentally translating IDs, map layouts or mod logic."""
+    raw_parts = pointer.lstrip("/").split("/")
+    parts = [x.replace("~1", "/").replace("~0", "~") for x in raw_parts]
+    labels = [x for x in parts if not x.isdigit()]
+    if not labels:
+        return False
+    leaf = labels[-1]
+    if leaf in {"id", "type", "path", "copy-from", "dependencies",
+                "ctxt", "//", "rows", "symbol", "category", "material",
+                "target", "effect", "group", "item", "ammo", "skill"}:
+        return False
+    if leaf == "sound":
+        return name == "monsters/speech.json"
+    if leaf in {"pull", "open", "close", "fail"}:
+        return name == "furniture_and_terrain/gates.json"
+    allowed = {
+        "name", "str", "str_pl", "str_sp", "description", "desc", "text",
+        "dynamic_line", "msg", "message", "done_message", "apply_message",
+        "remove_message", "u_message", "npc_message", "friendly_msg",
+        "hostile_msg", "sound_msg", "sound_message", "use_message",
+        "warning", "signage", "prompt", "revert_msg", "need_fire_msg",
+        "need_charges_msg", "need_charge_msg", "not_ready_msg",
+        "menu_text", "success_message", "failure_message",
+        "failure_explanation", "snippet", "snippet_category", "label",
+        "title", "greeting", "gendered_line", "description_short",
+        "name_suffix", "mutagen_message", "memorial_message", "info",
+        "initiate", "decay_messages", "messages", "miss_messages",
+        "job_description", "start_name", "bash_dmg_verb", "cut_dmg_verb",
+        "targeting_sound",
+    }
+    return (any(x in allowed or x.startswith(("msg_", "message_")) or
+                x.endswith(("_msg", "_message")) for x in labels)
+            or (len(parts) >= 3 and parts[-3] == "modes" and
+                parts[-1] == "1"))
+
+
 def apply(kind, data_mods, dry_run=False):
     info = OVERLAYS[kind]
     folder = (Path(data_mods) / info["folder"]).resolve()
@@ -76,6 +124,12 @@ def apply(kind, data_mods, dry_run=False):
     if sum(isinstance(x, dict) and x.get("type") == "MOD_INFO"
            and x.get("id") == info["id"] for x in entries) != 1:
         raise ValueError("Unexpected CDDA mod ID: " + kind)
+    original_blobs = None
+    if info.get("source_blobs"):
+        pin = json.loads((HERE / info["source_blobs"]).read_text(encoding="utf-8"))
+        if pin["revision"] != info["revision"] or len(pin["files"]) != 339:
+            raise ValueError("Arcana source blob manifest is inconsistent")
+        original_blobs = pin["files"]
     prepared = []
     strings = 0
     for name, changes in sorted(load_overlay(kind).items()):
@@ -86,10 +140,22 @@ def apply(kind, data_mods, dry_run=False):
         path = (folder / relative).resolve()
         if folder not in path.parents or not path.is_file():
             raise FileNotFoundError("Original JSON missing: " + name)
-        obj = json.loads(path.read_text(encoding="utf-8-sig"))
+        raw = path.read_bytes()
+        if original_blobs is not None:
+            sha = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii")
+                               + b"\\x00" + raw).hexdigest()
+            if original_blobs.get(name) != sha:
+                raise ValueError("Arcana upstream JSON does not match pinned revision: " + name)
+        obj = json.loads(raw.decode("utf-8-sig"))
+        seen_pointers = set()
         for pointer, translated in changes:
+            if pointer in seen_pointers:
+                raise ValueError("Repeated translation pointer: " + name + pointer)
+            seen_pointers.add(pointer)
             if not isinstance(translated, str) or len(translated) > 8192:
                 raise ValueError("Invalid localized text: " + pointer)
+            if kind == "arcana" and not allowed_arcana_pointer(name, pointer):
+                raise ValueError("Arcana overlay attempted to modify a technical field: " + name + pointer)
             parent, key = target_for_pointer(obj, pointer)
             old = parent[key]
             if not isinstance(old, str):
@@ -99,6 +165,8 @@ def apply(kind, data_mods, dry_run=False):
             parent[key] = translated
             strings += 1
         prepared.append((path, json.dumps(obj, ensure_ascii=False, indent=2) + "\n"))
+    if info.get("expected_strings") is not None and strings != info["expected_strings"]:
+        raise ValueError("Incorrect number of Arcana translation entries")
     if not dry_run:
         for path, data in prepared:
             temporary = path.with_name(path.name + ".vi-tmp")
