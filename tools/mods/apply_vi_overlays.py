@@ -34,7 +34,7 @@ OVERLAYS = {
         "sha256": "d7837131504a9112c165efba75df6518f69a685d88d232b57a6d62cfb133f6c6",
     },
 }
-TOKEN = re.compile(r"%(?:\d+\$)?[+\-#0 ]*(?:\d+)?(?:\.\d+)?[sdif]|<[A-Za-z_/][^>]*>")
+TOKEN = re.compile(r"(?<![0-9])%(?:\d+\$)?[+\-#0 ]*(?:\d+)?(?:\.\d+)?[sdif](?![A-Za-z])|<[A-Za-z_/][^>]*>")
 
 
 def load_overlay(kind):
