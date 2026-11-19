@@ -1,0 +1,31 @@
+# Five optional community mods for Abcd-huy
+
+The curator manifest (curated_mods.json) identifies EXACT source revisions and their CDDA mod subfolders:
+
+1. Cataclysm++: Noctifer-de-Mortem/nocts_cata_mod (DDA folder)
+2. Arcana: Strange Aeons: Standing-Storm/cdda-arcana-mod
+3. Secronom Zombies: Kenan2000/Secronom-Zombies (NOT LICENSED FOR REDISTRIBUTION)
+4. Blazemod: Erin105/blazemod
+5. More Survival Tools Extra: chaosvolt/MST_Extra_Mod (DDA folder)
+
+The installer copies the actual mod content into the target directory without changing saves, enabling mods, or overwriting an existing mod folder. It retains the source licence file when one exists in the upstream archive. The original project and authors remain the source of the content; no ownership is claimed by Abcd-huy.
+
+Commands (from the repository root, with Python 3.10+):
+    
+    python3 tools/mods/install_curated.py --list
+    python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
+    python3 tools/mods/install_curated.py --install secronom --target /path/to/personal/user/mods --allow-local-unlicensed
+    python3 -m unittest discover -s tools/accessibility -p 'test_curated_mod_installer.py' -v
+
+IMPORTANT: Secronom has no verified license for redistribution. The local-only option is intended for the end user's own private installation. Do not add its contents to a public repo or distribute it in a public APK unless the rightsholder grants suitable permission.
+
+Licenses:
+- Cataclysm++: Unlicense, upstream repository LICENSE.
+- Arcana, Blazemod and MST Extra: Creative Commons Attribution-ShareAlike 3.0, upstream LICENSE.txt.
+- Secronom: unspecified / permission not yet verified.
+
+Each extra mod is optional. These sources are not automatically added to data/mods/default.json, so no existing or new world enables them unexpectedly. The existing world mod-selection screen loads mods from data/mods and the per-user mods directory.
+
+Compatibility caveat: the pinned external mod data has NOT YET passed the game engine's full JSON and gameplay loader for the exact Abcd-huy revision. Installing it and successfully creating and reloading a disposable world must precede inclusion in a public APK. In particular, modified items, monsters, effects, vehicles and EOCs may conflict with the rapidly changing experimental CDDA code.
+
+Vietnamese translation: translate text fields after the data has passed loading checks. Preserve object IDs and JSON keys. Translation may require the game's gettext extraction/localization build and game-specific context; never translate raw JSON blindly.

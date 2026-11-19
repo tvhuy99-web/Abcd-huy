@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "policy": "Downloaded sources are pinned; no mod is activated by default. Secronom is local-use only pending redistribution permission.",
+  "mods": [
+    {
+      "id": "cataplusplus",
+      "name": "Cataclysm++",
+      "repository": "Noctifer-de-Mortem/nocts_cata_mod",
+      "revision": "46982a63da25b064c8d0fdee9b68c23dccc1f671",
+      "source_subdir": "nocts_cata_mod_DDA",
+      "destination": "CataclysmPlusPlus",
+      "mod_id": "Cata++",
+      "license": "Unlicense",
+      "redistributable": true,
+      "required_mod_ids": [
+        "dda"
+      ]
+    },
+    {
+      "id": "arcana",
+      "name": "Arcana: Strange Aeons",
+      "repository": "Standing-Storm/cdda-arcana-mod",
+      "revision": "080d8e9e454d2179bc98eb07de075f74e58bcbd1",
+      "source_subdir": "Arcana",
+      "destination": "Arcana_StrangeAeons",
+      "mod_id": "Arcana",
+      "license": "CC-BY-SA-3.0",
+      "redistributable": true,
+      "required_mod_ids": [
+        "dda"
+      ]
+    },
+    {
+      "id": "secronom",
+      "name": "Secronom Zombies",
+      "repository": "Kenan2000/Secronom-Zombies",
+      "revision": "3be7c393b0894b229ea6f18d99b0bccd02cad2a6",
+      "source_subdir": "secronom",
+      "destination": "Secronom",
+      "mod_id": "secronom",
+      "license": "NOT_SPECIFIED",
+      "redistributable": false,
+      "required_mod_ids": [
+        "dda"
+      ]
+    },
+    {
+      "id": "blazemod",
+      "name": "Blazemod: Vehicle Additions Pack",
+      "repository": "Erin105/blazemod",
+      "revision": "14530cc7ebfaac6c85586e7d7728635f8fda7d6d",
+      "source_subdir": "",
+      "destination": "Blazemod",
+      "mod_id": "blazemod",
+      "license": "CC-BY-SA-3.0",
+      "redistributable": true,
+      "required_mod_ids": [
+        "dda"
+      ]
+    },
+    {
+      "id": "mst_extra",
+      "name": "More Survival Tools Extra",
+      "repository": "chaosvolt/MST_Extra_Mod",
+      "revision": "5f9dbfef550d5c140865ce5f6a32c40eb34c07ca",
+      "source_subdir": "MST_Extra",
+      "destination": "MST_Extra",
+      "mod_id": "MST_Extra",
+      "license": "CC-BY-SA-3.0",
+      "redistributable": true,
+      "required_mod_ids": [
+        "dda"
+      ]
+    }
+  ]
+}
