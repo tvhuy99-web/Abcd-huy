@@ -1,0 +1,58 @@
+name: Curated Vietnamese mod source and JSON validation
+
+on:
+  pull_request:
+    paths:
+      - 'tools/mods/**'
+      - '.github/workflows/curated-vietnamese-mods.yml'
+  push:
+    branches:
+      - master
+      - feature/curated-five-mods-20261119
+    paths:
+      - 'tools/mods/**'
+      - '.github/workflows/curated-vietnamese-mods.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Validate all four pinned overlay manifests
+        run: python3 -m unittest discover -s tools/accessibility -p 'test_curated_mod_vi_overlays.py' -v
+      - name: Download and inspect four original licensed mods
+        run: python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
+      - name: Test full Vietnamese overlays without changing files
+        run: python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
+      - name: Apply four Vietnamese overlays
+        run: python3 tools/mods/apply_vi_overlays.py --target data/mods
+      - name: Parse all localized mod JSON and check mod identifiers
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          expected = {
+              "CataclysmPlusPlus": "Cata++",
+              "Arcana_StrangeAeons": "Arcana",
+              "Blazemod": "blazemod",
+              "MST_Extra": "MST_Extra",
+          }
+          for directory, mod_id in expected.items():
+              root = Path("data/mods") / directory
+              count = 0
+              for path in root.rglob("*.json"):
+                  json.loads(path.read_text(encoding="utf-8-sig"))
+                  count += 1
+              info = json.loads((root / "modinfo.json").read_text(encoding="utf-8"))
+              objects = info if isinstance(info, list) else [info]
+              assert sum(entry.get("type") == "MOD_INFO"
+                         and entry.get("id") == mod_id
+                         for entry in objects) == 1
+              print(f"{directory}: validated {count} JSON files; id={mod_id}")
+          PY
