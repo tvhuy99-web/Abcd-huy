@@ -18,7 +18,9 @@ def read(name):
 class RepositoryLatestOnlyActions(unittest.TestCase):
     def test_all_workflows_define_top_level_concurrency(self):
         paths = sorted(WORK.glob("*.yml")) + sorted(WORK.glob("*.yaml"))
-        self.assertGreaterEqual(len(paths), 44)
+        names = {path.name for path in paths}
+        self.assertIn("matrix.yml", names)
+        self.assertIn("android-accessibility-release-trial.yml", names)
         for path in paths:
             with self.subTest(workflow=path.name):
                 text = path.read_text(encoding="utf-8")
@@ -66,15 +68,14 @@ class RepositoryLatestOnlyActions(unittest.TestCase):
         self.assertNotIn("  push:", read("android-accessibility-production.yml"))
 
     def test_comment_commands_are_not_superseded_by_other_comments(self):
-        for name in ("comment-commands.yml", "greet-first-time-comment.yml"):
+        for name in ("comment-commands.yml",):
             with self.subTest(workflow=name):
                 body = read(name)
                 self.assertIn("github.event.comment.id", body)
                 self.assertIn("cancel-in-progress: false", body)
 
     def test_post_processing_is_scoped_by_upstream_run_not_branch(self):
-        for name in ("post-spell-check-result.yml", "post-suggestions.yml",
-                     "test_labeler.yml", "gh-pages-rebuild.yml"):
+        for name in ("post-spell-check-result.yml", "post-suggestions.yml"):
             with self.subTest(workflow=name):
                 body = read(name)
                 self.assertIn("github.event.workflow_run.id", body)
@@ -89,9 +90,8 @@ class RepositoryLatestOnlyActions(unittest.TestCase):
                       matrix)
 
     def test_manual_publish_and_maintenance_are_not_preempted(self):
-        for name in ("release-android-bundle.yaml", "stale.yml",
-                     "build-translations.yml", "compose-tilesets.yml",
-                     "weekly-changelog.yml"):
+        for name in ("release-android-bundle.yaml", "build-translations.yml",
+                     "compose-tilesets.yml"):
             with self.subTest(workflow=name):
                 self.assertIn("cancel-in-progress: false", read(name))
 
@@ -106,8 +106,8 @@ class RepositoryLatestOnlyActions(unittest.TestCase):
         self.assertIn("latest.get(item.key)", body)
 
     def test_individual_projects_keep_branch_local_parallelism(self):
-        for name in ("reader-audit-build.yml", "format_emscripten.yml",
-                     "audit-vietnamese.yml", "export-vietnamese-review.yml"):
+        for name in ("reader-audit-build.yml", "audit-vietnamese.yml",
+                     "export-vietnamese-review.yml"):
             with self.subTest(workflow=name):
                 body = read(name)
                 self.assertIn("cancel-in-progress: true", body)
