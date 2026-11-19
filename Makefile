@@ -387,6 +387,8 @@ ifneq ($(CLANG), 0)
     LD  = $(CROSS)$(CLANGCMD)
     CC  = $(CROSS)$(subst ++,,$(CLANGCMD))
   endif
+  # libstdc++ marks loops with "#pragma GCC unroll", which clang cannot always honor.
+  CXX_WARNINGS += -Wno-pass-failed
   CXX_WARNINGS += -Wno-unknown-warning-option
   WARNINGS += -Wno-unknown-warning-option
 else
