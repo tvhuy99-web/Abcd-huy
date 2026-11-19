@@ -41,7 +41,7 @@ class VietnameseModOverlaysTest(unittest.TestCase):
                     "description": "A blade hits for %s damage."}]
             (root / "items.json").write_text(json.dumps(obj), encoding="utf-8")
             translated = {"items.json": [["/0/name/str", "Kiếm nặng"],
-                                        ["/0/description", "Lưỡi kiếm gây %s sát thương."]]}
+                                         ["/0/description", "Lưỡi kiếm gây %s sát thương."]]}
             with patch.object(overlays, "load_overlay", return_value=translated):
                 files, strings = overlays.apply("cataplusplus", folder)
             self.assertEqual((files, strings), (1, 2))
