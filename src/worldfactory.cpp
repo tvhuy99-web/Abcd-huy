@@ -1934,7 +1934,9 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         if( action == "A11Y_INTERNAL_MOD_FOCUS" ) {
             recalc_start = true;
         } else if( action == "A11Y_INTERNAL_MANUAL_MOD_IMPORT" ) {
+#if defined(__ANDROID__)
             a11y::android::open_manual_mod_action( "import", "" );
+#endif
         } else if( action == "A11Y_INTERNAL_MANUAL_MOD_TOGGLE" ) {
             if( manual_toggle_id && manual_toggle_id->is_valid() ) {
                 const auto found = std::find( active_mod_order.begin(), active_mod_order.end(),

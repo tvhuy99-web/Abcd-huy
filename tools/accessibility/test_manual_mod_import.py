@@ -49,6 +49,16 @@ class ManualModImportContracts(unittest.TestCase):
                       self.world)
         self.assertIn('if (!node.actions.contains("activate"))', self.reader)
 
+    def test_desktop_build_never_links_android_only_mod_picker(self):
+        self.assertIn(
+            'if( action == "A11Y_INTERNAL_MANUAL_MOD_IMPORT" )', self.world
+        )
+        self.assertIn(
+            '#if defined(__ANDROID__)\n'
+            '            a11y::android::open_manual_mod_action( "import", "" );\n'
+            '#endif', self.world
+        )
+
     def test_reloading_only_on_game_thread(self):
         self.assertIn("take_manual_mods_changed()", self.world)
         self.assertIn("mman->reload_available_mods()", self.world)
