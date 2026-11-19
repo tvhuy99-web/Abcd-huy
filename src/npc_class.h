@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -114,6 +115,9 @@ class npc_class
 
         // By default, NPCs will be open to trade anything in their inventory, including worn items. If this is set to false, they won't sell items that they're directly wearing or wielding. Items inside of pockets/bags/etc are still fair game.
         bool sells_belongings = true;
+
+        // Optional snippet category, or "null" to suppress the farewell.
+        std::optional<std::string> bye_message_override;
 
         item_group_id worn_override;
         item_group_id carry_override;
