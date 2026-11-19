@@ -221,6 +221,7 @@ jobs:
                   samples = {
                       'assets/data/mods/MST_Extra/items/tools.json': 'lò đất sét',
                       'assets/data/mods/Blazemod/items/guns/blaze_weapons.json': 'súng xuyên giáp điện từ',
+                       'assets/data/mods/CataclysmPlusPlus/c_achievements.json': 'Dấu Vết Hồ Sơ',
                   }
                   for asset, phrase in samples.items():
                       if asset not in contents or phrase not in archive.read(asset).decode('utf-8'):
