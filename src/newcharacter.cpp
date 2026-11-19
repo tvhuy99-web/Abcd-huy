@@ -2460,6 +2460,11 @@ void character_creator_ui::upon_switching_tab()
     update_uilist_entries();
 }
 
+void character_creator_ui::setup_input_context( input_context &cc_ictxt )
+{
+    setup_input_context( cc_ictxt, false );
+}
+
 void character_creator_ui::setup_input_context( input_context &cc_ictxt, bool quick_value_change )
 {
     const bool allow_reroll = cc_uistate.generation_type == character_type::RANDOM;
