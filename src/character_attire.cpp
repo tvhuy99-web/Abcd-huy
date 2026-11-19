@@ -275,12 +275,6 @@ ret_val<void> Character::can_wear( const item &it, bool with_equip_change ) cons
 }
 
 std::optional<std::list<item>::iterator>
-Character::wear( int pos, bool interactive )
-{
-    return wear( item_location( *this, &i_at( pos ) ), interactive );
-}
-
-std::optional<std::list<item>::iterator>
 Character::wear( item_location item_wear, bool interactive )
 {
     item &to_wear = *item_wear;
@@ -368,6 +362,8 @@ std::optional<std::list<item>::iterator> outfit::wear_item( Character &guy, cons
                         item_location( guy, &*new_item_it ) : item_location();
     cata::event e = cata::event::make<event_type::character_wears_item>( guy.getID(), guy.last_item );
     get_event_bus().send_with_talker( &guy, &loc, e );
+    // event handler may have removed the garment; unsorted wear has no location, so skip test
+    const bool removed_by_event = do_sort_items && !loc;
 
     if( interactive ) {
         if( !quiet ) {
@@ -405,7 +401,7 @@ std::optional<std::list<item>::iterator> outfit::wear_item( Character &guy, cons
     }
 
     // skip this for unsorted items in debug mode
-    if( do_sort_items ) {
+    if( do_sort_items && !removed_by_event ) {
         new_item_it->on_wear( guy );
 
         if( guy.is_avatar() ) {
@@ -425,7 +421,7 @@ std::optional<std::list<item>::iterator> outfit::wear_item( Character &guy, cons
 
     guy.recoil = MAX_RECOIL;
 
-    return new_item_it;
+    return removed_by_event ? worn.end() : new_item_it;
 }
 
 void outfit::recalc_ablative_blocking( const Character *guy )
@@ -568,12 +564,6 @@ bool Character::takeoff( item_location loc, std::list<item> *res )
     }
 }
 
-bool Character::takeoff( int pos )
-{
-    item_location loc = item_location( *this, &i_at( pos ) );
-    return takeoff( loc );
-}
-
 bool Character::is_wearing( const itype_id &it ) const
 {
     return worn.is_worn( it );
@@ -622,6 +612,20 @@ bool Character::wearing_fitting_on( const bodypart_id &bp ) const
 bool Character::is_barefoot() const
 {
     return worn.is_barefoot();
+}
+
+std::vector<item_location> outfit::worn_locations( Character &guy ) const
+{
+    std::vector<item_location> ret;
+
+    visit_items( guy, [&ret]( const item_location & node ) {
+        if( !node.has_parent() ) {
+            ret.emplace_back( node );
+        }
+        return VisitResponse::NEXT;
+    } );
+
+    return ret;
 }
 
 std::optional<const item *> outfit::item_worn_with_inv_let( const char invlet ) const
@@ -1635,9 +1639,23 @@ void outfit::inv_dump( std::vector<item *> &ret )
 
 void outfit::inv_dump( std::vector<const item *> &ret ) const
 {
+    // is it correct this is not equal to non-const version return?
     for( const item &i : worn ) {
         ret.push_back( &i );
     }
+}
+
+void outfit::inv_dump_locs( Character &guy, std::vector<item_location> &ret ) const
+{
+    visit_items( guy, [&ret]( const item_location & node ) {
+        if( !node.has_parent() &&
+            !node->has_flag( flag_INTEGRATED ) &&
+            !node->has_flag( json_flag_SHAPESHIFTED_ARMOR ) ) {
+            ret.emplace_back( node );
+        }
+        return VisitResponse::NEXT;
+    } );
+
 }
 
 bool outfit::covered_with_flag( const flag_id &f, const body_part_set &parts ) const
@@ -2029,26 +2047,30 @@ std::unordered_set<bodypart_id> outfit::where_discomfort( const Character &guy )
 }
 
 void outfit::fire_options( Character &guy, std::vector<std::string> &options,
-                           std::vector<std::function<void()>> &actions )
+                           std::vector<std::function<void()>> &actions ) const
 {
-    for( item &clothing : worn ) {
-        std::vector<item *> guns = item_location( guy, &clothing ).items_with( []( const item & it ) {
-            return it.is_gun();
+    for( item_location &clothing : worn_locations( guy ) ) {
+        std::vector<item_location> guns;
+        clothing.visit_contents( [&guns]( const item_location & node ) {
+            if( node->is_gun() ) {
+                guns.emplace_back( node );
+            }
+            return VisitResponse::NEXT;
         } );
 
-        if( !guns.empty() && clothing.type->can_use( "holster" ) ) {
+        if( !guns.empty() && clothing->type->can_use( "holster" ) ) {
             //~ draw (first) gun contained in holster
             //~ %1$s: weapon name, %2$s: container name, %3$d: remaining ammo count
             options.push_back( string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
                                               guns.front()->tname(),
-                                              clothing.type_name(),
+                                              clothing->type_name(),
                                               guns.front()->ammo_remaining( ) ) );
 
-            actions.emplace_back( [&] { guy.invoke_item( &clothing, "holster" ); } );
+            actions.emplace_back( [&] { guy.invoke_item( clothing, "holster" ); } );
 
-        } else if( clothing.is_gun() && clothing.gunmod_find_by_flag( flag_BELTED ) ) {
+        } else if( clothing->is_gun() && clothing->gunmod_find_by_flag( flag_BELTED ) ) {
             // wield item currently worn using shoulder strap
-            options.push_back( clothing.display_name() );
+            options.push_back( clothing->display_name() );
             actions.emplace_back( [&] { guy.wield( clothing ); } );
         }
     }
@@ -2559,29 +2581,6 @@ item_location outfit::first_item_covering_bp( Character &guy, bodypart_id bp )
         }
     }
     return item_location{};
-}
-
-std::optional<int> outfit::get_item_position( const item &it ) const
-{
-    int pos = 0;
-    for( const item &clothing : worn ) {
-        if( clothing.has_item( it ) ) {
-            return pos;
-        }
-        pos++;
-    }
-    return std::nullopt;
-}
-
-const item &outfit::i_at( int position ) const
-{
-    if( static_cast<size_t>( position ) < worn.size() ) {
-        auto iter = worn.begin();
-        std::advance( iter, position );
-        return *iter;
-    } else {
-        return null_item_reference();
-    }
 }
 
 std::string outfit::get_armor_display( bodypart_id bp ) const

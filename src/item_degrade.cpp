@@ -215,6 +215,17 @@ bool item::activation_success() const
     return rng( 0, 3999 ) - damage_ >= 0;
 }
 
+double item::attack_time_modifier_from_faults() const
+{
+    double ret = 1.0;
+
+    for( fault_id fault : faults ) {
+        ret *= fault->attack_cost_modifier();
+    }
+
+    return ret;
+}
+
 float item::damage_adjusted_melee_weapon_damage( float value, const damage_type_id &dt ) const
 {
     if( type->count_by_charges() ) {
@@ -1170,12 +1181,17 @@ float item::simulate_burn( fire_data &frd ) const
     return burn_added;
 }
 
-bool item::burn( fire_data &frd )
+float item::burn_amount( fire_data &frd ) const
 {
     if( has_flag( flag_UNBREAKABLE ) ) {
-        return false;
+        return 0.0f;
     }
-    float burn_added = simulate_burn( frd );
+    return simulate_burn( frd );
+}
+
+bool item::burn( fire_data &frd )
+{
+    float burn_added = burn_amount( frd );
 
     if( burn_added <= 0 ) {
         return false;

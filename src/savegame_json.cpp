@@ -96,6 +96,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
+#include "npc_sleep.h"
 #include "options.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"
@@ -1594,6 +1595,9 @@ void avatar::deserialize( const JsonObject &data )
 void avatar::load( const JsonObject &data )
 {
     Character::load( data );
+    // standing where the save left you counts from now
+    relocation_anchor = pos_abs();
+    relocated_at = calendar::turn;
 
     std::string prof_ident = "(null)";
     if( data.read( "profession", prof_ident ) && string_id<profession>( prof_ident ).is_valid() ) {
@@ -2125,6 +2129,21 @@ void npc::load( const JsonObject &data )
         comp_mission.role_id = comp_miss_role;
     }
 
+    task_on_mission.reset();
+    if( data.has_object( "task_on_mission" ) ) {
+        npc_suspended_task held;
+        data.read( "task_on_mission", held );
+        task_on_mission = held;
+    }
+    suspended_task.reset();
+    if( data.has_object( "suspended_task" ) ) {
+        npc_suspended_task held;
+        data.read( "suspended_task", held );
+        if( held.task ) {
+            suspended_task = held;
+        }
+    }
+
     if( data.read( "companion_mission_role_id", companion_mission_role ) ) {
         companion_mission_role_id = companion_mission_role;
     }
@@ -2188,11 +2207,37 @@ void npc::load( const JsonObject &data )
         member.read( p );
         complaints.emplace( member.name(), p );
     }
+    data.read( "sleep_session", sleep_session );
     data.read( "unique_id", unique_id );
     clear_personality_traits();
     generate_personality_traits();
     data.read( "may_activity_occupancy_after_end_items_loc",
                may_activity_occupancy_after_end_items_loc );
+
+    // saves from before camp residents existed kept camp members as guards
+    if( savegame_loading_version <= 38 ) {
+        const bool migrate_current = mission == NPC_MISSION_GUARD_ALLY && assigned_camp;
+        const bool migrate_previous = previous_mission == NPC_MISSION_GUARD_ALLY && assigned_camp;
+        if( migrate_current ) {
+            mission = NPC_MISSION_CAMP_RESIDENT;
+        }
+        if( migrate_previous ) {
+            previous_mission = NPC_MISSION_CAMP_RESIDENT;
+        }
+        if( migrate_current || migrate_previous ) {
+            guard_pos = std::nullopt;
+            clear_ai_guard_pos();
+            if( mission != NPC_MISSION_ACTIVITY ) {
+                goal = no_goal_point;
+                omt_path.clear();
+                path.clear();
+                chair_pos = std::nullopt;
+                wander_pos = std::nullopt;
+                clear_destination();
+                chatbin.first_topic = "TALK_FRIEND_CAMP_RESIDENT";
+            }
+        }
+    }
 }
 
 /*
@@ -2205,6 +2250,62 @@ void npc::serialize( JsonOut &json ) const
     // puts their data into the same json object.
     store( json );
     json.end_object();
+}
+
+void npc_suspended_task::serialize( JsonOut &json ) const
+{
+    json.start_object();
+    json.member( "task", task );
+    json.member( "backlog", backlog );
+    json.end_object();
+}
+
+void npc_suspended_task::deserialize( const JsonObject &data )
+{
+    data.allow_omitted_members();
+    data.read( "task", task );
+    data.read( "backlog", backlog );
+}
+
+void npc_sleep_session::serialize( JsonOut &json ) const
+{
+    json.start_object();
+    json.member( "phase", static_cast<int>( phase ) );
+    json.member( "settle_started", settle_started );
+    json.member( "next_attempt", next_attempt );
+    json.member( "woken_at", woken_at );
+    json.member( "wake_window_start", wake_window_start );
+    json.member( "wakes", wakes );
+    json.member( "stalled_until", stalled_until );
+    json.member( "stay_awake_until", stay_awake_until );
+    json.member( "stay_awake_floor", stay_awake_floor );
+    json.member( "noise_hold_until", noise_hold_until );
+    json.member( "noise_hold_at", noise_hold_at );
+    json.member( "noise_hold_deaf", noise_hold_deaf );
+    json.member( "noise_wakes", noise_wakes );
+    json.member( "last_noise_wake", last_noise_wake );
+    json.end_object();
+}
+
+void npc_sleep_session::deserialize( const JsonObject &data )
+{
+    data.allow_omitted_members();
+    int phase_value = 0;
+    data.read( "phase", phase_value );
+    phase = static_cast<npc_sleep_phase>( phase_value );
+    data.read( "settle_started", settle_started );
+    data.read( "next_attempt", next_attempt );
+    data.read( "woken_at", woken_at );
+    data.read( "wake_window_start", wake_window_start );
+    data.read( "wakes", wakes );
+    data.read( "stalled_until", stalled_until );
+    data.read( "stay_awake_until", stay_awake_until );
+    data.read( "stay_awake_floor", stay_awake_floor );
+    data.read( "noise_hold_until", noise_hold_until );
+    data.read( "noise_hold_at", noise_hold_at );
+    data.read( "noise_hold_deaf", noise_hold_deaf );
+    data.read( "noise_wakes", noise_wakes );
+    data.read( "last_noise_wake", last_noise_wake );
 }
 
 void npc::store( JsonOut &json ) const
@@ -2253,6 +2354,12 @@ void npc::store( JsonOut &json ) const
     json.member( "comp_mission_id", comp_mission.miss_id );
     json.member( "comp_mission_pt", comp_mission.position );
     json.member( "comp_mission_role", comp_mission.role_id );
+    if( task_on_mission ) {
+        json.member( "task_on_mission", *task_on_mission );
+    }
+    if( suspended_task ) {
+        json.member( "suspended_task", *suspended_task );
+    }
     json.member( "companion_mission_role_id", companion_mission_role_id );
     json.member( "companion_mission_points", companion_mission_points );
     json.member( "companion_mission_time", companion_mission_time );
@@ -2263,6 +2370,7 @@ void npc::store( JsonOut &json ) const
     json.member( "restock", restock );
 
     json.member( "complaints", complaints );
+    json.member( "sleep_session", sleep_session );
     json.member( "unique_id", unique_id );
     json.member( "may_activity_occupancy_after_end_items_loc",
                  may_activity_occupancy_after_end_items_loc );

@@ -174,6 +174,10 @@ static const material_id material_water( "water" );
 
 static const morale_type morale_support( "morale_support" );
 
+static const mtype_id mon_LS_fixbot( "mon_LS_fixbot" );
+static const mtype_id mon_LS_fixbot_haywire( "mon_LS_fixbot_haywire" );
+static const mtype_id mon_LS_medbot( "mon_LS_medbot" );
+static const mtype_id mon_LS_spotbot( "mon_LS_spotbot" );
 static const mtype_id mon_amalgamation_breather( "mon_amalgamation_breather" );
 static const mtype_id mon_amalgamation_breather_hub( "mon_amalgamation_breather_hub" );
 static const mtype_id mon_biollante( "mon_biollante" );
@@ -3836,6 +3840,73 @@ bool mattack::mon_leech_evolution( monster *z )
     return true;
 }
 
+bool mattack::fixbot_spawner( monster *z )
+{
+    const map &here = get_map();
+
+    // count allies
+    const bool u_see = get_player_view().sees( here, *z );
+    int ally_count = 0;
+    for( monster &candidate : g->all_monsters() ) {
+        if( candidate.type->id == mon_LS_fixbot || candidate.type->id == mon_LS_spotbot ||
+            candidate.type->id == mon_LS_medbot ) {
+            ally_count++;
+        }
+    }
+
+    // 10 max allies
+    constexpr int max_allies = 20;
+    if( ally_count >= max_allies ) {
+        return true;
+    }
+
+    // pick the ally
+    static const std::array<mtype_id, 3> robot_types = { mon_LS_fixbot, mon_LS_medbot, mon_LS_spotbot };
+    const mtype_id &monster_type = random_entry( robot_types );
+
+    // spawn one
+    if( monster *const new_mon = g->place_critter_around( monster_type, z->pos_bub( here ), 1 ) ) {
+        // message if you see
+        if( u_see ) {
+            add_msg( m_warning,
+                     _( "A %s crawls out of the printer!" ), new_mon->name() );
+        }
+    }
+    return true;
+}
+
+bool mattack::fixbot_spawner_haywire( monster *z )
+{
+    const map &here = get_map();
+
+    // count allies
+    const bool u_see = get_player_view().sees( here, *z );
+    int ally_count = 0;
+    for( monster &candidate : g->all_monsters() ) {
+        if( candidate.type->id == mon_LS_fixbot || candidate.type->id == mon_LS_spotbot ||
+            candidate.type->id == mon_LS_medbot ) {
+            ally_count++;
+        }
+    }
+
+    // 50 max allies
+    constexpr int max_allies = 50;
+    if( ally_count >= max_allies ) {
+        return true;
+    }
+
+    // spawn one
+    const mtype_id &monster_type = mon_LS_fixbot_haywire;
+    if( monster *const new_mon = g->place_critter_around( monster_type, z->pos_bub( here ), 1 ) ) {
+        // message if you see
+        if( u_see ) {
+            add_msg( m_warning,
+                     _( "A %s is thrown out of the printer!" ), new_mon->name() );
+        }
+    }
+    return true;
+}
+
 bool mattack::tindalos_teleport( monster *z )
 {
     map &here = get_map();
@@ -4307,10 +4378,13 @@ bool mattack::kamikaze( monster *z )
         if( z->get_effect( effect_countdown ).get_duration() == 1_turns ) {
             z->die( &here, nullptr );
             // Timer is out, detonate
-            item i_explodes( act_bomb_type, calendar::turn );
-            i_explodes.active = true;
-            i_explodes.countdown_point = calendar::turn_zero;
-            i_explodes.process( here, nullptr, z->pos_bub() );
+            // TODO: remove if/when process will be more item_location aware
+            item_location i_explodes = here.add_item_or_charges_ret_loc( z->pos_bub(), item( act_bomb_type,
+                                       calendar::turn ) );
+            i_explodes->active = true;
+            i_explodes->countdown_point = calendar::turn_zero;
+            i_explodes->process( here, nullptr, z->pos_bub() );
+            i_explodes.remove_item();
             return false;
         }
         return false;

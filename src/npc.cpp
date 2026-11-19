@@ -89,6 +89,7 @@
 #include "visitable.h"
 #include "vpart_position.h"
 #include "weather.h"
+#include "weather_type.h"
 
 #if defined(TILES)
 #include "sdltiles.h"
@@ -556,7 +557,7 @@ void npc_template::check_consistency()
             debugmsg( "Invalid NPC class %s", guy.myclass.c_str() );
         }
         std::string first_topic = guy.chatbin.first_topic;
-        if( const json_talk_topic *topic = get_talk_topic( first_topic ) ) {
+        if( const json_talk_topic *topic = talk_topic_all::get_talk_topic( first_topic ) ) {
             cata::flat_set<std::string> reachable_topics =
                 topic->get_directly_reachable_topics( true );
             if( reachable_topics.count( "TALK_MISSION_OFFER" ) ) {
@@ -1191,13 +1192,21 @@ void npc::starting_inv_wear_item( npc *who, item &it )
 
 void npc::revert_after_activity()
 {
-    mission = previous_mission;
-    attitude = previous_attitude;
+    // task put aside to rest keeps the NPC's mission and attitude
+    if( !suspended_task ) {
+        mission = previous_mission;
+        attitude = previous_attitude;
+    }
     activity = player_activity();
     current_activity_id = activity_id::NULL_ID();
     clear_destination();
     backlog.clear();
     activity_handlers::clean_may_activity_occupancy_items_var( *this );
+}
+
+void npc::drop_suspended_task()
+{
+    suspended_task.reset();
 }
 
 npc_mission npc::get_previous_mission() const
@@ -2124,7 +2133,8 @@ int npc::indoor_voice() const
     Character &player = get_player_character();
     const int distance_to_player = rl_dist( pos_abs(), player.pos_abs() );
     if( is_following() || is_ally( player ) ) {
-        wanted_volume = distance_to_player;
+        // heard only when volume beats distance plus the weather's sound_attn
+        wanted_volume = distance_to_player + get_weather().weather_id->sound_attn + 1;
     } else if( is_enemy() && sees( here, player ) ) {
         // Battle cry! Bandits have no concept of indoor voice, even when not threatened.
         wanted_volume = max_volume;
@@ -2592,7 +2602,7 @@ void healing_options::set_all()
 
 bool npc::has_healing_item( healing_options try_to_fix )
 {
-    return !get_healing_item( try_to_fix, true ).is_null();
+    return !get_healing_item( try_to_fix, true )->is_null();
 }
 
 healing_options npc::has_healing_options()
@@ -2644,9 +2654,9 @@ healing_options npc::has_healing_options( healing_options try_to_fix )
     return can_fix;
 }
 
-item &npc::get_healing_item( healing_options try_to_fix, bool first_best )
+item_location npc::get_healing_item( healing_options try_to_fix, bool first_best )
 {
-    item *best = &null_item_reference();
+    item_location best;
     visit_items( [&best, try_to_fix, first_best]( item_location node ) {
         const use_function *use = node->type->get_use( "heal" );
         if( use == nullptr ) {
@@ -2659,7 +2669,7 @@ item &npc::get_healing_item( healing_options try_to_fix, bool first_best )
             ( try_to_fix.bleed && actor.bleed > 0 ) ||
             ( try_to_fix.bite && actor.bite > 0 ) ||
             ( try_to_fix.infect && actor.infect > 0 ) ) {
-            best = node.get_item();
+            best = node;
             if( first_best ) {
                 return VisitResponse::ABORT;
             }
@@ -2668,7 +2678,7 @@ item &npc::get_healing_item( healing_options try_to_fix, bool first_best )
         return VisitResponse::NEXT;
     } );
 
-    return *best;
+    return best;
 }
 
 bool npc::has_painkiller() const
@@ -3104,7 +3114,7 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
     const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
     mvwprintz( w, point( column, line++ ), res.second, res.first.translated() );
     wprintz( w, c_light_gray, ";" );
-    wprintz( w, symbol_color(), " %s", npc_attitude_name( get_attitude() ) );
+    wprintz( w, symbol_color(), " %s", get_current_status() );
 
     // Awareness indicator on the third line.
     std::string senses_str = sees( here, player_character ) ? _( "Aware of your presence" ) :
@@ -3265,6 +3275,7 @@ void npc::reboot()
     // they can be woken up by the player, and if their brain is fixed, great,
     // if not, they will faint again, and the NPC can be kept asleep until the bug is fixed.
     cancel_activity();
+    sleep_session.end();
     path.clear();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
@@ -3579,7 +3590,8 @@ void npc::on_load( map *here )
 
     // Cap at some reasonable number, say 2 days
     const time_duration dt = std::min( calendar::turn - last_updated, 2_days );
-    // TODO: Sleeping, healing etc.
+    // TODO: sleep that would have started or ended while unloaded, healing etc.; a sleep
+    // session is restored as saved
     last_updated = calendar::turn;
     time_point cur = calendar::turn - dt;
     add_msg_debug( debugmode::DF_NPC, "on_load() by %s, %d turns", get_name(), to_turns<int>( dt ) );
@@ -3616,6 +3628,13 @@ void npc::on_load( map *here )
             mod_moves( to_moves<int>( dt ) );
         }
     }
+    // restored after the move grant: mission hours mustn't go to the task
+    if( task_on_mission && !has_companion_mission() ) {
+        activity = task_on_mission->task;
+        backlog = task_on_mission->backlog;
+        current_activity_id = activity.id();
+        task_on_mission.reset();
+    }
 
     // Not necessarily true, but it's not a bad idea to set this
     has_new_items = true;
@@ -3644,32 +3663,6 @@ void npc::on_load( map *here )
         hallucination = true;
     }
     effect_on_conditions::load_existing_character( *this );
-
-    // Migrate legacy camp assignees from GUARD_ALLY to CAMP_RESIDENT.
-    const bool migrate_current =
-        mission == NPC_MISSION_GUARD_ALLY && assigned_camp;
-    const bool migrate_previous =
-        previous_mission == NPC_MISSION_GUARD_ALLY && assigned_camp;
-    if( migrate_current || migrate_previous ) {
-        if( migrate_current ) {
-            mission = NPC_MISSION_CAMP_RESIDENT;
-        }
-        if( migrate_previous ) {
-            previous_mission = NPC_MISSION_CAMP_RESIDENT;
-        }
-        guard_pos = std::nullopt;
-        clear_ai_guard_pos();
-        if( mission != NPC_MISSION_ACTIVITY ) {
-            goal = no_goal_point;
-            omt_path.clear();
-            path.clear();
-            chair_pos = std::nullopt;
-            wander_pos = std::nullopt;
-            clear_destination();
-            clear_committed_goal();
-            chatbin.first_topic = "TALK_FRIEND_CAMP_RESIDENT";
-        }
-    }
 
     reconcile_schedule_on_load();
     shop_restock();
@@ -3731,7 +3724,7 @@ void npc::process_turn()
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
 }
 
-bool npc::invoke_item( item *used, const tripoint_bub_ms &pt, int )
+bool npc::invoke_item( item_location &used, const tripoint_bub_ms &pt, int )
 {
     const auto &use_methods = used->type->use_methods;
 
@@ -3743,12 +3736,12 @@ bool npc::invoke_item( item *used, const tripoint_bub_ms &pt, int )
     return false;
 }
 
-bool npc::invoke_item( item *used, const std::string &method )
+bool npc::invoke_item( item_location &used, const std::string &method )
 {
     return Character::invoke_item( used, method );
 }
 
-bool npc::invoke_item( item *used )
+bool npc::invoke_item( item_location &used )
 {
     return Character::invoke_item( used );
 }
@@ -3905,7 +3898,7 @@ std::vector<std::string> npc::extended_description() const
     Attitude att = attitude_to( player_character );
     const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
     tmp.emplace_back( string_format( "%s; %s", colorize( res.first, res.second ),
-                                     colorize( npc_attitude_name( get_attitude() ), symbol_color() ) ) );
+                                     colorize( get_current_status(), symbol_color() ) ) );
 
     tmp.emplace_back( sees( here, player_character ) ? colorize( _( "Aware of your presence" ),
                       c_yellow ) :
@@ -3974,6 +3967,7 @@ std::pair<std::string, nc_color> npc::hp_description() const
 void npc::set_companion_mission( const tripoint_abs_omt &omt_pos, const std::string &role_id,
                                  const mission_id &miss_id )
 {
+    put_task_aside_for_mission();
     comp_mission.position = omt_pos;
     comp_mission.miss_id = miss_id;
     comp_mission.role_id = role_id;
@@ -3982,10 +3976,37 @@ void npc::set_companion_mission( const tripoint_abs_omt &omt_pos, const std::str
 void npc::set_companion_mission( const tripoint_abs_omt &omt_pos, const std::string &role_id,
                                  const mission_id &miss_id, const tripoint_abs_omt &destination )
 {
+    put_task_aside_for_mission();
     comp_mission.position = omt_pos;
     comp_mission.miss_id = miss_id;
     comp_mission.role_id = role_id;
     comp_mission.destination = destination;
+}
+
+void npc::put_task_aside_for_mission()
+{
+    if( task_on_mission ) {
+        return;
+    }
+    if( is_self_care_activity() ) {
+        // self-care activity isn't kept for after the mission; the task it interrupted is
+        activity.canceled( *this );
+        activity = player_activity();
+        if( !backlog.empty() ) {
+            activity = backlog.front();
+            backlog.pop_front();
+        }
+    }
+    // the walk to the task is planned again when the task resumes
+    const player_activity pending = activity ? activity : get_destination_activity();
+    clear_destination();
+    if( !pending && backlog.empty() ) {
+        return;
+    }
+    // moved, not cancelled: cancel would end a craft the NPC goes back to
+    task_on_mission = npc_suspended_task{ pending, backlog };
+    activity = player_activity();
+    backlog.clear();
 }
 
 void npc::reset_companion_mission()
@@ -4303,14 +4324,13 @@ std::string npc::describe_mission() const
     } // switch (mission)
 }
 
-std::string npc::display_name( bool possessive ) const
+std::string npc::display_name() const
 {
     const std::string profession = disp_profession();
     if( profession.empty() ) {
-        return possessive ? string_format( _( "%1$s's" ), get_name() ) : get_name();
+        return get_name();
     }
-    return possessive ? string_format( _( "%1$s, %2$s's" ), get_name(),
-                                       profession ) : string_format( _( "%1$s, %2$s" ), get_name(), profession );
+    return string_format( _( "%1$s, %2$s" ), get_name(), profession );
 }
 
 std::string npc::name_and_activity() const
@@ -4364,23 +4384,32 @@ void npc::ensure_portrait_valid()
 
 std::string npc::get_current_status() const
 {
-    if( current_target() != nullptr ) {
-        return _( "In Combat!" );
-    } else if( in_sleep_state() ) {
-        return _( "Sleeping" );
-    } else if( is_following() ) {
-        return _( "Following" );
-    } else if( is_leader() ) {
-        return _( "Leading" );
-    } else if( is_patrolling() ) {
-        return _( "Patrolling" );
-    } else if( mission == NPC_MISSION_CAMP_RESIDENT ) {
-        return _( "At camp" );
-    } else if( is_guarding() ) {
-        return _( "Guarding" );
-    } else {
-        return get_current_activity();
+    npc_attitude att = get_attitude();
+
+    // Attempt to be specific about a follower's current activity.
+    if( att == NPCATT_FOLLOW || att == NPCATT_WAIT || att == NPCATT_ACTIVITY || att == NPCATT_NULL ) {
+        if( current_target() != nullptr ) {
+            return _( "In Combat!" );
+        } else if( has_effect( effect_lying_down ) && !has_effect( effect_sleep ) ) {
+            return _( "Trying to sleep" );
+        } else if( in_sleep_state() ) {
+            return _( "Sleeping" );
+        } else if( att == NPCATT_ACTIVITY && current_activity_id ) {
+            return get_current_activity();
+        } else if( is_travelling() ) {
+            return _( "Travelling" );
+        } else if( is_shopkeeper() ) {
+            return _( "Trading" );
+        } else if( is_patrolling() ) {
+            return _( "Patrolling" );
+        } else if( is_guarding() && is_player_ally() ) {
+            return _( "Guarding" );
+        } else if( mission == NPC_MISSION_CAMP_RESIDENT ) {
+            return _( "At camp" );
+        }
     }
+    // This covers healing and most states for non-follower NPCs.
+    return npc_attitude_name( att );
 }
 
 void npc::update_missions_target( character_id old_character, character_id new_character )

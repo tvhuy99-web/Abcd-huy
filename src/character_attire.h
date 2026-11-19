@@ -56,6 +56,10 @@ struct layering_item_info {
     int encumber;
     std::string name;
 
+    // these members are informational-only
+    units::volume storage;
+    bool hidden;
+
     // Operator overload required to leverage vector equality operator.
     bool operator ==( const layering_item_info &o ) const {
         // This is used to merge e.g. both arms into one entry when their items
@@ -105,6 +109,8 @@ class outfit
         item item_worn_with_flag( const flag_id &f, const bodypart_id &bp ) const;
         item item_worn_with_flag( const flag_id &f ) const;
         item *item_worn_with_id( const itype_id &i );
+        // returns item_locations of apparel
+        std::vector<item_location> worn_locations( Character &guy ) const;
         std::optional<const item *> item_worn_with_inv_let( char invlet ) const;
         // get the best blocking value with the flag that allows worn.
         item *best_shield();
@@ -113,6 +119,7 @@ class outfit
         item_location first_item_covering_bp( Character &guy, bodypart_id bp );
         void inv_dump( std::vector<item *> &ret );
         void inv_dump( std::vector<const item *> &ret ) const;
+        void inv_dump_locs( Character &guy, std::vector<item_location> &ret ) const;
         /** Applies encumbrance from items only
          * If new_item is not null, then calculate under the assumption that it
          * is added to existing work items.
@@ -199,21 +206,32 @@ class outfit
                             std::list<item> &worn_remains, bool &armor_destroyed );
         /** Draws the UI and handles player input for the armor re-ordering window */
         void sort_armor( Character &guy );
+        void sort();
+        void splice( std::list<item>::iterator to, std::list<item>::iterator pos );
+        std::vector<std::list<item>::iterator> filter_by_bodypart( bodypart_id bp );
+        void assign_invlets( Character &guy );
         /*
          * when you break out of a grab you have a chance to lose some things from your pockets
          * that are hanging off your character
          */
         std::vector<item_pocket *> grab_drop_pockets();
         std::vector<item_pocket *> grab_drop_pockets( const bodypart_id &bp );
-        std::vector<layering_item_info> items_cover_bp( const Character &c, const bodypart_id &bp );
+        std::vector<layering_item_info> items_cover_bp( const Character &c, const bodypart_id &bp ) const;
+        /*
+        * @return true if ALL items worn on one bodypart with an opposite also cover that opposite part
+        * a pair of pants covers both legs -- returns true
+        * an ring on a right hand covers one hand -- returns false
+        * a hat covers the head, which has no opposite bodypart -- returns false
+        */
+        bool items_cover_opposite_bp( const Character &who, const bodypart_id &cover ) const;
         item_penalties get_item_penalties( std::list<item>::const_iterator worn_item_it,
-                                           const Character &c, const bodypart_id &_bp );
+                                           const Character &c, const bodypart_id &_bp ) const;
         std::vector<advanced_inv_listitem> get_AIM_inventory( size_t &item_index, avatar &you,
                 const advanced_inventory_pane &pane, advanced_inv_area &square );
         void add_AIM_items_from_area( avatar &you, advanced_inv_area &square,
                                       advanced_inventory_pane &pane );
         void fire_options( Character &guy, std::vector<std::string> &options,
-                           std::vector<std::function<void()>> &actions );
+                           std::vector<std::function<void()>> &actions ) const;
         // an extension of Character::best_pocket()
         void best_pocket( Character &guy, const item &it, const item *avoid,
                           std::pair<item_location, item_pocket *> &current_best,
@@ -234,20 +252,14 @@ class outfit
         std::vector<item> available_pockets() const;
         void write_text_memorial( std::ostream &file, const std::string &indent, const char *eol ) const;
         std::string get_armor_display( bodypart_id bp ) const;
-        void activate_combat_items( npc &guy );
-        void deactivate_combat_items( npc &guy );
+        void activate_combat_items( npc &guy ) const;
+        void deactivate_combat_items( npc &guy ) const;
 
         bool empty() const;
         item &front();
         size_t size() const;
 
         std::vector<item_location> top_items_loc( Character &guy );
-        std::vector<item_location> all_items_loc( Character &guy );
-
-        // gets item position. not translated for worn index. DEPRECATE ME!
-        std::optional<int> get_item_position( const item &it ) const;
-        // finds the top level item at the position in the list. DEPRECATE ME!
-        const item &i_at( int position ) const;
 
         VisitResponse visit_items( const Character &wearer,
                                    const std::function<VisitResponse( const item_location & )> &func ) const;
@@ -263,4 +275,16 @@ class outfit
 units::mass get_selected_stack_weight( const item *i, const std::map<const item *, int> &without );
 void destroyed_armor_msg( Character &who, const std::string &pre_damage_name );
 
+namespace clothing_info
+{
+std::string clothing_layer( const item &worn_item );
+std::vector<std::string> clothing_properties(
+    const item &worn_item, const Character &c, const bodypart_id &bp );
+std::vector<std::string> clothing_protection( const item &worn_item,
+        const bodypart_id &bp );
+std::vector<std::string> clothing_flags_description( const item &worn_item );
+void add_category_and_values( std::vector<std::string> &current_text,
+                              const std::string &category_name,
+                              const std::vector<std::pair<std::string, std::string>> &names_and_values );
+} // namespace clothing_info
 #endif // CATA_SRC_CHARACTER_ATTIRE_H

@@ -3,19 +3,19 @@
 #define CATA_SRC_FAULT_H
 
 #include <map>
-#include <memory>
 #include <set>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "calendar.h"
 #include "math_parser_diag_value.h"
-#include "memory_fast.h"
 #include "requirements.h"
 #include "translation.h"
 #include "type_id.h"
+#include "value_ptr.h"
 #include "weighted_list.h"
 
 class JsonObject;
@@ -81,7 +81,12 @@ class fault_fix
         bool was_loaded = false; // used by generic_factory
         friend class generic_factory<fault_fix>;
         friend class fault;
-        shared_ptr_fast<requirement_data> requirements = make_shared_fast<requirement_data>();
+
+        // used to store requirements, since requirement ids are unavailable at the moment of loading
+        // transferred into requirements at finalization
+        std::vector<std::pair<requirement_id, int>> pending_requirements;
+
+        cata::value_ptr<requirement_data> requirements = cata::make_value<requirement_data>();
 };
 
 class fault
@@ -101,6 +106,7 @@ class fault
         int degradation_mod() const;
         // Damage applied when fault is applied.
         int instant_damage() const;
+        double attack_cost_modifier() const;
         // int is additive (default 0), float is multiplier (default 1)
         std::vector<std::tuple<int, float, damage_type_id>> melee_damage_mod() const;
         // int is additive (default 0), float is multiplier (default 1)
@@ -133,6 +139,7 @@ class fault
         std::set<fault_fix_id> fixes;
         std::set<std::string> flags;
         std::set<fault_id> block_faults;
+        double attack_cost_modifier_ = 1.0;
         double price_modifier = 1.0;
         int degradation_mod_ = 0;
         int instant_damage_ = 0;
