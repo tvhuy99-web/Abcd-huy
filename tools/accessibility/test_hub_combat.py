@@ -105,12 +105,12 @@ class CombatHubTest(unittest.TestCase):
                 self.assertTrue(
                     any('_( "' + message + '" )' in source
                         for source in (melee, monster)))
-                entry = '#, c-format\\nmsgid "' + message + '"\\nmsgstr "'
+                entry = '#, c-format\nmsgid "' + message + '"\nmsgstr "'
                 self.assertIn(entry, catalog)
                 translated = catalog.split(entry, 1)[1].split('"', 1)[0]
                 self.assertTrue(translated.strip())
                 placeholders = lambda text: sorted(
-                    re.findall(r"%(?:\\d+\\$)?[sdif]", text))
+                    re.findall(r"%(?:\d+\$)?[sdif]", text))
                 self.assertEqual(placeholders(message), placeholders(translated))
 
     def test_throw_wielded_never_gets_an_extra_confirmation(self):
