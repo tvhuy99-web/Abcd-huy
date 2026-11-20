@@ -21,6 +21,10 @@ The six files changed on both sides are `character.h`, `creature.cpp`, `map.cpp`
 
 `map.h` lacked only the upstream TODO comment above `hit_with_acid`, restored in this audit. The new upstream `map_cache.cpp` had already been integrated; the fork retains additional Android diagnostic timing hooks.
 
+## Completed upstream history merge
+
+The dedicated test branch was merged with `CleverRaven/Cataclysm-DDA@e422f76622480bcc53fd26b2553f401648ede8db` as its second Git parent in commit `861ae5253ad1efb46f9ad5ffff4fe31462032c81`. The merge restored 62 missing upstream paths, preserving accessibility customizations. After the merge, GitHub reports `behind_by = 0` against that upstream snapshot.
+
 ## What these numbers do **not** establish
 
 - Identical baseline/current upstream content in 148 files means *upstream made no changes to those files in this interval*. It does not mean the fork customizations should be removed.

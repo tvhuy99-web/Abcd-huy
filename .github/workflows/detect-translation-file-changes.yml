@@ -1,3 +1,7 @@
+concurrency:
+  group: upstream-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 name: Detect translation file changes
 
 
@@ -13,6 +17,7 @@ on:
 
 jobs:
   detect-translation-file-changes:
+    if: github.repository == 'CleverRaven/Cataclysm-DDA'
     runs-on: ubuntu-latest
     steps:
       - name: "Detect translation file changes"

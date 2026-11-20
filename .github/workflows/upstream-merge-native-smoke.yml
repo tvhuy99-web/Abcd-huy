@@ -7,6 +7,7 @@ on:
     paths:
       - 'src/**'
       - 'Makefile'
+      - 'tests/**'
       - 'tests/item_wakeup_test.cpp'
       - 'tests/melee_test.cpp'
       - 'tests/map_bash_test.cpp'

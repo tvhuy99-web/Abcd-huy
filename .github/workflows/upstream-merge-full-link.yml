@@ -8,6 +8,7 @@ on:
       - '.github/workflows/upstream-merge-full-link.yml'
       - 'src/**'
       - 'Makefile'
+      - 'tests/**'
   workflow_dispatch:
 
 permissions:

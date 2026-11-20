@@ -1,3 +1,7 @@
+concurrency:
+  group: upstream-${{ github.workflow }}-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
 name: Github pages rebuild
 
 on:
@@ -12,7 +16,7 @@ env:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.repository == 'CleverRaven/Cataclysm-DDA' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Trigger GitHub pages rebuild
         shell: bash

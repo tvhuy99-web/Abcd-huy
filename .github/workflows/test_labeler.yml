@@ -1,3 +1,7 @@
+concurrency:
+  group: upstream-${{ github.workflow }}-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
 name: Apply Test Labels
 
 on:
