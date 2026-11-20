@@ -16,6 +16,8 @@ void play_music( std::string_view playlist );
 void stop_music();
 void update_music_volume();
 void load_soundset();
+// Main-thread hot switch: keep audio device alive, rebuild resources/playlists.
+bool reload_soundset();
 extern bool sound_init_success;
 
 #else
@@ -30,6 +32,7 @@ inline void play_music( std::string_view /*playlist*/ )
 }
 inline void update_music_volume() { }
 inline void load_soundset() { }
+inline bool reload_soundset() { return true; }
 
 #endif
 

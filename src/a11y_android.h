@@ -66,6 +66,10 @@ void publish( std::string_view json );
 void announce( std::string_view text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
 void open_tts_settings();
+// Manual ZIP import and export are handled by Android's document picker.
+void open_manual_mod_action( std::string_view action, std::string_view mod_id );
+void mark_manual_mods_changed();
+bool take_manual_mods_changed();
 #if defined(__ANDROID__)
 // Main menu controls for the bounded, per-launch Android diagnostic journal.
 void open_debug_log();
@@ -78,6 +82,10 @@ void diagnostic_event( std::string_view category, std::string_view detail );
 void open_sound_settings( int music, int effects, bool enabled );
 void queue_sound_settings( int music, int effects, bool enabled );
 void apply_pending_sound_settings();
+// Thread-safe soundpack selection mailbox. Only the main game thread touches SDL.
+void queue_soundpack_selection( std::string id );
+void apply_pending_soundpack_selection();
+std::string take_soundpack_selection_result();
 #else
 // Diagnostics are Android-only. Other platforms build shared gameplay code
 // without a Java journal, so diagnostic calls must be harmless there.
