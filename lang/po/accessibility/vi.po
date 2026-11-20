@@ -4520,7 +4520,7 @@ msgid "All"
 msgstr "Tất cả"
 
 msgid "Creatures and NPCs"
-msgstr "Sinh vật và NPC"
+msgstr "Sinh vật và nhân vật không do người chơi điều khiển"
 
 msgid "Places and environment"
 msgstr "Địa điểm và môi trường"
