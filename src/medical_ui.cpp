@@ -32,6 +32,7 @@
 #include "debug.h"
 #include "display.h"
 #include "effect.h"
+#include "enum_conversions.h"
 #include "enum_traits.h"
 #include "enums.h"
 #include "flag.h"
@@ -320,11 +321,21 @@ std::string medical_ui::get_limb_wounds( const bodypart_id &part ) const
                 detail_str += string_format( "healing time: %s\n", to_string( wd.get_healing_time() ) );
                 detail_str += string_format( "lifetime: %s\n", to_string( time_duration::from_seconds( wd.get_healing_progress() ) ) );
                 detail_str += string_format( "healing percentage: %.3f%%\n", wd.healing_percentage() );
-                detail_str += string_format( "gives pain: %d\n", wd.get_pain( you ) );
+                detail_str += string_format( "healing speed multiplier: %.3fx\n",
+                                             wd.get_wound_healing_modifier( you ) );
+                detail_str += string_format( "gives pain: %d (raw %d)\n", wd.get_pain( you ),
+                                             wd.get_pain_raw() );
+                detail_str += string_format( "hp damage: %d (raw %d)\n", wd.get_hp_damage(), wd.hp_damage );
                 if( wd.wound_progress_timer.has_value() ) {
                     detail_str += string_format( "progresses into: %s, in %s\n", wd.wound_progress_timer->first.str(),
                                                  to_string( wd.wound_progress_timer->second -
                                                             time_duration::from_seconds( wd.get_healing_progress() ) ) );
+                }
+                for( const wound_mod_values &mv : wd.type->get_modify_values() ) {
+                    detail_str += string_format( "mod_value: %s%s, %d every %s\n",
+                                                 io::enum_to_string( mv.type ),
+                                                 mv.vitamin.has_value() ? string_format( " (%s)", mv.vitamin->str() ) : "",
+                                                 mv.amount, to_string( mv.rate ) );
                 }
                 detail_str += string_format( "%s\n", limb_score_output );
             }
