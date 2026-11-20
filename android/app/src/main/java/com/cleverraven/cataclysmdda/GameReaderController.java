@@ -1240,6 +1240,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && !next.summary.equals(previousSnapshot.summary)
                         && previous.equals(focus)
                         && !documentReader.isOpen() && !commandPaletteOpen;
+                // A change to the marked quantity is one short outcome, not a
+                // fresh focus announcement with item name, role and position.
+                // Explicit swipes and pocket-axis navigation keep their full
+                // spoken row descriptions.
+                String shortInventoryMark = !changedContext && selectionChanged
+                        && "inventory".equals(next.category) && previous.equals(focus)
+                        && !commandPaletteOpen && !documentReader.isOpen()
+                        ? inventoryMarkFeedback(previousSnapshot, next, focus) : "";
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredCraftRecipeDetail
@@ -1317,7 +1325,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 nodeText(next.find(focus), false)));
                     }
                 } else if (selectionChanged) {
-                    readCurrent();
+                    if (!shortInventoryMark.isEmpty()) {
+                        feedback(shortInventoryMark);
+                    } else {
+                        readCurrent();
+                    }
                 } else if (summaryChanged) {
                     // The summary itself is the
                     // feedback for this update; reading the focused row
@@ -1646,6 +1658,49 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         return next.find(next.focus) != null ? next.focus
                 : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
+    }
+
+
+    /**
+     * The Android reader already navigates pocket contents directly. Only
+     * replace a repeated item-row narration when the SAME focused checkbox
+     * has a verified, newly applied selection count. New focus remains full.
+     */
+    private String inventoryMarkFeedback(ReaderSnapshot before, ReaderSnapshot after,
+                                         String focusedId) {
+        if (before == null || after == null || focusedId.isEmpty()
+                || !"inventory".equals(after.category)
+                || !before.contextKey().equals(after.contextKey())) {
+            return "";
+        }
+        ReaderSnapshot.Node oldRow = before.find(focusedId);
+        ReaderSnapshot.Node row = after.find(focusedId);
+        if (oldRow == null || row == null || !"checkbox".equals(row.role)
+                || !"checkbox".equals(oldRow.role)
+                || !oldRow.label.equals(row.label)) {
+            return "";
+        }
+        boolean markChanged = oldRow.checked != row.checked;
+        boolean quantityChanged = !oldRow.appliedValue.equals(row.appliedValue);
+        if (!markChanged && !quantityChanged) {
+            return "";
+        }
+        if ("int".equals(row.fieldType) && row.hasFieldRange
+                && row.appliedValue.matches("[0-9]+")) {
+            if (!row.checked || "0".equals(row.appliedValue)) {
+                return activity.getString(R.string.a11yInventoryUnmarked);
+            }
+            return activity.getString(R.string.a11yInventoryMarkedQuantity,
+                    row.appliedValue, Math.round(row.fieldMax));
+        }
+        // Single-item checkboxes do not have a numeric editor. Comparison
+        // rows use the same checkbox contract, and only a real checked-state
+        // transition is summarized.
+        if (markChanged) {
+            return activity.getString(row.checked
+                    ? R.string.a11yInventoryMarked : R.string.a11yInventoryUnmarked);
+        }
+        return "";
     }
 
     private String nodeText(ReaderSnapshot.Node node, boolean includeDetail) {

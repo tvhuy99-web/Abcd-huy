@@ -4747,14 +4747,26 @@ void selection_column::cycle_hide_override()
 
 void inventory_selector::on_input( const inventory_input &input )
 {
+    // Only actual mode/filter changes speak. This is independent of pocket
+    // browsing gestures and never announces a container as "opened".
+    const auto speak_inventory_change = []( const std::string &text ) {
+        if( a11y::enabled() && !text.empty() ) {
+            a11y::android::announce( text, 1 );
+        }
+    };
     if( input.action == "CATEGORY_SELECTION" ) {
         toggle_navigation_mode();
+        speak_inventory_change( mode == navigation_mode::CATEGORY ?
+                                _( "Category selection mode." ) : _( "Item selection mode." ) );
     } else if( input.action == "PREV_COLUMN" ) {
         toggle_active_column( scroll_direction::BACKWARD );
     } else if( input.action == "NEXT_COLUMN" ) {
         toggle_active_column( scroll_direction::FORWARD );
     } else if( input.action == "VIEW_CATEGORY_MODE" ) {
         toggle_categorize_contained();
+        speak_inventory_change( _uimode == uimode::hierarchy ?
+                                _( "Inventory view: container hierarchy." ) :
+                                _( "Inventory view: categories." ) );
     } else if( input.action == "TOGGLE_NUMPAD_NAVIGATION" ) {
         uistate.numpad_navigation = !uistate.numpad_navigation;
         reassign_custom_invlets();
@@ -4782,13 +4794,25 @@ void inventory_selector::on_input( const inventory_input &input )
             action_examine( sitem );
         }
     } else if( input.action == "INVENTORY_FILTER" ) {
+        const std::string old_filter = filter;
         query_set_filter();
+        if( filter != old_filter ) {
+            speak_inventory_change( filter.empty() ? _( "Inventory filter cleared." ) :
+                                    string_format( _( "Inventory filter applied: %s." ),
+                                                   remove_color_tags( filter ) ) );
+        }
         ui.lock()->mark_resize();
     } else if( input.action == "RESET_FILTER" ) {
+        const bool was_filtered = !filter.empty();
         set_filter( "" );
+        if( was_filtered ) {
+            speak_inventory_change( _( "Inventory filter cleared." ) );
+        }
         ui.lock()->mark_resize();
     } else if( input.action == "TOGGLE_SKIP_UNSELECTABLE" ) {
         toggle_skip_unselectable();
+        speak_inventory_change( skip_unselectable ? _( "Unavailable items skipped." ) :
+                                _( "Unavailable items included." ) );
     } else {
         for( inventory_column *elem : columns ) {
             elem->on_input( input );
