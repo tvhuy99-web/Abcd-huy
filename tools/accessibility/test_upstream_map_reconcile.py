@@ -20,6 +20,14 @@ class MapLoadedItemReconciliationTest(unittest.TestCase):
         self.assertNotIn("map_cursor( this, p ).visit_items(", self.method)
         self.assertNotIn("walk_recursive", self.method)
 
+    def test_skip_empty_map_tiles_before_constructing_cursor(self):
+        self.assertIn("auto &tile_items = sm->get_items( { sx, sy } );",
+                      self.method)
+        self.assertIn("if( tile_items.empty() )", self.method)
+        self.assertIn("for( item &it : tile_items )", self.method)
+        self.assertIn("item_location( cur, &it ).visit_items( reconcile_recursive );",
+                      self.method)
+
     def test_every_vehicle_part_and_nested_item_is_visited(self):
         self.assertIn("for( const vpart_reference &vpr : wv.v->get_all_parts() )", self.method)
         self.assertIn("vehicle_cursor( *wv.v, vpr.part_index() ).visit_items( reconcile_recursive );",

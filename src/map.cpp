@@ -6281,13 +6281,18 @@ void map::reconcile_loaded_items( const reconcile_scope scope )
                 }
                 for( int sx = 0; sx < SEEX; ++sx ) {
                     for( int sy = 0; sy < SEEY; ++sy ) {
+                        auto &tile_items = sm->get_items( { sx, sy } );
+                        // A loaded submap may contain mostly empty tiles. Avoid creating
+                        // map cursors for them during world reloads and map shifts.
+                        if( tile_items.empty() ) {
+                            continue;
+                        }
                         const tripoint_bub_ms p( sx + gridx * SEEX,
                                                  sy + gridy * SEEY, gridz );
                         const map_cursor cur( this, p );
-                        // rather than visiting the map_cursor, we need to pull the items out
-                        // otherwise we get an infinite loop with reconcile since map_cursor::visit
-                        // loads a tinymap off-bubble, and that load reconciles again
-                        for( item &it : sm->get_items( { sx, sy } ) ) {
+                        // Visit roots directly: visiting map_cursor itself can load an
+                        // off-bubble tinymap and recursively trigger reconciliation.
+                        for( item &it : tile_items ) {
                             item_location( cur, &it ).visit_items( reconcile_recursive );
                         }
                     }
