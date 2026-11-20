@@ -4157,6 +4157,7 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
     const bool outdoor_only = jo.get_bool( "outdoor_only", false );
     const bool store_in_lore = jo.get_bool( "store_in_lore", false );
     const bool sound = jo.get_bool( "sound", false );
+    const std::string android_reader_lesson = jo.get_string( "android_reader_lesson", "" );
     const bool popup_msg = jo.get_bool( "popup", false );
     const bool popup_w_interrupt_query_msg = jo.get_bool( "popup_w_interrupt_query", false );
     const PopupFlags popup_flag = jo.has_member( "popup_flag" ) ?
@@ -4169,7 +4170,8 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
     optional( jo, false, "type", type_string, "neutral" );
 
     return [snip_id, message, outdoor_only, sound, snippet, same_snippet, type_string, popup_msg,
-                     popup_w_interrupt_query_msg, popup_flag, interrupt_type, global, store_in_lore, is_npc]
+                     popup_w_interrupt_query_msg, popup_flag, interrupt_type, global, store_in_lore, is_npc,
+                     android_reader_lesson]
     ( dialogue const & d ) {
         Character *target;
         if( global ) {
@@ -4233,6 +4235,23 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
         } else {
             translated_message = message.evaluate( d ).translated();
         }
+        // EOC tutorial cells keep their desktop text in JSON. Android shows
+        // the dedicated spoken lesson instead, selected by stable snippet ID.
+        // All other EOC messages and non-Android platforms stay unchanged.
+        bool android_reader_popup = false;
+#if defined(__ANDROID__)
+        if( !android_reader_lesson.empty() ) {
+            const auto spoken_lesson = SNIPPET.get_snippet_by_id( snippet_id( android_reader_lesson ) );
+            if( spoken_lesson ) {
+                translated_message = spoken_lesson->translated();
+                android_reader_popup = true;
+            } else {
+                debugmsg( "Missing Android reader lesson: %s", android_reader_lesson );
+            }
+        }
+#else
+        ( void )android_reader_lesson;
+#endif
         std::unique_ptr<talker> default_talker = get_talker_for( get_player_character() );
         talker &alpha = d.has_alpha ? *d.actor( false ) : *default_talker;
         talker &beta = d.has_beta ? *d.actor( true ) : *default_talker;
@@ -4254,6 +4273,11 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
         if( popup_msg ) {
             popup( translated_message, popup_flag );
             g->cancel_activity_or_ignore_query( distraction_type::eoc, "" );
+            // The popup already spoke this lesson. Do not queue the same
+            // complete text again as a game message when closing the popup.
+            if( android_reader_popup ) {
+                return;
+            }
         }
         if( popup_w_interrupt_query_msg ) {
             if( interrupt_type.evaluate( d ) == "portal_storm_popup" ) {

@@ -6,11 +6,11 @@
     "text": [
       {
         "id": "ANDROID_READER_LESSON_INTRO",
-        "text": "Chào mừng đến với phần hướng dẫn. Mỗi bài học xuất hiện đúng lúc bạn cần. Trong thế giới, chạm ba lần bằng hai ngón để mở Menu tổng hợp rồi chọn Tìm lệnh. Trong menu, vuốt một ngón trái hoặc phải để duyệt, chạm đôi để chọn, vuốt hai ngón lên để xác nhận và xuống để quay lại. Vuốt hai ngón xuống để đóng bài học này."
+        "text": "Chào mừng tới phần hướng dẫn trên Android. Mỗi bài học sẽ nêu thao tác và nhiệm vụ tiếp theo. Ở màn hình thế giới, chạm ba lần bằng hai ngón để mở Menu tổng hợp. Trong menu, vuốt một ngón sang trái hoặc phải để duyệt, chạm hai lần để chọn; vuốt hai ngón lên để xác nhận và xuống để quay lại. Vuốt hai ngón xuống để đóng hộp thoại này. Nhiệm vụ: khám phá lối đi về phía đông."
       },
       {
         "id": "ANDROID_READER_LESSON_MOVE",
-        "text": "Vuốt một ngón lên để đi về phía bắc; xuống để đi về phía nam; trái để đi về phía tây; phải để đi về phía đông. Muốn đi chéo, mở Menu tổng hợp, chọn Di chuyển rồi Chọn hướng. Muốn đứng yên một lượt, vào Tìm lệnh và tìm Chờ. Bây giờ vuốt một ngón sang phải để đi về phía đông đến cánh cửa."
+        "text": "Bài học: Di chuyển. Trên bản đồ, vuốt một ngón lên để đi bắc, xuống để đi nam, trái để đi tây và phải để đi đông. Muốn đi chéo, mở Menu tổng hợp, vào Di chuyển và tư thế rồi chọn hướng. Muốn đứng yên đúng một lượt, tìm lệnh Đứng yên một lượt; lệnh Chờ thường dùng để chờ lâu hơn. Nhiệm vụ: vuốt sang phải để tới cửa phía đông."
       },
       {
         "id": "ANDROID_READER_LESSON_OPEN",
@@ -30,11 +30,11 @@
       },
       {
         "id": "ANDROID_READER_LESSON_PICKUP",
-        "text": "Bạn đang đứng trên vật phẩm. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Nhặt. Vuốt một ngón trái hoặc phải để tìm gậy bóng chày, chạm đôi để chọn, rồi vuốt hai ngón lên để xác nhận. Bạn cũng có thể nhặt đồ ở ô bên cạnh. Sau đó vuốt một ngón xuống để đi về phía nam đến cửa."
+        "text": "Bài học: Nhặt đồ. Bạn vừa bước lên ô có vật phẩm. Mở Menu tổng hợp, chọn Túi đồ và vật phẩm, rồi chọn chức năng nhặt gần bạn. Duyệt tới gậy bóng chày; chạm hai lần để đánh dấu, nghe số lượng, sau đó xác nhận trong màn nhặt. Chỉ duyệt danh sách chưa làm nhân vật nhặt đồ. Nhiệm vụ: nhặt gậy bóng chày và đi tới cửa phía nam."
       },
       {
         "id": "ANDROID_READER_LESSON_EXAMINE",
-        "text": "Có giáo thép trên giá bên cạnh. Túi bạn đã đầy: mở Menu tổng hợp, chọn Tìm lệnh, tìm Thả và thả gậy bóng chày. Sau đó tìm Cầm vũ khí, chọn giáo thép trên giá rồi xác nhận. Vuốt một ngón sang trái để đi về phía tây đến các quầy."
+        "text": "Bài học: Cầm vũ khí. Trên giá gần bạn có giáo thép. Nếu túi đầy, mở Menu tổng hợp, vào Túi đồ và vật phẩm, rồi chọn Thả để bỏ gậy bóng chày xuống. Sau đó mở Trang bị và sửa chữa, chọn lệnh cầm vật phẩm, tìm giáo thép và xác nhận. Nhiệm vụ: cầm giáo thép rồi đi sang tây tới các quầy."
       },
       {
         "id": "ANDROID_READER_LESSON_GOT_ARMOR",
@@ -42,7 +42,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_GOT_WEAPON",
-        "text": "Bạn vừa nhặt được vũ khí. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Cầm vũ khí, chọn món muốn cầm rồi xác nhận. Muốn rảnh tay, dùng lệnh Cầm vũ khí để cất đi hoặc lệnh Thả để bỏ xuống."
+        "text": "Bài học: Vũ khí cận chiến. Bạn vừa nhặt được vũ khí. Mở Menu tổng hợp, vào Trang bị và sửa chữa, chọn Chọn vật phẩm để cầm trên tay và chọn món muốn cầm. Bạn cũng có thể đánh tay không. Muốn đổi vũ khí, dùng lại chức năng cầm; đừng chọn Thả trừ khi bạn muốn bỏ vật phẩm xuống đất."
       },
       {
         "id": "ANDROID_READER_LESSON_GOT_FOOD",
@@ -54,11 +54,11 @@
       },
       {
         "id": "ANDROID_READER_LESSON_GOT_GUN",
-        "text": "Bạn vừa nhặt được súng. Súng cần đúng loại đạn mới bắn được. Độ tản mát cao khiến phát bắn khó trúng; một số súng có nhiều chế độ bắn. Khi cần, mở Menu tổng hợp, chọn Tìm lệnh, tìm Chế độ bắn."
+        "text": "Bài học: Súng. Súng cần đạn đúng loại, đôi khi còn cần băng đạn. Có thể nghe số đạn còn lại trong trạng thái vũ khí. Mở Menu tổng hợp, vào Chiến đấu, vũ khí và phép thuật để tìm các lệnh bắn. Lệnh Đổi chế độ bắn hoặc đánh của súng chỉ chuyển chế độ, không tự bắn."
       },
       {
         "id": "ANDROID_READER_LESSON_GOT_AMMO",
-        "text": "Bạn vừa nhặt được đạn. Kiểm tra đạn có phù hợp với súng không; sát thương, xuyên giáp, tầm bắn và độ tản mát ảnh hưởng đến hiệu quả. Muốn nạp đạn, mở Menu tổng hợp, chọn Tìm lệnh, tìm Nạp đạn."
+        "text": "Bài học: Đạn. Đạn phải tương thích với súng và băng đạn. Mở Menu tổng hợp, vào Trang bị và sửa chữa, chọn Chọn vật phẩm để nạp rồi nghe lựa chọn phù hợp. Nếu muốn tự tìm súng hoặc băng đạn cần nạp, dùng Tự nạp súng hoặc băng đạn phù hợp. Kiểm tra kết quả trước khi bắn."
       },
       {
         "id": "ANDROID_READER_LESSON_WORE_ARMOR",
@@ -74,11 +74,11 @@
       },
       {
         "id": "ANDROID_READER_LESSON_WEAPON_INFO",
-        "text": "Muốn xem thông số vũ khí, mở Menu tổng hợp, chọn Tìm lệnh, tìm Túi đồ. Vuốt một ngón trái hoặc phải đến vũ khí; chạm một lần bằng hai ngón để nghe chi tiết. Chú ý sát thương đập, cắt, độ chính xác và tốc độ đánh."
+        "text": "Bài học: Xem thông số vũ khí. Mở Menu tổng hợp, vào Túi đồ và vật phẩm rồi chọn xem vật phẩm đang mang theo. Duyệt đến vũ khí và yêu cầu đọc chi tiết. Nghe sát thương đập hoặc cắt, độ chính xác và tốc độ ra đòn. Vũ khí nặng có thể đánh chậm; vũ khí có tầm với có thể đánh xa hơn một ô."
       },
       {
         "id": "ANDROID_READER_LESSON_HIT_MONSTER",
-        "text": "Đánh trúng có thể làm quái vật choáng tạm thời. Khi ở chế độ chiến đấu, vuốt một ngón theo hướng quái vật để tấn công; vuốt hai ngón theo hướng muốn đi để di chuyển. Chạm ba lần bằng ba ngón để chuyển giữa chế độ bản đồ và chiến đấu."
+        "text": "Bài học: Đánh trúng. Hãy quét để biết hướng và khoảng cách của mục tiêu. Với tay không hay vũ khí cận chiến thường, bạn cần đứng sát mục tiêu. Trong chế độ chiến đấu, vuốt một ngón về hướng mục tiêu để đánh; nếu ô trống nhân vật có thể bước. Vuốt hai ngón để chủ động đi lại. Chạm ba lần bằng ba ngón để đổi chế độ bản đồ và chiến đấu."
       },
       {
         "id": "ANDROID_READER_LESSON_PAIN",
@@ -102,19 +102,19 @@
       },
       {
         "id": "ANDROID_READER_LESSON_ACT_GRENADE",
-        "text": "Lựu đạn đã được kích hoạt, hãy ném nó ngay. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Ném; chọn lựu đạn và chọn hướng ném. Tầm ném phụ thuộc vào sức mạnh và trọng lượng vật phẩm."
+        "text": "Cảnh báo: Lựu đạn đã kích hoạt và có thể phát nổ. Hãy tìm lệnh Chọn vật phẩm để ném trong nhóm Chiến đấu của Menu tổng hợp, chọn lựu đạn và hướng ném. Không tiếp tục làm việc khác khi vẫn đang cầm lựu đạn đang hoạt động. Tầm ném phụ thuộc sức mạnh và trọng lượng."
       },
       {
         "id": "ANDROID_READER_LESSON_ACT_BUBBLEWRAP",
-        "text": "Trước mặt là một cái bẫy. Hãy bước lên màng xốp nổ để thử; nó vô hại nhưng gây tiếng động. Muốn gỡ bẫy khác, mở Menu tổng hợp, chọn Tìm lệnh, tìm Kiểm tra rồi chọn hướng có bẫy. Cẩn thận vì gỡ bẫy có thể khiến bẫy phát nổ."
+        "text": "Bài học: Nhận biết bẫy. Phía trước có màng xốp nổ phát tiếng động nhưng không gây sát thương. Hãy quét để biết hướng và tiến đến nếu thấy an toàn. Các bẫy khác có thể nguy hiểm; đừng mặc định bẫy nào cũng vô hại. Nhiệm vụ: bước lên ô màng xốp nổ để thử."
       },
       {
         "id": "ANDROID_READER_LESSON_GUN_FIRE",
-        "text": "Để bắn súng, mở Menu tổng hợp, chọn Tìm lệnh, tìm Bắn. Vuốt một ngón trái hoặc phải để duyệt mục tiêu; chọn bia tập rồi xác nhận bắn. Muốn đổi chế độ bắn, tìm Chế độ bắn. Hãy bắn vài phát vào bia, sau đó vuốt một ngón sang trái để đi về phía tây."
+        "text": "Bài học: Bắn súng. Mở Menu tổng hợp, vào Chiến đấu, vũ khí và phép thuật rồi chọn Bắn súng hoặc tấn công tầm xa. Khi có màn chọn súng, chọn khẩu súng phù hợp và nghe số đạn. Trong màn ngắm, tìm bia tập, nghe tên mục tiêu rồi xác nhận bắn. Lệnh Đổi chế độ bắn hoặc đánh của súng chỉ chọn chế độ. Nhiệm vụ: bắn vào bia tập rồi đi sang tây."
       },
       {
         "id": "ANDROID_READER_LESSON_RECOIL",
-        "text": "Bắn súng làm tăng độ giật, khiến những phát tiếp theo khó trúng. Muốn xem độ giật, mở Menu tổng hợp, chọn Tìm lệnh, tìm Bắn để vào màn ngắm. Đứng yên một lượt bằng lệnh Chờ sẽ giúp giảm độ giật."
+        "text": "Bài học: Độ giật. Sau mỗi phát bắn, súng có thể giật khiến phát tiếp theo khó chính xác. Vào màn ngắm để nghe thông số và chọn mục tiêu. Nếu muốn lấy lại độ ổn định, đứng yên một lượt bằng lệnh Đứng yên một lượt trong Menu tổng hợp. Nhiệm vụ: thử ngắm lại trước khi bắn tiếp."
       },
       {
         "id": "ANDROID_READER_LESSON_STAIRS",
@@ -138,11 +138,67 @@
       },
       {
         "id": "ANDROID_READER_LESSON_RESTORE_STAMINA",
-        "text": "Bạn đang thiếu thể lực nên di chuyển và hành động chậm hơn. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Chờ rồi chọn Chờ đến khi hồi hơi. Nếu mệt mỏi kéo dài, hãy nghỉ thêm."
+        "text": "Bài học: Hồi thể lực. Thể lực thấp khiến bạn khó chạy hoặc đánh liên tục. Mở Menu tổng hợp, vào Ăn uống, nghỉ ngơi và y tế, chọn Chọn khoảng thời gian cần chờ rồi tìm cách nghỉ đến khi hồi hơi. Nghe thông báo hồi phục trước khi đi tiếp. Nếu có nguy hiểm ở gần, hãy tìm nơi an toàn trước khi nghỉ."
       },
       {
         "id": "ANDROID_READER_LESSON_HOLSTERS_ACTIVATE",
         "text": "Bạn có thể cất giáo thép vào dây đeo giáo để rảnh tay. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Sử dụng, chọn dây đeo giáo, chọn giáo thép rồi xác nhận. Sau đó tiếp tục đi theo hành lang."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_LOOK",
+        "text": "Bài học: Quan sát. Trên bản đồ, vuốt hai ngón tay về một hướng để nghe đường đi, cửa, vật phẩm và sinh vật ở hướng đó. Có thể mở Menu tổng hợp, vào Quan sát và bản đồ để xem những lệnh khám phá khác. Nhiệm vụ: quét hướng đông và tìm lối đi tiếp. Bạn không cần chuột hay bàn phím."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_MOVEMENT_MODES",
+        "text": "Bài học: Di chuyển. Đi bộ là chế độ mặc định. Chạy nhanh hơn nhưng tốn thể lực; cúi người và nằm bò giúp khó bị phát hiện hơn nhưng đi chậm. Mở Menu tổng hợp, chọn Di chuyển và tư thế, rồi chọn Chế độ di chuyển để thay đổi. Duyệt các chế độ và chạm hai lần để chọn. Nhiệm vụ: thử chạy, chuyển lại đi bộ và đi tới cuối hành lang."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_MONSTER_SIGHTED",
+        "text": "Bài học: Đánh cận chiến. Có hình nộm trong khu vực, chưa chắc đã đứng sát bạn. Vuốt hai ngón để quét và nghe hướng, khoảng cách của nó. Tiến tới ô liền kề. Chạm ba lần bằng ba ngón để bật chế độ chiến đấu, rồi vuốt một ngón theo hướng hình nộm để đánh. Nếu ô trống, nhân vật có thể bước. Khi chế độ an toàn chặn lệnh, vào Menu tổng hợp, nhóm Chiến đấu, để kiểm tra và điều chỉnh. Nhiệm vụ: đánh hình nộm rồi tới cửa phía sau."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_REACH_ATTACK",
+        "text": "Bài học: Đánh có tầm với. Hình nộm ở sau quầy. Giáo thép có thể đánh từ khoảng cách hai ô, không cần đứng sát mục tiêu. Hãy cầm giáo, quét để xác định hình nộm, rồi mở Menu tổng hợp, nhóm Chiến đấu, chọn Bắn súng hoặc tấn công tầm xa. Trong màn chọn mục tiêu, chọn hình nộm rồi xác nhận. Nhiệm vụ: đánh trúng hình nộm qua quầy và đi vào hành lang phía nam."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_HOLSTERS_WEAR",
+        "text": "Bài học: Dây đeo giáo. Có một dây đeo giáo trên giá gần đó. Mở Menu tổng hợp, chọn Trang bị và sửa chữa, rồi chọn Mặc để đeo dây. Dây này giúp cất giáo khi cần rảnh tay; mặc dây không tự động cất giáo. Nhiệm vụ: mặc dây đeo giáo và tiếp tục đi theo hành lang."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_GUN_LOAD",
+        "text": "Bài học: Nạp đạn. Trên giá có súng, băng đạn và đạn. Trước tiên phải nạp đạn phù hợp vào băng đạn, sau đó đưa băng đạn vào súng. Mở Menu tổng hợp, chọn Trang bị và sửa chữa, tìm Chọn vật phẩm để nạp; chọn đúng vật phẩm và loại đạn theo lời đọc. Sau mỗi bước, nghe trạng thái để kiểm tra số đạn. Nhiệm vụ: chuẩn bị một khẩu súng có đạn. Có thể dùng lệnh Tháo đạn khi cần đổi đạn."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_INVENTORY",
+        "text": "Bài học: Túi đồ và ngăn chứa. Vật phẩm phải vừa ngăn của quần áo, ba lô hoặc vật chứa khác; mang theo quá nhiều cũng gây nặng và vướng. Mở Menu tổng hợp, vào Túi đồ và vật phẩm, chọn Xem vật phẩm đang mang theo. Duyệt đến quần áo rồi mở phần chi tiết để nghe các ngăn chứa. Nhiệm vụ: tìm ba lô trên giá phía tây và mặc ba lô để tăng chỗ chứa."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_FLASHLIGHT",
+        "text": "Bài học: Đèn pin. Trên giá có đèn pin và pin. Mở Menu tổng hợp, chọn Trang bị và sửa chữa, tìm Chọn vật phẩm để nạp, rồi chọn đèn pin và loại pin phù hợp. Kiểm tra thông báo sau khi nạp. Để bật đèn, dùng lệnh Sử dụng hoặc kích hoạt vật phẩm. Nhiệm vụ: mang đèn pin đã nạp theo và đi tới cầu thang."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_INTERACT",
+        "text": "Bài học: Tương tác với môi trường. Gần đây có máy cấp nước. Trước hết, lấy chai nhựa trên giá. Bạn có thể vuốt hai ngón để quét tìm máy cấp nước hoặc vào Menu tổng hợp, mục Quan sát và bản đồ. Khi đứng gần máy, mở Menu tổng hợp, chọn Tương tác với môi trường, rồi chọn chức năng kiểm tra. Nhiệm vụ: tìm máy cấp nước và mang chai tới đó."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_REMOTE_USE",
+        "text": "Bài học: Dùng dụng cụ gần mình. Đèn pin dùng pin nhưng nhanh hết điện. Đèn lồng xăng có thể chiếu sáng lâu hơn. Hãy tìm đèn lồng, xăng và bật lửa; dùng chức năng nạp để cho xăng vào đèn. Sau đó mở Menu tổng hợp, chọn Túi đồ và vật phẩm, tìm Sử dụng hoặc kích hoạt vật phẩm và chọn đèn lồng. Một số dụng cụ có thể sử dụng ngay khi ở gần. Nhiệm vụ: thắp sáng đèn lồng rồi đi về hành lang phía đông."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_CRAFTING_FOOD",
+        "text": "Bài học: Chế tạo thức ăn. Bạn đang đói; gần đây có bơ đậu phộng và bánh quy để làm bánh kẹp. Mở Menu tổng hợp, chọn Chế tạo và xây dựng, rồi chọn Chế tạo. Tìm nhóm món ăn và công thức bánh kẹp bơ đậu phộng. Nghe danh sách nguyên liệu và chọn chế tạo khi đủ điều kiện. Game có thể dùng nguyên liệu, dụng cụ cách tối đa sáu ô. Nhiệm vụ: chế tạo bánh kẹp rồi mở chức năng ăn uống để ăn."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_CONSTRUCTION",
+        "text": "Bài học: Trang trí bằng sơn. Trên giá có chổi và các thùng sơn. Mở Menu tổng hợp, chọn Chế tạo và xây dựng, rồi chọn Xây dựng. Duyệt nhóm trang trí, tìm thao tác sơn tường, chọn màu và vị trí phù hợp theo lời đọc. Nếu thiếu dụng cụ hoặc nguyên liệu, nghe phần yêu cầu để biết cần gì. Nhiệm vụ: sơn một đoạn tường rồi đi tiếp về phía nam."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_THROWING",
+        "text": "Bài học: Nhặt số lượng và ném. Có mười quả bóng chày trên sàn; bạn không cần nhặt hết. Mở Menu tổng hợp, mục Túi đồ và vật phẩm, chọn chức năng nhặt. Tìm chồng bóng chày, chọn số lượng bằng điều khiển của trình đọc rồi xác nhận. Để ném, vào nhóm Chiến đấu, chọn Chọn vật phẩm để ném, chọn bóng chày và bia tập. Nhiệm vụ: ném vài quả vào hình nộm, rồi đi đến cuối hành lang phía bắc."
+      },
+      {
+        "id": "ANDROID_READER_LESSON_FINALE",
+        "text": "Hoàn thành phần hướng dẫn. Bạn đã luyện di chuyển, quan sát, mở cửa, nhặt đồ, chiến đấu, nạp đạn và chế tạo. Nếu quên một thao tác, mở Menu tổng hợp và chọn Tìm lệnh hoặc đọc hướng dẫn cử chỉ của màn hình hiện tại. Bạn có thể khám phá thêm hoặc mở Hệ thống và bản lưu để thoát. Lưu ý: bản lưu của phần hướng dẫn không có đủ đặc điểm của thế giới chơi thông thường. Nhiệm vụ tiếp theo: bắt đầu một ván chơi mới khi sẵn sàng."
       }
     ]
   }
