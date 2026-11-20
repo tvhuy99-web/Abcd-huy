@@ -67,8 +67,14 @@ class TutorialCombatDummyContracts(unittest.TestCase):
         self.assertIn("adjacent creature", self.english)
         self.assertIn("empty tile can still move you", self.english)
         self.assertIn('name="a11yCombatOn"', self.vietnamese)
-        self.assertIn("ô sát cạnh", self.vietnamese)
-        self.assertIn("ô trống", self.vietnamese)
+        # The new combat hint distinguishes gunfire, melee and walking
+        # without implying that empty tiles are always attacked.
+        combat = self.vietnamese.split(
+            'name="a11yCombatOn">', 1)[1].split("</string>", 1)[0]
+        for required in ("bắn súng", "đánh", "ô trống", "có thể bước"):
+            self.assertIn(required, combat)
+        self.assertIn('name="a11yGuideAttackNorth">Đánh hoặc bước',
+                      self.vietnamese)
 
 
 if __name__ == "__main__":
