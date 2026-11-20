@@ -31,6 +31,18 @@ bool activate_pending_scopes( const void *input_owner );
 std::optional<std::string> poll_input( const void *input_owner );
 void announce_game_message( std::string_view text, bool urgent );
 
+// While the avatar is edited, mods may repeatedly grant and revoke spells
+// as the preview is rebuilt. Keep those gameplay messages in the native log
+// but do not enqueue them as Android speech ahead of points and selections.
+class character_creation_speech_scope
+{
+    public:
+        character_creation_speech_scope();
+        ~character_creation_speech_scope();
+        character_creation_speech_scope( const character_creation_speech_scope & ) = delete;
+        character_creation_speech_scope &operator=( const character_creation_speech_scope & ) = delete;
+};
+
 // Keep DEFAULTMODE's semantic frame across ordinary game turns. Only its
 // game-thread input handler is rebound at each input wait; none of the
 // character or map state is accessed from an Android callback.

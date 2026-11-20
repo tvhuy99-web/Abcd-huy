@@ -137,6 +137,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void replayBufferedGameMessages() {
+        // During loading, mods may emit character-trait and spell notices
+        // before the creator has a semantic snapshot. They are stale preview
+        // events, not user selections. Do not replay them after step one loads.
+        if (snapshot != null
+                && ("CHARACTER_CREATION".equals(snapshot.category)
+                    || snapshot.category.startsWith("character-creator-step-"))) {
+            if (!pendingGameMessages.isEmpty()) {
+                SessionDebugLog.event("CREATOR_SPEECH_SUPPRESSED",
+                        "buffered_loading_events=" + pendingGameMessages.size());
+                pendingGameMessages.clear();
+            }
+            return;
+        }
         while (!pendingGameMessages.isEmpty()) {
             // A quick-shot failure can originate in a transient targeting
             // frame. Speak it only after returning to the world, so the

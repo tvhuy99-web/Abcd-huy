@@ -6694,3 +6694,8 @@ msgstr "Nạp vật phẩm đang cầm nếu có thể nạp. Lệnh này không
 
 msgid "Automatically choose a target within melee reach and attack once, even when unarmed. With no target, you may wait one turn if safe mode allows. This is not a toggle."
 msgstr "Tự chọn mục tiêu trong tầm đánh cận chiến và đánh một lần, kể cả khi tay không. Nếu không có mục tiêu, nhân vật có thể chờ một lượt nếu chế độ an toàn cho phép. Đây không phải nút bật tắt."
+
+# Concise remaining-point feedback after accessible character creator changes.
+#, c-format
+msgid "Points remaining: %d."
+msgstr "Điểm còn lại: %d."
