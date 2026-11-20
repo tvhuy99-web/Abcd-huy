@@ -6326,3 +6326,61 @@ msgstr "%1$s và %2$s"
 msgid "%1$s: %2$s."
 msgstr "%1$s: %2$s."
 
+#, c-format
+msgid "%1$s to the %2$s, %3$d tiles away."
+msgstr "%1$s ở phía %2$s, cách %3$d ô."
+
+#, c-format
+msgid "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles."
+msgstr "Có %1$d %2$s mới trong phạm vi rađa, gần nhất ở phía %3$s, cách %4$d ô."
+
+#, c-format
+msgid "%d more new radar groups were combined."
+msgstr "Có thêm %d nhóm đối tượng mới đã được gộp trong thông báo."
+
+msgid "Stairs up"
+msgstr "Cầu thang đi lên"
+
+msgid "Stairs down"
+msgstr "Cầu thang đi xuống"
+
+#, c-format
+msgid "Passage opens to the %1$s, %2$d tiles."
+msgstr "Lối đi mở ra về phía %1$s, cách %2$d ô."
+
+#, c-format
+msgid "Passage narrows to the %1$s, blocked in %2$d tiles."
+msgstr "Lối đi về phía %1$s hẹp lại, bị chặn sau %2$d ô."
+
+msgid "The space around you opens up."
+msgstr "Không gian xung quanh trở nên rộng thoáng hơn."
+
+msgid "The space around you narrows."
+msgstr "Không gian xung quanh trở nên chật hẹp hơn."
+
+#, c-format
+msgid "%d more environment changes."
+msgstr "Còn %d thay đổi môi trường khác."
+
+msgid "open"
+msgstr "mở"
+
+msgid "locked"
+msgstr "khóa"
+
+msgid "closed"
+msgstr "đóng"
+
+#, c-format
+msgid "Door to the %1$s, %2$d tiles away, is now %3$s."
+msgstr "Cửa ở phía %1$s, cách %2$d ô, hiện đang %3$s."
+
+#, c-format
+msgid "Object changed: %1$s to the %2$s, %3$d tiles away."
+msgstr "Đối tượng thay đổi: %1$s ở phía %2$s, cách %3$d ô."
+
+msgid "Automatic spoken radar"
+msgstr "Rađa tự động"
+
+msgid "Toggle spoken announcements when objects enter eight tiles."
+msgstr "Bật hoặc tắt thông báo bằng giọng nói khi đối tượng vào phạm vi tám ô."
