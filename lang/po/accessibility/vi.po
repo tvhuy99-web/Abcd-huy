@@ -6703,8 +6703,6 @@ msgstr "Động cơ"
 msgid "%s ago"
 msgstr "cách đây %s"
 
-msgid "Show visible fields, traps, creatures, special perceptions, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers."
-msgstr "Hiển thị hiệu ứng môi trường, bẫy, sinh vật, dấu hiệu cảm nhận đặc biệt, vật phẩm, phương tiện, vật cản, cửa và cầu thang đã biết, đồ đạc đã ghi nhớ và dấu âm thanh."
 
 msgid "Automatic spoken radar"
 msgstr "Rađa thông báo bằng giọng nói tự động"
@@ -6734,8 +6732,6 @@ msgstr "Tiến độ"
 msgid "Autonomous destination driving"
 msgstr "Tự lái đến điểm đích"
 
-msgid "All groups together cannot be met from the same inventory, even if individual groups look available."
-msgstr "Không thể đồng thời đáp ứng tất cả các nhóm từ cùng một túi đồ, dù từng nhóm riêng lẻ có vẻ đủ."
 
 msgid "Confirm"
 msgstr "Xác nhận"
