@@ -7,6 +7,9 @@ on:
     paths:
       - 'src/**'
       - 'Makefile'
+      - 'tests/item_wakeup_test.cpp'
+      - 'tests/melee_test.cpp'
+      - 'tests/map_bash_test.cpp'
       - '.github/workflows/upstream-merge-native-smoke.yml'
   workflow_dispatch:
 
@@ -85,3 +88,20 @@ jobs:
             obj/medical_ui.o obj/player_display.o \
             CXX=g++-16 RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=1 LINTJSON=0 CCACHE=0
+
+  regression-test-compile:
+    name: Compile map, wakeup and melee C++ regression tests
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Compile the new native tests without needing a full test executable
+        run: |
+          # Syntax and type checking for test translation units. Test execution
+          # still requires linking the full cata_test binary separately.
+          make -C tests -j2 \
+            obj/item_wakeup_test.o obj/map_bash_test.o obj/melee_test.o \
+            CXX=g++ PCH=0 \
+            CXXFLAGS='-std=c++20 -O0 -g0 -Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unknown-pragmas -Wno-parentheses'
