@@ -498,3 +498,14 @@ TEST_CASE( "Damage_type_EOCs", "[damage][eoc]" )
     }
 
 }
+
+TEST_CASE( "partial_dodge_can_still_be_a_glancing_melee_hit", "[melee][dodge]" )
+{
+    // The partial-dodge mechanic allows negative hit spreads to inflict
+    // reduced damage.  Special monster attacks must not treat all of
+    // these glancing hits as complete misses.
+    CHECK_FALSE( Creature::melee_attack_hit( -25 ) );
+    CHECK( Creature::melee_attack_hit( -24 ) );
+    CHECK( Creature::melee_attack_hit( -1 ) );
+    CHECK( Creature::melee_attack_hit( 0 ) );
+}
