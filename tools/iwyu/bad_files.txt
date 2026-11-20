@@ -25,6 +25,7 @@ src/loading_ui.cpp
 src/localized_comparator.cpp
 src/main.cpp
 src/map.cpp
+src/map_cache.cpp
 src/mutation_ui.cpp
 src/ncurses_def.cpp
 src/options.cpp
