@@ -9,7 +9,9 @@ function Q {
 		-exec jq "${@}" {} +
 }
 
-SPECIAL_OF_TERRAIN="$(mktemp --suffix=-special-of-terrain.json )"
+SPECIAL_OF_TERRAIN="$(mktemp "${TMPDIR:-/tmp}/special-of-terrain.XXXXXX")"
+MISSING_OM_SPECIAL=""
+trap 'rm -f -- "$SPECIAL_OF_TERRAIN" "${MISSING_OM_SPECIAL:-}"' EXIT
 Q 'def skip(to_skip): select(all(. != to_skip; .));
     if type=="array" then .[] else . end
 	| select(type=="object")
@@ -26,7 +28,7 @@ Q 'def skip(to_skip): select(all(. != to_skip; .));
 	| map_values(unique)' \
 > "$SPECIAL_OF_TERRAIN"
 
-MISSING_OM_SPECIAL="$(mktemp --suffix=-missing-om-special.json )"
+MISSING_OM_SPECIAL="$(mktemp "${TMPDIR:-/tmp}/missing-om-special.XXXXXX")"
 Q --slurpfile special_of_terrain "$SPECIAL_OF_TERRAIN" \
    	'if type=="array" then .[] else . end
 	| select(type=="object")
