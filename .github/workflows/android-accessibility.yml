@@ -214,18 +214,30 @@ jobs:
             task_signing_args=(-Paccessibility_test_signing=true
                                "-Poverride_versionCode=${version_code}")
           fi
-          # Maven Central sometimes returns HTTP 429 on fresh runners. Retry
-          # only that transient failure; compile and configuration errors fail fast.
+          # Cold runners may receive HTTP 429, then cached metadata misses for
+          # many known AGP classpath dependencies. Retry only those patterns,
+          # refresh dependency metadata, and fail fast on compilation errors.
+          gradle_retry_args=()
           for attempt in 1 2 3; do
             echo "Gradle assemble attempt ${attempt}/3"
-            if bash ./gradlew --no-daemon --console=plain --max-workers=4 -Pj=4 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log; then
+            if bash ./gradlew --no-daemon --console=plain --max-workers=4 -Pj=4 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "${gradle_retry_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log; then
               break
             fi
-            if [ "$attempt" -eq 3 ] || ! grep -Eq 'Received status code 429|Too Many Requests|HTTP response code: 429' ../build-evidence/gradle.log; then
-              echo "::error::Gradle failed without transient dependency throttling or retries exhausted."
+            transient_dependency_error=false
+            if grep -Eq 'Received status code 429|Too Many Requests|HTTP response code: 429' ../build-evidence/gradle.log; then
+              transient_dependency_error=true
+            elif grep -Fq "Could not resolve all artifacts for configuration ':classpath'" ../build-evidence/gradle.log &&
+                 [ "$(grep -Fc 'Could not find ' ../build-evidence/gradle.log)" -ge 5 ]; then
+              # Five or more missing basic classpath artifacts is a remote
+              # repository failure, not an isolated invalid dependency.
+              transient_dependency_error=true
+            fi
+            if [ "$attempt" -eq 3 ] || [ "$transient_dependency_error" != true ]; then
+              echo "::error::Gradle build failed for a non-transient reason or retries exhausted."
               exit 1
             fi
-            echo "::warning::Maven dependency download throttled (HTTP 429), retrying Gradle."
+            echo "::warning::Transient Maven metadata/download failure; refresh and retry."
+            gradle_retry_args=(--refresh-dependencies)
             sleep $((attempt * 45))
           done
           ccache --show-stats --verbose | tee ../build-evidence/ccache.txt
