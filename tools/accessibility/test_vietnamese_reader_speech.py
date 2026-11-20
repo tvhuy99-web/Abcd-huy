@@ -97,6 +97,36 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('msgid "northwest"\nmsgstr "tây bắc"', self.po)
         self.assertNotIn('question.label = _( "Dialog message" );', self.dialog)
 
+    def test_gettext_overlay_has_no_duplicate_message_identity(self):
+        # A PO message may wrap its msgid over several quoted lines.
+        # Duplicate source keys stop msgcat and therefore block Android APKs.
+        import json
+
+        identities = set()
+        for entry in self.po.split("\n\n"):
+            context = ""
+            message = None
+            section = None
+            for line in entry.splitlines():
+                if line.startswith("msgctxt "):
+                    context = json.loads(line[8:])
+                    section = "context"
+                elif line.startswith("msgid "):
+                    message = json.loads(line[6:])
+                    section = "message"
+                elif line.startswith(("msgid_plural ", "msgstr")):
+                    section = None
+                elif line.startswith('"') and section == "message":
+                    message += json.loads(line)
+                elif line.startswith('"') and section == "context":
+                    context += json.loads(line)
+            if not message:
+                continue
+            identity = (context, message)
+            self.assertNotIn(identity, identities,
+                             "Duplicate gettext message: " + repr(identity))
+            identities.add(identity)
+
     def test_new_vietnamese_session_translations(self):
         # All session-leaked radar phrases, nearby labels and status words
         # are supplied at build time by the Vietnamese accessibility catalog.
