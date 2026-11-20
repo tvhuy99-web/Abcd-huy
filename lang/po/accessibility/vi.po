@@ -6456,9 +6456,6 @@ msgstr "Rất nóng!"
 msgid "Warm"
 msgstr "Ấm"
 
-msgid "none"
-msgstr "không có"
-
 msgid "On"
 msgstr "Bật"
 
