@@ -45,6 +45,8 @@ std::vector<screen_scope *> live_scopes;
 // Destruct before screens and live_scopes at process exit.
 std::unique_ptr<screen_scope> retained_world_scope;
 std::uint64_t seen_epoch = 0;
+// Owned by the native game thread; the character creator may open nested UI.
+int character_creation_speech_depth = 0;
 
 void publish_current()
 {
@@ -62,6 +64,16 @@ void publish_current()
 
 bool enabled() { return android::enabled(); }
 bool suspended() { return !enabled() || android::suspended(); }
+
+character_creation_speech_scope::character_creation_speech_scope()
+{
+    ++character_creation_speech_depth;
+}
+
+character_creation_speech_scope::~character_creation_speech_scope()
+{
+    --character_creation_speech_depth;
+}
 
 void replace_game_session()
 {
@@ -436,6 +448,12 @@ void announce_game_message( const std::string_view text, const bool urgent )
 {
     synchronize_lifecycle();
     if( text.empty() || suspended() ) {
+        return;
+    }
+    // A mod can relearn the same preview spells on every character-creator
+    // tab change. The creator announces selection and points independently
+    // via android::announce, so suppress only the generic gameplay channel.
+    if( character_creation_speech_depth > 0 ) {
         return;
     }
     // ReaderSpeechQueue uses the same priority levels: information does not

@@ -348,6 +348,11 @@ struct multi_pool {
 };
 } // namespace
 
+static std::string creator_change_with_remaining( const std::string &description, int remaining )
+{
+    return description + " " + string_format( _( "Points remaining: %d." ), remaining );
+}
+
 // Toggle this trait and all prereqs, removing upgrades on removal
 void Character::toggle_trait_deps( const trait_id &tr, const std::string &variant )
 {
@@ -3372,6 +3377,9 @@ static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, 
 
 bool character_creator_ui::display()
 {
+    // Do not enqueue mod spell-learning chatter while rebuilding character
+    // previews. Scope ends on both completion and return to the main menu.
+    const a11y::character_creation_speech_scope creator_speech;
     cc_uistate.reset();
     character_creator_ui_impl ccui( this );
 
@@ -3971,8 +3979,11 @@ bool character_creator_ui::handle_action( const std::string &action )
                 a11y::android::announce( _( "Not enough points for this attribute." ), 1 );
                 return;
             }
-            a11y::android::announce( string_format( _( "%1$s set to %2$d." ),
-                                     _( io::enum_to_full_string( selected_stat ) ), new_value ), 1 );
+            a11y::android::announce( creator_change_with_remaining(
+                                         string_format( _( "%1$s set to %2$d." ),
+                                                        _( io::enum_to_full_string( selected_stat ) ),
+                                                        new_value ),
+                                         pool_after ), 1 );
         }
     };
     auto mod_skill = [&you]( int mod_value ) {
@@ -3996,9 +4007,11 @@ bool character_creator_ui::handle_action( const std::string &action )
                 a11y::android::announce( _( "Not enough points for this skill." ), 1 );
                 return;
             }
-            a11y::android::announce( string_format( _( "%1$s set to %2$d." ),
-                                     selected_skill->name(),
-                                     you.get_skill_level( selected_skill ) ), 1 );
+            a11y::android::announce( creator_change_with_remaining(
+                                         string_format( _( "%1$s set to %2$d." ),
+                                                        selected_skill->name(),
+                                                        you.get_skill_level( selected_skill ) ),
+                                         points_after ), 1 );
         }
     };
 
@@ -4425,9 +4438,11 @@ void character_creator_callback::confirm( uilist *menu )
             cc_uistate.recalc_hobbies_taken = true;
             cc_uistate.recalc_hobbies_taken_list( u );
             if( a11y::enabled() ) {
-                a11y::android::announce( string_format( enabling ?
-                                          _( "Selected %s." ) : _( "Unselected %s." ),
-                                          selected_hobby->gender_appropriate_name( u.male ) ), 1 );
+                a11y::android::announce( creator_change_with_remaining(
+                                             string_format( enabling ?
+                                                            _( "Selected %s." ) : _( "Unselected %s." ),
+                                                            selected_hobby->gender_appropriate_name( u.male ) ),
+                                             multi_pool( u ).skill_points_left ), 1 );
             }
             break;
         }
@@ -4456,8 +4471,10 @@ void character_creator_callback::confirm( uilist *menu )
                 if( chosen ) {
                     set_stat_base( u, selected_stat, *chosen );
                     cc_uistate.stats[selected_stat_index] = *chosen;
-                    a11y::android::announce( string_format( _( "%1$s set to %2$d." ),
-                                              name, *chosen ), 1 );
+                    a11y::android::announce( creator_change_with_remaining(
+                                                 string_format( _( "%1$s set to %2$d." ),
+                                                                name, *chosen ),
+                                                 multi_pool( u ).stat_points_left ), 1 );
                 }
             } else {
                 number_input_popup<int> stat_query( 0, stat_queried,
@@ -4557,9 +4574,11 @@ void character_creator_callback::confirm( uilist *menu )
                 u.toggle_trait_deps( cur_trait, variant );
             }
             if( a11y::enabled() && ( inc_type != 0 || variant_changed ) ) {
-                a11y::android::announce( string_format( u.has_trait( cur_trait ) ?
-                                          _( "Selected %s." ) : _( "Unselected %s." ),
-                                          cur_trait->name() ), 1 );
+                a11y::android::announce( creator_change_with_remaining(
+                                             string_format( u.has_trait( cur_trait ) ?
+                                                            _( "Selected %s." ) : _( "Unselected %s." ),
+                                                            cur_trait->name() ),
+                                             multi_pool( u ).trait_points_left ), 1 );
             }
             break;
         }
@@ -4585,8 +4604,10 @@ void character_creator_callback::confirm( uilist *menu )
                 if( chosen ) {
                     u.set_skill_level( skill_queried, *chosen );
                     u.set_knowledge_level( skill_queried, *chosen );
-                    a11y::android::announce( string_format( _( "%1$s set to %2$d." ),
-                                              skill_queried->name(), *chosen ), 1 );
+                    a11y::android::announce( creator_change_with_remaining(
+                                                 string_format( _( "%1$s set to %2$d." ),
+                                                                skill_queried->name(), *chosen ),
+                                                 multi_pool( u ).skill_points_left ), 1 );
                 }
             } else {
                 number_input_popup<int> skill_query( 0, previous_skill_level,
