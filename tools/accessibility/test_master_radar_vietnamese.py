@@ -19,7 +19,7 @@ class MasterVietnameseRadar(unittest.TestCase):
             with self.subTest(phrase=source):
                 self.assertIn('msgid "' + source + '"', catalog)
         self.assertIn('msgstr "Rađa tự động"', catalog)
-        self.assertIn('msgstr "Thông báo quái vật"',
+        self.assertIn('<string name="a11yRadarMonsters">Thông báo quái vật</string>',
                       (ROOT / "android/app/src/main/res/values-vi/strings.xml").read_text(encoding="utf-8"))
 
 
