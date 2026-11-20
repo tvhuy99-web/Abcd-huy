@@ -61,7 +61,7 @@ class RepositoryLatestOnlyActions(unittest.TestCase):
                 self.assertIn("cancel-in-progress: true", body)
                 self.assertIn("-Pj=4", body)
                 self.assertIn("--max-workers=4", body)
-        self.assertIn("push:\n    branches: [master]",
+        self.assertIn("push:\n    branches: [master, test/upstream-full-merge-2026-11-19]",
                       read("android-accessibility-release-trial.yml"))
         self.assertNotIn("      - master\n", read("android-accessibility.yml")
                          .split("  push:", 1)[1].split("  pull_request:", 1)[0])

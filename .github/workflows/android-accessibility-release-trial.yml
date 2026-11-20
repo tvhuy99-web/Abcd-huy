@@ -1,9 +1,10 @@
 name: Android Accessibility Release trial (test-signed)
 
 on:
-  # The only automatic Android APK built from master; newest commit wins.
+  # Build the same optimized Accessibility Release APK on master and the
+  # upstream integration branch. Keep both refs isolated by concurrency.
   push:
-    branches: [master]
+    branches: [master, test/upstream-full-merge-2026-11-19]
     paths:
       - 'src/**'
       - 'android/**'
@@ -273,7 +274,8 @@ jobs:
             exit 1
           }
       - name: Publish Android Accessibility Release APK on GitHub
-        if: success()
+        # Integration builds are installable Actions artifacts, not public releases.
+        if: success() && github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

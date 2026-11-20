@@ -12,9 +12,8 @@ on:
       - perf/character-blueprint-cache-20261108
       - perf/reader-swipe-latency-20261109
       - feat/one-step-quantity-selection-20261110
-      # Final combined upstream and master integration check.
-      # Test-key Debug APK only: never run production/release packaging here.
-      - test/upstream-full-merge-2026-11-19
+      # Integration uses the same optimized Release pipeline as master.
+      # Do not also compile a competing Debug APK on that branch.
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'

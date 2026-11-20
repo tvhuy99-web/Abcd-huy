@@ -33,7 +33,7 @@ class AndroidSingleLatestBuildContracts(unittest.TestCase):
         trial = read("trial")
         candidate = read("candidate")
         production = read("production")
-        self.assertIn("push:\n    branches: [master]", trial)
+        self.assertIn("push:\n    branches: [master, test/upstream-full-merge-2026-11-19]", trial)
         self.assertIn("workflow_dispatch:", trial)
         candidate_push = candidate.split("  push:\n", 1)[1].split(
             "  pull_request:\n", 1
@@ -85,7 +85,7 @@ class AndroidSingleLatestBuildContracts(unittest.TestCase):
     def test_candidate_baseline_does_not_build_simultaneously(self):
         self.assertIn("max-parallel: 1", read("candidate"))
 
-    def test_trial_only_publishes_current_master_commit(self):
+    def test_trial_release_integrates_without_publishing_test_branch(self):
         trial = read("trial")
         self.assertIn("Reject obsolete master source before costly compilation", trial)
         self.assertIn("Recheck master is still latest before publishing APK", trial)
@@ -93,6 +93,8 @@ class AndroidSingleLatestBuildContracts(unittest.TestCase):
             trial.count("git ls-remote origin refs/heads/master"), 2
         )
         self.assertIn('test "$latest" = "$GITHUB_SHA"', trial)
+        self.assertIn("if: success() && github.ref == 'refs/heads/master'", trial)
+        self.assertIn('branches: [master, test/upstream-full-merge-2026-11-19]', trial)
 
 
 if __name__ == "__main__":
