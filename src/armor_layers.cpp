@@ -576,14 +576,6 @@ std::vector<layering_item_info> outfit::items_cover_bp( const Character &c, cons
     return s;
 }
 
-bool outfit::items_cover_opposite_bp( const Character &who, const bodypart_id &cover ) const
-{
-    const bodypart_id opposite = cover.obj().opposite_part;
-    return cover != opposite &&
-           items_cover_bp( who, cover ) ==
-           items_cover_bp( who, opposite );
-}
-
 static void draw_grid( const catacurses::window &w, int left_pane_w, int mid_pane_w,
                        int encumb_top )
 {

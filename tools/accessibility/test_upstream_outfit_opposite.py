@@ -11,21 +11,26 @@ class SymmetricArmorCoverage(unittest.TestCase):
     def setUpClass(cls):
         cls.attire = (SRC / "character_attire.h").read_text("utf-8")
         cls.armor = (SRC / "armor_layers.cpp").read_text("utf-8")
+        cls.attire_impl = (SRC / "character_attire.cpp").read_text("utf-8")
         cls.status = (SRC / "body_status_ui.cpp").read_text("utf-8")
 
     def test_upstream_opposite_limb_coverage_is_implemented(self):
         self.assertIn(
             "bool items_cover_opposite_bp( const Character &who, const bodypart_id &cover ) const;",
             self.attire)
+        # The fork already implements this API in character_attire.cpp.
+        # The upstream copy in armor_layers.cpp would duplicate a linker symbol.
         self.assertEqual(
-            self.armor.count("bool outfit::items_cover_opposite_bp("), 1)
-        body = self.armor.split(
+            self.attire_impl.count("bool outfit::items_cover_opposite_bp("), 1)
+        self.assertNotIn("bool outfit::items_cover_opposite_bp(", self.armor)
+        body = self.attire_impl.split(
             "bool outfit::items_cover_opposite_bp(", 1)[1].split(
-                "static void draw_grid(", 1)[0]
-        self.assertIn("const bodypart_id opposite = cover.obj().opposite_part;", body)
-        self.assertIn("return cover != opposite &&", body)
-        self.assertIn("items_cover_bp( who, cover ) ==", body)
-        self.assertIn("items_cover_bp( who, opposite );", body)
+                "void outfit::splice(", 1)[0]
+        self.assertIn("cover == bodypart_str_id::NULL_ID()", body)
+        self.assertIn("const bodypart_id opposite = cover->opposite_part.id();", body)
+        self.assertIn("for( const item &garment : worn )", body)
+        self.assertIn("if( !garment.covers( opposite ) )", body)
+        self.assertIn("return any_on_part;", body)
 
     def test_armor_reader_and_health_view_keep_shared_limb_semantics(self):
         self.assertIn(
