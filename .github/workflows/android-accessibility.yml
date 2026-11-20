@@ -284,9 +284,12 @@ jobs:
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
                       if os.environ['BUILD_KIND'] == 'candidate':
-                          for mod in ('CataclysmPlusPlus', 'Arcana_StrangeAeons',
-                                      'Blazemod', 'MST_Extra'):
-                              required = 'assets/data/mods/' + mod + '/modinfo.json'
+                          for required in (
+                              'assets/data/mods/CataclysmPlusPlus/modinfo.json',
+                              'assets/data/mods/Arcana_StrangeAeons/modinfo.json',
+                              'assets/data/mods/Blazemod/modinfo.json',
+                              'assets/data/mods/MST_Extra/modinfo.json',
+                          ):
                               if required not in names:
                                   raise SystemExit(f'{apk}: missing licensed mod {required}')
                           samples = {
