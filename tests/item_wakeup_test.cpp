@@ -1189,3 +1189,57 @@ TEST_CASE( "item_wakeup_map_load_recurses_into_containers",
     mgr.clear();
     clear_test_enumerate_handlers();
 }
+
+TEST_CASE( "item_wakeup_map_load_recurses_into_vehicle_cargo",
+           "[item_wakeup][reconcile][container][vehicle]" )
+{
+    // Rebuilding the map must visit items inside containers in every cargo part.
+    // This is especially important when a vehicle was loaded from a save.
+    auto enumerator = []( const item & /*it*/, const item_location & /*loc*/ )
+    -> std::vector<desired_wakeup> {
+        return {
+            desired_wakeup{ item_wakeup_kind::ready_check, calendar::turn_zero + 30_minutes },
+        };
+    };
+
+    clear_test_enumerate_handlers();
+    register_test_enumerate_handler( itype_test_wakeup_dummy, enumerator );
+
+    item_wakeup_manager &mgr = get_item_wakeups();
+    mgr.clear();
+
+    clear_map();
+    avatar &u = get_avatar();
+    map &here = get_map();
+    u.setpos( here, tripoint_bub_ms( 60, 60, 0 ) );
+
+    vehicle *veh = here.add_vehicle( vehicle_prototype_bicycle, tripoint_bub_ms( 65, 65, 0 ),
+                                     0_degrees, -1, veh_spawn_status::PRISTINE );
+    REQUIRE( veh != nullptr );
+
+    int cargo_part_idx = -1;
+    for( const vpart_reference &vpr : veh->get_all_parts() ) {
+        if( vpr.has_feature( "CARGO" ) ) {
+            cargo_part_idx = vpr.part_index();
+            break;
+        }
+    }
+    REQUIRE( cargo_part_idx >= 0 );
+
+    item box( itype_backpack, calendar::turn );
+    REQUIRE( box.put_in( item( itype_test_wakeup_dummy, calendar::turn ),
+                         pocket_type::CONTAINER ).success() );
+    std::optional<vehicle_stack::iterator> placed =
+        veh->add_item( here, veh->part( cargo_part_idx ), box );
+    REQUIRE( placed.has_value() );
+    REQUIRE( !( *placed )->all_items_top().empty() );
+    const int64_t nested_uid = ( *placed )->all_items_top().front()->uid().get_value();
+
+    mgr.clear();
+    REQUIRE_FALSE( mgr.is_scheduled( nested_uid, item_wakeup_kind::ready_check ) );
+    here.load( here.get_abs_sub(), /*update_vehicles=*/false, /*pump_events=*/false );
+    CHECK( mgr.is_scheduled( nested_uid, item_wakeup_kind::ready_check ) );
+
+    mgr.clear();
+    clear_test_enumerate_handlers();
+}
