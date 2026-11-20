@@ -137,11 +137,30 @@ void annotate_live_command_states( semantic_snapshot &snapshot )
             if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
                 node.value += ". " + std::string( _( "Inactive: additional auto features are off" ) );
             }
+        } else if( id == "fire" ) {
+            node.detail = _( "Choose a gun you carry to aim and fire. "
+                             "If no gun is available, the game may use a reach attack or a vehicle turret. "
+                             "Ordinary adjacent melee uses a different command." );
+        } else if( id == "fire_burst" ) {
+            node.detail = _( "Fire a burst only if the gun you are holding supports burst or "
+                             "automatic fire. This does not perform a melee attack." );
+        } else if( id == "select_fire_mode" ) {
+            node.detail = _( "Cycle the firing and melee modes of the gun you are holding. "
+                             "This does not attack." );
+        } else if( id == "reload_weapon" ) {
+            node.detail = _( "Automatically choose a gun or compatible magazine to reload, "
+                             "starting with the gun in your hands. "
+                             "This may reload another gun in your inventory." );
+        } else if( id == "reload_wielded" ) {
+            node.detail = _( "Reload the item in your hands if it supports reloading. "
+                             "This does not choose another item." );
         } else if( id == "autoattack" ) {
             // Despite the translated name, this action makes a single
             // automatic melee attack. It has no persistent on/off state.
             node.value = _( "One attack, not an on/off setting" );
-            node.detail = _( "Perform one automatic melee attack.  This is not an on/off setting." );
+            node.detail = _( "Automatically choose a target within melee reach and attack once, "
+                             "even when unarmed. With no target, you may wait one turn "
+                             "if safe mode allows. This is not a toggle." );
         } else if( id == "safemode" && g ) {
             node.value = g->safe_mode == SAFE_MODE_OFF ? _( "Currently off" ) :
                          g->safe_mode == SAFE_MODE_STOP ? _( "On, danger detected" ) :

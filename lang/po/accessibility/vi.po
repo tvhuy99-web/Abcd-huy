@@ -6570,3 +6570,127 @@ msgstr "ƯU TIÊN THẤP"
 
 msgid "You can't see that destination."
 msgstr "Bạn không nhìn thấy điểm đến đó."
+
+# Android comprehensive menu wording clarified after the 2026-11-20 review.
+msgid "Fire wielded item"
+msgstr "Bắn súng hoặc tấn công tầm xa"
+
+msgid "Autoattack"
+msgstr "Đánh cận chiến một lần, kể cả tay không"
+
+msgid "Burst-fire wielded item"
+msgstr "Bắn loạt bằng súng đang cầm"
+
+msgid "Toggle attack mode of wielded item"
+msgstr "Đổi chế độ bắn hoặc đánh của súng"
+
+msgid "Select default ammo for wielded weapon which do not use a magazine"
+msgstr "Chọn đạn ưu tiên cho súng nạp từng viên"
+
+msgid "Throw item"
+msgstr "Chọn vật phẩm để ném"
+
+msgid "Throw wielded item"
+msgstr "Ném vật phẩm đang cầm"
+
+msgid "Reload item"
+msgstr "Chọn vật phẩm để nạp"
+
+msgid "Reload weapon"
+msgstr "Tự nạp súng hoặc băng đạn phù hợp"
+
+msgid "Reload wielded item"
+msgstr "Nạp vật phẩm đang cầm"
+
+msgid "Use item"
+msgstr "Sử dụng hoặc kích hoạt vật phẩm"
+
+msgid "Use wielded item"
+msgstr "Sử dụng vật phẩm đang cầm"
+
+msgid "Wield"
+msgstr "Chọn vật phẩm để cầm trên tay"
+
+msgid "Pick up items from all nearby tiles"
+msgstr "Chọn đồ để nhặt ở ô đứng và tám ô liền kề"
+
+msgid "Pick up items from one nearby tile"
+msgstr "Chọn đồ để nhặt tại một ô gần"
+
+msgid "Unload container into inventory (keep items)"
+msgstr "Tháo đạn hoặc lấy đồ từ vật chứa về túi"
+
+msgid "Unload container onto ground (drop items)"
+msgstr "Lấy đồ từ vật chứa ra và đặt xuống đất"
+
+msgid "Consume item (all items)"
+msgstr "Chọn vật phẩm để ăn, uống hoặc sử dụng"
+
+msgid "Consume item (by type)"
+msgstr "Chọn loại vật phẩm để ăn, uống hoặc sử dụng"
+
+msgid "Wait for several minutes"
+msgstr "Chọn khoảng thời gian cần chờ"
+
+msgid "Pause"
+msgstr "Đứng yên một lượt"
+
+msgid "Toggle auto travel mode"
+msgstr "Bật hoặc tắt chế độ tìm đường theo hướng"
+
+msgid "Haul items along the ground"
+msgstr "Chọn đồ để kéo lê khi di chuyển"
+
+msgid "Quick toggle hauling"
+msgstr "Bật hoặc tắt việc kéo lê đồ"
+
+msgid "Zone activities"
+msgstr "Thực hiện công việc theo các vùng đã thiết lập"
+
+msgid "Auto pickup manager"
+msgstr "Thiết lập quy tắc tự động nhặt đồ"
+
+msgid "Recraft last recipe"
+msgstr "Chế tạo lại công thức vừa dùng"
+
+msgid "Craft as long as possible"
+msgstr "Lặp lại chế tạo khi còn đủ điều kiện"
+
+msgid "Grab something nearby"
+msgstr "Nắm hoặc buông vật thể gần đó"
+
+msgid "Peek around corners"
+msgstr "Nhìn quanh góc mà không bước ra"
+
+msgid "Advanced Inventory Manager"
+msgstr "Quản lý chuyển đồ giữa các vị trí"
+
+msgid "Insert item"
+msgstr "Chọn đồ để cho vào vật chứa"
+
+msgid "Open inventory"
+msgstr "Xem vật phẩm đang mang theo"
+
+msgid "View message log"
+msgstr "Đọc lịch sử thông báo"
+
+msgid "Toggle auto safe mode"
+msgstr "Bật hoặc tắt tự kích hoạt chế độ an toàn"
+
+msgid "Choose a gun you carry to aim and fire. If no gun is available, the game may use a reach attack or a vehicle turret. Ordinary adjacent melee uses a different command."
+msgstr "Chọn một khẩu súng đang mang để ngắm và bắn. Khi không có súng, game có thể dùng đòn đánh có tầm với hoặc ụ súng trên xe. Đòn đánh cận chiến thông thường dùng lệnh khác."
+
+msgid "Fire a burst only if the gun you are holding supports burst or automatic fire. This does not perform a melee attack."
+msgstr "Chỉ bắn loạt khi súng đang cầm hỗ trợ bắn loạt hoặc liên thanh. Lệnh này không đánh cận chiến."
+
+msgid "Cycle the firing and melee modes of the gun you are holding. This does not attack."
+msgstr "Chuyển giữa các chế độ bắn hoặc chế độ đánh của súng đang cầm. Thao tác này không tấn công."
+
+msgid "Automatically choose a gun or compatible magazine to reload, starting with the gun in your hands. This may reload another gun in your inventory."
+msgstr "Tự chọn súng hoặc băng đạn phù hợp để nạp, ưu tiên súng đang cầm. Lệnh cũng có thể nạp súng khác trong túi đồ."
+
+msgid "Reload the item in your hands if it supports reloading. This does not choose another item."
+msgstr "Nạp vật phẩm đang cầm nếu có thể nạp. Lệnh này không chọn vật phẩm khác."
+
+msgid "Automatically choose a target within melee reach and attack once, even when unarmed. With no target, you may wait one turn if safe mode allows. This is not a toggle."
+msgstr "Tự chọn mục tiêu trong tầm đánh cận chiến và đánh một lần, kể cả khi tay không. Nếu không có mục tiêu, nhân vật có thể chờ một lượt nếu chế độ an toàn cho phép. Đây không phải nút bật tắt."
