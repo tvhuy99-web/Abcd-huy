@@ -30,6 +30,7 @@
 #include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
 #include "a11y_world.h"
+#include "a11y_scene.h"
 #include "activity_actor_definitions.h"
 #include "advanced_inv.h"
 #include "auto_note.h"
@@ -782,6 +783,8 @@ input_context game::get_player_input( std::string &action )
                 a11y::announce_linear_scan( point::west );
             } else if( intent.node == "reader:scan:east" ) {
                 a11y::announce_linear_scan( point::east );
+            } else if( intent.node == "reader:scene:survey" ) {
+                a11y::announce_detailed_place_survey();
             } else if( intent.node == "reader:places" ) {
                 ui::omap::display_accessible_places();
             } else if( intent.node == "reader:pickup_here" ) {

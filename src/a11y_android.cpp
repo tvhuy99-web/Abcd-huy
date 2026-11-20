@@ -436,7 +436,12 @@ void publish( const std::string_view json )
 void announce( const std::string_view text, const int priority )
 {
 #if defined(__ANDROID__)
-    if( text.empty() || text.size() > 16384 || ( priority != 1 && priority != 3 ) ) {
+    // Explicit place surveys are spoken as one long document. Keep the
+    // existing 16 KiB limit for all ordinary notifications.
+    constexpr std::string_view scene_prefix = "A11Y_SCENE:";
+    const bool scene_survey = text.substr( 0, scene_prefix.size() ) == scene_prefix;
+    const std::size_t max_bytes = scene_survey ? 131072 : 16384;
+    if( text.empty() || text.size() > max_bytes || ( priority != 1 && priority != 3 ) ) {
         return;
     }
     const std::string spoken = remove_color_tags( text );
