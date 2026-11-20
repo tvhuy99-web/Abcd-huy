@@ -12,9 +12,9 @@ on:
       - perf/character-blueprint-cache-20261108
       - perf/reader-swipe-latency-20261109
       - feat/one-step-quantity-selection-20261110
-      # The upstream integration branch is intentionally omitted here.
-      # Build its single combined Android candidate via workflow_dispatch
-      # after master features and Vietnamese translations are reconciled.
+      # Final combined upstream and master integration check.
+      # Test-key Debug APK only: never run production/release packaging here.
+      - test/upstream-full-merge-2026-11-19
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'
