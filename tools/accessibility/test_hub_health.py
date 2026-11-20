@@ -67,7 +67,11 @@ class HealthHubTest(unittest.TestCase):
         self.assertIn('healing speed multiplier: %.3fx', body)
         self.assertIn('wd.get_wound_healing_modifier( you )', body)
         self.assertIn('wd.get_pain_raw()', body)
-        self.assertIn('wd.get_hp_damage(), wd.hp_damage', body)
+        self.assertIn('wd.get_hp_damage()', body)
+        self.assertIn('hp damage: %d', body)
+        # Access the effective remaining damage through the public method;
+        # wound::hp_damage is private and cannot be used from this UI.
+        self.assertNotIn('wd.hp_damage', body)
         self.assertIn('wd.type->get_modify_values()', body)
         self.assertIn('io::enum_to_string( mv.type )', body)
         self.assertLess(body.index('if( !debug_mode ) {'),
