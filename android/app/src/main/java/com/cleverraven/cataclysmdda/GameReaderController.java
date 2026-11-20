@@ -39,6 +39,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
     private static final String TARGET_TOGGLE_NODE = "reader:target:toggle-local";
     private static final String TRAVEL_STATUS_NODE = "reader:travel:status-local";
+    private static final String MANUAL_MOD_EXPORT_NODE = "reader:manual-mod:export";
+    private static final String MANUAL_MOD_DELETE_NODE = "reader:manual-mod:delete";
     private static final String POCKET_CONFIRM_NODE = "reader-pocket:confirm";
     private static final String POCKET_CANCEL_NODE = "reader-pocket:cancel";
     private final CataclysmDDA activity;
@@ -1041,7 +1043,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (commandPaletteOpen && !changedContext &&
                         (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus)
                          || TARGET_TOGGLE_NODE.equals(focus)
-                         || TRAVEL_STATUS_NODE.equals(focus))) {
+                         || TRAVEL_STATUS_NODE.equals(focus)
+                         || MANUAL_MOD_EXPORT_NODE.equals(focus)
+                         || MANUAL_MOD_DELETE_NODE.equals(focus))) {
                     // A screen update must not steal focus from an open command drawer.
                     readerLayerParent = "";
                 } else if (nativeLayerChanged) {
@@ -1068,7 +1072,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (next.find(focus) == null && !gestureGuideOpen
                         && !(commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
                                 || TARGET_TOGGLE_NODE.equals(focus)
-                                || TRAVEL_STATUS_NODE.equals(focus)))
+                                || TRAVEL_STATUS_NODE.equals(focus)
+                                || MANUAL_MOD_EXPORT_NODE.equals(focus)
+                                || MANUAL_MOD_DELETE_NODE.equals(focus)))
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
                     // Changing a surroundings page always focuses its native
@@ -2448,6 +2454,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 }
             }
+            // Long press on a manually imported mod adds local file actions,
+            // but NEVER replaces the shared final Gesture guide row.
+            final String selectedMod = commandPaletteOpen ? commandPaletteReturnFocus : focus;
+            if ("mod-selection".equals(snapshot.category)
+                    && selectedMod.startsWith("mod:manual:item:")
+                    && snapshot.find(selectedMod) != null) {
+                result.add(ReaderSnapshot.Node.localCommand(MANUAL_MOD_EXPORT_NODE,
+                        activity.getString(R.string.a11yManualModExport)));
+                result.add(ReaderSnapshot.Node.localCommand(MANUAL_MOD_DELETE_NODE,
+                        activity.getString(R.string.a11yManualModDelete)));
+            }
             if ("targeting".equals(snapshot.category) &&
                     snapshot.find("target:fire-direction:0") != null) {
                 // Preserve the former long-press toggle, now first accessible
@@ -2935,6 +2952,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         (!GESTURE_GUIDE_NODE.equals(command.id)
                          && !TARGET_TOGGLE_NODE.equals(command.id)
                          && !TRAVEL_STATUS_NODE.equals(command.id)
+                         && !MANUAL_MOD_EXPORT_NODE.equals(command.id)
+                         && !MANUAL_MOD_DELETE_NODE.equals(command.id)
                          && snapshot.find(command.id) == null)) {
                     return;
                 }
@@ -3435,6 +3454,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // handle focus intents and would report unsupported for every swipe.
         if (!GESTURE_GUIDE_NODE.equals(focus) && !TARGET_TOGGLE_NODE.equals(focus)
                 && !TRAVEL_STATUS_NODE.equals(focus)
+                && !MANUAL_MOD_EXPORT_NODE.equals(focus)
+                && !MANUAL_MOD_DELETE_NODE.equals(focus)
                 && !isAuxiliaryCommand(filtered.get(selected))) {
             send("focus", "");
         }
@@ -4523,6 +4544,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(travelDetailSpeech(travelContextDrawerState));
             return;
         }
+        if (commandPaletteOpen && (MANUAL_MOD_EXPORT_NODE.equals(focus)
+                || MANUAL_MOD_DELETE_NODE.equals(focus))) {
+            ReaderSnapshot.Node selected = snapshot == null
+                    ? null : snapshot.find(commandPaletteReturnFocus);
+            if (snapshot == null || !"mod-selection".equals(snapshot.category)
+                    || selected == null || !selected.id.startsWith("mod:manual:item:")) {
+                closeContextActions();
+                return;
+            }
+            String operation = MANUAL_MOD_EXPORT_NODE.equals(focus) ? "export" : "delete";
+            String modId = selected.id.substring("mod:manual:item:".length());
+            closeContextActions();
+            activity.onAccessibilityManualModAction(operation, modId);
+            return;
+        }
         if (commandPaletteOpen && TARGET_TOGGLE_NODE.equals(focus)) {
             commandPaletteOpen = false;
             targetingOriginalControls = !targetingOriginalControls;
@@ -5384,6 +5420,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(travelDetailSpeech(travelContextDrawerState));
             return;
         }
+        if (commandPaletteOpen && (MANUAL_MOD_EXPORT_NODE.equals(focus)
+                || MANUAL_MOD_DELETE_NODE.equals(focus))) {
+            feedback(activity.getString(MANUAL_MOD_EXPORT_NODE.equals(focus)
+                    ? R.string.a11yManualModExport : R.string.a11yManualModDelete));
+            return;
+        }
         if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
                 || TARGET_TOGGLE_NODE.equals(focus))) {
             feedback(GESTURE_GUIDE_NODE.equals(focus)
@@ -5552,7 +5594,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (gestureGuideOpen) { readCurrent(); return; }
         if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
                 || TARGET_TOGGLE_NODE.equals(focus)
-                || TRAVEL_STATUS_NODE.equals(focus))) {
+                || TRAVEL_STATUS_NODE.equals(focus)
+                || MANUAL_MOD_EXPORT_NODE.equals(focus)
+                || MANUAL_MOD_DELETE_NODE.equals(focus))) {
             readCurrent();
             return;
         }

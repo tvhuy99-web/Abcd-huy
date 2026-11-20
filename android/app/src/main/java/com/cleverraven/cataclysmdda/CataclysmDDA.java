@@ -272,6 +272,19 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
+    /** Android SAF handles mod ZIP files without touching live game objects. */
+    public void onAccessibilityManualModAction(String action, String modId) {
+        if (!"import".equals(action) && !"export".equals(action)
+                && !"delete".equals(action)) { return; }
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) { return; }
+            Intent intent = new Intent(this, ManualModsActivity.class);
+            intent.putExtra(ManualModsActivity.EXTRA_ACTION, action);
+            intent.putExtra(ManualModsActivity.EXTRA_MOD_ID, modId);
+            startActivity(intent);
+        });
+    }
+
     public void onAccessibilityOpenBackupRestore() {
         runOnUiThread(() -> {
             if (!isFinishing() && !isDestroyed()) {
@@ -281,19 +294,27 @@ public class CataclysmDDA extends SDLActivity {
     }
 
     /** Launch the separate native game-audio controls from Settings. */
-    public void onAccessibilityOpenSoundSettings(int music, int effects, boolean enabled) {
+    public void onAccessibilityOpenSoundSettings(int music, int effects,
+                                                  boolean enabled, String selected) {
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) { return; }
             Intent intent = new Intent(this, SoundSettingsActivity.class);
             intent.putExtra("native_music_volume", music);
             intent.putExtra("native_effects_volume", effects);
             intent.putExtra("native_sound_enabled", enabled);
+            intent.putExtra("native_selected_soundpack", selected);
             startActivity(intent);
         });
     }
 
     // Java never edits native options on this thread. C++ drains a queue.
     static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
+    static native void nativeQueueSoundpackSelection(String id);
+    static native String nativeTakeSoundpackSelectionResult();
+    static native String nativeUserSoundDir();
+    static native String nativeDataSoundDir();
+    static native String nativeUserModDir();
+    static native void nativeQueueManualModsChanged();
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native void nativeConfigureReaderPerformance(boolean spokenOnlyWorld,
