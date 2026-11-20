@@ -3,7 +3,7 @@
     "type": "trap",
     "//": "Should be an abstract but traps don't support abstracts rn",
     "id": "tr_tutorial",
-    "name": { "str": "tutorial message", "//~": "NO_I18N" },
+    "name": { "str": "tutorial message" },
     "color": "white",
     "symbol": "x",
     "visibility": 99,

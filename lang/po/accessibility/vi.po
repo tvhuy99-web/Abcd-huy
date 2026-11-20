@@ -4525,7 +4525,7 @@ msgid "All"
 msgstr "Tất cả"
 
 msgid "Creatures and NPCs"
-msgstr "Sinh vật và NPC"
+msgstr "Sinh vật và nhân vật không do người chơi điều khiển"
 
 msgid "Places and environment"
 msgstr "Địa điểm và môi trường"
@@ -6346,27 +6346,27 @@ msgstr "Cầu thang đi xuống"
 
 #, c-format
 msgid "Passage opens to the %1$s, %2$d tiles."
-msgstr "Lối đi mở ra về phía %1$s, cách %2$d ô."
+msgstr "Lối về phía %1$s thông thoáng trong %2$d ô."
 
 #, c-format
 msgid "Passage narrows to the %1$s, blocked in %2$d tiles."
-msgstr "Lối đi về phía %1$s hẹp lại, bị chặn sau %2$d ô."
+msgstr "Lối về phía %1$s hẹp lại, bị chặn sau %2$d ô."
 
 msgid "The space around you opens up."
-msgstr "Không gian xung quanh trở nên rộng thoáng hơn."
+msgstr "Không gian xung quanh rộng ra."
 
 msgid "The space around you narrows."
-msgstr "Không gian xung quanh trở nên chật hẹp hơn."
+msgstr "Không gian xung quanh hẹp lại."
 
 #, c-format
 msgid "%d more environment changes."
-msgstr "Còn %d thay đổi môi trường khác."
+msgstr "Còn %d thay đổi khác trong môi trường."
 
 msgid "open"
 msgstr "mở"
 
 msgid "locked"
-msgstr "khóa"
+msgstr "bị khóa"
 
 msgid "closed"
 msgstr "đóng"
@@ -6380,10 +6380,10 @@ msgid "Object changed: %1$s to the %2$s, %3$d tiles away."
 msgstr "Đối tượng thay đổi: %1$s ở phía %2$s, cách %3$d ô."
 
 msgid "Automatic spoken radar"
-msgstr "Rađa tự động"
+msgstr "Rađa thông báo bằng giọng nói tự động"
 
 msgid "Toggle spoken announcements when objects enter eight tiles."
-msgstr "Bật hoặc tắt thông báo bằng giọng nói khi đối tượng vào phạm vi tám ô."
+msgstr "Bật hoặc tắt thông báo khi vật thể xuất hiện trong phạm vi tám ô."
 
 # Upstream combined block/dodge combat messages spoken by the Android reader.
 #, c-format
@@ -6425,3 +6425,159 @@ msgstr "%1$s đỡ được đòn tấn công của %2$s."
 #, c-format
 msgid "%1$s dodges %2$s attack."
 msgstr "%1$s né được đòn tấn công của %2$s."
+
+# Additional Vietnamese accessibility strings synchronized from fork master 902782b9.
+msgid "tutorial message"
+msgstr "điểm hướng dẫn"
+
+msgid "Hungry"
+msgstr "Đói"
+
+msgid "Near starving"
+msgstr "Gần chết đói"
+
+msgid "Starving!"
+msgstr "Đang chết đói!"
+
+msgid "Famished"
+msgstr "Đói lả"
+
+msgid "Freezing!"
+msgstr "Lạnh cóng!"
+
+msgid "Very cold!"
+msgstr "Rất lạnh!"
+
+msgid "Chilly"
+msgstr "Hơi lạnh"
+
+msgid "Scorching!"
+msgstr "Nóng bỏng!"
+
+msgid "Very hot!"
+msgstr "Rất nóng!"
+
+msgid "Warm"
+msgstr "Ấm"
+
+msgid "none"
+msgstr "không có"
+
+msgid "On"
+msgstr "Bật"
+
+msgid "Off"
+msgstr "Tắt"
+
+msgid "Stop"
+msgstr "Dừng"
+
+msgid "Driving"
+msgstr "Đang lái"
+
+msgid "moderate"
+msgstr "vừa phải"
+
+msgid "Hunger"
+msgstr "Đói"
+
+msgid "Thirst"
+msgstr "Khát"
+
+msgid "Sleepiness"
+msgstr "Buồn ngủ"
+
+msgid "Pain"
+msgstr "Đau"
+
+msgid "Stamina"
+msgstr "Thể lực"
+
+msgid "Morale"
+msgstr "Tinh thần"
+
+msgid "Weariness"
+msgstr "Mệt mỏi"
+
+msgid "Current and target speed"
+msgstr "Tốc độ hiện tại và tốc độ mục tiêu"
+
+msgid "Engine"
+msgstr "Động cơ"
+
+#, c-format
+msgid "%s ago"
+msgstr "cách đây %s"
+
+msgid "Show visible fields, traps, creatures, special perceptions, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers."
+msgstr "Hiển thị hiệu ứng môi trường, bẫy, sinh vật, dấu hiệu cảm nhận đặc biệt, vật phẩm, phương tiện, vật cản, cửa và cầu thang đã biết, đồ đạc đã ghi nhớ và dấu âm thanh."
+
+msgid "Uses the native weapon and ammunition rules.  No walking."
+msgstr "Sử dụng quy tắc vũ khí và đạn của game. Không di chuyển."
+
+msgid "Visible hostile creatures"
+msgstr "Sinh vật thù địch đang nhìn thấy"
+
+msgid "Release held object"
+msgstr "Buông vật đang giữ"
+
+#, c-format
+msgid "Release %s"
+msgstr "Buông %s"
+
+msgid "Release the held object.  No movement or extra confirmation."
+msgstr "Buông vật đang giữ. Không di chuyển và không cần xác nhận thêm."
+
+msgid "Progress"
+msgstr "Tiến độ"
+
+msgid "Autonomous destination driving"
+msgstr "Tự lái đến điểm đích"
+
+msgid "All groups together cannot be met from the same inventory, even if individual groups look available."
+msgstr "Không thể đồng thời đáp ứng tất cả các nhóm từ cùng một túi đồ, dù từng nhóm riêng lẻ có vẻ đủ."
+
+msgid "Confirm"
+msgstr "Xác nhận"
+
+msgid "Cancel"
+msgstr "Hủy"
+
+msgid "UP: history, CTRL-U: clear line, ESC: abort, ENTER: save"
+msgstr "Lên: xem lịch sử; Ctrl+U: xóa dòng; Esc: hủy; Enter: lưu"
+
+msgid "Filter items"
+msgstr "Lọc vật phẩm"
+
+msgid "High priority"
+msgstr "Ưu tiên cao"
+
+msgid "Low priority"
+msgstr "Ưu tiên thấp"
+
+msgid "Filter: "
+msgstr "Lọc: "
+
+msgid "Filter monsters"
+msgstr "Lọc quái vật"
+
+msgid "Type part of a monster's name to filter it."
+msgstr "Nhập một phần tên quái vật để lọc."
+
+msgid "Filter terrain and furniture"
+msgstr "Lọc địa hình và đồ đạc"
+
+msgid "Type part of a terrain's or furniture's name to filter it."
+msgstr "Nhập một phần tên địa hình hoặc đồ đạc để lọc."
+
+msgid "You don't see any items around you!"
+msgstr "Bạn không nhìn thấy vật phẩm nào xung quanh!"
+
+msgid "HIGH PRIORITY"
+msgstr "ƯU TIÊN CAO"
+
+msgid "LOW PRIORITY"
+msgstr "ƯU TIÊN THẤP"
+
+msgid "You can't see that destination."
+msgstr "Bạn không nhìn thấy điểm đến đó."

@@ -97,6 +97,33 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('msgid "northwest"\nmsgstr "tây bắc"', self.po)
         self.assertNotIn('question.label = _( "Dialog message" );', self.dialog)
 
+    def test_new_vietnamese_session_translations(self):
+        # All session-leaked radar phrases, nearby labels and status words
+        # are supplied at build time by the Vietnamese accessibility catalog.
+        expected = {
+            "tutorial message": "điểm hướng dẫn",
+            "Passage opens to the %1$s, %2$d tiles.": "Lối về phía %1$s thông thoáng trong %2$d ô.",
+            "Passage narrows to the %1$s, blocked in %2$d tiles.": "Lối về phía %1$s hẹp lại, bị chặn sau %2$d ô.",
+            "The space around you opens up.": "Không gian xung quanh rộng ra.",
+            "The space around you narrows.": "Không gian xung quanh hẹp lại.",
+            "Door to the %1$s, %2$d tiles away, is now %3$s.": "Cửa ở phía %1$s, cách %2$d ô, hiện đang %3$s.",
+            "Hunger": "Đói",
+            "Thirst": "Khát",
+            "Sleepiness": "Buồn ngủ",
+            "Weariness": "Mệt mỏi",
+            "Creatures and NPCs": "Sinh vật và nhân vật không do người chơi điều khiển",
+        }
+        for english, vietnamese in expected.items():
+            with self.subTest(english=english):
+                self.assertIn('msgid ' + __import__("json").dumps(english, ensure_ascii=False)
+                              + chr(10) + 'msgstr ' + __import__("json").dumps(vietnamese, ensure_ascii=False),
+                              self.po)
+
+    def test_tutorial_trigger_name_is_localizable(self):
+        tutorial = (ROOT / "data/mods/dda_tutorial/traps.json").read_text("utf-8")
+        self.assertIn('"name": { "str": "tutorial message" }', tutorial)
+        self.assertNotIn('"str": "tutorial message", "//~": "NO_I18N"', tutorial)
+
 
 if __name__ == "__main__":
     unittest.main()
