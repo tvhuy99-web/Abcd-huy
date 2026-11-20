@@ -6384,3 +6384,44 @@ msgstr "Rađa tự động"
 
 msgid "Toggle spoken announcements when objects enter eight tiles."
 msgstr "Bật hoặc tắt thông báo bằng giọng nói khi đối tượng vào phạm vi tám ô."
+
+# Upstream combined block/dodge combat messages spoken by the Android reader.
+#, c-format
+msgid "You block %1$s of the attack with your %2$s!"
+msgstr "Bạn dùng %2$s để đỡ đòn. Mức đỡ được: %1$s!"
+
+#, c-format
+msgid "<npcname> blocks %1$s of the attack with their %2$s!"
+msgstr "<npcname> dùng %2$s để đỡ đòn. Mức đỡ được: %1$s!"
+
+#, c-format
+msgid "You parry %1$s of the attack with your %2$s!"
+msgstr "Bạn dùng %2$s để gạt đòn. Mức gạt được: %1$s!"
+
+#, c-format
+msgid "<npcname> parries %1$s of the attack with their %2$s!"
+msgstr "<npcname> dùng %2$s để gạt đòn. Mức gạt được: %1$s!"
+
+#, c-format
+msgid "The %s blocks the attack!"
+msgstr "%s đỡ được đòn tấn công!"
+
+#, c-format
+msgid "The %s parries the attack!"
+msgstr "%s gạt được đòn tấn công!"
+
+#, c-format
+msgid "You block %s."
+msgstr "Bạn đỡ được đòn của %s."
+
+#, c-format
+msgid "You dodge %s."
+msgstr "Bạn né được đòn của %s."
+
+#, c-format
+msgid "%1$s blocks %2$s attack."
+msgstr "%1$s đỡ được đòn tấn công của %2$s."
+
+#, c-format
+msgid "%1$s dodges %2$s attack."
+msgstr "%1$s né được đòn tấn công của %2$s."

@@ -61,6 +61,58 @@ class CombatHubTest(unittest.TestCase):
         self.assertIn("Future warnings for this type may be skipped.", safe)
         self.assertNotIn("query_yn(", safe)
 
+    def test_upstream_combined_defense_keeps_accessible_combat_messages(self):
+        melee = (SRC / "melee.cpp").read_text("utf-8")
+        monster = (SRC / "monster.cpp").read_text("utf-8")
+        creature = (SRC / "creature.cpp").read_text("utf-8")
+        monster_attacks = (SRC / "mattack_actors.cpp").read_text("utf-8")
+
+        self.assertIn("float Character::block_roll(", melee)
+        self.assertIn("const float block_share = last_block / ( last_block + last_dodge );", melee)
+        self.assertIn("t.last_dodge + t.last_block", melee)
+        self.assertIn("last_dodge = dodge;", creature)
+        self.assertIn("last_block = block;", creature)
+        self.assertIn("last_hit_spread = hit_spread;", creature)
+        self.assertIn("melee_hit_range( acc ), blockable", monster_attacks)
+        self.assertIn("float monster::block_roll(", monster)
+        # Keep existing native narration and distinguish blocked/dodged hits.
+        self.assertIn("Messages::mute_combat_speech", monster)
+        self.assertIn("a11y::android::announce(", monster)
+        self.assertIn('_( "You block %s." )', monster)
+        self.assertIn('_( "You dodge %s." )', monster)
+
+    def test_upstream_combined_defense_feedback_is_localized(self):
+        import re
+
+        catalog = (SRC.parent / "lang/po/accessibility/vi.po").read_text(
+            encoding="utf-8")
+        melee = (SRC / "melee.cpp").read_text("utf-8")
+        monster = (SRC / "monster.cpp").read_text("utf-8")
+        messages = (
+            "You block %1$s of the attack with your %2$s!",
+            "<npcname> blocks %1$s of the attack with their %2$s!",
+            "You parry %1$s of the attack with your %2$s!",
+            "<npcname> parries %1$s of the attack with their %2$s!",
+            "The %s blocks the attack!",
+            "The %s parries the attack!",
+            "You block %s.",
+            "You dodge %s.",
+            "%1$s blocks %2$s attack.",
+            "%1$s dodges %2$s attack.",
+        )
+        for message in messages:
+            with self.subTest(message=message):
+                self.assertTrue(
+                    any('_( "' + message + '" )' in source
+                        for source in (melee, monster)))
+                entry = '#, c-format\\nmsgid "' + message + '"\\nmsgstr "'
+                self.assertIn(entry, catalog)
+                translated = catalog.split(entry, 1)[1].split('"', 1)[0]
+                self.assertTrue(translated.strip())
+                placeholders = lambda text: sorted(
+                    re.findall(r"%(?:\\d+\\$)?[sdif]", text))
+                self.assertEqual(placeholders(message), placeholders(translated))
+
     def test_throw_wielded_never_gets_an_extra_confirmation(self):
         throwing = self.actions.split(
             "case ACTION_THROW_WIELDED:", 1
