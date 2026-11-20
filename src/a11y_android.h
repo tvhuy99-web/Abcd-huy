@@ -98,6 +98,10 @@ void cue( const std::string &name );
 // Only scan while the user has opted into directional sonar.
 void configure_directional_sonar( bool active );
 bool directional_sonar_enabled();
+// Opt-in spoken radar: 8 channel bits, no gameplay mutations.
+void configure_automatic_radar( unsigned int mask );
+unsigned int automatic_radar_mask();
+unsigned int automatic_radar_revision();
 // Independent nearest visible creature and item distances on eight rays.
 void directional_sonar_targets( const std::array<int, 8> &creatures,
                                 const std::array<int, 8> &items );
