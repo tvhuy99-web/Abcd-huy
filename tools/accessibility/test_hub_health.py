@@ -56,6 +56,24 @@ class HealthHubTest(unittest.TestCase):
         self.assertIn("you->pick_wound_fix( bp )", self.med)
         self.assertIn('a11y::limb_health_description( *you, part )', self.med)
 
+    def test_medical_debug_keeps_upstream_wound_diagnostics(self):
+        # Normal reader health summaries must not disclose exact HP.
+        # Technical wound details are restricted to debug mode.
+        body = self.med.split(
+            "std::string medical_ui::get_limb_wounds", 1)[1].split(
+                "std::string medical_ui::get_limb_scores_and_modifiers", 1)[0]
+        self.assertIn('#include "enum_conversions.h"', self.med)
+        self.assertIn('if( !debug_mode ) {', body)
+        self.assertIn('healing speed multiplier: %.3fx', body)
+        self.assertIn('wd.get_wound_healing_modifier( you )', body)
+        self.assertIn('wd.get_pain_raw()', body)
+        self.assertIn('wd.get_hp_damage(), wd.hp_damage', body)
+        self.assertIn('wd.type->get_modify_values()', body)
+        self.assertIn('io::enum_to_string( mv.type )', body)
+        self.assertLess(body.index('if( !debug_mode ) {'),
+                        body.index('healing speed multiplier: %.3fx'))
+        self.assertIn('a11y::limb_health_description( *you, part )', self.med)
+
     def test_quick_health_without_raw_hitpoints(self):
         self.assertIn('"pd:quick-health"', self.player)
         self.assertIn('_( "Quick health summary" )', self.player)
