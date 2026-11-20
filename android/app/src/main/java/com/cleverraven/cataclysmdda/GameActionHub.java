@@ -310,7 +310,7 @@ final class GameActionHub {
             }
         } else if (section == 14) {
             for (String id : new String[] { "world:status", "world:messages",
-                    "reader:coordinates", "world:here", "world:last_outcome",
+                    "reader:tutorial:last", "reader:coordinates", "world:here", "world:last_outcome",
                     "world:alert_history" }) {
                 addNode(result, context, snapshot, id, seen);
             }

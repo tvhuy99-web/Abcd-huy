@@ -32,6 +32,7 @@
 #include "a11y_perception.h"
 #include "a11y_radar.h"
 #include "a11y_runtime.h"
+#include "a11y_tutorial_text.h"
 #include "action.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -1157,6 +1158,14 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         recent += it->first + ": " + it->second + ". ";
     }
     result.nodes.push_back( document( "world:messages", _( "Recent messages" ), recent ) );
+#if defined(__ANDROID__)
+    const std::string latest_lesson = get_avatar().get_value( a11y::tutorial::last_lesson_key ).str();
+    if( !latest_lesson.empty() ) {
+        // Focus-only, no extra popup, movement, or game turn.
+        result.nodes.push_back( document( "reader:tutorial:last",
+                                          _( "Read latest tutorial lesson in full" ), latest_lesson ) );
+    }
+#endif
     // A small explicit command surface lets Android multi-finger gestures
     // request live information without trusting coordinates from Java.
     result.nodes.push_back( button( "reader:scan:north", _( "Scan 30 tiles north" ), "" ) );
