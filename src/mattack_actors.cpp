@@ -914,7 +914,7 @@ bool melee_actor::call( monster &z ) const
     }
 
     if( dodgeable ) {
-        if( hitspread < 0 ) {
+        if( !Creature::melee_attack_hit( hitspread ) ) {
             sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.pos_bub() ),
                                      sfx::get_heard_angle( z.pos_bub() ) );
             target->add_msg_player_or_npc( msg_type, miss_msg_u,
