@@ -214,14 +214,29 @@ jobs:
             task_signing_args=(-Paccessibility_test_signing=true
                                "-Poverride_versionCode=${version_code}")
           fi
-          bash ./gradlew --no-daemon --console=plain --max-workers=4 -Pj=4 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
+          # Maven Central sometimes returns HTTP 429 on fresh runners. Retry
+          # only that transient failure; compile and configuration errors fail fast.
+          for attempt in 1 2 3; do
+            echo "Gradle assemble attempt ${attempt}/3"
+            if bash ./gradlew --no-daemon --console=plain --max-workers=4 -Pj=4 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ] || ! grep -Eq 'Received status code 429|Too Many Requests|HTTP response code: 429' ../build-evidence/gradle.log; then
+              echo "::error::Gradle failed without transient dependency throttling or retries exhausted."
+              exit 1
+            fi
+            echo "::warning::Maven dependency download throttled (HTTP 429), retrying Gradle."
+            sleep $((attempt * 45))
+          done
           ccache --show-stats --verbose | tee ../build-evidence/ccache.txt
       - name: Verify APK contents and checksums
         env:
           BUILD_KIND: ${{ matrix.name }}
         run: |
           python3 - <<'PY'
+          import gettext
           import hashlib
+          import io
           import os
           import pathlib
           import re
@@ -249,6 +264,17 @@ jobs:
                                        'assets/data/shaders/grayscale.frag.spv'):
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
+                      # The combat announcement overlay must reach the APK's
+                      # actual gettext catalog, not merely pass source tests.
+                      if os.environ['BUILD_KIND'] == 'candidate':
+                          catalog = gettext.GNUTranslations(io.BytesIO(
+                              archive.read('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo')))
+                          for message in (
+                              'You block %s.',
+                              'You parry %1$s of the attack with your %2$s!',
+                          ):
+                              if catalog.gettext(message) == message:
+                                  raise SystemExit(f'{apk}: untranslated combat speech: {message}')
                   signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
                   signature = subprocess.check_output([str(signer), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
                   pathlib.Path('build-evidence/signer.txt').write_text(signature)

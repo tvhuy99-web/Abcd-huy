@@ -52,6 +52,30 @@ class AndroidSingleLatestBuildContracts(unittest.TestCase):
                 self.assertIn("--max-workers=4", body)
                 self.assertNotIn("-Pj=3", body)
 
+    def test_candidate_retries_only_transient_gradle_maven_throttling(self):
+        candidate = read("candidate")
+        build = candidate.split(
+            "- name: Build installable debug APK", 1)[1].split(
+                "- name: Verify APK contents and checksums", 1)[0]
+        self.assertIn("for attempt in 1 2 3; do", build)
+        self.assertIn("if bash ./gradlew", build)
+        self.assertIn("Received status code 429", build)
+        self.assertIn("Too Many Requests", build)
+        self.assertIn("sleep $((attempt * 45))", build)
+        self.assertIn("exit 1", build)
+        self.assertIn("tee ../build-evidence/gradle.log", build)
+
+    def test_candidate_verifies_combat_gettext_in_installable_apk(self):
+        verification = read("candidate").split(
+            "- name: Verify APK contents and checksums", 1)[1].split(
+                "- name: Seed exact native cache", 1)[0]
+        self.assertIn("gettext.GNUTranslations", verification)
+        self.assertIn("archive.read('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo')",
+                      verification)
+        self.assertIn("'You block %s.'", verification)
+        self.assertIn("'You parry %1$s of the attack with your %2$s!'", verification)
+        self.assertIn("catalog.gettext(message) == message", verification)
+
     def test_candidate_baseline_does_not_build_simultaneously(self):
         self.assertIn("max-parallel: 1", read("candidate"))
 
