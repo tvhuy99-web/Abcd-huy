@@ -287,14 +287,27 @@ std::string medical_ui::get_limb_wounds( const bodypart_id &part ) const
     const bodypart *bp = you->get_part( part );
 
     // for existing wounds
-    const std::vector<wound> &wds = bp->get_wounds();
+    // Keep the body's wound storage untouched. The visual medical view and
+    // screen reader should encounter the most severe injuries first.
+    std::vector<wound> wds = bp->get_wounds();
+    std::stable_sort( wds.begin(), wds.end(), []( const wound &a, const wound &b ) {
+        return a.type->severity > b.type->severity;
+    } );
     if( !wds.empty() ) {
         detail_str += _( "Current wounds" );
         detail_str += ":\n";
         for( const wound &wd : wds ) {
+            // Mirror upstream's visible severity colors while retaining the
+            // existing native / accessible medical UI and treatment actions.
+            nc_color severity_color = c_cyan;
+            if( wd.type->severity == wound_severity::CRITICAL ) {
+                severity_color = c_red;
+            } else if( wd.type->severity == wound_severity::MAJOR ) {
+                severity_color = c_light_red;
+            }
             if( !debug_mode ) {
                 detail_str +=
-                    string_format( "%s - %s\n", colorize( wd.type->get_name(), c_cyan ), wd.type->get_description() );
+                    string_format( "%s - %s\n", colorize( wd.type->get_name(), severity_color ), wd.type->get_description() );
             } else {
 
                 std::string limb_score_output = "limb scores applied:\n";
@@ -303,7 +316,7 @@ std::string medical_ui::get_limb_wounds( const bodypart_id &part ) const
                 }
 
                 detail_str += string_format( "%s (%s) - %s\n",
-                                             colorize( wd.type->get_name(), c_cyan ), wd.type.str(), wd.type->get_description() );
+                                             colorize( wd.type->get_name(), severity_color ), wd.type.str(), wd.type->get_description() );
                 detail_str += string_format( "healing time: %s\n", to_string( wd.get_healing_time() ) );
                 detail_str += string_format( "lifetime: %s\n", to_string( time_duration::from_seconds( wd.get_healing_progress() ) ) );
                 detail_str += string_format( "healing percentage: %.3f%%\n", wd.healing_percentage() );
