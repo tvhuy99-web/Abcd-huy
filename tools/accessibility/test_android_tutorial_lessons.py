@@ -81,7 +81,6 @@ class AndroidTutorialLessonTests(unittest.TestCase):
                 with self.subTest(lesson=effect["android_reader_lesson"]):
                     self.assertIn("Nhiệm vụ", text)
 
-
     def test_quick_popup_keeps_complete_lesson_for_reading_on_demand(self):
         helper = (ROOT / "src/a11y_tutorial_text.h").read_text("utf-8")
         world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
@@ -98,7 +97,6 @@ class AndroidTutorialLessonTests(unittest.TestCase):
         self.assertIn('"reader:tutorial:last"', hub)
         self.assertIn('msgid "Read latest tutorial lesson in full"',
                       (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8"))
-
 
 
 if __name__ == "__main__":

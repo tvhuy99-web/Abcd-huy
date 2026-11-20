@@ -2,6 +2,7 @@
 #ifndef CATA_SRC_A11Y_TUTORIAL_TEXT_H
 #define CATA_SRC_A11Y_TUTORIAL_TEXT_H
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 
