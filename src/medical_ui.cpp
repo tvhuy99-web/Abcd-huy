@@ -325,7 +325,9 @@ std::string medical_ui::get_limb_wounds( const bodypart_id &part ) const
                                              wd.get_wound_healing_modifier( you ) );
                 detail_str += string_format( "gives pain: %d (raw %d)\n", wd.get_pain( you ),
                                              wd.get_pain_raw() );
-                detail_str += string_format( "hp damage: %d (raw %d)\n", wd.get_hp_damage(), wd.hp_damage );
+                // Report the remaining wound HP damage via its public accessor.
+                // The original unhealed damage is intentionally private.
+                detail_str += string_format( "hp damage: %d\n", wd.get_hp_damage() );
                 if( wd.wound_progress_timer.has_value() ) {
                     detail_str += string_format( "progresses into: %s, in %s\n", wd.wound_progress_timer->first.str(),
                                                  to_string( wd.wound_progress_timer->second -
