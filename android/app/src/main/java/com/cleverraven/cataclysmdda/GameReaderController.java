@@ -87,6 +87,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private static final String COMBAT_ALERT_PREFIX = "A11Y_COMBAT_ALERT:";
     private static final String QUERY_PREFIX = "A11Y_QUERY:";
+    private static final String SCENE_PREFIX = "A11Y_SCENE:";
     private static final String DRIVE_FEEDBACK_PREFIX = "A11Y_DRIVE_FEEDBACK:";
     private static final String AUTODRIVE_END_PREFIX = "A11Y_AUTODRIVE_END:";
     private static final String AREA_PREFIX = "A11Y_AREA:";
@@ -99,6 +100,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (message == null) { return false; }
         return priority >= ReaderSpeechQueue.URGENT
                 || message.startsWith(QUERY_PREFIX)
+                || message.startsWith(SCENE_PREFIX)
                 || message.startsWith(DRIVE_FEEDBACK_PREFIX)
                 || message.startsWith(AUTODRIVE_END_PREFIX)
                 || message.startsWith(AREA_PREFIX)
@@ -1315,7 +1317,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // enter ReaderSpeechQueue (MAX_PENDING=8). Never silently discard
         // early chunks when a long book/item description is requested.
         if (text == null || text.trim().isEmpty()
-                || (text.length() > 16000 && !text.startsWith("A11Y_DETAIL:"))) {
+                || (text.length() > 16000 && !text.startsWith("A11Y_DETAIL:")
+                    && !text.startsWith(SCENE_PREFIX))) {
             return;
         }
         final String message = text;
@@ -1327,6 +1330,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final boolean detailEnd = message.startsWith("A11Y_DETAIL_END:");
         final boolean combatAlert = message.startsWith(COMBAT_ALERT_PREFIX);
         final boolean userQuery = message.startsWith(QUERY_PREFIX);
+        final boolean placeSurvey = message.startsWith(SCENE_PREFIX);
         final boolean drivingFeedback = message.startsWith(DRIVE_FEEDBACK_PREFIX);
         final boolean autodriveEnd = message.startsWith(AUTODRIVE_END_PREFIX);
         final boolean areaChange = message.startsWith(AREA_PREFIX);
@@ -1334,6 +1338,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 loading ? message.substring("A11Y_LOADING:".length())
                 : extendedScan ? message.substring("A11Y_SCAN:".length())
                 : requestedDetail ? message.substring("A11Y_DETAIL:".length())
+                : placeSurvey ? message.substring(SCENE_PREFIX.length())
                 : userQuery ? message.substring(QUERY_PREFIX.length())
                 : drivingFeedback ? message.substring(DRIVE_FEEDBACK_PREFIX.length())
                 : autodriveEnd ? message.substring(AUTODRIVE_END_PREFIX.length())
@@ -1445,6 +1450,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (usesTouchExploration()) {
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
+            } else if (placeSurvey) {
+                // One user-requested report. Existing LONG_TEXT speech chunks
+                // the document instead of dropping its earlier sections.
+                speakInlineDetail(spokenMessage);
             } else if (userQuery) {
                 // The user explicitly requested current location: speak now
                 // and replace an older query instead of queuing stale places.

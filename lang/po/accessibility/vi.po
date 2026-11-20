@@ -6190,3 +6190,139 @@ msgstr "Không tìm được đường đi an toàn. Xe đã tạm dừng."
 #, c-format
 msgid "Local coordinates X %1$d, Y %2$d. World map X %3$d, Y %4$d, Z %5$d."
 msgstr "Tọa độ khu vực X %1$d, Y %2$d. Bản đồ chung X %3$d, Y %4$d, Z %5$d."
+
+msgid "here"
+msgstr "ngay tại đây"
+
+msgid "stairs up"
+msgstr "cầu thang đi lên"
+
+msgid "stairs down"
+msgstr "cầu thang đi xuống"
+
+msgid "near the northwest"
+msgstr "gần góc tây bắc"
+
+msgid "near the northeast"
+msgstr "gần góc đông bắc"
+
+msgid "near the southwest"
+msgstr "gần góc tây nam"
+
+msgid "near the southeast"
+msgstr "gần góc đông nam"
+
+msgid "toward the north"
+msgstr "ở phần phía bắc"
+
+msgid "toward the south"
+msgstr "ở phần phía nam"
+
+msgid "toward the west"
+msgstr "ở phần phía tây"
+
+msgid "toward the east"
+msgstr "ở phần phía đông"
+
+msgid "near the center"
+msgstr "gần trung tâm"
+
+msgid "unknown area"
+msgstr "khu vực chưa xác định"
+
+msgid "Windows"
+msgstr "Cửa sổ"
+
+msgid "Stairs and vertical links"
+msgstr "Cầu thang và lối nối tầng"
+
+msgid "Furniture"
+msgstr "Đồ nội thất"
+
+msgid "Vehicles"
+msgstr "Phương tiện"
+
+msgid "Creatures"
+msgstr "Sinh vật"
+
+msgid "Detailed place survey"
+msgstr "Khảo sát địa điểm chi tiết"
+
+msgid "Survey the loaded place beyond line of sight and read one complete description."
+msgstr "Khảo sát địa điểm mở rộng vượt ngoài tầm nhìn và đọc liên tục toàn bộ mô tả."
+
+#, c-format
+msgid "Place survey: %s."
+msgstr "Khảo sát địa điểm: %s."
+
+#, c-format
+msgid "Area width %1$d east-west tiles, length %2$d north-south tiles."
+msgstr "Khu vực rộng %1$d ô theo chiều đông tây, dài %2$d ô theo chiều bắc nam."
+
+#, c-format
+msgid "Map levels: %d."
+msgstr "Có %d tầng bản đồ."
+
+#, c-format
+msgid "You are at local X %1$d, Y %2$d, %3$s of the place."
+msgstr "Bạn đang đứng tại tọa độ khu vực X %1$d, Y %2$d, %3$s của địa điểm."
+
+#, c-format
+msgid "You are at local X %1$d, Y %2$d."
+msgstr "Bạn đang đứng tại tọa độ khu vực X %1$d, Y %2$d."
+
+#, c-format
+msgid "You are at world X %1$d, Y %2$d, Z %3$d."
+msgstr "Bạn đang đứng tại tọa độ bản đồ chung X %1$d, Y %2$d, Z %3$d."
+
+#, c-format
+msgid "X %1$d, Y %2$d"
+msgstr "X %1$d, Y %2$d"
+
+#, c-format
+msgid "world X %1$d, Y %2$d"
+msgstr "bản đồ chung X %1$d, Y %2$d"
+
+msgid "Paths:"
+msgstr "Lối đi:"
+
+#, c-format
+msgid "Straight %1$s: %2$d tiles."
+msgstr "Phía %1$s đi thẳng được %2$d ô."
+
+#, c-format
+msgid "Straight %1$s: at least %2$d tiles."
+msgstr "Phía %1$s đi thẳng được ít nhất %2$d ô."
+
+msgid "Entrances"
+msgstr "Cửa ra vào"
+
+msgid "Dangers and traces"
+msgstr "Nguy hiểm và dấu vết"
+
+#, c-format
+msgid "%d more locations."
+msgstr "Còn %d vị trí khác."
+
+#, c-format
+msgid "%d more types."
+msgstr "Còn %d loại khác."
+
+msgid "Survey limit reached."
+msgstr "Đã đạt giới hạn khảo sát."
+
+msgid "Surroundings:"
+msgstr "Khu vực xung quanh:"
+
+#, c-format
+msgid "to the %s"
+msgstr "phía %s"
+
+#, c-format
+msgid "%1$s and %2$s"
+msgstr "%1$s và %2$s"
+
+#, c-format
+msgid "%1$s: %2$s."
+msgstr "%1$s: %2$s."
+
