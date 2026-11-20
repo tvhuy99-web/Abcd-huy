@@ -104,6 +104,8 @@ class mod_manager
          * This also reloads the dependency tree.
          */
         void refresh_mod_list();
+        // Rebuild installed mod metadata and the usable-mod list after SAF changes.
+        void reload_available_mods();
 
         std::vector<mod_id> all_mods() const;
 

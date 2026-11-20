@@ -35,7 +35,7 @@ class mute_combat_speech
         mute_combat_speech( const mute_combat_speech & ) = delete;
         mute_combat_speech &operator=( const mute_combat_speech & ) = delete;
     private:
-        bool muted;
+        [[maybe_unused]] bool muted;
 };
 
 std::vector<std::pair<std::string, std::string>> recent_messages( size_t count );
