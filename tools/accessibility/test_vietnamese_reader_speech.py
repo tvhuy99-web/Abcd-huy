@@ -117,7 +117,7 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         for english, vietnamese in expected.items():
             with self.subTest(english=english):
                 self.assertIn('msgid ' + __import__("json").dumps(english, ensure_ascii=False)
-                              + '\\nmsgstr ' + __import__("json").dumps(vietnamese, ensure_ascii=False),
+                              + chr(10) + 'msgstr ' + __import__("json").dumps(vietnamese, ensure_ascii=False),
                               self.po)
 
     def test_tutorial_trigger_name_is_localizable(self):
