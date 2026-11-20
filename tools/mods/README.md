@@ -43,7 +43,7 @@ require native-game loading and voice/accessibility acceptance testing.
   `nocts_cata_mod_DDA` folder at commit
   `46982a63da25b064c8d0fdee9b68c23dccc1f671`. The separate
   Bright Nights version in the uploaded ZIP is deliberately excluded.
-- **Arcana**: not translated yet.
+- **Arcana**: 6,794 Vietnamese strings across 185 JSON files, checked against pinned upstream file identities. The overlay changes only user-facing text; gameplay compatibility still needs testing.
 
 To check and apply the three overlays to installed pinned mods:
 
