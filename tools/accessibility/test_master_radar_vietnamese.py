@@ -11,7 +11,8 @@ class MasterVietnameseRadar(unittest.TestCase):
     def test_every_native_radar_phrase_and_button_has_vi_translation(self):
         cpp = (ROOT / "src/a11y_radar.cpp").read_text(encoding="utf-8")
         catalog = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
-        phrases = set(re.findall(r'_\\(\\s*"([^"]+)"\\s*\\)', cpp))
+        phrases = set(re.findall(r'_\(\s*"([^"]+)"\s*\)', cpp))
+        self.assertGreater(len(phrases), 0)
         phrases.update(("Automatic spoken radar",
                         "Toggle spoken announcements when objects enter eight tiles."))
         for source in phrases:
