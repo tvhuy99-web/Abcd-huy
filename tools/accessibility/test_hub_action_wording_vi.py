@@ -48,12 +48,52 @@ LABELS = {
     "Toggle auto safe mode": "Bật hoặc tắt tự kích hoạt chế độ an toàn"
 }
 DETAILS = {
-    "Choose a gun you carry to aim and fire. If no gun is available, the game may use a reach attack or a vehicle turret. Ordinary adjacent melee uses a different command.": "Chọn một khẩu súng đang mang để ngắm và bắn. Khi không có súng, game có thể dùng đòn đánh có tầm với hoặc ụ súng trên xe. Đòn đánh cận chiến thông thường dùng lệnh khác.",
-    "Fire a burst only if the gun you are holding supports burst or automatic fire. This does not perform a melee attack.": "Chỉ bắn loạt khi súng đang cầm hỗ trợ bắn loạt hoặc liên thanh. Lệnh này không đánh cận chiến.",
-    "Cycle the firing and melee modes of the gun you are holding. This does not attack.": "Chuyển giữa các chế độ bắn hoặc chế độ đánh của súng đang cầm. Thao tác này không tấn công.",
-    "Automatically choose a gun or compatible magazine to reload, starting with the gun in your hands. This may reload another gun in your inventory.": "Tự chọn súng hoặc băng đạn phù hợp để nạp, ưu tiên súng đang cầm. Lệnh cũng có thể nạp súng khác trong túi đồ.",
-    "Reload the item in your hands if it supports reloading. This does not choose another item.": "Nạp vật phẩm đang cầm nếu có thể nạp. Lệnh này không chọn vật phẩm khác.",
-    "Automatically choose a target within melee reach and attack once, even when unarmed. With no target, you may wait one turn if safe mode allows. This is not a toggle.": "Tự chọn mục tiêu trong tầm đánh cận chiến và đánh một lần, kể cả khi tay không. Nếu không có mục tiêu, nhân vật có thể chờ một lượt nếu chế độ an toàn cho phép. Đây không phải nút bật tắt."
+    (
+        "Choose a gun you carry to aim and fire. If no gun is available, the "
+        "game may use a reach attack or a vehicle turret. Ordinary adjacent "
+        "melee uses a different command."
+    ): (
+        "Chọn một khẩu súng đang mang để ngắm và bắn. Khi không có súng, game có "
+        "thể dùng đòn đánh có tầm với hoặc ụ súng trên xe. Đòn đánh cận chiến "
+        "thông thường dùng lệnh khác."
+    ),
+    (
+        "Fire a burst only if the gun you are holding supports burst or "
+        "automatic fire. This does not perform a melee attack."
+    ): (
+        "Chỉ bắn loạt khi súng đang cầm hỗ trợ bắn loạt hoặc liên thanh. Lệnh "
+        "này không đánh cận chiến."
+    ),
+    (
+        "Cycle the firing and melee modes of the gun you are holding. This does "
+        "not attack."
+    ): (
+        "Chuyển giữa các chế độ bắn hoặc chế độ đánh của súng đang cầm. Thao tác "
+        "này không tấn công."
+    ),
+    (
+        "Automatically choose a gun or compatible magazine to reload, starting "
+        "with the gun in your hands. This may reload another gun in your "
+        "inventory."
+    ): (
+        "Tự chọn súng hoặc băng đạn phù hợp để nạp, ưu tiên súng đang cầm. Lệnh "
+        "cũng có thể nạp súng khác trong túi đồ."
+    ),
+    (
+        "Reload the item in your hands if it supports reloading. This does not "
+        "choose another item."
+    ): (
+        "Nạp vật phẩm đang cầm nếu có thể nạp. Lệnh này không chọn vật phẩm khác."
+    ),
+    (
+        "Automatically choose a target within melee reach and attack once, even "
+        "when unarmed. With no target, you may wait one turn if safe mode "
+        "allows. This is not a toggle."
+    ): (
+        "Tự chọn mục tiêu trong tầm đánh cận chiến và đánh một lần, kể cả khi "
+        "tay không. Nếu không có mục tiêu, nhân vật có thể chờ một lượt nếu chế "
+        "độ an toàn cho phép. Đây không phải nút bật tắt."
+    ),
 }
 
 
