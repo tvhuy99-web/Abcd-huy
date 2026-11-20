@@ -1,6 +1,7 @@
 
 #include <algorithm>
 #include "a11y_semantics.h"
+#include "a11y_tutorial_text.h"
 #include <array>
 #include <climits>
 #include <cmath>
@@ -5823,6 +5824,11 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
         talker &alpha = d.has_alpha ? *d.actor( false ) : *default_talker;
         talker &beta = d.has_beta ? *d.actor( true ) : *default_talker;
         parse_tags( translated_message, alpha, beta, d );
+#if defined(__ANDROID__)
+        if( android_reader_popup ) {
+            target->set_value( a11y::tutorial::last_lesson_key, translated_message );
+        }
+#endif
         if( sound ) {
             bool display = false;
             map &here = get_map();
@@ -5838,7 +5844,8 @@ talk_effect_fun_t::func f_message( const JsonObject &jo, std::string_view member
             }
         }
         if( popup_msg ) {
-            popup( translated_message, popup_flag );
+            popup( android_reader_popup ? a11y::tutorial::brief( translated_message ) :
+                   translated_message, popup_flag );
             g->cancel_activity_or_ignore_query( distraction_type::eoc, "" );
             // The popup already spoke this lesson. Do not queue the same
             // complete text again as a game message when closing the popup.

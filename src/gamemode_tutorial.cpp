@@ -7,6 +7,7 @@
 
 #include "action.h"
 #include "a11y_android.h"
+#include "a11y_tutorial_text.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
@@ -411,5 +412,13 @@ void tutorial_game::add_message( tut_lesson lesson )
     std::string translated_lesson = SNIPPET.get_snippet_by_id( snippet_id( lesson_id ) )
                                     .value_or( translation() ).translated();
     parse_tags( translated_lesson, get_player_character(), get_player_character() );
+#if defined(__ANDROID__)
+    get_player_character().set_value( a11y::tutorial::last_lesson_key, translated_lesson );
+    // Introduce the controls fully once. Later lessons start with a brief
+    // objective, with the complete lesson available in the accessible hub.
+    popup( lesson == tut_lesson::LESSON_INTRO ? translated_lesson :
+           a11y::tutorial::brief( translated_lesson ), PF_ON_TOP );
+#else
     popup( translated_lesson, PF_ON_TOP );
+#endif
 }

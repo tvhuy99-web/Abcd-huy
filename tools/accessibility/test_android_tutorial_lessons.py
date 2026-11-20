@@ -82,5 +82,24 @@ class AndroidTutorialLessonTests(unittest.TestCase):
                     self.assertIn("Nhiệm vụ", text)
 
 
+    def test_quick_popup_keeps_complete_lesson_for_reading_on_demand(self):
+        helper = (ROOT / "src/a11y_tutorial_text.h").read_text("utf-8")
+        world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
+        game = (ROOT / "src/gamemode_tutorial.cpp").read_text("utf-8")
+        hub = (ROOT / "android/app/src/main/java/com/cleverraven"
+               "/cataclysmdda/GameActionHub.java").read_text("utf-8")
+        self.assertIn('"Nhiệm vụ:"', helper)
+        self.assertIn('a11y::tutorial::brief( translated_message )',
+                      self.effects)
+        self.assertIn('last_lesson_key, translated_message', self.effects)
+        self.assertIn('last_lesson_key, translated_lesson', game)
+        self.assertIn("lesson == tut_lesson::LESSON_INTRO", game)
+        self.assertIn('"reader:tutorial:last"', world)
+        self.assertIn('"reader:tutorial:last"', hub)
+        self.assertIn('msgid "Read latest tutorial lesson in full"',
+                      (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8"))
+
+
+
 if __name__ == "__main__":
     unittest.main()

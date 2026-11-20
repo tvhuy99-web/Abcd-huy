@@ -67,7 +67,7 @@ class TutorialCombatDummyContracts(unittest.TestCase):
         self.assertIn("adjacent creature", self.english)
         self.assertIn("empty tile can still move you", self.english)
         self.assertIn('name="a11yCombatOn"', self.vietnamese)
-        self.assertIn("ô sát cạnh", self.vietnamese)
+        self.assertIn("bắn súng hoặc đánh", self.vietnamese)
         self.assertIn("ô trống", self.vietnamese)
 
 
