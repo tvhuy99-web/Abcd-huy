@@ -39,6 +39,23 @@ class HealthHubTest(unittest.TestCase):
         self.assertIn("opt.doable", self.med)
         self.assertIn("a11y::append_requirements(", self.med)
 
+    def test_medical_wounds_sorted_by_severity(self):
+        # Port upstream's severe-first display without replacing the
+        # accessibility-aware medical screen or mutating the wound list.
+        body = self.med.split(
+            "std::string medical_ui::get_limb_wounds", 1)[1].split(
+                "std::string medical_ui::get_limb_scores_and_modifiers", 1)[0]
+        self.assertIn("std::vector<wound> wds = bp->get_wounds();", body)
+        self.assertIn("std::stable_sort( wds.begin(), wds.end()", body)
+        self.assertIn("a.type->severity > b.type->severity", body)
+        self.assertIn("wound_severity::CRITICAL", body)
+        self.assertIn("wound_severity::MAJOR", body)
+        self.assertEqual(
+            body.count("colorize( wd.type->get_name(), severity_color )"), 2)
+        # Existing medical treatment remains delegated to native checks.
+        self.assertIn("you->pick_wound_fix( bp )", self.med)
+        self.assertIn('a11y::limb_health_description( *you, part )', self.med)
+
     def test_quick_health_without_raw_hitpoints(self):
         self.assertIn('"pd:quick-health"', self.player)
         self.assertIn('_( "Quick health summary" )', self.player)
