@@ -301,4 +301,17 @@
     <string name="a11yGuideAutoReadHeading">Đọc hướng đầu xe; bộ tự lái tự chọn hướng đi</string>
     <string name="a11yGuideAutoPause">Tạm dừng hành trình và phanh xe</string>
     <string name="a11yGuideAutoMapCancel">Hủy hành trình tự lái và chuyển về Bản đồ</string>
+    <!-- Reader-owned automatic proximity radar and selectable categories. -->
+    <string name="a11yRadarTitle">Rađa tự động</string>
+    <string name="a11yRadarManage">Quản lý rađa</string>
+    <string name="a11yRadarOn">Bật</string>
+    <string name="a11yRadarOff">Tắt</string>
+    <string name="a11yRadarItems">Thông báo vật phẩm</string>
+    <string name="a11yRadarMonsters">Thông báo quái vật</string>
+    <string name="a11yRadarPlaces">Thông báo địa điểm</string>
+    <string name="a11yRadarNpcs">Thông báo NPC</string>
+    <string name="a11yRadarDoors">Thông báo cửa và cầu thang</string>
+    <string name="a11yRadarHazards">Thông báo nguy hiểm</string>
+    <string name="a11yRadarVehicles">Thông báo phương tiện</string>
+    <string name="a11yRadarLandmarks">Thông báo điểm mốc</string>
 </resources>

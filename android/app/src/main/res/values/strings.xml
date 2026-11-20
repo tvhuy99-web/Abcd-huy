@@ -301,4 +301,17 @@
     <string name="a11yGuideAutoReadHeading">Read the car heading; autopilot chooses steering</string>
     <string name="a11yGuideAutoPause">Pause the trip and apply the brakes</string>
     <string name="a11yGuideAutoMapCancel">Cancel the trip and switch to Map</string>
+    <!-- Reader-owned automatic proximity radar and selectable categories. -->
+    <string name="a11yRadarTitle">Automatic radar</string>
+    <string name="a11yRadarManage">Manage radar</string>
+    <string name="a11yRadarOn">On</string>
+    <string name="a11yRadarOff">Off</string>
+    <string name="a11yRadarItems">Announce items</string>
+    <string name="a11yRadarMonsters">Announce monsters</string>
+    <string name="a11yRadarPlaces">Announce places</string>
+    <string name="a11yRadarNpcs">Announce NPCs</string>
+    <string name="a11yRadarDoors">Announce doors and stairs</string>
+    <string name="a11yRadarHazards">Announce hazards</string>
+    <string name="a11yRadarVehicles">Announce vehicles</string>
+    <string name="a11yRadarLandmarks">Announce landmarks</string>
 </resources>
