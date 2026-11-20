@@ -82,6 +82,9 @@
         <activity android:name="BackupRestoreActivity"
                   android:exported="false"
                   android:label="@string/a11yBackupRestoreTitle" />
+        <activity android:name="ManualModsActivity"
+                  android:exported="false"
+                  android:label="@string/a11yManualModTitle" />
         <activity android:name="TtsSettingsActivity"
                   android:exported="false"
                   android:label="@string/a11yTtsSettingsTitle" />
