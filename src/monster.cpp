@@ -2408,13 +2408,11 @@ bool monster::melee_attack( Creature &target, float accuracy )
                              body_part_name_accusative( dealt_dam.bp_hit ), target.skin_name() );
                 }
             } else if( target.is_npc() ) {
-                //~ $1s is monster name, %2$s is that monster target name,
-                //~ $3s is target bodypart name in accusative, $4s is the monster target name,
-                //~ 5$s is target armor name.
-                add_msg( _( "%1$s hits %2$s %3$s but is stopped by %4$s %5$s." ), u_see_me ? disp_name( true ) : _( "Something" ),
-                         target.disp_name( true ),
+                //~ $1s is monster name, %2$s is target NPC name,
+                //~ $3s is target bodypart name in accusative, $4s is target armor name.
+                add_msg( _( "%1$s hits %2$s in the %3$s but is stopped by the %4$s." ),
+                         u_see_me ? disp_name( true ) : _( "Something" ), target.disp_name(),
                          body_part_name_accusative( dealt_dam.bp_hit ),
-                         target.disp_name( true ),
                          target.skin_name() );
             } else if( get_option<bool>( "LOG_MONSTER_ATTACK_MONSTER" ) ) {
                 //~ $1s is monster name, %2$s is that monster target name,
