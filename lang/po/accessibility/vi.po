@@ -6698,6 +6698,7 @@ msgstr "Tự chọn mục tiêu trong tầm đánh cận chiến và đánh mộ
 # Optional on-demand full lesson text in Android's reader hub.
 msgid "Read latest tutorial lesson in full"
 msgstr "Nghe chi tiết bài học gần nhất"
+
 # Concise remaining-point feedback after accessible character creator changes.
 #, c-format
 msgid "Points remaining: %d."
@@ -6947,6 +6948,3 @@ msgstr "Đã bắt đầu tháo %s."
 msgid "Started refilling %s."
 msgstr "Đã bắt đầu nạp nhiên liệu cho %s."
 
-# Optional on-demand full lesson text in Android's reader hub.
-msgid "Read latest tutorial lesson in full"
-msgstr "Nghe chi tiết bài học gần nhất"
