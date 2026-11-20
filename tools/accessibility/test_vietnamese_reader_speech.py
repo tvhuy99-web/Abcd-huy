@@ -97,7 +97,6 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('msgid "northwest"\nmsgstr "tây bắc"', self.po)
         self.assertNotIn('question.label = _( "Dialog message" );', self.dialog)
 
-
     def test_new_vietnamese_session_translations(self):
         # All session-leaked radar phrases, nearby labels and status words
         # are supplied at build time by the Vietnamese accessibility catalog.
