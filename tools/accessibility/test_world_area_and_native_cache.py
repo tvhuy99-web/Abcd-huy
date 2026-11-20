@@ -60,13 +60,13 @@ class WorldAreaAndNativeBuildTest(unittest.TestCase):
                       read(JAVA / "CataclysmDDA.java"))
 
     def test_cache_and_ai_slow_path_instrumented_only_when_log_on(self):
-        mapping = read(SRC / "map.cpp")
+        cache = read(SRC / "map_cache.cpp")
         turns = read(SRC / "do_turn.cpp")
-        self.assertIn('diagnostic_event( "WORLD_CACHE_PHASE"', mapping)
+        self.assertIn('diagnostic_event( "WORLD_CACHE_PHASE"', cache)
         for phase in ("scene_ms=", "transparency_ms=", "avatar_fov_ms=",
                       "camera_ms=", "light_sources_ms=", "lightmap_ms="):
-            self.assertIn(phase, mapping)
-        self.assertIn("profile_cache = a11y::android::performance_profiling_enabled()", mapping)
+            self.assertIn(phase, cache)
+        self.assertIn("profile_cache = a11y::android::performance_profiling_enabled()", cache)
         self.assertIn('diagnostic_event( "WORLD_AI_HOTSPOT"', turns)
         self.assertIn('diagnostic_event( "WORLD_AI_COUNTS"', turns)
         self.assertIn("monster_ms >= 40", turns)
