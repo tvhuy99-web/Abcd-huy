@@ -1496,10 +1496,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             if (requestedDetail && !expectingItemDetail()) { return; }
-            if (placeSurvey) {
-                openPlaceSurvey(message.substring(SCENE_PREFIX.length()));
-                return;
-            }
             final boolean autodriveStopped = spokenMessage.contains("No safe route found. Vehicle paused.")
                     || spokenMessage.contains("Không tìm được đường đi an toàn. Xe đã tạm dừng.");
             final boolean autodriveArrived = drivingFeedback
@@ -1526,6 +1522,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // "Nothing to open here" arrived in exactly this gap.
                 pendingGameMessages.addLast(new BufferedGameMessage(message, priority));
                 SessionDebugLog.event("GAME_MESSAGE_BUFFERED", "text=" + message);
+                return;
+            }
+            if (placeSurvey) {
+                openPlaceSurvey(message.substring(SCENE_PREFIX.length()));
                 return;
             }
             if (loading) {
@@ -3225,7 +3225,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ? activity.getString(R.string.a11ySurveyContinue)
                     : placeSurveyRows.get(index);
             Button row = new Button(activity);
-            row.setText(label + ". "
+            row.setText(label + (label.endsWith(".") || label.endsWith(":") ? " " : ". ")
                     + activity.getString(R.string.a11yPosition, index + 1, total));
             row.setSelected(index == placeSurveyIndex);
             row.setOnClickListener(view -> {
@@ -5623,7 +5623,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             final String spoken = placeSurveyIndex == placeSurveyRows.size()
                     ? activity.getString(R.string.a11ySurveyContinue)
                     : placeSurveyRows.get(placeSurveyIndex);
-            feedback(spoken + ". "
+            feedback(spoken + (spoken.endsWith(".") || spoken.endsWith(":") ? " " : ". ")
                     + activity.getString(R.string.a11yPosition, placeSurveyIndex + 1, total));
             return;
         }
