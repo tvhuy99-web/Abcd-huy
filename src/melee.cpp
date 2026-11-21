@@ -170,7 +170,8 @@ static const weapon_category_id weapon_category_UNARMED( "UNARMED" );
 static const std::string player_base_stamina_burn_rate( "PLAYER_BASE_STAMINA_BURN_RATE" );
 
 static void player_hit_message( Character *attacker, const std::string &message,
-                                Creature &t, int dam, bool crit = false, bool technique = false, const std::string &wp_hit = {} );
+                                Creature &t, int dam, bool crit = false, bool technique = false, const std::string &wp_hit = {}, int
+                                hit_spread = INT_MIN );
 static int stumble( Character &u, const item_location &weap );
 static std::string melee_message( const ma_technique &tec, Character &p,
                                   const dealt_damage_instance &ddi );
@@ -661,7 +662,7 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
     }
 
     // Fighting is hard work
-    set_activity_level( EXTRA_EXERCISE );
+    set_activity_level( COMBAT_EXERCISE );
 
     item_location cur_weapon = allow_unarmed ? used_weapon() : get_wielded_item();
     item cur_weap = cur_weapon ? *cur_weapon : null_item_reference();
@@ -695,7 +696,7 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
         }
     }
 
-    const bool hits = hit_spread >= 0;
+    const bool hits = Creature::melee_attack_hit( hit_spread );
 
     if( monster *m = t.as_monster() ) {
         cata::event e = cata::event::make<event_type::character_melee_attacks_monster>( getID(),
@@ -918,7 +919,7 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
                 // the accessibility summary above is the only spoken hit.
                 Messages::mute_combat_speech original_melee_hit( is_avatar() && t.is_monster() );
                 player_hit_message( this, message, t, dam, critical_hit, technique.id != tec_none,
-                                    dealt_dam.wp_hit );
+                                    dealt_dam.wp_hit, hit_spread );
             } else {
                 add_msg_player_or_npc( m_good, _( "You hit something." ),
                                        _( "<npcname> hits something." ) );
@@ -1042,7 +1043,7 @@ void Character::reach_attack( const tripoint_bub_ms &p, int forced_movecost )
     }
 
     // Fighting is hard work
-    set_activity_level( EXTRA_EXERCISE );
+    set_activity_level( COMBAT_EXERCISE );
 
     creature_tracker &creatures = get_creature_tracker();
     Creature *critter = creatures.creature_at( p );
@@ -2278,7 +2279,7 @@ void Character::perform_special_attacks( Creature &t, dealt_damage_instance &dea
 
         // TODO: Make this hit roll use unarmed skill, not weapon skill + weapon to_hit
         int hit_spread = t.deal_melee_attack( this, hit_roll() * 0.8 );
-        if( hit_spread >= 0 ) {
+        if( Creature::melee_attack_hit( hit_spread ) ) {
             weakpoint_attack attack;
             t.deal_melee_hit( this, hit_spread, false, att.damage, dealt_dam, attack );
             if( !practiced ) {
@@ -2289,7 +2290,7 @@ void Character::perform_special_attacks( Creature &t, dealt_damage_instance &dea
         }
         int dam = dealt_dam.total_damage();
         if( dam > 0 ) {
-            player_hit_message( this, att.text, t, dam );
+            player_hit_message( this, att.text, t, dam, false, false, {}, hit_spread );
         }
     }
 }
@@ -2632,7 +2633,7 @@ std::string melee_message( const ma_technique &tec, Character &p,
 
 // display the hit message for an attack
 void player_hit_message( Character *attacker, const std::string &message,
-                         Creature &t, int dam, bool crit, bool technique, const std::string &wp_hit )
+                         Creature &t, int dam, bool crit, bool technique, const std::string &wp_hit, int hit_spread )
 {
     map &here = get_map();
     const tripoint_bub_ms pos = attacker->pos_bub( here );
@@ -2679,6 +2680,10 @@ void player_hit_message( Character *attacker, const std::string &message,
             //~ someone hits something for %d damage
             msg = string_format( _( "%s for %d damage." ), message, dam );
         }
+    }
+
+    if( dam > 0 && !crit && hit_spread != INT_MIN ) {
+        msg += "  " + Creature::hit_quality_label( hit_spread );
     }
 
     if( dam > 0 && attacker->is_avatar() ) {
