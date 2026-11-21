@@ -32,6 +32,16 @@ jobs:
         run: |
           g++ --version
           test -f /usr/include/ncursesw/curses.h
+      - name: Prepare GDB for noninteractive stack sampling
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          if ! command -v gdb >/dev/null 2>&1; then
+            sudo apt-get -o Acquire::Retries=2 update
+            sudo apt-get -o Acquire::Retries=2 install -y --no-install-recommends gdb
+          fi
+          gdb --version
+          sudo -n true
       - name: Compile and link complete non-tiled native game
         run: |
           # Keep compiling independent units to surface all remaining merge errors in one run.
@@ -52,10 +62,43 @@ jobs:
           mkdir -p "$report"
           failed=0
 
+          capture_stack() {
+            local label="$1" watchdog="$2" sample="$3" target stack status
+            # timeout launches stdbuf, which execs cataclysm in the same PID.
+            target="$(pgrep -P "$watchdog" -x cataclysm | head -n 1 || true)"
+            if [ -z "$target" ] || [ ! -r "/proc/$target/exe" ]; then
+              echo "STACK ${label}: game already exited or PID unavailable"
+              return 0
+            fi
+            stack="$report/${label}-stack-${sample}.log"
+            echo "STACK ${label} sample=${sample} pid=${target} $(date -u +'%Y-%m-%dT%H:%M:%SZ')" | tee "$stack"
+            status=0
+            # Linux ptrace restrictions can prohibit sibling-process attach;
+            # sudo on the disposable runner avoids changing system policy.
+            sudo -n timeout --signal=TERM --kill-after=5s 25s \
+              gdb -q -nx -batch \
+              -iex 'set auto-load off' \
+              -iex 'set debuginfod enabled off' \
+              -ex 'set pagination off' \
+              -ex 'set print thread-events off' \
+              -ex "attach $target" \
+              -ex 'info threads' \
+              -ex 'thread apply all bt 40' \
+              -ex 'info registers pc' \
+              -ex 'detach' >>"$stack" 2>&1 || status=$?
+            echo "GDB exit=${status}" >>"$stack"
+            cat "$stack"
+            if [ "$status" -ne 0 ]; then
+              echo "::warning title=GDB sample failed::${label} sample ${sample} exit ${status}; see stack log"
+            fi
+            # Diagnostics are best effort; preserve the actual loader status.
+            return 0
+          }
+
           run_check() {
             local label="$1" seconds="$2"
             shift 2
-            local userdir log profile status pid
+            local userdir log profile status pid ticks=0
             userdir="$(mktemp -d)"
             log="$report/${label}.log"
             profile="$report/${label}-process.log"
@@ -79,6 +122,12 @@ jobs:
               ps -eo pid,ppid,stat,etime,time,%cpu,rss,wchan:24,comm \
                 | awk 'NR == 1 || $NF == "cataclysm" || $NF == "timeout"' \
                 | tee -a "$profile"
+              ticks=$((ticks + 1))
+              # Repeated independent snapshots help distinguish a hot loop
+              # from a slow but progressing load. Detach after each sample.
+              case "$ticks" in
+                2|5|10) capture_stack "$label" "$pid" "$ticks" ;;
+              esac
             done
 
             status=0
