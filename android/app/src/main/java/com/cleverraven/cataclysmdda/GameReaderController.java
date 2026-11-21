@@ -1397,7 +1397,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // hazards retain the established urgent warning priority.
             handler.post(() -> {
                 if (closed || !foreground || !windowFocused || !preferences.isEnabled()
-                        || !preferences.isRadarEnabled() || comprehensiveMenu
+                        || !preferences.isRadarEnabled() || comprehensiveMenu || placeSurveyOpen
                         || snapshot == null || snapshot.find("world:here") == null
                         || vehicleMode || autonomousDriveTrip || spoken.isEmpty()) { return; }
                 speech.say("radar-entry:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
@@ -3277,9 +3277,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         placeSurveyIndex = 0;
         speech.stop();
         root.cancelGesture();
-        if (snapshot != null && snapshot.find("world:here") != null) {
+        boolean backToWorld = snapshot != null && snapshot.find("world:here") != null;
+        if (backToWorld) {
             focus = "world:here";
         }
+        sonar.setWorldActive(backToWorld && foreground && windowFocused
+                && preferences.isEnabled() && !comprehensiveMenu && debugReport == null);
         render();
         readCurrent();
     }
