@@ -48,7 +48,7 @@ class CombatPocketRegressions(unittest.TestCase):
         self.assertIn("A11Y_INTERNAL_FIRE_DIRECTION", self.gun)
         self.assertIn("loop_exit_code = ExitCode::Fire;", self.gun)
 
-    def test_empty_direction_and_friendlies_are_not_excluded(self):
+    def test_manual_fire_still_allows_empty_direction_and_native_confirmations(self):
         targeting = self.gun.split("tripoint_bub_ms target_ui::directional_shot_target(", 1)[1]
         targeting = targeting.split("a11y::semantic_snapshot target_ui::reader_snapshot()", 1)[0]
         self.assertIn("return fallback;", targeting)

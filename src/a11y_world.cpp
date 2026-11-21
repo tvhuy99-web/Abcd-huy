@@ -1298,10 +1298,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                     && !viewer.has_destination()
                                     && !viewer.has_destination_activity()
                                     && !viewer.has_effect( effect_sleep );
-    // Eight-direction combat gestures use the same engine rules as the
-    // corresponding native keys. A gun fires; otherwise normal movement
-    // bumps into monsters for melee, interacts with NPCs, or walks into
-    // empty space. No hostile-only restriction or forced standstill.
+    // Eight-direction combat gestures choose a target using the native
+    // weapon range and target list. They never dispatch a movement action.
     // The existing eligibility gate prevents use in incompatible modes.
     constexpr std::array<point, 8> combat_steps = {
         point::north, point::north_east, point::east, point::south_east,
@@ -1314,10 +1312,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         const std::string dir_name = relative_name( combat_steps[i] );
         semantic_node attack = button( "reader:combat:attack:" + std::to_string( i ),
                                        ranged_combat ? string_format( _( "Fire %s" ), dir_name ) :
-                                       string_format( _( "Move or attack %s" ), dir_name ),
-                                       ranged_combat ?
-                                       _( "Fire the wielded gun in this direction." ) :
-                                       _( "Use normal movement: attack or interact if occupied, otherwise walk." ) );
+                                       string_format( _( "Attack %s" ), dir_name ),
+                                       _( "Attack the nearest valid target in this direction within the current weapon range. Never walk." ) );
         attack.enabled = result.swipe_movement_allowed;
         result.nodes.push_back( std::move( attack ) );
     }

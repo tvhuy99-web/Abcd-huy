@@ -207,7 +207,7 @@
     <string name="a11yContextConfirmUnavailable">No confirmation action here</string>
     <string name="a11yNativeInputRangeError">Value must be between %1$s and %2$s.</string>
     <string name="a11yNativeInputInstructions">Edit with the Android keyboard. Use OK to save or Cancel to discard. You can turn TalkBack on or off yourself.</string>
-    <string name="a11yCombatOn">Combat: swipe one finger toward an adjacent creature to attack it. Swiping toward an empty tile can still move you. Swipe with two fingers to move; bend a swipe for diagonal attacks. Left-right reloads; right-left reads weapon.</string>
+    <string name="a11yCombatOn">Combat: one-finger swipes attack or fire within the weapon's current range without walking. Two fingers move. Bend a swipe for diagonals. Left-right reloads; right-left reads weapon.</string>
     <string name="a11yCombatOff">Map mode on. Your original gesture assignments are restored.</string>
     <string name="a11yCombatUnavailable">Combat command unavailable. No movement was performed.</string>
     <string name="a11yCombatNoEnemies">No visible hostile creatures nearby.</string>

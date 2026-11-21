@@ -2567,6 +2567,31 @@ static void fire()
     }
 
     const item_location weapon = you.get_wielded_item();
+    if( combat_attack_direction >= 0 &&
+        ( !weapon || !weapon->is_gun() || weapon->gun_current_mode().melee() ) ) {
+        // Use native targeting and attack resolution. A short-range strike
+        // uses the regular melee attack; a longer one uses reach_attack.
+        // Neither branch calls avatar_action::move, even on an empty ray.
+        const target_handler::trajectory traj =
+            target_handler::mode_accessible_melee( you, combat_attack_direction );
+        if( traj.empty() ) {
+            return;
+        }
+        Creature *target = get_creature_tracker().creature_at( traj.back(), true );
+        if( target == nullptr ) {
+            return;
+        }
+        if( you.is_adjacent( target, false ) ) {
+            if( !you.move_effects( true ) ) {
+                you.set_moves( 0 );
+                return;
+            }
+            you.melee_attack( *target, true );
+        } else {
+            you.reach_attack( traj.back() );
+        }
+        return;
+    }
     if( a11y::enabled() && combat_attack_direction < 0 ) {
         // The accessible Fire action is a gun chooser, not the generic
         // holster "use" menu. A selected firearm is equipped with the
@@ -4680,29 +4705,10 @@ bool game::handle_action()
             const std::string direction = action.substr( 28 );
             if( direction.size() == 1 && direction[0] >= '0' && direction[0] <= '7' ) {
                 const int dir = direction[0] - '0';
-                const item_location held = player_character.get_wielded_item();
-                if( held && held->is_gun() && !held->gun_current_mode().melee() ) {
-                    // Gun gestures retain their native directional firing
-                    // path and aim mode, unchanged.
-                    combat_attack_direction = dir;
-                    act = ACTION_FIRE;
-                } else {
-                    // CDDA's ordinary eight-direction movement is also its
-                    // melee control. Walking into a creature lets the game
-                    // decide whether to attack, displace, talk, or refuse;
-                    // an empty square follows the game's walking rules.
-                    // Do not invent a hostile-only filter or a no-move
-                    // fallback. Use the normal action pipeline so safety,
-                    // status effects, terrain, isometric rotation and turn
-                    // costs behave exactly as with a native movement key.
-                    constexpr action_id step_actions[8] = {
-                        ACTION_MOVE_FORTH, ACTION_MOVE_FORTH_RIGHT,
-                        ACTION_MOVE_RIGHT, ACTION_MOVE_BACK_RIGHT,
-                        ACTION_MOVE_BACK, ACTION_MOVE_BACK_LEFT,
-                        ACTION_MOVE_LEFT, ACTION_MOVE_FORTH_LEFT
-                    };
-                    act = step_actions[dir];
-                }
+                // A combat swipe is an attack, never a movement command.
+                // Fire() dispatches to the engine's ranged or melee path.
+                combat_attack_direction = dir;
+                act = ACTION_FIRE;
             }
         } else if( a11y::enabled() &&
                    action == "A11Y_INTERNAL_VEHICLE_BEGIN" ) {

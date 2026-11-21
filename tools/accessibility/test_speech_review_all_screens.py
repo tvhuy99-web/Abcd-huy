@@ -56,13 +56,13 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
 
     def test_concise_gestures_and_item_guidance_retains_controls(self):
         combat = self.strings["a11yCombatOn"]
-        self.assertLess(len(combat), 135)
-        for word in ("một ngón", "hai ngón", "bắn súng", "đánh",
-                     "ô trống", "nạp đạn", "vũ khí"):
+        self.assertLess(len(combat), 150)
+        for word in ("một ngón", "hai ngón", "bắn", "đánh",
+                     "tầm vũ khí", "không bước", "nạp đạn"):
             self.assertIn(word, combat.lower())
         for suffix in ("North", "South", "West", "East",
                        "Northwest", "Northeast", "Southwest", "Southeast"):
-            self.assertIn("Đánh hoặc bước",
+            self.assertIn("Tấn công",
                           self.strings["a11yGuideAttack" + suffix])
         self.assertNotIn("ba ngón", combat.lower())
         self.assertRegex(self.po, r'chỗ chứa và (?:"\n")?quyền sở hữu')

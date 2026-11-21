@@ -4147,10 +4147,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 default: break;
             }
-            // Eight directional strokes use native gameplay. Gun swipes
-            // fire; unarmed or melee swipes use the matching regular move
-            // key (including the game's bump-to-attack and interactions).
-            // Bent strokes retain the four diagonals.
+            // Eight directional strokes attack within the current weapon
+            // range using native targeting. Never walk on a combat swipe.
+            // Bent strokes retain the four diagonals; two fingers move.
             int direction = -1;
             switch (gestureId) {
                 case "swipe_up": direction = 0; break;

@@ -62,18 +62,15 @@ class TutorialCombatDummyContracts(unittest.TestCase):
         self.assertEqual(actual, expected)
         self.assertIn((21, 9), expected)
 
-    def test_reader_explains_adjacent_melee_and_empty_tile_movement(self):
+    def test_reader_explains_attack_range_and_separate_movement(self):
         self.assertIn('name="a11yCombatOn"', self.english)
-        self.assertIn("adjacent creature", self.english)
-        self.assertIn("empty tile can still move you", self.english)
-        self.assertIn('name="a11yCombatOn"', self.vietnamese)
-        # The new combat hint distinguishes gunfire, melee and walking
-        # without implying that empty tiles are always attacked.
+        self.assertIn("current range without walking", self.english)
+        self.assertIn("Two fingers move", self.english)
         combat = self.vietnamese.split(
             'name="a11yCombatOn">', 1)[1].split("</string>", 1)[0]
-        for required in ("bắn súng", "đánh", "ô trống", "có thể bước"):
+        for required in ("đánh hoặc bắn", "tầm vũ khí", "không bước", "Hai ngón đi"):
             self.assertIn(required, combat)
-        self.assertIn('name="a11yGuideAttackNorth">Đánh hoặc bước',
+        self.assertIn('name="a11yGuideAttackNorth">Tấn công',
                       self.vietnamese)
 
 

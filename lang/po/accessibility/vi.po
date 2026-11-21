@@ -6976,3 +6976,14 @@ msgstr "Ngó về hướng nào?"
 
 msgid "quick shortcuts"
 msgstr "phím tắt nhanh"
+
+#, c-format
+msgid "Attack %s"
+msgstr "Tấn công về phía %s"
+
+msgid "Attack the nearest valid target in this direction within the current weapon range. Never walk."
+msgstr "Tấn công mục tiêu hợp lệ gần nhất theo hướng này trong tầm vũ khí hiện tại. Không di chuyển."
+
+#, c-format
+msgid "No target in that direction within weapon range (%d tiles)."
+msgstr "Không có mục tiêu trong hướng này trong tầm vũ khí (%d ô)."
