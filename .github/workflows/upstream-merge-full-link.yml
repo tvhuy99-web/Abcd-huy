@@ -38,11 +38,12 @@ jobs:
           make -k -j3 all \
             CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
-      # Isolate static initialization, the core mod and tutorial dependencies.
+      # Isolate the core mod from tutorial dependencies. --jsonverify is not
+      # safe for headless CI: it does not enable test_mode (curses still opens).
       # Each check has its own bounded runtime; a timeout is a test failure,
       # never silently treated as success.
       - name: Diagnose native data loading by stage
-        timeout-minutes: 32
+        timeout-minutes: 25
         env:
           TERM: xterm
         run: |
@@ -109,7 +110,6 @@ jobs:
 
           echo '| Stage | Exit status | Limit |' >"$report/summary.md"
           echo '|---|---:|---:|' >>"$report/summary.md"
-          run_check static-json 300 --jsonverify
           run_check core-dda 480 --check-mods dda
           run_check tutorial-dda 540 --check-mods dda dda_tutorial
           cat "$report/summary.md" >>"$GITHUB_STEP_SUMMARY"
