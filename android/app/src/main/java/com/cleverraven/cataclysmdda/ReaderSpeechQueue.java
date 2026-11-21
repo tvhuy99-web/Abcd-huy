@@ -396,6 +396,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             return;
         }
         text = ReaderSpokenText.clean(text);
+        text = ReaderSpokenText.expandVietnameseUnits(text, initLocale);
         if (text.trim().isEmpty()) { return; }
         if (key != null && key.startsWith("game-message:")) {
             // Urgent warnings must reach the player before older, nonurgent

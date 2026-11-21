@@ -1,5 +1,6 @@
 package com.cleverraven.cataclysmdda;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -25,6 +26,16 @@ final class ReaderSpokenText {
             "(?m)^[ \\t]*(?:#[ \\t]*){2,}\\r?$");
     private static final Pattern EXCESS_DIAGRAM_GAPS = Pattern.compile("\n{3,}");
 
+    // Speech-only expansion of compact measurement units directly after numbers
+    // so Vietnamese TTS engines pronounce them naturally without altering UI width.
+    private static final Pattern UNIT_DEG_C = Pattern.compile("(\\d)[ \\t]*°C(?![\\p{L}\\p{N}_/])");
+    private static final Pattern UNIT_DEG_F = Pattern.compile("(\\d)[ \\t]*°F(?![\\p{L}\\p{N}_/])");
+    private static final Pattern UNIT_KMH = Pattern.compile("(\\d)[ \\t]*km/h(?![\\p{L}\\p{N}_/])");
+    private static final Pattern UNIT_MSVH = Pattern.compile("(\\d)[ \\t]*mSv/h(?![\\p{L}\\p{N}_/])");
+    private static final Pattern UNIT_KJ = Pattern.compile("(\\d)[ \\t]*kJ(?![\\p{L}\\p{N}_/])");
+    private static final Pattern UNIT_KCAL = Pattern.compile("(\\d)[ \\t]*kcal(?![\\p{L}\\p{N}_/])");
+    private static final Pattern UNIT_ML = Pattern.compile("(\\d)[ \\t]*mL(?![\\p{L}\\p{N}_/])");
+
     private ReaderSpokenText() { }
 
     static String clean(String text) {
@@ -39,5 +50,21 @@ final class ReaderSpokenText {
             }
         }
         return DUPLICATE_STOP.matcher(cleaned).replaceAll(".");
+    }
+
+    /** Expand units only for the selected Vietnamese voice, without changing UI text. */
+    static String expandVietnameseUnits(String text, Locale locale) {
+        if (text == null || locale == null || !"vi".equals(locale.getLanguage())) {
+            return text;
+        }
+        String cleaned = text;
+        cleaned = UNIT_DEG_C.matcher(cleaned).replaceAll("$1 độ C");
+        cleaned = UNIT_DEG_F.matcher(cleaned).replaceAll("$1 độ F");
+        cleaned = UNIT_KMH.matcher(cleaned).replaceAll("$1 ki lô mét trên giờ");
+        cleaned = UNIT_MSVH.matcher(cleaned).replaceAll("$1 mi li si vớt trên giờ");
+        cleaned = UNIT_KJ.matcher(cleaned).replaceAll("$1 ki lô jun");
+        cleaned = UNIT_KCAL.matcher(cleaned).replaceAll("$1 ki lô ca lo");
+        cleaned = UNIT_ML.matcher(cleaned).replaceAll("$1 mi li lít");
+        return cleaned;
     }
 }
