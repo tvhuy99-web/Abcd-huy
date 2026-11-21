@@ -32,7 +32,7 @@ class MasterSceneSurveyFlow(unittest.TestCase):
         self.assertNotIn("} else if (placeSurvey) {", reader)
         self.assertIn("private void renderPlaceSurvey()", reader)
         self.assertIn("private void closePlaceSurvey()", reader)
-        self.assertIn('report.split("\\r?\\n")', reader)
+        self.assertIn(r'report.split("\\r?\\n")', reader)
         self.assertIn("final int total = placeSurveyRows.size() + 1;", reader)
         self.assertIn("placeSurveyIndex + delta", reader)
         self.assertIn("if (placeSurveyOpen) { closePlaceSurvey(); return; }", reader)
