@@ -21,6 +21,7 @@
 #include "item.h"
 #include "map.h"
 #include "mapdata.h"
+#include "messages.h"
 #include "omdata.h"
 #include "output.h"
 #include "overmap.h"
@@ -336,6 +337,11 @@ void speak_new( std::vector<radar_contact> &fresh,
                                       static_cast<int>( changes.size() - max_changes ) );
     }
     if( !spoken.empty() ) {
+        // Reuse the game's notification history without speaking twice.
+        // Driving must not fill the history with passing radar contacts.
+        if( !get_avatar().in_vehicle ) {
+            Messages::add_msg_silent( urgent ? m_warning : m_info, spoken );
+        }
         a11y::android::announce( std::string( urgent ? "A11Y_RADAR_DANGER:" :
                                        "A11Y_RADAR_ALERT:" ) + spoken, urgent ? 3 : 1 );
     }
