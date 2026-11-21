@@ -302,6 +302,8 @@
     <string name="a11yGuideAutoPause">Tạm dừng hành trình và phanh xe</string>
     <string name="a11yGuideAutoMapCancel">Hủy hành trình tự lái và chuyển về Bản đồ</string>
     <!-- Reader-owned automatic proximity radar and selectable categories. -->
+    <string name="a11ySurveyTitle">Khảo sát địa điểm chi tiết</string>
+    <string name="a11ySurveyContinue">Tiếp tục</string>
     <string name="a11yRadarTitle">Rađa tự động</string>
     <string name="a11yRadarManage">Quản lý rađa</string>
     <string name="a11yRadarOn">Bật</string>
