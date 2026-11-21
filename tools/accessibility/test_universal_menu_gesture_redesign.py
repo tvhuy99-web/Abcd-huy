@@ -144,7 +144,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
         self.assertIn('here.label = _( "Death camera center" );', native)
         self.assertIn('boolean newlyNoteworthy = worldView', self.controller)
         self.assertIn(
-            'if (newlyNoteworthy) { feedback(nextTile.value); }',
+            'if (newlyNoteworthy && !placeSurveyOpen) { feedback(nextTile.value); }',
             self.controller)
 
     def test_world_tile_alert_speaks_visible_items_not_ordinary_floor(self):
@@ -185,7 +185,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
             'steppedToAnotherTile || !"alert".equals(previousTile.role)',
             self.controller)
         self.assertIn(
-            'if (newlyNoteworthy) { feedback(nextTile.value); }',
+            'if (newlyNoteworthy && !placeSurveyOpen) { feedback(nextTile.value); }',
             self.controller)
 
     def test_hub_long_press_keeps_gesture_assignment_and_favorites(self):
