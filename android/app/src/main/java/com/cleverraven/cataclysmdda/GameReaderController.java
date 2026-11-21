@@ -1179,7 +1179,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ReaderSnapshot.Node previousTile = previousSnapshot == null ? null
                         : previousSnapshot.find("world:here");
                 boolean worldView = nextTile != null;
-                sonar.setWorldActive(worldView && !comprehensiveMenu
+                sonar.setWorldActive(worldView && !comprehensiveMenu && !placeSurveyOpen
                         && foreground && windowFocused && preferences.isEnabled()
                         && debugReport == null);
                 if (comprehensiveMenu) {
@@ -1264,7 +1264,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && !commandPaletteOpen && !documentReader.isOpen()
                         ? inventoryMarkFeedback(previousSnapshot, next, focus) : "";
                 if (worldView) {
-                    if (newlyNoteworthy) { feedback(nextTile.value); }
+                    if (newlyNoteworthy && !placeSurveyOpen) { feedback(nextTile.value); }
                 } else if (enteredCraftRecipeDetail
                         && next.find("craft:detail:name") != null) {
                     // Speak name + actual description exactly once on entry.
@@ -1599,7 +1599,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             boolean active = foreground && windowFocused && preferences.isEnabled()
                     && snapshot != null && snapshot.find("world:here") != null
-                    && !comprehensiveMenu && debugReport == null;
+                    && !comprehensiveMenu && !placeSurveyOpen && debugReport == null;
             sonar.setWorldActive(active);
             if (active) {
                 sonar.updateTargets(creatures, items);
