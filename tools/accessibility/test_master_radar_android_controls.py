@@ -33,7 +33,8 @@ class RadarAndroidControls(unittest.TestCase):
         self.assertIn("hubSection = 13;", reader)
         self.assertIn("RADAR_CHANNEL_LANDMARKS", reader)
         self.assertIn("reader:radar:toggle", reader)
-        self.assertIn("} else if (placeSurvey) {", reader)
+        self.assertIn("if (placeSurvey) {", reader)
+        self.assertIn("openPlaceSurvey(message.substring(SCENE_PREFIX.length()))", reader)
 
 
 if __name__ == "__main__":
