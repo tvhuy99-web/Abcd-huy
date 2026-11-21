@@ -24,6 +24,13 @@ class PartialMeleeHitParity(unittest.TestCase):
         self.assertIn("Messages::mute_combat_speech original_melee_hit", melee)
         self.assertIn("Hit %1$s. %2$d damage. %3$d HP remaining.", melee)
 
+    def test_paid_dodge_uses_upstream_combat_exertion(self):
+        character = (SRC / "character.cpp").read_text("utf-8")
+        dodge = character.split("void Character::on_try_dodge()", 1)[1].split(
+            "void Character::on_dodge(", 1)[0]
+        self.assertIn("set_activity_level( COMBAT_EXERCISE );", dodge)
+        self.assertNotIn("set_activity_level( EXTRA_EXERCISE );", dodge)
+
     def test_melee_and_reach_use_upstream_activity_level(self):
         melee = (SRC / "melee.cpp").read_text("utf-8")
         self.assertEqual(melee.count("// Fighting is hard work\n    set_activity_level( COMBAT_EXERCISE );"), 2)

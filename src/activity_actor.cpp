@@ -127,6 +127,7 @@
 #include "shearing.h"
 #include "skill.h"
 #include "sounds.h"
+#include "stomach.h"
 #include "string_formatter.h"
 #include "talker.h"
 #include "temp_crafting_inventory.h"
@@ -6447,30 +6448,46 @@ std::unique_ptr<activity_actor> close_tile_activity_actor::deserialize( JsonValu
     return actor.clone();
 }
 
-void camp_meal_activity_actor::start( player_activity &act, Character & )
+void camp_meal_activity_actor::start( player_activity &act, Character &who )
 {
-    // Keep a distinct activity so a threatened NPC can abandon the meal without
-    // deducting any food from the camp.
-    act.moves_total = to_moves<int>( 5_minutes );
+    const basecamp *bcp = overmap_buffer.find_camp( camp_position.xy() ).value_or( nullptr );
+    if( bcp == nullptr || meal_kcals <= 0 || !bcp->allowed_access_by( who ) ) {
+        act.set_to_null();
+        return;
+    }
+    act.moves_total = to_moves<int>( who.get_consume_time( camp_meal_of( *bcp, meal_kcals ) ) );
     act.moves_left = act.moves_total;
 }
 
 void camp_meal_activity_actor::finish( player_activity &act, Character &who )
 {
-    // Look up the camp at finish time: it might have been lost or its
-    // stockpile depleted while the NPC was eating.
-    if( meal_kcals > 0 && who.is_npc() ) {
-        const std::optional<basecamp *> camp = overmap_buffer.find_camp( camp_position.xy() );
-        if( camp && ( *camp )->allowed_access_by( who ) ) {
-            const int available = ( *camp )->get_owner()->food_supply().kcal();
-            if( available > 0 ) {
-                const int portion = std::min( meal_kcals, available );
-                ( *camp )->feed_workers( who, ( *camp )->camp_food_supply( -portion ),
-                                        camp_meal::personal );
-            }
-        }
-    }
     act.set_to_null();
+    basecamp *bcp = overmap_buffer.find_camp( camp_position.xy() ).value_or( nullptr );
+    if( bcp == nullptr || meal_kcals <= 0 || !bcp->allowed_access_by( who ) ) {
+        return;
+    }
+    // As upstream, recheck the NPC's appetite at the completion of the meal.
+    if( who.is_npc() && !who.as_npc()->intake_fits( npc::need_goal_id::eat_food ) ) {
+        return;
+    }
+    // Keep the fork's stockpile guard: the larder may have been emptied
+    // while the NPC was eating. Do not divide by zero in camp_food_supply.
+    const faction *owner = bcp->get_owner();
+    if( owner == nullptr ) {
+        return;
+    }
+    const int portion = owner->consumes_food ?
+                        std::min( meal_kcals, owner->food_supply().kcal() ) : meal_kcals;
+    if( portion <= 0 ) {
+        if( who.is_npc() ) {
+            who.as_npc()->refuse_camp_meal();
+        }
+        return;
+    }
+    if( bcp->feed_workers( who, bcp->camp_food_supply( -portion ), camp_meal::personal ) <= 0 &&
+        who.is_npc() ) {
+        who.as_npc()->refuse_camp_meal();
+    }
 }
 
 void camp_meal_activity_actor::serialize( JsonOut &jsout ) const

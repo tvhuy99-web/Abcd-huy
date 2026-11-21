@@ -192,6 +192,11 @@ class UpstreamMealAndWoundCompatibility(unittest.TestCase):
         self.assertIn("class camp_meal_activity_actor", header)
         self.assertIn("void camp_meal_activity_actor::finish(", actor)
         self.assertIn("camp_food_supply( -portion )", actor)
+        self.assertIn("who.get_consume_time( camp_meal_of( *bcp, meal_kcals ) )", actor)
+        self.assertIn("who.as_npc()->intake_fits( npc::need_goal_id::eat_food )", actor)
+        self.assertIn("who.as_npc()->refuse_camp_meal();", actor)
+        self.assertIn("owner->consumes_food", actor)
+        self.assertIn("if( portion <= 0 )", actor)
         self.assertIn("camp_meal::personal", actor)
         self.assertIn('data.read( "meal_kcals", actor.meal_kcals )', actor)
         self.assertIn(
