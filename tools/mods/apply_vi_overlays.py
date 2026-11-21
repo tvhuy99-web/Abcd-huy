@@ -19,7 +19,7 @@ OVERLAYS = {
         "folder": "Arcana_StrangeAeons", "id": "Arcana",
         "revision": "080d8e9e454d2179bc98eb07de075f74e58bcbd1",
         "file": "translations/arcana_vi_overlay.b64",
-        "sha256": "c90dede89fb5b31852256e3b57828d235e908ff70ecea633fceab7046c060d37",
+        "sha256": "a2fedcba612d63fd78fbb91b99d9121ff36e6e4dcf5ee9c550b33c4740bd3ac9",
         "max_bytes": 1_500_000, "max_files": 339,
         "source_blobs": "translations/arcana_upstream_blob_shas.json",
         "expected_strings": 6794,
@@ -164,8 +164,14 @@ def apply(kind, data_mods, dry_run=False):
             old = parent[key]
             if not isinstance(old, str):
                 raise ValueError("Non-string original: " + name + pointer)
-            if Counter(TOKEN.findall(old)) != Counter(TOKEN.findall(translated)):
+            old_tokens = TOKEN.findall(old)
+            new_tokens = TOKEN.findall(translated)
+            if Counter(old_tokens) != Counter(new_tokens):
                 raise ValueError("Broken placeholder: " + name + pointer)
+            old_unnumbered = [t for t in old_tokens if t.startswith("%") and "$" not in t]
+            new_unnumbered = [t for t in new_tokens if t.startswith("%") and "$" not in t]
+            if old_unnumbered != new_unnumbered:
+                raise ValueError("Reordered unnumbered placeholder: " + name + pointer)
             parent[key] = translated
             strings += 1
         prepared.append((path, json.dumps(obj, ensure_ascii=False, indent=2) + "\n"))
