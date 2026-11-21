@@ -66,7 +66,7 @@ class NearbySquareScanTests(unittest.TestCase):
         self.assertNotIn("tile.source != a11y::observation_source::visible", code)
         for field in ("items", "creatures", "traps", "vehicle", "furniture"):
             self.assertIn("tile." + field, code)
-        self.assertIn("observed.heard_marker", code)
+        self.assertIn("sounds::sound_at( position )", code)
         self.assertNotIn("add_row( tile.terrain, relative, 0 );", code)
         self.assertIn("seen_vehicles.insert(", code)
         self.assertIn("entry.second.is_dangerous()", code)

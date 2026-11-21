@@ -26,18 +26,34 @@ public class NativeUI {
         private Semaphore semaphore = new Semaphore(0, true);
 
         public void popup(final String message) {
+            final java.util.concurrent.atomic.AtomicBoolean released =
+                    new java.util.concurrent.atomic.AtomicBoolean(false);
+            final Runnable releaseOnce = () -> {
+                if (released.compareAndSet(false, true)) {
+                    semaphore.release();
+                }
+            };
             activity.runOnUiThread(new Runnable() {
                 public void run() {
-                    AlertDialog dialog = new AlertDialog.Builder(activity, R.style.AlertDialogTheme)
-                            .setTitle("")
-                            .setCancelable(false)
-                            .setMessage(message)
-                            .setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    semaphore.release();
-                                }
-                            }).create();
-                    dialog.show();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        releaseOnce.run();
+                        return;
+                    }
+                    try {
+                        AlertDialog dialog = new AlertDialog.Builder(activity, R.style.AlertDialogTheme)
+                                .setTitle("")
+                                .setCancelable(false)
+                                .setMessage(message)
+                                .setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        releaseOnce.run();
+                                    }
+                                }).create();
+                        dialog.setOnDismissListener(d -> releaseOnce.run());
+                        dialog.show();
+                    } catch (RuntimeException ex) {
+                        releaseOnce.run();
+                    }
                 }
             });
 
@@ -52,28 +68,47 @@ public class NativeUI {
     private class QueryYN {
         private Semaphore semaphore = new Semaphore(0, true);
 
-        private YesNoDialogResponse response;
+        private YesNoDialogResponse response = YesNoDialogResponse.NO;
 
         public boolean queryYN(final String message) {
+            response = YesNoDialogResponse.NO;
+            final java.util.concurrent.atomic.AtomicBoolean released =
+                    new java.util.concurrent.atomic.AtomicBoolean(false);
+            final Runnable releaseOnce = () -> {
+                if (released.compareAndSet(false, true)) {
+                    semaphore.release();
+                }
+            };
             activity.runOnUiThread(new Runnable() {
                 public void run() {
-                    AlertDialog dialog = new AlertDialog.Builder(activity, R.style.AlertDialogTheme)
-                            .setTitle("")
-                            .setCancelable(false)
-                            .setMessage(message)
-                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    response = YesNoDialogResponse.YES;
-                                    semaphore.release();
-                                }
-                            })
-                            .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    response = YesNoDialogResponse.NO;
-                                    semaphore.release();
-                                }
-                            }).create();
-                    dialog.show();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        response = YesNoDialogResponse.NO;
+                        releaseOnce.run();
+                        return;
+                    }
+                    try {
+                        AlertDialog dialog = new AlertDialog.Builder(activity, R.style.AlertDialogTheme)
+                                .setTitle("")
+                                .setCancelable(false)
+                                .setMessage(message)
+                                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        response = YesNoDialogResponse.YES;
+                                        releaseOnce.run();
+                                    }
+                                })
+                                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        response = YesNoDialogResponse.NO;
+                                        releaseOnce.run();
+                                    }
+                                }).create();
+                        dialog.setOnDismissListener(d -> releaseOnce.run());
+                        dialog.show();
+                    } catch (RuntimeException ex) {
+                        response = YesNoDialogResponse.NO;
+                        releaseOnce.run();
+                    }
                 }
             });
 
@@ -114,31 +149,55 @@ public class NativeUI {
 
             while (singleChoiceResponse == init
                     || (singleChoiceResponse != cancel && enabled[singleChoiceResponse] == false)) {
+                final java.util.concurrent.atomic.AtomicBoolean released =
+                        new java.util.concurrent.atomic.AtomicBoolean(false);
+                final Runnable releaseOnce = () -> {
+                    if (released.compareAndSet(false, true)) {
+                        semaphore.release();
+                    }
+                };
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
-                        AlertDialog dialog = new AlertDialog.Builder(activity, R.style.AlertDialogTheme)
-                                .setTitle(text)
-                                .setItems(choices, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        singleChoiceResponse = which;
-                                        semaphore.release();
-                                    }
-                                })
-                                .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                    public void onCancel(DialogInterface dialog) {
-                                        singleChoiceResponse = cancel;
-                                        semaphore.release();
-                                    }
-                                })
-                                .create();
-                        dialog.show();
+                        if (activity.isFinishing() || activity.isDestroyed()) {
+                            singleChoiceResponse = cancel;
+                            releaseOnce.run();
+                            return;
+                        }
+                        try {
+                            AlertDialog dialog = new AlertDialog.Builder(activity, R.style.AlertDialogTheme)
+                                    .setTitle(text)
+                                    .setItems(choices, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            singleChoiceResponse = which;
+                                            releaseOnce.run();
+                                        }
+                                    })
+                                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                        public void onCancel(DialogInterface dialog) {
+                                            singleChoiceResponse = cancel;
+                                            releaseOnce.run();
+                                        }
+                                    })
+                                    .create();
+                            dialog.setOnDismissListener(d -> {
+                                if (released.compareAndSet(false, true)) {
+                                    singleChoiceResponse = cancel;
+                                    semaphore.release();
+                                }
+                            });
+                            dialog.show();
+                        } catch (RuntimeException ex) {
+                            singleChoiceResponse = cancel;
+                            releaseOnce.run();
+                        }
                     }
                 });
 
                 try {
                     semaphore.acquire();
                 } catch (InterruptedException ex) {
-                    // No-op
+                    Thread.currentThread().interrupt();
+                    return cancel;
                 }
 
                 if (singleChoiceResponse != cancel && enabled[singleChoiceResponse] == false) {

@@ -1,6 +1,7 @@
 package android.speech.tts;
 
 import android.content.Context;
+import android.media.AudioAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +48,7 @@ public final class TextToSpeech {
     public boolean networkVoice;
     public float pitch = 1.0f;
     public Object lastSpeakOptions;
+    public AudioAttributes audioAttributes;
     private Locale locale;
 
     public TextToSpeech(Context context, OnInitListener listener) {
@@ -60,6 +62,11 @@ public final class TextToSpeech {
 
     public void finishInit(int status) {
         initialized.onInit(status);
+    }
+
+    public int setAudioAttributes(AudioAttributes audioAttributes) {
+        this.audioAttributes = audioAttributes;
+        return SUCCESS;
     }
 
     public int setLanguage(Locale locale) {

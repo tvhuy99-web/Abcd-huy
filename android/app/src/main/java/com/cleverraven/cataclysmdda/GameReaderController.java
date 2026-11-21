@@ -470,6 +470,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (preferences.isEnabled() && !speech.isReady()) {
             speech.initialize(preferences);
         }
+        handler.removeCallbacks(travelStatePoll);
+        handler.postDelayed(travelStatePoll, 200);
         render();
         updateNativeState(true);
     }
@@ -504,6 +506,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderDiagnostics.get().event("lifecycle_pause");
         announceTtsSavedAfterInit = false;
         foreground = false;
+        handler.removeCallbacks(travelStatePoll);
         sonar.setWorldActive(false);
         presentationEpoch++;
         root.cancelGesture();
@@ -1605,11 +1608,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
      * also spoken, and the player itself checks the user's opt-in.
      */
     public void onGameCue(String name) {
-        if (closed || !foreground || !preferences.isEnabled() || name == null) {
+        if (name == null) {
             return;
         }
-        ReaderDiagnostics.get().count("cue_" + name);
-        cues.play(name);
+        handler.post(() -> {
+            if (closed || !foreground || !preferences.isEnabled()) {
+                return;
+            }
+            ReaderDiagnostics.get().count("cue_" + name);
+            cues.play(name);
+        });
     }
 
     private boolean receiptMatches(JSONObject object) {
@@ -3092,6 +3100,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         int command = state == 3 ? (travelChoice == 0 ? 4
                 : travelChoice == 1 ? 2 : 3)
                 : travelChoice == 0 ? (state == 2 || state == 4 ? 2 : 1) : 3;
+        requestTravelControl(command, state);
+    }
+
+    private void requestTravelControl(int command, int state) {
         try {
             if (CataclysmDDA.nativeTravelControl(command)) {
                 SessionDebugLog.event("TRAVEL_CONTROL",
@@ -4778,7 +4790,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 });
         root.cancelGesture();
         render();
+        if (editor != null && editor.isNativeInputOnly()) {
+            editor.focusNativeInput();
+        }
         feedback(activity.getString(R.string.a11yEditorInstructions));
+    }
+
+    @Override
+    public boolean shouldPassTouchToChild(android.view.MotionEvent event) {
+        if (editor == null || !editor.isNativeInputOnly()) {
+            return false;
+        }
+        android.view.View field = editor.getField();
+        if (field == null || !field.isShown()) {
+            return false;
+        }
+        int[] loc = new int[2];
+        field.getLocationOnScreen(loc);
+        float x = event.getRawX();
+        float y = event.getRawY();
+        return x >= loc[0] && x <= loc[0] + field.getWidth()
+                && y >= loc[1] && y <= loc[1] + field.getHeight();
     }
 
     /**
@@ -5851,12 +5883,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (comprehensiveMenu) { readCurrent(); }
             return;
         }
-        if (autonomousDriveTrip && rawNativeTravelState() != 0) {
-            // Android Back cancels the full destination on the native game
-            // thread; it must never activate a hidden Continue/Cancel row.
-            travelChoice = 1;
-            activateTravel();
-            return;
+        if (autonomousDriveTrip) {
+            final int nativeState = rawNativeTravelState();
+            if (nativeState != 0) {
+                // Send Cancel directly: the state may change between the
+                // swipe and native receipt. Never derive Resume from a row.
+                requestTravelControl(3, nativeState);
+                return;
+            }
         }
         if (walkingTravelPanelActive()) {
             if (travelState() == 4) {
@@ -5974,8 +6008,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean canToggleReaderOutsideWorld() {
         // Check screen identity rather than TTS readiness. A failed engine
         // must not turn the map's character-details gesture into a toggle.
-        boolean worldMap = snapshot != null && snapshot.find("world:here") != null
-                && snapshot.find("reader:coordinates") != null
+        boolean worldMap = ((snapshot != null && snapshot.find("world:here") != null
+                && snapshot.find("reader:coordinates") != null)
+                || autonomousDriveTravelActive())
                 && !comprehensiveMenu && !commandPaletteOpen && editor == null
                 && debugReport == null;
         return !closed && foreground && windowFocused && !usesTouchExploration()

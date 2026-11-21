@@ -1,6 +1,7 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
+import android.media.AudioAttributes;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -252,6 +253,10 @@ public final class AndroidSpeech implements AutoCloseable {
                     return;
                 }
                 try {
+                    engine.setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build());
                     final int result = engine.setLanguage(language);
                     if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                         fail(State.MISSING_LANGUAGE);

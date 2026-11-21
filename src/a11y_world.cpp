@@ -809,32 +809,33 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                     vehicle_detail += " " + string_format( _( "Battery: %s." ), battery );
                 }
             }
+            float cached_steering = 0.0f;
+            int cached_total_wheels = 0;
+            int cached_intact_wheels = 0;
             if( local_driver ) {
                 const int safe_speed = static_cast<int>( std::lround(
                         convert_velocity( veh.safe_velocity( get_map() ), VU_VEHICLE ) ) );
                 vehicle_detail += " " + string_format(
                                       _( "Calculated safe speed: %1$d %2$s." ),
                                       safe_speed, velocity_units( VU_VEHICLE ) );
-                const float steering = veh.steering_effectiveness( get_map() );
+                cached_steering = veh.steering_effectiveness( get_map() );
                 vehicle_detail += " " + std::string(
-                                      steering < 0.0f ? _( "Steering system absent." ) :
-                                      steering == 0.0f ? _( "Steering system broken." ) :
-                                      steering < 0.5f ? _( "Steering system weakened." ) :
+                                      cached_steering < 0.0f ? _( "Steering system absent." ) :
+                                      cached_steering == 0.0f ? _( "Steering system broken." ) :
+                                      cached_steering < 0.5f ? _( "Steering system weakened." ) :
                                       _( "Steering system operational." ) );
-                int total_wheels = 0;
-                int intact_wheels = 0;
                 for( int index = 0; index < veh.part_count(); ++index ) {
                     const vehicle_part &part = veh.part( index );
                     if( !part.removed && !part.is_fake && part.info().has_flag( VPFLAG_WHEEL ) ) {
-                        ++total_wheels;
+                        ++cached_total_wheels;
                         if( !part.is_broken() ) {
-                            ++intact_wheels;
+                            ++cached_intact_wheels;
                         }
                     }
                 }
-                if( total_wheels > 0 ) {
+                if( cached_total_wheels > 0 ) {
                     vehicle_detail += " " + string_format( _( "Intact wheels: %1$d of %2$d." ),
-                                                         intact_wheels, total_wheels );
+                                                         cached_intact_wheels, cached_total_wheels );
                 }
                 if( !veh.engines.empty() ) {
                     int intact_engines = 0;
@@ -885,7 +886,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 // Only add an explanation when the native vehicle state
                 // identifies a specific reason steering cannot take effect.
                 // Do not mistake an ordinary pending turn for a failed turn.
-                const float steering = veh.steering_effectiveness( get_map() );
+                const float steering = cached_steering;
                 if( veh.is_on_ramp ) {
                     heading_report += ". " + std::string(
                                           _( "You can't turn the vehicle while on a ramp." ) );
@@ -919,30 +920,17 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 if( !fuel.empty() ) {
                     brief_condition += " " + string_format( _( "Fuel: %s." ), fuel );
                 }
-                const float steer = veh.steering_effectiveness( get_map() );
-                if( steer < 0.0f ) {
+                if( cached_steering < 0.0f ) {
                     brief_condition += " " + std::string( _( "Steering system absent." ) );
-                } else if( steer == 0.0f ) {
+                } else if( cached_steering == 0.0f ) {
                     brief_condition += " " + std::string( _( "Steering system broken." ) );
-                } else if( steer < 0.5f ) {
+                } else if( cached_steering < 0.5f ) {
                     brief_condition += " " + std::string( _( "Steering system weakened." ) );
                 }
-                int wheel_total = 0;
-                int wheel_intact = 0;
-                for( int index = 0; index < veh.part_count(); ++index ) {
-                    const vehicle_part &part = veh.part( index );
-                    if( !part.removed && !part.is_fake &&
-                        part.info().has_flag( VPFLAG_WHEEL ) ) {
-                        ++wheel_total;
-                        if( !part.is_broken() ) {
-                            ++wheel_intact;
-                        }
-                    }
-                }
-                if( wheel_total > 0 && wheel_intact < wheel_total ) {
+                if( cached_total_wheels > 0 && cached_intact_wheels < cached_total_wheels ) {
                     brief_condition += " " + string_format(
                                            _( "Intact wheels: %1$d of %2$d." ),
-                                           wheel_intact, wheel_total );
+                                           cached_intact_wheels, cached_total_wheels );
                 }
             }
             if( veh.skidding ) {
@@ -1772,6 +1760,8 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
             body_tiles.push_back( veh.bub_part_pos( here, i ).xy() );
         }
     }
+    std::sort( body_tiles.begin(), body_tiles.end() );
+    body_tiles.erase( std::unique( body_tiles.begin(), body_tiles.end() ), body_tiles.end() );
     const auto clearance = [&body_tiles, horizon]( const point_bub_ms &target ) {
         int closest = horizon;
         for( const point_bub_ms &body : body_tiles ) {

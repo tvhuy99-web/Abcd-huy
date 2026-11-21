@@ -885,6 +885,7 @@ public class SplashScreen extends Activity {
         private long lastProgressMillis = 0;
         private long copiedBytes = 0;
         private int installedFiles = 0;
+        private int totalInstallFiles = 0;
 
         private AlertDialog installationAlert;
         private AlertDialog settingsAlert;
@@ -1238,6 +1239,7 @@ public class SplashScreen extends Activity {
                 }
                 totalFiles = assetFiles.size();
                 countMillis = SystemClock.elapsedRealtime() - phaseStart;
+                totalInstallFiles = totalFiles;
                 publishProgress(0, totalFiles);
 
                 // Measure the exact uncompressed size by streaming the
@@ -1567,7 +1569,7 @@ public class SplashScreen extends Activity {
             long now = SystemClock.elapsedRealtime();
             if (now - lastProgressMillis >= PROGRESS_INTERVAL_MILLIS) {
                 lastProgressMillis = now;
-                publishProgress(installedFiles);
+                publishProgress(installedFiles, totalInstallFiles);
             }
             InputStream in = null;
             OutputStream out = null;

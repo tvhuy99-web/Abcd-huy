@@ -32,6 +32,8 @@
 #include "enum_traits.h"
 #if defined(__ANDROID__)
 #include "field.h"
+#include "magic_enchantment.h"
+#include "sounds.h"
 #endif
 #include "game.h"
 #include "game_constants.h"
@@ -1257,6 +1259,7 @@ void surroundings_menu::execute_accessible()
     const tripoint_bub_ms origin = you.pos_bub();
     map &here = get_map();
     std::set<const vehicle *> seen_vehicles;
+    const bool has_special_vision = !you.enchantment_cache->special_vision_vector.empty();
     const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
                               int stop_distance, nearby_kind kind ) {
         if( !name.empty() ) {
@@ -1280,15 +1283,16 @@ void surroundings_menu::execute_accessible()
                 // Preserve heard markers, but inspect raw map objects
                 // exactly like the 16-tile assisted scan. Do not include
                 // ordinary empty floors, grass or roads in this list.
-                const a11y::tile_observation observed = a11y::observe_tile( position );
                 const a11y::unrestricted_tile tile = a11y::scan_unrestricted_tile( position );
-                if( tile.creatures.empty() ) {
+                if( tile.creatures.empty() && has_special_vision ) {
+                    const a11y::tile_observation observed = a11y::observe_tile( position );
                     for( const std::string &perception : observed.special_perceptions ) {
                         add_row( remove_color_tags( perception ), relative, 1, nearby_kind::unclassified );
                     }
                 }
-                if( !observed.heard_marker.empty() ) {
-                    add_row( remove_color_tags( observed.heard_marker ), relative, 1,
+                const std::string heard_marker = sounds::sound_at( position );
+                if( !heard_marker.empty() ) {
+                    add_row( remove_color_tags( heard_marker ), relative, 1,
                              nearby_kind::unclassified );
                 }
                 for( const std::string &creature : tile.creatures ) {

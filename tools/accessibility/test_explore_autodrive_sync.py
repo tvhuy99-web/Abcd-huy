@@ -342,12 +342,11 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
                       CONTROLLER)
         self.assertIn("public void openActionMenu()", CONTROLLER)
         self.assertIn("showComprehensiveMenu();", CONTROLLER)
-        self.assertIn("if (autonomousDriveTrip && rawNativeTravelState() != 0)",
-                      CONTROLLER)
+        self.assertIn("if (autonomousDriveTrip) {", CONTROLLER)
+        self.assertIn("final int nativeState = rawNativeTravelState();", CONTROLLER)
         self.assertNotIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
                          CONTROLLER)
-        self.assertIn("travelChoice = 1;\n"
-                      "            activateTravel();", CONTROLLER)
+        self.assertIn("requestTravelControl(3, nativeState);", CONTROLLER)
         self.assertIn("( suspended() && control != 3 )", BRIDGE)
         self.assertIn("return pending_travel_control.exchange( 0", BRIDGE)
 

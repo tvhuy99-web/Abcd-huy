@@ -261,7 +261,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("spoken_heading( veh.face.dir() )", heading)
         self.assertNotIn("spoken_heading( veh.turn_dir )", heading)
         self.assertNotIn('_( "Requested heading: %s." )', heading)
-        self.assertIn("veh.steering_effectiveness( get_map() )", heading)
+        self.assertIn("const float steering = cached_steering;", heading)
         self.assertIn("veh.skidding", heading)
         self.assertIn("veh.velocity == 0 && veh.turn_dir != veh.face.dir()", heading)
         self.assertIn('next.find("reader:vehicle:heading")', CTRL)

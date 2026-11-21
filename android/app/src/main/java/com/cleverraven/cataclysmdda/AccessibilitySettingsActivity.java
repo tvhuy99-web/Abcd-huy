@@ -89,11 +89,12 @@ public final class AccessibilitySettingsActivity extends Activity {
         distanceValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         controls.addView(distanceValue);
         SeekBar distance = new SeekBar(this);
+        final boolean[] initializingSliders = { true };
         distance.setMax(2);
         distance.setProgress(prefs.getSwipeDistanceLevel());
         distance.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int level, boolean fromUser) {
-                if (fromUser) { prefs.setSwipeDistanceLevel(level); }
+                if (!initializingSliders[0]) { prefs.setSwipeDistanceLevel(level); }
                 String choice = getString(new int[] { R.string.a11ySwipeDistanceShort,
                         R.string.a11ySwipeDistanceStandard,
                         R.string.a11ySwipeDistanceLong }[level]);
@@ -122,7 +123,7 @@ public final class AccessibilitySettingsActivity extends Activity {
         duration.setProgress(prefs.getSwipeDurationLevel());
         duration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int level, boolean fromUser) {
-                if (fromUser) { prefs.setSwipeDurationLevel(level); }
+                if (!initializingSliders[0]) { prefs.setSwipeDurationLevel(level); }
                 String choice = getString(new int[] { R.string.a11ySwipeDurationQuick,
                         R.string.a11ySwipeDurationStandard,
                         R.string.a11ySwipeDurationDeliberate }[level]);
@@ -139,6 +140,7 @@ public final class AccessibilitySettingsActivity extends Activity {
                 R.string.a11ySwipeDurationDeliberate }[duration.getProgress()]);
         durationValue.setText(getString(R.string.a11ySwipeDurationValue, durationChoice));
         duration.setContentDescription(durationValue.getText());
+        initializingSliders[0] = false;
 
         Button back = new Button(this);
         back.setText(R.string.a11yReaderReturn);

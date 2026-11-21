@@ -718,7 +718,7 @@ msgid "Starting proficiencies"
 msgstr "Năng lực thành thạo ban đầu"
 
 msgid "Starting bionics"
-msgstr "Bionic ban đầu"
+msgstr "Thiết bị cấy ghép ban đầu"
 
 msgid "Starting spells"
 msgstr "Phép ban đầu"
@@ -834,7 +834,7 @@ msgid ""
 "next value to change it, or activate to open its editor. The game's normal "
 "options flow handles saving when applicable."
 msgstr ""
-"Chọn tùy chọn để nghe giá trị và mô tả. Dùng Giá trị trước/sau để đổi hoặc "
+"Chọn tùy chọn để nghe giá trị và mô tả. Dùng Giá trị trước hoặc sau để đổi hoặc "
 "kích hoạt để chỉnh sửa. Game sẽ lưu khi cần."
 
 msgid "Activate to return to world mod selection."
@@ -964,7 +964,7 @@ msgid ""
 "Your offer: %1$s item units, estimated value %2$s. NPC offer: %3$s item "
 "units, estimated value %4$s. Current balance: %5$s."
 msgstr ""
-"Bạn đưa %1$s đơn vị, giá %2$s. NPC đưa %3$s đơn vị, giá %4$s. Số dư: %5$s."
+"Bạn đưa %1$s đơn vị, giá %2$s. Đối phương đưa %3$s đơn vị, giá %4$s. Số dư: %5$s."
 
 msgid "Balance is acceptable to the trader."
 msgstr "Số dư này được người giao dịch chấp nhận."
@@ -1199,7 +1199,7 @@ msgstr "Mod này có lỗi và không thể thêm vào."
 
 #, c-format
 msgid "Bionics: %s"
-msgstr "Bionic: %s"
+msgstr "Thiết bị cấy ghép: %s"
 
 #, c-format
 msgid "Spells: %s"
@@ -1774,7 +1774,7 @@ msgstr "%1$s: hợp lệ cho %2$s.\n"
 
 #, c-format
 msgid "%d bionics."
-msgstr "%d bionic."
+msgstr "%d thiết bị cấy ghép."
 
 #, c-format
 msgid "%d column left"
@@ -1834,15 +1834,15 @@ msgstr "%s: cấp 0: %d-%d, mỗi cấp: %.2f - %.2f, cấp tối đa: %d-%d"
 
 msgid "* is used as a wildcard and matching is case insensitive.  Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed."
 msgstr ""
-"* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ "
+"Dấu sao được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ "
 "thường. Ví dụ: 'footsteps' khớp đúng tên âm thanh, 'a loud ba*' khớp các âm "
 "thanh bắt đầu bằng 'a loud ba', '*losion!' khớp các âm thanh kết thúc bằng "
-"'losion!', và 'a *oud*ba*' cho thấy có thể dùng nhiều dấu *."
+"'losion!', và 'a *oud*ba*' cho thấy có thể dùng nhiều dấu sao."
 
 msgid "* is used as a wildcard and matching is case insensitive.  Examples: 'human' matches every NPC, 'zombie' matches the monster name exactly, 'acidic zo*' matches monsters beginning with 'acidic zo', '*mbie' matches monsters ending with 'mbie', and '*cid*zo*ie' shows that multiple * are allowed."
 msgstr ""
 "* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ "
-"thường. Ví dụ: 'human' khớp mọi NPC, 'zombie' khớp đúng tên quái vật, "
+"thường. Ví dụ: 'human' khớp mọi nhân vật không do người chơi điều khiển, 'zombie' khớp đúng tên quái vật, "
 "'acidic zo*' khớp các quái vật bắt đầu bằng 'acidic zo', '*mbie' khớp các "
 "quái vật kết thúc bằng 'mbie', và '*cid*zo*ie' cho thấy có thể dùng nhiều "
 "dấu *."
@@ -1986,7 +1986,7 @@ msgid "Adjust the selected amount of the highlighted item in this pane to balanc
 msgstr ""
 "Điều chỉnh số lượng đã chọn của vật phẩm đang được làm nổi bật trong ngăn "
 "này để cân bằng đề nghị hiện tại. Việc này thay đổi lựa chọn, giống như "
-"bật/tắt một vật phẩm; nó không hoàn tất giao dịch."
+"bật hoặc tắt một vật phẩm; nó không hoàn tất giao dịch."
 
 msgid "Advanced inventory"
 msgstr "Kho nâng cao"
@@ -2081,8 +2081,8 @@ msgstr "Thái độ chỉ áp dụng cho các quy tắc phát hiện thù địc
 #, c-format
 msgid "Auto pickup is currently %1$s in the options.  Current tab: %2$s. %3$d rule(s) on this tab."
 msgstr ""
-"Tự động nhặt hiện đang %1$s trong tùy chọn. Tab hiện tại: %2$s. Có %3$d quy "
-"tắc ở tab này."
+"Tự động nhặt hiện đang %1$s trong tùy chọn. Thẻ hiện tại: %2$s. Có %3$d quy "
+"tắc ở thẻ này."
 
 msgid "Auto pickup is currently disabled.  Activate to enable it."
 msgstr "Tự động nhặt hiện đang tắt. Kích hoạt để bật."
@@ -2110,7 +2110,7 @@ msgid "Binding scope"
 msgstr "Phạm vi gán phím"
 
 msgid "Blacklist/Whitelist"
-msgstr "Danh sách chặn/Danh sách cho phép"
+msgstr "Danh sách chặn hoặc danh sách cho phép"
 
 msgid "Blast"
 msgstr "Vụ nổ"
@@ -2370,7 +2370,7 @@ msgstr ""
 " chưa từng thấy được công bố là chưa khám phá và không được gọi tên. Tọa độ "
 "con trỏ là chính xác vì bản đồ là bản ghi của chính nhân vật. Ghi chú bản đồ"
 " được đọc gồm nội dung của nó cộng với biểu tượng và màu của nó bằng lời, và"
-" vùng nguy hiểm được nêu dưới dạng bán kính tính bằng ô bản đồ. Node tuyến "
+" vùng nguy hiểm được nêu dưới dạng bán kính tính bằng ô bản đồ. Điểm tuyến "
 "hiện tại nêu tên điểm đến đã lên kế hoạch; việc bắt đầu di chuyển là một "
 "lệnh riêng. Ô đích của mục tiêu hiện tại được công bố khi con trỏ tới đó. "
 "Tìm kiếm chỉ tìm các ô nhân vật đã thấy và các ghi chú nhân vật đã tạo."
@@ -2481,10 +2481,10 @@ msgstr "Trái cây: ngay tại đầu rắn"
 
 msgid "Game goal: switch all the lights on. # is on and - is off.  Toggling a light switches the selected light and its 4 neighbors (above, below, left and right); a neighbor outside the board is not toggled.  Move the cursor with the direction keys, toggle the selected light with the space bar or 5, reset to return the board to its starting state, and quit to leave the game."
 msgstr ""
-"Mục tiêu của trò chơi: bật mọi bóng đèn. # là đang bật và - là đang tắt. "
-"Việc bật/tắt một bóng đèn sẽ chuyển trạng thái của bóng đèn đang chọn và 4 "
+"Mục tiêu của trò chơi: bật mọi bóng đèn. Ký hiệu thăng là đang bật và dấu gạch ngang là đang tắt. "
+"Việc bật hoặc tắt một bóng đèn sẽ chuyển trạng thái của bóng đèn đang chọn và 4 "
 "bóng kề của nó (trên, dưới, trái và phải); bóng kề nằm ngoài bàn cờ thì "
-"không được chuyển. Di chuyển con trỏ bằng các phím hướng, bật/tắt bóng đèn "
+"không được chuyển. Di chuyển con trỏ bằng các phím hướng, bật hoặc tắt bóng đèn "
 "đang chọn bằng phím cách hoặc phím 5, đặt lại để đưa bàn cờ về trạng thái "
 "ban đầu, và thoát để rời khỏi trò chơi."
 
@@ -2537,7 +2537,7 @@ msgid "Inactive"
 msgstr "Không hoạt động"
 
 msgid "Include/Exclude"
-msgstr "Bao gồm/Loại trừ"
+msgstr "Bao gồm hoặc loại trừ"
 
 msgid "Inspect this follower."
 msgstr "Xem xét người đi theo này."
@@ -2605,7 +2605,7 @@ msgid ""
 "win."
 msgstr ""
 "Bật đèn: %1$d trên %2$d bóng đèn đang bật. Con trỏ tại hàng %3$d, cột %4$d: "
-"%5$s. Việc bật/tắt một bóng đèn cũng bật/tắt 4 bóng kề của nó; hãy bật mọi "
+"%5$s. Việc bật hoặc tắt một bóng đèn cũng bật hoặc tắt 4 bóng kề của nó; hãy bật mọi "
 "bóng đèn để thắng."
 
 msgid ""
@@ -2953,10 +2953,10 @@ msgid ""
 "this runs the engine's own per-action reset for every action listed here. "
 "Conflict prompts, if any, are the engine's per-action ones."
 msgstr ""
-"Thao tác do bộ đọc tổ hợp: engine chỉ đặt lại một hành động mỗi lần, nên "
-"thao tác này chạy cơ chế đặt lại từng hành động của chính engine cho mọi "
+"Thao tác do bộ đọc tổ hợp: trò chơi chỉ đặt lại một hành động mỗi lần, nên "
+"thao tác này chạy cơ chế đặt lại từng hành động của chính trò chơi cho mọi "
 "hành động được liệt kê tại đây. Các câu hỏi về xung đột, nếu có, là câu hỏi "
-"theo từng hành động của engine."
+"theo từng hành động của trò chơi."
 
 msgid "Reader-only filter: the help screen itself has no search.  Filtering only changes which topic rows are listed here; the help topics themselves never change."
 msgstr ""
@@ -3269,7 +3269,7 @@ msgstr ""
 
 #, c-format
 msgid "Tab: %1$s. Active bionics: %2$d. Passive bionics: %3$d."
-msgstr "Tab: %1$s. Bionic chủ động: %2$d. Bionic bị động: %3$d."
+msgstr "Thẻ: %1$s. Thiết bị cấy ghép chủ động: %2$d. Thiết bị cấy ghép bị động: %3$d."
 
 msgid "Temperature (cold)"
 msgstr "Nhiệt độ (lạnh)"
@@ -3344,7 +3344,7 @@ msgstr ""
 
 msgid "The rule is removed from this tab's list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it."
 msgstr ""
-"Quy tắc bị xóa khỏi danh sách của tab này ngay lập tức. Thay đổi chỉ được "
+"Quy tắc bị xóa khỏi danh sách của thẻ này ngay lập tức. Thay đổi chỉ được "
 "lưu khi bạn trả lời Có cho câu hỏi \"Lưu thay đổi?\" khi rời màn hình này; "
 "trả lời Không sẽ hủy bỏ nó."
 
@@ -3477,7 +3477,7 @@ msgid ""
 "Warning: %1$s is an essential menu key (reader policy, not an engine rule). "
 "Activate its row again to remove its keybinding anyway."
 msgstr ""
-"Cảnh báo: %1$s là phím menu thiết yếu (chính sách của trình đọc, không phải "
+"Cảnh báo: %1$s là phím trình đơn thiết yếu (chính sách của trình đọc, không phải "
 "luật của game). Kích hoạt hàng của nó lần nữa để vẫn xóa gán phím của nó."
 
 #, c-format
@@ -3485,8 +3485,8 @@ msgid ""
 "Warning: %1$s is an essential menu key (reader policy, not an engine rule). "
 "Activate its row again to reset its keybinding anyway."
 msgstr ""
-"Cảnh báo: %1$s là phím menu thiết yếu (chính sách của bộ đọc, không phải "
-"luật của engine). Kích hoạt hàng của nó lần nữa để vẫn đặt lại gán phím của "
+"Cảnh báo: %1$s là phím trình đơn thiết yếu (chính sách của bộ đọc, không phải "
+"luật của trò chơi). Kích hoạt hàng của nó lần nữa để vẫn đặt lại gán phím của "
 "nó."
 
 msgid ""
@@ -3661,7 +3661,7 @@ msgstr "Nhóm kỹ năng tiếp"
 
 msgctxt "Main Menu|Settings"
 msgid "TTS Settings"
-msgstr "Cài đặt TTS"
+msgstr "Cài đặt giọng đọc"
 
 # Direct world gestures and unrestricted assistive scan, 2026-11-07.
 msgid "Scan 30 tiles north"
@@ -5327,7 +5327,7 @@ msgstr "Trường này chính xác hơn giới hạn cho phép là %s."
 
 msgid ""
 "Toggle whether direction input moves the cursor several map tiles at once."
-msgstr "Bật/tắt việc phím hướng di chuyển con trỏ nhiều ô bản đồ cùng lúc."
+msgstr "Bật hoặc tắt việc phím hướng di chuyển con trỏ nhiều ô bản đồ cùng lúc."
 
 msgid ""
 "When enabled, keep the overmap open and follow the player during automatic "
@@ -5522,7 +5522,7 @@ msgstr "Không đủ thể lực để kích hoạt %s."
 
 #, c-format
 msgid "Tab: %s."
-msgstr "Tab: %s."
+msgstr "Thẻ: %s."
 
 #, c-format
 msgid "Picked up %s for reordering."
@@ -6948,3 +6948,31 @@ msgstr "Đã bắt đầu tháo %s."
 msgid "Started refilling %s."
 msgstr "Đã bắt đầu nạp nhiên liệu cho %s."
 
+msgid "Choose a visible movable object by name and direction.  Selecting it grabs it immediately."
+msgstr "Chọn một vật thể có thể di chuyển đang nhìn thấy theo tên và hướng. Chọn mục đó để nắm giữ ngay."
+
+#, c-format
+msgid "%1$s [%2$d]"
+msgstr "%1$s, số lượng %2$d"
+
+msgid "The car drives itself. Double tap to pause or resume. Switch to Map to cancel the trip."
+msgstr "Xe đang tự lái. Chạm hai lần để tạm dừng hoặc tiếp tục. Chuyển sang Bản đồ để hủy chuyến đi."
+
+msgid "mutagen"
+msgstr "chất đột biến"
+
+#, c-format
+msgid "%s [%d]"
+msgstr "%s, số lượng %d"
+
+msgid "Above"
+msgstr "Phía trên"
+
+msgid "Below"
+msgstr "Phía dưới"
+
+msgid "Peek where?"
+msgstr "Ngó về hướng nào?"
+
+msgid "quick shortcuts"
+msgstr "phím tắt nhanh"

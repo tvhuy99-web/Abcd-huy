@@ -376,18 +376,18 @@ std::vector<located_entry> grouped_features( const std::vector<located_entry> &f
     std::vector<located_entry> result;
     for( const auto &group : by_name ) {
         std::vector<point> squares;
+        squares.reserve( group.second.size() );
+        std::map<point, const located_entry *> by_square;
         for( const located_entry &entry : group.second ) {
-            squares.emplace_back( entry.position.x(), entry.position.y() );
+            const point sq( entry.position.x(), entry.position.y() );
+            squares.push_back( sq );
+            by_square.emplace( sq, &entry );
         }
         for( const point &representative : scene_detail::representative_tiles(
                  squares, point( player.x(), player.y() ) ) ) {
-            const auto matching = std::find_if( group.second.begin(), group.second.end(),
-            [&representative]( const located_entry &entry ) {
-                return entry.position.x() == representative.x &&
-                       entry.position.y() == representative.y;
-            } );
-            if( matching != group.second.end() ) {
-                result.push_back( *matching );
+            const auto matching = by_square.find( representative );
+            if( matching != by_square.end() ) {
+                result.push_back( *matching->second );
             }
         }
     }

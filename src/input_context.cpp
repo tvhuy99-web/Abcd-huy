@@ -538,8 +538,9 @@ const std::string &input_context::handle_input( const int timeout )
                 }
             }
             // Internal polling must not become a gameplay TIMEOUT or wait for TTS.
-            int wait = 50;
-            if( requested_timeout >= 0 ) {
+            const bool reader_suspended = a11y::suspended();
+            int wait = reader_suspended ? 200 : 50;
+            if( !reader_suspended && requested_timeout >= 0 ) {
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                          std::chrono::steady_clock::now() - input_started ).count();
                 wait = static_cast<int>( std::max<std::int64_t>( 0,
