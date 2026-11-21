@@ -81,10 +81,6 @@ struct bodygraph {
 using bodygraph_callback =
     std::function<std::string( const bodygraph_part *, std::string )>;
 
-// Display the interactive bodygraph, including nested body part graphs.
-void display_bodygraph( const Character &u, const bodygraph_id &id );
-
-
 /**
  * @brief Returns a prepared bodygraph ready to be rendered line-by-line.
  *

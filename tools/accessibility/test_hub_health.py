@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2] / "src"
 class HealthHubTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.body = (ROOT / "bodygraph.cpp").read_text("utf-8")
+        cls.body = (ROOT / "body_status_ui.cpp").read_text("utf-8")
         cls.med = (ROOT / "medical_ui.cpp").read_text("utf-8")
         cls.player = (ROOT / "player_display.cpp").read_text("utf-8")
         cls.food = (ROOT / "game_inventory.cpp").read_text("utf-8")
@@ -19,15 +19,15 @@ class HealthHubTest(unittest.TestCase):
         cls.avatar = (ROOT / "avatar.cpp").read_text("utf-8")
 
     def test_bodygraph_is_a_real_spoken_list(self):
-        self.assertIn('a11y::screen_scope reader( &ctxt, "body-status"', self.body)
+        self.assertIn('body_reader.emplace( &current_tab_input, "body-status"', self.body)
         self.assertIn('node.id = "body:part:"', self.body)
         self.assertIn('node.role = "listitem"', self.body)
-        self.assertIn("a11y::limb_health_description( *u, parent )", self.body)
+        self.assertIn("a11y::limb_health_description( bs_uistate.displayed_character, parent )", self.body)
         self.assertIn('intent.action != "focus"', self.body)
         self.assertIn("prepare_infolist();", self.body)
         self.assertIn('return "CONFIRM";', self.body)
         self.assertIn('return "TIMEOUT";', self.body)
-        self.assertIn("reader.update( std::move( snapshot ) );", self.body)
+        self.assertIn("body_reader->update( std::move( snapshot ) );", self.body)
 
     def test_medical_triage_and_native_treatment_checks(self):
         self.assertIn("std::stable_sort( urgent_first.begin()", self.med)

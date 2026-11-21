@@ -11,6 +11,11 @@
 #include "imgui/imgui.h"
 #include "translations.h"
 
+namespace a11y
+{
+struct semantic_snapshot;
+} // namespace a11y
+
 class input_context;
 class npc;
 struct input_event;
@@ -32,6 +37,9 @@ class follower_rules_ui_impl : public cataimgui::window
         }
 
         void set_npc_pointer_to( npc *new_guy );
+        a11y::semantic_snapshot build_a11y_snapshot( const input_context &ctxt,
+                const std::string &focused );
+        bool activate_a11y_rule( const std::string &node_id );
 
     private:
         npc *guy = nullptr;

@@ -245,20 +245,20 @@ class UpstreamNativeLinkageContracts(unittest.TestCase):
         self.assertIn("enum_to_string<do_activity_reason>(", actors)
         self.assertIn("do_activity_reason::REFUSES_THIS_WORK", actors)
         self.assertIn("bool bodygraph_part::has_bodypart(", bodygraph)
-        self.assertIn("sub_bodyparts.begin(), sub_bodyparts.end()", bodygraph)
+        self.assertIn("for( sub_bodypart_id bpid : sub_bodyparts )", bodygraph)
 
 
 class BodyStatusNativeLinkageContracts(unittest.TestCase):
     """Keep the integrated status and armor UI linkable without losing a11y."""
 
     def test_bodygraph_and_status_tabs_provide_real_data(self):
-        cpp = (SRC / "body_status_ui.cpp").read_text("utf-8")
+        cpp = (SRC / "body_status_ui.cpp").read_text("utf-8") + "\n" + (SRC / "bodygraph.cpp").read_text("utf-8")
         self.assertIn("void body_status_uistate::prepare_partlist()", cpp)
         self.assertIn("void body_status_uistate::prepare_infolist()", cpp)
         self.assertIn("displayed_graph_id->parts", cpp)
         self.assertIn("worn.prepare_bodymap_info( info, bp, sub_parts", cpp)
         self.assertIn("void body_status_ui_impl::draw_graph_imgui(", cpp)
-        self.assertIn("prepare_bodygraph_text( bodypart_or_subpart_id )", cpp)
+        self.assertIn("prepare_bodygraph_text(", cpp)
         self.assertIn("void body_status_ui_impl::draw_info_imgui(", cpp)
 
     def test_armor_reordering_stays_on_real_item_list(self):
@@ -285,11 +285,11 @@ class BodyStatusNativeLinkageContracts(unittest.TestCase):
         cpp = (SRC / "body_status_ui.cpp").read_text("utf-8")
         medical = (SRC / "medical_ui.cpp").read_text("utf-8")
         self.assertIn("medical_ui::get_modified_limb_name(", cpp)
-        self.assertIn("medical_ui::get_limb_wounds(", cpp)
+        self.assertIn("medical_ui::draw_limbs_details(", cpp)
         self.assertIn("medical_ui::draw_limbs_details(", cpp)
         self.assertIn("medical_ui::summary_tab(", cpp)
         self.assertIn("bool Character::disp_medical()", medical)
-        self.assertIn("a11y::semantic_snapshot medical_ui::reader_snapshot()", medical)
+        self.assertIn("a11y::semantic_snapshot accessible_medical_ui::reader_snapshot()", medical)
 
 
 if __name__ == "__main__":

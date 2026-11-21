@@ -1,5 +1,9 @@
 #include "ui_extended_description.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+
 #include <imgui/imgui.h>
 
 #include "cata_utility.h"
@@ -237,15 +241,101 @@ cataimgui::bounds extended_description_window::get_bounds()
 
 void extended_description_window::show()
 {
+    a11y::screen_scope reader( &ctxt, "extended-description",
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        static constexpr description_target targets[4] = {
+            description_target::creature, description_target::furniture,
+            description_target::terrain, description_target::vehicle
+        };
+        for( int i = 0; i < 4; ++i ) {
+            if( intent.node == "ext:tab:" + std::to_string( i ) ) {
+                if( intent.action == "focus" || intent.action == "activate" ) {
+                    switch_target = targets[i];
+                    cur_target = targets[i];
+                    return std::string( "TIMEOUT" );
+                }
+                return std::nullopt;
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     while( true ) {
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   ctxt, _( "Extended description" ) );
+            auto join_lines = []( const std::vector<std::string> &lines, const char *fallback ) {
+                if( lines.empty() ) {
+                    return std::string( fallback );
+                }
+                std::string out;
+                for( const std::string &line : lines ) {
+                    if( line != "--" ) {
+                        out += remove_color_tags( line ) + "\n";
+                    }
+                }
+                return out;
+            };
+            struct ext_tab {
+                description_target target;
+                const char *title;
+                std::string body;
+            };
+            std::string terrain_body = join_lines( terrain_description,
+                                                   _( "You can't see the terrain here." ) );
+            const std::string signage = get_map().get_signage( p );
+            if( !signage.empty() ) {
+                terrain_body += "\n" + ( get_player_character().has_trait( trait_ILLITERATE ) ?
+                                          std::string( _( "Sign: ???" ) ) :
+                                          string_format( _( "Sign: %s" ), signage ) );
+            }
+            const std::string graffiti = get_map().graffiti_at( p );
+            if( !graffiti.empty() ) {
+                terrain_body += "\n" + ( get_player_character().has_trait( trait_ILLITERATE ) ?
+                                          std::string( _( "Inscription: ???" ) ) :
+                                          string_format( _( "Inscription: %s" ), graffiti ) );
+            }
+            const std::vector<ext_tab> tabs = {
+                {
+                    description_target::creature, _( "Creature" ),
+                    join_lines( creature_description, _( "You can't see any creatures here." ) )
+                },
+                {
+                    description_target::furniture, _( "Furniture" ),
+                    join_lines( furniture_description, _( "You can't see any furniture here." ) )
+                },
+                { description_target::terrain, _( "Terrain" ), std::move( terrain_body ) },
+                {
+                    description_target::vehicle, _( "Vehicle or appliance" ),
+                    join_lines( veh_app_description, _( "You can't see vehicles or appliances here." ) )
+                },
+            };
+            for( std::size_t i = 0; i < tabs.size(); ++i ) {
+                a11y::semantic_node node;
+                node.id = "ext:tab:" + std::to_string( i );
+                node.role = "listitem";
+                node.label = tabs[i].title;
+                node.detail = tabs[i].body;
+                node.actions = { "focus", "activate" };
+                node.selected = tabs[i].target == cur_target;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( tabs.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            reader.update( std::move( snapshot ) );
+        }
         ui_manager::redraw_invalidated();
         std::string action = ctxt.handle_input();
         if( action == "NEXT_TAB" ) {
             switch_target = cur_target;
             ++switch_target;
+            cur_target = switch_target;
         } else if( action == "PREV_TAB" ) {
             switch_target = cur_target;
             --switch_target;
+            cur_target = switch_target;
         }  else if( action == "UP" ) {
             info_scroll = cataimgui::scroll::line_up;
         }  else if( action == "DOWN" ) {
@@ -256,12 +346,16 @@ void extended_description_window::show()
             info_scroll = cataimgui::scroll::page_down;
         } else if( action == "CREATURE" ) {
             switch_target = description_target::creature;
+            cur_target = switch_target;
         } else if( action == "FURNITURE" ) {
             switch_target = description_target::furniture;
+            cur_target = switch_target;
         } else if( action == "TERRAIN" ) {
             switch_target = description_target::terrain;
+            cur_target = switch_target;
         } else if( action == "VEHICLE" ) {
             switch_target = description_target::vehicle;
+            cur_target = switch_target;
         } else if( action == "CONFIRM" || action == "QUIT" ) {
             return;
         }

@@ -210,10 +210,16 @@ std::optional<tripoint_abs_omt> teleporter_list::choose_teleport_location()
             clamp( static_cast<int>( known_teleporters.size() ), 24, TERMY * 9 / 10 ) *ImGui::GetTextLineHeightWithSpacing(),
         };
 
+    teleport_selector.desc_enabled = true;
+    const tripoint_abs_omt origin = get_avatar().pos_abs_omt();
     int index = 0;
     std::map<int, tripoint_abs_omt> index_pairs;
     for( const std::pair<const tripoint_abs_omt, std::string> &gate : known_teleporters ) {
-        teleport_selector.addentry( index, true, 0, gate.second );
+        const int dist = rl_dist( origin, gate.first );
+        const std::string desc = string_format(
+                                     _( "Distance: %1$d map tiles, coordinates %2$s." ),
+                                     dist, gate.first.to_string() );
+        teleport_selector.addentry_desc( index, true, 0, gate.second, desc );
         index_pairs.emplace( index, gate.first );
         index++;
     }

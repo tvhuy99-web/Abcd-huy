@@ -1,3 +1,6 @@
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
 #include "character.h"
 
 #include <algorithm>
@@ -449,10 +452,56 @@ void Character::conduct_blood_analysis()
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    std::string focused = effect_descriptions.empty() ? "blood:empty" : "blood:effect:0";
+    a11y::screen_scope reader( &ctxt, "blood-test-results",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "focus" ) {
+            if( !intent.node.empty() ) {
+                focused = intent.node;
+            }
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.action == "activate" ) {
+            return std::string( "CONFIRM" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     bool stop = false;
     // Display new messages
     g->invalidate_main_ui_adaptor();
     while( !stop ) {
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   ctxt, _( "Blood Test Results" ) );
+            if( effect_descriptions.empty() ) {
+                a11y::semantic_node node;
+                node.id = "blood:empty";
+                node.role = "document";
+                node.label = _( "No effects." );
+                node.actions = { "focus", "activate" };
+                node.selected = true;
+                snapshot.focus = node.id;
+                snapshot.nodes.push_back( std::move( node ) );
+            } else {
+                snapshot.summary = string_format( _( "%d blood test findings." ),
+                                                  static_cast<int>( effect_descriptions.size() ) );
+                for( std::size_t i = 0; i < effect_descriptions.size(); ++i ) {
+                    a11y::semantic_node node;
+                    node.id = "blood:effect:" + std::to_string( i );
+                    node.role = "listitem";
+                    node.label = remove_color_tags( effect_descriptions[i] );
+                    node.actions = { "focus", "activate" };
+                    node.selected = node.id == focused;
+                    node.position = static_cast<int>( i ) + 1;
+                    node.total = static_cast<int>( effect_descriptions.size() );
+                    if( node.selected || ( snapshot.focus.empty() && i == 0 ) ) {
+                        snapshot.focus = node.id;
+                    }
+                    snapshot.nodes.push_back( std::move( node ) );
+                }
+            }
+            reader.update( std::move( snapshot ) );
+        }
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
         if( action == "CONFIRM" || action == "QUIT" ) {

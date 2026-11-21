@@ -1,5 +1,9 @@
 #include "iuse.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -1806,7 +1810,56 @@ class exosuit_interact
         void interact_loop() {
             bool done = false;
             shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor();
+            a11y::screen_scope suit_reader( &ctxt, "modular-suit",
+            [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                const auto pockets = suit->get_container_pockets();
+                for( std::size_t i = 0; i < pockets.size(); ++i ) {
+                    if( intent.node != "suit:pocket:" + std::to_string( i ) ) {
+                        continue;
+                    }
+                    if( intent.action != "focus" && intent.action != "activate" ) {
+                        return std::nullopt;
+                    }
+                    cur_pocket = static_cast<int>( i );
+                    scroll_pos = 0;
+                    sel_frame = 0;
+                    return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+                }
+                return a11y::registered_intent( ctxt, intent );
+            } );
             while( !done ) {
+                if( a11y::enabled() ) {
+                    const auto pockets = suit->get_container_pockets();
+                    a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                           ctxt, remove_color_tags( suit->tname() ) );
+                    snapshot.summary = _( "Select a module slot and double tap to insert, replace, or activate." );
+                    for( std::size_t i = 0; i < pockets.size(); ++i ) {
+                        item_pocket *pkt = pockets[i];
+                        a11y::semantic_node node;
+                        node.id = "suit:pocket:" + std::to_string( i );
+                        node.role = "listitem";
+                        node.label = remove_color_tags( get_pocket_name( pkt ) );
+                        if( static_cast<int>( i ) == cur_pocket ) {
+                            std::vector<iteminfo> suitinfo;
+                            pkt->general_info( suitinfo, static_cast<int>( i ), true );
+                            pkt->contents_info( suitinfo, static_cast<int>( i ), true );
+                            for( const iteminfo &entry : suitinfo ) {
+                                if( !entry.sName.empty() ) {
+                                    node.detail += remove_color_tags( entry.sName ) + "\n";
+                                }
+                            }
+                        }
+                        node.actions = { "focus", "activate" };
+                        node.selected = static_cast<int>( i ) == cur_pocket;
+                        node.position = static_cast<int>( i ) + 1;
+                        node.total = static_cast<int>( pockets.size() );
+                        if( node.selected ) {
+                            snapshot.focus = node.id;
+                        }
+                        snapshot.nodes.push_back( std::move( node ) );
+                    }
+                    suit_reader.update( std::move( snapshot ) );
+                }
                 ui_manager::redraw();
                 std::string action = ctxt.handle_input();
                 if( action == "MOUSE_MOVE" || action == "SELECT" ) {

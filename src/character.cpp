@@ -58,6 +58,7 @@
 #include "item_location.h"
 #include "item_pocket.h"
 #include "item_stack.h"
+#include "item_tname.h"
 #include "itype.h"
 #include "lightmap.h"
 #include "line.h"
@@ -3481,8 +3482,9 @@ float Character::instantaneous_activity_level() const
 
 int Character::activity_level_index() const
 {
-    // Activity levels are 1, 2, 4, 6, 8, 10
-    // So we can easily cut them in half and round down for an index
+    // Activity levels are 1, 2, 4, 6, 8, 10, 1000
+    // So we can (mostly) easily cut them in half and round down for an index
+    // ...This function is only called for EOCs, maybe we should just return the activity level directly instead of this.
     return std::floor( instantaneous_activity_level() / 2 );
 }
 
@@ -4265,7 +4267,13 @@ void Character::mend_item( item_location &&obj, bool interactive )
 
     if( mending_options.empty() ) {
         if( interactive ) {
-            add_msg( m_info, _( "The %s doesn't have any faults to mend." ), obj->tname() );
+            if( obj->faults.empty() ) {
+                add_msg( m_info, _( "The %s doesn't have any faults to mend." ), obj->tname( 1,
+                         tname::item_identity_name ) );
+            } else {
+                add_msg( m_info, _( "The %s faults cannot be mended." ), obj->tname( 1,
+                         tname::item_identity_name ) );
+            }
             if( obj->damage() > obj->degradation() ) {
                 const std::set<itype_id> &rep = obj->repaired_with();
                 if( rep.empty() ) {
@@ -5382,6 +5390,12 @@ void Character::assign_activity( const player_activity &act )
         guy->set_mission( NPC_MISSION_ACTIVITY );
         guy->current_activity_id = activity.id();
     }
+}
+
+bool Character::activity_limits_rendering() const
+{
+    // NOTE WELL! Sleeping is not in itself an activity! So we must check for the effect.
+    return ( activity && activity.render_blocked() ) || has_effect( effect_sleep );
 }
 
 bool Character::has_activity( const activity_id &type ) const

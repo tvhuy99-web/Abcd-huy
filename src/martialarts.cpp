@@ -1,5 +1,9 @@
 #include "martialarts.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+
 #include <imgui/imgui.h>
 #include <algorithm>
 #include <cstdlib>
@@ -2259,6 +2263,8 @@ class ma_details_ui_impl : public cataimgui::window
             ma_style = style_selected;
         };
         void init_data();
+        a11y::semantic_snapshot build_a11y_snapshot( const input_context &ctxt,
+                const std::string &focused ) const;
 
     private:
         void draw_ma_details_text();
@@ -2305,7 +2311,22 @@ void ma_details_ui::draw_ma_details_ui( const matype_id &style_selected )
     // Smooths out our handling, makes tabs load immediately after input instead of waiting for next.
     ctxt.set_timeout( 10 );
 
+    std::string focused = "ma:section:general";
+    a11y::screen_scope reader( &ctxt, "martial-art-details",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node.rfind( "ma:section:", 0 ) == 0 ) {
+            if( intent.action == "focus" || intent.action == "activate" ) {
+                focused = intent.node;
+                return std::string( "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     while( true ) {
+        if( a11y::enabled() ) {
+            reader.update( p_impl.build_a11y_snapshot( ctxt, focused ) );
+        }
         ui_manager::redraw_invalidated();
 
         p_impl.last_action = ctxt.handle_input();
@@ -2314,6 +2335,67 @@ void ma_details_ui::draw_ma_details_ui( const matype_id &style_selected )
             break;
         }
     }
+}
+
+a11y::semantic_snapshot ma_details_ui_impl::build_a11y_snapshot( const input_context &ctxt,
+        const std::string &focused ) const
+{
+    const std::string title = ma_style.str().empty() ?
+                              std::string( _( "Martial art style details" ) ) :
+                              string_format( _( "Martial art style details - %s" ),
+                                      ma_style.obj().name.translated() );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+    auto add_sec = [&]( const std::string &id, const std::string &label,
+                        const std::string &detail, int pos, int total ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "listitem";
+        node.label = label;
+        node.detail = detail;
+        node.actions = { "focus", "activate" };
+        node.selected = id == focused;
+        node.position = pos;
+        node.total = total;
+        if( node.selected ) {
+            snapshot.focus = node.id;
+        }
+        snapshot.nodes.push_back( std::move( node ) );
+    };
+    std::string gen_body;
+    for( const std::string &line : general_info_text ) {
+        gen_body += remove_color_tags( line ) + "\n";
+    }
+    std::string buff_body;
+    for( const auto &kv : buffs_text ) {
+        buff_body += remove_color_tags( kv.first ) + ":\n";
+        for( const std::string &line : kv.second ) {
+            buff_body += remove_color_tags( line ) + "\n";
+        }
+    }
+    std::string tech_body;
+    for( const auto &kv : techniques_text ) {
+        tech_body += remove_color_tags( kv.first ) + ":\n";
+        for( const std::string &line : kv.second ) {
+            tech_body += remove_color_tags( line ) + "\n";
+        }
+    }
+    std::string weap_body;
+    for( const auto &kv : weapons_text ) {
+        weap_body += remove_color_tags( kv.first ) + ": " + remove_color_tags( kv.second ) + "\n";
+    }
+    add_sec( "ma:section:general", _( "General information" ),
+             gen_body.empty() ? std::string( _( "None." ) ) : gen_body, 1, 4 );
+    add_sec( "ma:section:buffs", string_format( _( "Buffs (%d)" ), buffs_total ),
+             buff_body.empty() ? std::string( _( "None." ) ) : buff_body, 2, 4 );
+    add_sec( "ma:section:techniques",
+             string_format( _( "Techniques (%d)" ), static_cast<int>( techniques_text.size() ) ),
+             tech_body.empty() ? std::string( _( "None." ) ) : tech_body, 3, 4 );
+    add_sec( "ma:section:weapons", string_format( _( "Compatible weapons (%d)" ), weapons_total ),
+             weap_body.empty() ? std::string( _( "None." ) ) : weap_body, 4, 4 );
+    if( snapshot.focus.empty() && !snapshot.nodes.empty() ) {
+        snapshot.focus = snapshot.nodes.front().id;
+    }
+    return snapshot;
 }
 
 void ma_details_ui_impl::init_data()

@@ -7945,3 +7945,82 @@ msgstr "Bản mod này có lỗi và không thể bật lên."
 #, c-format
 msgid "Zone created: %s. Save changes when leaving."
 msgstr "Đã tạo khu vực: %s. Hãy lưu thay đổi khi rời khỏi."
+
+#, c-format
+msgid "%d blood test findings."
+msgstr "Có %d kết quả xét nghiệm máu."
+
+msgid "Extended description"
+msgstr "Mô tả mở rộng"
+
+msgid "Vehicle or appliance"
+msgstr "Phương tiện hoặc thiết bị gia dụng"
+
+msgid "Martial art style details"
+msgstr "Chi tiết môn võ thuật"
+
+msgid "General information"
+msgstr "Thông tin chung"
+
+#, c-format
+msgid "Buffs (%d)"
+msgstr "Hiệu ứng hỗ trợ (%d)"
+
+#, c-format
+msgid "Techniques (%d)"
+msgstr "Kỹ thuật (%d)"
+
+#, c-format
+msgid "Compatible weapons (%d)"
+msgstr "Vũ khí tương thích (%d)"
+
+msgid "None."
+msgstr "Không có."
+
+msgid "Vending machine"
+msgstr "Máy bán hàng tự động"
+
+#, c-format
+msgid "Price: %1$s, stock: %2$d"
+msgstr "Giá: %1$s, còn lại: %2$d"
+
+#, c-format
+msgid "Rules for %s"
+msgstr "Quy tắc cho %s"
+
+msgid "Select a rule and double tap to toggle or cycle its setting."
+msgstr "Chọn một quy tắc và chạm hai lần để bật tắt hoặc chuyển sang mức tiếp theo."
+
+msgid "Medical status"
+msgstr "Tình trạng y tế"
+
+msgid "Select a body part to inspect wounds or double tap to treat."
+msgstr "Chọn một bộ phận cơ thể để kiểm tra vết thương hoặc chạm hai lần để điều trị."
+
+msgid "Sort armor"
+msgstr "Sắp xếp giáp"
+
+msgid "All body parts"
+msgstr "Tất cả bộ phận cơ thể"
+
+#, c-format
+msgid "Category: %1$s. %2$d worn items."
+msgstr "Danh mục: %1$s. %2$d vật phẩm đang mặc."
+
+#, c-format
+msgid "Distance: %1$d map tiles, coordinates %2$s."
+msgstr "Khoảng cách: %1$d ô bản đồ, tọa độ %2$s."
+
+msgid "Select a module slot and double tap to insert, replace, or activate."
+msgstr "Chọn một khe mô-đun và chạm hai lần để lắp, thay thế hoặc kích hoạt."
+
+msgid "Change vehicle part shape"
+msgstr "Đổi hình dạng bộ phận phương tiện"
+
+msgid "Select a vehicle tile and double tap to choose a part to reshape."
+msgstr "Chọn một ô phương tiện và chạm hai lần để chọn bộ phận cần đổi hình dạng."
+
+#, c-format
+msgid "Vehicle tile %d"
+msgstr "Ô phương tiện %d"
+

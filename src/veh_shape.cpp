@@ -1,5 +1,11 @@
 #include "veh_shape.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+#include "output.h"
+#include "string_formatter.h"
+
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -59,9 +65,59 @@ player_activity veh_shape::start( const tripoint_bub_ms &pos )
     ui.mark_resize();
     init_input();
 
+    std::vector<tripoint_bub_ms> allowed_tiles( cursor_allowed.begin(), cursor_allowed.end() );
+    a11y::screen_scope shape_reader( &ctxt, "vehicle-shape",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( std::size_t i = 0; i < allowed_tiles.size(); ++i ) {
+            if( intent.node != "vehshape:tile:" + std::to_string( i ) ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            set_cursor_pos( allowed_tiles[i] );
+            return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     std::string action = "CONFIRM";
 
     while( true ) {
+        if( a11y::enabled() ) {
+            const tripoint_bub_ms cur = get_cursor_pos();
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   ctxt, _( "Change vehicle part shape" ) );
+            snapshot.summary = _( "Select a vehicle tile and double tap to choose a part to reshape." );
+            for( std::size_t i = 0; i < allowed_tiles.size(); ++i ) {
+                const tripoint_bub_ms &tp = allowed_tiles[i];
+                std::string part_names;
+                for( int pidx = 0; pidx < veh.part_count_real(); ++pidx ) {
+                    const vehicle_part &vp = veh.part( pidx );
+                    if( !vp.is_fake && veh.bub_part_pos( here, vp ) == tp ) {
+                        if( !part_names.empty() ) {
+                            part_names += ", ";
+                        }
+                        part_names += remove_color_tags( vp.name() );
+                    }
+                }
+                a11y::semantic_node node;
+                node.id = "vehshape:tile:" + std::to_string( i );
+                node.role = "listitem";
+                node.label = part_names.empty() ?
+                             string_format( _( "Vehicle tile %d" ), static_cast<int>( i ) + 1 ) :
+                             part_names;
+                node.value = string_format( _( "X %1$d, Y %2$d" ), tp.x(), tp.y() );
+                node.actions = { "focus", "activate" };
+                node.selected = tp == cur;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( allowed_tiles.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            shape_reader.update( std::move( snapshot ) );
+        }
         g->invalidate_main_ui_adaptor();
         ui_manager::redraw();
 
@@ -69,7 +125,7 @@ player_activity veh_shape::start( const tripoint_bub_ms &pos )
             action = ctxt.handle_input( get_option<int>( "EDGE_SCROLL" ) );
         }
 
-        if( handle_cursor_movement( action ) || ( action == "HELP_KEYBINDINGS" ) ) {
+        if( handle_cursor_movement( action ) || ( action == "HELP_KEYBINDINGS" ) || ( action == "TIMEOUT" ) ) {
             action.clear();
             continue;
         } else if( action == "CONFIRM" ) {

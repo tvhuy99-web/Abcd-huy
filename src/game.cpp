@@ -1157,6 +1157,8 @@ bool game::start_game()
     if( debug_menu::is_debug_character() ) {
         debug_menu::do_debug_quick_setup();
         add_msg( m_good, _( "Debug character detected.  Quick setup applied, good luck on the testing!" ) );
+    } else {
+        debug_mode = false;
     }
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=new phase=character_and_world_ms " <<
@@ -2575,6 +2577,7 @@ int game::inventory_item_menu( item_location locThisItem,
 // Returns true if input requires breaking out into a game action.
 bool game::handle_mouseview( input_context &ctxt, std::string &action )
 {
+    cata_timer handle_mousemove_timer( "handle_mousemove" );
     std::optional<tripoint_bub_ms> liveview_pos;
 
     do {
@@ -3483,6 +3486,12 @@ bool game::has_blink_curses()
 
 void game::draw( ui_adaptor &ui )
 {
+    if( u.activity_limits_rendering() ) {
+        // We still want to draw the sidebar, so the player can see the time of day and be sure the game hasn't gotten stuck.
+        // There is no measurable performance impact for drawing it, so it's free!
+        draw_panels( true );
+        return;
+    }
     map &here = get_map();
 
     if( test_mode ) {
@@ -4031,6 +4040,7 @@ std::vector<monster *> game::get_fishable_monsters( std::unordered_set<tripoint_
 
 void game::mon_info_update( )
 {
+    cata_timer mon_info_update_timer( "mon_info_update" );
     const map &here = get_map();
     const tripoint_bub_ms pos = u.pos_bub( here );
 
@@ -4255,6 +4265,7 @@ void game::mon_info_update( )
 
 void game::cleanup_dead()
 {
+    cata_timer cleanup_dead_timer( "cleanup_dead" );
     map &here = get_map();
 
     // Dead monsters need to stay in the tracker until everything else that needs to die does so
@@ -5949,10 +5960,12 @@ void game::examine( const tripoint_bub_ms &examp, bool with_pickup )
 
     const tripoint_bub_ms player_pos = u.pos_bub();
 
+    // Normally examining terrain or furniture is a "minor" offense, but some might be flagged differently.
+    const bool extra_alarming_action = here.has_flag( "FACTION_SECURITY", examp );
     if( here.has_furn( examp ) ) {
         if( !u.cant_do_mounted() ) {
             if( !here.has_flag( "FREE_TO_EXAMINE", examp ) &&
-                !warn_player_maybe_anger_local_faction( false, true ) ) {
+                !warn_player_maybe_anger_local_faction( extra_alarming_action, true ) ) {
                 return; // player declined to mess with faction's stuff
             }
             xfurn_t.examine( u, examp );
@@ -5960,7 +5973,7 @@ void game::examine( const tripoint_bub_ms &examp, bool with_pickup )
     } else {
         if( xter_t.can_examine( examp ) && !u.is_mounted() ) {
             if( !here.has_flag( "FREE_TO_EXAMINE", examp ) &&
-                !warn_player_maybe_anger_local_faction( false, true ) ) {
+                !warn_player_maybe_anger_local_faction( extra_alarming_action, true ) ) {
                 return; // player declined to mess with faction's stuff
             }
             xter_t.examine( u, examp );

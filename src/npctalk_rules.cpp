@@ -1,5 +1,9 @@
 #include "npctalk_rules.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+
 #include <iterator>
 #include <map>
 #include <memory>
@@ -21,6 +25,7 @@
 #include "input_context.h"
 #include "input_enums.h"
 #include "npc.h"
+#include "output.h"
 #include "pimpl.h"
 #include "string_formatter.h"
 #include "translation.h"
@@ -76,7 +81,27 @@ void follower_rules_ui::draw_follower_rules_ui( npc *guy )
     // This is still bizarrely necessary for imgui
     ctxt.set_timeout( 10 );
 
+    std::string focused = "follower:rule:engagement";
+    a11y::screen_scope reader( &ctxt, "follower-rules",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node.rfind( "follower:rule:", 0 ) == 0 ) {
+            if( intent.action == "focus" ) {
+                focused = intent.node;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                focused = intent.node;
+                p_impl.activate_a11y_rule( intent.node );
+                return std::string( "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     while( true ) {
+        if( a11y::enabled() ) {
+            reader.update( p_impl.build_a11y_snapshot( ctxt, focused ) );
+        }
         ui_manager::redraw_invalidated();
 
 
@@ -128,6 +153,102 @@ bool follower_rules_ui_impl::setup_table_button( int &button_num, std::string &l
 {
     ImGui::TableNextColumn();
     return setup_button( button_num, label, should_color );
+}
+
+template<typename T>
+static void cycle_rule_map( T &rule, const std::map<T, std::string> &rule_map )
+{
+    auto next = rule_map.upper_bound( rule );
+    rule = next == rule_map.end() ? rule_map.begin()->first : next->first;
+}
+
+a11y::semantic_snapshot follower_rules_ui_impl::build_a11y_snapshot(
+    const input_context &ctxt, const std::string &focused )
+{
+    const std::string title = guy != nullptr ?
+                              string_format( _( "Rules for %s" ), guy->disp_name() ) :
+                              std::string( _( "Rules for your follower" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+    if( guy == nullptr ) {
+        return snapshot;
+    }
+    snapshot.summary = _( "Select a rule and double tap to toggle or cycle its setting." );
+    const int total = 4 + static_cast<int>( ally_rule_strs.size() );
+    int pos = 0;
+    auto add_rule = [&]( const std::string &id, const std::string &label,
+                         const std::string &value ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "listitem";
+        node.label = label;
+        node.value = remove_color_tags( value );
+        node.actions = { "focus", "activate" };
+        node.selected = id == focused;
+        node.position = ++pos;
+        node.total = total;
+        if( node.selected ) {
+            snapshot.focus = node.id;
+        }
+        snapshot.nodes.push_back( std::move( node ) );
+    };
+    auto eng_it = engagement_rules.find( guy->rules.engagement );
+    add_rule( "follower:rule:engagement", _( "Engagement" ),
+              eng_it != engagement_rules.end() ? get_parsed( eng_it->second ) : "" );
+    auto aim_it = aim_rule_map.find( guy->rules.aim );
+    add_rule( "follower:rule:aim", _( "Aiming" ),
+              aim_it != aim_rule_map.end() ? get_parsed( aim_it->second ) : "" );
+    auto rech_it = recharge_map.find( guy->rules.cbm_recharge );
+    add_rule( "follower:rule:cbm_recharge", _( "CBM recharge" ),
+              rech_it != recharge_map.end() ? get_parsed( rech_it->second ) : "" );
+    auto res_it = reserve_map.find( guy->rules.cbm_reserve );
+    add_rule( "follower:rule:cbm_reserve", _( "CBM reserve" ),
+              res_it != reserve_map.end() ? get_parsed( res_it->second ) : "" );
+    for( const auto &kv : ally_rule_strs ) {
+        const bool enabled = guy->rules.has_flag( kv.second.rule );
+        const std::string text = get_parsed( enabled ? kv.second.rule_true_text :
+                                             kv.second.rule_false_text );
+        add_rule( "follower:rule:flag:" + kv.first, text,
+                  enabled ? _( "On" ) : _( "Off" ) );
+    }
+    if( snapshot.focus.empty() && !snapshot.nodes.empty() ) {
+        snapshot.focus = snapshot.nodes.front().id;
+    }
+    return snapshot;
+}
+
+bool follower_rules_ui_impl::activate_a11y_rule( const std::string &node_id )
+{
+    if( guy == nullptr ) {
+        return false;
+    }
+    if( node_id == "follower:rule:engagement" ) {
+        cycle_rule_map( guy->rules.engagement, engagement_rules );
+        return true;
+    }
+    if( node_id == "follower:rule:aim" ) {
+        cycle_rule_map( guy->rules.aim, aim_rule_map );
+        return true;
+    }
+    if( node_id == "follower:rule:cbm_recharge" ) {
+        cycle_rule_map( guy->rules.cbm_recharge, recharge_map );
+        return true;
+    }
+    if( node_id == "follower:rule:cbm_reserve" ) {
+        cycle_rule_map( guy->rules.cbm_reserve, reserve_map );
+        return true;
+    }
+    static constexpr const char *prefix = "follower:rule:flag:";
+    if( node_id.rfind( prefix, 0 ) == 0 ) {
+        const std::string key = node_id.substr( 19 );
+        const auto it = ally_rule_strs.find( key );
+        if( it != ally_rule_strs.end() ) {
+            const bool next_state = !guy->rules.has_flag( it->second.rule );
+            guy->rules.toggle_flag( it->second.rule );
+            guy->rules.toggle_specific_override_state( it->second.rule, next_state );
+            return true;
+        }
+    }
+    return false;
 }
 
 void follower_rules_ui_impl::set_npc_pointer_to( npc *new_guy )

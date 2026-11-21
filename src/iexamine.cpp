@@ -1,5 +1,9 @@
 #include "iexamine.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -1179,10 +1183,52 @@ void iexamine::vending( Character &you, const tripoint_bub_ms &examp )
         draw_item_info( w_item_info, data );
     } );
 
+    a11y::screen_scope vend_reader( &ctxt, "vending-machine",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( std::size_t i = 0; i < item_list.size(); ++i ) {
+            if( intent.node != "vend:item:" + std::to_string( i ) ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            cur_pos = static_cast<int>( i );
+            item_info_scroll_pos = 0;
+            return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     for( ;; ) {
-        ui_manager::redraw();
-
         const int num_items = item_list.size();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   ctxt, _( "Vending machine" ) );
+            snapshot.summary = string_format( _( "Money left: %s" ), format_money( money ) );
+            for( std::size_t i = 0; i < item_list.size(); ++i ) {
+                const auto &elem = item_list[i];
+                const auto &sample_item = elem->second.back();
+                a11y::semantic_node node;
+                node.id = "vend:item:" + std::to_string( i );
+                node.role = "listitem";
+                node.label = remove_color_tags( elem->first );
+                node.value = string_format( _( "Price: %1$s, stock: %2$d" ),
+                                            format_money( sample_item->price( false ) ),
+                                            static_cast<int>( elem->second.size() ) );
+                if( static_cast<int>( i ) == cur_pos ) {
+                    node.detail = remove_color_tags( sample_item->info( true ) );
+                }
+                node.actions = { "focus", "activate" };
+                node.selected = static_cast<int>( i ) == cur_pos;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = num_items;
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            vend_reader.update( std::move( snapshot ) );
+        }
+        ui_manager::redraw();
 
         // Item info
         auto &cur_items = item_list[static_cast<size_t>( cur_pos )]->second;

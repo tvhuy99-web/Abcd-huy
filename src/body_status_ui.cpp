@@ -1,11 +1,12 @@
 #include "body_status_ui.h" // IWYU pragma: associated
 
-#include <algorithm>
 #include <functional>
-#include <set>
-#include <sstream>
 #include <memory>
 
+#include "a11y_body.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
 #include "avatar_action.h"
 #include "bodygraph.h"
 #include "character.h"
@@ -13,6 +14,7 @@
 #include "color.h"
 #include "creature.h"
 #include "display.h"
+#include "effect.h"
 #include "enum_traits.h"
 #include "flag.h"
 #include "imgui/imgui.h"
@@ -58,95 +60,13 @@ static void refresh_header_footer_text( uilist *new_uilist, const body_status_ui
     }
 }
 
-// These helpers serve the combined status tabs.  The fork's existing
-// accessible Character::disp_medical() is a separate screen and remains intact.
-std::string medical_ui::get_modified_limb_name( const Character &who, const bodypart_id &part )
-{
-    const int current = who.get_part_hp_cur( part );
-    const int maximum = who.get_part_hp_max( part );
-    std::string label = string_format( _( "%1$s: %2$d/%3$d HP" ),
-                                      body_part_name( part ), current, maximum );
-    if( who.is_limb_broken( part ) ) {
-        label += string_format( " [%s]", _( "BROKEN" ) );
-    }
-    if( who.has_wounds( part.id() ) ) {
-        label += string_format( " [%s]", _( "WOUNDED" ) );
-    }
-    return label;
-}
-
-std::string medical_ui::get_limb_effects( const Character &who, const bodypart_id &part )
-{
-    std::string description;
-    for( const effect &eff : who.get_effects_from_bp( part ) ) {
-        if( eff.get_id()->is_show_in_info() ) {
-            description += string_format( "%s\n", eff.disp_name() );
-        }
-    }
-    return description;
-}
-
-std::string medical_ui::get_limb_wounds( const Character &who, const bodypart_id &part )
-{
-    std::string description;
-    const bodypart *bp = who.get_part( part );
-    if( bp == nullptr ) {
-        return description;
-    }
-    for( const wound &wd : bp->get_wounds() ) {
-        description += string_format( "%1$s: %2$s\n",
-                                      wd.type->get_name(), wd.type->get_description() );
-    }
-    return description;
-}
-
-std::string medical_ui::get_limb_scores_and_modifiers( const Character &who,
-        const bodypart_id &part )
-{
-    return string_format( _( "Encumbrance: %d" ), who.encumb( part ) );
-}
-
-void medical_ui::summary_tab( const Character &who )
-{
-    int injured = 0;
-    int wounded = 0;
-    for( const bodypart_id &part : who.get_all_body_parts() ) {
-        if( who.get_part_hp_cur( part ) < who.get_part_hp_max( part ) ) {
-            ++injured;
-        }
-        if( who.has_wounds( part.id() ) ) {
-            ++wounded;
-        }
-    }
-    cataimgui::draw_colored_text( string_format( _( "Injured body parts: %d" ), injured ) );
-    cataimgui::draw_colored_text( string_format( _( "Body parts with wounds: %d" ), wounded ) );
-}
-
-void medical_ui::draw_limbs_details( const Character &who, const bodypart_id &part )
-{
-    if( part == bodypart_str_id::NULL_ID() ) {
-        return;
-    }
-    cataimgui::draw_colored_text( get_modified_limb_name( who, part ) );
-    ImGui::Separator();
-    cataimgui::draw_colored_text( get_limb_scores_and_modifiers( who, part ) );
-    const std::string effects = get_limb_effects( who, part );
-    if( !effects.empty() ) {
-        ImGui::Separator();
-        cataimgui::draw_colored_text( effects );
-    }
-    const std::string wounds = get_limb_wounds( who, part );
-    if( !wounds.empty() ) {
-        ImGui::Separator();
-        cataimgui::draw_colored_text( wounds );
-    }
-}
-
 body_status_uistate::body_status_uistate( Character &displayed_character, bodygraph_id bg_id,
         body_status_tab initial_tab ) :
     displayed_character( displayed_character ), initial_tab( initial_tab )
 {
-    displayed_graph_id = bg_id == bodygraph_id::NULL_ID() ? bodygraph_full_body : bg_id;
+    if( bg_id == bodygraph_id::NULL_ID() ) {
+        displayed_graph_id = bodygraph_full_body;
+    }
 }
 
 void body_status_uistate::update_blink()
@@ -180,90 +100,6 @@ std::string bodygraph_part_info::get_part() const
            bp_id.id().str();
 }
 
-void body_status_uistate::prepare_partlist()
-{
-    partlist.clear();
-    if( !displayed_graph_id.is_valid() ) {
-        return;
-    }
-    for( const auto &section : displayed_graph_id->parts ) {
-        const bodygraph_part &graph_part = section.second;
-        for( const bodypart_id &bp : graph_part.bodyparts ) {
-            partlist.emplace_back( bp, sub_bodypart_str_id::NULL_ID(),
-                                   &graph_part, displayed_character.has_part( bp, body_part_filter::equivalent ) );
-        }
-        for( const sub_bodypart_id &sbp : graph_part.sub_bodyparts ) {
-            const bodypart_id parent = sbp->parent.id();
-            partlist.emplace_back( parent, sbp->id, &graph_part,
-                                   displayed_character.has_part( parent, body_part_filter::equivalent ) );
-        }
-    }
-    std::sort( partlist.begin(), partlist.end(), []( const bodygraph_part_info &a,
-    const bodygraph_part_info &b ) {
-        const std::string a_name = a.sbp_id.is_null() ? a.bp_id->name.translated() :
-                                   a.sbp_id->name.translated();
-        const std::string b_name = b.sbp_id.is_null() ? b.bp_id->name.translated() :
-                                   b.sbp_id->name.translated();
-        return a_name < b_name;
-    } );
-    if( partlist.empty() ) {
-        selected_index = 0;
-        selected_bodypart = bodypart_str_id::NULL_ID();
-    } else {
-        selected_index = std::clamp( selected_index, 0, static_cast<int>( partlist.size() ) - 1 );
-        selected_bodypart = partlist[selected_index].bp_id;
-    }
-}
-
-void body_status_uistate::prepare_infolist()
-{
-    info = bodygraph_info();
-    info_txt.clear();
-    if( partlist.empty() || selected_index < 0 ||
-        selected_index >= static_cast<int>( partlist.size() ) ) {
-        return;
-    }
-    const bodygraph_part_info &selected = partlist[selected_index];
-    if( !selected.present_on_character ) {
-        return;
-    }
-    const bodypart_id &bp = selected.bp_id;
-    std::set<sub_bodypart_id> sub_parts;
-    if( !selected.sbp_id.is_null() ) {
-        sub_parts.emplace( selected.sbp_id.id() );
-    } else {
-        for( const sub_bodypart_str_id &sbp : bp->sub_parts ) {
-            if( !sbp->secondary ) {
-                sub_parts.emplace( sbp.id() );
-            }
-        }
-    }
-    displayed_character.worn.prepare_bodymap_info( info, bp, sub_parts,
-            displayed_character );
-    info_txt.emplace_back( string_format( _( "Health: %1$d/%2$d" ),
-                                          info.part_hp_cur, info.part_hp_max ) );
-    info_txt.emplace_back( string_format( _( "Wetness: %d%%" ),
-                                          static_cast<int>( info.wetness * 100.0f ) ) );
-    info_txt.emplace_back( string_format( _( "Body temperature: %s" ), info.temp_approx ) );
-    info_txt.emplace_back( string_format( _( "Encumbrance: %d" ), info.total_encumbrance ) );
-    info_txt.emplace_back( string_format( _( "Coverage: %d%%" ), info.avg_coverage ) );
-    info_txt.emplace_back( string_format( _( "Environmental protection: %d" ), info.avg_env_protection ) );
-    if( !info.effects.empty() ) {
-        info_txt.emplace_back( _( "Effects:" ) );
-        for( const effect &eff : info.effects ) {
-            if( eff.get_id()->is_show_in_info() ) {
-                info_txt.emplace_back( eff.disp_name() );
-            }
-        }
-    }
-    if( !info.worn_names.empty() ) {
-        info_txt.emplace_back( _( "Worn:" ) );
-        for( const std::string &name : info.worn_names ) {
-            info_txt.emplace_back( name );
-        }
-    }
-}
-
 void body_status_uistate::init()
 {
     last_blink = std::chrono::steady_clock::now();
@@ -282,8 +118,6 @@ void body_status_uistate::update_sorted_armor()
     for( bodypart_id bp_id : all_bodyparts ) {
         sort_armor_categories.emplace_back( bp_id );
     }
-    sort_armor_category_index = std::clamp( sort_armor_category_index, 0,
-                                           static_cast<int>( sort_armor_categories.size() ) - 1 );
     sort_armor_category = sort_armor_categories[sort_armor_category_index];
 
     worn_subset = displayed_character.worn.filter_by_bodypart( sort_armor_category );
@@ -374,9 +208,6 @@ bool body_status_ui::display()
     body_status_ui_impl bsui( this );
 
     bs_uistate.init();
-    if( bs_uistate.partlist.empty() ) {
-        return false;
-    }
 
     // setup all uilists/inputs
     body_status_tab preserve_first_tab = bs_uistate.initial_tab;
@@ -394,6 +225,9 @@ bool body_status_ui::display()
 
     ui_manager::invalidate_all_ui_adaptors();
 
+    std::optional<a11y::screen_scope> body_reader;
+    body_status_tab reader_tab = body_status_tab::BS_TAB_last;
+    const input_context *reader_input = nullptr;
     while( !bs_uistate.quit_menu ) {
         ui_manager::redraw_invalidated();
 
@@ -402,6 +236,196 @@ bool body_status_ui::display()
         input_context::scoped_activation active_tab_context( current_tab_input );
 
         std::shared_ptr<uilist> current_tab_uilist = get_current_tab_uilist();
+        const bool need_new_scope = !body_reader.has_value() ||
+                                    reader_tab != bs_uistate.selected_tab ||
+                                    reader_input != &current_tab_input;
+        if( !a11y::enabled() ) {
+            body_reader.reset();
+            reader_tab = body_status_tab::BS_TAB_last;
+            reader_input = nullptr;
+        } else if( bs_uistate.selected_tab == body_status_tab::BS_TAB_SUMMARY ) {
+            if( need_new_scope ) {
+                body_reader.reset();
+                body_reader.emplace( &current_tab_input, "body-status",
+                [this, &current_tab_input](
+                const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                    for( std::size_t i = 0; i < bs_uistate.partlist.size(); ++i ) {
+                        if( intent.node != "body:part:" + std::to_string( i ) ) {
+                            continue;
+                        }
+                        if( intent.action != "focus" && intent.action != "activate" ) {
+                            return std::nullopt;
+                        }
+                        bs_uistate.update_selected( static_cast<int>( i ) );
+                        if( std::shared_ptr<uilist> tab_list = get_current_tab_uilist() ) {
+                            tab_list->selected = static_cast<int>( i );
+                        }
+                        bs_uistate.prepare_infolist();
+                        if( intent.action == "activate" &&
+                            bs_uistate.partlist[i].bg_part != nullptr &&
+                            !bs_uistate.partlist[i].bg_part->nested_graph.is_null() ) {
+                            return "CONFIRM";
+                        }
+                        return "TIMEOUT";
+                    }
+                    return a11y::registered_intent( current_tab_input, intent );
+                } );
+                reader_tab = bs_uistate.selected_tab;
+                reader_input = &current_tab_input;
+            }
+
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   current_tab_input, _( "Body status" ) );
+            snapshot.summary = _( "Body parts in a list.  Select a part to hear its condition.  "
+                                  "Browsing never treats wounds." );
+            for( std::size_t i = 0; i < bs_uistate.partlist.size(); ++i ) {
+                const bodygraph_part_info &part = bs_uistate.partlist[i];
+                const bodypart_id &parent = part.bp_id;
+                a11y::semantic_node node;
+                node.id = "body:part:" + std::to_string( i );
+                node.role = "listitem";
+                node.actions = { "focus", "activate" };
+                node.label = !part.sbp_id.is_null() ?
+                             part.sbp_id->name.translated() : parent->name.translated();
+                if( part.present_on_character ) {
+                    node.value = a11y::limb_health_description( bs_uistate.displayed_character, parent );
+                    if( static_cast<int>( i ) == bs_uistate.selected_index ) {
+                        for( const std::string &line : bs_uistate.info_txt ) {
+                            if( line != "--" ) {
+                                node.detail += remove_color_tags( line ) + "\n";
+                            }
+                        }
+                    }
+                } else {
+                    node.value = _( "Body part absent." );
+                }
+                if( part.bg_part != nullptr && !part.bg_part->nested_graph.is_null() ) {
+                    node.detail += "\n" + std::string( _( "Open detailed body-part view." ) );
+                }
+                node.selected = static_cast<int>( i ) == bs_uistate.selected_index;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( bs_uistate.partlist.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            body_reader->update( std::move( snapshot ) );
+        } else if( bs_uistate.selected_tab == body_status_tab::BS_TAB_MEDICAL ) {
+            if( need_new_scope ) {
+                body_reader.reset();
+                body_reader.emplace( &current_tab_input, "body-status-medical",
+                [this, &current_tab_input](
+                const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                    for( std::size_t i = 0; i < bs_uistate.all_bodyparts.size(); ++i ) {
+                        if( intent.node != "body:med:" + std::to_string( i ) ) {
+                            continue;
+                        }
+                        if( intent.action != "focus" && intent.action != "activate" ) {
+                            return std::nullopt;
+                        }
+                        bs_uistate.update_selected( static_cast<int>( i ) );
+                        if( std::shared_ptr<uilist> tab_list = get_current_tab_uilist() ) {
+                            tab_list->selected = static_cast<int>( i );
+                        }
+                        return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+                    }
+                    return a11y::registered_intent( current_tab_input, intent );
+                } );
+                reader_tab = bs_uistate.selected_tab;
+                reader_input = &current_tab_input;
+            }
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   current_tab_input, _( "Medical status" ) );
+            snapshot.summary = _( "Select a body part to inspect wounds or double tap to treat." );
+            for( std::size_t i = 0; i < bs_uistate.all_bodyparts.size(); ++i ) {
+                const bodypart_id bp = bs_uistate.all_bodyparts[i];
+                a11y::semantic_node node;
+                node.id = "body:med:" + std::to_string( i );
+                node.role = "listitem";
+                node.actions = { "focus", "activate" };
+                node.label = remove_color_tags(
+                                 medical_ui::get_modified_limb_name( bs_uistate.displayed_character, bp ) );
+                node.value = a11y::limb_health_description( bs_uistate.displayed_character, bp );
+                if( static_cast<int>( i ) == bs_uistate.selected_index ) {
+                    for( const effect &eff : bs_uistate.displayed_character.get_effects_from_bp( bp ) ) {
+                        if( eff.get_id()->is_show_in_info() ) {
+                            node.detail += remove_color_tags( eff.disp_name() ) + "\n";
+                        }
+                    }
+                }
+                node.selected = static_cast<int>( i ) == bs_uistate.selected_index;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( bs_uistate.all_bodyparts.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            body_reader->update( std::move( snapshot ) );
+        } else if( bs_uistate.selected_tab == body_status_tab::BS_TAB_SORT_ARMOR ) {
+            if( need_new_scope ) {
+                body_reader.reset();
+                body_reader.emplace( &current_tab_input, "body-status-armor",
+                [this, &current_tab_input](
+                const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                    for( std::size_t i = 0; i < bs_uistate.worn_subset.size(); ++i ) {
+                        if( intent.node != "body:armor:" + std::to_string( i ) ) {
+                            continue;
+                        }
+                        if( intent.action != "focus" && intent.action != "activate" ) {
+                            return std::nullopt;
+                        }
+                        bs_uistate.update_selected( static_cast<int>( i ) );
+                        if( std::shared_ptr<uilist> tab_list = get_current_tab_uilist() ) {
+                            tab_list->selected = static_cast<int>( i );
+                        }
+                        return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+                    }
+                    return a11y::registered_intent( current_tab_input, intent );
+                } );
+                reader_tab = bs_uistate.selected_tab;
+                reader_input = &current_tab_input;
+            }
+            const std::string cat_label = bs_uistate.sort_armor_category_index == 0 ?
+                                          std::string( _( "All body parts" ) ) :
+                                          bs_uistate.sort_armor_category->name_as_heading.translated();
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   current_tab_input, _( "Sort armor" ) );
+            snapshot.summary = string_format( _( "Category: %1$s. %2$d worn items." ),
+                                              cat_label,
+                                              static_cast<int>( bs_uistate.worn_subset.size() ) );
+            for( std::size_t i = 0; i < bs_uistate.worn_subset.size(); ++i ) {
+                const item &armor = *bs_uistate.worn_subset[i];
+                a11y::semantic_node node;
+                node.id = "body:armor:" + std::to_string( i );
+                node.role = "listitem";
+                node.actions = { "focus", "activate" };
+                node.label = remove_color_tags( armor.tname() );
+                node.value = remove_color_tags( clothing_info::clothing_layer( armor ) );
+                if( static_cast<int>( i ) == bs_uistate.selected_index ) {
+                    for( const std::string &l : clothing_info::clothing_flags_description( armor ) ) {
+                        node.detail += remove_color_tags( l ) + "\n";
+                    }
+                    for( const std::string &l : clothing_info::clothing_properties(
+                             armor, bs_uistate.displayed_character, bs_uistate.sort_armor_category ) ) {
+                        node.detail += remove_color_tags( l ) + "\n";
+                    }
+                    for( const std::string &l : clothing_info::clothing_protection(
+                             armor, bs_uistate.sort_armor_category ) ) {
+                        node.detail += remove_color_tags( l ) + "\n";
+                    }
+                }
+                node.selected = static_cast<int>( i ) == bs_uistate.selected_index;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( bs_uistate.worn_subset.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            body_reader->update( std::move( snapshot ) );
+        }
         if( current_tab_uilist ) {
             if( current_tab_uilist->query_setup() ) {
                 current_tab_uilist->query_once( current_tab_input, 33 );
@@ -620,16 +644,14 @@ bool body_status_ui::handle_action( const std::string &action )
         * and moving the selected item inwards in `Character::worn`
         */
         int inner_item_index = bs_uistate.selected_index - 1;
-        if( inner_item_index >= 0 &&
-            bs_uistate.selected_index < static_cast<int>( bs_uistate.worn_subset.size() ) ) {
+        if( inner_item_index >= 0 ) {
             std::list<item>::iterator selected_item = bs_uistate.worn_subset[bs_uistate.selected_index];
             std::list<item>::iterator inner_item = bs_uistate.worn_subset[inner_item_index];
             splice_worn_item( selected_item, inner_item, inner_item_index, false );
         }
     } else if( action == "MOVE_ARMOR_OUT" ) {
         int outer_item_index = bs_uistate.selected_index + 1;
-        if( bs_uistate.selected_index >= 0 &&
-            outer_item_index < static_cast<int>( bs_uistate.worn_subset.size() ) ) {
+        if( outer_item_index < static_cast<int>( bs_uistate.worn_subset.size() ) ) {
             std::list<item>::iterator selected_item = bs_uistate.worn_subset[bs_uistate.selected_index];
             std::list<item>::iterator outer_item = bs_uistate.worn_subset[outer_item_index];
             splice_worn_item( selected_item, outer_item, outer_item_index, true );
@@ -790,11 +812,12 @@ void body_status_callback::confirm( uilist *menu )
     select( menu );
     switch( bs_uistate.selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY: {
-            if( !bs_uistate.parent_bodypart.has_value() && !bs_uistate.partlist.empty() ) {
-                // Enter a nested graph only when the destination is valid.
+            if( !bs_uistate.parent_bodypart.has_value() ) {
+                // if in the top-level bodypart list, open the sub-bodypart list
+                bs_uistate.parent_bodypart = bs_uistate.selected_bodypart;
+                // get nested graph of original part
                 const bodygraph_id next_graph = bs_uistate.get_selected_partlist().bg_part->nested_graph;
-                if( next_graph != bodygraph_id::NULL_ID() && next_graph.is_valid() ) {
-                    bs_uistate.parent_bodypart = bs_uistate.selected_bodypart;
+                if( next_graph != bodygraph_id::NULL_ID() ) {
                     bs_uistate.displayed_graph_id = next_graph;
                     bs_uistate.prepare_partlist();
                     ui_parent->reset_list_entries = true;
@@ -834,23 +857,17 @@ void body_status_uistate::update_selected( int index )
     selected_index = index;
     switch( selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY: {
-            if( index < 0 || index >= static_cast<int>( partlist.size() ) ) {
-                selected_bodypart = bodypart_str_id::NULL_ID();
-                info_txt.clear();
-                break;
-            }
-            selected_bodypart = get_selected_partlist().bp_id;
+            bodypart_id selected_bp = get_selected_partlist().bp_id;
+            selected_bodypart = selected_bp;
             prepare_infolist();
             break;
         }
         case body_status_tab::BS_TAB_MEDICAL: {
-            if( index >= 0 && index < static_cast<int>( all_bodyparts.size() ) ) {
-                selected_bodypart = all_bodyparts[index];
-            }
+            selected_bodypart = all_bodyparts[index];
             break;
         }
         case body_status_tab::BS_TAB_SORT_ARMOR:
-            selected_armor = index >= 0 && index < static_cast<int>( worn_subset.size() ) ?
+            selected_armor = index > -1 && !worn_subset.empty() ?
                              item_location( displayed_character, &*worn_subset[index] )
                              : item_location::nowhere;
             break;
@@ -927,8 +944,6 @@ void body_status_ui_impl::draw_controls()
 
         std::shared_ptr<uilist> current_uilist = ui_parent->get_current_tab_uilist();
         if( current_uilist ) {
-            // The fork keeps rendering inside uilist_impl to retain its
-            // accessibility-aware ImGui behavior.
             uilist_impl list_renderer( *current_uilist );
             list_renderer.draw_controls();
         }
@@ -963,9 +978,7 @@ void body_status_ui_impl::draw_info()
 
     switch( bs_uistate.selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY:
-            if( bs_uistate.selected_index >= 0 &&
-                bs_uistate.selected_index < static_cast<int>( bs_uistate.partlist.size() ) &&
-                bs_uistate.get_selected_partlist().present_on_character ) {
+            if( bs_uistate.get_selected_partlist().present_on_character ) {
                 draw_info_imgui( bs_uistate.info_txt );
             }
             break;
@@ -1007,30 +1020,6 @@ void body_status_ui_impl::draw_info()
     tabbed_listinfo_ui::set_info_scroll( bs_uistate.info_scrolled_down, bs_uistate.info_scrolled_up );
 }
 
-
-void body_status_ui_impl::draw_info_imgui( const std::vector<std::string> &lines ) const
-{
-    for( const std::string &line : lines ) {
-        if( line == "--" ) {
-            ImGui::Separator();
-        } else {
-            cataimgui::draw_colored_text( line );
-        }
-    }
-}
-
-void body_status_ui_impl::draw_graph_imgui(
-    const std::optional<std::string> &bodypart_or_subpart_id )
-{
-    // Preserve the colored text and fragment highlighting supplied by the
-    // bodygraph renderer instead of replacing it with a generic picture.
-    const std::string graph = ui_parent->bs_uistate.prepare_bodygraph_text( bodypart_or_subpart_id );
-    std::istringstream lines( graph );
-    std::string line;
-    while( std::getline( lines, line ) ) {
-        cataimgui::draw_colored_text( line );
-    }
-}
 
 void body_status_ui_impl::draw_worn_items_by_limb()
 {
@@ -1088,12 +1077,9 @@ void body_status_ui_impl::draw_bodygraph()
 
     switch( bs_uistate.selected_tab ) {
         case body_status_tab::BS_TAB_SUMMARY:
-            if( bs_uistate.selected_index >= 0 &&
-                bs_uistate.selected_index < static_cast<int>( bs_uistate.partlist.size() ) ) {
-                bodypart_or_subpart_id = bs_uistate.parent_bodypart.has_value() ?
-                                         bs_uistate.get_selected_partlist().sbp_id.str() :
-                                         bs_uistate.selected_bodypart->id.str();
-            }
+            bodypart_or_subpart_id = bs_uistate.parent_bodypart.has_value() ?
+                                     bs_uistate.get_selected_partlist().sbp_id.str() :
+                                     bs_uistate.selected_bodypart->id.str();
             break;
         case body_status_tab::BS_TAB_MEDICAL:
             bodypart_or_subpart_id = bs_uistate.selected_bodypart.id().str();
