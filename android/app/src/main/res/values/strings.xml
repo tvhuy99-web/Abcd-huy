@@ -103,6 +103,8 @@
     <string name="a11yHubCharacter">Character and abilities</string>
     <string name="a11yHubMissions">Missions and relations</string>
     <string name="a11yHubVehicles">Vehicles and travel</string>
+    <string name="a11ySurveyTitle">Detailed place survey</string>
+    <string name="a11ySurveyContinue">Continue</string>
     <string name="a11yRadarTitle">Automatic radar</string>
     <string name="a11yRadarManage">Manage radar</string>
     <string name="a11yRadarOn">On</string>
