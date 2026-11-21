@@ -4,7 +4,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <map>
 
 #include "enums.h"
 #include "gamemode.h"
@@ -67,8 +66,7 @@ struct tutorial_game : public special_game {
 
     private:
         void add_message( tut_lesson lesson );
-
-        std::map<tut_lesson, bool> tutorials_seen;
+        bool lesson_seen( tut_lesson lesson ) const;
 };
 
 #endif // CATA_SRC_GAMEMODE_TUTORIAL_H

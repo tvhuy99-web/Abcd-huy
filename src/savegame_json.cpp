@@ -1653,8 +1653,14 @@ void avatar::load( const JsonObject &data )
     } else {
         const scenario *generic_scenario = scenario::generic();
 
-        debugmsg( "Tried to use non-existent scenario '%s'. Setting to generic '%s'.",
-                  scen_ident.c_str(), generic_scenario->ident().c_str() );
+        // Older tutorials never assigned a scenario. This specific absent
+        // field is expected for those saves, not a corrupt normal scenario.
+        const bool legacy_tutorial = g && g->gametype() == special_game_type::TUTORIAL &&
+                                     ( scen_ident == "(null)" || scen_ident.empty() );
+        if( !legacy_tutorial ) {
+            debugmsg( "Tried to use non-existent scenario '%s'. Setting to generic '%s'.",
+                      scen_ident.c_str(), generic_scenario->ident().c_str() );
+        }
         set_scenario( generic_scenario );
     }
 

@@ -817,6 +817,11 @@ bool game::save()
             world_generator->last_character_name = u.name;
             world_generator->save_last_world_info();
             world_generator->active_world->add_save( save_t::from_save_id( u.get_save_id() ) );
+            // Persist the repaired legacy tutorial mod list only after a
+            // successful explicit game save, not during a load attempt.
+            if( gametype() == special_game_type::TUTORIAL ) {
+                world_generator->get_mod_manager().save_mods_list( world_generator->active_world );
+            }
             write_to_file( PATH_INFO::world_base_save_path() / ( base64_encode(
             u.get_save_id() ) + ".pt" ), [&total_time_played]( std::ostream & fout ) {
                 fout.imbue( std::locale::classic() );

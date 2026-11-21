@@ -467,6 +467,14 @@ void mod_manager::load_mods_list( WORLD *world ) const
     if( world == nullptr ) {
         return;
     }
+    if( world->world_name == "TUTORIAL" ) {
+        // Legacy tutorial worlds were saved before the menu replaced the
+        // default mod list. Restore the built-in dependencies in memory
+        // before any map, monster or trap is deserialized. Never rewrite
+        // the on-disk save merely because the player opens the load menu.
+        world->active_mod_order = { mod_id( "dda" ), mod_id( "dda_tutorial" ) };
+        return;
+    }
     std::vector<mod_id> &amo = world->active_mod_order;
     amo.clear();
     read_from_file_optional_json( get_mods_list_file( world ), [&]( const JsonArray & jsin ) {
@@ -483,6 +491,17 @@ void mod_manager::load_mods_list( WORLD *world ) const
 void mod_manager::check_mods_list( WORLD *world ) const
 {
     if( world == nullptr ) {
+        return;
+    }
+    if( world->world_name == "TUTORIAL" ) {
+        // No valid tutorial can be loaded without these definitions.
+        // Do not offer to remove its required pack and corrupt the world.
+        for( const mod_id &required : { mod_id( "dda" ), mod_id( "dda_tutorial" ) } ) {
+            if( !required.is_valid() ) {
+                throw std::runtime_error( "Required tutorial mod missing: " + required.str() );
+            }
+        }
+        world->active_mod_order = { mod_id( "dda" ), mod_id( "dda_tutorial" ) };
         return;
     }
     std::vector<mod_id> &amo = world->active_mod_order;

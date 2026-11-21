@@ -329,6 +329,9 @@ WORLD *worldfactory::make_new_world( special_game_type special_type )
 
     std::unique_ptr<WORLD> special_world = std::make_unique<WORLD>();
     special_world->world_name = worldname;
+    // The dedicated tutorial does not use the user's normal default mods.
+    // Set its exact dependency list before WORLD::save writes mods.json.
+    special_world->active_mod_order = { mod_id( "dda" ), mod_id( "dda_tutorial" ) };
 
     special_world->WORLD_OPTIONS["WORLD_END"].setValue( "delete" );
 

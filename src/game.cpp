@@ -698,6 +698,17 @@ void game::reenter_fullscreen()
  */
 void game::setup( bool loading_saved_character )
 {
+    if( loading_saved_character ) {
+        // Restore the special mode before loading its content or avatar.
+        // Never run tutorial_game::init on resume: it creates a new map
+        // and resets the player's equipment, location and health.
+        if( world_generator->active_world &&
+            world_generator->active_world->world_name == "TUTORIAL" ) {
+            gamemode = get_special_game( special_game_type::TUTORIAL );
+        } else {
+            gamemode.reset();
+        }
+    }
 #if defined(__ANDROID__)
     const auto setup_started_at = std::chrono::steady_clock::now();
     const flexbuffer_cache_stats cache_before = flexbuffer_cache::statistics();

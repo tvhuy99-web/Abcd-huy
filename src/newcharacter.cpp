@@ -215,8 +215,11 @@ static std::string get_skill_entry_text( const skill_id selected_skill, const av
 
 [[maybe_unused]] static uilist_entry get_uilist_entry( const std::string &name )
 {
-    const bool screen_reader_mode = get_option<bool>( "SCREEN_READER_MODE" );
-    uilist_entry cc_entry( screen_reader_mode ? std::string() : name );
+    // The semantic reader obtains its label from entry.txt. Keep the real
+    // name for its six creator lists even when SCREEN_READER_MODE is enabled.
+    // Only the legacy, non-semantic reader needs the visually blank column.
+    const bool legacy_reader_mode = get_option<bool>( "SCREEN_READER_MODE" ) && !a11y::enabled();
+    uilist_entry cc_entry( legacy_reader_mode ? std::string() : name );
     cc_entry.hotkey = input_event();
 
     return cc_entry;

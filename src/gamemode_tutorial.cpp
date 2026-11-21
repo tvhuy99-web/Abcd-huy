@@ -28,6 +28,7 @@
 #include "point.h"
 #include "profession.h"
 #include "scent_map.h"
+#include "scenario.h"
 #include "stomach.h"
 #include "text_snippets.h"
 #include "translation.h"
@@ -133,6 +134,19 @@ std::string enum_to_string<tut_lesson>( tut_lesson data )
 }
 } // namespace io
 
+static std::string tutorial_seen_key( tut_lesson lesson )
+{
+    // Creature values are serialized with the avatar, unlike a map kept
+    // only inside the temporary tutorial_game instance. Stable lesson
+    // names also survive changes to the enumeration order.
+    return "A11Y_TUTORIAL_SEEN_" + io::enum_to_string<tut_lesson>( lesson );
+}
+
+bool tutorial_game::lesson_seen( tut_lesson lesson ) const
+{
+    return get_player_character().get_value( tutorial_seen_key( lesson ) ).str() == "1";
+}
+
 bool tutorial_game::init()
 {
     loading_ui::done();
@@ -142,12 +156,17 @@ bool tutorial_game::init()
     calendar::turn = calendar::start_of_cataclysm + 8_weeks + 12_hours;
     get_weather().forced_temperature = units::from_celsius( 20 );
 
-    tutorials_seen.clear();
     get_scent().reset();
     // We use a Z-factor of 10 so that we don't plop down tutorial rooms in the
     // middle of the "real" game world
     avatar &player_character = get_avatar();
     player_character.normalize();
+    set_scenario( scenario::generic() );
+    // Only a fresh tutorial resets lesson progress. Resume never calls init.
+    for( int i = 0; i < static_cast<int>( tut_lesson::NUM_LESSONS ); ++i ) {
+        player_character.remove_value( tutorial_seen_key( static_cast<tut_lesson>( i ) ) );
+    }
+    player_character.remove_value( a11y::tutorial::last_lesson_key );
 
     player_character.set_all_parts_hp_to_max();
     player_character.clear_effects();
@@ -247,7 +266,7 @@ void tutorial_game::per_turn()
         add_message( tut_lesson::LESSON_RESTORE_STAMINA );
     }
 
-    if( !tutorials_seen[tut_lesson::LESSON_BUTCHER] ) {
+    if( !lesson_seen( tut_lesson::LESSON_BUTCHER ) ) {
         for( const item &it : here.i_at( pos.xy() ) ) {
             if( it.is_corpse() ) {
                 add_message( tut_lesson::LESSON_BUTCHER );
@@ -398,10 +417,9 @@ void tutorial_game::post_action( action_id act )
 
 void tutorial_game::add_message( tut_lesson lesson )
 {
-    if( tutorials_seen[lesson] ) {
+    if( lesson_seen( lesson ) ) {
         return;
     }
-    tutorials_seen[lesson] = true;
     g->invalidate_main_ui_adaptor();
     std::string lesson_id = io::enum_to_string<tut_lesson>( lesson );
 #if defined(__ANDROID__)
@@ -411,7 +429,12 @@ void tutorial_game::add_message( tut_lesson lesson )
 #endif
     std::string translated_lesson = SNIPPET.get_snippet_by_id( snippet_id( lesson_id ) )
                                     .value_or( translation() ).translated();
+    if( translated_lesson.empty() ) {
+        // An unavailable lesson must remain eligible to be shown later.
+        return;
+    }
     parse_tags( translated_lesson, get_player_character(), get_player_character() );
+    get_player_character().set_value( tutorial_seen_key( lesson ), std::string( "1" ) );
 #if defined(__ANDROID__)
     get_player_character().set_value( a11y::tutorial::last_lesson_key, translated_lesson );
     // Introduce the controls fully once. Later lessons start with a brief
