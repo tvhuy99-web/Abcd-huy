@@ -316,6 +316,7 @@ void fault::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "degradation_mod", degradation_mod_, 0 );
     optional( jo, was_loaded, "instant_damage", instant_damage_, 0 );
     optional( jo, was_loaded, "affected_by_degradation", affected_by_degradation_, false );
+    optional( jo, was_loaded, "attack_cost_modifier", attack_cost_modifier_, 1.0 );
     optional( jo, was_loaded, "encumbrance_add", encumbrance_mod_flat_, 0 );
     optional( jo, was_loaded, "encumbrance_mult", encumbrance_mod_mult_, 1.f );
     optional( jo, was_loaded, "contact_area_mod", contact_area_mod_, 1.f );
