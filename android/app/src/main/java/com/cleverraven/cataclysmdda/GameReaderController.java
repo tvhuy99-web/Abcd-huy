@@ -176,6 +176,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // inventory. Cache it for two-finger double-tap without visiting the
     // world first; the game message log itself is never changed here.
     private String lastRecentMessages = "";
+    // The place survey is a local, focusable reader screen, not one TTS paragraph.
+    private final List<String> placeSurveyRows = new ArrayList<>();
+    private boolean placeSurveyOpen;
+    private int placeSurveyIndex;
     private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
     private String editorContext = "";
@@ -520,6 +524,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         snapshot = null;
         lastLoadingStatus = "";
         lastRecentMessages = "";
+        placeSurveyOpen = false;
+        placeSurveyRows.clear();
         readerLayerParent = "";
         pendingReaderLayer = "";
         pendingLinkedDetail = "";
@@ -677,6 +683,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (object.optBoolean("inactive")) {
                     sonar.setWorldActive(false);
                     comprehensiveMenu = false;
+                    placeSurveyOpen = false;
+                    placeSurveyRows.clear();
                     choosingGesture = false;
                     bindingItem = null;
                     choosingHubAction = false;
@@ -706,6 +714,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 ReaderSnapshot next = new ReaderSnapshot(object);
+                if (placeSurveyOpen && next.find("world:here") == null) {
+                    placeSurveyOpen = false;
+                    placeSurveyRows.clear();
+                }
                 final long parsedAt = receivedAt != 0L
                         ? SystemClock.elapsedRealtime() : 0L;
                 SessionDebugLog.event("SCREEN", "category=" + next.category
@@ -1484,6 +1496,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             if (requestedDetail && !expectingItemDetail()) { return; }
+            if (placeSurvey) {
+                openPlaceSurvey(message.substring(SCENE_PREFIX.length()));
+                return;
+            }
             final boolean autodriveStopped = spokenMessage.contains("No safe route found. Vehicle paused.")
                     || spokenMessage.contains("Không tìm được đường đi an toàn. Xe đã tạm dừng.");
             final boolean autodriveArrived = drivingFeedback
@@ -1532,10 +1548,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (usesTouchExploration()) {
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
-            } else if (placeSurvey) {
-                // One user-requested report. Existing LONG_TEXT speech chunks
-                // the document instead of dropping its earlier sections.
-                speakInlineDetail(spokenMessage);
             } else if (userQuery) {
                 // The user explicitly requested current location: speak now
                 // and replace an older query instead of queuing stale places.
@@ -3184,6 +3196,94 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         renderGuideButton();
     }
 
+    private void renderPlaceSurvey() {
+        TextView title = new TextView(activity);
+        title.setText(R.string.a11ySurveyTitle);
+        title.setTextColor(0xffeeeeee);
+        title.setTextSize(20);
+        title.setPadding(12, 16, 12, 12);
+        title.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        rows.addView(title);
+
+        final int total = placeSurveyRows.size() + 1; // Last item: Continue.
+        final int start = (placeSurveyIndex / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
+        final int end = Math.min(total, start + HUB_PAGE_SIZE);
+        if (start > 0) {
+            Button previous = new Button(activity);
+            previous.setText(R.string.a11yPreviousPage);
+            previous.setOnClickListener(view -> {
+                placeSurveyIndex = start - 1;
+                render();
+                readCurrent();
+            });
+            rows.addView(previous);
+        }
+        for (int i = start; i < end; ++i) {
+            final int index = i;
+            final boolean continueButton = index == placeSurveyRows.size();
+            final String label = continueButton
+                    ? activity.getString(R.string.a11ySurveyContinue)
+                    : placeSurveyRows.get(index);
+            Button row = new Button(activity);
+            row.setText(label + ". "
+                    + activity.getString(R.string.a11yPosition, index + 1, total));
+            row.setSelected(index == placeSurveyIndex);
+            row.setOnClickListener(view -> {
+                placeSurveyIndex = index;
+                if (continueButton) { closePlaceSurvey(); }
+                else { readCurrent(); }
+            });
+            row.setOnFocusChangeListener((view, focused) -> {
+                if (focused && placeSurveyOpen && !usesTouchExploration()) {
+                    placeSurveyIndex = index;
+                    readCurrent();
+                }
+            });
+            rows.addView(row);
+        }
+        if (end < total) {
+            Button next = new Button(activity);
+            next.setText(R.string.a11yNextPage);
+            next.setOnClickListener(view -> {
+                placeSurveyIndex = end;
+                render();
+                readCurrent();
+            });
+            rows.addView(next);
+        }
+    }
+
+    private void openPlaceSurvey(String report) {
+        if (closed || snapshot == null || snapshot.find("world:here") == null) { return; }
+        placeSurveyRows.clear();
+        for (String line : report.split("\\r?\\n")) {
+            String fact = ReaderSpokenText.clean(line);
+            if (!fact.isEmpty()) { placeSurveyRows.add(fact); }
+        }
+        if (placeSurveyRows.isEmpty()) { return; }
+        placeSurveyIndex = 0;
+        placeSurveyOpen = true;
+        speech.stop();
+        sonar.setWorldActive(false);
+        root.cancelGesture();
+        render();
+        readCurrent();
+    }
+
+    private void closePlaceSurvey() {
+        if (!placeSurveyOpen) { return; }
+        placeSurveyOpen = false;
+        placeSurveyRows.clear();
+        placeSurveyIndex = 0;
+        speech.stop();
+        root.cancelGesture();
+        if (snapshot != null && snapshot.find("world:here") != null) {
+            focus = "world:here";
+        }
+        render();
+        readCurrent();
+    }
+
     private void render() {
         if (closed) { return; }
         rows.removeAllViews();
@@ -3214,6 +3314,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 rows.addView(button);
             }
             renderGuideButton();
+            return;
+        }
+        // Survey details are individual focusable rows, never a single document.
+        if (placeSurveyOpen) {
+            root.setBackgroundColor(0xff161616);
+            renderPlaceSurvey();
             return;
         }
         // Native text entry is still needed for character names and game fields.
@@ -3303,7 +3409,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return autonomousDriveTrip && rawNativeTravelState() != 0
                 && !autonomousDriveCancelRequested
                 && !gestureGuideOpen && !commandPaletteOpen && !comprehensiveMenu
-                && editor == null && !closed && foreground && windowFocused
+                && !placeSurveyOpen && editor == null && !closed && foreground && windowFocused
                 && snapshot != null
                 && ( snapshot.find("activity:autodrive") != null ||
                      "DEFAULTMODE".equals(snapshot.category) );
@@ -3344,6 +3450,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     + (snapshot == null ? "" : snapshot.contextKey());
         }
         if (debugReport != null) { return presentationEpoch + ":debug"; }
+        if (placeSurveyOpen) { return presentationEpoch + ":place-survey"; }
         if (walkingTravelPanelActive()) {
             return presentationEpoch + ":travel:" + travelState();
         }
@@ -3408,6 +3515,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (debugReport != null) {
             debugFocus = Math.floorMod(debugFocus + delta, 4);
+            readCurrent();
+            return;
+        }
+        if (placeSurveyOpen) {
+            placeSurveyIndex = Math.max(0, Math.min(placeSurveyRows.size(),
+                    placeSurveyIndex + delta));
+            render();
             readCurrent();
             return;
         }
@@ -3782,6 +3896,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void confirm() {
         if (closed) { return; }
+        if (placeSurveyOpen) { activate(); return; }
         if (gestureGuideOpen) { readCurrent(); return; }
         if (debugReport != null) { return; }
         if (editor != null) {
@@ -3945,7 +4060,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean directWorldGesturesEnabled() {
-        return debugReport == null && !comprehensiveMenu
+        return debugReport == null && !comprehensiveMenu && !placeSurveyOpen
                 && !commandPaletteOpen && !gestureGuideOpen && !closed && foreground
                 && windowFocused && !lastSuspended && editor == null
                 && snapshot != null && snapshot.find("world:here") != null
@@ -4597,6 +4712,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void activate() {
         SessionDebugLog.event("ACTION", "activate focus=" + focus
                 + " hub=" + comprehensiveMenu);
+        if (placeSurveyOpen) {
+            if (placeSurveyIndex == placeSurveyRows.size()) { closePlaceSurvey(); }
+            else { readCurrent(); }
+            return;
+        }
         if (gestureGuideOpen) {
             // Read again without executing a potentially unsafe command.
             readCurrent();
@@ -5498,6 +5618,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void readCurrent() {
+        if (placeSurveyOpen) {
+            final int total = placeSurveyRows.size() + 1;
+            final String spoken = placeSurveyIndex == placeSurveyRows.size()
+                    ? activity.getString(R.string.a11ySurveyContinue)
+                    : placeSurveyRows.get(placeSurveyIndex);
+            feedback(spoken + ". "
+                    + activity.getString(R.string.a11yPosition, placeSurveyIndex + 1, total));
+            return;
+        }
         if (gestureGuideOpen) {
             feedback(gestureGuideSpeech());
             return;
@@ -5850,6 +5979,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("ACTION", "back focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (closed) { return; }
+        if (placeSurveyOpen) { closePlaceSurvey(); return; }
         if (gestureGuideOpen) { closeGestureGuide(); return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.cancelInput(); return; }
