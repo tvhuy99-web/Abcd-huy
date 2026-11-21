@@ -33,5 +33,15 @@ class MasterNativeRadar(unittest.TestCase):
         self.assertIn("class change_tracker", header)
 
 
+    def test_radar_events_are_saved_to_existing_game_messages_without_duplicate_tts(self):
+        radar = (SRC / "a11y_radar.cpp").read_text(encoding="utf-8")
+        messages = (SRC / "messages.cpp").read_text(encoding="utf-8")
+        self.assertIn('#include "messages.h"', radar)
+        self.assertIn("Messages::add_msg_silent( urgent ? m_warning : m_info, spoken );", radar)
+        self.assertIn("if( !get_avatar().in_vehicle )", radar)
+        self.assertIn('A11Y_RADAR_DANGER:', radar)
+        self.assertIn('A11Y_RADAR_ALERT:', radar)
+        self.assertIn("void Messages::add_msg_silent(", messages)
+
 if __name__ == "__main__":
     unittest.main()
