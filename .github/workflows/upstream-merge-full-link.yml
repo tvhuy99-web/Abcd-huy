@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/upstream-merge-full-link.yml'
       - 'src/**'
+      - 'data/**'
       - 'Makefile'
       - 'tests/**'
   workflow_dispatch:
@@ -20,7 +21,7 @@ concurrency:
 
 jobs:
   full-link:
-    name: Build and link complete native game (no distribution)
+    name: Build, link and load native JSON data (no distribution)
     runs-on: ubuntu-26.04
     timeout-minutes: 90
     steps:
@@ -37,3 +38,19 @@ jobs:
           make -k -j3 all \
             CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
+      - name: Load and verify core JSON and built-in tutorial using the game executable
+        timeout-minutes: 30
+        env:
+          TERM: xterm
+        run: |
+          set -euo pipefail
+          userdir="$(mktemp -d)"
+          trap 'rm -rf "$userdir"' EXIT
+          # The game's actual JSON loaders (including fault::load) must run.
+          # Specify the obsolete tutorial explicitly; it is hidden from the
+          # normal mod selection list and from all-mod validation by default.
+          ./cataclysm --userdir "$userdir/" --check-mods dda dda_tutorial 2>&1 | tee "$RUNNER_TEMP/native-json-check.log"
+          # Retain a second guard for errors printed instead of thrown.
+          if grep -Ei 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)' "$RUNNER_TEMP/native-json-check.log"; then
+            exit 1
+          fi

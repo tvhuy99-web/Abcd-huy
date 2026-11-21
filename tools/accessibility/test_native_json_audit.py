@@ -1,0 +1,60 @@
+"""Contracts for upstream JSON loading, faction defaults, and save compatibility."""
+
+from pathlib import Path
+import json
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def text(path):
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+class NativeJsonAuditTests(unittest.TestCase):
+    def test_faction_falls_back_to_npc_legacy_relationship(self):
+        faction = text("src/faction.cpp")
+        self.assertIn('optional( jsobj, false, "mon_faction", mon_faction, mfaction_str_id::NULL_ID() );', faction)
+        npc = text("src/npc.cpp").split("mfaction_id npc::get_monster_faction() const", 1)[1]
+        self.assertLess(npc.index("my_fac->mon_faction.is_valid()"), npc.index("is_player_ally()"))
+
+    def test_camp_meal_reads_upstream_and_old_android_fields(self):
+        load = text("src/activity_actor.cpp").split(
+            "camp_meal_activity_actor::deserialize(", 1)[1].split("return actor.clone();", 1)[0]
+        for upstream, old, field in (("camp", "camp_position", "camp_position"),
+                                      ("kcal", "meal_kcals", "meal_kcals")):
+            self.assertLess(load.index(f'data.read( "{upstream}", actor.{field} )'),
+                            load.index(f'data.read( "{old}", actor.{field} )'))
+
+    def test_fault_requirements_follow_generic_factory_inheritance(self):
+        source = text("src/fault.cpp")
+        self.assertNotIn("reqs_temp_storage", source)
+        load = source.split("void fault_fix::load(", 1)[1].split("void fault_fix::finalize()", 1)[0]
+        self.assertIn('if( jo.has_array( "requirements" ) ) {', load)
+        self.assertIn("pending_requirements.clear();", load)
+        self.assertIn("pending_requirements.emplace_back(", load)
+        finalize = source.split("void fault_fix::finalize()", 1)[1].split(
+            "void fault_fix::check()", 1)[0]
+        self.assertIn("for( const std::pair<requirement_id, int> &p : pending_requirements )", finalize)
+        self.assertIn("pending_requirements.clear();", finalize)
+
+    def test_native_data_check_returns_failure_if_loader_throws(self):
+        body = text("src/game_io.cpp").split("bool game::check_mod_data(", 1)[1].split(
+            "bool game::is_core_data_loaded()", 1)[0]
+        self.assertEqual(body.count("load_ok = false;"), 2)
+        self.assertIn("return load_ok;", body)
+        self.assertIn('get_option( "SKIP_VERIFICATION" ).setValue( "false" )', body)
+
+    def test_ci_runs_real_data_loader_after_link_in_clean_userdir(self):
+        workflow = text(".github/workflows/upstream-merge-full-link.yml")
+        self.assertIn("'data/**'", workflow)
+        self.assertIn("set -euo pipefail", workflow)
+        self.assertIn('mktemp -d', workflow)
+        self.assertLess(workflow.index("make -k -j3 all"),
+                        workflow.index("--check-mods dda dda_tutorial"))
+        tutorial = json.loads(text("data/mods/dda_tutorial/modinfo.json"))[0]
+        self.assertIn("dda", tutorial["dependencies"])
+
+
+if __name__ == "__main__":
+    unittest.main()

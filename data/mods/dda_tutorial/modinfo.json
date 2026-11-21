@@ -5,6 +5,7 @@
     "name": "Tutorial",
     "description": "Tutorial for Cataclysm-DDA",
     "category": "content",
+    "dependencies": [ "dda" ],
     "//": "Marked as obsolete so it doesn't appear in the mod selection list",
     "obsolete": true
   }

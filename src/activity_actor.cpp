@@ -6485,6 +6485,10 @@ std::unique_ptr<activity_actor> camp_meal_activity_actor::deserialize( JsonValue
 {
     camp_meal_activity_actor actor;
     JsonObject data = jsin.get_object();
+    // Restore both upstream and older Android save formats. The current
+    // field wins if a migrated save contains both; mark both as read.
+    data.read( "camp", actor.camp_position );
+    data.read( "kcal", actor.meal_kcals );
     data.read( "camp_position", actor.camp_position );
     data.read( "meal_kcals", actor.meal_kcals );
     return actor.clone();

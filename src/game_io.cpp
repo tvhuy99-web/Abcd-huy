@@ -131,6 +131,9 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
 
     // deduplicated list of mods to check
     std::set<mod_id> check( opts.begin(), opts.end() );
+    bool load_ok = true;
+    // Validation is explicitly requested; never inherit a fast-load skip.
+    get_options().get_option( "SKIP_VERIFICATION" ).setValue( "false" );
 
     // if no specific mods specified check all non-obsolete mods
     if( check.empty() ) {
@@ -154,6 +157,7 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
             DynamicDataLoader::get_instance().finalize_loaded_data();
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data from json: " << err.what() << std::endl;
+            load_ok = false;
         }
 
         std::string world_name = world_generator->active_world->world_name;
@@ -200,6 +204,7 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
             DynamicDataLoader::get_instance().finalize_loaded_data();
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data: " << err.what() << std::endl;
+            load_ok = false;
         }
 
         std::string world_name = world_generator->active_world->world_name;
@@ -208,7 +213,7 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
         MAPBUFFER.clear();
         overmap_buffer.clear();
     }
-    return true;
+    return load_ok;
 }
 
 bool game::is_core_data_loaded() const
