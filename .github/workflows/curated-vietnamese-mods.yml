@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - feature/curated-five-mods-20261119
+      - test/upstream-full-merge-2026-11-19
     paths:
       - 'tools/mods/**'
       - '.github/workflows/curated-vietnamese-mods.yml'

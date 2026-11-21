@@ -930,7 +930,11 @@ int main( int argc, const char *argv[] )
 
     set_language_from_options();
     rng_set_engine_seed( cli.seed );
-    game_ui::init_ui();
+    // --check-mods sets test_mode and deliberately skips curses initialization.
+    // Do not query or resize a nonexistent terminal before loading JSON.
+    if( !test_mode ) {
+        game_ui::init_ui();
+    }
 
     g = std::make_unique<game>();
     load_static_game_data( cli );

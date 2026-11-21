@@ -10,6 +10,7 @@ on:
       - 'data/**'
       - 'Makefile'
       - 'tests/**'
+      - 'tools/mods/**'
   workflow_dispatch:
 
 permissions:
@@ -165,6 +166,37 @@ jobs:
 
           if [ "$failed" -ne 0 ]; then
             echo "::error title=Native verification incomplete::${failed} checks failed or timed out; see diagnostic artifact"
+            exit 1
+          fi
+      - name: Install pinned Arcana and apply protected Vietnamese overlay
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          python3 tools/mods/install_curated.py --install arcana --target data/mods
+          python3 tools/mods/apply_vi_overlays.py --target data/mods --mods arcana
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("data/mods/Arcana_StrangeAeons/effects/effects.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          effect = next(x for x in data if x.get("id") == "triffid_garland_buff")
+          assert effect["decay_messages"][0][1] == "bad", effect
+          print("Verified localized triffid garland message type: bad")
+          PY
+      - name: Load localized Arcana using the real native JSON parser
+        timeout-minutes: 10
+        env:
+          TERM: xterm
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/native-verify"
+          mkdir -p "$report"
+          userdir="$(mktemp -d)"
+          trap 'rm -rf "$userdir"' EXIT
+          timeout --verbose --kill-after=10s 480s stdbuf -oL -eL \
+            ./cataclysm --userdir "$userdir/" --check-mods Arcana \
+            </dev/null 2>&1 | tee "$report/arcana-native.log"
+          if grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)' "$report/arcana-native.log"; then
             exit 1
           fi
       - name: Upload native loader diagnostics
