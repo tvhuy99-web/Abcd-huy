@@ -6448,6 +6448,13 @@ std::unique_ptr<activity_actor> close_tile_activity_actor::deserialize( JsonValu
     return actor.clone();
 }
 
+static item camp_meal_of( const basecamp &camp, const int kcal )
+{
+    nutrients portion;
+    portion.calories = static_cast<int64_t>( kcal ) * 1000;
+    return camp.make_fake_food( portion );
+}
+
 void camp_meal_activity_actor::start( player_activity &act, Character &who )
 {
     const basecamp *bcp = overmap_buffer.find_camp( camp_position.xy() ).value_or( nullptr );
@@ -6472,10 +6479,11 @@ void camp_meal_activity_actor::finish( player_activity &act, Character &who )
     }
     // Keep the fork's stockpile guard: the larder may have been emptied
     // while the NPC was eating. Do not divide by zero in camp_food_supply.
-    const faction *owner = bcp->get_owner();
-    if( owner == nullptr ) {
+    const faction_id owner_id = bcp->get_owner();
+    if( !owner_id.is_valid() ) {
         return;
     }
+    const faction *owner = &*owner_id;
     const int portion = owner->consumes_food ?
                         std::min( meal_kcals, owner->food_supply().kcal() ) : meal_kcals;
     if( portion <= 0 ) {
