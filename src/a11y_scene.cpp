@@ -413,14 +413,14 @@ void append_features( std::string &report, const std::string &title,
                                  std::abs( b.position.y() - player.y() ) );
         return da < db;
     } );
-    report += " " + title + ":";
+    report += "\n" + title + ":";
     for( std::size_t i = 0; i < listed.size() && i < maximum; ++i ) {
         const located_entry &entry = listed[i];
-        report += " " + entry.label + ", " +
+        report += "\n" + entry.label + ", " +
                   point_speech( entry.position, player, local ) + ".";
     }
     if( listed.size() > maximum ) {
-        report += " " + string_format( _( "%d more locations." ),
+        report += "\n" + string_format( _( "%d more locations." ),
                                        static_cast<int>( listed.size() - maximum ) );
     }
 }
@@ -443,13 +443,13 @@ void append_groups( std::string &report, const std::string &title,
         };
         return distance( a.second.first ) < distance( b.second.first );
     } );
-    report += " " + title + ":";
+    report += "\n" + title + ":";
     for( std::size_t i = 0; i < ordered.size() && i < maximum; ++i ) {
-        report += " " + ordered[i].first + ", " +
+        report += "\n" + ordered[i].first + ", " +
                   point_speech( ordered[i].second.first, player, local ) + ".";
     }
     if( ordered.size() > maximum ) {
-        report += " " + string_format( _( "%d more types." ),
+        report += "\n" + string_format( _( "%d more types." ),
                                        static_cast<int>( ordered.size() - maximum ) );
     }
 }
@@ -507,7 +507,7 @@ void append_adjacent_places( std::string &report, const site_region &site,
     if( neighbors.empty() ) {
         return;
     }
-    report += " " + std::string( _( "Surroundings:" ) );
+    report += "\n" + std::string( _( "Surroundings:" ) );
     for( const auto &entry : neighbors ) {
         std::string directions;
         for( std::size_t i = 0; i < entry.second.size(); ++i ) {
@@ -520,7 +520,7 @@ void append_adjacent_places( std::string &report, const site_region &site,
                 directions += ", " + entry.second[i];
             }
         }
-        report += " " + string_format( _( "%1$s: %2$s." ), directions, entry.first );
+        report += "\n" + string_format( _( "%1$s: %2$s." ), directions, entry.first );
     }
 }
 
@@ -576,22 +576,22 @@ std::string build_survey()
     const scene_detail::extent bounds = site.identified ? site.envelope : loaded_bounds;
 
     if( bounded_site ) {
-        report += " " + string_format( _( "Area width %1$d east-west tiles, length %2$d north-south tiles." ),
+        report += "\n" + string_format( _( "Area width %1$d east-west tiles, length %2$d north-south tiles." ),
                                        bounds.width(), bounds.height() );
         if( site.floors.size() > 1 ) {
-            report += " " + string_format( _( "Map levels: %d." ),
+            report += "\n" + string_format( _( "Map levels: %d." ),
                                            static_cast<int>( site.floors.size() ) );
         }
     }
     if( local && bounded_site ) {
-        report += " " + string_format(
+        report += "\n" + string_format(
                       _( "You are at local X %1$d, Y %2$d, %3$s of the place." ),
                       local->x, local->y, position_in_site( player, bounds ) );
     } else if( local ) {
-        report += " " + string_format( _( "You are at local X %1$d, Y %2$d." ),
+        report += "\n" + string_format( _( "You are at local X %1$d, Y %2$d." ),
                                        local->x, local->y );
     } else {
-        report += " " + string_format( _( "You are at world X %1$d, Y %2$d, Z %3$d." ),
+        report += "\n" + string_format( _( "You are at world X %1$d, Y %2$d, Z %3$d." ),
                                        player.x(), player.y(), player.z() );
     }
 
@@ -620,9 +620,9 @@ std::string build_survey()
         }
     }
 
-    report += " " + std::string( _( "Paths:" ) );
+    report += "\n" + std::string( _( "Paths:" ) );
     for( const point &dir : { point::north, point::east, point::south, point::west } ) {
-        report += " " + straight_route( here, center, dir );
+        report += "\n" + straight_route( here, center, dir );
     }
     append_features( report, _( "Entrances" ), found.doors, player, landmark_local, 32, true );
     append_features( report, _( "Windows" ), found.windows, player, landmark_local, 48, true );
@@ -637,7 +637,7 @@ std::string build_survey()
     append_features( report, _( "Dangers and traces" ), found.dangers,
                      player, landmark_local, 32, true );
     if( found.tile_limit_hit ) {
-        report += " " + std::string( _( "Survey limit reached." ) );
+        report += "\n" + std::string( _( "Survey limit reached." ) );
     }
     append_adjacent_places( report, site, omt );
     // No repeated orientation recap or spoken "End of survey".
@@ -648,9 +648,8 @@ std::string build_survey()
 
 void announce_detailed_place_survey()
 {
-    // Deliberate, read-only world query. Keep Android's existing one-request
-    // TTS behavior (including its ordinary stop/restart gestures); no new UI,
-    // timer, pause button, or per-turn scanning is introduced.
+    // Read-only query. Newlines delimit independently focusable facts for
+    // Android, preserving the full survey without forcing one long utterance.
     a11y::android::announce( "A11Y_SCENE:" + build_survey(), 1 );
 }
 
