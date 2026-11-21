@@ -64,7 +64,7 @@ class TutorialCombatDummyContracts(unittest.TestCase):
 
     def test_reader_explains_attack_range_and_separate_movement(self):
         self.assertIn('name="a11yCombatOn"', self.english)
-        self.assertIn("current range without walking", self.english)
+        self.assertIn("current weapon range without walking", self.english)
         self.assertIn("Two fingers move", self.english)
         combat = self.vietnamese.split(
             'name="a11yCombatOn">', 1)[1].split("</string>", 1)[0]

@@ -592,7 +592,7 @@ target_handler::trajectory target_handler::mode_accessible_melee( avatar &you, i
     target_ui ui = target_ui();
     ui.you = &you;
     ui.mode = target_ui::TargetMode::Reach;
-    const item_location weapon = you.used_weapon();
+    item_location weapon = you.used_weapon();
     ui.relevant = weapon ? weapon.get_item() : nullptr;
     // Forced-unarmed while wielding a weapon must not cause a reach attack
     // with the held weapon. Otherwise use the original effective range.
