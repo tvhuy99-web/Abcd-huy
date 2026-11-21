@@ -38,19 +38,91 @@ jobs:
           make -k -j3 all \
             CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
             TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
-      - name: Load and verify core JSON and built-in tutorial using the game executable
-        timeout-minutes: 30
+      # Isolate static initialization, the core mod and tutorial dependencies.
+      # Each check has its own bounded runtime; a timeout is a test failure,
+      # never silently treated as success.
+      - name: Diagnose native data loading by stage
+        timeout-minutes: 32
         env:
           TERM: xterm
         run: |
           set -euo pipefail
-          userdir="$(mktemp -d)"
-          trap 'rm -rf "$userdir"' EXIT
-          # The game's actual JSON loaders (including fault::load) must run.
-          # Specify the obsolete tutorial explicitly; it is hidden from the
-          # normal mod selection list and from all-mod validation by default.
-          ./cataclysm --userdir "$userdir/" --check-mods dda dda_tutorial 2>&1 | tee "$RUNNER_TEMP/native-json-check.log"
-          # Retain a second guard for errors printed instead of thrown.
-          if grep -Ei 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)' "$RUNNER_TEMP/native-json-check.log"; then
+          report="$RUNNER_TEMP/native-verify"
+          mkdir -p "$report"
+          failed=0
+
+          run_check() {
+            local label="$1" seconds="$2"
+            shift 2
+            local userdir log profile status pid
+            userdir="$(mktemp -d)"
+            log="$report/${label}.log"
+            profile="$report/${label}-process.log"
+            echo "START ${label} | $(date -u +'%Y-%m-%dT%H:%M:%SZ') | limit=${seconds}s | args=$*" | tee "$profile"
+
+            # Use noninteractive stdin; capture both loader output and stderr.
+            timeout --verbose --signal=TERM --kill-after=10s "${seconds}s" \
+              stdbuf -oL -eL ./cataclysm --userdir "$userdir/" "$@" \
+              </dev/null >"$log" 2>&1 &
+            pid=$!
+
+            # Native loaders can be silent. Capture CPU, memory and wait
+            # channel every 20 seconds so a long load is distinguishable
+            # from a deadlock or a process waiting for input.
+            while kill -0 "$pid" 2>/dev/null; do
+              sleep 20
+              if ! kill -0 "$pid" 2>/dev/null; then
+                break
+              fi
+              echo "HEARTBEAT ${label} | $(date -u +'%Y-%m-%dT%H:%M:%SZ') | output_bytes=$(wc -c <"$log")" | tee -a "$profile"
+              ps -eo pid,ppid,stat,etime,time,%cpu,rss,wchan:24,comm \
+                | awk 'NR == 1 || $NF == "cataclysm" || $NF == "timeout"' \
+                | tee -a "$profile"
+            done
+
+            status=0
+            wait "$pid" || status=$?
+            echo "FINISH ${label} | $(date -u +'%Y-%m-%dT%H:%M:%SZ') | exit=${status}" | tee -a "$profile"
+            tail -n 35 "$log" || true
+
+            # Preserve the loader's own debug output before removing its
+            # isolated user directory. These logs are uploaded on failure.
+            while IFS= read -r -d '' file; do
+              cp "$file" "$report/${label}-$(basename "$file")"
+            done < <(find "$userdir" -type f \
+              \( -name 'debug.log' -o -name 'crash.log' \) -print0)
+            rm -rf "$userdir"
+
+            if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+              echo "::error title=Native validation timeout::${label} exceeded ${seconds}s (exit ${status}); inspect native-verify logs"
+              failed=$((failed + 1))
+            elif [ "$status" -ne 0 ]; then
+              echo "::error title=Native validation failed::${label} exited ${status}"
+              failed=$((failed + 1))
+            fi
+            if grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)' "$log"; then
+              echo "::error title=Native JSON loader reported errors::See ${label}.log"
+              failed=$((failed + 1))
+            fi
+            printf '| %s | %s | %s |\n' "$label" "$status" "${seconds}s max" >>"$report/summary.md"
+          }
+
+          echo '| Stage | Exit status | Limit |' >"$report/summary.md"
+          echo '|---|---:|---:|' >>"$report/summary.md"
+          run_check static-json 300 --jsonverify
+          run_check core-dda 480 --check-mods dda
+          run_check tutorial-dda 540 --check-mods dda dda_tutorial
+          cat "$report/summary.md" >>"$GITHUB_STEP_SUMMARY"
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error title=Native verification incomplete::${failed} checks failed or timed out; see diagnostic artifact"
             exit 1
           fi
+      - name: Upload native loader diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-loader-diagnostics
+          path: ${{ runner.temp }}/native-verify/
+          if-no-files-found: warn
+          retention-days: 7
