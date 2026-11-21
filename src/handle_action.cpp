@@ -2704,6 +2704,13 @@ static void fire()
             target_handler::queue_accessible_combat_shot( combat_attack_direction );
         }
         avatar_action::fire_wielded_weapon( you );
+        // A rejected wielded gun (e.g. incompatible ammunition or a
+        // failed aim start) must not leave a direction for a later shot.
+        if( combat_attack_direction >= 0 &&
+            ( !you.activity || you.activity.id() != activity_id( "ACT_AIM" ) ) ) {
+            target_handler::take_accessible_combat_shot();
+            target_handler::take_accessible_combat_precise_aim();
+        }
         return;
     }
     // try firing turrets

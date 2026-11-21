@@ -30,6 +30,15 @@ class DirectionalCombatRangeTests(unittest.TestCase):
         self.assertIn("get_targetable_creatures( range, mode == TargetMode::Reach )", ranged)
         self.assertIn("automatic_combat_shot && !prompt_friendlies_in_lof()", ranged)
 
+    def test_failed_or_canceled_aim_clears_pending_direction(self):
+        handler = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
+        actor = (SRC / "activity_actor.cpp").read_text(encoding="utf-8")
+        self.assertIn('you.activity.id() != activity_id( "ACT_AIM" )', handler)
+        finish = actor.split("void aim_activity_actor::finish(", 1)[1].split(
+            "void aim_activity_actor::serialize(", 1)[0]
+        self.assertEqual(finish.count("take_accessible_combat_shot();"), 2)
+        self.assertEqual(finish.count("take_accessible_combat_precise_aim();"), 2)
+
     def test_no_target_or_refused_confirmation_never_executes_melee(self):
         handler = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
         body = handler.split("mode_accessible_melee( you, combat_attack_direction )", 1)[1].split(

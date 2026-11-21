@@ -610,6 +610,10 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     // A one-gesture combat shot returns to the world after firing even
     // when AIM_AFTER_FIRING is enabled. Normal targeting keeps its setting.
     const bool quick_combat_shot = target_handler::take_accessible_combat_shot_completed();
+    // A gun fault or cancelled ammo selection can finish before the
+    // targeting UI consumes a pending accessibility combat direction.
+    target_handler::take_accessible_combat_shot();
+    target_handler::take_accessible_combat_precise_aim();
 
     act.set_to_null();
     item_location weapon = get_weapon();
@@ -656,6 +660,9 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
 
 void aim_activity_actor::canceled( player_activity &/*act*/, Character &/*who*/ )
 {
+    target_handler::take_accessible_combat_shot();
+    target_handler::take_accessible_combat_precise_aim();
+    target_handler::take_accessible_combat_shot_completed();
     unload_RAS_weapon();
     restore_view();
 }

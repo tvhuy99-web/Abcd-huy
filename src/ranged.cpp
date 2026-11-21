@@ -3072,6 +3072,7 @@ target_handler::trajectory target_ui::run()
     update_target_list();
 
     if( mode == TargetMode::Reach && accessible_melee_direction ) {
+        dst = src;
         const int chosen = *accessible_melee_direction;
         if( chosen < 0 || chosen >= 8 ) {
             return {};

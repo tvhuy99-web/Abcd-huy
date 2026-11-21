@@ -78,7 +78,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_HIT_MONSTER",
-        "text": "Bài học: Đánh trúng. Hãy quét để biết hướng và khoảng cách của mục tiêu. Với tay không hay vũ khí cận chiến thường, bạn cần đứng sát mục tiêu. Trong chế độ chiến đấu, vuốt một ngón về hướng mục tiêu để đánh; nếu ô trống nhân vật có thể bước. Vuốt hai ngón để chủ động đi lại. Chạm ba lần bằng ba ngón để đổi chế độ bản đồ và chiến đấu."
+        "text": "Bài học: Đánh trúng. Hãy quét để biết hướng và khoảng cách của mục tiêu. Với tay không hay vũ khí cận chiến thường, bạn cần đứng sát mục tiêu; vũ khí có tầm với đánh được từ xa hơn. Trong chế độ chiến đấu, vuốt một ngón về hướng mục tiêu để đánh theo tầm vũ khí; nhân vật không bước tới dù không có mục tiêu. Vuốt hai ngón để chủ động đi lại. Chạm ba lần bằng ba ngón để đổi chế độ bản đồ và chiến đấu."
       },
       {
         "id": "ANDROID_READER_LESSON_PAIN",
@@ -110,7 +110,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_GUN_FIRE",
-        "text": "Bài học: Bắn súng. Mở Menu tổng hợp, vào Chiến đấu, vũ khí và phép thuật rồi chọn Bắn súng hoặc tấn công tầm xa. Khi có màn chọn súng, chọn khẩu súng phù hợp và nghe số đạn. Trong màn ngắm, tìm bia tập, nghe tên mục tiêu rồi xác nhận bắn. Lệnh Đổi chế độ bắn hoặc đánh của súng chỉ chọn chế độ. Nhiệm vụ: bắn vào bia tập rồi đi sang tây."
+        "text": "Bài học: Bắn súng. Cầm súng đã nạp đạn, quét ở chế độ bản đồ để xác định bia tập. Bật chế độ chiến đấu, vuốt một ngón theo hướng bia trong tầm bắn. Hoặc mở Menu tổng hợp, nhóm Chiến đấu, chọn Bắn súng hoặc tấn công tầm xa để ngắm thủ công. Lệnh Đổi chế độ bắn hoặc đánh của súng chỉ chọn chế độ. Nhiệm vụ: bắn vào bia tập rồi đi sang tây."
       },
       {
         "id": "ANDROID_READER_LESSON_RECOIL",
@@ -154,11 +154,11 @@
       },
       {
         "id": "ANDROID_READER_LESSON_MONSTER_SIGHTED",
-        "text": "Bài học: Đánh cận chiến. Có hình nộm trong khu vực, chưa chắc đã đứng sát bạn. Vuốt hai ngón để quét và nghe hướng, khoảng cách của nó. Tiến tới ô liền kề. Chạm ba lần bằng ba ngón để bật chế độ chiến đấu, rồi vuốt một ngón theo hướng hình nộm để đánh. Nếu ô trống, nhân vật có thể bước. Khi chế độ an toàn chặn lệnh, vào Menu tổng hợp, nhóm Chiến đấu, để kiểm tra và điều chỉnh. Nhiệm vụ: đánh hình nộm rồi tới cửa phía sau."
+        "text": "Bài học: Đánh cận chiến. Có hình nộm trong khu vực, chưa chắc đã đứng sát bạn. Ở chế độ bản đồ, vuốt hai ngón để quét và nghe hướng, khoảng cách của nó. Chạm ba lần bằng ba ngón để bật chế độ chiến đấu. Vuốt hai ngón để tiến vào tầm vũ khí, rồi vuốt một ngón theo hướng hình nộm để đánh. Nhân vật không bước khi tấn công. Khi chế độ an toàn chặn lệnh, vào Menu tổng hợp, nhóm Chiến đấu, để kiểm tra và điều chỉnh. Nhiệm vụ: đánh hình nộm rồi tới cửa phía sau."
       },
       {
         "id": "ANDROID_READER_LESSON_REACH_ATTACK",
-        "text": "Bài học: Đánh có tầm với. Hình nộm ở sau quầy. Giáo thép có thể đánh từ khoảng cách hai ô, không cần đứng sát mục tiêu. Hãy cầm giáo, quét để xác định hình nộm, rồi mở Menu tổng hợp, nhóm Chiến đấu, chọn Bắn súng hoặc tấn công tầm xa. Trong màn chọn mục tiêu, chọn hình nộm rồi xác nhận. Nhiệm vụ: đánh trúng hình nộm qua quầy và đi vào hành lang phía nam."
+        "text": "Bài học: Đánh có tầm với. Hình nộm ở sau quầy. Giáo thép có thể đánh từ khoảng cách hai ô, không cần đứng sát mục tiêu. Hãy cầm giáo, quét ở chế độ bản đồ để xác định hình nộm, bật chế độ chiến đấu rồi vuốt một ngón theo hướng hình nộm khi nó nằm trong tầm giáo. Không cần bước tới sát. Nhiệm vụ: đánh trúng hình nộm qua quầy và đi vào hành lang phía nam."
       },
       {
         "id": "ANDROID_READER_LESSON_HOLSTERS_WEAR",

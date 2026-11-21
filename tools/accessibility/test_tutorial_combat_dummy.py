@@ -68,7 +68,7 @@ class TutorialCombatDummyContracts(unittest.TestCase):
         self.assertIn("Two fingers move", self.english)
         combat = self.vietnamese.split(
             'name="a11yCombatOn">', 1)[1].split("</string>", 1)[0]
-        for required in ("đánh hoặc bắn", "tầm vũ khí", "không bước", "Hai ngón đi"):
+        for required in ("đánh, bắn", "tầm vũ khí", "không bước", "Hai ngón đi"):
             self.assertIn(required, combat)
         self.assertIn('name="a11yGuideAttackNorth">Tấn công',
                       self.vietnamese)
