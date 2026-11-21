@@ -971,6 +971,7 @@ struct healing_option {
     wound_fix_id fix;
     bool doable;
     time_duration time_to_apply;
+    int amount = 1;
 };
 } // namespace
 
@@ -1047,7 +1048,24 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
             opt.doable &= fix_id->get_requirements().can_make_with_inventory( this, inv,
                           is_crafting_component );
 
-            healing_options.emplace_back( opt );
+            // Group only the same wound type and treatment. A larger batch
+            // must be affordable before it is presented as an enabled option.
+            const auto same_option = [&opt]( const healing_option &stored ) {
+                return stored.wd == opt.wd && stored.fix == opt.fix && stored.doable == opt.doable;
+            };
+            auto existing = std::find_if( healing_options.begin(), healing_options.end(), same_option );
+            if( existing != healing_options.end() && opt.doable &&
+                !fix_id->get_requirements().can_make_with_inventory( this, inv,
+                        is_crafting_component, existing->amount + opt.amount ) ) {
+                opt.doable = false;
+                existing = std::find_if( healing_options.begin(), healing_options.end(), same_option );
+            }
+            if( existing != healing_options.end() ) {
+                existing->amount += opt.amount;
+                existing->time_to_apply += opt.time_to_apply;
+            } else {
+                healing_options.emplace_back( opt );
+            }
         }
     }
 
@@ -1084,9 +1102,10 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         const requirement_data &reqs = fix.get_requirements();
         const nc_color col = opt.doable ? c_white : c_light_gray;
 
-        const std::vector<std::string> tools = reqs.get_folded_tools_list( this, fold_width, col, inv );
+        const std::vector<std::string> tools = reqs.get_folded_tools_list( this, fold_width, col, inv,
+                                               opt.amount );
         const std::vector<std::string> comps = reqs.get_folded_components_list( this, fold_width, col, inv,
-                                               is_crafting_component );
+                                               is_crafting_component, opt.amount );
 
         std::string descr = word_rewrap( fix.get_description(), 80 ) + "\n\n";
 
@@ -1132,7 +1151,7 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         }
         if( a11y::enabled() ) {
             a11y::semantic_snapshot requirements;
-            a11y::append_requirements( requirements, "treatment", reqs, *this, inv, is_crafting_component, 1 );
+            a11y::append_requirements( requirements, "treatment", reqs, *this, inv, is_crafting_component, opt.amount );
             for( const a11y::semantic_node &node : requirements.nodes ) {
                 descr += "\n" + node.label + "\n" + node.detail;
             }
@@ -1144,7 +1163,9 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
                 }
             }
         }
-        menu.addentry_desc( -1, true, -1, fix.get_name(), colorize( descr, col ) );
+        const std::string name = opt.amount > 1 ?
+                                 string_format( "%s (x%d)", fix.get_name(), opt.amount ) : fix.get_name();
+        menu.addentry_desc( -1, true, -1, name, colorize( descr, col ) );
         menu.entries.back().a11y_value = opt.doable ? _( "Treatment requirements are met." ) :
                                           _( "Treatment requirements are not met." );
 
@@ -1163,7 +1184,8 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         return false;
     }
 
-    assign_activity( fix_wound_activity_actor( opt.time_to_apply, bp_id, opt.wd, opt.fix ) );
+    assign_activity( fix_wound_activity_actor( opt.time_to_apply, bp_id, opt.wd, opt.fix,
+                     opt.amount ) );
 
     return true;
 }

@@ -11667,37 +11667,54 @@ void fix_wound_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
     const wound_fix &fix = *mending_method;
+    // Wounds may have healed naturally while the activity was in progress.
+    // Remember individual damage before mutating the vector; do not charge
+    // for wounds that no longer exist or duplicate a single wound's damage.
+    std::vector<int> treated_damage;
+    for( const wound &wd : bp->get_wounds() ) {
+        if( static_cast<int>( treated_damage.size() ) >= amount ) {
+            break;
+        }
+        if( wd.type == mended_wound ) {
+            treated_damage.push_back( wd.get_hp_damage() );
+        }
+    }
+    const int treated = static_cast<int>( treated_damage.size() );
+    if( treated == 0 ) {
+        return;
+    }
     const requirement_data &reqs = fix.get_requirements();
     const temp_crafting_inventory &inv = who.crafting_inventory();
-    if( !reqs.can_make_with_inventory( &who, inv, is_crafting_component ) ) {
+    if( !reqs.can_make_with_inventory( &who, inv, is_crafting_component, treated ) ) {
         add_msg( m_info, _( "You are currently unable to heal the %s." ), healed_bp->name.translated() );
         return;
     }
     for( const auto &e : reqs.get_components() ) {
-        who.consume_items( e );
+        who.consume_items( e, treated );
     }
     for( const auto &e : reqs.get_tools() ) {
-        who.consume_tools( e );
+        who.consume_tools( e, treated );
     }
     who.invalidate_crafting_inventory();
 
-    for( const wound_type_id &id : fix.wounds_added ) {
-        const wound *original = bp->get_wound( mended_wound );
-        if( original ) {
-            bp->add_wound( id, who, original->get_hp_damage() );
+    for( const int damage : treated_damage ) {
+        for( const wound_type_id &id : fix.wounds_added ) {
+            bp->add_wound( id, who, damage );
         }
     }
 
-    for( const wound_type_id &id : fix.wounds_removed ) {
-        bp->remove_wound( id );
+    for( int i = 0; i < treated; ++i ) {
+        for( const wound_type_id &id : fix.wounds_removed ) {
+            bp->remove_wound( id );
+        }
     }
 
     if( fix.mod_hp ) {
-        bp->mod_hp_cur( fix.mod_hp );
+        bp->mod_hp_cur( fix.mod_hp * treated );
     }
 
     for( const wound_skill &sk : fix.skills ) {
-        who.practice( sk.skill, 10, static_cast<int>( sk.level * 1.25 ) );
+        who.practice( sk.skill, 10 * treated, static_cast<int>( sk.level * 1.25 ) );
     }
 
     for( const wound_proficiency &wound_prof : fix.proficiencies ) {
@@ -11714,6 +11731,7 @@ void fix_wound_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "healed_bp", healed_bp );
     jsout.member( "mended_wound", mended_wound );
     jsout.member( "mending_method", mending_method );
+    jsout.member( "amount", amount );
 
     jsout.end_object();
 }
@@ -11727,6 +11745,9 @@ std::unique_ptr<activity_actor> fix_wound_activity_actor::deserialize( JsonValue
     data.read( "healed_bp", actor.healed_bp );
     data.read( "mended_wound", actor.mended_wound );
     data.read( "mending_method", actor.mending_method );
+    data.read( "amount", actor.amount );
+    // Old saves omit amount; the default is a single treatment.
+    actor.amount = std::max( 1, actor.amount );
 
     return actor.clone();
 }
