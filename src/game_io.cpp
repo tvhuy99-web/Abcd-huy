@@ -192,16 +192,22 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
         try {
             load_core_data();
 
-            // Load any dependencies and de-duplicate them
-            std::vector<mod_id> dep_vector = tree.get_dependencies_of_X_as_strings( mod.ident );
-            std::set<mod_id> dep_set( dep_vector.begin(), dep_vector.end() );
-            for( const auto &dep : dep_set ) {
-                load_data_from_dir( dep->path, dep->ident.str() );
-            }
-
-            // Load mod itself
-            load_data_from_dir( mod.path, mod.ident.str() );
-            DynamicDataLoader::get_instance().finalize_loaded_data();
+            // Match gameplay: dependencies must precede their dependants,
+            // and mod_interactions are loaded only for active mod IDs.
+            std::set<mod_id> seen;
+            std::vector<mod_id> &packs = test_world->active_mod_order;
+            const std::function<void( const mod_id & )> append_dependencies =
+            [&]( const mod_id & id ) {
+                if( !seen.insert( id ).second ) {
+                    return;
+                }
+                for( const mod_id &dependency : id->dependencies ) {
+                    append_dependencies( dependency );
+                }
+                packs.push_back( id );
+            };
+            append_dependencies( mod.ident );
+            load_world_modfiles();
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data: " << err.what() << std::endl;
             load_ok = false;

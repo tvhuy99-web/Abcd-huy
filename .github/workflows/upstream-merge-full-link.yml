@@ -178,6 +178,9 @@ jobs:
           set -euo pipefail
           python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
           python3 tools/mods/apply_vi_overlays.py --target data/mods
+          python3 -m unittest discover -s tools/accessibility -p 'test_community_item_schema.py' -v
+          python3 tools/mods/migrate_item_schema.py --target data/mods
+          python3 tools/mods/migrate_item_schema.py --target data/mods --check
           python3 - <<'PY'
           import json
           from pathlib import Path

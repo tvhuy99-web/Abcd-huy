@@ -45,6 +45,17 @@ class NativeJsonAuditTests(unittest.TestCase):
         self.assertIn("return load_ok;", body)
         self.assertIn('get_option( "SKIP_VERIFICATION" ).setValue( "false" )', body)
 
+    def test_native_check_uses_gameplay_mod_loading_and_logs_errors(self):
+        body = text("src/game_io.cpp").split("bool game::check_mod_data(", 1)[1].split(
+            "bool game::is_core_data_loaded()", 1)[0]
+        self.assertIn("append_dependencies( dependency )", body)
+        self.assertIn("test_world->active_mod_order", body)
+        self.assertIn("load_world_modfiles();", body)
+        self.assertNotIn("load_data_from_dir( mod.path", body)
+        main = text("src/main.cpp")
+        self.assertIn("initialize_debugging( cli.check_mods )", main)
+        self.assertIn("Native validation: load_ok=", main)
+
     def test_ci_runs_real_data_loader_after_link_in_clean_userdir(self):
         workflow = text(".github/workflows/upstream-merge-full-link.yml")
         self.assertIn("'data/**'", workflow)

@@ -11,6 +11,7 @@ on:
       - 'lang/**'
       - 'data/**'
       - 'tools/accessibility/**'
+      - 'tools/mods/**'
       - 'tools/build_shaders.py'
       - 'CMakeLists.txt'
       - '.github/workflows/android-accessibility-release-trial.yml'
@@ -95,6 +96,11 @@ jobs:
         run: |
           python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
           python3 tools/mods/apply_vi_overlays.py --target data/mods
+      - name: Migrate community items to current DDA schema before packaging
+        run: |
+          python3 -m unittest discover -s tools/accessibility -p 'test_community_item_schema.py' -v
+          python3 tools/mods/migrate_item_schema.py --target data/mods
+          python3 tools/mods/migrate_item_schema.py --target data/mods --check
       - name: Compile shader assets
         run: |
           python3 tools/build_shaders.py --shader-dir data/shaders --formats spv

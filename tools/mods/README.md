@@ -56,3 +56,21 @@ The dry run rejects missing JSON pointer targets, altered technical fields,
 corrupt overlay checksums, changed source revisions and broken format/colour
 tags. Do not translate JSON property names or IDs. Changes in gameplay data
 or additional upstream mod revisions require a new compatibility review.
+
+## Compatibility migration for the upstream integration branch
+
+After the pinned Vietnamese overlays are verified and applied, candidate builds
+run a separate item-schema migration against the four packaged mod folders:
+
+```sh
+python3 tools/mods/migrate_item_schema.py --target data/mods
+python3 tools/mods/migrate_item_schema.py --target data/mods --check
+```
+
+The migration preserves item IDs, localized text and numeric fields. It converts
+legacy item types and singular subtype declarations, retains old nested armor
+properties, and moves the removed alcohol use actions to the corresponding
+upstream consumption flags. It does not rewrite saves or change enabled mods.
+The checker is idempotent and rejects conflicting fields rather than discarding
+them. This is a targeted schema migration, not proof that every mod mechanic
+is compatible. Native loader checks and on-device acceptance are still required.

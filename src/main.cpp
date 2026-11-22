@@ -696,12 +696,15 @@ void validate_directories()
     }
 }
 
-void initialize_debugging()
+void initialize_debugging( bool headless_validation )
 {
 #if defined(EMSCRIPTEN)
+    ( void )headless_validation;
     setupDebug( DebugOutput::std_err );
 #else
-    setupDebug( DebugOutput::file );
+    // In validation mode the runner must see the actual debug messages,
+    // including consistency failures that only set error_observed.
+    setupDebug( headless_validation ? DebugOutput::std_err : DebugOutput::file );
 #endif
     // NOLINTNEXTLINE(cata-tests-must-restore-global-state)
     json_error_output_colors = json_error_output_colors_t::color_tags;
@@ -795,7 +798,11 @@ void load_static_game_data( const cli_opts &cli )
         if( cli.check_mods ) {
             init_colors();
             const std::vector<mod_id> mods( cli.opts.begin(), cli.opts.end() );
-            exit( g->check_mod_data( mods ) && !debug_has_error_been_observed() ? 0 : 1 );
+            const bool loaded = g->check_mod_data( mods );
+            const bool debug_errors = debug_has_error_been_observed();
+            std::cerr << "Native validation: load_ok=" << loaded
+                      << " debug_errors=" << debug_errors << std::endl;
+            exit( loaded && !debug_errors ? 0 : 1 );
         }
     } catch( const std::exception &err ) {
         debugmsg( "%s", err.what() );
@@ -920,7 +927,7 @@ int main( int argc, const char *argv[] )
     cli_opts cli = parse_commandline( argc, const_cast<const char **>( argv ) );
 
     validate_directories();
-    initialize_debugging();
+    initialize_debugging( cli.check_mods );
     initialize_locale();
     log_sdl_versions();
 
