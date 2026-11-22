@@ -231,10 +231,13 @@ def migrate_mods(target, folders=FOLDERS, check=False):
                 original = json.loads(path.read_text(encoding="utf-8-sig"))
                 localized = normalize_localized_document(
                     original, overlay.get(path.relative_to(folder).as_posix(), ()))
-                new, count = migrate_document(localized, path)
-                # Count formatting-only changes too, including non-item text.
-                if localized != original and count == 0:
-                    count = 1
+                new, _ = migrate_document(localized, path)
+                # Count both schema and formatting changes relative to the
+                # original, including non-item localized declarations.
+                if isinstance(original, list):
+                    count = sum(before != after for before, after in zip(original, new))
+                else:
+                    count = int(original != new)
             except ValueError as exc:
                 errors.append(str(exc))
                 continue
@@ -264,7 +267,7 @@ def migrate_mods(target, folders=FOLDERS, check=False):
             temporary.unlink(missing_ok=True)
         print(f"{path}: migrated {count} item declarations")
         total += count
-    print(f"Community item migration: {total} declarations in {len(prepared)} files")
+    print(f"Community compatibility migration: {total} declarations in {len(prepared)} files")
     return total
 
 

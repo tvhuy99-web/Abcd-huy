@@ -11,6 +11,8 @@ on:
       - 'Makefile'
       - 'tests/**'
       - 'tools/mods/**'
+      - 'tools/accessibility/test_native_json_audit.py'
+      - 'tools/accessibility/test_community_item_schema.py'
   workflow_dispatch:
 
 permissions:

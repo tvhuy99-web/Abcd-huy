@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'tools/mods/**'
+      - 'tools/accessibility/test_curated_mod_vi_overlays.py'
+      - 'tools/accessibility/test_community_item_schema.py'
       - '.github/workflows/curated-vietnamese-mods.yml'
   push:
     branches:
@@ -12,6 +14,8 @@ on:
       - test/upstream-full-merge-2026-11-19
     paths:
       - 'tools/mods/**'
+      - 'tools/accessibility/test_curated_mod_vi_overlays.py'
+      - 'tools/accessibility/test_community_item_schema.py'
       - '.github/workflows/curated-vietnamese-mods.yml'
   workflow_dispatch:
 
