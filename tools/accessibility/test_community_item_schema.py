@@ -56,6 +56,25 @@ class CommunityItemSchemaTest(unittest.TestCase):
         self.assertEqual(migrate_item(combo)["subtypes"], ["TOOL", "ARMOR"])
         self.assertEqual(migrate_item(migrate_item(combo)), migrate_item(combo))
 
+    def test_lowercase_legacy_slots_from_mst(self):
+        examples = (
+            {"type": "ITEM", "id": "tarp", "copy-from": "tarp",
+             "subtype": ["armor"], "qualities": [["SURFACE", 3]]},
+            {"type": "ITEM", "id": "makeshift_sled_runners_item",
+             "subtype": ["wheel"], "diameter": 1, "width": 1},
+        )
+        for original, slot in zip(examples, ("ARMOR", "WHEEL")):
+            with self.subTest(slot=slot):
+                expected = dict(original)
+                del expected["subtype"]
+                expected["subtypes"] = [slot]
+                self.assertEqual(migrate_item(original), expected)
+                self.assertEqual(migrate_item(expected), expected)
+        self.assertEqual(migrate_item({"type": "ITEM", "subtypes": ["Tool", "armor", "TOOL"]}),
+                         {"type": "ITEM", "subtypes": ["TOOL", "ARMOR"]})
+        with self.assertRaisesRegex(ValueError, "Unknown item subtype"):
+            migrate_item({"type": "ITEM", "subtype": ["unknown"]})
+
     def test_alcohol_moves_to_consumption_flag_without_losing_other_actions(self):
         old = {"type": "ITEM", "subtype": ["COMESTIBLE"], "id": "posca_hard",
                "copy-from": "posca", "use_action": "ALCOHOL_WEAK",

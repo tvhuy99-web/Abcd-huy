@@ -25,11 +25,13 @@ ALCOHOL = frozenset(("ALCOHOL", "ALCOHOL_WEAK", "ALCOHOL_STRONG"))
 def slot_list(value):
     values = [value] if isinstance(value, str) else value
     if not isinstance(values, list) or any(
-            not isinstance(slot, str) or slot not in LEGACY_TYPES for slot in values):
+            not isinstance(slot, str) or slot.upper() not in LEGACY_TYPES for slot in values):
         raise ValueError("Unknown item subtype: " + repr(value))
     # GENERIC is the old base item, not a runtime slot. TOOL_ARMOR
     # likewise represents two independent slots, not a slot of its own.
-    return list(dict.fromkeys(slot for name in values for slot in LEGACY_TYPES[name]))
+    # Pinned legacy mods also spell known slots in lowercase. Normalize
+    # the enum spelling only; unknown slots still fail validation.
+    return list(dict.fromkeys(slot for name in values for slot in LEGACY_TYPES[name.upper()]))
 
 
 def rename_subtypes(obj):
