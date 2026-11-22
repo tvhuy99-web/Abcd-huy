@@ -3257,7 +3257,11 @@ void islot_ammo::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "recovery_chance", recovery_chance, not_negative );
     optional( jo, was_loaded, "count", def_charges, positive, 1 );
     optional( jo, was_loaded, "loudness", loudness, not_negative, -1 );
-    optional( jo, was_loaded, "effects", ammo_effects, auto_flags_reader<ammo_effect_str_id> {} );
+    // A mod may inherit an ordinary item and give it its first AMMO
+    // slot. Extending that slot's empty effect set is well-defined; the
+    // other fields, especially mandatory ammo_type, still need initialization.
+    optional( jo, was_loaded || jo.has_string( "copy-from" ), "effects", ammo_effects,
+              auto_flags_reader<ammo_effect_str_id> {} );
     optional( jo, was_loaded, "critical_multiplier", critical_multiplier, positive_float, 2.0f );
     optional( jo, was_loaded, "show_stats", force_stat_display, false );
 }

@@ -207,7 +207,8 @@ jobs:
             timeout --verbose --kill-after=10s 480s stdbuf -oL -eL \
               ./cataclysm --userdir "$userdir/" --check-mods "$mod" \
               </dev/null >"$log" 2>&1 || status=$?
-            cat "$log"
+            # Keep the complete log in the artifact without flooding Actions.
+            tail -n 100 "$log" || true
             while IFS= read -r -d '' file; do
               cp "$file" "$report/${mod}-$(basename "$file")"
             done < <(find "$userdir" -type f \( -name 'debug.log' -o -name 'crash.log' \) -print0)

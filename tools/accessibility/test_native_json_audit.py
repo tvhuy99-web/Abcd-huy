@@ -56,6 +56,26 @@ class NativeJsonAuditTests(unittest.TestCase):
         self.assertIn("initialize_debugging( cli.check_mods )", main)
         self.assertIn("Native validation: load_ok=", main)
 
+    def test_headless_options_initialized_once_and_exit_keeps_diagnostics(self):
+        main = text("src/main.cpp")
+        body = main.split("bool initialize_interface(", 1)[1].split(
+            "void load_static_game_data(", 1)[0]
+        self.assertIn("#if !defined(TILES)", body)
+        self.assertIn("#if defined(TILES)\n    else if( cli.check_mods )", body)
+        self.assertIn("Json::globally_report_unvisited_members( false );\n            exit( loaded", main)
+
+    def test_new_ammo_slot_can_extend_effects_but_still_requires_ammo_type(self):
+        factory = text("src/item_factory.cpp").split("void islot_ammo::deserialize(", 1)[1].split(
+            "void islot_engine::deserialize(", 1)[0]
+        self.assertIn('mandatory( jo, was_loaded, "ammo_type", type )', factory)
+        self.assertIn('was_loaded || jo.has_string( "copy-from" ), "effects"', factory)
+
+    def test_vehicle_fuel_is_an_actual_ammo_consumer(self):
+        ammo = text("src/ammo.cpp")
+        self.assertIn("vehicles::parts::get_all()", ammo)
+        self.assertIn("part.fuel_type == fuel->get_id()", ammo)
+        self.assertIn("!used_as_vehicle_fuel", ammo)
+
     def test_ci_runs_real_data_loader_after_link_in_clean_userdir(self):
         workflow = text(".github/workflows/upstream-merge-full-link.yml")
         self.assertIn("'data/**'", workflow)

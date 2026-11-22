@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Migrate pinned community item JSON after verifying/applying text overlays.
 
-Only top-level item declarations are transformed. Do not alter item_group
-subtypes, nested effect/recipe types, identifiers, translations or weights.
+Transform top-level item declarations and formatting of exact Vietnamese
+overlay text. Do not alter item_group subtypes, nested effect/recipe types,
+identifiers, translated wording, placeholders or weights.
 Never apply these rules to saves or the source archive used to verify overlays.
 """
 import argparse
@@ -10,6 +11,12 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import tempfile
+import re
+
+if __package__:
+    from .apply_vi_overlays import OVERLAYS, TOKEN, load_overlay, target_for_pointer
+else:
+    from apply_vi_overlays import OVERLAYS, TOKEN, load_overlay, target_for_pointer
 
 FOLDERS = ("CataclysmPlusPlus", "Arcana_StrangeAeons", "Blazemod", "MST_Extra")
 SLOTS = frozenset((
@@ -111,6 +118,81 @@ def migrate_item(original):
     return obj
 
 
+def normalize_text_style(value):
+    """Apply only the punctuation fixes used by the upstream text lint.
+
+    Format tags and placeholders must remain byte-for-byte unchanged.
+    English checker uses an ASCII word length of 3 before '.' and 1
+    before '!' or '?'. Vietnamese translation wording stays untouched.
+    """
+    parts = []
+    end = 0
+    for token in TOKEN.finditer(value):
+        parts.append((False, value[end:token.start()]))
+        parts.append((True, token.group()))
+        end = token.end()
+    parts.append((False, value[end:]))
+    def fix(text):
+        text = text.replace("loại !!VUI NHẤT!!", "loại VUI NHẤT!!")
+        text = text.replace("...", "…")
+        text = re.sub(r"(?<=[A-Za-z0-9-]{3})\.(?= [^ \n])", ". ", text)
+        text = re.sub(r"(?<=[A-Za-z0-9-])([!?]+) (?=[^ \n])", r"\1  ", text)
+        return text
+    result = "".join(text if protected else fix(text) for protected, text in parts)
+    if TOKEN.findall(result) != TOKEN.findall(value):
+        raise ValueError("Text style normalization changed protected tokens")
+    return result
+
+
+def normalize_localized_document(document, changes):
+    """Normalize exact overlay text values, never technical or untranslated data.
+
+    The native item/monster name schema supports str_sp for names whose
+    singular/plural are identical. Vietnamese does not append English 's'.
+    Keep explicitly different translations, and never convert descriptions
+    or other singular-only translation objects to str_sp.
+    """
+    if not changes:
+        return document
+    result = deepcopy(document)
+    name_entries = set()
+    for pointer, translated in changes:
+        # The same migration runs again with --check; a normalized name
+        # can have str_sp instead of the old pointer's str/str_pl, and
+        # migrated armor_data can have moved to the top level.
+        try:
+            parent, key = target_for_pointer(result, pointer)
+            current = parent[key]
+        except (KeyError, IndexError, TypeError, ValueError):
+            continue
+        if not isinstance(current, str) or current != translated:
+            continue
+        if re.search(r"/(?:decay_messages|apply_message)/\d+/1$", pointer):
+            continue
+        parent[key] = normalize_text_style(current)
+        match = re.fullmatch(r"/(\d+)/name(?:/str(?:_pl|_sp)?)?", pointer)
+        if match:
+            name_entries.add(int(match.group(1)))
+        elif re.fullmatch(r"/name(?:/str(?:_pl|_sp)?)?", pointer):
+            name_entries.add(0)
+    objects = result if isinstance(result, list) else [result]
+    for index in name_entries:
+        if index >= len(objects):
+            continue
+        obj = objects[index]
+        if not isinstance(obj, dict) or obj.get("type") not in (
+                {"ITEM", "MONSTER"} | LEGACY_TYPES.keys()):
+            continue
+        name = obj.get("name")
+        if isinstance(name, str):
+            obj["name"] = {"str_sp": name}
+        elif isinstance(name, dict) and "str" in name and (
+                "str_pl" not in name or name["str"] == name["str_pl"]):
+            name["str_sp"] = name.pop("str")
+            name.pop("str_pl", None)
+    return result
+
+
 def migrate_document(document, path):
     multiple = isinstance(document, list)
     objects = document if multiple else [document]
@@ -139,13 +221,20 @@ def migrate_mods(target, folders=FOLDERS, check=False):
         folder = target / name
         if not (folder / "modinfo.json").is_file():
             raise FileNotFoundError(f"Missing mod: {folder}")
+        overlay_kind = next((k for k, v in OVERLAYS.items() if v["folder"] == name), None)
+        overlay = load_overlay(overlay_kind) if overlay_kind else {}
         for path in sorted(folder.rglob("*.json")):
             if path.is_symlink() or any(p.is_symlink() for p in path.parents
                                        if p != target and target in p.parents):
                 raise ValueError(f"Refusing symbolic link: {path}")
             try:
                 original = json.loads(path.read_text(encoding="utf-8-sig"))
-                new, count = migrate_document(original, path)
+                localized = normalize_localized_document(
+                    original, overlay.get(path.relative_to(folder).as_posix(), ()))
+                new, count = migrate_document(localized, path)
+                # Count formatting-only changes too, including non-item text.
+                if localized != original and count == 0:
+                    count = 1
             except ValueError as exc:
                 errors.append(str(exc))
                 continue

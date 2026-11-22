@@ -74,3 +74,5 @@ upstream consumption flags. It does not rewrite saves or change enabled mods.
 The checker is idempotent and rejects conflicting fields rather than discarding
 them. This is a targeted schema migration, not proof that every mod mechanic
 is compatible. Native loader checks and on-device acceptance are still required.
+
+The migration also normalizes punctuation and singular/plural structure only on exact Vietnamese overlay text. The original translation manifests remain immutable. Native loader validation still reports JSON field, reference, and text lint problems; no failures are suppressed.

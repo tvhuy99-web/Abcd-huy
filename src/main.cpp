@@ -778,10 +778,17 @@ bool initialize_interface( const cli_opts &cli )
             DebugLog( D_ERROR, DC_ALL ) << "Error while initializing the interface: " << err.what() << "\n";
             return false;
         }
-    } else if( cli.check_mods ) {
+    }
+#if defined(TILES)
+    else if( cli.check_mods ) {
+        // Tiled builds normally initialize options with the UI. The
+        // non-tiled path already did so above, even in test mode.
         get_options().init();
         get_options().load();
     }
+#else
+    ( void )cli;
+#endif
 
     return true;
 }
@@ -802,6 +809,10 @@ void load_static_game_data( const cli_opts &cli )
             const bool debug_errors = debug_has_error_been_observed();
             std::cerr << "Native validation: load_ok=" << loaded
                       << " debug_errors=" << debug_errors << std::endl;
+            // exit() does not run main's scope guard. Deferred, unprocessed
+            // JSON left after an exception must not report during static
+            // destruction (when the debug logger may already be destroyed).
+            Json::globally_report_unvisited_members( false );
             exit( loaded && !debug_errors ? 0 : 1 );
         }
     } catch( const std::exception &err ) {

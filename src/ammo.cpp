@@ -22,6 +22,7 @@
 #include "mapdata.h"
 #include "type_id.h"
 #include "value_ptr.h"
+#include "veh_type.h"
 #include "worldfactory.h"
 
 static const ammotype ammo_120mm( "120mm" );
@@ -193,7 +194,21 @@ void ammunition_type::check_consistency()
         // Liquids still need charge handling, so a ton of liquids need their own fake ammo types.
         const bool is_liquid_sole_type = solid_types_as_this_ammo.empty();
 
-        if( shoots_this_ammo.empty() && !is_whitelisted && !is_liquid_sole_type ) {
+        // Fuel-only charged items (including perpetual vehicle reactors)
+        // are legitimate consumers even when no gun fires that ammo.
+        const auto &vehicle_parts = vehicles::parts::get_all();
+        const bool used_as_vehicle_fuel = std::any_of( vehicle_parts.begin(), vehicle_parts.end(),
+        [&]( const vpart_info & part ) {
+            return !part.fuel_type.is_null() &&
+                   ( part.fuel_type == at ||
+                     std::any_of( solid_types_as_this_ammo.begin(), solid_types_as_this_ammo.end(),
+            [&]( const itype * fuel ) {
+                return part.fuel_type == fuel->get_id();
+            } ) );
+        } );
+
+        if( shoots_this_ammo.empty() && !is_whitelisted && !is_liquid_sole_type &&
+            !used_as_vehicle_fuel ) {
             debugmsg( "ammotype %s exists but is unused", id.c_str() );
         }
 

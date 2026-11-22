@@ -4,7 +4,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from tools.mods.migrate_item_schema import migrate_document, migrate_item, migrate_mods
+from tools.mods.migrate_item_schema import (
+    migrate_document, migrate_item, migrate_mods, normalize_localized_document,
+    normalize_text_style,
+)
 
 
 class CommunityItemSchemaTest(unittest.TestCase):
@@ -87,6 +90,35 @@ class CommunityItemSchemaTest(unittest.TestCase):
         other = {"type": "COMESTIBLE", "use_action": ["ALCOHOL", {"type": "heal"}]}
         self.assertEqual(migrate_item(other)["use_action"], [{"type": "heal"}])
         self.assertEqual(migrate_item(other)["flags"], ["ALCOHOL"])
+
+    def test_vietnamese_names_and_style_preserve_mechanics(self):
+        data = [
+            {"type": "ITEM", "id": "one", "name": {"str": "áo giáp"},
+             "description": "Chào bạn. Chúc vui! Bạn có %d <color_red>HP</color>...",
+             "damage": 10},
+            {"type": "MONSTER", "id": "two",
+             "name": {"str": "quái vật", "str_pl": "quái vật"}},
+            {"type": "ITEM", "id": "three", "name": {"str": "thứ nhất", "str_pl": "những thứ"}},
+            {"type": "recipe", "name": {"str": "tên riêng"}},
+        ]
+        changes = [
+            ("/0/name/str", "áo giáp"),
+            ("/0/description", data[0]["description"]),
+            ("/1/name/str", "quái vật"),
+            ("/1/name/str_pl", "quái vật"),
+            ("/2/name/str", "thứ nhất"),
+            ("/3/name/str", "tên riêng"),
+        ]
+        result = normalize_localized_document(data, changes)
+        self.assertEqual(result[0]["name"], {"str_sp": "áo giáp"})
+        self.assertEqual(result[0]["description"],
+                         "Chào bạn.  Chúc vui!  Bạn có %d <color_red>HP</color>…")
+        self.assertEqual(result[0]["damage"], 10)
+        self.assertEqual(result[1]["name"], {"str_sp": "quái vật"})
+        self.assertEqual(result[2], data[2])
+        self.assertEqual(result[3], data[3])
+        self.assertEqual(normalize_localized_document(result, changes), result)
+        self.assertEqual(normalize_text_style("file.json. Next."), "file.json.  Next.")
 
     def test_nonitems_and_nested_data_are_untouched(self):
         objects = [{"type": "item_group", "subtype": "collection", "id": "tools_survival"},
