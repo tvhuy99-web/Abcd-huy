@@ -6,7 +6,7 @@ import unittest
 
 from tools.mods.migrate_item_schema import (
     migrate_document, migrate_item, migrate_mods, normalize_localized_document,
-    normalize_text_style,
+    normalize_text_style, normalize_pinned_source_text, migrate_mst_recipes,
 )
 
 
@@ -119,6 +119,52 @@ class CommunityItemSchemaTest(unittest.TestCase):
         self.assertEqual(result[3], data[3])
         self.assertEqual(normalize_localized_document(result, changes), result)
         self.assertEqual(normalize_text_style("file.json. Next."), "file.json.  Next.")
+
+    def test_legacy_tool_ammo_and_tinderbox_transforms(self):
+        for ammo in ("charcoal", ["charcoal"]):
+            item = {"type": "ITEM", "subtype": ["TOOL"], "id": "purifier",
+                    "ammo": ammo, "charges_per_use": 1}
+            expected = {"type": "ITEM", "subtypes": ["TOOL"], "id": "purifier",
+                        "tool_ammo": ["charcoal"], "charges_per_use": 1}
+            self.assertEqual(migrate_item(item), expected)
+            self.assertEqual(migrate_item(expected), expected)
+        with self.assertRaisesRegex(ValueError, "Conflicting tool ammo"):
+            migrate_item({"type": "TOOL", "ammo": ["a"], "tool_ammo": ["b"]})
+        for ident, parent, target, active in (
+                ("tinderbox_clay", "tinderbox", "tinderbox_clay_on", True),
+                ("tinderbox_clay_on", "tinderbox_on", "tinderbox_clay", False)):
+            item = {"id": ident, "copy-from": parent, "type": "TOOL",
+                    "use_action": {"type": "transform", "target": target, "active": active}}
+            new = migrate_item(item)
+            self.assertEqual(new["use_action"], {"type": "transform", "target": target})
+            self.assertEqual(new["copy-from"], parent)
+            self.assertEqual(migrate_item(new), new)
+
+    def test_native_lint_before_tokens_and_pinned_source_text(self):
+        self.assertEqual(normalize_text_style("quái thai. %s!"), "quái thai.  %s!")
+        self.assertEqual(normalize_text_style("vitae. <color_red>HP</color>"),
+                         "vitae.  <color_red>HP</color>")
+        self.assertEqual(normalize_text_style("Chào bạn. %s!"), "Chào bạn. %s!")
+        metadata = [{"type": "MOD_INFO", "id": "Cata++",
+                     "description": "Monsters, etc. It also adds lore."}]
+        fixed = normalize_pinned_source_text(metadata, "CataclysmPlusPlus", "modinfo.json")
+        self.assertEqual(fixed[0]["description"], "Monsters, etc.  It also adds lore.")
+        dialogue = [{"responses": [{"text": "...", "topic": "BGSS_BHUNTER_STORY1"}]}]
+        fixed = normalize_pinned_source_text(dialogue, "CataclysmPlusPlus", "Npc/c_bgss.json")
+        self.assertEqual(fixed[0]["responses"][0], {"text": "…", "topic": "BGSS_BHUNTER_STORY1"})
+        self.assertEqual(normalize_pinned_source_text(fixed, "CataclysmPlusPlus",
+                                                      "Npc/c_bgss.json"), fixed)
+
+    def test_mst_recipe_compatibility_preserves_yields_and_alternatives(self):
+        data = [{"type": "recipe", "result": "pemmican",
+                 "components": [[["edible_tallow_lard", 2, "LIST"], ["ghee", 2]]]}]
+        data.extend({"type": "recipe", "result": ident} for ident in
+                    ("pitch_wood", "bearing_lead", "oil_garlic"))
+        fixed = migrate_mst_recipes(data, "recipes/recipe_overrides.json")
+        self.assertEqual(fixed[0]["components"], [[["edible_tallow", 2, "LIST"], ["ghee", 2]]])
+        self.assertEqual([obj["charges"] for obj in fixed[1:]], [10, 30, 6])
+        self.assertEqual(migrate_mst_recipes(fixed, "recipes/recipe_overrides.json"), fixed)
+        self.assertEqual(data[0]["components"][0][0][0], "edible_tallow_lard")
 
     def test_nonitems_and_nested_data_are_untouched(self):
         objects = [{"type": "item_group", "subtype": "collection", "id": "tools_survival"},

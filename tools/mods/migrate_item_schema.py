@@ -101,6 +101,30 @@ def migrate_item(original):
             rename_subtypes(obj[operation])
             if "subtypes" in obj[operation]:
                 obj[operation]["subtypes"] = slot_list(obj[operation]["subtypes"])
+    # The current tool slot owns tool_ammo, not the old generic ammo field.
+    # Do not reinterpret ammo belonging to a gun, magazine or other slot.
+    if "TOOL" in slots and set(slots) <= {"TOOL", "ARMOR"} and "ammo" in obj:
+        legacy = obj.pop("ammo")
+        legacy = [legacy] if isinstance(legacy, str) else legacy
+        if not isinstance(legacy, list) or not all(isinstance(x, str) for x in legacy):
+            raise ValueError("Invalid legacy tool ammo")
+        if "tool_ammo" in obj and obj["tool_ammo"] != legacy:
+            raise ValueError("Conflicting tool ammo fields")
+        obj["tool_ammo"] = legacy
+    # These two pinned MST transform targets inherit the corresponding
+    # upstream tinderbox states. The lit parent has SPAWN_ACTIVE, and
+    # item_transformation derives activity from the target, not the actor.
+    targets = {"tinderbox_clay": ("tinderbox_clay_on", True),
+               "tinderbox_clay_on": ("tinderbox_clay", False)}
+    if obj.get("id") in targets:
+        target, active = targets[obj["id"]]
+        actions = obj.get("use_action", [])
+        for action in actions if isinstance(actions, list) else [actions]:
+            if (isinstance(action, dict) and action.get("type") == "transform"
+                    and action.get("target") == target and "active" in action):
+                if action["active"] is not active:
+                    raise ValueError("Unexpected legacy tinderbox activity")
+                del action["active"]
     # Upstream 8351742905 moved the old alcohol use actions to consumption
     # flags with the same strengths. Preserve every unrelated use action.
     actions = obj.get("use_action")
@@ -138,7 +162,14 @@ def normalize_text_style(value):
         text = re.sub(r"(?<=[A-Za-z0-9-]{3})\.(?= [^ \n])", ". ", text)
         text = re.sub(r"(?<=[A-Za-z0-9-])([!?]+) (?=[^ \n])", r"\1  ", text)
         return text
-    result = "".join(text if protected else fix(text) for protected, text in parts)
+    # A format token after a sentence is still the next non-space text
+    # for the native lint (for example "vitae. %s!"). Supply that context
+    # to the unprotected segment without modifying the actual token.
+    result = "".join(
+        text if protected else
+        (fix(text + "X")[:-1] if index + 1 < len(parts) and parts[index + 1][0]
+         else fix(text))
+        for index, (protected, text) in enumerate(parts))
     if TOKEN.findall(result) != TOKEN.findall(value):
         raise ValueError("Text style normalization changed protected tokens")
     return result
@@ -193,6 +224,57 @@ def normalize_localized_document(document, changes):
     return result
 
 
+def normalize_pinned_source_text(document, folder, relative):
+    """Known native-lint failures in untranslated pinned source fields."""
+    if folder != "CataclysmPlusPlus":
+        return document
+    if relative not in ("modinfo.json", "Npc/c_bgss.json"):
+        return document
+    result = deepcopy(document)
+    objects = result if isinstance(result, list) else [result]
+    if relative == "modinfo.json":
+        for obj in objects:
+            if isinstance(obj, dict) and obj.get("type") == "MOD_INFO" and isinstance(
+                    obj.get("description"), str):
+                obj["description"] = normalize_text_style(obj["description"])
+    else:
+        # Only the literal dialogue response reported by the native loader.
+        def visit(value):
+            if isinstance(value, dict):
+                if value.get("text") == "...":
+                    value["text"] = "…"
+                for child in value.values():
+                    visit(child)
+            elif isinstance(value, list):
+                for child in value:
+                    visit(child)
+        visit(result)
+    return result
+
+
+def migrate_mst_recipes(document, relative):
+    """Port the pinned MST recipes to the current DDA requirements and yields."""
+    if not relative.startswith("recipes/"):
+        return document
+    result = deepcopy(document)
+    quantities = {"pitch_wood": 10, "bearing_lead": 30, "oil_garlic": 6}
+    for obj in result if isinstance(result, list) else [result]:
+        if not isinstance(obj, dict) or obj.get("type") != "recipe":
+            continue
+        ident = obj.get("result")
+        # Preserve the previous implicit default charge count reported by
+        # the real loader; do not change an explicit recipe yield.
+        if ident in quantities and "charges" not in obj:
+            obj["charges"] = quantities[ident]
+        if ident in ("pemmican", "pemmican_meat"):
+            for alternatives in obj.get("components", []):
+                for component in alternatives:
+                    if (isinstance(component, list) and len(component) == 3
+                            and component[0] == "edible_tallow_lard" and component[2] == "LIST"):
+                        component[0] = "edible_tallow"
+    return result
+
+
 def migrate_document(document, path):
     multiple = isinstance(document, list)
     objects = document if multiple else [document]
@@ -231,6 +313,10 @@ def migrate_mods(target, folders=FOLDERS, check=False):
                 original = json.loads(path.read_text(encoding="utf-8-sig"))
                 localized = normalize_localized_document(
                     original, overlay.get(path.relative_to(folder).as_posix(), ()))
+                relative = path.relative_to(folder).as_posix()
+                localized = normalize_pinned_source_text(localized, name, relative)
+                if name == "MST_Extra":
+                    localized = migrate_mst_recipes(localized, relative)
                 new, _ = migrate_document(localized, path)
                 # Count both schema and formatting changes relative to the
                 # original, including non-item localized declarations.
