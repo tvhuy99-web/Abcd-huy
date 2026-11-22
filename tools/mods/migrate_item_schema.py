@@ -25,9 +25,11 @@ ALCOHOL = frozenset(("ALCOHOL", "ALCOHOL_WEAK", "ALCOHOL_STRONG"))
 def slot_list(value):
     values = [value] if isinstance(value, str) else value
     if not isinstance(values, list) or any(
-            not isinstance(slot, str) or slot not in SLOTS for slot in values):
+            not isinstance(slot, str) or slot not in LEGACY_TYPES for slot in values):
         raise ValueError("Unknown item subtype: " + repr(value))
-    return values
+    # GENERIC is the old base item, not a runtime slot. TOOL_ARMOR
+    # likewise represents two independent slots, not a slot of its own.
+    return list(dict.fromkeys(slot for name in values for slot in LEGACY_TYPES[name]))
 
 
 def rename_subtypes(obj):
@@ -88,6 +90,8 @@ def migrate_item(original):
     for operation in ("extend", "delete"):
         if isinstance(obj.get(operation), dict):
             rename_subtypes(obj[operation])
+            if "subtypes" in obj[operation]:
+                obj[operation]["subtypes"] = slot_list(obj[operation]["subtypes"])
     # Upstream 8351742905 moved the old alcohol use actions to consumption
     # flags with the same strengths. Preserve every unrelated use action.
     actions = obj.get("use_action")
@@ -110,20 +114,25 @@ def migrate_document(document, path):
     objects = document if multiple else [document]
     migrated = []
     count = 0
+    errors = []
     for obj in objects:
         try:
             new = migrate_item(obj)
         except ValueError as exc:
             ident = obj.get("id", obj.get("abstract", "?"))
-            raise ValueError(f"{path}: {ident}: {exc}") from exc
+            errors.append(f"{path}: {ident}: {exc}")
+            continue
         count += new != obj
         migrated.append(new)
+    if errors:
+        raise ValueError("\n".join(errors))
     return (migrated if multiple else migrated[0]), count
 
 
 def migrate_mods(target, folders=FOLDERS, check=False):
     target = Path(target)
     prepared = []
+    errors = []
     for name in folders:
         folder = target / name
         if not (folder / "modinfo.json").is_file():
@@ -132,10 +141,16 @@ def migrate_mods(target, folders=FOLDERS, check=False):
             if path.is_symlink() or any(p.is_symlink() for p in path.parents
                                        if p != target and target in p.parents):
                 raise ValueError(f"Refusing symbolic link: {path}")
-            original = json.loads(path.read_text(encoding="utf-8-sig"))
-            new, count = migrate_document(original, path)
+            try:
+                original = json.loads(path.read_text(encoding="utf-8-sig"))
+                new, count = migrate_document(original, path)
+            except ValueError as exc:
+                errors.append(str(exc))
+                continue
             if count:
                 prepared.append((path, new, count))
+    if errors:
+        raise ValueError("Community migration errors:\n" + "\n".join(errors))
     # Validate every document before rewriting any; original source pins and
     # translation manifests remain unchanged. Per-file atomic replacement.
     if check and prepared:
