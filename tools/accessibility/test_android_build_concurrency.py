@@ -6,6 +6,7 @@ silently lower the supported runner native parallelism.
 """
 from pathlib import Path
 import unittest
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
@@ -43,6 +44,20 @@ class AndroidSingleLatestBuildContracts(unittest.TestCase):
         self.assertIn("  workflow_dispatch:\n", candidate)
         self.assertNotIn("  push:\n", production)
         self.assertIn("  workflow_dispatch:\n", production)
+
+    def test_translated_android_strings_have_default_locale_entries(self):
+        resources = Path(__file__).resolve().parents[2] / "android/app/src/main/res"
+        default = ET.parse(resources / "values/strings.xml").getroot()
+        names = {entry.get("name") for entry in default.findall("string")}
+        # The old fullscreen label is still shipped in localized resources.
+        self.assertIn("forceFullscreen", names)
+        localized = sorted(resources.glob("values-*/strings.xml"))
+        self.assertTrue(localized, "Android locale resources not found")
+        for path in localized:
+            with self.subTest(locale=path.parent.name):
+                translated = ET.parse(path).getroot()
+                orphaned = {entry.get("name") for entry in translated.findall("string")} - names
+                self.assertFalse(orphaned, f"Android ExtraTranslation in {path}: {orphaned}")
 
     def test_four_native_compilers_and_gradle_workers(self):
         for name in FILES:

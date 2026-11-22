@@ -10,6 +10,7 @@
     <string name="accessibilityServicesMessage">Some touch accessibility services can affect game gestures. Keep your screen reader enabled while testing the voice setup. Gameplay narration is still being developed. Continue to use the existing game controls, or open accessibility and voice setup:\n%1$s</string>
     <string name="ignoreFalsePostives">Mark as false positive(s)</string>
     <string name="softwareRendering">Software rendering</string>
+    <string name="forceFullscreen">Force fullscreen</string>
     <string name="androidSystemUiMode">Android system bars</string>
     <string name="androidSystemUiModeSystemBars">Show system bars</string>
     <string name="androidSystemUiModeFullscreen">Fullscreen</string>
