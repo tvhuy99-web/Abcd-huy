@@ -267,6 +267,15 @@ def migrate_mst_recipes(document, relative):
         if ident in quantities and "charges" not in obj:
             obj["charges"] = quantities[ident]
         if ident in ("pemmican", "pemmican_meat"):
+            # recipe::load replaces inline requirements rather than inheriting
+            # omitted tools and qualities. Preserve the current DDA parent
+            # requirements when MST overrides only the component alternatives.
+            # These values match data/json/recipes/food/meat_dishes.json
+            # at the integrated upstream revision 2917d666.
+            if obj.get("copy-from") == ident:
+                heat = 40 if ident == "pemmican" else 36
+                obj.setdefault("tools", [[["surface_heat", heat, "LIST"]]])
+                obj.setdefault("qualities", [{"id": "CUT", "level": 2}])
             for alternatives in obj.get("components", []):
                 for component in alternatives:
                     if (isinstance(component, list) and len(component) == 3

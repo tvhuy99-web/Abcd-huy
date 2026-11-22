@@ -166,6 +166,30 @@ class CommunityItemSchemaTest(unittest.TestCase):
         self.assertEqual(migrate_mst_recipes(fixed, "recipes/recipe_overrides.json"), fixed)
         self.assertEqual(data[0]["components"][0][0][0], "edible_tallow_lard")
 
+    def test_pemmican_overrides_keep_current_core_tools_and_qualities(self):
+        root = Path(__file__).resolve().parents[2]
+        core = json.loads((root / "data/json/recipes/food/meat_dishes.json")
+                          .read_text(encoding="utf-8"))
+        originals = {obj["result"]: obj for obj in core
+                     if obj.get("type") == "recipe"
+                     and obj.get("result") in ("pemmican", "pemmican_meat")}
+        for ident in ("pemmican", "pemmican_meat"):
+            with self.subTest(ident=ident):
+                override = {"type": "recipe", "result": ident, "copy-from": ident,
+                            "components": [[["edible_tallow_lard", 2, "LIST"], ["ghee", 2]]]}
+                fixed = migrate_mst_recipes([override], "recipes/recipe_overrides.json")[0]
+                self.assertEqual(fixed["tools"], originals[ident]["tools"])
+                self.assertEqual(fixed["qualities"], originals[ident]["qualities"])
+                self.assertEqual(fixed["components"],
+                                 [[["edible_tallow", 2, "LIST"], ["ghee", 2]]])
+                self.assertEqual(migrate_mst_recipes([fixed], "recipes/recipe_overrides.json"),
+                                 [fixed])
+                explicit = dict(override, tools=[], qualities=[])
+                fixed_explicit = migrate_mst_recipes([explicit], "recipes/recipe_overrides.json")[0]
+                self.assertEqual(fixed_explicit["tools"], [])
+                self.assertEqual(fixed_explicit["qualities"], [])
+                self.assertNotIn("tools", override)
+
     def test_nonitems_and_nested_data_are_untouched(self):
         objects = [{"type": "item_group", "subtype": "collection", "id": "tools_survival"},
                    {"type": "recipe", "result": "jar", "nested": {"type": "GENERIC"}},
