@@ -112,7 +112,7 @@ class CommunityItemSchemaTest(unittest.TestCase):
         result = normalize_localized_document(data, changes)
         self.assertEqual(result[0]["name"], {"str_sp": "áo giáp"})
         self.assertEqual(result[0]["description"],
-                         "Chào bạn.  Chúc vui!  Bạn có %d <color_red>HP</color>…")
+                         "Chào bạn. Chúc vui!  Bạn có %d <color_red>HP</color>…")
         self.assertEqual(result[0]["damage"], 10)
         self.assertEqual(result[1]["name"], {"str_sp": "quái vật"})
         self.assertEqual(result[2], data[2])
