@@ -24,7 +24,7 @@ jobs:
   full-link:
     name: Build, link and load native JSON data (no distribution)
     runs-on: ubuntu-26.04
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -44,6 +44,7 @@ jobs:
           gdb --version
           sudo -n true
       - name: Compile and link complete non-tiled native game
+        id: native_build
         run: |
           # Keep compiling independent units to surface all remaining merge errors in one run.
           make -k -j3 all \
@@ -151,7 +152,7 @@ jobs:
               echo "::error title=Native validation failed::${label} exited ${status}"
               failed=$((failed + 1))
             fi
-            if grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)' "$log"; then
+            if grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)|already defined with type' "$log"; then
               echo "::error title=Native JSON loader reported errors::See ${label}.log"
               failed=$((failed + 1))
             fi
@@ -162,18 +163,21 @@ jobs:
           echo '|---|---:|---:|' >>"$report/summary.md"
           run_check core-dda 480 --check-mods dda
           run_check tutorial-dda 540 --check-mods dda dda_tutorial
+          run_check legacy-item-group-fixture 540 --check-mods test_data
           cat "$report/summary.md" >>"$GITHUB_STEP_SUMMARY"
 
           if [ "$failed" -ne 0 ]; then
             echo "::error title=Native verification incomplete::${failed} checks failed or timed out; see diagnostic artifact"
             exit 1
           fi
-      - name: Install pinned Arcana and apply protected Vietnamese overlay
+      - name: Install pinned community mods and apply protected Vietnamese overlays
+        id: curated_install
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
         timeout-minutes: 8
         run: |
           set -euo pipefail
-          python3 tools/mods/install_curated.py --install arcana --target data/mods
-          python3 tools/mods/apply_vi_overlays.py --target data/mods --mods arcana
+          python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
+          python3 tools/mods/apply_vi_overlays.py --target data/mods
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -183,22 +187,34 @@ jobs:
           assert effect["decay_messages"][0][1] == "bad", effect
           print("Verified localized triffid garland message type: bad")
           PY
-      - name: Load localized Arcana using the real native JSON parser
-        timeout-minutes: 10
+      - name: Load each localized mod using the real native JSON parser
+        if: ${{ !cancelled() && steps.curated_install.outcome == 'success' }}
+        timeout-minutes: 38
         env:
           TERM: xterm
         run: |
           set -euo pipefail
           report="$RUNNER_TEMP/native-verify"
           mkdir -p "$report"
-          userdir="$(mktemp -d)"
-          trap 'rm -rf "$userdir"' EXIT
-          timeout --verbose --kill-after=10s 480s stdbuf -oL -eL \
-            ./cataclysm --userdir "$userdir/" --check-mods Arcana \
-            </dev/null 2>&1 | tee "$report/arcana-native.log"
-          if grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)' "$report/arcana-native.log"; then
-            exit 1
-          fi
+          failed=0
+          for mod in MST_Extra Arcana 'Cata++' blazemod; do
+            userdir="$(mktemp -d)"
+            log="$report/${mod}-native.log"
+            status=0
+            timeout --verbose --kill-after=10s 480s stdbuf -oL -eL \
+              ./cataclysm --userdir "$userdir/" --check-mods "$mod" \
+              </dev/null >"$log" 2>&1 || status=$?
+            cat "$log"
+            while IFS= read -r -d '' file; do
+              cp "$file" "$report/${mod}-$(basename "$file")"
+            done < <(find "$userdir" -type f \( -name 'debug.log' -o -name 'crash.log' \) -print0)
+            rm -rf "$userdir"
+            if [ "$status" -ne 0 ] || grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)|already defined with type' "$log"; then
+              echo "::error title=Native mod validation failed::${mod}: exit ${status}; see diagnostic logs"
+              failed=$((failed + 1))
+            fi
+          done
+          test "$failed" -eq 0
       - name: Upload native loader diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

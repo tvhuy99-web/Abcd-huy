@@ -1,5 +1,29 @@
 [
   {
+    "id": "test_legacy_extend_collection",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "test_rock", "prob": 100 } ]
+  },
+  {
+    "id": "test_legacy_extend_collection",
+    "copy-from": "test_legacy_extend_collection",
+    "type": "item_group",
+    "extend": { "items": [ [ "test_pipe", 100 ] ] }
+  },
+  {
+    "id": "test_legacy_extend_distribution",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "test_rock", "prob": 100 } ]
+  },
+  {
+    "id": "test_legacy_extend_distribution",
+    "copy-from": "test_legacy_extend_distribution",
+    "type": "item_group",
+    "extend": { "items": [ [ "test_pipe", 100 ] ] }
+  },
+  {
     "id": "test_truncating_to_container",
     "type": "item_group",
     "//": "A baloon with three items, which can't all fit.  The intention is that we should get one or the other",
