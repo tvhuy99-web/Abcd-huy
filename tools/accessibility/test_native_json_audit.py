@@ -76,6 +76,21 @@ class NativeJsonAuditTests(unittest.TestCase):
         self.assertIn("part.fuel_type == fuel->get_id()", ammo)
         self.assertIn("!used_as_vehicle_fuel", ammo)
 
+    def test_complex_recipe_warning_does_not_interrupt_world_loading(self):
+        source = text("src/requirements.cpp")
+        body = source.split("deduped_requirement_data::deduped_requirement_data(", 1)[1].split(
+            "bool deduped_requirement_data::can_make_with_inventory(", 1)[0]
+        limit = body.split("if( alternatives_.size() + pending.size() > max_alternatives )", 1)[1]
+        limit = limit.split("return;", 1)[0]
+        self.assertIn("DebugLog( D_WARNING, D_GAME )", limit)
+        self.assertNotIn("debugmsg(", limit)
+        self.assertIn("context.str()", limit)
+        self.assertIn("alternatives_.size() + pending.size()", limit)
+        self.assertIn("is_too_complex_ = true;", limit)
+        self.assertIn("alternatives_ = { in };", limit)
+        self.assertNotIn("%1s", limit)
+        self.assertNotIn("%2s", limit)
+
     def test_ci_runs_real_data_loader_after_link_in_clean_userdir(self):
         workflow = text(".github/workflows/upstream-merge-full-link.yml")
         self.assertIn("'data/**'", workflow)

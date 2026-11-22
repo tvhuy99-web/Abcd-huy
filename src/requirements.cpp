@@ -1823,10 +1823,16 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
         // with 114 alternatives.
         static constexpr size_t max_alternatives = 115;
         if( alternatives_.size() + pending.size() > max_alternatives ) {
-            debugmsg( "Construction of deduped_requirement_data generated too many alternatives.  "
-                      "The recipe %1s should be simplified.  See the Recipe section in "
-                      "doc/JSON/JSON_INFO.md for more details.  It has %2s alternatives.", context.str(),
-                      alternatives_.size() + pending.size() );
+            // The input requirement is retained below as a safe fallback, so
+            // a content mod exceeding the expansion budget must not halt
+            // character creation with a modal error.  Stream the recipe ID
+            // and count to the debug log without printf format specifiers.
+            DebugLog( D_WARNING, D_GAME ) <<
+                                         "Construction of deduped_requirement_data generated too many alternatives.  "
+                                         "The recipe " << context.str() <<
+                                         " should be simplified.  See the Recipe section in "
+                                         "doc/JSON/JSON_INFO.md for more details.  It has " <<
+                                         alternatives_.size() + pending.size() << " alternatives.";
             is_too_complex_ = true;
             alternatives_ = { in };
             return;
