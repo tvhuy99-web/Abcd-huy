@@ -553,6 +553,46 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                           compass( door.offset ), door.distance, state ) );
     }
 
+    // Group tile-only furniture and windows by 4-connected SAME-TYPE
+    // cells.  Distinct islands are separate groups, but touching separate
+    // furniture has no per-instance ID in the map and stays ambiguous.
+    const auto current_landmarks = radar_detail::summarize_tile_groups( tile_samples );
+    for( const auto &entry : current_landmarks ) {
+        const auto old = previous_landmark_groups.find( entry.first );
+        const radar_detail::tile_group_summary &summary = entry.second;
+        if( old == previous_landmark_groups.end() ||
+            old->second.groups != summary.groups ||
+            old->second.occupied_tiles != summary.occupied_tiles ) {
+            changes.push_back( string_format(
+                                   _( "%1$s: %2$d connected group(s) across %3$d tile(s), nearest to the %4$s at %5$d tiles." ),
+                                   entry.first, summary.groups, summary.occupied_tiles,
+                                   compass( point( summary.nearest_dx, summary.nearest_dy ) ),
+                                   summary.nearest_distance ) );
+        }
+    }
+    previous_landmark_groups = current_landmarks;
+
+    std::map<radar_detail::count_key, int> visible_counts;
+    for( const auto &entry : contacts ) {
+        const radar_contact &contact = entry.second;
+        if( contact.channel != radar_doors && contact.channel != radar_places ) {
+            ++visible_counts[ { contact.channel, contact.label } ];
+        }
+    }
+    const auto changed_totals = contact_counts.changed( visible_counts );
+    std::set<radar_detail::count_key> freshly_spoken;
+    for( const radar_contact &contact : fresh ) {
+        freshly_spoken.emplace( contact.channel, contact.label );
+    }
+    // New arrivals use the complete current count in speak_new().  A
+    // decrease has no arrival, so announce its new nonzero total here.
+    for( const auto &entry : changed_totals ) {
+        if( entry.second > 0 && freshly_spoken.count( entry.first ) == 0 ) {
+            changes.push_back( string_format( _( "%1$d %2$s now nearby." ),
+                                              entry.second, entry.first.second ) );
+        }
+    }
+
     // Keep the Places channel's existing discovery behavior; add only brief,
     // movement-driven changes in connected geometry. Skip teleports and level
     // changes so a new area is not mistaken for a newly opened passage.
