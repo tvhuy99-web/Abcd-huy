@@ -808,16 +808,20 @@ special_placement_result mutable_overmap_special_data::place(
         om.ter_set( pos, tid );
         if( ter.camp_owner.has_value() ) {
             tripoint_abs_omt camp_loc =  {project_combine( om.pos(), pos.xy() ), pos.z()};
-            get_map().add_camp( camp_loc, "faction_camp", false );
-            std::optional<basecamp *> bcp = overmap_buffer.find_camp( camp_loc.xy() );
-            if( !bcp ) {
-                debugmsg( "Camp placement during special generation failed at %s", camp_loc.to_string() );
-            } else {
-                basecamp *temp_camp = *bcp;
-                temp_camp->set_owner( ter.camp_owner.value() );
-                temp_camp->set_name( ter.camp_name.translated() );
-                // FIXME? Camp types are raw strings! Not ideal.
-                temp_camp->define_camp( camp_loc, "faction_base_bare_bones_NPC_camp_0", false );
+            // The same special may meet a camp restored from an earlier save.
+            // Do not overwrite its owner, name or existing expansions.
+            if( !om.find_camp( camp_loc.xy() ) ) {
+                get_map().add_camp( camp_loc, "faction_camp", false );
+                std::optional<basecamp *> bcp = overmap_buffer.find_camp( camp_loc.xy() );
+                if( !bcp ) {
+                    debugmsg( "Camp placement during special generation failed at %s", camp_loc.to_string() );
+                } else {
+                    basecamp *temp_camp = *bcp;
+                    temp_camp->set_owner( ter.camp_owner.value() );
+                    temp_camp->set_name( ter.camp_name.translated() );
+                    // FIXME? Camp types are raw strings! Not ideal.
+                    temp_camp->define_camp( camp_loc, "faction_base_bare_bones_NPC_camp_0", false );
+                }
             }
         }
         unresolved.add_joins_for( ter, pos, rot, suppressed_joins );
