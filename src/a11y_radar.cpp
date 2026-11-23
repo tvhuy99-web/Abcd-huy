@@ -476,9 +476,11 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
             }
             if( mask & radar_items ) {
                 for( const item &obj : here.i_at( p ) ) {
+                    // Two items of the same type may share one map square.
+                    // A missing UID must not collapse them into one contact.
                     const std::string id = obj.uid().is_valid() ?
-                                           std::to_string( obj.uid().get_value() ) :
-                                           position_id + ":" + obj.typeId().str();
+                                           "uid:" + std::to_string( obj.uid().get_value() ) :
+                                           "ptr:" + pointer_id( &obj );
                     add( contacts, radar_items, id, obj.tname(), delta );
                 }
             }
