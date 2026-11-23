@@ -411,6 +411,8 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     const avatar &player = get_avatar();
     std::map<std::string, radar_contact> contacts;
     std::map<std::string, std::string> current_door_states;
+    std::set<std::string> adjacent_door_keys;
+    std::vector<radar_detail::tile_sample> tile_samples;
     std::set<tripoint_abs_omt> examined_places;
     for( int dy = -range; dy <= range; ++dy ) {
         for( int dx = -range; dx <= range; ++dx ) {
@@ -446,8 +448,12 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                         furniture_id.find( "_locked" ) != std::string::npos;
                     const std::string state = !here.impassable( p ) ? "open" :
                                               locked ? "locked" : "closed";
-                    current_door_states[std::to_string( radar_doors ) + ":door:" +
-                                        position_id] = state;
+                    const std::string door_key = std::to_string( radar_doors ) + ":door:" +
+                                                 position_id;
+                    current_door_states[door_key] = state;
+                    if( radar_detail::cardinally_adjacent( dx, dy ) ) {
+                        adjacent_door_keys.insert( door_key );
+                    }
                 }
                 if( here.has_flag( ter_furn_flag::TFLAG_GOES_UP, p ) ) {
                     add( contacts, radar_doors, "up:" + position_id, _( "Stairs up" ), delta );
@@ -484,13 +490,17 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                 }
             }
             if( mask & radar_landmarks ) {
+                // Tiles are not individual furniture object IDs.  Group same
+                // type, side-connected cells without claiming distinct pieces.
                 if( here.has_furn( p ) ) {
-                    add( contacts, radar_landmarks, "furn:" + position_id,
-                         here.furnname( p ), delta );
+                    tile_samples.push_back( { "furn:" + here.furn( p ).id().str(),
+                                              remove_color_tags( here.furnname( p ) ),
+                                              world.x(), world.y(), dx, dy } );
                 }
                 if( here.has_flag( ter_furn_flag::TFLAG_WINDOW, p ) ) {
-                    add( contacts, radar_landmarks, "window:" + position_id,
-                         here.tername( p ), delta );
+                    tile_samples.push_back( { "window:" + here.ter( p ).id().str(),
+                                              remove_color_tags( here.tername( p ) ),
+                                              world.x(), world.y(), dx, dy } );
                 }
             }
             if( mask & radar_places ) {
@@ -556,7 +566,7 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     // spoken names changed can produce an additional change notice.
     std::map<std::string, std::string> current_object_names;
     for( const auto &entry : contacts ) {
-        if( entry.second.channel == radar_items || entry.second.channel == radar_landmarks ) {
+        if( entry.second.channel == radar_items ) {
             current_object_names.emplace( entry.first, entry.second.label );
         }
     }
