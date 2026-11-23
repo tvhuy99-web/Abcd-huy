@@ -102,5 +102,42 @@ class NativeJsonAuditTests(unittest.TestCase):
         self.assertIn("dda", tutorial["dependencies"])
 
 
+    def test_special_placement_does_not_recreate_an_existing_camp(self):
+        for path in ("src/overmap_special_fixed.cpp",
+                     "src/overmap_special_mutable.cpp"):
+            source = text(path)
+            guard = "if( !om.find_camp( camp_loc.xy() ) ) {"
+            creation = 'get_map().add_camp( camp_loc, "faction_camp", false );'
+            self.assertEqual(source.count(guard), 1, path)
+            self.assertEqual(source.count(creation), 1, path)
+            start = source.index(guard)
+            self.assertLess(start, source.index(creation), path)
+            # The ownership, name and expansion setup must remain protected.
+            block = source[start:source.index("temp_camp->define_camp(", start)]
+            self.assertIn("temp_camp->set_owner(", block, path)
+            self.assertIn("temp_camp->set_name(", block, path)
+
+    def test_saved_and_legacy_camps_are_not_registered_twice(self):
+        source = text("src/savegame.cpp")
+        saved = source.split('name == "camps"', 1)[1].split(
+            'name == "overmap_special_placements"', 1)[0]
+        self.assertIn("if( !find_camp( camp_pos ) )", saved)
+        self.assertIn("add_camp( camp_pos, new_camp );", saved)
+        self.assertIn("Skipping duplicate saved basecamp", saved)
+        game = text("src/game.cpp")
+        legacy = game.split("void game::validate_camps()", 1)[1].split(
+            "std::set<character_id> game::get_follower_list()", 1)[0]
+        self.assertEqual(legacy.count(
+            "if( !overmap_buffer.find_camp( camp.camp_omt_pos().xy() ) )"), 2)
+        self.assertEqual(legacy.count("overmap_buffer.add_camp( camp );"), 2)
+
+    def test_isherwood_stables_are_a_named_mutable_special_camp(self):
+        data = json.loads(text("data/json/overmap/overmap_mutable/farm_isherwood_mutable.json"))
+        special = next(obj for obj in data if obj.get("id") == "Isherwood Farm Mutable")
+        stable = special["overmaps"]["farm_isherwood_6_north"]
+        self.assertEqual(stable["camp"], "isherwood_family")
+        self.assertEqual(stable["camp_name"], "Isherwood Stables")
+
+
 if __name__ == "__main__":
     unittest.main()
