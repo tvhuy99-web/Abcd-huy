@@ -134,3 +134,86 @@ TEST_CASE( "a11y_radar_announces_only_meaningful_connected_space_changes",
     room.rays[0] = { true, false, 8, "" };
     CHECK( compare_spatial( hall, room ).size() == 1 );
 }
+
+TEST_CASE( "a11y_radar_groups_long_furniture_without_counting_each_tile_as_an_object",
+           "[a11y][radar]" )
+{
+    using a11y::radar_detail::tile_sample;
+    using a11y::radar_detail::summarize_tile_groups;
+    // A cupboard occupying three connected squares is one *spatial group*.
+    const std::vector<tile_sample> long_cupboard{
+        { "f_cupboard", "cupboard", 100, 200, 3, 0 },
+        { "f_cupboard", "cupboard", 101, 200, 4, 0 },
+        { "f_cupboard", "cupboard", 102, 200, 5, 0 }
+    };
+    const auto one = summarize_tile_groups( long_cupboard ).at( "cupboard" );
+    CHECK( one.groups == 1 );
+    CHECK( one.occupied_tiles == 3 );
+    CHECK( one.nearest_distance == 3 );
+
+    // Two separate cupboards are two groups even with the same spoken name.
+    const std::vector<tile_sample> separate{
+        { "f_cupboard", "cupboard", 100, 200, 2, 0 },
+        { "f_cupboard", "cupboard", 104, 200, 6, 0 }
+    };
+    const auto two = summarize_tile_groups( separate ).at( "cupboard" );
+    CHECK( two.groups == 2 );
+    CHECK( two.occupied_tiles == 2 );
+
+    // Adjacent map types which happen to share a translation remain distinct.
+    // The map cannot identify separate same-type furniture touching directly.
+    const std::vector<tile_sample> different_types{
+        { "f_cupboard", "cupboard", 100, 200, 2, 0 },
+        { "f_cupboard_variant", "cupboard", 101, 200, 3, 0 }
+    };
+    CHECK( summarize_tile_groups( different_types ).at( "cupboard" ).groups == 2 );
+    const std::vector<tile_sample> diagonal{
+        { "f_cupboard", "cupboard", 100, 200, 2, 0 },
+        { "f_cupboard", "cupboard", 101, 201, 3, 1 }
+    };
+    CHECK( summarize_tile_groups( diagonal ).at( "cupboard" ).groups == 2 );
+}
+
+TEST_CASE( "a11y_radar_reports_nine_to_ten_as_a_total_change",
+           "[a11y][radar]" )
+{
+    using namespace a11y::radar_detail;
+    count_tracker counts;
+    const count_key cupboard{ 7u, "cupboard" };
+    const std::map<count_key, int> nine{ { cupboard, 9 } };
+    const std::map<count_key, int> ten{ { cupboard, 10 } };
+    CHECK( counts.changed( nine ).at( cupboard ) == 9 );
+    CHECK( counts.changed( nine ).empty() );
+    CHECK( counts.changed( ten ).at( cupboard ) == 10 );
+    CHECK( counts.changed( ten ).empty() );
+    CHECK( counts.changed( nine ).at( cupboard ) == 9 );
+    counts.clear();
+    CHECK( counts.changed( ten ).at( cupboard ) == 10 );
+}
+
+TEST_CASE( "a11y_radar_reports_door_south_when_walking_east_to_west",
+           "[a11y][radar]" )
+{
+    using namespace a11y::radar_detail;
+    entry_tracker range_entries;
+    entry_tracker adjacent_entries;
+    const std::set<std::string> door{ "door:100:201" };
+    const std::set<std::string> no_adjacency;
+
+    // The door was already discovered within eight squares.
+    CHECK( range_entries.entering( door ) == door );
+    CHECK( range_entries.entering( door ).empty() );
+    CHECK_FALSE( cardinally_adjacent( 1, 1 ) ); // Southeast diagonal.
+    CHECK( adjacent_entries.entering( no_adjacency ).empty() );
+
+    // Walking west brings the same door directly south, one square away.
+    CHECK( cardinally_adjacent( 0, 1 ) );
+    CHECK( adjacent_entries.entering( door ) == door );
+    CHECK( range_entries.entering( door ).empty() );
+    // Standing beside the door must not repeat the alert.
+    CHECK( adjacent_entries.entering( door ).empty() );
+
+    // After passing it, returning to the doorway is a fresh approach.
+    CHECK( adjacent_entries.entering( no_adjacency ).empty() );
+    CHECK( adjacent_entries.entering( door ) == door );
+}
