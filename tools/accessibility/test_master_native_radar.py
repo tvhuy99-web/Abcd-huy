@@ -69,6 +69,9 @@ class MasterNativeRadar(unittest.TestCase):
         self.assertIn("speak_new( fresh, contacts, changes );", radar)
         self.assertIn("%1$d %2$s nearby, closest to the %3$s", radar)
         self.assertNotIn("%1$d new %2$s nearby, closest to the %3$s", radar)
+        # Two physical items on the same tile may have the same type and no UID.
+        self.assertIn('"ptr:" + pointer_id( &obj )', radar)
+        self.assertNotIn('position_id + ":" + obj.typeId().str()', radar)
 
 
 if __name__ == "__main__":
