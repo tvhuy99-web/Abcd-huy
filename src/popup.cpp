@@ -337,6 +337,14 @@ query_popup::result query_popup::query_once()
             if( intent.node == "option:" + std::to_string( i ) ) {
                 cur = i;
                 impl->keyboard_selected_option = i;
+                // A direct reader double-tap on No must return NO to the
+                // caller, not pass through a shared CONFIRM cursor.  That
+                // cursor is used by other gestures and can select Yes.
+                // Leave other popup types' existing confirmation intact.
+                if( intent.action == "activate" &&
+                    ( category == "YESNO" || category == "YESNOQUIT" ) ) {
+                    return options[i].action;
+                }
                 return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
             }
         }

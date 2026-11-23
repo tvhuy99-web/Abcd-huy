@@ -1213,6 +1213,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "A11Y_INTERNAL_MOD_FOCUS" );
+    ctxt.register_action( "A11Y_INTERNAL_MOD_TOGGLE" );
     ctxt.register_action( "A11Y_INTERNAL_MANUAL_MOD_IMPORT" );
     ctxt.register_action( "A11Y_INTERNAL_MANUAL_MOD_TOGGLE" );
 
@@ -1559,6 +1560,11 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         startsel[active_header] = 0;
         recalc_start = true;
         reader_focus = intent.node;
+        if( intent.action == "activate" && !target->second.active_list ) {
+            // The available list keeps enabled mods visible. Activating the
+            // same row again must remove it, not try_add it a second time.
+            return "A11Y_INTERNAL_MOD_TOGGLE";
+        }
         return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" ) :
                std::optional<std::string>( "A11Y_INTERNAL_MOD_FOCUS" );
     } );
@@ -1567,7 +1573,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "World mod selection" );
-        snapshot.summary = _( "Browse mod categories. Activate an available mod to add it, or an active mod to remove it. Move commands change load order." );
+        snapshot.summary = _( "Browse mod categories. Double-tap a mod to enable or disable it. The active list shows load order." );
 
         const std::vector<std::pair<std::string, translation>> &mod_tabs = get_mod_list_tabs();
         for( size_t i = 0; i < mod_tabs.size(); ++i ) {
@@ -1735,17 +1741,21 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             node.id = "mod:available:" + id.str();
             node.parent_id = available_parent;
             node.depth = 1;
-            node.role = "button";
+            node.role = "checkbox";
             node.label = id.is_valid() ? id->name() : _( "Missing mod" );
-            node.value = std::find( active_mod_order.begin(), active_mod_order.end(), id ) != active_mod_order.end() ?
-                         _( "Already in load order" ) : _( "Available to add" );
+            const bool already_active = std::find( active_mod_order.begin(), active_mod_order.end(),
+                                                  id ) != active_mod_order.end();
+            node.checked = already_active;
+            node.value = already_active ? _( "Already in load order" ) : _( "Available to add" );
             if( mod_has_detail( id ) ) {
                 node.value += " " + std::string( _( "Has details." ) );
             }
             if( !id.is_valid() ) {
                 node.enabled = false;
                 node.disabled_reason = _( "This mod is missing and cannot be added." );
-            } else if( !mman_ui->mm_tree.is_available( id ) ) {
+            } else if( !already_active && !mman_ui->mm_tree.is_available( id ) ) {
+                // An existing mod can always be removed, even when its
+                // dependency tree would prevent enabling it from scratch.
                 // try_add refuses such mods silently (mod_manager_ui.cpp).
                 // Publish the refusal up front, with the dependency tree's
                 // own error text as the reason, so a reader user hears why
@@ -1935,6 +1945,28 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         }
 
         if( action == "A11Y_INTERNAL_MOD_FOCUS" ) {
+            recalc_start = true;
+        } else if( action == "A11Y_INTERNAL_MOD_TOGGLE" ) {
+            const std::vector<mod_id> &current_tab_mods = all_tabs[iCurrentTab].mods;
+            if( active_header == 0 && cursel[0] < current_tab_mods.size() ) {
+                const mod_id selected_id = current_tab_mods[cursel[0]];
+                const auto found = std::find( active_mod_order.begin(), active_mod_order.end(), selected_id );
+                if( found != active_mod_order.end() ) {
+                    mman_ui->try_rem( std::distance( active_mod_order.begin(), found ), active_mod_order );
+                    if( std::find( active_mod_order.begin(), active_mod_order.end(), selected_id ) ==
+                        active_mod_order.end() ) {
+                        a11y::android::announce( string_format( _( "Mod disabled: %s." ),
+                                                                selected_id->name() ), 1 );
+                    }
+                } else {
+                    mman_ui->try_add( selected_id, active_mod_order );
+                    if( std::find( active_mod_order.begin(), active_mod_order.end(), selected_id ) !=
+                        active_mod_order.end() ) {
+                        a11y::android::announce( string_format( _( "Mod enabled: %s." ),
+                                                                selected_id->name() ), 1 );
+                    }
+                }
+            }
             recalc_start = true;
         } else if( action == "A11Y_INTERNAL_MANUAL_MOD_IMPORT" ) {
 #if defined(__ANDROID__)
