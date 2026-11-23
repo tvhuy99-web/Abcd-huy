@@ -736,7 +736,13 @@ void overmap::unserialize( const JsonObject &jsobj )
             for( JsonObject camp_json : camps_json ) {
                 basecamp new_camp;
                 new_camp.deserialize( camp_json );
-                add_camp( new_camp.camp_omt_pos().xy(), new_camp );
+                const point_abs_omt camp_pos = new_camp.camp_omt_pos().xy();
+                if( !find_camp( camp_pos ) ) {
+                    add_camp( camp_pos, new_camp );
+                } else {
+                    DebugLog( D_WARNING, DC_ALL ) << "Skipping duplicate saved basecamp at "
+                                                  << camp_pos.to_string();
+                }
             }
         } else if( name == "overmap_special_placements" ) {
             JsonArray special_placements_json = om_member;
