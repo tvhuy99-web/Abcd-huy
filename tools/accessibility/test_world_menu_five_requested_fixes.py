@@ -48,7 +48,8 @@ class WorldMenuFiveRequestedFixes(unittest.TestCase):
         # The available category still lists enabled mods. A second activate
         # must remove that very mod instead of repeating try_add (a no-op).
         self.assertIn('ctxt.register_action( "A11Y_INTERNAL_MOD_TOGGLE" );', WORLD)
-        dispatch = WORLD.split('const auto target = reader_targets.find( intent.node );', 1)[1]
+        dispatch = WORLD.split('&ctxt, "mod-selection",', 1)[1]
+        dispatch = dispatch.split('const auto target = reader_targets.find( intent.node );', 1)[1]
         dispatch = dispatch.split('const auto update_reader = [&]()', 1)[0]
         self.assertIn('if( intent.action == "activate" && !target->second.active_list )', dispatch)
         self.assertIn('return "A11Y_INTERNAL_MOD_TOGGLE";', dispatch)
