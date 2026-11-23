@@ -518,11 +518,25 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
         now.insert( entry.first );
     }
     const std::set<std::string> entering = tracker.entering( now );
+    // First discovery at eight tiles and passing a door at one cardinal
+    // tile are separate events.  Moving alongside the same door is silent
+    // until cardinal adjacency ends and begins again.
+    const std::set<std::string> newly_adjacent = nearby_doors.entering( adjacent_door_keys );
     std::vector<radar_contact> fresh;
     for( const std::string &key : entering ) {
-        fresh.push_back( contacts.at( key ) );
+        // On the first scan at one tile, avoid speaking this door twice.
+        if( newly_adjacent.count( key ) == 0 ) {
+            fresh.push_back( contacts.at( key ) );
+        }
     }
     std::vector<std::string> changes;
+    for( const std::string &key : newly_adjacent ) {
+        const auto it = contacts.find( key );
+        if( it != contacts.end() ) {
+            changes.push_back( string_format( _( "%1$s to the %2$s, %3$d tiles away." ),
+                                              it->second.label, compass( it->second.offset ), 1 ) );
+        }
+    }
 
     // The door channel now announces changes without falsely treating a door
     // at the same absolute position as a newly discovered object.
