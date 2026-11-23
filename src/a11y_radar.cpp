@@ -62,6 +62,9 @@ struct radar_contact {
 radar_detail::entry_tracker tracker;
 radar_detail::change_tracker door_states;
 radar_detail::change_tracker object_names;
+radar_detail::entry_tracker nearby_doors;
+radar_detail::count_tracker contact_counts;
+std::map<std::string, radar_detail::tile_group_summary> previous_landmark_groups;
 std::optional<radar_detail::spatial_frame> previous_space;
 std::optional<tripoint_abs_ms> previous_space_origin;
 
@@ -69,6 +72,9 @@ void clear_change_memory()
 {
     door_states.clear();
     object_names.clear();
+    nearby_doors.clear();
+    contact_counts.clear();
+    previous_landmark_groups.clear();
     previous_space.reset();
     previous_space_origin.reset();
 }
@@ -264,7 +270,8 @@ int sort_rank( const unsigned int category )
     return 7;
 }
 
-void speak_new( std::vector<radar_contact> &fresh,
+void speak_new( const std::vector<radar_contact> &fresh,
+                const std::map<std::string, radar_contact> &contacts,
                 const std::vector<std::string> &changes )
 {
     if( fresh.empty() && changes.empty() ) {
@@ -280,7 +287,9 @@ void speak_new( std::vector<radar_contact> &fresh,
         int count = 0;
     };
     std::map<std::pair<unsigned int, std::string>, grouped> groups;
-    for( const radar_contact &contact : fresh ) {
+    // Count every currently nearby instance, not only the newly entering ones.
+    for( const auto &entry : contacts ) {
+        const radar_contact &contact = entry.second;
         const auto key = std::make_pair( contact.channel, contact.label );
         grouped &g = groups[key];
         if( g.count++ == 0 || contact.distance < g.distance ) {
@@ -290,9 +299,13 @@ void speak_new( std::vector<radar_contact> &fresh,
             g.distance = contact.distance;
         }
     }
+    std::set<std::pair<unsigned int, std::string>> entering_groups;
+    for( const radar_contact &contact : fresh ) {
+        entering_groups.emplace( contact.channel, contact.label );
+    }
     std::vector<grouped> ordered;
-    for( const auto &it : groups ) {
-        ordered.push_back( it.second );
+    for( const auto &key : entering_groups ) {
+        ordered.push_back( groups.at( key ) );
     }
     std::sort( ordered.begin(), ordered.end(), []( const grouped &a, const grouped &b ) {
         if( sort_rank( a.channel ) != sort_rank( b.channel ) ) {
@@ -315,7 +328,7 @@ void speak_new( std::vector<radar_contact> &fresh,
             spoken += string_format( _( "%1$s to the %2$s, %3$d tiles away." ),
                                      g.label, direction, g.distance );
         } else {
-            spoken += string_format( _( "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles." ),
+            spoken += string_format( _( "%1$d %2$s nearby, closest to the %3$s at %4$d tiles." ),
                                      g.count, g.label, direction, g.distance );
         }
     }
@@ -377,10 +390,16 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     if( mask != last_mask ) {
         if( ( mask ^ last_mask ) & radar_doors ) {
             door_states.clear();
+            nearby_doors.clear();
         }
         if( ( mask ^ last_mask ) & ( radar_items | radar_landmarks ) ) {
             object_names.clear();
         }
+        if( ( mask ^ last_mask ) & radar_landmarks ) {
+            previous_landmark_groups.clear();
+        }
+        // Refresh totals after a category is enabled or disabled.
+        contact_counts.clear();
         if( ( mask ^ last_mask ) & radar_places ) {
             previous_space.reset();
             previous_space_origin.reset();
@@ -553,7 +572,7 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                           object.distance ) );
     }
 
-    speak_new( fresh, changes );
+    speak_new( fresh, contacts, changes );
 }
 
 } // namespace a11y
