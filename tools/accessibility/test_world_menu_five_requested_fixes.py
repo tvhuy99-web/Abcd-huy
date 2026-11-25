@@ -44,6 +44,36 @@ class WorldMenuFiveRequestedFixes(unittest.TestCase):
         ]:
             self.assertIn('msgid "' + en + '"\nmsgstr "' + vi + '"', SPEECH)
 
+    def test_available_mod_double_tap_is_an_actual_enable_disable_toggle(self):
+        # The available category still lists enabled mods. A second activate
+        # must remove that very mod instead of repeating try_add (a no-op).
+        self.assertIn('ctxt.register_action( "A11Y_INTERNAL_MOD_TOGGLE" );', WORLD)
+        dispatch = WORLD.split('&ctxt, "mod-selection",', 1)[1]
+        dispatch = dispatch.split('const auto target = reader_targets.find( intent.node );', 1)[1]
+        dispatch = dispatch.split('const auto update_reader = [&]()', 1)[0]
+        self.assertIn('if( intent.action == "activate" && !target->second.active_list )', dispatch)
+        self.assertIn('return "A11Y_INTERNAL_MOD_TOGGLE";', dispatch)
+
+        toggle = WORLD.split('} else if( action == "A11Y_INTERNAL_MOD_TOGGLE" ) {', 1)[1]
+        toggle = toggle.split('} else if( action == "A11Y_INTERNAL_MANUAL_MOD_IMPORT" )', 1)[0]
+        self.assertIn('std::find( active_mod_order.begin(), active_mod_order.end(), selected_id )', toggle)
+        self.assertIn('mman_ui->try_rem(', toggle)
+        self.assertIn('mman_ui->try_add( selected_id, active_mod_order );', toggle)
+        self.assertIn('_( "Mod disabled: %s." )', toggle)
+        self.assertIn('_( "Mod enabled: %s." )', toggle)
+
+    def test_mod_toggle_is_checkable_and_even_unavailable_active_mod_can_be_removed(self):
+        rows = WORLD.split('node.id = "mod:available:" + id.str();', 1)[1]
+        rows = rows.split('if( active_mod_order.empty() ) {', 1)[0]
+        self.assertIn('node.role = "checkbox";', rows)
+        self.assertIn('node.checked = already_active;', rows)
+        self.assertIn('!already_active && !mman_ui->mm_tree.is_available( id )', rows)
+        self.assertIn('msgid "Mod enabled: %s."\nmsgstr "Đã bật mod: %s."', SPEECH)
+        self.assertIn('msgid "Mod disabled: %s."\nmsgstr "Đã tắt mod: %s."', SPEECH)
+        # Normal keyboard and mouse confirmation semantics remain untouched.
+        self.assertIn('} else if( action == "CONFIRM" ) {', WORLD)
+        self.assertIn('mman_ui->try_rem( cursel[1], active_mod_order );', WORLD)
+
     def test_world_option_group_is_not_checkbox_or_duplicate_expansion(self):
         segment = OPTIONS.split('if( item.type == ItemType::GroupHeader ) {', 1)[1].split(
             'row.parent_id = tree_root_published', 1)[0]
