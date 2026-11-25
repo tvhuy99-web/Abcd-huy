@@ -32,6 +32,35 @@ class ReaderRegressionFixes(unittest.TestCase):
         self.assertIn('if( cc_uistate.selected_tab == CHARCREATOR_SUMMARY )', creator)
         self.assertIn('_( "Are you finished creating your character?" )', creator)
 
+    def test_double_tapped_no_dispatches_no_not_generic_confirm(self):
+        popup = (SRC / "popup.cpp").read_text(encoding="utf-8")
+        option_handler = popup.split('a11y::screen_scope reader( &ctxt, category,', 1)[1]
+        option_handler = option_handler.split('a11y::semantic_snapshot reader_snapshot;', 1)[0]
+        self.assertIn('intent.node == "option:" + std::to_string( i )', option_handler)
+        self.assertIn('category == "YESNO" || category == "YESNOQUIT"', option_handler)
+        self.assertIn('return options[i].action;', option_handler)
+        self.assertLess(option_handler.index('return options[i].action;'),
+                        option_handler.index('return intent.action == "activate" ? "CONFIRM"'))
+        # The popup, not the Android two-finger confirmation path, resolves
+        # a direct one-finger activation into the exact native YES/NO result.
+        self.assertIn('if( res.action == options[ind].action )', popup)
+        self.assertIn('res.wait_input = false;', popup)
+        output = (SRC / "output.cpp").read_text(encoding="utf-8")
+        self.assertIn('return action == "YES";', output)
+
+    def test_native_no_keeps_character_creator_on_summary_step(self):
+        creator = (SRC / "newcharacter.cpp").read_text(encoding="utf-8")
+        summary = creator.split('if( cc_uistate.selected_tab == CHARCREATOR_SUMMARY ) {', 1)[1]
+        summary = summary.split('} else if( action == "SCROLL_INFOBOX_UP" )', 1)[0]
+        self.assertIn('if( query_yn( query ) ) {', summary)
+        self.assertIn('cc_uistate.finished_character_creator = true;', summary)
+        surface = (JAVA / "ReaderGestureSurface.java").read_text(encoding="utf-8")
+        self.assertIn('listener.activate();', surface)
+        self.assertIn('listener.confirm();', surface)  # Two-finger up is unchanged.
+        activation = self.controller.split('public void activate()', 1)[1]
+        activation = activation.split('private void openEditor(', 1)[0]
+        self.assertIn('send("activate", "");', activation)
+
     def test_voice_preview_optional(self):
         save = self.tts.split("private void saveSettings()", 1)[1].split(
             "private boolean usesTalkBack()", 1)[0]
