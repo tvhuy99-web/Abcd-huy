@@ -43,5 +43,36 @@ class MasterNativeRadar(unittest.TestCase):
         self.assertIn('A11Y_RADAR_ALERT:', radar)
         self.assertIn("void Messages::add_msg_silent(", messages)
 
+    def test_door_pass_alert_is_independent_from_eight_tile_entry(self):
+        radar = (SRC / "a11y_radar.cpp").read_text(encoding="utf-8")
+        header = (SRC / "a11y_radar.h").read_text(encoding="utf-8")
+        self.assertIn("cardinally_adjacent( dx, dy )", radar)
+        self.assertIn("nearby_doors.entering( adjacent_door_keys )", radar)
+        self.assertIn("newly_adjacent.count( key ) == 0", radar)
+        self.assertIn("inline bool cardinally_adjacent(", header)
+        self.assertIn("return std::abs( dx ) + std::abs( dy ) == 1;", header)
+
+    def test_multi_tile_landmarks_are_groups_not_fabricated_object_instances(self):
+        radar = (SRC / "a11y_radar.cpp").read_text(encoding="utf-8")
+        header = (SRC / "a11y_radar.h").read_text(encoding="utf-8")
+        self.assertIn("summarize_tile_groups( tile_samples )", radar)
+        self.assertIn("std::vector<radar_detail::tile_sample> tile_samples;", radar)
+        self.assertIn("tiles[j].type != current.type", header)
+        self.assertIn("if( adjacent == 1 )", header)
+        self.assertIn("occupied_tiles", header)
+        self.assertIn("connected group(s) across", radar)
+
+    def test_speech_reports_total_objects_not_only_new_entries(self):
+        radar = (SRC / "a11y_radar.cpp").read_text(encoding="utf-8")
+        self.assertIn("for( const auto &entry : contacts ) {", radar)
+        self.assertIn("const auto changed_totals = contact_counts.changed( visible_counts );", radar)
+        self.assertIn("speak_new( fresh, contacts, changes );", radar)
+        self.assertIn("%1$d %2$s nearby, closest to the %3$s", radar)
+        self.assertNotIn("%1$d new %2$s nearby, closest to the %3$s", radar)
+        # Two physical items on the same tile may have the same type and no UID.
+        self.assertIn('"ptr:" + pointer_id( &obj )', radar)
+        self.assertNotIn('position_id + ":" + obj.typeId().str()', radar)
+
+
 if __name__ == "__main__":
     unittest.main()

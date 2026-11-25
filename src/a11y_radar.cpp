@@ -62,6 +62,9 @@ struct radar_contact {
 radar_detail::entry_tracker tracker;
 radar_detail::change_tracker door_states;
 radar_detail::change_tracker object_names;
+radar_detail::entry_tracker nearby_doors;
+radar_detail::count_tracker contact_counts;
+std::map<std::string, radar_detail::tile_group_summary> previous_landmark_groups;
 std::optional<radar_detail::spatial_frame> previous_space;
 std::optional<tripoint_abs_ms> previous_space_origin;
 
@@ -69,6 +72,9 @@ void clear_change_memory()
 {
     door_states.clear();
     object_names.clear();
+    nearby_doors.clear();
+    contact_counts.clear();
+    previous_landmark_groups.clear();
     previous_space.reset();
     previous_space_origin.reset();
 }
@@ -264,7 +270,8 @@ int sort_rank( const unsigned int category )
     return 7;
 }
 
-void speak_new( std::vector<radar_contact> &fresh,
+void speak_new( const std::vector<radar_contact> &fresh,
+                const std::map<std::string, radar_contact> &contacts,
                 const std::vector<std::string> &changes )
 {
     if( fresh.empty() && changes.empty() ) {
@@ -280,7 +287,9 @@ void speak_new( std::vector<radar_contact> &fresh,
         int count = 0;
     };
     std::map<std::pair<unsigned int, std::string>, grouped> groups;
-    for( const radar_contact &contact : fresh ) {
+    // Count every currently nearby instance, not only the newly entering ones.
+    for( const auto &entry : contacts ) {
+        const radar_contact &contact = entry.second;
         const auto key = std::make_pair( contact.channel, contact.label );
         grouped &g = groups[key];
         if( g.count++ == 0 || contact.distance < g.distance ) {
@@ -290,9 +299,13 @@ void speak_new( std::vector<radar_contact> &fresh,
             g.distance = contact.distance;
         }
     }
+    std::set<std::pair<unsigned int, std::string>> entering_groups;
+    for( const radar_contact &contact : fresh ) {
+        entering_groups.emplace( contact.channel, contact.label );
+    }
     std::vector<grouped> ordered;
-    for( const auto &it : groups ) {
-        ordered.push_back( it.second );
+    for( const auto &key : entering_groups ) {
+        ordered.push_back( groups.at( key ) );
     }
     std::sort( ordered.begin(), ordered.end(), []( const grouped &a, const grouped &b ) {
         if( sort_rank( a.channel ) != sort_rank( b.channel ) ) {
@@ -315,7 +328,7 @@ void speak_new( std::vector<radar_contact> &fresh,
             spoken += string_format( _( "%1$s to the %2$s, %3$d tiles away." ),
                                      g.label, direction, g.distance );
         } else {
-            spoken += string_format( _( "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles." ),
+            spoken += string_format( _( "%1$d %2$s nearby, closest to the %3$s at %4$d tiles." ),
                                      g.count, g.label, direction, g.distance );
         }
     }
@@ -377,10 +390,16 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     if( mask != last_mask ) {
         if( ( mask ^ last_mask ) & radar_doors ) {
             door_states.clear();
+            nearby_doors.clear();
         }
         if( ( mask ^ last_mask ) & ( radar_items | radar_landmarks ) ) {
             object_names.clear();
         }
+        if( ( mask ^ last_mask ) & radar_landmarks ) {
+            previous_landmark_groups.clear();
+        }
+        // Refresh totals after a category is enabled or disabled.
+        contact_counts.clear();
         if( ( mask ^ last_mask ) & radar_places ) {
             previous_space.reset();
             previous_space_origin.reset();
@@ -392,6 +411,8 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     const avatar &player = get_avatar();
     std::map<std::string, radar_contact> contacts;
     std::map<std::string, std::string> current_door_states;
+    std::set<std::string> adjacent_door_keys;
+    std::vector<radar_detail::tile_sample> tile_samples;
     std::set<tripoint_abs_omt> examined_places;
     for( int dy = -range; dy <= range; ++dy ) {
         for( int dx = -range; dx <= range; ++dx ) {
@@ -427,8 +448,12 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                         furniture_id.find( "_locked" ) != std::string::npos;
                     const std::string state = !here.impassable( p ) ? "open" :
                                               locked ? "locked" : "closed";
-                    current_door_states[std::to_string( radar_doors ) + ":door:" +
-                                        position_id] = state;
+                    const std::string door_key = std::to_string( radar_doors ) + ":door:" +
+                                                 position_id;
+                    current_door_states[door_key] = state;
+                    if( radar_detail::cardinally_adjacent( dx, dy ) ) {
+                        adjacent_door_keys.insert( door_key );
+                    }
                 }
                 if( here.has_flag( ter_furn_flag::TFLAG_GOES_UP, p ) ) {
                     add( contacts, radar_doors, "up:" + position_id, _( "Stairs up" ), delta );
@@ -451,9 +476,11 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
             }
             if( mask & radar_items ) {
                 for( const item &obj : here.i_at( p ) ) {
+                    // Two items of the same type may share one map square.
+                    // A missing UID must not collapse them into one contact.
                     const std::string id = obj.uid().is_valid() ?
-                                           std::to_string( obj.uid().get_value() ) :
-                                           position_id + ":" + obj.typeId().str();
+                                           "uid:" + std::to_string( obj.uid().get_value() ) :
+                                           "ptr:" + pointer_id( &obj );
                     add( contacts, radar_items, id, obj.tname(), delta );
                 }
             }
@@ -465,13 +492,17 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                 }
             }
             if( mask & radar_landmarks ) {
+                // Tiles are not individual furniture object IDs.  Group same
+                // type, side-connected cells without claiming distinct pieces.
                 if( here.has_furn( p ) ) {
-                    add( contacts, radar_landmarks, "furn:" + position_id,
-                         here.furnname( p ), delta );
+                    tile_samples.push_back( { "furn:" + here.furn( p ).id().str(),
+                                              remove_color_tags( here.furnname( p ) ),
+                                              world.x(), world.y(), dx, dy } );
                 }
                 if( here.has_flag( ter_furn_flag::TFLAG_WINDOW, p ) ) {
-                    add( contacts, radar_landmarks, "window:" + position_id,
-                         here.tername( p ), delta );
+                    tile_samples.push_back( { "window:" + here.ter( p ).id().str(),
+                                              remove_color_tags( here.tername( p ) ),
+                                              world.x(), world.y(), dx, dy } );
                 }
             }
             if( mask & radar_places ) {
@@ -489,11 +520,25 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
         now.insert( entry.first );
     }
     const std::set<std::string> entering = tracker.entering( now );
+    // First discovery at eight tiles and passing a door at one cardinal
+    // tile are separate events.  Moving alongside the same door is silent
+    // until cardinal adjacency ends and begins again.
+    const std::set<std::string> newly_adjacent = nearby_doors.entering( adjacent_door_keys );
     std::vector<radar_contact> fresh;
     for( const std::string &key : entering ) {
-        fresh.push_back( contacts.at( key ) );
+        // On the first scan at one tile, avoid speaking this door twice.
+        if( newly_adjacent.count( key ) == 0 ) {
+            fresh.push_back( contacts.at( key ) );
+        }
     }
     std::vector<std::string> changes;
+    for( const std::string &key : newly_adjacent ) {
+        const auto it = contacts.find( key );
+        if( it != contacts.end() ) {
+            changes.push_back( string_format( _( "%1$s to the %2$s, %3$d tiles away." ),
+                                              it->second.label, compass( it->second.offset ), 1 ) );
+        }
+    }
 
     // The door channel now announces changes without falsely treating a door
     // at the same absolute position as a newly discovered object.
@@ -508,6 +553,46 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                   change.second == "locked" ? _( "locked" ) : _( "closed" );
         changes.push_back( string_format( _( "Door to the %1$s, %2$d tiles away, is now %3$s." ),
                                           compass( door.offset ), door.distance, state ) );
+    }
+
+    // Group tile-only furniture and windows by 4-connected SAME-TYPE
+    // cells.  Distinct islands are separate groups, but touching separate
+    // furniture has no per-instance ID in the map and stays ambiguous.
+    const auto current_landmarks = radar_detail::summarize_tile_groups( tile_samples );
+    for( const auto &entry : current_landmarks ) {
+        const auto old = previous_landmark_groups.find( entry.first );
+        const radar_detail::tile_group_summary &summary = entry.second;
+        if( old == previous_landmark_groups.end() ||
+            old->second.groups != summary.groups ||
+            old->second.occupied_tiles != summary.occupied_tiles ) {
+            changes.push_back( string_format(
+                                   _( "%1$s: %2$d connected group(s) across %3$d tile(s), nearest to the %4$s at %5$d tiles." ),
+                                   entry.first, summary.groups, summary.occupied_tiles,
+                                   compass( point( summary.nearest_dx, summary.nearest_dy ) ),
+                                   summary.nearest_distance ) );
+        }
+    }
+    previous_landmark_groups = current_landmarks;
+
+    std::map<radar_detail::count_key, int> visible_counts;
+    for( const auto &entry : contacts ) {
+        const radar_contact &contact = entry.second;
+        if( contact.channel != radar_doors && contact.channel != radar_places ) {
+            ++visible_counts[ { contact.channel, contact.label } ];
+        }
+    }
+    const auto changed_totals = contact_counts.changed( visible_counts );
+    std::set<radar_detail::count_key> freshly_spoken;
+    for( const radar_contact &contact : fresh ) {
+        freshly_spoken.emplace( contact.channel, contact.label );
+    }
+    // New arrivals use the complete current count in speak_new().  A
+    // decrease has no arrival, so announce its new nonzero total here.
+    for( const auto &entry : changed_totals ) {
+        if( entry.second > 0 && freshly_spoken.count( entry.first ) == 0 ) {
+            changes.push_back( string_format( _( "%1$d %2$s now nearby." ),
+                                              entry.second, entry.first.second ) );
+        }
     }
 
     // Keep the Places channel's existing discovery behavior; add only brief,
@@ -537,7 +622,7 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
     // spoken names changed can produce an additional change notice.
     std::map<std::string, std::string> current_object_names;
     for( const auto &entry : contacts ) {
-        if( entry.second.channel == radar_items || entry.second.channel == radar_landmarks ) {
+        if( entry.second.channel == radar_items ) {
             current_object_names.emplace( entry.first, entry.second.label );
         }
     }
@@ -553,7 +638,7 @@ void update_automatic_radar( const tripoint_bub_ms &origin )
                                           object.distance ) );
     }
 
-    speak_new( fresh, changes );
+    speak_new( fresh, contacts, changes );
 }
 
 } // namespace a11y

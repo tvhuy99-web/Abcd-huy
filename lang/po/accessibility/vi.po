@@ -6335,6 +6335,18 @@ msgid "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles."
 msgstr "Có %1$d %2$s mới trong phạm vi rađa, gần nhất ở phía %3$s, cách %4$d ô."
 
 #, c-format
+msgid "%1$d %2$s nearby, closest to the %3$s at %4$d tiles."
+msgstr "Có %1$d %2$s trong phạm vi rađa, gần nhất ở phía %3$s, cách %4$d ô."
+
+#, c-format
+msgid "%1$d %2$s now nearby."
+msgstr "Hiện có %1$d %2$s trong phạm vi rađa."
+
+#, c-format
+msgid "%1$s: %2$d connected group(s) across %3$d tile(s), nearest to the %4$s at %5$d tiles."
+msgstr "%1$s: %2$d cụm liền nhau, chiếm %3$d ô; cụm gần nhất ở phía %4$s, cách %5$d ô."
+
+#, c-format
 msgid "%d more new radar groups were combined."
 msgstr "Có thêm %d nhóm đối tượng mới đã được gộp trong thông báo."
 
