@@ -860,12 +860,16 @@ msgstr "Kích hoạt để chọn giá trị trước."
 msgid "Activate to select the next value."
 msgstr "Kích hoạt để chọn giá trị tiếp theo."
 
-msgid ""
-"Browse mod categories. Activate an available mod to add it, or an active mod"
-" to remove it. Move commands change load order."
-msgstr ""
-"Duyệt nhóm mod. Kích hoạt mod chưa dùng để thêm hoặc mod đang bật để gỡ. "
-"Dùng lệnh di chuyển để đổi thứ tự nạp."
+msgid "Browse mod categories. Double-tap a mod to enable or disable it. The active list shows load order."
+msgstr "Duyệt nhóm mod. Chạm hai lần vào mod để bật hoặc tắt. Danh sách mod đang bật cho biết thứ tự nạp."
+
+#, c-format
+msgid "Mod enabled: %s."
+msgstr "Đã bật mod: %s."
+
+#, c-format
+msgid "Mod disabled: %s."
+msgstr "Đã tắt mod: %s."
 
 msgid "Activate to show the mods in this category."
 msgstr "Kích hoạt để xem mod trong nhóm này."
