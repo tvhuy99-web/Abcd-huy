@@ -1952,12 +1952,18 @@ void game::validate_camps()
 
     basecamp camp = here.hoist_submap_camp( u.pos_bub() );
     if( camp.is_valid() ) {
-        overmap_buffer.add_camp( camp );
+        // Prefer an existing overmap camp to the old submap copy.
+        if( !overmap_buffer.find_camp( camp.camp_omt_pos().xy() ) ) {
+            overmap_buffer.add_camp( camp );
+        }
         here.remove_submap_camp( u.pos_bub() );
     } else if( camp.camp_omt_pos() != tripoint_abs_omt() ) {
         std::string camp_name = _( "Faction Camp" );
         camp.set_name( camp_name );
-        overmap_buffer.add_camp( camp );
+        // Prefer an existing overmap camp to the old submap copy.
+        if( !overmap_buffer.find_camp( camp.camp_omt_pos().xy() ) ) {
+            overmap_buffer.add_camp( camp );
+        }
         here.remove_submap_camp( u.pos_bub() );
     }
 }
