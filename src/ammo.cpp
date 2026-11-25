@@ -22,10 +22,12 @@
 #include "mapdata.h"
 #include "type_id.h"
 #include "value_ptr.h"
+#include "veh_type.h"
 #include "worldfactory.h"
 
 static const ammotype ammo_120mm( "120mm" );
 static const ammotype ammo_afs_titanium_small( "afs_titanium_small" );
+static const ammotype ammo_chem_black_powder( "chem_black_powder" );
 static const ammotype ammo_gunpowder( "gunpowder" );
 static const ammotype ammo_gunpowder_artillery( "gunpowder_artillery" );
 static const ammotype ammo_gunpowder_large_rifle( "gunpowder_large_rifle" );
@@ -109,6 +111,7 @@ void ammunition_type::check_consistency()
         ammo_gunpowder_pistol, // Ditto
         ammo_gunpowder_rifle, // Ditto
         ammo_gunpowder_shotgun, // Ditto
+        ammo_chem_black_powder, // Ditto
         ammo_afs_titanium_small, // Just waiting for someone to do the work on de-charging this
         ammo_120mm, // Has some hardcoded references despite the fact nothing can actually shoot this. Need to clean those up before it can be safely removed
         ammo_rolling_paper, // Removing it causes an inexplicable autopickup test failure.
@@ -191,7 +194,21 @@ void ammunition_type::check_consistency()
         // Liquids still need charge handling, so a ton of liquids need their own fake ammo types.
         const bool is_liquid_sole_type = solid_types_as_this_ammo.empty();
 
-        if( shoots_this_ammo.empty() && !is_whitelisted && !is_liquid_sole_type ) {
+        // Fuel-only charged items (including perpetual vehicle reactors)
+        // are legitimate consumers even when no gun fires that ammo.
+        const auto &vehicle_parts = vehicles::parts::get_all();
+        const bool used_as_vehicle_fuel = std::any_of( vehicle_parts.begin(), vehicle_parts.end(),
+        [&]( const vpart_info & part ) {
+            return !part.fuel_type.is_null() &&
+                   ( part.fuel_type == at ||
+                     std::any_of( solid_types_as_this_ammo.begin(), solid_types_as_this_ammo.end(),
+            [&]( const itype * fuel ) {
+                return part.fuel_type == fuel->get_id();
+            } ) );
+        } );
+
+        if( shoots_this_ammo.empty() && !is_whitelisted && !is_liquid_sole_type &&
+            !used_as_vehicle_fuel ) {
             debugmsg( "ammotype %s exists but is unused", id.c_str() );
         }
 

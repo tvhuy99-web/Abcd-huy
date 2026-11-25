@@ -101,9 +101,10 @@ class monster : public Creature
             return this;
         }
 
-        mfaction_id get_monster_faction() const override {
-            return faction.id();
-        }
+        // Get the monfaction associated with this monster
+        mfaction_id get_monster_faction() const override;
+        //Get the *NPC* faction associated with this monster's monfaction, may be null
+        faction_id get_parent_faction() const;
         void gravity_check() override;
         void gravity_check( map *here ) override;
         void poly( const mtype_id &id );
@@ -143,7 +144,7 @@ class monster : public Creature
         std::string name( unsigned int quantity = 1 ) const; // Returns the monster's formal name
         std::string name_with_armor() const; // Name, with whatever our armor is called
         // the creature-class versions of the above
-        std::string disp_name( bool possessive = false, bool capitalize_first = false ) const override;
+        std::string disp_name( bool capitalize_first = false ) const override;
         std::string skin_name() const override;
         void get_HP_Bar( nc_color &color, std::string &text ) const;
         std::pair<std::string, nc_color> get_attitude() const;
@@ -374,6 +375,7 @@ class monster : public Creature
         // The monster's skill in hitting a weakpoint
         float weakpoint_skill() const;
 
+        float block_roll( const Creature *source ) override;
         bool block_hit( Creature *source, bodypart_id &bp_hit, damage_instance &d ) override;
         bool melee_attack( Creature &target );
         bool melee_attack( Creature &target, float accuracy );

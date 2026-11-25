@@ -333,7 +333,7 @@ public final class BackupRestoreActivity extends Activity {
         backupExport.setEnabled(!backupBusy && backupArchive != null);
         backupImport.setEnabled(!backupBusy && backupArchive != null);
         backupOpenPicker.setEnabled(!backupBusy && pendingBackupAction != BACKUP_ACTION_NONE);
-        backupConfirmRestore.setEnabled(!backupBusy && stagedBackupReady && ReaderGameSession.canRestore());
+        backupConfirmRestore.setEnabled(!backupBusy && stagedBackupReady && !deferredRestorePending);
         // Cancel stays available while a deferred restore is pending, so
         // the user can still void the confirmation before restarting.
         backupCancelRestore.setEnabled(!backupBusy && (stagedBackupReady || deferredRestorePending));

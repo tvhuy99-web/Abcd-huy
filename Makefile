@@ -387,6 +387,8 @@ ifneq ($(CLANG), 0)
     LD  = $(CROSS)$(CLANGCMD)
     CC  = $(CROSS)$(subst ++,,$(CLANGCMD))
   endif
+  # libstdc++ marks loops with "#pragma GCC unroll", which clang cannot always honor.
+  CXX_WARNINGS += -Wno-pass-failed
   CXX_WARNINGS += -Wno-unknown-warning-option
   WARNINGS += -Wno-unknown-warning-option
 else
@@ -1264,9 +1266,13 @@ src/version.h: version
 
 src/version.cpp: src/version.h
 
-TEST_MO := data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo
+TEST_MO := \
+  data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo \
+  data/mods/TEST_DATA/lang/mo/ru/LC_MESSAGES/TEST_DATA.mo
 
-$(TEST_MO): data/mods/TEST_DATA/lang/po/en.po
+# Keep the fork's English parser fixture and upstream's Russian plural fixture.
+# Build both using each locale's matching PO file instead of dropping one.
+data/mods/TEST_DATA/lang/mo/%/LC_MESSAGES/TEST_DATA.mo: data/mods/TEST_DATA/lang/po/%.po
 	mkdir -p $(dir $@)
 	msgfmt -f -o $@ $<
 

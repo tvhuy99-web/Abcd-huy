@@ -247,17 +247,19 @@ void performance_step_sample( const bool moved )
 
 void configure( const bool enable, const bool suspend )
 {
-    const std::scoped_lock<std::mutex> lock( inbox_mutex );
-    reader_enabled.store( enable, std::memory_order_release );
-    reader_suspended.store( suspend, std::memory_order_release );
-    inbox.clear();
-    world_step_ready = false;
-    has_world_token = false;
-    // An intent from the former Android Activity must never control a
-    // new owner. The route state itself survives a lifecycle rebind.
-    pending_travel_control.store( 0, std::memory_order_release );
-    travel_map_return_deadline_ms.store( 0, std::memory_order_release );
-    epoch.fetch_add( 1, std::memory_order_release );
+    {
+        const std::scoped_lock<std::mutex> lock( inbox_mutex );
+        reader_enabled.store( enable, std::memory_order_release );
+        reader_suspended.store( suspend, std::memory_order_release );
+        inbox.clear();
+        world_step_ready = false;
+        has_world_token = false;
+        // An intent from the former Android Activity must never control a
+        // new owner. The route state itself survives a lifecycle rebind.
+        pending_travel_control.store( 0, std::memory_order_release );
+        travel_map_return_deadline_ms.store( 0, std::memory_order_release );
+        epoch.fetch_add( 1, std::memory_order_release );
+    }
 #if defined(__ANDROID__)
     PushWakeEvent();
 #endif
@@ -265,32 +267,34 @@ void configure( const bool enable, const bool suspend )
 
 bool enqueue( semantic_intent intent )
 {
-    const std::scoped_lock<std::mutex> lock( inbox_mutex );
-    if( !enabled() || suspended() || inbox.size() >= 32 || intent.request == 0 ||
-        intent.node.size() > 512 || intent.action.size() > 80 || intent.value.size() > 16384 ) {
-        return false;
-    }
-    // Only the world walking channel is single-flight. Menu navigation
-    // retains the existing mailbox because it uses a different token.
-    if( intent.action == "activate" && is_world_step_node( intent.node ) &&
-        matches_last_world( intent.token ) ) {
-        if( !world_step_ready ||
-            std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
-            return pending.action == "activate" && is_world_step_node( pending.node );
-        } ) ) {
-            if( performance_profile_active.load( std::memory_order_relaxed ) ) {
-                profile_busy_epoch.fetch_add( 1, std::memory_order_relaxed );
-            }
+    {
+        const std::scoped_lock<std::mutex> lock( inbox_mutex );
+        if( !enabled() || suspended() || inbox.size() >= 32 || intent.request == 0 ||
+            intent.node.size() > 512 || intent.action.size() > 80 || intent.value.size() > 16384 ) {
             return false;
         }
-        // Reserve the one movement input immediately. Subsequent swipes
-        // during a long game turn are refused now, never executed later.
-        world_step_ready = false;
+        // Only the world walking channel is single-flight. Menu navigation
+        // retains the existing mailbox because it uses a different token.
+        if( intent.action == "activate" && is_world_step_node( intent.node ) &&
+            matches_last_world( intent.token ) ) {
+            if( !world_step_ready ||
+                std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
+                return pending.action == "activate" && is_world_step_node( pending.node );
+            } ) ) {
+                if( performance_profile_active.load( std::memory_order_relaxed ) ) {
+                    profile_busy_epoch.fetch_add( 1, std::memory_order_relaxed );
+                }
+                return false;
+            }
+            // Reserve the one movement input immediately. Subsequent swipes
+            // during a long game turn are refused now, never executed later.
+            world_step_ready = false;
+        }
+        intent.received_at_ms = static_cast<std::uint64_t>(
+                                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        std::chrono::steady_clock::now().time_since_epoch() ).count() );
+        inbox.push_back( std::move( intent ) );
     }
-    intent.received_at_ms = static_cast<std::uint64_t>(
-                                std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::steady_clock::now().time_since_epoch() ).count() );
-    inbox.push_back( std::move( intent ) );
 #if defined(__ANDROID__)
     PushWakeEvent();
 #endif
@@ -428,33 +432,48 @@ std::size_t cancel_pending_world_steps()
     return before - inbox.size();
 }
 
+#if defined(__ANDROID__)
+namespace
+{
+jstring to_jstring_utf16( JNIEnv *env, const std::string_view utf8 )
+{
+    // JNI NewStringUTF uses modified UTF-8. Use UTF-16 explicitly for
+    // Vietnamese combining marks and characters outside the BMP.
+    std::u16string utf16;
+    utf16.reserve( utf8.size() );
+    for( const char32_t cp : utf8_to_utf32( utf8 ) ) {
+        if( cp > 0x10ffff || ( cp >= 0xd800 && cp <= 0xdfff ) ) {
+            utf16.push_back( 0xfffd );
+        } else if( cp <= 0xffff ) {
+            utf16.push_back( static_cast<char16_t>( cp ) );
+        } else {
+            utf16.push_back( static_cast<char16_t>( 0xd800 + ( ( cp - 0x10000 ) >> 10 ) ) );
+            utf16.push_back( static_cast<char16_t>( 0xdc00 + ( ( cp - 0x10000 ) & 0x3ff ) ) );
+        }
+    }
+    return env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
+                           static_cast<jsize>( utf16.size() ) );
+}
+} // namespace
+#endif
+
 void publish( const std::string_view json )
 {
 #if defined(__ANDROID__)
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 8 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
     if( activity != nullptr ) {
         jclass cls = env->GetObjectClass( activity );
-        jmethodID method = env->GetMethodID( cls, "onAccessibilitySnapshot", "(Ljava/lang/String;)V" );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilitySnapshot", "(Ljava/lang/String;)V" );
         if( method != nullptr ) {
-            // JNI NewStringUTF uses modified UTF-8. Use UTF-16 explicitly for
-            // Vietnamese combining marks and characters outside the BMP.
-            std::u16string utf16;
-            for( const char32_t cp : utf8_to_utf32( json ) ) {
-                if( cp > 0x10ffff || ( cp >= 0xd800 && cp <= 0xdfff ) ) {
-                    utf16.push_back( 0xfffd );
-                } else if( cp <= 0xffff ) {
-                    utf16.push_back( static_cast<char16_t>( cp ) );
-                } else {
-                    utf16.push_back( static_cast<char16_t>( 0xd800 + ( ( cp - 0x10000 ) >> 10 ) ) );
-                    utf16.push_back( static_cast<char16_t>( 0xdc00 + ( ( cp - 0x10000 ) & 0x3ff ) ) );
-                }
-            }
-            jstring text = env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
-                                          static_cast<jsize>( utf16.size() ) );
+            jstring text = to_jstring_utf16( env, json );
             if( text != nullptr ) {
                 env->CallVoidMethod( activity, method, text );
             }
@@ -474,9 +493,8 @@ void publish( const std::string_view json )
 void announce( const std::string_view text, const int priority )
 {
 #if defined(__ANDROID__)
-    // A manually selected place survey is one long document: the Android
-    // reader chunks it just like character details. Leave the existing
-    // 16 KiB limit in place for ordinary game notifications.
+    // Explicit place surveys are spoken as one long document. Keep the
+    // existing 16 KiB limit for all ordinary notifications.
     constexpr std::string_view scene_prefix = "A11Y_SCENE:";
     const bool scene_survey = text.substr( 0, scene_prefix.size() ) == scene_prefix;
     const std::size_t max_bytes = scene_survey ? 131072 : 16384;
@@ -764,8 +782,8 @@ void diagnostic_event( const std::string_view category, const std::string_view d
                            env->GetMethodID( cls, "onAccessibilityNativeDiagnostic",
                                              "(Ljava/lang/String;Ljava/lang/String;)V" );
         if( method != nullptr ) {
-            jstring kind = env->NewStringUTF( std::string( category ).c_str() );
-            jstring info = env->NewStringUTF( emitted_detail.c_str() );
+            jstring kind = to_jstring_utf16( env, category );
+            jstring info = to_jstring_utf16( env, emitted_detail );
             if( kind != nullptr && info != nullptr ) {
                 env->CallVoidMethod( activity, method, kind, info );
             }
@@ -831,8 +849,8 @@ void open_manual_mod_action( const std::string_view action, const std::string_vi
                            env->GetMethodID( cls, "onAccessibilityManualModAction",
                                              "(Ljava/lang/String;Ljava/lang/String;)V" );
         if( method != nullptr ) {
-            jstring op = env->NewStringUTF( std::string( action ).c_str() );
-            jstring id = env->NewStringUTF( std::string( mod_id ).c_str() );
+            jstring op = to_jstring_utf16( env, action );
+            jstring id = to_jstring_utf16( env, mod_id );
             if( op != nullptr && id != nullptr ) {
                 env->CallVoidMethod( activity, method, op, id );
             }
@@ -898,7 +916,7 @@ void open_sound_settings( const int music, const int effects, const bool enabled
                            env->GetMethodID( cls, "onAccessibilityOpenSoundSettings",
                                                "(IIZLjava/lang/String;)V" );
         if( method != nullptr ) {
-            jstring selected = env->NewStringUTF( get_option<std::string>( "SOUNDPACKS" ).c_str() );
+            jstring selected = to_jstring_utf16( env, get_option<std::string>( "SOUNDPACKS" ) );
             env->CallVoidMethod( activity, method, music, effects,
                                  enabled ? JNI_TRUE : JNI_FALSE, selected );
         }
@@ -988,6 +1006,9 @@ void directional_sonar_targets( const std::array<int, 8> &creatures,
     }
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr || env->PushLocalFrame( 8 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
@@ -1075,7 +1096,7 @@ std::string from_java( JNIEnv *env, jstring value )
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeUserModDir( JNIEnv *env, jclass )
 {
-    return env->NewStringUTF( PATH_INFO::user_moddir().c_str() );
+    return a11y::android::to_jstring_utf16( env, PATH_INFO::user_moddir() );
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -1103,21 +1124,21 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTakeSoundpackSelectionResult(
     JNIEnv *env, jclass )
 {
-    return env->NewStringUTF( a11y::android::take_soundpack_selection_result().c_str() );
+    return a11y::android::to_jstring_utf16( env, a11y::android::take_soundpack_selection_result() );
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeUserSoundDir(
     JNIEnv *env, jclass )
 {
-    return env->NewStringUTF( PATH_INFO::user_sound().get_unrelative_path().u8string().c_str() );
+    return a11y::android::to_jstring_utf16( env, PATH_INFO::user_sound().get_unrelative_path().u8string() );
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeDataSoundDir(
     JNIEnv *env, jclass )
 {
-    return env->NewStringUTF( PATH_INFO::data_sound().get_unrelative_path().u8string().c_str() );
+    return a11y::android::to_jstring_utf16( env, PATH_INFO::data_sound().get_unrelative_path().u8string() );
 }
 
 extern "C" JNIEXPORT void JNICALL

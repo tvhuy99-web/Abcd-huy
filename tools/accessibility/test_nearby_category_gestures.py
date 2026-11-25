@@ -33,7 +33,7 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('nearby_kind::creature', self.native)
         self.assertIn('nearby_kind::item', self.native)
         self.assertIn('nearby_kind::environment', self.native)
-        self.assertIn('observed.heard_marker', self.native)
+        self.assertIn('sounds::sound_at( position )', self.native)
         self.assertIn('observed.special_perceptions', self.native)
         self.assertIn('const std::string &creature : tile.creatures', self.native)
         self.assertIn('const std::string &item_name : tile.items', self.native)
@@ -80,7 +80,7 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('focus = next.find(next.focus) != null ? next.focus', self.reader)
         self.assertIn('feedback((enteredMenu ? next.title + ". " : "") + next.summary);', self.reader)
         self.assertIn('node.value = relative_words( entry.relative );', self.native)
-        for translation in ('Tất cả', 'Sinh vật và NPC', 'Địa điểm và môi trường',
+        for translation in ('Tất cả', 'Sinh vật và nhân vật không do người chơi điều khiển', 'Địa điểm và môi trường',
                             'Vật phẩm', 'Không có mục nào'):
             self.assertIn(translation, self.vi)
 

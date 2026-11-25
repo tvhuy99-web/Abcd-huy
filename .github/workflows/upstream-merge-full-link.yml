@@ -1,0 +1,231 @@
+name: Full native linkage check (upstream integration)
+
+on:
+  push:
+    branches:
+      - test/upstream-full-merge-2026-11-19
+    paths:
+      - '.github/workflows/upstream-merge-full-link.yml'
+      - 'src/**'
+      - 'data/**'
+      - 'Makefile'
+      - 'tests/**'
+      - 'tools/mods/**'
+      - 'tools/accessibility/test_native_json_audit.py'
+      - 'tools/accessibility/test_community_item_schema.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-native-link-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-link:
+    name: Build, link and load native JSON data (no distribution)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Verify preinstalled compiler and headers
+        run: |
+          g++ --version
+          test -f /usr/include/ncursesw/curses.h
+      - name: Prepare GDB for noninteractive stack sampling
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          if ! command -v gdb >/dev/null 2>&1; then
+            sudo apt-get -o Acquire::Retries=2 update
+            sudo apt-get -o Acquire::Retries=2 install -y --no-install-recommends gdb
+          fi
+          gdb --version
+          sudo -n true
+      - name: Compile and link complete non-tiled native game
+        id: native_build
+        run: |
+          # Keep compiling independent units to surface all remaining merge errors in one run.
+          make -k -j3 all \
+            CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
+            TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
+      # Isolate the core mod from tutorial dependencies. --jsonverify is not
+      # safe for headless CI: it does not enable test_mode (curses still opens).
+      # Each check has its own bounded runtime; a timeout is a test failure,
+      # never silently treated as success.
+      - name: Diagnose native data loading by stage
+        timeout-minutes: 25
+        env:
+          TERM: xterm
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/native-verify"
+          mkdir -p "$report"
+          failed=0
+
+          capture_stack() {
+            local label="$1" watchdog="$2" sample="$3" target stack status
+            # timeout launches stdbuf, which execs cataclysm in the same PID.
+            target="$(pgrep -P "$watchdog" -x cataclysm | head -n 1 || true)"
+            if [ -z "$target" ] || [ ! -r "/proc/$target/exe" ]; then
+              echo "STACK ${label}: game already exited or PID unavailable"
+              return 0
+            fi
+            stack="$report/${label}-stack-${sample}.log"
+            echo "STACK ${label} sample=${sample} pid=${target} $(date -u +'%Y-%m-%dT%H:%M:%SZ')" | tee "$stack"
+            status=0
+            # Linux ptrace restrictions can prohibit sibling-process attach;
+            # sudo on the disposable runner avoids changing system policy.
+            sudo -n timeout --signal=TERM --kill-after=5s 25s \
+              gdb -q -nx -batch \
+              -iex 'set auto-load off' \
+              -iex 'set debuginfod enabled off' \
+              -ex 'set pagination off' \
+              -ex 'set print thread-events off' \
+              -ex "attach $target" \
+              -ex 'info threads' \
+              -ex 'thread apply all bt 40' \
+              -ex 'info registers pc' \
+              -ex 'detach' >>"$stack" 2>&1 || status=$?
+            echo "GDB exit=${status}" >>"$stack"
+            cat "$stack"
+            if [ "$status" -ne 0 ]; then
+              echo "::warning title=GDB sample failed::${label} sample ${sample} exit ${status}; see stack log"
+            fi
+            # Diagnostics are best effort; preserve the actual loader status.
+            return 0
+          }
+
+          run_check() {
+            local label="$1" seconds="$2"
+            shift 2
+            local userdir log profile status pid ticks=0
+            userdir="$(mktemp -d)"
+            log="$report/${label}.log"
+            profile="$report/${label}-process.log"
+            echo "START ${label} | $(date -u +'%Y-%m-%dT%H:%M:%SZ') | limit=${seconds}s | args=$*" | tee "$profile"
+
+            # Use noninteractive stdin; capture both loader output and stderr.
+            timeout --verbose --signal=TERM --kill-after=10s "${seconds}s" \
+              stdbuf -oL -eL ./cataclysm --userdir "$userdir/" "$@" \
+              </dev/null >"$log" 2>&1 &
+            pid=$!
+
+            # Native loaders can be silent. Capture CPU, memory and wait
+            # channel every 20 seconds so a long load is distinguishable
+            # from a deadlock or a process waiting for input.
+            while kill -0 "$pid" 2>/dev/null; do
+              sleep 20
+              if ! kill -0 "$pid" 2>/dev/null; then
+                break
+              fi
+              echo "HEARTBEAT ${label} | $(date -u +'%Y-%m-%dT%H:%M:%SZ') | output_bytes=$(wc -c <"$log")" | tee -a "$profile"
+              ps -eo pid,ppid,stat,etime,time,%cpu,rss,wchan:24,comm \
+                | awk 'NR == 1 || $NF == "cataclysm" || $NF == "timeout"' \
+                | tee -a "$profile"
+              ticks=$((ticks + 1))
+              # Repeated independent snapshots help distinguish a hot loop
+              # from a slow but progressing load. Detach after each sample.
+              case "$ticks" in
+                2|5|10) capture_stack "$label" "$pid" "$ticks" ;;
+              esac
+            done
+
+            status=0
+            wait "$pid" || status=$?
+            echo "FINISH ${label} | $(date -u +'%Y-%m-%dT%H:%M:%SZ') | exit=${status}" | tee -a "$profile"
+            tail -n 35 "$log" || true
+
+            # Preserve the loader's own debug output before removing its
+            # isolated user directory. These logs are uploaded on failure.
+            while IFS= read -r -d '' file; do
+              cp "$file" "$report/${label}-$(basename "$file")"
+            done < <(find "$userdir" -type f \
+              \( -name 'debug.log' -o -name 'crash.log' \) -print0)
+            rm -rf "$userdir"
+
+            if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+              echo "::error title=Native validation timeout::${label} exceeded ${seconds}s (exit ${status}); inspect native-verify logs"
+              failed=$((failed + 1))
+            elif [ "$status" -ne 0 ]; then
+              echo "::error title=Native validation failed::${label} exited ${status}"
+              failed=$((failed + 1))
+            fi
+            if grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)|already defined with type' "$log"; then
+              echo "::error title=Native JSON loader reported errors::See ${label}.log"
+              failed=$((failed + 1))
+            fi
+            printf '| %s | %s | %s |\n' "$label" "$status" "${seconds}s max" >>"$report/summary.md"
+          }
+
+          echo '| Stage | Exit status | Limit |' >"$report/summary.md"
+          echo '|---|---:|---:|' >>"$report/summary.md"
+          run_check core-dda 480 --check-mods dda
+          run_check tutorial-dda 540 --check-mods dda dda_tutorial
+          run_check legacy-item-group-fixture 540 --check-mods test_data
+          cat "$report/summary.md" >>"$GITHUB_STEP_SUMMARY"
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error title=Native verification incomplete::${failed} checks failed or timed out; see diagnostic artifact"
+            exit 1
+          fi
+      - name: Install pinned community mods and apply protected Vietnamese overlays
+        id: curated_install
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          python3 tools/mods/install_curated.py --install cataplusplus arcana blazemod mst_extra --target data/mods
+          python3 tools/mods/apply_vi_overlays.py --target data/mods
+          python3 -m unittest discover -s tools/accessibility -p 'test_community_item_schema.py' -v
+          python3 tools/mods/migrate_item_schema.py --target data/mods
+          python3 tools/mods/migrate_item_schema.py --target data/mods --check
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("data/mods/Arcana_StrangeAeons/effects/effects.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          effect = next(x for x in data if x.get("id") == "triffid_garland_buff")
+          assert effect["decay_messages"][0][1] == "bad", effect
+          print("Verified localized triffid garland message type: bad")
+          PY
+      - name: Load each localized mod using the real native JSON parser
+        if: ${{ !cancelled() && steps.curated_install.outcome == 'success' }}
+        timeout-minutes: 38
+        env:
+          TERM: xterm
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/native-verify"
+          mkdir -p "$report"
+          failed=0
+          for mod in MST_Extra Arcana 'Cata++' blazemod; do
+            userdir="$(mktemp -d)"
+            log="$report/${mod}-native.log"
+            status=0
+            timeout --verbose --kill-after=10s 480s stdbuf -oL -eL \
+              ./cataclysm --userdir "$userdir/" --check-mods "$mod" \
+              </dev/null >"$log" 2>&1 || status=$?
+            # Keep the complete log in the artifact without flooding Actions.
+            tail -n 100 "$log" || true
+            while IFS= read -r -d '' file; do
+              cp "$file" "$report/${mod}-$(basename "$file")"
+            done < <(find "$userdir" -type f \( -name 'debug.log' -o -name 'crash.log' \) -print0)
+            rm -rf "$userdir"
+            if [ "$status" -ne 0 ] || grep -Eiq 'Error loading data|Unread data\. *Invalid|Json error:|DEBUG : \(json-error\)|already defined with type' "$log"; then
+              echo "::error title=Native mod validation failed::${mod}: exit ${status}; see diagnostic logs"
+              failed=$((failed + 1))
+            fi
+          done
+          test "$failed" -eq 0
+      - name: Upload native loader diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-loader-diagnostics
+          path: ${{ runner.temp }}/native-verify/
+          if-no-files-found: warn
+          retention-days: 7

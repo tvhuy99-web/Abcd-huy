@@ -153,6 +153,21 @@ TEST_CASE( "deduplicate_repeated_requirements", "[requirement]" )
     } );
 }
 
+TEST_CASE( "complex_requirements_fall_back_without_losing_components", "[requirement]" )
+{
+    // Repeated overlapping choices produce more than the expansion budget.
+    // Preserve the full original requirement rather than discarding choices.
+    requirement_data::alter_item_comp_vector components;
+    for( int i = 0; i < 12; ++i ) {
+        components.push_back( { { itype_rock, 1 }, { itype_soap, 1 } } );
+    }
+    const requirement_data input( {}, {}, components );
+    const deduped_requirement_data result( input, recipe_id::NULL_ID() );
+    CHECK( result.is_too_complex() );
+    REQUIRE( result.alternatives().size() == 1 );
+    CHECK( result.alternatives().front().list_all() == input.list_all() );
+}
+
 TEST_CASE( "requirement_extension", "[requirement]" )
 {
     SECTION( "basic_component_extension" ) {

@@ -163,6 +163,8 @@ bool validate_intent_value( const semantic_node &node, const semantic_intent &in
 // IDs/counters are serialized as decimal strings so JavaScript/JSON consumers
 // cannot truncate uint64_t identities to a floating point number.
 std::string snapshot_json( const semantic_snapshot &snapshot );
+std::string snapshot_json_with_content( const semantic_snapshot &snapshot,
+                                        const std::string &content_json );
 std::string snapshot_content_json( const semantic_snapshot &snapshot );
 
 } // namespace a11y

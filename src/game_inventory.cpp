@@ -1186,7 +1186,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
             }
 
             if( uses.size() == 1 ) {
-                const auto ret = uses.begin()->second.can_call( you, it, you.pos_bub() );
+                const auto ret = uses.begin()->second.can_call( you, loc, you.pos_bub() );
                 if( !ret.success() ) {
                     return trim_trailing_punctuations( ret.str() );
                 }
@@ -1643,8 +1643,8 @@ class ebookread_inventory_preset : public read_inventory_preset
 item_location game_menus::inv::read( Character &you )
 {
     const std::string msg = you.is_avatar() ?
-                            string_format( _( "%1$s have nothing to read." ), you.disp_name( false, true ) ) :
-                            string_format( _( "%1$s has nothing to read." ), you.disp_name( false, true ) );
+                            string_format( _( "%1$s have nothing to read." ), you.disp_name( true ) ) :
+                            string_format( _( "%1$s has nothing to read." ), you.disp_name( true ) );
     return inv_internal( you, read_inventory_preset( you ), _( "Read" ), 1, msg, "", item_location(),
                          true );
 }
@@ -1653,8 +1653,8 @@ item_location game_menus::inv::ebookread( Character &you, item_location &ereader
 {
     const std::string none_message =
         you.is_avatar() ?
-        string_format( _( "%1$s have nothing to read." ), you.disp_name( false, true ) ) :
-        string_format( _( "%1$s has nothing to read." ), you.disp_name( false, true ) );
+        string_format( _( "%1$s have nothing to read." ), you.disp_name( true ) ) :
+        string_format( _( "%1$s has nothing to read." ), you.disp_name( true ) );
 
     const ebookread_inventory_preset preset( you );
     inventory_pick_selector inv_s( you, preset );

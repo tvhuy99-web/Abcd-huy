@@ -39,6 +39,7 @@
 #include "avatar_action.h"
 #include "bionics.h"
 #include "bodygraph.h"
+#include "body_status_ui.h"
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -193,6 +194,7 @@ static const trait_id trait_WAYFARER( "WAYFARER" );
 static const zone_type_id zone_type_CHOP_TREES( "CHOP_TREES" );
 static const zone_type_id zone_type_CONSTRUCTION_BLUEPRINT( "CONSTRUCTION_BLUEPRINT" );
 static const zone_type_id zone_type_DISASSEMBLE( "DISASSEMBLE" );
+static const zone_type_id zone_type_DISSECT( "DISSECT" );
 static const zone_type_id zone_type_FARM_PLOT( "FARM_PLOT" );
 static const zone_type_id zone_type_LOOT_CORPSE( "LOOT_CORPSE" );
 static const zone_type_id zone_type_LOOT_UNSORTED( "LOOT_UNSORTED" );
@@ -1537,11 +1539,15 @@ static void haul()
 
     uilist menu;
 
-    bool hauling = player_character.is_hauling();
-    bool autohaul = player_character.is_autohauling();
     std::vector<item_location> &haul_list = player_character.haul_list;
     std::vector<item_location> haulable_items = get_map().get_haulable_items(
                 player_character.pos_bub() );
+    player_character.trim_haul_list( haulable_items );
+    if( player_character.is_hauling() && haul_list.empty() && !player_character.is_autohauling() ) {
+        player_character.stop_hauling();
+    }
+    bool hauling = player_character.is_hauling();
+    bool autohaul = player_character.is_autohauling();
     int haul_qty = haul_list.size();
     std::string &haul_filter = player_character.hauling_filter;
 
@@ -2256,7 +2262,8 @@ static void loot()
         MultiDis = 16384,
         MultiMopping = 32768,
         MultiStudy = 131072,
-        UnloadLoot = 65536
+        UnloadLoot = 65536,
+        MultiDissection = 262144
     };
 
     Character &player_character = get_player_character();
@@ -2296,6 +2303,8 @@ static void loot()
                                  player_character.pos_bub() ) ? Multirepairvehicle : 0;
     flags |= g->check_near_zone( zone_type_LOOT_CORPSE,
                                  player_character.pos_bub() ) ? MultiButchery : 0;
+    flags |= g->check_near_zone( zone_type_DISSECT,
+                                 player_character.pos_bub() ) ? MultiDissection : 0;
     flags |= g->check_near_zone( zone_type_MINING, player_character.pos_bub() ) ? MultiMining : 0;
     flags |= g->check_near_zone( zone_type_DISASSEMBLE,
                                  player_character.pos_bub() ) ? MultiDis : 0;
@@ -2357,6 +2366,10 @@ static void loot()
     if( flags & MultiButchery ) {
         menu.addentry_desc( MultiButchery, true, 'B', _( "Butcher corpses" ),
                             wrap60( _( "Auto-butcher anything in corpse loot zones - auto-fetch tools." ) ) );
+    }
+    if( flags & MultiDissection ) {
+        menu.addentry_desc( MultiDissection, true, 'Y', _( "Dissect corpses" ),
+                            wrap60( _( "Auto-dissect anything in designated zone - auto-fetch tools." ) ) );
     }
     if( flags & MultiMining ) {
         menu.addentry_desc( MultiMining, true, 'M', _( "Mine Area" ),
@@ -2440,6 +2453,9 @@ static void loot()
         case MultiButchery:
             player_character.assign_activity( multi_butchery_activity_actor() );
             break;
+        case MultiDissection:
+            player_character.assign_activity( multi_dissection_activity_actor() );
+            break;
         case MultiMining:
             player_character.assign_activity( multi_mine_activity_actor() );
             break;
@@ -2493,7 +2509,7 @@ static void read()
         if( avatar_action::check_stealing( get_player_character(), the_book ) ) {
             item_location parent_loc = loc.parent_item();
             if( loc->type->can_use( "learn_spell" ) ) {
-                the_book.get_use( "learn_spell" )->call( &player_character, the_book, player_character.pos_bub() );
+                the_book.get_use( "learn_spell" )->call( &player_character, loc, player_character.pos_bub() );
             } else if( loc.is_efile() ) {
                 // obtain e-storage device if not allowed to use remotely
                 if( !parent_loc->has_flag( json_flag_ALLOWS_REMOTE_USE ) ) {
@@ -2551,6 +2567,31 @@ static void fire()
     }
 
     const item_location weapon = you.get_wielded_item();
+    if( combat_attack_direction >= 0 &&
+        ( !weapon || !weapon->is_gun() || weapon->gun_current_mode().melee() ) ) {
+        // Use native targeting and attack resolution. A short-range strike
+        // uses the regular melee attack; a longer one uses reach_attack.
+        // Neither branch calls avatar_action::move, even on an empty ray.
+        const target_handler::trajectory traj =
+            target_handler::mode_accessible_melee( you, combat_attack_direction );
+        if( traj.empty() ) {
+            return;
+        }
+        Creature *target = get_creature_tracker().creature_at( traj.back(), true );
+        if( target == nullptr ) {
+            return;
+        }
+        if( you.is_adjacent( target, false ) ) {
+            if( !you.move_effects( true ) ) {
+                you.set_moves( 0 );
+                return;
+            }
+            you.melee_attack( *target, true );
+        } else {
+            you.reach_attack( traj.back() );
+        }
+        return;
+    }
     if( a11y::enabled() && combat_attack_direction < 0 ) {
         // The accessible Fire action is a gun chooser, not the generic
         // holster "use" menu. A selected firearm is equipped with the
@@ -2558,13 +2599,14 @@ static void fire()
         // This also works when a melee weapon is currently wielded.
         std::vector<item_location> guns;
         std::vector<std::string> labels;
-        for( item_location &loc : you.all_items_loc() ) {
+        you.visit_items( [&]( const item_location &loc ) {
             if( loc && loc->is_gun() && !loc->is_gunmod() ) {
                 guns.push_back( loc );
                 labels.push_back( string_format( _( "%1$s. %2$d rounds loaded." ),
                                                  loc->tname(), loc->ammo_remaining() ) );
             }
-        }
+            return VisitResponse::NEXT;
+        } );
         if( !guns.empty() ) {
             int choice = uilist( _( "Choose a gun to fire" ), labels );
             if( choice < 0 || static_cast<std::size_t>( choice ) >= guns.size() ) {
@@ -2662,6 +2704,13 @@ static void fire()
             target_handler::queue_accessible_combat_shot( combat_attack_direction );
         }
         avatar_action::fire_wielded_weapon( you );
+        // A rejected wielded gun (e.g. incompatible ammunition or a
+        // failed aim start) must not leave a direction for a later shot.
+        if( combat_attack_direction >= 0 &&
+            ( !you.activity || you.activity.id() != activity_id( "ACT_AIM" ) ) ) {
+            target_handler::take_accessible_combat_shot();
+            target_handler::take_accessible_combat_precise_aim();
+        }
         return;
     }
     // try firing turrets
@@ -3916,12 +3965,13 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 // game's location-aware wield rules, retrieval costs and
                 // safe auto-stow when the former weapon fits in inventory.
                 std::vector<item_location> options;
-                for( item_location loc : player_character.all_items_loc() ) {
+                player_character.visit_items( [&]( const item_location &loc ) {
                     if( loc && ( loc->is_gun() || loc->is_melee() ) &&
                         player_character.can_wield( *loc ).success() ) {
                         options.push_back( loc );
                     }
-                }
+                    return VisitResponse::NEXT;
+                } );
                 const int total = static_cast<int>( options.size() ) + 1;
                 int current = 0; // index zero = unarmed
                 for( std::size_t i = 0; i < options.size(); ++i ) {
@@ -4325,15 +4375,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             player_character.disp_morale();
             break;
 
-        case ACTION_MEDICAL:
-            if( player_character.disp_medical() ) {
+        case ACTION_MEDICAL: {
+            body_status_ui bsui( get_player_character(), body_status_tab::BS_TAB_MEDICAL );
+            if( bsui.display() ) {
                 return false;
             }
             break;
+        }
 
-        case ACTION_BODYSTATUS:
-            display_bodygraph( get_player_character() );
+        case ACTION_BODYSTATUS: {
+            body_status_ui bsui( get_player_character() );
+            bsui.display();
             break;
+        }
 
         case ACTION_MESSAGES:
             Messages::display_messages();
@@ -4658,29 +4712,10 @@ bool game::handle_action()
             const std::string direction = action.substr( 28 );
             if( direction.size() == 1 && direction[0] >= '0' && direction[0] <= '7' ) {
                 const int dir = direction[0] - '0';
-                const item_location held = player_character.get_wielded_item();
-                if( held && held->is_gun() && !held->gun_current_mode().melee() ) {
-                    // Gun gestures retain their native directional firing
-                    // path and aim mode, unchanged.
-                    combat_attack_direction = dir;
-                    act = ACTION_FIRE;
-                } else {
-                    // CDDA's ordinary eight-direction movement is also its
-                    // melee control. Walking into a creature lets the game
-                    // decide whether to attack, displace, talk, or refuse;
-                    // an empty square follows the game's walking rules.
-                    // Do not invent a hostile-only filter or a no-move
-                    // fallback. Use the normal action pipeline so safety,
-                    // status effects, terrain, isometric rotation and turn
-                    // costs behave exactly as with a native movement key.
-                    constexpr action_id step_actions[8] = {
-                        ACTION_MOVE_FORTH, ACTION_MOVE_FORTH_RIGHT,
-                        ACTION_MOVE_RIGHT, ACTION_MOVE_BACK_RIGHT,
-                        ACTION_MOVE_BACK, ACTION_MOVE_BACK_LEFT,
-                        ACTION_MOVE_LEFT, ACTION_MOVE_FORTH_LEFT
-                    };
-                    act = step_actions[dir];
-                }
+                // A combat swipe is an attack, never a movement command.
+                // Fire() dispatches to the engine's ranged or melee path.
+                combat_attack_direction = dir;
+                act = ACTION_FIRE;
             }
         } else if( a11y::enabled() &&
                    action == "A11Y_INTERNAL_VEHICLE_BEGIN" ) {

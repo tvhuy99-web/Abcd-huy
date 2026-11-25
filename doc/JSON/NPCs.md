@@ -58,7 +58,6 @@ Format:
   "carry_override": "NC_EXAMPLE_carried",                                  // Optional. Defines an item group that replaces their carried items (in pockets, etc). Items which cannot
                                                                            // be carried will overflow(fall to the ground) when the NPC is loaded.
   "weapon_override": "NC_EXAMPLE_weapon",                                  // Optional. Defines an item group that replaces their wielded weapon.
-  "bye_message_override": "<fuck_you>",                                    // Optional. If used, overrides the default bye message (picked from <bye> snippet) to any another custom snippet, if set to "null" will make the npc not say anything when leaving dialogue.
   "shopkeeper_item_group": [                                               // Optional. See [Shopkeeper NPC configuration](#shopkeeper-npc-configuration) below.
     { "group": "example_shopkeeper_itemgroup1" },
     { "group": "example_shopkeeper_itemgroup2", "trust": 10 },
@@ -295,6 +294,7 @@ For further information on snippets, see [New Contributor Guide: Dialogue](https
 
 ### Custom Entries
 
+Each of this line can be overriden for specific NPCs, in a format, for example, `"snip_bye": "<end_talking_bye_portal_person>",`
 Field | Default messages/snippets | Used for...
 ---|---|---
 `<acknowledged>` | `<acknowledged>` | see data/json/npcs/snippets/talk_tags_follower.json
@@ -1497,7 +1497,7 @@ These can be read or written to with `val()`.
 
 | Value | Supports assignment | Description |
 --- | --- | --- |
-| `activity_level` | ❌ | Current activity level index as a floored integer, from 0-5. Roughly: <pre>0.45 = SLEEP_EXERCISE (floored and returns 0),<br/>0.5 = NO_EXERCISE(floored and returns 0),<br/>1 = LIGHT_EXERCISE,<br/>2 = MODERATE_EXERCISE,<br/>3 = BRISK_EXERCISE,<br/>4 = ACTIVE_EXERCISE,<br/>5 = EXTRA_EXERCISE. |
+| `activity_level` | ❌ | Current activity level index as a floored integer, from 0-5. Roughly: <pre>0.45 = SLEEP_EXERCISE (floored and returns 0),<br/>0.5 = NO_EXERCISE(floored and returns 0),<br/>1 = LIGHT_EXERCISE,<br/>2 = MODERATE_EXERCISE,<br/>3 = BRISK_EXERCISE,<br/>4 = ACTIVE_EXERCISE,<br/>5 = EXTRA_EXERCISE, <br/>500 = COMBAT_EXERCISE. |
 | `age` | ✅ | Current age in years. |
 | `allies` | ❌ | The avatar's number of allies |
 | `anger` | ✅ | Current anger level. Only works for monsters. |

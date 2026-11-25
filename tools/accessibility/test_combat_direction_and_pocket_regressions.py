@@ -48,7 +48,7 @@ class CombatPocketRegressions(unittest.TestCase):
         self.assertIn("A11Y_INTERNAL_FIRE_DIRECTION", self.gun)
         self.assertIn("loop_exit_code = ExitCode::Fire;", self.gun)
 
-    def test_empty_direction_and_friendlies_are_not_excluded(self):
+    def test_manual_fire_still_allows_empty_direction_and_native_confirmations(self):
         targeting = self.gun.split("tripoint_bub_ms target_ui::directional_shot_target(", 1)[1]
         targeting = targeting.split("a11y::semantic_snapshot target_ui::reader_snapshot()", 1)[0]
         self.assertIn("return fallback;", targeting)
@@ -64,7 +64,9 @@ class CombatPocketRegressions(unittest.TestCase):
         game = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
         aim_actor = (ROOT / "src/activity_actor.cpp").read_text(encoding="utf-8")
         game_header = (ROOT / "src/game.h").read_text(encoding="utf-8")
-        self.assertIn('you.all_items_loc()', handler)
+        self.assertIn('you.visit_items(', handler)
+        self.assertIn('guns.push_back( loc );', handler)
+        self.assertIn('return VisitResponse::NEXT;', handler)
         self.assertIn('Choose a gun to fire', handler)
         self.assertIn('you.wield( selected )', handler)
         self.assertIn('avatar_action::fire_wielded_weapon( you )', handler)

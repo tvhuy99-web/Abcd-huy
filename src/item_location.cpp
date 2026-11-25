@@ -498,7 +498,7 @@ class item_location::impl::item_on_person : public item_location::impl
             ch.mod_moves( -obtain_cost( ch, qty ) );
 
             on_contents_changed();
-            if( &ch.i_at( ch.get_item_position( target() ) ) == target() ) {
+            if( ch.is_worn( *target() ) || ch.get_wielded_item().get_item() == target() ) {
                 // item already in target characters inventory at base of stack
                 return item_location( ch, target() );
             }
@@ -1488,26 +1488,6 @@ bool item_location::check_parent_capacity_recursive() const
     return ptr->check_parent_capacity_recursive();
 }
 
-bool item_location::protected_from_liquids() const
-{
-    // check if inside a watertight which is not an open_container
-    if( has_parent() ) {
-        item_location parent = parent_item();
-
-        // parent can protect the item against water
-        if( parent->is_watertight_container() && !parent->will_spill() ) {
-            return true;
-        }
-
-        // check the parent's parent
-        return parent.protected_from_liquids();
-    }
-
-    // we recursively checked all containers
-    // none are closed watertight containers
-    return false;
-}
-
 std::unique_ptr<talker> get_talker_for( item_location &it )
 {
     return std::make_unique<talker_item>( &it );
@@ -1696,4 +1676,53 @@ item_location find_item_by_uid( int64_t uid, const item_locator_hint &hint )
     }
 
     return item_location::nowhere;
+}
+
+template<typename T>
+item_location item_location::form_loc_recursive( T &loc, item &it )
+{
+    item *parent = loc.find_parent( it );
+    if( parent != nullptr ) {
+        return item_location( form_loc_recursive( loc, *parent ), &it );
+    }
+
+    return item_location( loc, &it );
+}
+
+//explict template instantiation
+template item_location item_location::form_loc_recursive<Character>( Character &loc, item &it );
+template item_location item_location::form_loc_recursive<npc>( npc &loc, item &it );
+
+std::optional<item_location> item_location::try_form_loc( Character *you, map *here,
+        const tripoint_bub_ms &p, item &it )
+{
+    if( you != nullptr && you->has_item( it ) ) {
+        Character &who = *you;
+        return form_loc_recursive( who, it );
+    }
+    if( here ) {
+        map_cursor mc( here, p );
+        if( mc.has_item( it ) ) {
+            return form_loc_recursive( mc, it );
+        }
+        const optional_vpart_position vp = here->veh_at( p );
+        if( vp ) {
+            vehicle_cursor vc( vp->vehicle(), vp->part_index() );
+            if( vc.has_item( it ) ) {
+                return form_loc_recursive( vc, it );
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+item_location item_location::form_loc( Character *you, map *here, const tripoint_bub_ms &p,
+                                       item &it )
+{
+    if( std::optional<item_location> loc = try_form_loc( you, here, p, it ) ) {
+        return *loc;
+    }
+    debugmsg( "Couldn't find item %s to form item_location, forming dummy location to ensure minimum functionality",
+              it.display_name() );
+    return item_location( *you, &it );
 }

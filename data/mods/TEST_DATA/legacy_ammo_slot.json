@@ -1,0 +1,38 @@
+[
+  {
+    "type": "ITEM",
+    "name": {
+      "str": "test rubber pellet"
+    },
+    "description": "Fixture for adding a new ammo slot to a generic item.",
+    "symbol": "=",
+    "color": "white",
+    "weight": "2 g",
+    "volume": "10 ml",
+    "material": [
+      "rubber"
+    ],
+    "price": "1 cent",
+    "abstract": "test_a11y_generic_to_ammo_base"
+  },
+  {
+    "type": "ITEM",
+    "id": "test_a11y_generic_to_ammo",
+    "copy-from": "test_a11y_generic_to_ammo_base",
+    "subtypes": [
+      "AMMO"
+    ],
+    "ammo_type": "pebble",
+    "damage": {
+      "damage_type": "bullet",
+      "amount": 2
+    },
+    "range": 10,
+    "extend": {
+      "effects": [
+        "NON_FOULING",
+        "NEVER_MISFIRES"
+      ]
+    }
+  }
+]

@@ -136,14 +136,14 @@ class VietnameseHubWordingTest(unittest.TestCase):
                        "This may reload another gun in your inventory."):
             self.assertIn(phrase, self.builder)
 
-    def test_combat_gesture_labels_allow_movement(self):
+    def test_combat_gesture_labels_separate_attack_and_movement(self):
         prompt = self.ui["a11yCombatOn"].lower()
         self.assertLess(len(prompt), 135)
-        for term in ("bắn súng", "đánh", "ô trống", "hai ngón"):
+        for term in ("bắn", "đánh", "tầm vũ khí", "không bước", "hai ngón"):
             self.assertIn(term, prompt)
         for suffix in ("North", "South", "East", "West",
                        "Northeast", "Northwest", "Southeast", "Southwest"):
-            self.assertIn("Đánh hoặc bước",
+            self.assertIn("Tấn công",
                           self.ui["a11yGuideAttack" + suffix])
         self.assertIn("tay không", self.ui["a11yGuideNextWeapon"])
         self.assertIn("tay không", self.ui["a11yGuidePreviousWeapon"])

@@ -1,0 +1,108 @@
+name: Upstream integration C++ smoke (experimental)
+
+on:
+  push:
+    branches:
+      - test/upstream-full-merge-2026-11-19
+    paths:
+      - 'src/**'
+      - 'Makefile'
+      - 'tests/**'
+      - 'tests/item_wakeup_test.cpp'
+      - 'tests/melee_test.cpp'
+      - 'tests/map_bash_test.cpp'
+      - '.github/workflows/upstream-merge-native-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-native-merge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  system-toolchain-smoke:
+    name: Compile merged C++ with preinstalled GCC
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Verify runner C++ toolchain
+        run: |
+          g++ --version
+          test -f /usr/include/ncursesw/curses.h
+      - name: Compile integration-critical units without apt
+        run: |
+          make -k -j2 \
+            obj/monster.o obj/creature.o obj/character.o \
+            obj/avatar.o obj/vehicle_use.o obj/character_body.o \
+            obj/game.o obj/game_inventory.o obj/game_io.o obj/handle_action.o obj/inventory_ui.o \
+            obj/vehicle.o obj/vehicle_autodrive.o obj/advanced_inv.o obj/flexbuffer_cache.o \
+            obj/activity_actor.o obj/body_status_ui.o \
+            obj/bodygraph.o obj/character_inventory.o obj/crafting.o \
+            obj/item_action.o obj/item_factory.o obj/mattack_actors.o \
+            obj/player_activity.o obj/newcharacter.o \
+            obj/npc.o obj/npcmove.o obj/npctalk.o obj/npc_class.o \
+            obj/medical_ui.o obj/player_display.o \
+            obj/consumption.o obj/construction.o obj/debug_menu.o \
+            obj/dialogue.o obj/dialogue_imgui.o obj/effect.o \
+            obj/faction.o obj/faction_camp.o obj/faction_ui.o \
+            CXX=g++ RELEASE=1 PCH=1 TESTS=0 \
+            TILES=0 SOUND=0 LOCALIZE=0 LINTJSON=0 CCACHE=0
+
+  native-compile:
+    name: Compile overlapping C++ translation units
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Install GCC 16 and native build dependencies
+        run: |
+          for attempt in 1 2 3; do
+            if sudo apt-get -o Acquire::Retries=2 update &&
+               sudo apt-get -o Acquire::Retries=2 install -y g++-16 libncursesw5-dev gettext; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((20 * attempt))
+          done
+          g++-16 --version
+      - name: Compile merged source without producing a release
+        run: |
+          make -j2 \
+            obj/monster.o obj/creature.o obj/character.o \
+            obj/avatar.o obj/vehicle_use.o obj/character_body.o \
+            obj/game.o obj/game_inventory.o obj/game_io.o obj/handle_action.o obj/inventory_ui.o \
+            obj/vehicle.o obj/vehicle_autodrive.o obj/advanced_inv.o obj/flexbuffer_cache.o \
+            obj/activity_actor.o obj/body_status_ui.o \
+            obj/bodygraph.o obj/character_inventory.o obj/crafting.o \
+            obj/item_action.o obj/item_factory.o obj/mattack_actors.o \
+            obj/player_activity.o obj/newcharacter.o \
+            obj/npc.o obj/npcmove.o obj/npctalk.o obj/npc_class.o \
+            obj/medical_ui.o obj/player_display.o \
+            CXX=g++-16 RELEASE=1 PCH=1 TESTS=0 \
+            TILES=0 SOUND=0 LOCALIZE=1 LINTJSON=0 CCACHE=0
+
+  regression-test-compile:
+    name: Compile map, wakeup and melee C++ regression tests
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Compile the new native tests without needing a full test executable
+        run: |
+          # Syntax and type checking for test translation units. Test execution
+          # still requires linking the full cata_test binary separately.
+          make -C tests -j2 \
+            obj/item_wakeup_test.o obj/map_bash_test.o obj/melee_test.o \
+            CXX=g++ PCH=0 \
+            CXXFLAGS='-std=c++17 -O0 -g0 -Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unknown-pragmas -Wno-parentheses'

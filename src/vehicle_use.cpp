@@ -398,11 +398,15 @@ void vehicle::build_electronics_menu( map &here, veh_menu &menu )
     for( const vpart_reference &arc_vp : get_any_parts( "ARCADE" ) ) {
         if( arc_vp.part().enabled ) {
             item *arc_itm = &arc_vp.part().base;
+            vehicle_cursor vc( *this, arc_vp.part_index() );
+            item_location loc( vc, arc_itm );
 
             menu.add( _( "Play arcade machine" ) )
             .hotkey( "ARCADE" )
             .enable( !!arc_itm )
-            .on_submit( [arc_itm] { iuse::portable_game( &get_avatar(), arc_itm, tripoint_bub_ms::zero ); } );
+            .on_submit( [loc]() mutable {
+                iuse::portable_game( &get_avatar(), loc, tripoint_bub_ms::zero );
+            } );
             break;
         }
     }
@@ -1659,8 +1663,11 @@ void vehicle::use_monster_capture( int part, map */*here*/, const tripoint_bub_m
         return;
     }
     item base = item( parts[part].get_base() );
+    vehicle_cursor vc( *this, part );
+    item_location loc( vc, &base );
+
     // TODO: Use map aware invoke when available
-    base.type->invoke( &get_avatar(), base, pos );
+    base.type->invoke( &get_avatar(), loc, pos );
     if( base.has_var( "contained_name" ) ) {
         parts[part].set_flag( vp_flag::animal_flag );
     } else {
@@ -2266,7 +2273,11 @@ bool vehicle::use_vehicle_tool( vehicle &veh, map *here, const tripoint_bub_ms &
                                 const itype_id &tool_type,
                                 bool no_invoke )
 {
-    item tool( tool_type, calendar::turn );
+    // Vehicle tools are pseudo-items, not inventory objects. Keep an owned
+    // temporary location alive for the entire native invocation.
+    temp_crafting_inventory temporary_tools;
+    item &tool = temporary_tools.add_item_copy( item( tool_type, calendar::turn ) );
+    item_location tool_loc( temporary_tools, &tool );
     const bool is_multimag = !tool_type->firing_requirements.empty();
     std::map<std::string, multimag_pocket_state> mm_bindings;
     int ammo_in_tool = 0;
@@ -2290,7 +2301,7 @@ bool vehicle::use_vehicle_tool( vehicle &veh, map *here, const tripoint_bub_ms &
     const bool is_battery_tool = !ammo_type_id.is_null() && ammo_type_id->ammo->type == ammo_battery;
     if( !no_invoke ) {
         // TODO: pass map or go abs
-        get_player_character().invoke_item( &tool, vp_pos );
+        get_player_character().invoke_item( tool_loc, vp_pos );
     }
 
     // HACK: Evil hack incoming
@@ -2314,9 +2325,17 @@ bool vehicle::use_vehicle_tool( vehicle &veh, map *here, const tripoint_bub_ms &
     }
 
     if( is_multimag ) {
-        drain_back_multimag( veh, *here, tool, mm_bindings );
+        if( tool_loc.valid() ) {
+            drain_back_multimag( veh, *here, tool, mm_bindings );
+        } else {
+            // A consumed pseudo-tool has no magazines left to return.
+            item empty_tool( tool_type, calendar::turn );
+            drain_back_multimag( veh, *here, empty_tool, mm_bindings );
+        }
     } else {
-        const int used_charges = ammo_in_tool - tool.ammo_remaining_linked( *here, nullptr );
+        const int remaining_charges = tool_loc.valid() ?
+                                      tool.ammo_remaining_linked( *here, nullptr ) : 0;
+        const int used_charges = ammo_in_tool - remaining_charges;
         if( used_charges > 0 ) {
             if( is_battery_tool ) {
                 // if tool has less battery charges than it started with - discharge from vehicle batteries

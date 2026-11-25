@@ -61,6 +61,7 @@
 #include "bionics.h"
 #include "body_part_set.h"
 #include "bodygraph.h"
+#include "body_status_ui.h"
 #include "bodypart.h"
 #include "butchery_requirements.h"
 #include "butchery.h"
@@ -697,6 +698,17 @@ void game::reenter_fullscreen()
  */
 void game::setup( bool loading_saved_character )
 {
+    if( loading_saved_character ) {
+        // Restore the special mode before loading its content or avatar.
+        // Never run tutorial_game::init on resume: it creates a new map
+        // and resets the player's equipment, location and health.
+        if( world_generator->active_world &&
+            world_generator->active_world->world_name == "TUTORIAL" ) {
+            gamemode = get_special_game( special_game_type::TUTORIAL );
+        } else {
+            gamemode.reset();
+        }
+    }
 #if defined(__ANDROID__)
     const auto setup_started_at = std::chrono::steady_clock::now();
     const flexbuffer_cache_stats cache_before = flexbuffer_cache::statistics();
@@ -1145,6 +1157,8 @@ bool game::start_game()
     if( debug_menu::is_debug_character() ) {
         debug_menu::do_debug_quick_setup();
         add_msg( m_good, _( "Debug character detected.  Quick setup applied, good luck on the testing!" ) );
+    } else {
+        debug_mode = false;
     }
 #if defined(__ANDROID__)
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=new phase=character_and_world_ms " <<
@@ -2563,6 +2577,7 @@ int game::inventory_item_menu( item_location locThisItem,
 // Returns true if input requires breaking out into a game action.
 bool game::handle_mouseview( input_context &ctxt, std::string &action )
 {
+    cata_timer handle_mousemove_timer( "handle_mousemove" );
     std::optional<tripoint_bub_ms> liveview_pos;
 
     do {
@@ -3471,6 +3486,12 @@ bool game::has_blink_curses()
 
 void game::draw( ui_adaptor &ui )
 {
+    if( u.activity_limits_rendering() ) {
+        // We still want to draw the sidebar, so the player can see the time of day and be sure the game hasn't gotten stuck.
+        // There is no measurable performance impact for drawing it, so it's free!
+        draw_panels( true );
+        return;
+    }
     map &here = get_map();
 
     if( test_mode ) {
@@ -4019,6 +4040,7 @@ std::vector<monster *> game::get_fishable_monsters( std::unordered_set<tripoint_
 
 void game::mon_info_update( )
 {
+    cata_timer mon_info_update_timer( "mon_info_update" );
     const map &here = get_map();
     const tripoint_bub_ms pos = u.pos_bub( here );
 
@@ -4243,6 +4265,7 @@ void game::mon_info_update( )
 
 void game::cleanup_dead()
 {
+    cata_timer cleanup_dead_timer( "cleanup_dead" );
     map &here = get_map();
 
     // Dead monsters need to stay in the tracker until everything else that needs to die does so
@@ -5684,7 +5707,8 @@ bool game::npc_menu( npc &who )
         if( debug_mode || ( who.is_npc() && ( who.as_npc()->op_of_u.trust >= 5 ||
                                               who.is_friendly( u ) ) ) ||
             who.in_sleep_state() ) {
-            display_bodygraph( who );
+            body_status_ui bsui( who );
+            bsui.display();
         } else {
             who.say( SNIPPET.random_from_category( "<no>" ).value_or( translation() ).translated() );
         }
@@ -5719,7 +5743,7 @@ bool game::npc_menu( npc &who )
                 u.i_rem( &used );
             }
         } else {
-            bool did_use = u.invoke_item( &used, heal_string, who.pos_bub() );
+            bool did_use = u.invoke_item( loc, heal_string, who.pos_bub() );
             if( did_use ) {
                 // Note: exiting a body part selection menu counts as use here
                 u.mod_moves( -300 );
@@ -5936,10 +5960,12 @@ void game::examine( const tripoint_bub_ms &examp, bool with_pickup )
 
     const tripoint_bub_ms player_pos = u.pos_bub();
 
+    // Normally examining terrain or furniture is a "minor" offense, but some might be flagged differently.
+    const bool extra_alarming_action = here.has_flag( "FACTION_SECURITY", examp );
     if( here.has_furn( examp ) ) {
         if( !u.cant_do_mounted() ) {
             if( !here.has_flag( "FREE_TO_EXAMINE", examp ) &&
-                !warn_player_maybe_anger_local_faction( false, true ) ) {
+                !warn_player_maybe_anger_local_faction( extra_alarming_action, true ) ) {
                 return; // player declined to mess with faction's stuff
             }
             xfurn_t.examine( u, examp );
@@ -5947,7 +5973,7 @@ void game::examine( const tripoint_bub_ms &examp, bool with_pickup )
     } else {
         if( xter_t.can_examine( examp ) && !u.is_mounted() ) {
             if( !here.has_flag( "FREE_TO_EXAMINE", examp ) &&
-                !warn_player_maybe_anger_local_faction( false, true ) ) {
+                !warn_player_maybe_anger_local_faction( extra_alarming_action, true ) ) {
                 return; // player declined to mess with faction's stuff
             }
             xter_t.examine( u, examp );
@@ -7360,12 +7386,10 @@ void game::butcher( const std::optional<tripoint_bub_ms> &p )
     };
 
     std::vector< item * > salvage_tools = u.items_with( salvage_filter );
-    int salvage_tool_index = INT_MIN;
-    item *salvage_tool = nullptr;
+    item_location salvage_tool = item_location::nowhere;
     const salvage_actor *salvage_iuse = nullptr;
     if( !salvage_tools.empty() ) {
-        salvage_tool = salvage_tools.front();
-        salvage_tool_index = u.get_item_position( salvage_tool );
+        salvage_tool = item_location( u, salvage_tools.front() );
         item *usable = salvage_tool->get_usable_item( salvage_string );
         salvage_iuse = dynamic_cast<const salvage_actor *>(
                            usable->get_use( salvage_string )->get_actor_ptr() );
@@ -7384,7 +7408,7 @@ void game::butcher( const std::optional<tripoint_bub_ms> &p )
         if( it->is_corpse() ) {
             corpses.push_back( it );
         } else {
-            if( ( salvage_tool_index != INT_MIN ) && salvage_iuse->valid_to_cut_up( nullptr, *it ) ) {
+            if( salvage_tool.valid() && salvage_iuse->valid_to_cut_up( nullptr, *it ) ) {
                 salvageables.push_back( it );
             }
             if( u.can_disassemble( *it, crafting_inv ).success() ) {
@@ -7557,7 +7581,7 @@ void game::butcher( const std::optional<tripoint_bub_ms> &p )
         case BUTCHER_OTHER:
             switch( indexer_index ) {
                 case MULTISALVAGE:
-                    u.assign_activity( longsalvage_activity_actor( salvage_tool_index ) );
+                    u.assign_activity( longsalvage_activity_actor( salvage_tool ) );
                     break;
                 case MULTIBUTCHER: {
                     const std::optional<butcher_type> bt = butcher_submenu( corpses );
@@ -9650,17 +9674,17 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
         if( dst_item_ok && src_item_ok ) {
             // Assume contents of both cells are legal, so we can just swap contents.
             std::list<item> temp;
-            map_stack ms = here.i_at( fpos );
+            map_stack ms = here.i_at( fpos ); // Think of it as Tile A
+            map_stack dest = here.i_at( fdest ); // Respecitvely Tile B. Destination.
             std::move( ms.begin(), ms.end(),
                        std::back_inserter( temp ) );
             here.i_clear( fpos );
-            for( auto item_iter = ms.begin();
-                 item_iter != ms.end(); ++item_iter ) {
-                ms.insert( *item_iter );
+            for( item &item_iter : dest ) {
+                ms.insert( item_iter );
             }
             here.i_clear( fdest );
             for( item &cur_item : temp ) {
-                ms.insert( cur_item );
+                dest.insert( cur_item );
             }
         } else {
             add_msg( _( "Stuff spills from the %s!" ), furntype.name() );
@@ -9777,41 +9801,71 @@ void game::on_options_changed()
     refresh_mouse_config();
 }
 
+wet_items visit_water_affect_items( Character &you )
+{
+    wet_items ret;
+    if( !you.has_flag( json_flag_ITEM_WATERPROOFING ) ) {
+        you.visit_carried( [&ret]( const item_location & loc ) {
+            if( loc->has_flag( flag_WATER_DISSOLVE ) ) {
+                ret.dissolved.emplace_back( loc );
+            } else if( loc->has_flag( flag_WATER_BREAK ) && !loc->is_broken() ) {
+                ret.destroyed.emplace_back( loc );
+            } else if( loc->has_flag( flag_WATER_BREAK_ACTIVE ) && !loc->is_broken() ) {
+                ret.wet.emplace_back( loc );
+            } else if( loc->typeId() == itype_towel ) {
+                ret.towels.emplace_back( loc );
+            }
+            if( loc->is_watertight_container() && !loc->will_spill() ) {
+                return VisitResponse::SKIP;
+            }
+            return VisitResponse::NEXT;
+        } );
+    }
+    return ret;
+}
+
+static std::vector<item_location> apply_water_damage( Character &ch )
+{
+    wet_items wet_items_lists = visit_water_affect_items( ch );
+
+    for( item_location loc : wet_items_lists.dissolved ) {
+        ch.add_msg_player_or_npc( m_bad,
+                                  _( "One of your items dissolves in the water: %s!" ),
+                                  _( "<npcname> loses an item as it dissolves "
+                                     "in the water: %s!" ),
+                                  loc->display_name() );
+    }
+    for( item_location loc : wet_items_lists.destroyed ) {
+        ch.add_msg_player_or_npc( m_bad,
+                                  _( "The water destroys one of your items: %s!" ),
+                                  _( "<npcname> loses an item to water damage: %s!" ),
+                                  loc->display_name() );
+        loc->deactivate();
+        // TODO: Maybe different types of wet faults? But I can't think of any.
+        // This just means it's still too wet to use.
+        // TODO2: add fault types to electronics, remove `force` argument from here
+        loc->set_random_fault_of_type( "wet", true );
+        // An electronic item in water is also shorted.
+        if( loc->has_flag( flag_ELECTRONIC ) ) {
+            loc->set_random_fault_of_type( "shorted", true );
+        }
+    }
+    for( item_location loc : wet_items_lists.wet ) {
+        const int wetness_add = 5100 * std::log10( units::to_milliliter( loc->volume() ) );
+        loc->wetness += wetness_add;
+        loc->wetness = std::min( loc->wetness, 5 * wetness_add );
+    }
+    for( item_location loc : wet_items_lists.towels ) {
+        loc->convert( itype_towel_wet, &ch ).active = true;
+    }
+    std::reverse( wet_items_lists.dissolved.begin(), wet_items_lists.dissolved.end() );
+    return wet_items_lists.dissolved;
+}
+
 void game::water_affect_items( Character &ch ) const
 {
-    bool gear_waterproofed = ch.has_flag( json_flag_ITEM_WATERPROOFING );
-
-    for( item_location &loc : ch.all_items_loc() ) {
-        if( gear_waterproofed ) {
-            break;
-        }
-        // check flag first because its cheaper
-        if( loc->has_flag( flag_WATER_DISSOLVE ) && !loc.protected_from_liquids() ) {
-            add_msg_if_player_sees( ch.pos_bub(), m_bad, _( "%1$s %2$s dissolved in the water!" ),
-                                    ch.disp_name( true, true ), loc->display_name() );
-            loc.remove_item();
-        } else if( loc->has_flag( flag_WATER_BREAK ) && !loc->is_broken()
-                   && !loc.protected_from_liquids() ) {
-
-            add_msg_if_player_sees( ch.pos_bub(), m_bad, _( "The water destroyed %1$s %2$s!" ),
-                                    ch.disp_name( true ), loc->display_name() );
-            loc->deactivate();
-            // TODO: Maybe different types of wet faults? But I can't think of any.
-            // This just means it's still too wet to use.
-            // TODO2: add fault types to electronics, remove `force` argument from here
-            loc->set_random_fault_of_type( "wet", true );
-            // An electronic item in water is also shorted.
-            if( loc->has_flag( flag_ELECTRONIC ) ) {
-                loc->set_random_fault_of_type( "shorted", true );
-            }
-        } else if( loc->has_flag( flag_WATER_BREAK_ACTIVE ) && !loc->is_broken()
-                   && !loc.protected_from_liquids() ) {
-            const int wetness_add = 5100 * std::log10( units::to_milliliter( loc->volume() ) );
-            loc->wetness += wetness_add;
-            loc->wetness = std::min( loc->wetness, 5 * wetness_add );
-        } else if( loc->typeId() == itype_towel && !loc.protected_from_liquids() ) {
-            loc->convert( itype_towel_wet, &ch ).active = true;
-        }
+    for( item_location &to_remove : apply_water_damage( ch ) ) {
+        to_remove.remove_item();
     }
 }
 

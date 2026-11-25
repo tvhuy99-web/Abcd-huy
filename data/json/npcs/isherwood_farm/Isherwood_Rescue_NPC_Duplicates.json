@@ -36,7 +36,7 @@
         "effect": [
           { "u_lose_var": "general_meeting_barry_following" },
           { "u_add_var": "u_saved_barry_isherwood", "value": "yes" },
-          { "finish_mission": "MISSION_ISHERWOOD_CHRIS_1", "success": true },
+          { "math": [ "currently_invading_map = 0" ] },
           { "mapgen_update": "isherwood_rescue_remove_npcs", "om_terrain": "isherwood_barry_rescue_field" },
           { "math": [ "barry_travelling_home = 1" ] },
           {
@@ -78,7 +78,7 @@
     "type": "talk_topic",
     "id": "TALK_ISHERWOOD_FAMILY_DUPLICATES_CHRIS",
     "dynamic_line": {
-      "gendered_line": "*eyes you up and down with a nervous smile.  \"I almost didn't expect you to show up.\"  He hesitates, letting out a soft laugh.  \"That sounds bad.  I just mean, I can't really believe we're doing this.  Thank you… for doing this.  You ready to get Uncle Barry?\"",
+      "gendered_line": "*eyes you up and down with a nervous smile.  \"I almost didn't expect you to show up.\"  He hesitates, letting out a soft laugh.  \"That sounds bad.  I just mean…  I can't really believe we're doing this.  Thank you…  for everything.  You ready to get Uncle Barry?\"",
       "relevant_genders": [ "u" ]
     },
     "responses": [

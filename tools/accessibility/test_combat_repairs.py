@@ -164,15 +164,17 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("loop_exit_code = ExitCode::Fire;", self.ranged)
         self.assertIn("accessible_combat_shot_completed = true;", self.ranged)
         self.assertIn("bool take_accessible_combat_precise_aim();", header)
-        self.assertIn("const tripoint_bub_ms shot = directional_shot_target(", self.ranged)
+        self.assertIn("const tripoint_bub_ms shot = automatic_combat_shot ?", self.ranged)
+        self.assertIn("directional_combat_target( accessible_shot_directions[chosen] )", self.ranged)
         self.assertIn("set_cursor_pos( shot );", self.ranged)
         self.assertIn("confirm_non_enemy_target()", self.ranged)
         self.assertIn("who.fire_gun( here, fin_trajectory.back(), gun.qty, *gun, reload_loc );",
                       self.activity)
-        # The original empty-direction fire remains possible in both modes.
+        # Explicit manual aiming still permits an empty-tile shot; direct
+        # combat swipes instead require a valid target on the chosen ray.
         self.assertIn("return fallback;", self.ranged)
         self.assertIn("if( automatic_precise_combat_shot )", self.ranged)
-        self.assertNotIn('if( automatic_combat_shot && !dst_critter )', self.ranged)
+        self.assertIn("automatic_combat_shot && ( dst != shot || !dst_critter )", self.ranged)
 
     def test_deliberate_aimed_fire_is_available_beside_quick_fire(self):
         self.assertIn('intent.node == "target:aimed-shot"', self.ranged)

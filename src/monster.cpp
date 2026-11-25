@@ -20,6 +20,7 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "cata_imgui.h"
+#include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
 #include "coordinates.h"
@@ -102,6 +103,7 @@ static const damage_type_id damage_bullet( "bullet" );
 static const damage_type_id damage_cut( "cut" );
 static const damage_type_id damage_electric( "electric" );
 static const damage_type_id damage_heat( "heat" );
+static const damage_type_id damage_psi_telekinetic_damage( "psi_telekinetic_damage" );
 static const damage_type_id damage_stab( "stab" );
 
 static const efftype_id effect_absorbed_electric( "absorbed_electric" );
@@ -402,6 +404,16 @@ void monster::poly( const mtype_id &id )
 bool monster::can_upgrade() const
 {
     return upgrades && get_option<float>( "EVOLUTION_INVERSE_MULTIPLIER" ) > 0.0;
+}
+
+mfaction_id monster::get_monster_faction() const
+{
+    return faction.id();
+}
+
+faction_id monster::get_parent_faction() const
+{
+    return get_monster_faction()->associated_faction;
 }
 
 void monster::gravity_check()
@@ -770,13 +782,9 @@ std::string monster::name_with_armor() const
     return ret;
 }
 
-std::string monster::disp_name( bool possessive, bool capitalize_first ) const
+std::string monster::disp_name( bool capitalize_first ) const
 {
-    if( !possessive ) {
-        return string_format( capitalize_first ? _( "The %s" ) : _( "the %s" ), name() );
-    } else {
-        return string_format( capitalize_first ? _( "The %s's" ) : _( "the %s's" ), name() );
-    }
+    return string_format( capitalize_first ? _( "The %s" ) : _( "the %s" ), name() );
 }
 
 std::string monster::skin_name() const
@@ -1657,7 +1665,7 @@ Creature *monster::attack_target()
 
     Creature *target = get_creature_tracker().creature_at( get_dest() );
     if( target == nullptr || target == this ||
-        attitude_to( *target ) == Attitude::FRIENDLY || !sees( here,  *target ) ||
+        attitude_to( *target ) != Attitude::HOSTILE || !sees( here,  *target ) ||
         target->is_hallucination() ) {
         return nullptr;
     }
@@ -1753,7 +1761,8 @@ Creature::Attitude monster::attitude_to( const Creature &other ) const
                 break;
         }
     }
-    // Should not happen!, creature should be either player or monster
+    // Should not happen!, creature should be either character or monster
+    cata_fatal( "Unexpected creature type specialization" );
     return Attitude::NEUTRAL;
 }
 
@@ -1789,6 +1798,11 @@ monster_attitude monster::attitude( const Character *u ) const
 
     if( effect_cache[FLEEING] ) {
         return MATT_FLEE;
+    }
+
+    if( u && u->is_avatar() && !get_parent_faction().is_null() &&
+        get_parent_faction()->guaranteed_hostile() ) {
+        return MATT_ATTACK;
     }
 
     // CHECK FOR ANGER RELATIONS **HERE**
@@ -2161,40 +2175,47 @@ bool monster::is_dead_state() const
     return hp <= 0;
 }
 
-bool monster::block_hit( Creature *, bodypart_id &, damage_instance &dam )
+float monster::block_roll( const Creature * )
 {
-    if( blocks_left <= 0 ) {
-        return false;
+    if( blocks_left < 1 ) {
+        return 0.0f;
     }
-
-    --blocks_left;
 
     if( !x_in_y( type->block.chance, 100 ) ) {
+        return 0.0f;
+    }
+
+    float remaining_block = type->block.effectiveness;
+    if( remaining_block <= 0.0f ) {
+        return 0.0f;
+    }
+
+    return 50.0f * ( 1.0f - logarithmic_range( 0, 40,
+                     static_cast<int>( type -> block.effectiveness ) ) ) ;
+}
+
+bool monster::block_hit( Creature *, bodypart_id &, damage_instance & )
+{
+    if( blocks_left < 1 ) {
         return false;
     }
 
-    bool blocked = false;
-    float remaining_block = type->block.effectiveness;
-
-    for( damage_unit &elem : dam.damage_units ) {
-        if( remaining_block <= 0.0f ) {
-            break;
-        }
-
-        if( type->block.ranged || ( elem.type->physical && elem.type->melee_only ) ) {
-            const float block_amount = std::min( remaining_block, elem.amount );
-
-            elem.amount -= block_amount;
-            remaining_block -= block_amount;
-
-            if( block_amount > 0.0f ) {
-                blocked = true;
-            }
-        }
+    const float without_block = melee_damage_mult( static_cast<int>( last_hit_spread + last_block ) );
+    const float with_block = melee_damage_mult( last_hit_spread );
+    if( last_block <= 0.0f || without_block - with_block < 0.05f ) {
+        return false;
     }
+
+    blocks_left--;
+
+    // did they block, parry, or dodge?
+    const float block_share = last_block / ( last_block + last_dodge );
+    const bool blocked = block_share > 0.5f;
 
     if( blocked ) {
         add_msg_if_player_sees( *this, m_warning, _( "The %s blocks the attack!" ), name() );
+    } else if( block_share >= 0.33f ) {
+        add_msg_if_player_sees( *this, m_warning, _( "The %s parries the attack!" ), name() );
     }
 
     return blocked;
@@ -2286,12 +2307,16 @@ bool monster::melee_attack( Creature &target, float accuracy )
 
     dealt_damage_instance dealt_dam;
 
-    if( hitspread >= 0 ) {
+    if( Creature::melee_attack_hit( hitspread ) ) {
         target.deal_melee_hit( this, hitspread, false, damage, dealt_dam );
     }
 
     const int total_dealt = dealt_dam.total_damage();
-    if( hitspread < 0 ) {
+    std::string hit_quality_msg;
+    if( total_dealt > 0 ) {
+        hit_quality_msg = "  " + Creature::hit_quality_label( hitspread );
+    }
+    if( !Creature::melee_attack_hit( hitspread ) ) {
         bool monster_missed = monster_hit_roll < 0.0;
         // Miss
         if( has_flag( mon_flag_CLUMSY_ATTACKS ) && one_in( 4 ) ) {
@@ -2304,14 +2329,19 @@ bool monster::melee_attack( Creature &target, float accuracy )
         if( u_see_my_spot && !target.in_sleep_state() ) {
             if( target.is_avatar() ) {
                 if( monster_missed ) {
-                    add_msg( _( "%s misses you." ), u_see_me ? disp_name( false, true ) : _( "Something" ) );
+                    add_msg( _( "%s misses you." ), u_see_me ? disp_name( true ) : _( "Something" ) );
+                } else if( target.last_block > target.last_dodge ) {
+                    add_msg( _( "You block %s." ), u_see_me ? disp_name() : _( "something" ) );
                 } else {
                     add_msg( _( "You dodge %s." ), u_see_me ? disp_name() : _( "something" ) );
                 }
             } else if( target.is_npc() ) {
                 if( monster_missed ) {
                     add_msg( _( "%1$s misses %2$s!" ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ), target.disp_name() );
+                             u_see_me ? disp_name( true ) : _( "Something" ), target.disp_name() );
+                } else if( target.last_block > target.last_dodge ) {
+                    add_msg( _( "%1$s blocks %2$s attack." ),
+                             target.disp_name(), u_see_me ? name() : _( "something" ) );
                 } else {
                     add_msg( _( "%1$s dodges %2$s attack." ),
                              target.disp_name(), u_see_me ? name() : _( "something" ) );
@@ -2335,12 +2365,12 @@ bool monster::melee_attack( Creature &target, float accuracy )
                     // The attack's post-armor damage is authoritative. Do not
                     // read a small bodypart's HP as if it were the parent limb.
                     add_msg( m_bad, _( "%1$s hits your %2$s. You lose %3$d HP." ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ), total_dealt );
                 } else {
-                    add_msg( m_bad, _( "%1$s hits your %2$s." ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ),
-                             body_part_name_accusative( dealt_dam.bp_hit ) );
+                    add_msg( m_bad, _( "%1$s hits your %2$s.%3$s" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ),
+                             body_part_name_accusative( dealt_dam.bp_hit ), hit_quality_msg );
                 }
             } else if( target.is_npc() ) {
                 if( has_effect( effect_ridden ) && has_flag( mon_flag_RIDEABLE_MECH ) &&
@@ -2350,9 +2380,9 @@ bool monster::melee_attack( Creature &target, float accuracy )
                              total_dealt );
                 } else {
                     //~ %1$s: attacker name, %2$s: target NPC name, %3$s: bodypart name in accusative
-                    add_msg( _( "%1$s hits %2$s %3$s." ), u_see_me ? disp_name( false, true ) : _( "Something" ),
-                             target.disp_name( true ),
-                             body_part_name_accusative( dealt_dam.bp_hit ) );
+                    add_msg( _( "%1$s hits %2$s in the %3$s.%4$s" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ), target.disp_name(),
+                             body_part_name_accusative( dealt_dam.bp_hit ), hit_quality_msg );
                 }
             } else {
                 if( has_effect( effect_ridden ) && has_flag( mon_flag_RIDEABLE_MECH ) &&
@@ -2384,28 +2414,24 @@ bool monster::melee_attack( Creature &target, float accuracy )
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative, 3$s is armor name
                 if( a11y::enabled() ) {
                     add_msg( m_info, _( "%1$s hits your %2$s. Armor blocks the damage." ),
-                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ) );
                 } else {
-                    add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), u_see_me ? disp_name( false,
-                             true ) : _( "Something" ),
+                    add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), u_see_me ? disp_name( true ) : _( "Something" ),
                              body_part_name_accusative( dealt_dam.bp_hit ), target.skin_name() );
                 }
             } else if( target.is_npc() ) {
-                //~ $1s is monster name, %2$s is that monster target name,
-                //~ $3s is target bodypart name in accusative, $4s is the monster target name,
-                //~ 5$s is target armor name.
-                add_msg( _( "%1$s hits %2$s %3$s but is stopped by %4$s %5$s." ), u_see_me ? disp_name( false,
-                         true ) : _( "Something" ),
-                         target.disp_name( true ),
+                //~ $1s is monster name, %2$s is target NPC name,
+                //~ $3s is target bodypart name in accusative, $4s is target armor name.
+                add_msg( _( "%1$s hits %2$s in the %3$s but is stopped by the %4$s." ),
+                         u_see_me ? disp_name( true ) : _( "Something" ), target.disp_name(),
                          body_part_name_accusative( dealt_dam.bp_hit ),
-                         target.disp_name( true ),
                          target.skin_name() );
             } else if( get_option<bool>( "LOG_MONSTER_ATTACK_MONSTER" ) ) {
                 //~ $1s is monster name, %2$s is that monster target name,
                 //~ $3s is target armor name.
                 add_msg( _( "%1$s hits %2$s but is stopped by its %3$s." ),
-                         u_see_me ? disp_name( false, true ) : _( "Something" ),
+                         u_see_me ? disp_name( true ) : _( "Something" ),
                          target.disp_name(),
                          target.skin_name() );
             }
@@ -2425,7 +2451,7 @@ bool monster::melee_attack( Creature &target, float accuracy )
         return true;
     }
 
-    if( hitspread >= 0 && !is_hallucination() ) {
+    if( Creature::melee_attack_hit( hitspread ) && !is_hallucination() ) {
         enchantment_cache->cast_hit_you( *this, target );
     }
 
@@ -2497,7 +2523,7 @@ void monster::deal_damage_handle_type( const effect_source &source, const damage
         return; // immunity
     }
     // FIXME: Hardcoded damage type effects (bash, bullet)
-    if( du.type == damage_bash ) {
+    if( du.type == damage_bash || du.type == damage_psi_telekinetic_damage ) {
         if( has_flag( mon_flag_PLASTIC ) ) {
             damage += du.amount / rng( 2, 4 ); // lessened effect
             pain += du.amount / 4;
@@ -3228,7 +3254,17 @@ void monster::die( map *here, Creature *nkiller )
         return;
     }
 
-    add_msg_if_player_sees( *this, m_good, type->mdeath_effect.death_message.translated(), name() );
+    const translation &configured_death_message = type->mdeath_effect.death_message;
+    const bool has_configured_death_message = !configured_death_message.empty();
+    const auto show_death_message = [this, &configured_death_message, has_configured_death_message]() {
+        add_msg_if_player_sees( *this, m_good,
+                                has_configured_death_message ? configured_death_message.translated() :
+                                _( "The %s dies!" ), name() );
+    };
+    // Death effects can change whether the player sees the monster.
+    if( has_configured_death_message ) {
+        show_death_message();
+    }
 
     if( type->mdeath_effect.has_effect ) {
         //Not a hallucination, go process the death effects.
@@ -3283,7 +3319,11 @@ void monster::die( map *here, Creature *nkiller )
     if( !suppress_corpse ) {
         switch( type->mdeath_effect.corpse_type ) {
             case mdeath_type::NORMAL:
-                corpse =  mdeath::normal( here, *this );
+                if( !has_configured_death_message && !no_corpse_quiet && !quiet_death &&
+                    !has_flag( mon_flag_QUIETDEATH ) ) {
+                    show_death_message();
+                }
+                corpse = mdeath::normal( here, *this );
                 break;
             case mdeath_type::BROKEN:
                 mdeath::broken( here, *this );

@@ -58,7 +58,9 @@ void publish_current()
     screen_data &screen = *screens.back();
     screen.snapshot.token = *token;
     screen.snapshot.revision = screen.revision;
-    android::publish( snapshot_json( screen.snapshot ) );
+    android::publish( screen.content.empty() ?
+                      snapshot_json( screen.snapshot ) :
+                      snapshot_json_with_content( screen.snapshot, screen.content ) );
 }
 } // namespace
 

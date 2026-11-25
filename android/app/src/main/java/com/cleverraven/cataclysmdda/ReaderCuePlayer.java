@@ -75,7 +75,7 @@ public final class ReaderCuePlayer {
     private Runnable abandonFocus;
     private boolean loadFailed;
     private boolean unavailableReported;
-    private boolean closed;
+    private volatile boolean closed;
 
     public ReaderCuePlayer(Context context, ReaderPreferences preferences, Listener listener) {
         this.context = context.getApplicationContext();
@@ -137,6 +137,9 @@ public final class ReaderCuePlayer {
         Integer loaded = findLoaded(cue.rawId);
         if (loaded != null) {
             startSound(loaded);
+            return;
+        }
+        if (pendingLoads.containsValue(cue.rawId)) {
             return;
         }
         int sampleId = pool.load(context, cue.rawId, 1);

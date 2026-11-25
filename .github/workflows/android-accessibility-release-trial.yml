@@ -1,15 +1,17 @@
 name: Android Accessibility Release trial (test-signed)
 
 on:
-  # The only automatic Android APK built from master; newest commit wins.
+  # Build the same optimized Accessibility Release APK on master and the
+  # upstream integration branch. Keep both refs isolated by concurrency.
   push:
-    branches: [master]
+    branches: [master, test/upstream-full-merge-2026-11-19]
     paths:
       - 'src/**'
       - 'android/**'
       - 'lang/**'
       - 'data/**'
       - 'tools/accessibility/**'
+      - 'tools/mods/**'
       - 'tools/build_shaders.py'
       - 'CMakeLists.txt'
       - '.github/workflows/android-accessibility-release-trial.yml'
@@ -94,6 +96,11 @@ jobs:
         run: |
           python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
           python3 tools/mods/apply_vi_overlays.py --target data/mods
+      - name: Migrate community items to current DDA schema before packaging
+        run: |
+          python3 -m unittest discover -s tools/accessibility -p 'test_community_item_schema.py' -v
+          python3 tools/mods/migrate_item_schema.py --target data/mods
+          python3 tools/mods/migrate_item_schema.py --target data/mods --check
       - name: Compile shader assets
         run: |
           python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
@@ -273,7 +280,8 @@ jobs:
             exit 1
           }
       - name: Publish Android Accessibility Release APK on GitHub
-        if: success()
+        # Integration builds are installable Actions artifacts, not public releases.
+        if: success() && github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

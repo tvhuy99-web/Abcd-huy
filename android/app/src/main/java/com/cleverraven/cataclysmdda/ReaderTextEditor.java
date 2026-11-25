@@ -120,6 +120,20 @@ public final class ReaderTextEditor {
     }
 
     public LinearLayout getView() { return root; }
+    public EditText getField() { return field; }
+    public boolean isNativeInputOnly() { return nativeInputOnly; }
+    public void focusNativeInput() {
+        if (!nativeInputOnly) { return; }
+        field.requestFocus();
+        field.post(() -> {
+            android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager) activity.getSystemService(
+                            android.content.Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(field, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+    }
     public String getText() { return field.getText().toString(); }
     public String contextKey() { return group + ":" + revision; }
 

@@ -1410,6 +1410,7 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
 
     avatar &pc = get_avatar();
     on_out_of_scope cleanup( [&pc]() {
+        g->gamemode.reset();
         pc = avatar();
         world_generator->set_active_world( nullptr );
     } );

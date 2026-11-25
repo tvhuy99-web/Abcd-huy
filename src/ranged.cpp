@@ -290,6 +290,8 @@ class target_ui
         bool no_mana = false;
         // Relevant activity
         aim_activity_actor *activity = nullptr;
+        // Set only for a direct accessibility combat melee gesture.
+        std::optional<int> accessible_melee_direction;
 
         enum class ExitCode : int {
             Abort,
@@ -411,6 +413,10 @@ class target_ui
         // Aim at the first visible creature on this ray, or at the range edge.
         // Do not filter friendlies or require any creature to be present.
         tripoint_bub_ms directional_shot_target( const point &direction );
+
+        // Nearest native target on the selected compass ray, never an
+        // arbitrary tile or off-direction creature.
+        tripoint_bub_ms directional_combat_target( const point &direction );
 
         // Semantic view of targets the game currently permits and knows how to aim at.
         a11y::semantic_snapshot reader_snapshot();
@@ -577,6 +583,23 @@ target_handler::trajectory target_handler::mode_unarmed_reach( avatar &you )
     ui.range = std::max( 1, static_cast<int>( you.calculate_by_enchantment( 1,
                          enchant_vals::mod::MELEE_RANGE_MODIFIER ) ) );
 
+    restore_on_out_of_scope view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
+target_handler::trajectory target_handler::mode_accessible_melee( avatar &you, int direction )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::Reach;
+    item_location weapon = you.used_weapon();
+    ui.relevant = weapon ? weapon.get_item() : nullptr;
+    // Forced-unarmed while wielding a weapon must not cause a reach attack
+    // with the held weapon. Otherwise use the original effective range.
+    ui.range = weapon ? weapon->current_reach_range( you ).first :
+               you.get_wielded_item() ? 1 : std::max( 1, static_cast<int>(
+                       you.calculate_by_enchantment( 1, enchant_vals::mod::MELEE_RANGE_MODIFIER ) ) );
+    ui.accessible_melee_direction = direction;
     restore_on_out_of_scope view_offset_prev( you.view_offset );
     return ui.run();
 }
@@ -3048,6 +3071,27 @@ target_handler::trajectory target_ui::run()
     src = you->pos_bub();
     update_target_list();
 
+    if( mode == TargetMode::Reach && accessible_melee_direction ) {
+        dst = src;
+        const int chosen = *accessible_melee_direction;
+        if( chosen < 0 || chosen >= 8 ) {
+            return {};
+        }
+        const tripoint_bub_ms target = directional_combat_target( accessible_shot_directions[chosen] );
+        if( target == src ) {
+            add_msg( m_info, _( "No target in that direction within weapon range (%d tiles)." ), range );
+            return {};
+        }
+        set_cursor_pos( target );
+        if( dst != target || status != Status::Good || !dst_critter ||
+            !confirm_non_enemy_target() ) {
+            return {};
+        }
+        set_last_target();
+        on_target_accepted( true );
+        return traj;
+    }
+
     if( mode == TargetMode::Reach && targets.empty() ) {
         add_msg( m_info, _( "No hostile creature in reach." ) );
         traj.clear();
@@ -3252,9 +3296,12 @@ target_handler::trajectory target_ui::run()
             if( chosen < 0 || chosen >= 8 ) {
                 continue;
             }
-            const tripoint_bub_ms shot = directional_shot_target( accessible_shot_directions[chosen] );
+            const tripoint_bub_ms shot = automatic_combat_shot ?
+                                         directional_combat_target( accessible_shot_directions[chosen] ) :
+                                         directional_shot_target( accessible_shot_directions[chosen] );
             if( shot == src ) {
-                const std::string why = string_format(
+                const std::string why = string_format( automatic_combat_shot ?
+                                            _( "No target in that direction within weapon range (%d tiles)." ) :
                                             _( "Cannot fire in that direction.  Weapon range: %d tiles." ), range );
                 if( automatic_combat_shot ) {
                     // This modal is about to close. Defer speech until the
@@ -3267,6 +3314,12 @@ target_handler::trajectory target_ui::run()
                 continue;
             }
             set_cursor_pos( shot );
+            if( automatic_combat_shot && ( dst != shot || !dst_critter ) ) {
+                a11y::android::announce( "A11Y_COMBAT_ALERT:" + string_format(
+                    _( "No target in that direction within weapon range (%d tiles)." ), range ), 3 );
+                loop_exit_code = ExitCode::Abort;
+                break;
+            }
             if( status != Status::Good ) {
                 const std::string why = _( "The weapon cannot fire right now.  Check ammunition and firing mode." );
                 if( automatic_combat_shot ) {
@@ -3277,7 +3330,8 @@ target_handler::trajectory target_ui::run()
                 add_msg( m_info, "%s", why );
                 continue;
             }
-            if( !confirm_non_enemy_target() ) {
+            if( !confirm_non_enemy_target() ||
+                ( automatic_combat_shot && !prompt_friendlies_in_lof() ) ) {
                 // The existing friendly/neutral target confirmation still
                 // applies. A refusal never fires and never moves the avatar.
                 if( automatic_combat_shot ) {
@@ -3469,6 +3523,25 @@ target_handler::trajectory target_ui::run()
     }
 
     return traj;
+}
+
+tripoint_bub_ms target_ui::directional_combat_target( const point &direction )
+{
+    // update_target_list() uses get_targetable_creatures with native
+    // visibility, reach/obstruction, and range rules. Walk the ray in
+    // nearest-first order, rather than choosing a target in another
+    // direction or firing at an unseen/empty tile.
+    const map &here = get_map();
+    for( int step = 1; step <= range; ++step ) {
+        const tripoint_bub_ms tile = src + tripoint_rel_ms( tripoint( step * direction, 0 ) );
+        if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
+            break;
+        }
+        if( std::find( targets.begin(), targets.end(), tile ) != targets.end() ) {
+            return tile;
+        }
+    }
+    return src;
 }
 
 tripoint_bub_ms target_ui::directional_shot_target( const point &direction )

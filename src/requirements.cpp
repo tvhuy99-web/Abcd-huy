@@ -942,25 +942,31 @@ std::vector<std::string> requirement_data::get_folded_tools_list( const Characte
     return output_buffer;
 }
 
+// Debug hammerspace belongs to a character, so a query with no actor has none.
+static bool uses_hammerspace( const Character *actor, craft_flags flags )
+{
+    return actor != nullptr && ( flags & craft_flags::ignore_hammerspace ) == craft_flags::none &&
+           actor->has_trait( trait_DEBUG_HS );
+}
+
 bool requirement_data::can_make_with_inventory( const Character *actor,
         const temp_crafting_inventory &crafting_inv,
         const std::function<bool( const item & )> &filter, int batch, craft_flags flags,
         bool restrict_volume ) const
 {
-    // Debug hammerspace belongs to a character, so a query with no actor has none.
-    if( actor != nullptr && actor->has_trait( trait_DEBUG_HS ) ) {
+    if( uses_hammerspace( actor, flags ) ) {
         return true;
     }
 
     bool retval = true;
     // All functions must be called to update the available settings in the components.
-    if( !has_comps( actor, crafting_inv, qualities, return_true<item> ) ) {
+    if( !has_comps( actor, crafting_inv, qualities, return_true<item>, 1, flags ) ) {
         retval = false;
     }
     if( !has_comps( actor, crafting_inv, tools, return_true<item>, batch, flags ) ) {
         retval = false;
     }
-    if( !has_comps( actor, crafting_inv, components, filter, batch ) ) {
+    if( !has_comps( actor, crafting_inv, components, filter, batch, flags ) ) {
         retval = false;
     }
     if( !check_enough_materials( actor, crafting_inv, filter, batch, restrict_volume ) ) {
@@ -1015,9 +1021,9 @@ bool requirement_data::has_comps( const Character *actor,
 bool quality_requirement::has(
     const Character *actor,
     const temp_crafting_inventory &crafting_inv, const std::function<bool( const item & )> &, int,
-    craft_flags, const std::function<void( int )> & ) const
+    craft_flags flags, const std::function<void( int )> & ) const
 {
-    if( actor != nullptr && actor->has_trait( trait_DEBUG_HS ) ) {
+    if( uses_hammerspace( actor, flags ) ) {
         return true;
     }
     // Intrinsic only: has_quality also walks the actor's items, which crafting_inv has
@@ -1044,7 +1050,7 @@ bool tool_comp::has(
     int batch,
     craft_flags flags, const std::function<void( int )> &visitor ) const
 {
-    if( actor != nullptr && actor->has_trait( trait_DEBUG_HS ) ) {
+    if( uses_hammerspace( actor, flags ) ) {
         return true;
     }
     if( !by_charges() ) {
@@ -1085,9 +1091,9 @@ bool item_comp::has(
     const Character *actor, const temp_crafting_inventory &crafting_inv,
     const std::function<bool( const item & )> &filter,
     int batch,
-    craft_flags, const std::function<void( int )> & ) const
+    craft_flags flags, const std::function<void( int )> & ) const
 {
-    if( actor != nullptr && actor->has_trait( trait_DEBUG_HS ) ) {
+    if( uses_hammerspace( actor, flags ) ) {
         return true;
     }
     const int cnt = std::abs( count ) * batch;
@@ -1817,10 +1823,16 @@ deduped_requirement_data::deduped_requirement_data( const requirement_data &in,
         // with 114 alternatives.
         static constexpr size_t max_alternatives = 115;
         if( alternatives_.size() + pending.size() > max_alternatives ) {
-            debugmsg( "Construction of deduped_requirement_data generated too many alternatives.  "
-                      "The recipe %1s should be simplified.  See the Recipe section in "
-                      "doc/JSON/JSON_INFO.md for more details.  It has %2s alternatives.", context.str(),
-                      alternatives_.size() + pending.size() );
+            // The input requirement is retained below as a safe fallback, so
+            // a content mod exceeding the expansion budget must not halt
+            // character creation with a modal error.  Stream the recipe ID
+            // and count to the debug log without printf format specifiers.
+            DebugLog( D_WARNING, D_GAME ) <<
+                                         "Construction of deduped_requirement_data generated too many alternatives.  "
+                                         "The recipe " << context.str() <<
+                                         " should be simplified.  See the Recipe section in "
+                                         "doc/JSON/JSON_INFO.md for more details.  It has " <<
+                                         alternatives_.size() + pending.size() << " alternatives.";
             is_too_complex_ = true;
             alternatives_ = { in };
             return;

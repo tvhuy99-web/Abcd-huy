@@ -16,39 +16,11 @@ Cataclysm: Dark Days Ahead is a turn-based survival game set in a post-apocalypt
 [![Coverage Status](https://coveralls.io/repos/github/CleverRaven/Cataclysm-DDA/badge.svg?branch=master)](https://coveralls.io/github/CleverRaven/Cataclysm-DDA?branch=master)
 [![Open Source Helpers](https://www.codetriage.com/cleverraven/cataclysm-dda/badges/users.svg)](https://www.codetriage.com/cleverraven/cataclysm-dda)
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/CleverRaven/Cataclysm-DDA)](https://github.com/CleverRaven/Cataclysm-DDA/graphs/contributors)
-[![Lines of Code](https://tokei.rs/b1/github/CleverRaven/Cataclysm-DDA?category=code)](https://github.com/XAMPPRocky/tokei)
 [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/CleverRaven/Cataclysm-DDA)](https://www.tickgit.com/browse?repo=github.com/CleverRaven/Cataclysm-DDA)
 
 ### Packaging status
 
-#### Arch Linux
-
-Ncurses and tiles versions are available in the [community repos](https://www.archlinux.org/packages/?q=cataclysm-dda).
-
-```sh
-sudo pacman -S cataclysm-dda
-sudo pacman -S cataclysm-dda-tiles
-```
-
-#### Fedora
-
-Ncurses and tiles versions are available in the [official repos](https://src.fedoraproject.org/rpms/cataclysm-dda).
-
-```sh
-sudo dnf install cataclysm-dda
-```
-
-#### Debian / Ubuntu
-
-Ncurses and tiles versions are available in the [official repos](https://tracker.debian.org/pkg/cataclysm-dda).
-
-```sh
-sudo apt install cataclysm-dda-curses cataclysm-dda-sdl
-```
-
-#### Flatpak
-
-Download from [Flathub](https://flathub.org/apps/org.cataclysmdda.CataclysmDDA).
+We do not recommend installing cdda using a package manager or any other method to acquire the game that is not downloading a release from github (or compiling the game, if you wish to do so, though there is no reason to if you are not contributing).
 
 ## Compile
 

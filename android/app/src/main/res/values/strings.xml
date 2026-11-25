@@ -10,6 +10,7 @@
     <string name="accessibilityServicesMessage">Some touch accessibility services can affect game gestures. Keep your screen reader enabled while testing the voice setup. Gameplay narration is still being developed. Continue to use the existing game controls, or open accessibility and voice setup:\n%1$s</string>
     <string name="ignoreFalsePostives">Mark as false positive(s)</string>
     <string name="softwareRendering">Software rendering</string>
+    <string name="forceFullscreen">Force fullscreen</string>
     <string name="androidSystemUiMode">Android system bars</string>
     <string name="androidSystemUiModeSystemBars">Show system bars</string>
     <string name="androidSystemUiModeFullscreen">Fullscreen</string>
@@ -103,6 +104,8 @@
     <string name="a11yHubCharacter">Character and abilities</string>
     <string name="a11yHubMissions">Missions and relations</string>
     <string name="a11yHubVehicles">Vehicles and travel</string>
+    <string name="a11ySurveyTitle">Detailed place survey</string>
+    <string name="a11ySurveyContinue">Continue</string>
     <string name="a11yRadarTitle">Automatic radar</string>
     <string name="a11yRadarManage">Manage radar</string>
     <string name="a11yRadarOn">On</string>
@@ -207,7 +210,7 @@
     <string name="a11yContextConfirmUnavailable">No confirmation action here</string>
     <string name="a11yNativeInputRangeError">Value must be between %1$s and %2$s.</string>
     <string name="a11yNativeInputInstructions">Edit with the Android keyboard. Use OK to save or Cancel to discard. You can turn TalkBack on or off yourself.</string>
-    <string name="a11yCombatOn">Combat: swipe one finger toward an adjacent creature to attack it. Swiping toward an empty tile can still move you. Swipe with two fingers to move; bend a swipe for diagonal attacks. Left-right reloads; right-left reads weapon.</string>
+    <string name="a11yCombatOn">Combat: one-finger swipes attack or fire within the current weapon range without walking. Two fingers move. Bend a swipe for diagonals. Left-right reloads; right-left reads weapon.</string>
     <string name="a11yCombatOff">Map mode on. Your original gesture assignments are restored.</string>
     <string name="a11yCombatUnavailable">Combat command unavailable. No movement was performed.</string>
     <string name="a11yCombatNoEnemies">No visible hostile creatures nearby.</string>

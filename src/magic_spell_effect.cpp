@@ -651,8 +651,12 @@ static void damage_targets( const spell &sp, Creature &caster,
         } else if( sp.damage( caster ) < 0 ) {
             if( !cr->has_flag( json_flag_BLOCK_SUPERNATURAL_HEALING ) ) {
                 sp.heal( target, caster );
-                add_msg_if_player_sees( cr->pos_bub(), m_good, _( "%s wounds are closing up!" ),
-                                        cr->disp_name( true ) );
+                if( cr->is_avatar() ) {
+                    add_msg( m_good, _( "Your wounds are closing up!" ) );
+                } else {
+                    add_msg_if_player_sees( cr->pos_bub(), m_good, _( "%s begins to heal!" ),
+                                            cr->disp_name( true ) );
+                }
             } else {
                 caster.add_msg_if_player( m_bad, _( "Your healing spell has no effect!" ) );
             }
@@ -1388,8 +1392,6 @@ void spell_effect::spawn_summoned_monster( const spell &sp, Creature &caster,
         if( add_summoned_mon( *iter, summon_time, sp, caster ) ) {
             num_mons--;
             sp.make_sound( *iter, caster );
-        } else {
-            debugmsg( "failed to place monster" );
         }
         // whether or not we succeed in spawning a monster, we don't want to try this tripoint again
         area.erase( iter );

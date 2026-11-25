@@ -24,6 +24,7 @@
 
 #include "action.h"
 #include "activity_actor_definitions.h"
+#include "basecamp.h"
 #include "activity_handlers.h"
 #include "activity_item_handling.h"
 #include "a11y_android.h"
@@ -126,6 +127,7 @@
 #include "shearing.h"
 #include "skill.h"
 #include "sounds.h"
+#include "stomach.h"
 #include "string_formatter.h"
 #include "talker.h"
 #include "temp_crafting_inventory.h"
@@ -163,6 +165,7 @@ static const activity_id ACT_BOLTCUTTING( "ACT_BOLTCUTTING" );
 static const activity_id ACT_BUILD( "ACT_BUILD" );
 static const activity_id ACT_BUTCHER( "ACT_BUTCHER" );
 static const activity_id ACT_BUTCHER_FULL( "ACT_BUTCHER_FULL" );
+static const activity_id ACT_CAMP_MEAL( "ACT_CAMP_MEAL" );
 static const activity_id ACT_CHOP_LOGS( "ACT_CHOP_LOGS" );
 static const activity_id ACT_CHOP_PLANKS( "ACT_CHOP_PLANKS" );
 static const activity_id ACT_CHOP_TREE( "ACT_CHOP_TREE" );
@@ -218,6 +221,7 @@ static const activity_id ACT_MULTIPLE_CHOP_TREES( "ACT_MULTIPLE_CHOP_TREES" );
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
 static const activity_id ACT_MULTIPLE_CRAFT( "ACT_MULTIPLE_CRAFT" );
 static const activity_id ACT_MULTIPLE_DIS( "ACT_MULTIPLE_DIS" );
+static const activity_id ACT_MULTIPLE_DISSECT( "ACT_MULTIPLE_DISSECT" );
 static const activity_id ACT_MULTIPLE_FARM( "ACT_MULTIPLE_FARM" );
 static const activity_id ACT_MULTIPLE_FISH( "ACT_MULTIPLE_FISH" );
 static const activity_id ACT_MULTIPLE_MINE( "ACT_MULTIPLE_MINE" );
@@ -239,6 +243,7 @@ static const activity_id ACT_QUARTER( "ACT_QUARTER" );
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_REEL_CABLE( "ACT_REEL_CABLE" );
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
+static const activity_id ACT_REPAIR_ITEM( "ACT_REPAIR_ITEM" );
 static const activity_id ACT_ROBOT_CONTROL( "ACT_ROBOT_CONTROL" );
 static const activity_id ACT_SHAVE( "ACT_SHAVE" );
 static const activity_id ACT_SHEARING( "ACT_SHEARING" );
@@ -606,6 +611,10 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     // A one-gesture combat shot returns to the world after firing even
     // when AIM_AFTER_FIRING is enabled. Normal targeting keeps its setting.
     const bool quick_combat_shot = target_handler::take_accessible_combat_shot_completed();
+    // A gun fault or cancelled ammo selection can finish before the
+    // targeting UI consumes a pending accessibility combat direction.
+    target_handler::take_accessible_combat_shot();
+    target_handler::take_accessible_combat_precise_aim();
 
     act.set_to_null();
     item_location weapon = get_weapon();
@@ -652,6 +661,9 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
 
 void aim_activity_actor::canceled( player_activity &/*act*/, Character &/*who*/ )
 {
+    target_handler::take_accessible_combat_shot();
+    target_handler::take_accessible_combat_precise_aim();
+    target_handler::take_accessible_combat_shot_completed();
     unload_RAS_weapon();
     restore_view();
 }
@@ -1584,8 +1596,7 @@ static void tool_out_of_charges( Character &who, const std::string &tool_name )
     if( who.is_avatar() ) {
         who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool_name );
     } else { // who.is_npc()
-        add_msg_if_player_sees( who.pos_bub(), _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
-                                true ), tool_name );
+        add_msg_if_player_sees( who.pos_bub(), _( "%1$s %2$s ran out of charges." ), who.disp_name( true ), tool_name );
     }
     who.cancel_activity();
 }
@@ -2428,7 +2439,7 @@ void read_activity_actor::do_turn( player_activity &act, Character &who )
         add_msg_if_player_sees(
             who,
             _( "%1$s %2$s ran out of batteries." ),
-            who.disp_name( true, true ),
+            who.disp_name( true ),
             item::nname( ereader->typeId() ) );
         who.cancel_activity();
         return;
@@ -2651,7 +2662,7 @@ bool read_activity_actor::player_readma( avatar &you )
 
     if( one_in( difficulty ) ) {
         // learn martial art
-        mart_iter->second.call( &you, *book, you.pos_bub() );
+        mart_iter->second.call( &you, book, you.pos_bub() );
         return true;
     } else if( continuous ) {
         switch( rng( 1, 5 ) ) {
@@ -3949,7 +3960,7 @@ void ebooksave_activity_actor::do_turn( player_activity &act, Character &who )
             add_msg_if_player_sees(
                 who,
                 _( "%1$s %2$s ran out of batteries." ),
-                who.disp_name( true, true ),
+                who.disp_name( true ),
                 item::nname( ereader->typeId() ) );
             who.cancel_activity();
             return;
@@ -4002,7 +4013,7 @@ void ebooksave_activity_actor::finish( player_activity &act, Character &who )
                  n_gettext( "book", "books", handled_books ) );
     } else { // who.is_npc()
         add_msg_if_player_sees( who, _( "%s scans %d %s into their device." ),
-                                who.disp_name( false, true ), handled_books, n_gettext( "book", "books", handled_books ) );
+                                who.disp_name( true ), handled_books, n_gettext( "book", "books", handled_books ) );
     }
     act.set_to_null();
 }
@@ -4013,7 +4024,7 @@ void ebooksave_activity_actor::canceled( player_activity &act, Character &who )
         add_msg( m_info, _( "You stop scanning the remaining books." ) );
     } else { // who.is_npc()
         add_msg_if_player_sees( who, _( "%s stops scanning books." ),
-                                who.disp_name( false, true ) );
+                                who.disp_name( true ) );
     }
     act.set_to_null();
 }
@@ -4042,6 +4053,45 @@ std::unique_ptr<activity_actor> ebooksave_activity_actor::deserialize( JsonValue
 
 namespace io
 {
+template<>
+std::string enum_to_string<do_activity_reason>( do_activity_reason reason )
+{
+    switch( reason ) {
+        case do_activity_reason::CAN_DO_CONSTRUCTION: return "CAN_DO_CONSTRUCTION";
+        case do_activity_reason::CAN_DO_FETCH: return "CAN_DO_FETCH";
+        case do_activity_reason::NO_COMPONENTS: return "NO_COMPONENTS";
+        case do_activity_reason::DONT_HAVE_SKILL: return "DONT_HAVE_SKILL";
+        case do_activity_reason::NO_ZONE: return "NO_ZONE";
+        case do_activity_reason::NO_VEHICLE: return "NO_VEHICLE";
+        case do_activity_reason::ALREADY_DONE: return "ALREADY_DONE";
+        case do_activity_reason::UNKNOWN_ACTIVITY: return "UNKNOWN_ACTIVITY";
+        case do_activity_reason::NEEDS_CLEARING: return "NEEDS_CLEARING";
+        case do_activity_reason::NEEDS_HARVESTING: return "NEEDS_HARVESTING";
+        case do_activity_reason::NEEDS_PLANTING: return "NEEDS_PLANTING";
+        case do_activity_reason::NEEDS_TILLING: return "NEEDS_TILLING";
+        case do_activity_reason::NEEDS_FERTILIZING: return "NEEDS_FERTILIZING";
+        case do_activity_reason::BLOCKING_TILE: return "BLOCKING_TILE";
+        case do_activity_reason::NEEDS_BOOK_TO_LEARN: return "NEEDS_BOOK_TO_LEARN";
+        case do_activity_reason::NEEDS_CHOPPING: return "NEEDS_CHOPPING";
+        case do_activity_reason::NEEDS_TREE_CHOPPING: return "NEEDS_TREE_CHOPPING";
+        case do_activity_reason::NEEDS_BIG_BUTCHERING: return "NEEDS_BIG_BUTCHERING";
+        case do_activity_reason::NEEDS_BUTCHERING: return "NEEDS_BUTCHERING";
+        case do_activity_reason::NEEDS_DISSECTING: return "NEEDS_DISSECTING";
+        case do_activity_reason::NEEDS_CUT_HARVESTING: return "NEEDS_CUT_HARVESTING";
+        case do_activity_reason::ALREADY_WORKING: return "ALREADY_WORKING";
+        case do_activity_reason::NEEDS_VEH_DECONST: return "NEEDS_VEH_DECONST";
+        case do_activity_reason::NEEDS_VEH_REPAIR: return "NEEDS_VEH_REPAIR";
+        case do_activity_reason::WOULD_PREVENT_VEH_FLYING: return "WOULD_PREVENT_VEH_FLYING";
+        case do_activity_reason::NEEDS_MINING: return "NEEDS_MINING";
+        case do_activity_reason::NEEDS_MOP: return "NEEDS_MOP";
+        case do_activity_reason::NEEDS_FISHING: return "NEEDS_FISHING";
+        case do_activity_reason::NEEDS_CRAFT: return "NEEDS_CRAFT";
+        case do_activity_reason::NEEDS_DISASSEMBLE: return "NEEDS_DISASSEMBLE";
+        case do_activity_reason::REFUSES_THIS_WORK: return "REFUSES_THIS_WORK";
+    }
+    cata_fatal( "Invalid do_activity_reason in enum_to_string" );
+}
+
 template<>
 std::string enum_to_string<zone_activity_stage>( zone_activity_stage stage )
 {
@@ -4099,6 +4149,25 @@ std::string enum_to_string<close_tile_result>( close_tile_result data )
             // *INDENT-OFF*
         case close_tile_result::CLOSE_DOOR: return "CLOSE_DOOR";
         case close_tile_result::CLOSE_VEHICLE: return "CLOSE_VEHICLE";
+            // *INDENT-ON*
+        default:
+            cata_fatal( "Invalid based_on_type in enum_to_string" );
+    }
+}
+template<>
+std::string enum_to_string<repair_stage>(
+    repair_stage data )
+{
+    switch( data ) {
+            // *INDENT-OFF*
+        case repair_stage::INIT: return "INIT";
+        case repair_stage::ONCE: return "ONCE";
+        case repair_stage::FULL: return "FULL";
+        case repair_stage::EVENT: return "EVENT";
+        case repair_stage::REFIT_ONCE: return "REFIT_ONCE";
+        case repair_stage::REFIT_FULL: return "REFIT_FULL";
+        case repair_stage::CANCEL: return "CANCEL";
+        case repair_stage::LAST: return "LAST";
             // *INDENT-ON*
         default:
             cata_fatal( "Invalid based_on_type in enum_to_string" );
@@ -4343,7 +4412,7 @@ void efile_activity_actor::completed_processing_current_efile( player_activity &
     };
 
     add_msg_if_player_sees( who, m_info, string_format( _( "%s %s %s." ),
-                            who.disp_name( false, true ), efile_action_name( action_type, true, false ),
+                            who.disp_name( true ), efile_action_name( action_type, true, false ),
                             current_efile->display_name() ) );
     switch( action_type ) {
         case EF_BROWSE:
@@ -4546,7 +4615,7 @@ void efile_activity_actor::canceled( player_activity &act, Character &who )
         add_msg( m_info, _( "You stop processing the remaining devices." ) );
     } else {
         add_msg_if_player_sees( who, _( "%s stops processing devices." ),
-                                who.disp_name( false, true ) );
+                                who.disp_name( true ) );
     }
     act.set_to_null();
 }
@@ -5815,11 +5884,11 @@ requirement_check_result multi_zone_activity_actor::check_requirements( Characte
             if( zone ) {
                 add_msg_if_player_sees( you, m_info,
                                         _( "%s is trying to find necessary items to do the %s job on zone %s, reason %s" ),
-                                        you.disp_name(), act_id.c_str(), zone->get_name(), do_activity_reason_string[int( reason )] );
+                                        you.disp_name(), act_id.c_str(), zone->get_name(), io::enum_to_string( reason ) );
             } else {
                 add_msg_if_player_sees( you, m_info,
                                         _( "%s is trying to find necessary items to do the %s job, reason %s" ),
-                                        you.disp_name(), act_id.c_str(), do_activity_reason_string[int( reason )] );
+                                        you.disp_name(), act_id.c_str(), io::enum_to_string( reason ) );
             }
         }
 
@@ -6379,25 +6448,97 @@ std::unique_ptr<activity_actor> close_tile_activity_actor::deserialize( JsonValu
     return actor.clone();
 }
 
+static item camp_meal_of( const basecamp &camp, const int kcal )
+{
+    nutrients portion;
+    portion.calories = static_cast<int64_t>( kcal ) * 1000;
+    return camp.make_fake_food( portion );
+}
+
+void camp_meal_activity_actor::start( player_activity &act, Character &who )
+{
+    const basecamp *bcp = overmap_buffer.find_camp( camp_position.xy() ).value_or( nullptr );
+    if( bcp == nullptr || meal_kcals <= 0 || !bcp->allowed_access_by( who ) ) {
+        act.set_to_null();
+        return;
+    }
+    act.moves_total = to_moves<int>( who.get_consume_time( camp_meal_of( *bcp, meal_kcals ) ) );
+    act.moves_left = act.moves_total;
+}
+
+void camp_meal_activity_actor::finish( player_activity &act, Character &who )
+{
+    act.set_to_null();
+    basecamp *bcp = overmap_buffer.find_camp( camp_position.xy() ).value_or( nullptr );
+    if( bcp == nullptr || meal_kcals <= 0 || !bcp->allowed_access_by( who ) ) {
+        return;
+    }
+    // As upstream, recheck the NPC's appetite at the completion of the meal.
+    if( who.is_npc() && !who.as_npc()->intake_fits( npc::need_goal_id::eat_food ) ) {
+        return;
+    }
+    // Keep the fork's stockpile guard: the larder may have been emptied
+    // while the NPC was eating. Do not divide by zero in camp_food_supply.
+    const faction_id owner_id = bcp->get_owner();
+    if( !owner_id.is_valid() ) {
+        return;
+    }
+    const faction *owner = &*owner_id;
+    const int portion = owner->consumes_food ?
+                        std::min( meal_kcals, owner->food_supply().kcal() ) : meal_kcals;
+    if( portion <= 0 ) {
+        if( who.is_npc() ) {
+            who.as_npc()->refuse_camp_meal();
+        }
+        return;
+    }
+    if( bcp->feed_workers( who, bcp->camp_food_supply( -portion ), camp_meal::personal ) <= 0 &&
+        who.is_npc() ) {
+        who.as_npc()->refuse_camp_meal();
+    }
+}
+
+void camp_meal_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "camp_position", camp_position );
+    jsout.member( "meal_kcals", meal_kcals );
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> camp_meal_activity_actor::deserialize( JsonValue &jsin )
+{
+    camp_meal_activity_actor actor;
+    JsonObject data = jsin.get_object();
+    // Restore both upstream and older Android save formats. The current
+    // field wins if a migrated save contains both; mark both as read.
+    data.read( "camp", actor.camp_position );
+    data.read( "kcal", actor.meal_kcals );
+    data.read( "camp_position", actor.camp_position );
+    data.read( "meal_kcals", actor.meal_kcals );
+    return actor.clone();
+}
+
 void consume_activity_actor::start( player_activity &act, Character &guy )
 {
     int moves = 0;
-    Character &player_character = get_player_character();
-    //TODO: why use both `player_character` and `guy`?
-    auto player_will_eat = [this, &moves, &player_character, &guy]( const item & it ) {
-        ret_val<edible_rating> ret = player_character.will_eat( it, true );
+    // NPCs must evaluate their own diet, not the avatar's.
+    auto consumer_will_eat = [this, &moves, &guy]( const item &it ) {
+        const ret_val<edible_rating> ret = guy.will_eat( it, guy.is_avatar() );
         if( !ret.success() ) {
             was_canceled = true;
-            uistate.consume_uistate.clear();
+            if( guy.is_avatar() ) {
+                uistate.consume_uistate.clear();
+            }
         } else {
             moves = to_moves<int>( guy.get_consume_time( it ) );
         }
     };
 
     if( consume_location ) {
-        player_will_eat( *consume_location );
+        consumer_will_eat( *consume_location );
     } else if( !consume_item.is_null() ) {
-        player_will_eat( consume_item );
+        consumer_will_eat( consume_item );
     } else {
         debugmsg( "Item/location to be consumed should not be null." );
         was_canceled = true;
@@ -6407,7 +6548,7 @@ void consume_activity_actor::start( player_activity &act, Character &guy )
     act.moves_left = moves;
 }
 
-void consume_activity_actor::finish( player_activity &act, Character & )
+void consume_activity_actor::finish( player_activity &act, Character &who )
 {
     // Prevent interruptions from this point onwards, so that e.g. pain from
     // injecting serum doesn't pop up messages about cancelling consuming (it's
@@ -6416,12 +6557,11 @@ void consume_activity_actor::finish( player_activity &act, Character & )
 
     item_location consume_loc = consume_location;
 
-    avatar &player_character = get_avatar();
     if( !was_canceled ) {
         if( consume_loc ) {
-            player_character.consume( consume_loc, /*force=*/true );
+            who.consume( consume_loc, /*force=*/true );
         } else if( !consume_item.is_null() ) {
-            player_character.consume( consume_item, /*force=*/true );
+            who.consume( consume_item, /*force=*/true );
         } else {
             debugmsg( "Item location/name to be consumed should not be null." );
         }
@@ -6436,11 +6576,11 @@ void consume_activity_actor::finish( player_activity &act, Character & )
         act.set_to_null();
     }
 
-    if( act.id() == ACT_FIRSTAID && consume_loc ) {
+    if( who.is_avatar() && act.id() == ACT_FIRSTAID && consume_loc ) {
         uistate.consume_uistate.consume_menu_selected_items = { consume_loc };
     }
 
-    if( !avatar_action::eat_here( player_character ) && reprompt_consume_menu ) {
+    if( who.is_avatar() && reprompt_consume_menu && !avatar_action::eat_here( get_avatar() ) ) {
         uistate.open_menu = []() {
             avatar_action::eat_or_use( get_avatar(),
                                        game_menus::inv::consume( uistate.consume_uistate.consume_menu_comestype ) );
@@ -7729,9 +7869,10 @@ std::unique_ptr<activity_actor> drop_activity_actor::deserialize( JsonValue &jsi
 void harvest_activity_actor::start( player_activity &act, Character &who )
 {
     map &here = get_map();
+    const tripoint_bub_ms pos = here.get_bub( target );
 
-    if( here.has_furn( target ) ) {
-        const furn_id &furn = here.furn( target );
+    if( here.has_furn( pos ) ) {
+        const furn_id &furn = here.furn( pos );
 
         if( furn->has_examine( iexamine::harvest_furn ) ) {
             // TODO: Should be generified as a harvest field
@@ -7750,7 +7891,7 @@ void harvest_activity_actor::start( player_activity &act, Character &who )
         }
     }
 
-    const harvest_id harvest = here.get_harvest( target );
+    const harvest_id harvest = here.get_harvest( pos );
     if( harvest.is_null() || harvest->empty() ) {
         if( !auto_forage ) {
             who.add_msg_if_player( m_info,
@@ -7758,7 +7899,7 @@ void harvest_activity_actor::start( player_activity &act, Character &who )
         }
 
         if( who.manual_examine ) {
-            iexamine::none( who, target );
+            iexamine::none( who, pos );
         }
 
         act.set_to_null();
@@ -7776,6 +7917,7 @@ void harvest_activity_actor::finish( player_activity &act, Character &who )
     act.set_to_null();
 
     map &here = get_map();
+    const tripoint_bub_ms pos = here.get_bub( target );
 
     // If nothing can be harvested, neither can nectar
     // Incredibly low priority TODO: Allow separating nectar seasons
@@ -7785,7 +7927,7 @@ void harvest_activity_actor::finish( player_activity &act, Character &who )
 
     const float survival_skill = who.get_skill_level( skill_survival );
     bool got_anything = false;
-    for( const harvest_entry &entry : here.get_harvest( target ).obj() ) {
+    for( const harvest_entry &entry : here.get_harvest( pos ).obj() ) {
         const float min_num = entry.scale_num.first * survival_skill + entry.base_num.first;
         const float max_num = entry.scale_num.second * survival_skill + entry.base_num.second;
         const int roll = std::min<int>( entry.max, std::round( rng_float( min_num, max_num ) ) );
@@ -7801,9 +7943,9 @@ void harvest_activity_actor::finish( player_activity &act, Character &who )
     }
 
     if( exam_furn ) {
-        here.furn_set( target, furn_str_id::NULL_ID() );
+        here.furn_set( pos, furn_str_id::NULL_ID() );
     } else {
-        here.ter_set( target, here.get_ter_transforms_into( target ) );
+        here.ter_set( pos, here.get_ter_transforms_into( pos ) );
     }
 
     iexamine::practice_survival_while_foraging( who );
@@ -7812,7 +7954,7 @@ void harvest_activity_actor::finish( player_activity &act, Character &who )
 void harvest_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
-    jsout.member( "target", target );
+    jsout.member( "target_abs", target );
     jsout.member( "exam_furn", exam_furn );
     jsout.member( "nectar", nectar );
     jsout.member( "auto_forage", auto_forage );
@@ -7821,10 +7963,18 @@ void harvest_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> harvest_activity_actor::deserialize( JsonValue &jsin )
 {
-    harvest_activity_actor actor{ tripoint_bub_ms::invalid };
+    harvest_activity_actor actor{ tripoint_abs_ms::invalid };
 
     JsonObject jsobj = jsin.get_object();
-    jsobj.read( "target", actor.target );
+    if( jsobj.has_member( "target_abs" ) ) {
+        jsobj.read( "target_abs", actor.target );
+    } else {
+        // save without target_abs holds a bubble position, read on the map loaded at its origin
+        tripoint_bub_ms legacy_target = tripoint_bub_ms::invalid;
+        if( jsobj.read( "target", legacy_target ) ) {
+            actor.target = get_map().get_abs( legacy_target );
+        }
+    }
     jsobj.read( "exam_furn", actor.exam_furn );
     jsobj.read( "nectar", actor.nectar );
     jsobj.read( "auto_forage", actor.auto_forage );
@@ -9104,8 +9254,7 @@ void shearing_activity_actor::start( player_activity &act, Character &who )
         return;
     }
 
-    std::string pet_name_capitalized = mon->unique_name.empty() ? mon->disp_name( false,
-                                       true ) : mon->unique_name;
+    std::string pet_name_capitalized = mon->unique_name.empty() ? mon->disp_name( true ) : mon->unique_name;
 
     if( !mon->shearable() ) {
         add_msg( _( "%1$s has nothing %2$s could shear." ), pet_name_capitalized, who.disp_name() );
@@ -9119,7 +9268,7 @@ void shearing_activity_actor::start( player_activity &act, Character &who )
     const int shearing_quality = who.max_quality( qual_SHEAR );
     if( !( shearing_quality > 0 ) ) {
         if( who.is_avatar() ) {
-            add_msg( m_info, _( "%1$s don't have a shearing tool." ), who.disp_name( false, true ) );
+            add_msg( m_info, _( "%1$s don't have a shearing tool." ), who.disp_name( true ) );
         } else { // who.is_npc
             // npcs can't shear monsters yet, this is for when they are able to
             add_msg_if_player_sees( who, _( "%1$s doesn't have a shearing tool." ), who.disp_name(),
@@ -9138,7 +9287,7 @@ void shearing_activity_actor::start( player_activity &act, Character &who )
 
     if( who.is_avatar() ) {
         add_msg( m_info,
-                 _( "%1$s start shearing %2$s." ), who.disp_name( false, true ), mon->disp_name() );
+                 _( "%1$s start shearing %2$s." ), who.disp_name( true ), mon->disp_name() );
     } else { // who.is_npc
         // npcs can't shear monsters yet, this is for when they are able to
         add_msg_if_player_sees( who, _( "%1$s starts shearing %2$s." ), who.disp_name(),
@@ -9156,7 +9305,7 @@ void shearing_activity_actor::do_turn( player_activity &, Character &who )
             add_msg(
                 m_bad,
                 _( "%1$s don't have a shearing tool anymore." ),
-                who.disp_name( false, true ) );
+                who.disp_name( true ) );
         } else {
             add_msg_if_player_sees(
                 who,
@@ -9191,7 +9340,7 @@ void shearing_activity_actor::finish( player_activity &act, Character &who )
     add_msg_if_player_sees( who,
                             string_format(
                                 _( "%1$s finished shearing %2$s and got:" ),
-                                who.disp_name( false, true ),
+                                who.disp_name( true ),
                                 mon->unique_name.empty() ? mon->disp_name() : mon->unique_name ) );
 
     const std::vector<shearing_roll> shear_roll = shear_data.roll_all( *mon );
@@ -10555,11 +10704,11 @@ void invoke_item_activity_actor::do_turn( player_activity &, Character &who )
     std::string _method = method;
     if( method.empty() ) {
         who.cancel_activity();
-        who.invoke_item( _item.get_item() );
+        who.invoke_item( _item );
         return;
     }
     who.cancel_activity();
-    who.invoke_item( _item.get_item(), _method );
+    who.invoke_item( _item, _method );
 }
 
 void invoke_item_activity_actor::serialize( JsonOut &jsout ) const
@@ -11455,6 +11604,69 @@ std::unique_ptr<activity_actor> mend_item_activity_actor::deserialize( JsonValue
     return actor.clone();
 }
 
+item *repair_item_activity_actor::get_repair_tool( player_activity &act )
+{
+    item *main_tool = nullptr;
+
+    if( vp_tool.has_value() ) {
+        main_tool = w_hack.init( vp_tool->first, vp_tool->second ) ?
+                    w_hack.get_item() : tool_to_repair_with.get_item();
+    } else {
+        main_tool = tool_to_repair_with.get_item();
+    }
+
+
+    if( main_tool == nullptr ) {
+        debugmsg( "Invalid tool for repair_item_activity_actor" );
+        act.set_to_null();
+        return nullptr;
+    }
+    item *used_tool = main_tool->get_usable_item( repair_iuse_actor_name );
+    if( used_tool == nullptr ) {
+        debugmsg( "Lost tool used for repair_item_activity_actor" );
+        act.set_to_null();
+        return nullptr;
+    }
+    return used_tool;
+}
+
+void repair_item_activity_actor::start( player_activity &act, Character & )
+{
+    // processing happens in finish()
+    act.moves_total = 0;
+    act.moves_left = act.moves_total;
+}
+
+void repair_item_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+
+    jsout.member( "repaired_item", repaired_item );
+    jsout.member( "stage", stage );
+    jsout.member( "tool_to_repair_with", tool_to_repair_with );
+    jsout.member( "no_menu", no_menu );
+    jsout.member( "repair_iuse_actor_name", repair_iuse_actor_name );
+    jsout.member( "vp_tool", vp_tool );
+
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> repair_item_activity_actor::deserialize( JsonValue &jsin )
+{
+    repair_item_activity_actor actor;
+
+    JsonObject data = jsin.get_object();
+
+    data.read( "repaired_item", actor.repaired_item );
+    data.read( "stage", actor.stage );
+    data.read( "tool_to_repair_with", actor.tool_to_repair_with );
+    data.read( "no_menu", actor.no_menu );
+    data.read( "repair_iuse_actor_name", actor.repair_iuse_actor_name );
+    data.read( "vp_tool", actor.vp_tool );
+
+    return actor.clone();
+}
+
 void fix_wound_activity_actor::start( player_activity &act, Character & )
 {
     act.moves_total = to_moves<int>( initial_moves );
@@ -11480,34 +11692,54 @@ void fix_wound_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
     const wound_fix &fix = *mending_method;
+    // Wounds may have healed naturally while the activity was in progress.
+    // Remember individual damage before mutating the vector; do not charge
+    // for wounds that no longer exist or duplicate a single wound's damage.
+    std::vector<int> treated_damage;
+    for( const wound &wd : bp->get_wounds() ) {
+        if( static_cast<int>( treated_damage.size() ) >= amount ) {
+            break;
+        }
+        if( wd.type == mended_wound ) {
+            treated_damage.push_back( wd.get_hp_damage() );
+        }
+    }
+    const int treated = static_cast<int>( treated_damage.size() );
+    if( treated == 0 ) {
+        return;
+    }
     const requirement_data &reqs = fix.get_requirements();
     const temp_crafting_inventory &inv = who.crafting_inventory();
-    if( !reqs.can_make_with_inventory( &who, inv, is_crafting_component ) ) {
+    if( !reqs.can_make_with_inventory( &who, inv, is_crafting_component, treated ) ) {
         add_msg( m_info, _( "You are currently unable to heal the %s." ), healed_bp->name.translated() );
         return;
     }
     for( const auto &e : reqs.get_components() ) {
-        who.consume_items( e );
+        who.consume_items( e, treated );
     }
     for( const auto &e : reqs.get_tools() ) {
-        who.consume_tools( e );
+        who.consume_tools( e, treated );
     }
     who.invalidate_crafting_inventory();
 
-    for( const wound_type_id &id : fix.wounds_removed ) {
-        bp->remove_wound( id );
+    for( const int damage : treated_damage ) {
+        for( const wound_type_id &id : fix.wounds_added ) {
+            bp->add_wound( id, who, damage );
+        }
     }
 
-    for( const wound_type_id &id : fix.wounds_added ) {
-        bp->add_wound( id );
+    for( int i = 0; i < treated; ++i ) {
+        for( const wound_type_id &id : fix.wounds_removed ) {
+            bp->remove_wound( id );
+        }
     }
 
     if( fix.mod_hp ) {
-        bp->mod_hp_cur( fix.mod_hp );
+        bp->mod_hp_cur( fix.mod_hp * treated );
     }
 
-    for( const auto& [skill_id, level] : fix.skills ) {
-        who.practice( skill_id, 10, static_cast<int>( level * 1.25 ) );
+    for( const wound_skill &sk : fix.skills ) {
+        who.practice( sk.skill, 10 * treated, static_cast<int>( sk.level * 1.25 ) );
     }
 
     for( const wound_proficiency &wound_prof : fix.proficiencies ) {
@@ -11524,6 +11756,7 @@ void fix_wound_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "healed_bp", healed_bp );
     jsout.member( "mended_wound", mended_wound );
     jsout.member( "mending_method", mending_method );
+    jsout.member( "amount", amount );
 
     jsout.end_object();
 }
@@ -11537,6 +11770,9 @@ std::unique_ptr<activity_actor> fix_wound_activity_actor::deserialize( JsonValue
     data.read( "healed_bp", actor.healed_bp );
     data.read( "mended_wound", actor.mended_wound );
     data.read( "mending_method", actor.mending_method );
+    data.read( "amount", actor.amount );
+    // Old saves omit amount; the default is a single treatment.
+    actor.amount = std::max( 1, actor.amount );
 
     return actor.clone();
 }
@@ -11671,8 +11907,6 @@ std::unique_ptr<activity_actor> toolmod_add_activity_actor::deserialize( JsonVal
 
 void longsalvage_activity_actor::start( player_activity &act, Character & )
 {
-    act.index = index;
-
     //todo: refactor the actor to process items in ::do_turn, then remove setting the moves to 0
     //this currently still can't get interrupted before you get attacked
     act.moves_left = 0;
@@ -11680,12 +11914,16 @@ void longsalvage_activity_actor::start( player_activity &act, Character & )
 
 void longsalvage_activity_actor::finish( player_activity &act, Character &who )
 {
+    if( !salvage_tool.valid() ) {
+        debugmsg( "Lost tool used for long salvage" );
+        act.set_to_null();
+        return;
+    }
     static const std::string salvage_string = "salvage";
-    item &main_tool = who.i_at( act.index );
     map &here = get_map();
     map_stack items = here.i_at( who.pos_bub() );
-    item *salvage_tool = main_tool.get_usable_item( salvage_string );
-    if( salvage_tool == nullptr ) {
+    item *found_usable_item = salvage_tool->get_usable_item( salvage_string );
+    if( found_usable_item == nullptr ) {
         debugmsg( "Lost tool used for long salvage" );
         act.set_to_null();
         return;
@@ -11717,18 +11955,24 @@ void longsalvage_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
-    jsout.member( "index", index );
+    jsout.member( "salvage_tool", salvage_tool );
 
     jsout.end_object();
 }
 
 std::unique_ptr<activity_actor> longsalvage_activity_actor::deserialize( JsonValue &jsin )
 {
-    longsalvage_activity_actor actor( {} );
+    longsalvage_activity_actor actor;
 
     JsonObject data = jsin.get_object();
 
-    data.read( "index", actor.index );
+    // REMOVE "index" AFTER 0.K
+    if( data.has_member( "index" ) ) {
+        int index = 0;
+        // don't attempt to find an item, let activity from legacy save fail safely
+        data.read( "index", index );
+    }
+    data.read( "salvage_tool", actor.salvage_tool );
 
     return actor.clone();
 }
@@ -14182,6 +14426,12 @@ std::unique_ptr<activity_actor> multi_butchery_activity_actor::deserialize( Json
     return actor.clone();
 }
 
+std::unique_ptr<activity_actor> multi_dissection_activity_actor::deserialize( JsonValue & )
+{
+    multi_dissection_activity_actor actor;
+    return actor.clone();
+}
+
 void find_mount_activity_actor::do_turn( player_activity &act, Character &who )
 {
     //npc only activity
@@ -14437,7 +14687,7 @@ void zone_activity_actor::do_turn( player_activity &act, Character &you )
         return;
     }
     // If we got here without restarting the activity, it means we're done
-    add_msg( m_info, _( "%s sorted out every item possible." ), you.disp_name( false, true ) );
+    add_msg( m_info, _( "%s sorted out every item possible." ), you.disp_name( true ) );
     if( you.is_npc() ) {
         npc *guy = dynamic_cast<npc *>( &you );
         guy->revert_after_activity();
@@ -15761,6 +16011,7 @@ deserialize_functions = {
     { ACT_BUILD, &build_construction_activity_actor::deserialize },
     { ACT_BUTCHER, &butchery_activity_actor::deserialize },
     { ACT_BUTCHER_FULL, &butchery_activity_actor::deserialize },
+    { ACT_CAMP_MEAL, &camp_meal_activity_actor::deserialize },
     { ACT_CHOP_LOGS, &chop_logs_activity_actor::deserialize },
     { ACT_CHOP_PLANKS, &chop_planks_activity_actor::deserialize },
     { ACT_CHOP_TREE, &chop_tree_activity_actor::deserialize },
@@ -15816,6 +16067,7 @@ deserialize_functions = {
     { ACT_MULTIPLE_CONSTRUCTION, &multi_build_construction_activity_actor::deserialize },
     { ACT_MULTIPLE_CRAFT, &multi_craft_activity_actor::deserialize },
     { ACT_MULTIPLE_DIS, &multi_disassemble_activity_actor::deserialize },
+    { ACT_MULTIPLE_DISSECT, &multi_dissection_activity_actor::deserialize },
     { ACT_MULTIPLE_FARM, &multi_farm_activity_actor::deserialize },
     { ACT_MULTIPLE_FISH, &multi_fish_activity_actor::deserialize },
     { ACT_MULTIPLE_MINE, &multi_mine_activity_actor::deserialize },
@@ -15837,6 +16089,7 @@ deserialize_functions = {
     { ACT_READ, &read_activity_actor::deserialize },
     { ACT_REEL_CABLE, &reel_cable_activity_actor::deserialize },
     { ACT_RELOAD, &reload_activity_actor::deserialize },
+    { ACT_REPAIR_ITEM, &repair_item_activity_actor::deserialize },
     { ACT_ROBOT_CONTROL, &robot_control_activity_actor::deserialize },
     { ACT_SHAVE, &shave_activity_actor::deserialize },
     { ACT_SHEARING, &shearing_activity_actor::deserialize },

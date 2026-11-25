@@ -336,6 +336,29 @@ point_of_interest avatar::get_active_point_of_interest() const
     return active_point_of_interest;
 }
 
+// Changing areas resets the counter used by followers to distinguish
+// settled behavior from travel.  Use the upstream six-tile threshold.
+static constexpr int relocation_radius = 6;
+
+void avatar::on_move( const tripoint_abs_ms &old_pos )
+{
+    Character::on_move( old_pos );
+    const tripoint_abs_ms now_pos = pos_abs();
+    if( !relocation_anchor || now_pos.z() != relocation_anchor->z() ||
+        rl_dist( now_pos, *relocation_anchor ) > relocation_radius ) {
+        relocation_anchor = now_pos;
+        relocated_at = calendar::turn;
+    }
+}
+
+time_duration avatar::time_since_relocated() const
+{
+    if( !relocation_anchor ) {
+        return 0_turns;
+    }
+    return std::max( calendar::turn - relocated_at, 0_turns );
+}
+
 void avatar::reset_all_missions()
 {
     active_mission = nullptr;
@@ -520,7 +543,7 @@ bool avatar::read( item_location &book, item_location ereader )
             return false;
         }
 
-        book->get_use( "learn_spell" )->call( this, *book, pos_bub() );
+        book->get_use( "learn_spell" )->call( this, book, pos_bub() );
         return true;
     }
     bool continuous = false;
@@ -1014,13 +1037,9 @@ int avatar::print_info( const catacurses::window &w, int vStart, int, int column
                                     get_name() ) - 1;
 }
 
-std::string avatar::display_name( bool possessive, bool capitalize_first ) const
+std::string avatar::display_name( bool capitalize_first ) const
 {
-    if( !possessive ) {
-        return capitalize_first ? _( "You" ) : _( "you" );
-    } else {
-        return capitalize_first ? _( "Your" ) : _( "your" );
-    }
+    return capitalize_first ? _( "You" ) : _( "you" );
 }
 
 mfaction_id avatar::get_monster_faction() const
@@ -1464,7 +1483,7 @@ item::reload_option avatar::select_ammo( const item_location &base, bool prompt,
     return game_menus::inv::select_ammo( *this, base, prompt, empty );
 }
 
-bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt, int pre_obtain_moves )
+bool avatar::invoke_item( item_location &used, const tripoint_bub_ms &pt, int pre_obtain_moves )
 {
     const std::map<std::string, use_function> &use_methods = used->type->use_methods;
     const int num_methods = use_methods.size();
@@ -1484,7 +1503,7 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt, int pre_obtain_
     umenu.hilight_disabled = true;
 
     for( const auto &e : use_methods ) {
-        const auto res = e.second.can_call( *this, *used, pt );
+        const auto res = e.second.can_call( *this, used, pt );
         umenu.addentry_desc( MENU_AUTOASSIGN, res.success(), MENU_AUTOASSIGN, e.second.get_name(),
                              res.str() );
     }
@@ -1514,12 +1533,12 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt, int pre_obtain_
     return invoke_item( used, method, pt, pre_obtain_moves );
 }
 
-bool avatar::invoke_item( item *used )
+bool avatar::invoke_item( item_location &used )
 {
     return Character::invoke_item( used );
 }
 
-bool avatar::invoke_item( item *used, const std::string &method, const tripoint_bub_ms &pt,
+bool avatar::invoke_item( item_location &used, const std::string &method, const tripoint_bub_ms &pt,
                           int pre_obtain_moves )
 {
     if( pre_obtain_moves == -1 ) {
@@ -1528,7 +1547,7 @@ bool avatar::invoke_item( item *used, const std::string &method, const tripoint_
     return Character::invoke_item( used, method, pt, pre_obtain_moves );
 }
 
-bool avatar::invoke_item( item *used, const std::string &method )
+bool avatar::invoke_item( item_location &used, const std::string &method )
 {
     return Character::invoke_item( used, method );
 }

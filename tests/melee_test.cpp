@@ -457,24 +457,24 @@ TEST_CASE( "Damage_type_effectiveness_vs_monster_resistance", "[melee][damage][e
     clear_map_without_vision();
 
     SECTION( "Attacking a monster with no resistance to test_fire" ) {
-        check_damage_from_test_fire( "mon_test_zombie", 0, false, 16.f );
+        check_damage_from_test_fire( "mon_test_zombie_no_fire_resist", 0, false, 15.67f );
     }
 
     SECTION( "Attacking a monster with some resistance to test_fire" ) {
-        check_damage_from_test_fire( "mon_test_fire_resist", 5, false, 11.f );
+        check_damage_from_test_fire( "mon_test_fire_resist", 5, false, 10.70f );
     }
 
     SECTION( "Attacking a monster that is very resistant to test_fire" ) {
-        check_damage_from_test_fire( "mon_test_fire_vresist", 50, false, 8.f );
+        check_damage_from_test_fire( "mon_test_fire_vresist", 50, false, 7.75f );
     }
 
     SECTION( "Attacking a monster that is immune to test_fire" ) {
-        check_damage_from_test_fire( "mon_test_fire_immune", 0, true, 8.f );
+        check_damage_from_test_fire( "mon_test_fire_immune", 0, true, 7.75f );
     }
 
     SECTION( "Attacking an NPC with no resistance to test_fire" ) {
         check_damage_from_test_fire( { itype_test_zentai },
-                                     body_part_torso, 0, false, 14.84f );
+                                     body_part_torso, 0, false, 13.72f );
     }
 
     SECTION( "Attacking an NPC that is resistant to test_fire" ) {
@@ -484,7 +484,7 @@ TEST_CASE( "Damage_type_effectiveness_vs_monster_resistance", "[melee][damage][e
 
     SECTION( "Attacking an NPC that is immune to test_fire" ) {
         check_damage_from_test_fire( { itype_test_zentai_immune_test_fire },
-                                     body_part_torso, 0, true, 6.87f );
+                                     body_part_torso, 0, true, 6.35f );
     }
 }
 
@@ -493,7 +493,19 @@ TEST_CASE( "Damage_type_EOCs", "[damage][eoc]" )
     clear_map_without_vision();
 
     SECTION( "Attacking a monster" ) {
+        // test zombie is IMMOBILE so partial dodge doesn't render test flakey
         check_eocs_from_test_fire( "mon_test_zombie_only_fire" );
     }
 
+}
+
+TEST_CASE( "partial_dodge_can_still_be_a_glancing_melee_hit", "[melee][dodge]" )
+{
+    // The partial-dodge mechanic allows negative hit spreads to inflict
+    // reduced damage.  Special monster attacks must not treat all of
+    // these glancing hits as complete misses.
+    CHECK_FALSE( Creature::melee_attack_hit( -25 ) );
+    CHECK( Creature::melee_attack_hit( -24 ) );
+    CHECK( Creature::melee_attack_hit( -1 ) );
+    CHECK( Creature::melee_attack_hit( 0 ) );
 }

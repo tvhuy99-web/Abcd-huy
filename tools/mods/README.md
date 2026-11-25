@@ -43,7 +43,7 @@ require native-game loading and voice/accessibility acceptance testing.
   `nocts_cata_mod_DDA` folder at commit
   `46982a63da25b064c8d0fdee9b68c23dccc1f671`. The separate
   Bright Nights version in the uploaded ZIP is deliberately excluded.
-- **Arcana**: not translated yet.
+- **Arcana**: 6,794 Vietnamese strings across 185 JSON files, checked against pinned upstream file identities. The overlay changes only user-facing text; gameplay compatibility still needs testing.
 
 To check and apply the three overlays to installed pinned mods:
 
@@ -56,3 +56,23 @@ The dry run rejects missing JSON pointer targets, altered technical fields,
 corrupt overlay checksums, changed source revisions and broken format/colour
 tags. Do not translate JSON property names or IDs. Changes in gameplay data
 or additional upstream mod revisions require a new compatibility review.
+
+## Compatibility migration for the upstream integration branch
+
+After the pinned Vietnamese overlays are verified and applied, candidate builds
+run a separate item-schema migration against the four packaged mod folders:
+
+```sh
+python3 tools/mods/migrate_item_schema.py --target data/mods
+python3 tools/mods/migrate_item_schema.py --target data/mods --check
+```
+
+The migration preserves item IDs, localized text and numeric fields. It converts
+legacy item types and singular subtype declarations, retains old nested armor
+properties, and moves the removed alcohol use actions to the corresponding
+upstream consumption flags. It does not rewrite saves or change enabled mods.
+The checker is idempotent and rejects conflicting fields rather than discarding
+them. This is a targeted schema migration, not proof that every mod mechanic
+is compatible. Native loader checks and on-device acceptance are still required.
+
+The migration also normalizes punctuation and singular/plural structure only on exact Vietnamese overlay text. The original translation manifests remain immutable. Native loader validation still reports JSON field, reference, and text lint problems; no failures are suppressed.

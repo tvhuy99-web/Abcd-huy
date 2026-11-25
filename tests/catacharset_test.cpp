@@ -6,6 +6,10 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#ifdef _WIN32
+#include <io.h>
+#endif
+#include <char8_t-remediation/char8_t-remediation.h>
 
 #include "cata_catch.h"
 #include "catacharset.h"
@@ -42,7 +46,7 @@ TEST_CASE( "base64", "[catacharset][nogame]" )
 
 TEST_CASE( "utf8_to_utf32_roundtrip", "[catacharset][nogame]" )
 {
-    const std::string original = u8"Hello, 世界! à y\u0300 à̸̠你⃫";
+    const std::string original = U8( "Hello, 世界! à y\u0300 à̸̠你⃫" );
     const std::u32string converted = utf8_to_utf32( original );
     const std::string roundtrip = utf32_to_utf8( converted );
     CHECK( roundtrip == original );
@@ -211,4 +215,3 @@ TEST_CASE( "utf8_view", "[catacharset][nogame]" )
     }
     CHECK( actual_code_points == expected_code_points );
 }
-

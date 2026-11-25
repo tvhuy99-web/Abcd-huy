@@ -56,6 +56,7 @@
 #include "ordered_static_globals.h"
 #include "output.h"
 #include "path_info.h"
+#include "perf.h"
 #include "rng.h"
 #include "system_locale.h"
 #include "translations.h"
@@ -561,8 +562,8 @@ bool assure_essential_dirs_exist()
         savedir(),
         templatedir(),
         user_font(),
-        user_sound().get_unrelative_path().u8string(),
-        user_gfx().get_unrelative_path().u8string()
+        user_sound().generic_u8string(),
+        user_gfx().generic_u8string()
     };
     for( const std::string &path : essential_paths ) {
         if( !assure_dir_exist( path ) ) {
@@ -695,12 +696,15 @@ void validate_directories()
     }
 }
 
-void initialize_debugging()
+void initialize_debugging( bool headless_validation )
 {
 #if defined(EMSCRIPTEN)
+    ( void )headless_validation;
     setupDebug( DebugOutput::std_err );
 #else
-    setupDebug( DebugOutput::file );
+    // In validation mode the runner must see the actual debug messages,
+    // including consistency failures that only set error_observed.
+    setupDebug( headless_validation ? DebugOutput::std_err : DebugOutput::file );
 #endif
     // NOLINTNEXTLINE(cata-tests-must-restore-global-state)
     json_error_output_colors = json_error_output_colors_t::color_tags;
@@ -774,10 +778,17 @@ bool initialize_interface( const cli_opts &cli )
             DebugLog( D_ERROR, DC_ALL ) << "Error while initializing the interface: " << err.what() << "\n";
             return false;
         }
-    } else if( cli.check_mods ) {
+    }
+#if defined(TILES)
+    else if( cli.check_mods ) {
+        // Tiled builds normally initialize options with the UI. The
+        // non-tiled path already did so above, even in test mode.
         get_options().init();
         get_options().load();
     }
+#else
+    ( void )cli;
+#endif
 
     return true;
 }
@@ -794,7 +805,15 @@ void load_static_game_data( const cli_opts &cli )
         if( cli.check_mods ) {
             init_colors();
             const std::vector<mod_id> mods( cli.opts.begin(), cli.opts.end() );
-            exit( g->check_mod_data( mods ) && !debug_has_error_been_observed() ? 0 : 1 );
+            const bool loaded = g->check_mod_data( mods );
+            const bool debug_errors = debug_has_error_been_observed();
+            std::cerr << "Native validation: load_ok=" << loaded
+                      << " debug_errors=" << debug_errors << std::endl;
+            // exit() does not run main's scope guard. Deferred, unprocessed
+            // JSON left after an exception must not report during static
+            // destruction (when the debug logger may already be destroyed).
+            Json::globally_report_unvisited_members( false );
+            exit( loaded && !debug_errors ? 0 : 1 );
         }
     } catch( const std::exception &err ) {
         debugmsg( "%s", err.what() );
@@ -881,6 +900,7 @@ void run_game_loop( cli_opts &cli )
         shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
         get_event_bus().send<event_type::game_begin>( getVersionString() );
         while( !g->do_turn() ) {}
+        cata_timer::print_stats();
     }
 }
 
@@ -918,7 +938,7 @@ int main( int argc, const char *argv[] )
     cli_opts cli = parse_commandline( argc, const_cast<const char **>( argv ) );
 
     validate_directories();
-    initialize_debugging();
+    initialize_debugging( cli.check_mods );
     initialize_locale();
     log_sdl_versions();
 
@@ -928,7 +948,11 @@ int main( int argc, const char *argv[] )
 
     set_language_from_options();
     rng_set_engine_seed( cli.seed );
-    game_ui::init_ui();
+    // --check-mods sets test_mode and deliberately skips curses initialization.
+    // Do not query or resize a nonexistent terminal before loading JSON.
+    if( !test_mode ) {
+        game_ui::init_ui();
+    }
 
     g = std::make_unique<game>();
     load_static_game_data( cli );

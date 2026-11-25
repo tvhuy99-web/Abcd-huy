@@ -4,13 +4,18 @@ on:
   pull_request:
     paths:
       - 'tools/mods/**'
+      - 'tools/accessibility/test_curated_mod_vi_overlays.py'
+      - 'tools/accessibility/test_community_item_schema.py'
       - '.github/workflows/curated-vietnamese-mods.yml'
   push:
     branches:
       - master
       - feature/curated-five-mods-20261119
+      - test/upstream-full-merge-2026-11-19
     paths:
       - 'tools/mods/**'
+      - 'tools/accessibility/test_curated_mod_vi_overlays.py'
+      - 'tools/accessibility/test_community_item_schema.py'
       - '.github/workflows/curated-vietnamese-mods.yml'
   workflow_dispatch:
 
@@ -36,6 +41,11 @@ jobs:
         run: python3 tools/mods/apply_vi_overlays.py --target data/mods --dry-run
       - name: Apply four Vietnamese overlays
         run: python3 tools/mods/apply_vi_overlays.py --target data/mods
+      - name: Migrate and verify current item schema
+        run: |
+          python3 -m unittest discover -s tools/accessibility -p 'test_community_item_schema.py' -v
+          python3 tools/mods/migrate_item_schema.py --target data/mods
+          python3 tools/mods/migrate_item_schema.py --target data/mods --check
       - name: Parse all localized mod JSON and check mod identifiers
         run: |
           python3 - <<'PY'

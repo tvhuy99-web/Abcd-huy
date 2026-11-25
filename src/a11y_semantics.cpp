@@ -424,7 +424,8 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
     return result + ']';
 }
 
-std::string snapshot_json( const semantic_snapshot &snapshot )
+std::string snapshot_json_with_content( const semantic_snapshot &snapshot,
+                                        const std::string &content_json )
 {
     // Publish the game log alongside every screen. A session can resume
     // directly inside inventory, before the world has published its
@@ -439,6 +440,11 @@ std::string snapshot_json( const semantic_snapshot &snapshot )
            ",\"generation\":" + quote( std::to_string( snapshot.token.generation ) ) +
            ",\"revision\":" + quote( std::to_string( snapshot.revision ) ) +
            ",\"recentMessages\":" + quote_spoken( recent ) + ',' +
-           snapshot_content_json( snapshot ) + '}';
+           content_json + '}';
+}
+
+std::string snapshot_json( const semantic_snapshot &snapshot )
+{
+    return snapshot_json_with_content( snapshot, snapshot_content_json( snapshot ) );
 }
 } // namespace a11y

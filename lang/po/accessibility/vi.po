@@ -111,6 +111,11 @@ msgstr "%s chảy máu nặng hơn."
 msgid "Bleeding stopped at %s."
 msgstr "%s hết chảy máu."
 
+msgid ""
+"Bleeding wound.  Fix from the wounds menu.\n"
+msgstr ""
+"Vết thương đang chảy máu. Hãy xử lý trong mục Vết thương.\n"
+
 #, c-format
 msgid "%s is broken."
 msgstr "%s bị gãy."
@@ -267,9 +272,7 @@ msgstr "Hiện ô đang thấy, ô đã nhớ và ô có dấu âm thanh."
 msgid ""
 "Show visible fields, traps, creatures, special perceptions, items, vehicles,"
 " obstacles, known doors and stairs, remembered furniture, and heard markers."
-msgstr ""
-"Hiện ô có trường, bẫy, sinh vật, cảm nhận đặc biệt, vật phẩm, xe, vật cản, "
-"cửa, cầu thang, đồ đạc đã nhớ hoặc dấu âm thanh."
+msgstr "Hiển thị hiệu ứng môi trường, bẫy, sinh vật, dấu hiệu cảm nhận đặc biệt, vật phẩm, phương tiện, vật cản, cửa và cầu thang đã biết, đồ đạc đã ghi nhớ và dấu âm thanh."
 
 msgid "Special perception: %s"
 msgstr "Cảm nhận đặc biệt: %s"
@@ -715,7 +718,7 @@ msgid "Starting proficiencies"
 msgstr "Năng lực thành thạo ban đầu"
 
 msgid "Starting bionics"
-msgstr "Bionic ban đầu"
+msgstr "Thiết bị cấy ghép ban đầu"
 
 msgid "Starting spells"
 msgstr "Phép ban đầu"
@@ -831,7 +834,7 @@ msgid ""
 "next value to change it, or activate to open its editor. The game's normal "
 "options flow handles saving when applicable."
 msgstr ""
-"Chọn tùy chọn để nghe giá trị và mô tả. Dùng Giá trị trước/sau để đổi hoặc "
+"Chọn tùy chọn để nghe giá trị và mô tả. Dùng Giá trị trước hoặc sau để đổi hoặc "
 "kích hoạt để chỉnh sửa. Game sẽ lưu khi cần."
 
 msgid "Activate to return to world mod selection."
@@ -965,7 +968,7 @@ msgid ""
 "Your offer: %1$s item units, estimated value %2$s. NPC offer: %3$s item "
 "units, estimated value %4$s. Current balance: %5$s."
 msgstr ""
-"Bạn đưa %1$s đơn vị, giá %2$s. NPC đưa %3$s đơn vị, giá %4$s. Số dư: %5$s."
+"Bạn đưa %1$s đơn vị, giá %2$s. Đối phương đưa %3$s đơn vị, giá %4$s. Số dư: %5$s."
 
 msgid "Balance is acceptable to the trader."
 msgstr "Số dư này được người giao dịch chấp nhận."
@@ -1200,7 +1203,7 @@ msgstr "Mod này có lỗi và không thể thêm vào."
 
 #, c-format
 msgid "Bionics: %s"
-msgstr "Bionic: %s"
+msgstr "Thiết bị cấy ghép: %s"
 
 #, c-format
 msgid "Spells: %s"
@@ -1775,7 +1778,7 @@ msgstr "%1$s: hợp lệ cho %2$s.\n"
 
 #, c-format
 msgid "%d bionics."
-msgstr "%d bionic."
+msgstr "%d thiết bị cấy ghép."
 
 #, c-format
 msgid "%d column left"
@@ -1835,15 +1838,15 @@ msgstr "%s: cấp 0: %d-%d, mỗi cấp: %.2f - %.2f, cấp tối đa: %d-%d"
 
 msgid "* is used as a wildcard and matching is case insensitive.  Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed."
 msgstr ""
-"* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ "
+"Dấu sao được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ "
 "thường. Ví dụ: 'footsteps' khớp đúng tên âm thanh, 'a loud ba*' khớp các âm "
 "thanh bắt đầu bằng 'a loud ba', '*losion!' khớp các âm thanh kết thúc bằng "
-"'losion!', và 'a *oud*ba*' cho thấy có thể dùng nhiều dấu *."
+"'losion!', và 'a *oud*ba*' cho thấy có thể dùng nhiều dấu sao."
 
 msgid "* is used as a wildcard and matching is case insensitive.  Examples: 'human' matches every NPC, 'zombie' matches the monster name exactly, 'acidic zo*' matches monsters beginning with 'acidic zo', '*mbie' matches monsters ending with 'mbie', and '*cid*zo*ie' shows that multiple * are allowed."
 msgstr ""
 "* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ "
-"thường. Ví dụ: 'human' khớp mọi NPC, 'zombie' khớp đúng tên quái vật, "
+"thường. Ví dụ: 'human' khớp mọi nhân vật không do người chơi điều khiển, 'zombie' khớp đúng tên quái vật, "
 "'acidic zo*' khớp các quái vật bắt đầu bằng 'acidic zo', '*mbie' khớp các "
 "quái vật kết thúc bằng 'mbie', và '*cid*zo*ie' cho thấy có thể dùng nhiều "
 "dấu *."
@@ -1987,7 +1990,7 @@ msgid "Adjust the selected amount of the highlighted item in this pane to balanc
 msgstr ""
 "Điều chỉnh số lượng đã chọn của vật phẩm đang được làm nổi bật trong ngăn "
 "này để cân bằng đề nghị hiện tại. Việc này thay đổi lựa chọn, giống như "
-"bật/tắt một vật phẩm; nó không hoàn tất giao dịch."
+"bật hoặc tắt một vật phẩm; nó không hoàn tất giao dịch."
 
 msgid "Advanced inventory"
 msgstr "Kho nâng cao"
@@ -2008,9 +2011,7 @@ msgstr "Gộp mọi nhóm lại vẫn đáp ứng được từ cùng một hàn
 msgid ""
 "All groups together cannot be met from the same inventory, even if "
 "individual groups look available."
-msgstr ""
-"Gộp mọi nhóm lại không đáp ứng được từ cùng một hành trang, dù từng nhóm "
-"riêng lẻ trông có vẻ đủ."
+msgstr "Không thể đồng thời đáp ứng tất cả các nhóm từ cùng một túi đồ, dù từng nhóm riêng lẻ có vẻ đủ."
 
 #, c-format
 msgid "All morale modified to: %d%%"
@@ -2084,8 +2085,8 @@ msgstr "Thái độ chỉ áp dụng cho các quy tắc phát hiện thù địc
 #, c-format
 msgid "Auto pickup is currently %1$s in the options.  Current tab: %2$s. %3$d rule(s) on this tab."
 msgstr ""
-"Tự động nhặt hiện đang %1$s trong tùy chọn. Tab hiện tại: %2$s. Có %3$d quy "
-"tắc ở tab này."
+"Tự động nhặt hiện đang %1$s trong tùy chọn. Thẻ hiện tại: %2$s. Có %3$d quy "
+"tắc ở thẻ này."
 
 msgid "Auto pickup is currently disabled.  Activate to enable it."
 msgstr "Tự động nhặt hiện đang tắt. Kích hoạt để bật."
@@ -2113,7 +2114,7 @@ msgid "Binding scope"
 msgstr "Phạm vi gán phím"
 
 msgid "Blacklist/Whitelist"
-msgstr "Danh sách chặn/Danh sách cho phép"
+msgstr "Danh sách chặn hoặc danh sách cho phép"
 
 msgid "Blast"
 msgstr "Vụ nổ"
@@ -2373,7 +2374,7 @@ msgstr ""
 " chưa từng thấy được công bố là chưa khám phá và không được gọi tên. Tọa độ "
 "con trỏ là chính xác vì bản đồ là bản ghi của chính nhân vật. Ghi chú bản đồ"
 " được đọc gồm nội dung của nó cộng với biểu tượng và màu của nó bằng lời, và"
-" vùng nguy hiểm được nêu dưới dạng bán kính tính bằng ô bản đồ. Node tuyến "
+" vùng nguy hiểm được nêu dưới dạng bán kính tính bằng ô bản đồ. Điểm tuyến "
 "hiện tại nêu tên điểm đến đã lên kế hoạch; việc bắt đầu di chuyển là một "
 "lệnh riêng. Ô đích của mục tiêu hiện tại được công bố khi con trỏ tới đó. "
 "Tìm kiếm chỉ tìm các ô nhân vật đã thấy và các ghi chú nhân vật đã tạo."
@@ -2484,10 +2485,10 @@ msgstr "Trái cây: ngay tại đầu rắn"
 
 msgid "Game goal: switch all the lights on. # is on and - is off.  Toggling a light switches the selected light and its 4 neighbors (above, below, left and right); a neighbor outside the board is not toggled.  Move the cursor with the direction keys, toggle the selected light with the space bar or 5, reset to return the board to its starting state, and quit to leave the game."
 msgstr ""
-"Mục tiêu của trò chơi: bật mọi bóng đèn. # là đang bật và - là đang tắt. "
-"Việc bật/tắt một bóng đèn sẽ chuyển trạng thái của bóng đèn đang chọn và 4 "
+"Mục tiêu của trò chơi: bật mọi bóng đèn. Ký hiệu thăng là đang bật và dấu gạch ngang là đang tắt. "
+"Việc bật hoặc tắt một bóng đèn sẽ chuyển trạng thái của bóng đèn đang chọn và 4 "
 "bóng kề của nó (trên, dưới, trái và phải); bóng kề nằm ngoài bàn cờ thì "
-"không được chuyển. Di chuyển con trỏ bằng các phím hướng, bật/tắt bóng đèn "
+"không được chuyển. Di chuyển con trỏ bằng các phím hướng, bật hoặc tắt bóng đèn "
 "đang chọn bằng phím cách hoặc phím 5, đặt lại để đưa bàn cờ về trạng thái "
 "ban đầu, và thoát để rời khỏi trò chơi."
 
@@ -2540,7 +2541,7 @@ msgid "Inactive"
 msgstr "Không hoạt động"
 
 msgid "Include/Exclude"
-msgstr "Bao gồm/Loại trừ"
+msgstr "Bao gồm hoặc loại trừ"
 
 msgid "Inspect this follower."
 msgstr "Xem xét người đi theo này."
@@ -2608,7 +2609,7 @@ msgid ""
 "win."
 msgstr ""
 "Bật đèn: %1$d trên %2$d bóng đèn đang bật. Con trỏ tại hàng %3$d, cột %4$d: "
-"%5$s. Việc bật/tắt một bóng đèn cũng bật/tắt 4 bóng kề của nó; hãy bật mọi "
+"%5$s. Việc bật hoặc tắt một bóng đèn cũng bật hoặc tắt 4 bóng kề của nó; hãy bật mọi "
 "bóng đèn để thắng."
 
 msgid ""
@@ -2956,10 +2957,10 @@ msgid ""
 "this runs the engine's own per-action reset for every action listed here. "
 "Conflict prompts, if any, are the engine's per-action ones."
 msgstr ""
-"Thao tác do bộ đọc tổ hợp: engine chỉ đặt lại một hành động mỗi lần, nên "
-"thao tác này chạy cơ chế đặt lại từng hành động của chính engine cho mọi "
+"Thao tác do bộ đọc tổ hợp: trò chơi chỉ đặt lại một hành động mỗi lần, nên "
+"thao tác này chạy cơ chế đặt lại từng hành động của chính trò chơi cho mọi "
 "hành động được liệt kê tại đây. Các câu hỏi về xung đột, nếu có, là câu hỏi "
-"theo từng hành động của engine."
+"theo từng hành động của trò chơi."
 
 msgid "Reader-only filter: the help screen itself has no search.  Filtering only changes which topic rows are listed here; the help topics themselves never change."
 msgstr ""
@@ -3272,7 +3273,7 @@ msgstr ""
 
 #, c-format
 msgid "Tab: %1$s. Active bionics: %2$d. Passive bionics: %3$d."
-msgstr "Tab: %1$s. Bionic chủ động: %2$d. Bionic bị động: %3$d."
+msgstr "Thẻ: %1$s. Thiết bị cấy ghép chủ động: %2$d. Thiết bị cấy ghép bị động: %3$d."
 
 msgid "Temperature (cold)"
 msgstr "Nhiệt độ (lạnh)"
@@ -3347,7 +3348,7 @@ msgstr ""
 
 msgid "The rule is removed from this tab's list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it."
 msgstr ""
-"Quy tắc bị xóa khỏi danh sách của tab này ngay lập tức. Thay đổi chỉ được "
+"Quy tắc bị xóa khỏi danh sách của thẻ này ngay lập tức. Thay đổi chỉ được "
 "lưu khi bạn trả lời Có cho câu hỏi \"Lưu thay đổi?\" khi rời màn hình này; "
 "trả lời Không sẽ hủy bỏ nó."
 
@@ -3480,7 +3481,7 @@ msgid ""
 "Warning: %1$s is an essential menu key (reader policy, not an engine rule). "
 "Activate its row again to remove its keybinding anyway."
 msgstr ""
-"Cảnh báo: %1$s là phím menu thiết yếu (chính sách của trình đọc, không phải "
+"Cảnh báo: %1$s là phím trình đơn thiết yếu (chính sách của trình đọc, không phải "
 "luật của game). Kích hoạt hàng của nó lần nữa để vẫn xóa gán phím của nó."
 
 #, c-format
@@ -3488,8 +3489,8 @@ msgid ""
 "Warning: %1$s is an essential menu key (reader policy, not an engine rule). "
 "Activate its row again to reset its keybinding anyway."
 msgstr ""
-"Cảnh báo: %1$s là phím menu thiết yếu (chính sách của bộ đọc, không phải "
-"luật của engine). Kích hoạt hàng của nó lần nữa để vẫn đặt lại gán phím của "
+"Cảnh báo: %1$s là phím trình đơn thiết yếu (chính sách của bộ đọc, không phải "
+"luật của trò chơi). Kích hoạt hàng của nó lần nữa để vẫn đặt lại gán phím của "
 "nó."
 
 msgid ""
@@ -3664,7 +3665,7 @@ msgstr "Nhóm kỹ năng tiếp"
 
 msgctxt "Main Menu|Settings"
 msgid "TTS Settings"
-msgstr "Cài đặt TTS"
+msgstr "Cài đặt giọng đọc"
 
 # Direct world gestures and unrestricted assistive scan, 2026-11-07.
 msgid "Scan 30 tiles north"
@@ -5330,7 +5331,7 @@ msgstr "Trường này chính xác hơn giới hạn cho phép là %s."
 
 msgid ""
 "Toggle whether direction input moves the cursor several map tiles at once."
-msgstr "Bật/tắt việc phím hướng di chuyển con trỏ nhiều ô bản đồ cùng lúc."
+msgstr "Bật hoặc tắt việc phím hướng di chuyển con trỏ nhiều ô bản đồ cùng lúc."
 
 msgid ""
 "When enabled, keep the overmap open and follow the player during automatic "
@@ -5525,7 +5526,7 @@ msgstr "Không đủ thể lực để kích hoạt %s."
 
 #, c-format
 msgid "Tab: %s."
-msgstr "Tab: %s."
+msgstr "Thẻ: %s."
 
 #, c-format
 msgid "Picked up %s for reordering."
@@ -6199,22 +6200,6 @@ msgstr "cầu thang đi lên"
 msgid "stairs down"
 msgstr "cầu thang đi xuống"
 
-#, c-format
-msgid "X%1$d, Y%2$d"
-msgstr "X%1$d, Y%2$d"
-
-#, c-format
-msgid "world X%1$d, Y%2$d"
-msgstr "bản đồ chung X%1$d, Y%2$d"
-
-#, c-format
-msgid "%s, at your position"
-msgstr "%s, ngay tại vị trí của bạn"
-
-#, c-format
-msgid "%1$s, %2$s, %3$d tiles by position"
-msgstr "%1$s, về hướng %2$s, cách %3$d ô trên bản đồ"
-
 msgid "near the northwest"
 msgstr "gần góc tây bắc"
 
@@ -6242,103 +6227,8 @@ msgstr "ở phần phía đông"
 msgid "near the center"
 msgstr "gần trung tâm"
 
-#, c-format
-msgid "%s: none found."
-msgstr "%s: không phát hiện."
-
-#, c-format
-msgid "%1$s: %2$d found."
-msgstr "%1$s: phát hiện %2$d vị trí."
-
-msgid "connects inside and outside"
-msgstr "thông giữa bên trong và bên ngoài"
-
-msgid "currently obstructs movement"
-msgstr "hiện đang cản lối đi"
-
-#, c-format
-msgid "%d more positions were grouped to keep the reading manageable."
-msgstr "Còn %d vị trí khác đã được gộp để tránh lời đọc quá dài."
-
-#, c-format
-msgid "%1$s: %2$d types."
-msgstr "%1$s: có %2$d loại."
-
-#, c-format
-msgid "%1$s, %2$d positions or stacks, first at %3$s."
-msgstr "%1$s, %2$d vị trí hoặc chồng vật phẩm, vị trí đầu tiên tại %3$s."
-
-#, c-format
-msgid "%d additional types were counted but not listed individually."
-msgstr "Còn %d loại khác đã được đếm nhưng không liệt kê từng loại."
-
-#, c-format
-msgid "Straight %1$s: %2$d clear tiles before an obstruction."
-msgstr "Đi thẳng về phía %1$s được %2$d ô trống trước khi gặp vật cản."
-
-#, c-format
-msgid "Straight %1$s: at least %2$d clear tiles in the loaded map."
-msgstr "Đi thẳng về phía %1$s có ít nhất %2$d ô trống trong phần bản đồ đã tải."
-
 msgid "unknown area"
 msgstr "khu vực chưa xác định"
-
-#, c-format
-msgid "Detailed place survey. %s."
-msgstr "Khảo sát địa điểm chi tiết. %s."
-
-#, c-format
-msgid "The mapped place spans a bounding frame of %1$d east-west by %2$d north-south tiles. This is the map frame, not necessarily the outer wall dimensions."
-msgstr "Phạm vi địa điểm trên bản đồ có khung bao rộng %1$d ô theo hướng đông tây và dài %2$d ô theo hướng bắc nam. Đây là khung bản đồ, chưa chắc là kích thước tường ngoài."
-
-#, c-format
-msgid "%d connected map levels were identified; this survey covers your current level."
-msgstr "Xác định được %d tầng bản đồ thuộc địa điểm. Lần khảo sát này chỉ đọc tầng hiện tại."
-
-msgid "The entire place boundary is not established. Describing the loaded area around you only; no complete building or forest dimensions are claimed."
-msgstr "Chưa xác định đầy đủ ranh giới địa điểm. Chỉ mô tả phần bản đồ đã tải quanh bạn, không khẳng định kích thước toàn bộ công trình hoặc khu rừng."
-
-#, c-format
-msgid "You are at local X%1$d, Y%2$d, %3$s of this place."
-msgstr "Bạn đang ở tọa độ khu vực X%1$d, Y%2$d, %3$s của địa điểm."
-
-#, c-format
-msgid "You are at world X%1$d, Y%2$d, Z%3$d. Local coordinates are unavailable for this place."
-msgstr "Bạn đang ở tọa độ bản đồ chung X%1$d, Y%2$d, Z%3$d. Chưa xác định được tọa độ riêng cho địa điểm này."
-
-msgid "Extended survey reads the loaded map beyond line of sight, including behind walls."
-msgstr "Khảo sát mở rộng đọc dữ liệu bản đồ đã tải, kể cả những vị trí bị tường che khuất."
-
-#, c-format
-msgid "Map squares examined: %d."
-msgstr "Đã khảo sát %d ô bản đồ."
-
-msgid "Only part of the location is currently loaded or within the survey boundary. Counts below apply only to examined tiles."
-msgstr "Chỉ một phần địa điểm nằm trong vùng bản đồ đã tải hoặc phạm vi quét. Những số lượng sau đây chỉ tính trên các ô đã khảo sát."
-
-msgid "General structure."
-msgstr "Cấu trúc tổng thể."
-
-#, c-format
-msgid "%1$d wall tiles, %2$d passable tiles, %3$d roofed or inside tiles, and %4$d outside tiles."
-msgstr "Có %1$d ô tường, %2$d ô có thể đi qua, %3$d ô được phân loại trong nhà hoặc có mái và %4$d ô ngoài trời."
-
-#, c-format
-msgid "The observed covered space spans a frame of %1$d east-west by %2$d north-south tiles; this does not prove the full building perimeter."
-msgstr "Phần không gian có mái quan sát được nằm trong khung rộng %1$d ô theo hướng đông tây và dài %2$d ô theo hướng bắc nam. Chưa thể coi đây là toàn bộ chu vi tòa nhà."
-
-#, c-format
-msgid "%1$s portion: %2$d walls, %3$d doors, %4$d other obstacles, %5$d furniture locations, %6$d open traversable tiles."
-msgstr "Khu vực phía %1$s: %2$d ô tường, %3$d cửa, %4$d vật cản khác, %5$d vị trí đồ nội thất và %6$d ô trống có thể đi qua."
-
-msgid "Straight directions from your position. These are direct lines, not a path around walls."
-msgstr "Lối đi thẳng từ vị trí hiện tại. Đây chỉ là các hướng đi thẳng, không phải đường vòng tránh tường."
-
-msgid "Doors, windows, stairs and routes."
-msgstr "Cửa, cửa sổ, cầu thang và lối đi."
-
-msgid "Doors"
-msgstr "Các cửa"
 
 msgid "Windows"
 msgstr "Cửa sổ"
@@ -6346,172 +6236,20 @@ msgstr "Cửa sổ"
 msgid "Stairs and vertical links"
 msgstr "Cầu thang và lối nối tầng"
 
-msgid "Furniture, vehicles, and noteworthy items."
-msgstr "Đồ nội thất, phương tiện và vật phẩm đáng chú ý."
-
 msgid "Furniture"
 msgstr "Đồ nội thất"
 
 msgid "Vehicles"
 msgstr "Phương tiện"
 
-msgid "Item types"
-msgstr "Các loại vật phẩm"
-
-msgid "Creatures and dangers detected by extended survey."
-msgstr "Sinh vật và nguy hiểm được phát hiện qua khảo sát mở rộng."
-
 msgid "Creatures"
 msgstr "Sinh vật"
-
-msgid "Traps and fields"
-msgstr "Bẫy và vùng nguy hiểm"
-
-msgid "A safety scan limit was reached. The unlisted portion was not examined."
-msgstr "Đã chạm giới hạn an toàn của lần quét. Phần chưa liệt kê không được khảo sát."
-
-msgid "Orientation summary."
-msgstr "Tổng kết định hướng."
-
-#, c-format
-msgid "Your position is %s of the mapped place."
-msgstr "Vị trí của bạn ở %s của khu vực trên bản đồ."
-
-msgid "This is a local survey, not a verified whole-place outline."
-msgstr "Đây là khảo sát quanh vị trí hiện tại, chưa phải đường bao đã xác minh của toàn bộ địa điểm."
-
-#, c-format
-msgid "%1$d doors and %2$d stair links were detected in the scanned tiles."
-msgstr "Trong phần đã quét, phát hiện %1$d cửa và %2$d lối nối tầng."
-
 
 msgid "Detailed place survey"
 msgstr "Khảo sát địa điểm chi tiết"
 
 msgid "Survey the loaded place beyond line of sight and read one complete description."
 msgstr "Khảo sát địa điểm mở rộng vượt ngoài tầm nhìn và đọc liên tục toàn bộ mô tả."
-
-#, c-format
-msgid "%1$s: %2$s, %3$s."
-msgstr "%1$s: %2$s, %3$s."
-
-#, c-format
-msgid "Adjacent map area to the %1$s: %2$s."
-msgstr "Khu vực bản đồ tiếp giáp về phía %1$s: %2$s."
-
-msgid "This is one recognized road section; nearby buildings are separate landmarks."
-msgstr "Đây là một đoạn đường đã được xác định; các công trình lân cận được xem là những điểm mốc riêng."
-
-#, c-format
-msgid "You are at local X%1$d, Y%2$d. The full place boundaries have not been verified."
-msgstr "Bạn đang ở tọa độ khu vực X%1$d, Y%2$d. Chưa xác nhận được đầy đủ ranh giới của địa điểm."
-
-msgid "Nearest exterior door in the surveyed map"
-msgstr "Cửa ra ngoài gần nhất trong phần bản đồ đã khảo sát"
-
-msgid "Nearest detected stairway"
-msgstr "Cầu thang gần nhất được phát hiện"
-
-msgid "Nearest detected creature"
-msgstr "Sinh vật gần nhất được phát hiện"
-
-msgid "Ground-item stack limit reached. Additional ground items were not counted."
-msgstr "Đã chạm giới hạn đếm chồng vật phẩm trên mặt đất. Những vật phẩm tiếp theo chưa được tính."
-
-#, c-format
-msgid "%1$s to the %2$s, %3$d tiles away."
-msgstr "%1$s ở phía %2$s, cách %3$d ô."
-
-#, c-format
-msgid "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles."
-msgstr "Có %1$d %2$s mới trong phạm vi rađa, gần nhất ở phía %3$s, cách %4$d ô."
-
-#, c-format
-msgid "%d more new radar groups were combined."
-msgstr "Có thêm %d nhóm đối tượng mới đã được gộp trong thông báo."
-
-msgid "Stairs up"
-msgstr "Cầu thang đi lên"
-
-msgid "Stairs down"
-msgstr "Cầu thang đi xuống"
-
-# R25: concise inventory action outcomes in the existing Android reader.
-msgid "Category selection mode."
-msgstr "Chế độ chọn theo danh mục."
-
-msgid "Item selection mode."
-msgstr "Chế độ chọn từng vật phẩm."
-
-msgid "Inventory view: container hierarchy."
-msgstr "Cách hiển thị kho đồ: theo vật chứa."
-
-msgid "Inventory view: categories."
-msgstr "Cách hiển thị kho đồ: theo danh mục."
-
-msgid "Inventory filter cleared."
-msgstr "Đã xóa bộ lọc kho đồ."
-
-#, c-format
-msgid "Inventory filter applied: %s."
-msgstr "Đã áp dụng bộ lọc kho đồ: %s."
-
-msgid "Unavailable items skipped."
-msgstr "Đã bỏ qua các vật phẩm không thể chọn."
-
-msgid "Unavailable items included."
-msgstr "Đã hiển thị cả các vật phẩm không thể chọn."
-
-# Vehicle maintenance outcomes. Native completion uses existing game messages.
-msgid "Ready to repair."
-msgstr "Có thể sửa chữa."
-
-msgid "Ready to install."
-msgstr "Có thể lắp đặt."
-
-msgid "Ready to remove."
-msgstr "Có thể tháo bộ phận."
-
-#, c-format
-msgid "Requires %1$s skill level %2$d."
-msgstr "Cần kỹ năng %1$s cấp %2$d."
-
-msgid "Missing a required tool quality."
-msgstr "Thiếu công cụ có chất lượng yêu cầu."
-
-msgid "Missing a required tool."
-msgstr "Thiếu công cụ cần thiết."
-
-msgid "Missing required materials."
-msgstr "Thiếu vật liệu cần thiết."
-
-msgid "Requirements are not met. Read details for the complete list."
-msgstr "Chưa đủ điều kiện. Đọc chi tiết để biết toàn bộ yêu cầu."
-
-msgid "Requires suitable lifting or jacking equipment."
-msgstr "Cần thiết bị nâng hoặc kích phù hợp."
-
-msgid "Unrack this part before replacing it."
-msgstr "Cần tháo bộ phận khỏi giá chở trước khi thay thế."
-
-msgid "No part selected for installation."
-msgstr "Chưa chọn bộ phận để lắp đặt."
-
-#, c-format
-msgid "Started installing %s."
-msgstr "Đã bắt đầu lắp %s."
-
-#, c-format
-msgid "Started repairing %s."
-msgstr "Đã bắt đầu sửa %s."
-
-#, c-format
-msgid "Started removing %s."
-msgstr "Đã bắt đầu tháo %s."
-
-#, c-format
-msgid "Started refilling %s."
-msgstr "Đã bắt đầu nạp nhiên liệu cho %s."
 
 #, c-format
 msgid "Place survey: %s."
@@ -6588,10 +6326,23 @@ msgstr "%1$s và %2$s"
 msgid "%1$s: %2$s."
 msgstr "%1$s: %2$s."
 
-# Missing Vietnamese spoken strings found in the 2026-11-20 Android session
-# and the surrounding native accessibility, status and nearby interfaces.
-msgid "tutorial message"
-msgstr "điểm hướng dẫn"
+#, c-format
+msgid "%1$s to the %2$s, %3$d tiles away."
+msgstr "%1$s ở phía %2$s, cách %3$d ô."
+
+#, c-format
+msgid "%1$d new %2$s nearby, closest to the %3$s at %4$d tiles."
+msgstr "Có %1$d %2$s mới trong phạm vi rađa, gần nhất ở phía %3$s, cách %4$d ô."
+
+#, c-format
+msgid "%d more new radar groups were combined."
+msgstr "Có thêm %d nhóm đối tượng mới đã được gộp trong thông báo."
+
+msgid "Stairs up"
+msgstr "Cầu thang đi lên"
+
+msgid "Stairs down"
+msgstr "Cầu thang đi xuống"
 
 #, c-format
 msgid "Passage opens to the %1$s, %2$d tiles."
@@ -6628,6 +6379,57 @@ msgstr "Cửa ở phía %1$s, cách %2$d ô, hiện đang %3$s."
 msgid "Object changed: %1$s to the %2$s, %3$d tiles away."
 msgstr "Đối tượng thay đổi: %1$s ở phía %2$s, cách %3$d ô."
 
+msgid "Automatic spoken radar"
+msgstr "Rađa thông báo bằng giọng nói tự động"
+
+msgid "Toggle spoken announcements when objects enter eight tiles."
+msgstr "Bật hoặc tắt thông báo khi vật thể xuất hiện trong phạm vi tám ô."
+
+# Upstream combined block/dodge combat messages spoken by the Android reader.
+#, c-format
+msgid "You block %1$s of the attack with your %2$s!"
+msgstr "Bạn dùng %2$s để đỡ đòn. Mức đỡ được: %1$s!"
+
+#, c-format
+msgid "<npcname> blocks %1$s of the attack with their %2$s!"
+msgstr "<npcname> dùng %2$s để đỡ đòn. Mức đỡ được: %1$s!"
+
+#, c-format
+msgid "You parry %1$s of the attack with your %2$s!"
+msgstr "Bạn dùng %2$s để gạt đòn. Mức gạt được: %1$s!"
+
+#, c-format
+msgid "<npcname> parries %1$s of the attack with their %2$s!"
+msgstr "<npcname> dùng %2$s để gạt đòn. Mức gạt được: %1$s!"
+
+#, c-format
+msgid "The %s blocks the attack!"
+msgstr "%s đỡ được đòn tấn công!"
+
+#, c-format
+msgid "The %s parries the attack!"
+msgstr "%s gạt được đòn tấn công!"
+
+#, c-format
+msgid "You block %s."
+msgstr "Bạn đỡ được đòn của %s."
+
+#, c-format
+msgid "You dodge %s."
+msgstr "Bạn né được đòn của %s."
+
+#, c-format
+msgid "%1$s blocks %2$s attack."
+msgstr "%1$s đỡ được đòn tấn công của %2$s."
+
+#, c-format
+msgid "%1$s dodges %2$s attack."
+msgstr "%1$s né được đòn tấn công của %2$s."
+
+# Additional Vietnamese accessibility strings synchronized from fork master 902782b9.
+msgid "tutorial message"
+msgstr "điểm hướng dẫn"
+
 msgid "Hungry"
 msgstr "Đói"
 
@@ -6657,9 +6459,6 @@ msgstr "Rất nóng!"
 
 msgid "Warm"
 msgstr "Ấm"
-
-msgid "none"
-msgstr "không có"
 
 msgid "On"
 msgstr "Bật"
@@ -6707,12 +6506,6 @@ msgstr "Động cơ"
 msgid "%s ago"
 msgstr "cách đây %s"
 
-
-msgid "Automatic spoken radar"
-msgstr "Rađa thông báo bằng giọng nói tự động"
-
-msgid "Toggle spoken announcements when objects enter eight tiles."
-msgstr "Bật hoặc tắt thông báo khi vật thể xuất hiện trong phạm vi tám ô."
 
 msgid "Uses the native weapon and ammunition rules.  No walking."
 msgstr "Sử dụng quy tắc vũ khí và đạn của game. Không di chuyển."
@@ -6914,3 +6707,1324 @@ msgstr "Nghe chi tiết bài học gần nhất"
 #, c-format
 msgid "Points remaining: %d."
 msgstr "Điểm còn lại: %d."
+
+#, c-format
+msgid "X%1$d, Y%2$d"
+msgstr "X%1$d, Y%2$d"
+
+#, c-format
+msgid "world X%1$d, Y%2$d"
+msgstr "bản đồ chung X%1$d, Y%2$d"
+
+#, c-format
+msgid "%s, at your position"
+msgstr "%s, ngay tại vị trí của bạn"
+
+#, c-format
+msgid "%1$s, %2$s, %3$d tiles by position"
+msgstr "%1$s, về hướng %2$s, cách %3$d ô trên bản đồ"
+
+#, c-format
+msgid "%s: none found."
+msgstr "%s: không phát hiện."
+
+#, c-format
+msgid "%1$s: %2$d found."
+msgstr "%1$s: phát hiện %2$d vị trí."
+
+msgid "connects inside and outside"
+msgstr "thông giữa bên trong và bên ngoài"
+
+msgid "currently obstructs movement"
+msgstr "hiện đang cản lối đi"
+
+#, c-format
+msgid "%d more positions were grouped to keep the reading manageable."
+msgstr "Còn %d vị trí khác đã được gộp để tránh lời đọc quá dài."
+
+#, c-format
+msgid "%1$s: %2$d types."
+msgstr "%1$s: có %2$d loại."
+
+#, c-format
+msgid "%1$s, %2$d positions or stacks, first at %3$s."
+msgstr "%1$s, %2$d vị trí hoặc chồng vật phẩm, vị trí đầu tiên tại %3$s."
+
+#, c-format
+msgid "%d additional types were counted but not listed individually."
+msgstr "Còn %d loại khác đã được đếm nhưng không liệt kê từng loại."
+
+#, c-format
+msgid "Straight %1$s: %2$d clear tiles before an obstruction."
+msgstr "Đi thẳng về phía %1$s được %2$d ô trống trước khi gặp vật cản."
+
+#, c-format
+msgid "Straight %1$s: at least %2$d clear tiles in the loaded map."
+msgstr "Đi thẳng về phía %1$s có ít nhất %2$d ô trống trong phần bản đồ đã tải."
+
+#, c-format
+msgid "Detailed place survey. %s."
+msgstr "Khảo sát địa điểm chi tiết. %s."
+
+#, c-format
+msgid "The mapped place spans a bounding frame of %1$d east-west by %2$d north-south tiles. This is the map frame, not necessarily the outer wall dimensions."
+msgstr "Phạm vi địa điểm trên bản đồ có khung bao rộng %1$d ô theo hướng đông tây và dài %2$d ô theo hướng bắc nam. Đây là khung bản đồ, chưa chắc là kích thước tường ngoài."
+
+#, c-format
+msgid "%d connected map levels were identified; this survey covers your current level."
+msgstr "Xác định được %d tầng bản đồ thuộc địa điểm. Lần khảo sát này chỉ đọc tầng hiện tại."
+
+msgid "The entire place boundary is not established. Describing the loaded area around you only; no complete building or forest dimensions are claimed."
+msgstr "Chưa xác định đầy đủ ranh giới địa điểm. Chỉ mô tả phần bản đồ đã tải quanh bạn, không khẳng định kích thước toàn bộ công trình hoặc khu rừng."
+
+#, c-format
+msgid "You are at local X%1$d, Y%2$d, %3$s of this place."
+msgstr "Bạn đang ở tọa độ khu vực X%1$d, Y%2$d, %3$s của địa điểm."
+
+#, c-format
+msgid "You are at world X%1$d, Y%2$d, Z%3$d. Local coordinates are unavailable for this place."
+msgstr "Bạn đang ở tọa độ bản đồ chung X%1$d, Y%2$d, Z%3$d. Chưa xác định được tọa độ riêng cho địa điểm này."
+
+msgid "Extended survey reads the loaded map beyond line of sight, including behind walls."
+msgstr "Khảo sát mở rộng đọc dữ liệu bản đồ đã tải, kể cả những vị trí bị tường che khuất."
+
+#, c-format
+msgid "Map squares examined: %d."
+msgstr "Đã khảo sát %d ô bản đồ."
+
+msgid "Only part of the location is currently loaded or within the survey boundary. Counts below apply only to examined tiles."
+msgstr "Chỉ một phần địa điểm nằm trong vùng bản đồ đã tải hoặc phạm vi quét. Những số lượng sau đây chỉ tính trên các ô đã khảo sát."
+
+msgid "General structure."
+msgstr "Cấu trúc tổng thể."
+
+#, c-format
+msgid "%1$d wall tiles, %2$d passable tiles, %3$d roofed or inside tiles, and %4$d outside tiles."
+msgstr "Có %1$d ô tường, %2$d ô có thể đi qua, %3$d ô được phân loại trong nhà hoặc có mái và %4$d ô ngoài trời."
+
+#, c-format
+msgid "The observed covered space spans a frame of %1$d east-west by %2$d north-south tiles; this does not prove the full building perimeter."
+msgstr "Phần không gian có mái quan sát được nằm trong khung rộng %1$d ô theo hướng đông tây và dài %2$d ô theo hướng bắc nam. Chưa thể coi đây là toàn bộ chu vi tòa nhà."
+
+#, c-format
+msgid "%1$s portion: %2$d walls, %3$d doors, %4$d other obstacles, %5$d furniture locations, %6$d open traversable tiles."
+msgstr "Khu vực phía %1$s: %2$d ô tường, %3$d cửa, %4$d vật cản khác, %5$d vị trí đồ nội thất và %6$d ô trống có thể đi qua."
+
+msgid "Straight directions from your position. These are direct lines, not a path around walls."
+msgstr "Lối đi thẳng từ vị trí hiện tại. Đây chỉ là các hướng đi thẳng, không phải đường vòng tránh tường."
+
+msgid "Doors, windows, stairs and routes."
+msgstr "Cửa, cửa sổ, cầu thang và lối đi."
+
+msgid "Doors"
+msgstr "Các cửa"
+
+msgid "Furniture, vehicles, and noteworthy items."
+msgstr "Đồ nội thất, phương tiện và vật phẩm đáng chú ý."
+
+msgid "Item types"
+msgstr "Các loại vật phẩm"
+
+msgid "Creatures and dangers detected by extended survey."
+msgstr "Sinh vật và nguy hiểm được phát hiện qua khảo sát mở rộng."
+
+msgid "Traps and fields"
+msgstr "Bẫy và vùng nguy hiểm"
+
+msgid "A safety scan limit was reached. The unlisted portion was not examined."
+msgstr "Đã chạm giới hạn an toàn của lần quét. Phần chưa liệt kê không được khảo sát."
+
+msgid "Orientation summary."
+msgstr "Tổng kết định hướng."
+
+#, c-format
+msgid "Your position is %s of the mapped place."
+msgstr "Vị trí của bạn ở %s của khu vực trên bản đồ."
+
+msgid "This is a local survey, not a verified whole-place outline."
+msgstr "Đây là khảo sát quanh vị trí hiện tại, chưa phải đường bao đã xác minh của toàn bộ địa điểm."
+
+#, c-format
+msgid "%1$d doors and %2$d stair links were detected in the scanned tiles."
+msgstr "Trong phần đã quét, phát hiện %1$d cửa và %2$d lối nối tầng."
+
+#, c-format
+msgid "%1$s: %2$s, %3$s."
+msgstr "%1$s: %2$s, %3$s."
+
+#, c-format
+msgid "Adjacent map area to the %1$s: %2$s."
+msgstr "Khu vực bản đồ tiếp giáp về phía %1$s: %2$s."
+
+msgid "This is one recognized road section; nearby buildings are separate landmarks."
+msgstr "Đây là một đoạn đường đã được xác định; các công trình lân cận được xem là những điểm mốc riêng."
+
+#, c-format
+msgid "You are at local X%1$d, Y%2$d. The full place boundaries have not been verified."
+msgstr "Bạn đang ở tọa độ khu vực X%1$d, Y%2$d. Chưa xác nhận được đầy đủ ranh giới của địa điểm."
+
+msgid "Nearest exterior door in the surveyed map"
+msgstr "Cửa ra ngoài gần nhất trong phần bản đồ đã khảo sát"
+
+msgid "Nearest detected stairway"
+msgstr "Cầu thang gần nhất được phát hiện"
+
+msgid "Nearest detected creature"
+msgstr "Sinh vật gần nhất được phát hiện"
+
+msgid "Ground-item stack limit reached. Additional ground items were not counted."
+msgstr "Đã chạm giới hạn đếm chồng vật phẩm trên mặt đất. Những vật phẩm tiếp theo chưa được tính."
+
+# R25: concise inventory action outcomes in the existing Android reader.
+msgid "Category selection mode."
+msgstr "Chế độ chọn theo danh mục."
+
+msgid "Item selection mode."
+msgstr "Chế độ chọn từng vật phẩm."
+
+msgid "Inventory view: container hierarchy."
+msgstr "Cách hiển thị kho đồ: theo vật chứa."
+
+msgid "Inventory view: categories."
+msgstr "Cách hiển thị kho đồ: theo danh mục."
+
+msgid "Inventory filter cleared."
+msgstr "Đã xóa bộ lọc kho đồ."
+
+#, c-format
+msgid "Inventory filter applied: %s."
+msgstr "Đã áp dụng bộ lọc kho đồ: %s."
+
+msgid "Unavailable items skipped."
+msgstr "Đã bỏ qua các vật phẩm không thể chọn."
+
+msgid "Unavailable items included."
+msgstr "Đã hiển thị cả các vật phẩm không thể chọn."
+
+# Vehicle maintenance outcomes. Native completion uses existing game messages.
+msgid "Ready to repair."
+msgstr "Có thể sửa chữa."
+
+msgid "Ready to install."
+msgstr "Có thể lắp đặt."
+
+msgid "Ready to remove."
+msgstr "Có thể tháo bộ phận."
+
+#, c-format
+msgid "Requires %1$s skill level %2$d."
+msgstr "Cần kỹ năng %1$s cấp %2$d."
+
+msgid "Missing a required tool quality."
+msgstr "Thiếu công cụ có chất lượng yêu cầu."
+
+msgid "Missing a required tool."
+msgstr "Thiếu công cụ cần thiết."
+
+msgid "Missing required materials."
+msgstr "Thiếu vật liệu cần thiết."
+
+msgid "Requirements are not met. Read details for the complete list."
+msgstr "Chưa đủ điều kiện. Đọc chi tiết để biết toàn bộ yêu cầu."
+
+msgid "Requires suitable lifting or jacking equipment."
+msgstr "Cần thiết bị nâng hoặc kích phù hợp."
+
+msgid "Unrack this part before replacing it."
+msgstr "Cần tháo bộ phận khỏi giá chở trước khi thay thế."
+
+msgid "No part selected for installation."
+msgstr "Chưa chọn bộ phận để lắp đặt."
+
+#, c-format
+msgid "Started installing %s."
+msgstr "Đã bắt đầu lắp %s."
+
+#, c-format
+msgid "Started repairing %s."
+msgstr "Đã bắt đầu sửa %s."
+
+#, c-format
+msgid "Started removing %s."
+msgstr "Đã bắt đầu tháo %s."
+
+#, c-format
+msgid "Started refilling %s."
+msgstr "Đã bắt đầu nạp nhiên liệu cho %s."
+
+msgid "Choose a visible movable object by name and direction.  Selecting it grabs it immediately."
+msgstr "Chọn một vật thể có thể di chuyển đang nhìn thấy theo tên và hướng. Chọn mục đó để nắm giữ ngay."
+
+#, c-format
+msgid "%1$s [%2$d]"
+msgstr "%1$s, số lượng %2$d"
+
+msgid "The car drives itself. Double tap to pause or resume. Switch to Map to cancel the trip."
+msgstr "Xe đang tự lái. Chạm hai lần để tạm dừng hoặc tiếp tục. Chuyển sang Bản đồ để hủy chuyến đi."
+
+msgid "mutagen"
+msgstr "chất đột biến"
+
+#, c-format
+msgid "%s [%d]"
+msgstr "%s, số lượng %d"
+
+msgid "Above"
+msgstr "Phía trên"
+
+msgid "Below"
+msgstr "Phía dưới"
+
+msgid "Peek where?"
+msgstr "Ngó về hướng nào?"
+
+msgid "quick shortcuts"
+msgstr "phím tắt nhanh"
+
+#, c-format
+msgid "Attack %s"
+msgstr "Tấn công về phía %s"
+
+msgid "Attack the nearest valid target in this direction within the current weapon range. Never walk."
+msgstr "Tấn công mục tiêu hợp lệ gần nhất theo hướng này trong tầm vũ khí hiện tại. Không di chuyển."
+
+#, c-format
+msgid "No target in that direction within weapon range (%d tiles)."
+msgstr "Không có mục tiêu trong hướng này trong tầm vũ khí (%d ô)."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "the selected place"
+msgstr "địa điểm đã chọn"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%s is approximately %d tiles away."
+msgstr "%s cách khoảng %d ô."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "The vehicle can only reach a nearby area."
+msgstr "Phương tiện chỉ có thể tới khu vực lân cận."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No safe route found. Autodrive paused."
+msgstr "Không tìm thấy tuyến đường an toàn. Đã tạm dừng tự lái."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autodrive paused at your request."
+msgstr "Đã tạm dừng tự lái theo yêu cầu của bạn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autodrive canceled at your request."
+msgstr "Đã hủy tự lái theo yêu cầu của bạn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autodrive canceled: vehicle skidding."
+msgstr "Đã hủy tự lái: phương tiện đang trượt bánh."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autodrive canceled: driver controls lost."
+msgstr "Đã hủy tự lái: mất quyền điều khiển phương tiện."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autodrive canceled: the vehicle could not continue."
+msgstr "Đã hủy tự lái: phương tiện không thể tiếp tục di chuyển."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You need a loaded gun to start target practice."
+msgstr "Bạn cần một khẩu súng đã nạp đạn để bắt đầu tập bắn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Repeat last workout: intensity %1$d of 4, %2$d minutes"
+msgstr "Lặp lại bài tập trước: cường độ %1$d trên 4, %2$d phút"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Reload complete: %1$s with %2$s."
+msgstr "Đã nạp xong: %1$s với %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "You don't have the skill for the \"%1$s\" task at zone %2$s."
+msgstr "Bạn không đủ kỹ năng cho tác vụ \"%1$s\" tại khu vực %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "You don't have the skill for the \"%s\" task."
+msgstr "Bạn không đủ kỹ năng cho tác vụ \"%s\"."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "There is something blocking the location for the \"%1$s\" task at zone %2$s."
+msgstr "Có vật cản tại vị trí của tác vụ \"%1$s\" ở khu vực %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "There is something blocking the location for the \"%s\" task."
+msgstr "Có vật cản tại vị trí của tác vụ \"%s\"."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%s can't carry what the task needs."
+msgstr "%s không thể mang theo những gì tác vụ yêu cầu."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "It is too dark to do the \"%s\" activity."
+msgstr "Trời quá tối để thực hiện hoạt động \"%s\"."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because no suitable locations were found."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không tìm thấy vị trí phù hợp."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because no path to a suitable location could be found."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không tìm thấy đường đến vị trí phù hợp."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because no required zone was found."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không tìm thấy khu vực cần thiết."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because the target location is blocked or cannot be reached."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì vị trí đích bị chặn hoặc không thể tới được."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because of insufficient skills."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không đủ kỹ năng."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because the activity couldn't be found.  This is probably an error."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không tìm thấy hoạt động này. Đây có thể là lỗi trò chơi."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because no suitable location could be found."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không tìm thấy vị trí phù hợp."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because no criteria could be matched."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không có tiêu chí nào khớp."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s failed to perform the \"%2$s\" activity because no path to a suitable crafting/disassembly location could be found."
+msgstr "%1$s không thể thực hiện hoạt động \"%2$s\" vì không tìm thấy đường đến vị trí chế tạo hoặc tháo dỡ phù hợp."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s tab.  %2$d discovered map extras.  Automatic map-extra notes: %3$s."
+msgstr "Thẻ %1$s. Đã phát hiện %2$d điểm phụ trên bản đồ. Tự động ghi chú điểm phụ: %3$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Automatic map-extra notes"
+msgstr "Tự động ghi chú điểm phụ trên bản đồ"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Map note symbol: %s."
+msgstr "Biểu tượng ghi chú bản đồ: %s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Automatic map-extra notes are currently off."
+msgstr "Tự động ghi chú điểm phụ trên bản đồ hiện đang tắt."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Automatic map-extra notes enabled."
+msgstr "Đã bật tự động ghi chú điểm phụ trên bản đồ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Automatic map-extra notes disabled."
+msgstr "Đã tắt tự động ghi chú điểm phụ trên bản đồ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autoattack: no target in reach.  Will wait one turn if safe mode allows."
+msgstr "Tự đánh: không có mục tiêu trong tầm. Sẽ chờ một lượt nếu chế độ an toàn cho phép."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Autoattack: %1$s, %2$s, distance %3$d."
+msgstr "Tự đánh: %1$s, %2$s, khoảng cách %3$d ô."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Choose item to mend"
+msgstr "Chọn vật phẩm để sửa chữa"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You have no carried items with repairable faults."
+msgstr "Bạn không mang theo vật phẩm nào có lỗi có thể sửa được."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Selected for mending: %s."
+msgstr "Đã chọn để sửa chữa: %s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Medical training helps to minimize the complications."
+msgstr "Kiến thức y tế giúp giảm thiểu các biến chứng."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Fuel saving for %1$s: %2$s."
+msgstr "Tiết kiệm nhiên liệu cho %1$s: %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Automatic shutdown for %1$s: %2$s."
+msgstr "Tự động tắt cho %1$s: %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Show %1$s on screen: %2$s."
+msgstr "Hiển thị %1$s trên màn hình: %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No armor on this limb!"
+msgstr "Không có giáp trên bộ phận này!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Innermost"
+msgstr "Lớp trong cùng"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Outermost"
+msgstr "Lớp ngoài cùng"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s: %2$d/%3$d HP"
+msgstr "%1$s: %2$d trên %3$d máu"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Injured body parts: %d"
+msgstr "Bộ phận cơ thể bị thương: %d"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Body parts with wounds: %d"
+msgstr "Bộ phận cơ thể có vết thương: %d"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Health: %1$d/%2$d"
+msgstr "Máu: %1$d trên %2$d"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Wetness: %d%%"
+msgstr "Độ ướt: %d%%"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Body temperature: %s"
+msgstr "Thân nhiệt: %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Coverage: %d%%"
+msgstr "Độ che phủ: %d%%"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Environmental protection: %d"
+msgstr "Bảo vệ môi trường: %d"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This armor isn't one-sided!"
+msgstr "Giáp này không phải loại một bên!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No armor found!"
+msgstr "Không tìm thấy giáp nào!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Status of: %s"
+msgstr "Trạng thái của: %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Toggle Info Window"
+msgstr "Bật hoặc tắt cửa sổ thông tin"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Toggle Bodygraph Window"
+msgstr "Bật hoặc tắt cửa sổ sơ đồ cơ thể"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "SORT ARMOR"
+msgstr "Sắp xếp giáp"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Select a worn item to view its properties."
+msgstr "Chọn một vật phẩm đang mặc để xem thuộc tính."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Armor by Limb"
+msgstr "Giáp theo bộ phận"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Enc."
+msgstr "Vướng"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Vol."
+msgstr "Thể tích"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Hid."
+msgstr "Ẩn"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Body Graph:"
+msgstr "Sơ đồ cơ thể:"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Displaying: %s"
+msgstr "Đang hiển thị: %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Fault: %s.\n"
+msgstr "Lỗi hỏng: %s.\n"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Status: ready to mend.\n"
+msgstr "Trạng thái: sẵn sàng sửa chữa.\n"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Status: cannot mend yet; a required skill, tool or component is missing.\n"
+msgstr "Trạng thái: chưa thể sửa; còn thiếu kỹ năng, dụng cụ hoặc linh kiện cần thiết.\n"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Aura"
+msgstr "Hào quang"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Layer: "
+msgstr "Lớp mặc: "
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Integrated armor"
+msgstr "Giáp tích hợp"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Rigid armor"
+msgstr "Giáp cứng"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Ablative armor"
+msgstr "Giáp tấm rời"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Hidden from the character display"
+msgstr "Đang ẩn khỏi hiển thị nhân vật"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Favorite item"
+msgstr "Vật phẩm yêu thích"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Coverage of selected limb: %d%%"
+msgstr "Độ che phủ của bộ phận đang chọn: %d%%"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "You break the grab %s had on your %s!"
+msgstr "Bạn thoát khỏi cú tóm của %s vào %s của mình!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "<npcname> breaks the grab %s had on their %s!"
+msgstr "<npcname> thoát khỏi cú tóm của %s vào %s của họ!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "You try to break the grab %s has on your %s, but fail!"
+msgstr "Bạn cố thoát khỏi cú tóm của %s vào %s của mình, nhưng thất bại!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "<npcname> tries to break the grab %s has on their %s, but fails!"
+msgstr "<npcname> cố thoát khỏi cú tóm của %s vào %s của họ, nhưng thất bại!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%s has too low morale!"
+msgstr "Tinh thần của %s quá thấp!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No adjacent location is valid for this construction."
+msgstr "Không có ô liền kề nào hợp lệ cho công trình này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You feel full."
+msgstr "Bạn cảm thấy no."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You are still hungry."
+msgstr "Bạn vẫn còn đói."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You are no longer thirsty."
+msgstr "Bạn không còn khát nữa."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You are still thirsty."
+msgstr "Bạn vẫn còn khát."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No previous recipe to repeat."
+msgstr "Không có công thức trước đó để lặp lại."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Repeat crafting %1$s, batch %2$d."
+msgstr "Lặp lại chế tạo %1$s, mẻ %2$d."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Continuous crafting: %1$s, batch %2$d. Stops when unable to continue."
+msgstr "Chế tạo liên tục: %1$s, mẻ %2$d. Sẽ dừng khi không thể tiếp tục."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Craft what?"
+msgstr "Chế tạo gì?"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Start crafting"
+msgstr "Bắt đầu chế tạo"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "disassembly of"
+msgstr "tháo dỡ"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "A glancing hit."
+msgstr "Một đòn sượt qua."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "A good hit."
+msgstr "Một đòn trúng đích."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "A solid hit!"
+msgstr "Một đòn giáng mạnh!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "You use your %1$s to shield your %2$s!"
+msgstr "Bạn dùng %1$s để che chắn cho %2$s của mình!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "<npcname> uses their %1$s to shield their %2$s!"
+msgstr "<npcname> dùng %1$s để che chắn cho %2$s của họ!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%s is too heavy to pull towards you."
+msgstr "%s quá nặng để kéo về phía bạn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Debug functions. Choose a category or cancel to return. Debug commands may permanently change your current game."
+msgstr "Chức năng gỡ lỗi. Chọn một danh mục hoặc hủy để quay lại. Các lệnh gỡ lỗi có thể làm thay đổi vĩnh viễn ván chơi hiện tại của bạn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Run this debug command? It may permanently change your character or world. Continue?"
+msgstr "Chạy lệnh gỡ lỗi này? Lệnh có thể thay đổi vĩnh viễn nhân vật hoặc thế giới của bạn. Tiếp tục không?"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "New diary page created.  Select Edit entry text to write."
+msgstr "Đã tạo trang nhật ký mới. Chọn Sửa nội dung mục để bắt đầu viết."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Select a condition to enable or disable interruption.  Toggle all affects every condition."
+msgstr "Chọn một điều kiện để bật hoặc tắt ngắt hoạt động. Chuyển đổi tất cả sẽ áp dụng cho mọi điều kiện."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Your companion hit a river and didn't know how to swim…"
+msgstr "Người đồng hành của bạn gặp sông và không biết bơi…"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You are too full to eat right now."
+msgstr "Bạn đang quá no, không thể ăn lúc này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "<npcname> is too full to eat right now."
+msgstr "<npcname> đang quá no, không thể ăn lúc này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You feel too sick to eat right now, and put the meal back into storage."
+msgstr "Bạn cảm thấy quá buồn nôn để ăn lúc này, nên cất bữa ăn lại vào kho."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "<npcname> feels too sick to eat right now, and puts the meal back into storage."
+msgstr "<npcname> cảm thấy quá buồn nôn để ăn lúc này, nên cất bữa ăn lại vào kho."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You feel too sick to eat right now."
+msgstr "Bạn cảm thấy quá buồn nôn để ăn lúc này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "<npcname> feels too sick to eat right now."
+msgstr "<npcname> cảm thấy quá buồn nôn để ăn lúc này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Pixel minimap enabled."
+msgstr "Đã bật bản đồ nhỏ dạng điểm ảnh."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Pixel minimap disabled."
+msgstr "Đã tắt bản đồ nhỏ dạng điểm ảnh."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No visible vehicle controls nearby."
+msgstr "Không thấy bộ điều khiển phương tiện nào ở gần."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "World view zoom level: %d."
+msgstr "Mức thu phóng thế giới: %d."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Preparing to reload %1$s using %2$s."
+msgstr "Đang chuẩn bị nạp %1$s bằng %2$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "One of your items dissolves in the water: %s!"
+msgstr "Một vật phẩm của bạn bị tan trong nước: %s!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "<npcname> loses an item as it dissolves in the water: %s!"
+msgstr "<npcname> mất một vật phẩm vì bị tan trong nước: %s!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "The water destroys one of your items: %s!"
+msgstr "Nước đã làm hỏng một vật phẩm của bạn: %s!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "<npcname> loses an item to water damage: %s!"
+msgstr "<npcname> mất một vật phẩm do hư hại vì nước: %s!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Climb up %s"
+msgstr "Leo lên %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Climb down %s"
+msgstr "Leo xuống %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Invalid inventory letter."
+msgstr "Ký tự hành trang không hợp lệ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Choose an object to grab"
+msgstr "Chọn một vật thể để nắm giữ"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No visible movable furniture or vehicle nearby."
+msgstr "Không thấy đồ đạc hay phương tiện nào có thể di chuyển ở gần."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Dissect corpses"
+msgstr "Giải phẫu xác chết"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Auto-dissect anything in designated zone - auto-fetch tools."
+msgstr "Tự động giải phẫu mọi xác trong khu vực chỉ định và tự lấy dụng cụ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No previous spell to repeat."
+msgstr "Không có phép thuật trước đó để lặp lại."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Repeat %1$s. Cost %2$s %3$s. Time %4$s."
+msgstr "Lặp lại %1$s. Tiêu tốn %2$s %3$s. Thời gian %4$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Now on level %d."
+msgstr "Hiện đang ở tầng %d."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Burst mode: %1$s, %2$d shots."
+msgstr "Chế độ bắn loạt: %1$s, %2$d phát."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This gun has no burst or automatic firing mode."
+msgstr "Khẩu súng này không có chế độ bắn loạt hay tự động."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Hold a gun to use burst fire."
+msgstr "Hãy cầm súng trên tay để dùng chế độ bắn loạt."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Attack mode: %s (melee)."
+msgstr "Chế độ tấn công: %s (cận chiến)."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Firing mode: %1$s, %2$d shots."
+msgstr "Chế độ bắn: %1$s, %2$d phát."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Hold a gun to change firing mode."
+msgstr "Hãy cầm súng trên tay để đổi chế độ bắn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This weapon does not support a default ammo choice."
+msgstr "Vũ khí này không hỗ trợ chọn loại đạn mặc định."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Hold a compatible gun to choose default ammunition."
+msgstr "Hãy cầm khẩu súng tương thích để chọn đạn mặc định."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Auto travel on. Choose a direction to find a path."
+msgstr "Đã bật tự động di chuyển. Chọn một hướng để tìm đường."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Auto travel off."
+msgstr "Đã tắt tự động di chuyển."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Automatic safe mode on."
+msgstr "Đã bật chế độ an toàn tự động."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Automatic safe mode off."
+msgstr "Đã tắt chế độ an toàn tự động."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Enemy warning ignored for now.  Safe mode remains on."
+msgstr "Đã tạm bỏ qua cảnh báo kẻ địch. Chế độ an toàn vẫn bật."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No active enemy warning to ignore."
+msgstr "Không có cảnh báo kẻ địch nào đang kích hoạt để bỏ qua."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Whitelisted %s. Future warnings for this type may be skipped."
+msgstr "Đã đưa %s vào danh sách bỏ qua. Các cảnh báo sau cho loại này có thể được bỏ qua."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Reload the last save?  Any progress not saved will be lost.  Continue?"
+msgstr "Tải lại bản lưu gần nhất? Mọi tiến trình chưa lưu sẽ bị mất. Tiếp tục không?"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "It is too dark to plant anything now."
+msgstr "Trời quá tối để trồng cây lúc này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Choose a key"
+msgstr "Chọn một phím"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Choose a letter or number for %s."
+msgstr "Chọn một chữ cái hoặc chữ số cho %s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "No single-character keys are available."
+msgstr "Không còn phím đơn ký tự nào khả dụng."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Potential recovered materials: %s"
+msgstr "Vật liệu có thể thu hồi: %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "None listed"
+msgstr "Không có trong danh sách"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Disassembly time: %s"
+msgstr "Thời gian tháo dỡ: %s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "That item is no longer in the pocket."
+msgstr "Vật phẩm đó không còn trong ngăn chứa này nữa."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "When activated:"
+msgstr "Khi kích hoạt:"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Sun altitude %.1f°, azimuth %.1f°"
+msgstr "Độ cao mặt trời %.1f độ, phương vị %.1f độ"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Explosion delay: "
+msgstr "Độ trễ nổ: "
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Vast"
+msgstr "Rất rộng"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Shrapnel: "
+msgstr "Mảnh văng: "
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "The selected holstered item is no longer available."
+msgstr "Vật phẩm trong bao đã chọn không còn khả dụng."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You bandage the wound."
+msgstr "Bạn băng bó vết thương."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "The wound is bandaged."
+msgstr "Vết thương đã được băng bó."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "You have wounds on this limb that won't be healed by this.  Continue?"
+msgstr "Bộ phận này có những vết thương không thể chữa bằng cách này. Tiếp tục không?"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "A wound on this limb can be treated.  Do you want to do that instead?"
+msgstr "Có một vết thương trên bộ phận này có thể xử lý được. Bạn có muốn điều trị vết thương đó trước không?"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Invalid spell hotkey."
+msgstr "Phím tắt phép thuật không hợp lệ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Your wounds are closing up!"
+msgstr "Các vết thương của bạn đang khép miệng lại!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%s begins to heal!"
+msgstr "%s bắt đầu lành lại!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This developer demonstration does not provide accessible game controls.  Choose Back to return to Settings."
+msgstr "Màn hình thử nghiệm dành cho nhà phát triển này không hỗ trợ điều khiển trợ năng. Chọn Quay lại để trở về Cài đặt."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Failed to read from \"%1$s:%2$s\": %3$s"
+msgstr "Không thể đọc từ \"%1$s:%2$s\": %3$s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "A %s crawls out of the printer!"
+msgstr "Một %s bò ra khỏi máy in!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "A %s is thrown out of the printer!"
+msgstr "Một %s bị bắn ra khỏi máy in!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s hits your %2$s.%3$s"
+msgstr "%1$s đánh trúng %2$s của bạn.%3$s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s hits %2$s in the %3$s.%4$s"
+msgstr "%1$s đánh trúng %2$s vào %3$s.%4$s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s hits %2$s in the %3$s but is stopped by the %4$s."
+msgstr "%1$s đánh trúng %2$s vào %3$s nhưng bị chặn lại bởi %4$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Cannot activate %s. Focus it to hear the description."
+msgstr "Không thể kích hoạt %s. Hãy chọn vào mục đó để nghe mô tả."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "toggled"
+msgstr "đã chuyển trạng thái"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "activated"
+msgstr "đã kích hoạt"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Trying to sleep"
+msgstr "Đang cố ngủ"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Travelling"
+msgstr "Đang di chuyển"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Trading"
+msgstr "Đang giao dịch"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "I really need some water.  I'll be right back."
+msgstr "Tôi rất cần chút nước. Tôi sẽ quay lại ngay."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "I can't stay awake any longer."
+msgstr "Tôi không thể thức thêm được nữa."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "I really need something to eat.  I'll be right back."
+msgstr "Tôi rất cần gì đó để ăn. Tôi sẽ quay lại ngay."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Clear current key"
+msgstr "Xóa phím hiện tại"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Overmap coordinates: X %1$d, Y %2$d, level %3$d. Distance from player: %4$d map tiles.  %5$s %6$s"
+msgstr "Tọa độ bản đồ lớn: X %1$d, Y %2$d, tầng %3$d. Khoảng cách tới nhân vật: %4$d ô bản đồ. %5$s %6$s"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Choose the displayed search result and return to the map at that location.  This does not start travel."
+msgstr "Chọn kết quả tìm kiếm đang hiển thị và quay về bản đồ tại vị trí đó. Thao tác này không bắt đầu di chuyển."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Select the current map coordinates and close the map.  This action does not start travel."
+msgstr "Chọn tọa độ bản đồ hiện tại và đóng bản đồ. Thao tác này không bắt đầu di chuyển."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Set the current map tile as the route destination.  Choosing the existing route again may open the travel confirmation."
+msgstr "Đặt ô bản đồ hiện tại làm đích đến cho tuyến đường. Chọn lại tuyến đang có có thể mở xác nhận di chuyển."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Set a direct route to the current map tile.  Choosing the existing route again may open the travel confirmation."
+msgstr "Đặt tuyến đường thẳng tới ô bản đồ hiện tại. Chọn lại tuyến đang có có thể mở xác nhận di chuyển."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Planned destination: %1$s. Coordinates: X %2$d, Y %3$d, level %4$d. Route length: %5$d map tiles.  Relative location: %6$s."
+msgstr "Điểm đến dự kiến: %1$s. Tọa độ: X %2$d, Y %3$d, tầng %4$d. Độ dài tuyến: %5$d ô bản đồ. Vị trí tương đối: %6$s."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "A danger radius of %d map tiles is set at the cursor.  Open the prompt to remove it or choose another radius."
+msgstr "Đã đặt bán kính nguy hiểm %d ô bản đồ tại con trỏ. Mở hộp thoại để xóa hoặc chọn bán kính khác."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Show or hide map notes visually.  The reader still describes a note at the cursor."
+msgstr "Hiện hoặc ẩn ghi chú bản đồ về mặt hình ảnh. Trình đọc vẫn sẽ đọc ghi chú tại vị trí con trỏ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%d urgent body-part warnings.  Open Quick health summary."
+msgstr "Có %d cảnh báo khẩn cấp về bộ phận cơ thể. Hãy mở Tóm tắt sức khỏe nhanh."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Bionic power"
+msgstr "Năng lượng thiết bị cấy ghép"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Power: %1$d %2$s / %3$d kJ"
+msgstr "Năng lượng: %1$d %2$s trên %3$d kJ"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Installed: %d"
+msgstr "Đã lắp đặt: %d"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Your bionic heart beats slowly and loudly, without power!"
+msgstr "Trái tim cấy ghép của bạn đập chậm và mạnh vì cạn năng lượng!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%s wants nothing to do with you."
+msgstr "%s không muốn dính dáng gì tới bạn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "%1$s's %2$s stepped on a %3$s!"
+msgstr "%2$s của %1$s đã giẫm phải %3$s!"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Menu"
+msgstr "Trình đơn"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Cannot repair this part."
+msgstr "Không thể sửa bộ phận này."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This part cannot be repaired."
+msgstr "Bộ phận này không thể sửa được."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This vehicle cannot be repaired."
+msgstr "Phương tiện này không thể sửa được."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid " for more"
+msgstr " để xem thêm"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Gesture guide: autonomous driving"
+msgstr "Hướng dẫn cử chỉ: chế độ tự lái"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Autonomous driving: four straight one-finger swipes are disabled."
+msgstr "Chế độ tự lái: bốn cử chỉ vuốt thẳng một ngón đang tạm tắt."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Swipe one finger up then down: Read vehicle speed."
+msgstr "Vuốt một ngón lên rồi xuống: Đọc tốc độ xe."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Swipe one finger down then up: Read vehicle speed."
+msgstr "Vuốt một ngón xuống rồi lên: Đọc tốc độ xe."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Swipe one finger left then right: Read vehicle heading."
+msgstr "Vuốt một ngón trái rồi phải: Đọc hướng xe đang chạy."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Swipe one finger right then left: Read vehicle heading."
+msgstr "Vuốt một ngón phải rồi trái: Đọc hướng xe đang chạy."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Swipe one finger up then right: Read vehicle status."
+msgstr "Vuốt một ngón lên rồi sang phải: Đọc trạng thái xe."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Swipe one finger up then left: Pause and brake."
+msgstr "Vuốt một ngón lên rồi sang trái: Tạm dừng và phanh xe."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Triple tap three fingers: Cancel the trip and switch to Map."
+msgstr "Chạm ba lần bằng ba ngón: Hủy chuyến đi và chuyển sang Bản đồ."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "The selected mutation is not currently active."
+msgstr "Đột biến đã chọn hiện không được kích hoạt."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Monster spawn count"
+msgstr "Số lượng quái vật tạo ra"
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "Number of monsters to create for the selected type."
+msgstr "Số lượng quái vật cần tạo cho loại đã chọn."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "The spawn count is already zero."
+msgstr "Số lượng tạo ra đã bằng không."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "The selected item has no text snippets."
+msgstr "Vật phẩm đã chọn không có đoạn mô tả văn bản nào."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+msgid "This mod has errors and cannot be enabled."
+msgstr "Bản mod này có lỗi và không thể bật lên."
+
+#. Reviewed Vietnamese additions from cdda-merge-vi230-ci-cleanup.zip
+#, c-format
+msgid "Zone created: %s. Save changes when leaving."
+msgstr "Đã tạo khu vực: %s. Hãy lưu thay đổi khi rời khỏi."
+
+#, c-format
+msgid "%d blood test findings."
+msgstr "Có %d kết quả xét nghiệm máu."
+
+msgid "Extended description"
+msgstr "Mô tả mở rộng"
+
+msgid "Vehicle or appliance"
+msgstr "Phương tiện hoặc thiết bị gia dụng"
+
+msgid "Martial art style details"
+msgstr "Chi tiết môn võ thuật"
+
+msgid "General information"
+msgstr "Thông tin chung"
+
+#, c-format
+msgid "Buffs (%d)"
+msgstr "Hiệu ứng hỗ trợ (%d)"
+
+#, c-format
+msgid "Techniques (%d)"
+msgstr "Kỹ thuật (%d)"
+
+#, c-format
+msgid "Compatible weapons (%d)"
+msgstr "Vũ khí tương thích (%d)"
+
+msgid "None."
+msgstr "Không có."
+
+msgid "Vending machine"
+msgstr "Máy bán hàng tự động"
+
+#, c-format
+msgid "Price: %1$s, stock: %2$d"
+msgstr "Giá: %1$s, còn lại: %2$d"
+
+#, c-format
+msgid "Rules for %s"
+msgstr "Quy tắc cho %s"
+
+msgid "Select a rule and double tap to toggle or cycle its setting."
+msgstr "Chọn một quy tắc và chạm hai lần để bật tắt hoặc chuyển sang mức tiếp theo."
+
+msgid "Medical status"
+msgstr "Tình trạng y tế"
+
+msgid "Select a body part to inspect wounds or double tap to treat."
+msgstr "Chọn một bộ phận cơ thể để kiểm tra vết thương hoặc chạm hai lần để điều trị."
+
+msgid "Sort armor"
+msgstr "Sắp xếp giáp"
+
+msgid "All body parts"
+msgstr "Tất cả bộ phận cơ thể"
+
+#, c-format
+msgid "Category: %1$s. %2$d worn items."
+msgstr "Danh mục: %1$s. %2$d vật phẩm đang mặc."
+
+#, c-format
+msgid "Distance: %1$d map tiles, coordinates %2$s."
+msgstr "Khoảng cách: %1$d ô bản đồ, tọa độ %2$s."
+
+msgid "Select a module slot and double tap to insert, replace, or activate."
+msgstr "Chọn một khe mô-đun và chạm hai lần để lắp, thay thế hoặc kích hoạt."
+
+msgid "Change vehicle part shape"
+msgstr "Đổi hình dạng bộ phận phương tiện"
+
+msgid "Select a vehicle tile and double tap to choose a part to reshape."
+msgstr "Chọn một ô phương tiện và chạm hai lần để chọn bộ phận cần đổi hình dạng."
+
+#, c-format
+msgid "Vehicle tile %d"
+msgstr "Ô phương tiện %d"
+

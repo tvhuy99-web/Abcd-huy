@@ -1,5 +1,9 @@
 #include "iexamine.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
+
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -1179,10 +1183,52 @@ void iexamine::vending( Character &you, const tripoint_bub_ms &examp )
         draw_item_info( w_item_info, data );
     } );
 
+    a11y::screen_scope vend_reader( &ctxt, "vending-machine",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        for( std::size_t i = 0; i < item_list.size(); ++i ) {
+            if( intent.node != "vend:item:" + std::to_string( i ) ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            cur_pos = static_cast<int>( i );
+            item_info_scroll_pos = 0;
+            return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
     for( ;; ) {
-        ui_manager::redraw();
-
         const int num_items = item_list.size();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                   ctxt, _( "Vending machine" ) );
+            snapshot.summary = string_format( _( "Money left: %s" ), format_money( money ) );
+            for( std::size_t i = 0; i < item_list.size(); ++i ) {
+                const auto &elem = item_list[i];
+                const auto &sample_item = elem->second.back();
+                a11y::semantic_node node;
+                node.id = "vend:item:" + std::to_string( i );
+                node.role = "listitem";
+                node.label = remove_color_tags( elem->first );
+                node.value = string_format( _( "Price: %1$s, stock: %2$d" ),
+                                            format_money( sample_item->price( false ) ),
+                                            static_cast<int>( elem->second.size() ) );
+                if( static_cast<int>( i ) == cur_pos ) {
+                    node.detail = remove_color_tags( sample_item->info( true ) );
+                }
+                node.actions = { "focus", "activate" };
+                node.selected = static_cast<int>( i ) == cur_pos;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = num_items;
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            vend_reader.update( std::move( snapshot ) );
+        }
+        ui_manager::redraw();
 
         // Item info
         auto &cur_items = item_list[static_cast<size_t>( cur_pos )]->second;
@@ -2006,7 +2052,19 @@ void iexamine::locked_object( Character &you, const tripoint_bub_ms &examp )
         //~ %1$s: terrain/furniture name, %2$s: prying tool name
         you.add_msg_if_player( _( "You attempt to pry open the %1$s using your %2$s…" ),
                                target_name, best_prying.tname() );
-        iuse::crowbar( &you, &best_prying, examp );
+
+        item_location prying_tool_loc;
+        you.visit_items( [&prying_tool_loc, &best_prying]( const item_location & node ) {
+
+            if( node.get_item()->type->id == best_prying.type->id ) {
+                prying_tool_loc = node;
+                return VisitResponse::ABORT;
+            }
+
+            return VisitResponse::NEXT;
+        } );
+
+        iuse::crowbar( &you, prying_tool_loc, examp );
     } else if( action == act::pick ) {
         locked_object_pickable( you, examp );
     }
@@ -2045,12 +2103,21 @@ void iexamine::locked_object_pickable( Character &you, const tripoint_bub_ms &ex
         }
     }
 
-    std::vector<item *> picklocks = you.items_with( [&you]( const item & it ) {
+    std::vector<item_location> picklocks;
+    you.visit_items( [&picklocks, &you]( const item_location & node ) {
+
         // Don't include worn items such as hairpins
-        if( !you.is_worn( it ) ) {
-            return it.type->get_use( "PICK_LOCK" ) != nullptr;
+        if( !you.is_worn( *node ) ) {
+            return VisitResponse::NEXT;
         }
-        return false;
+
+        if( node->type->get_use( "PICK_LOCK" ) == nullptr ) {
+            return VisitResponse::NEXT;
+        }
+
+        picklocks.emplace_back( node );
+
+        return VisitResponse::NEXT;
     } );
 
     if( picklocks.empty() ) {
@@ -2060,7 +2127,8 @@ void iexamine::locked_object_pickable( Character &you, const tripoint_bub_ms &ex
     }
 
     // Sort by their picklock level.
-    std::sort( picklocks.begin(), picklocks.end(), [&]( const item * a, const item * b ) {
+    std::sort( picklocks.begin(), picklocks.end(), [&]
+    ( const item_location & a, const item_location & b ) {
         int a_quality = a->get_quality( qual_LOCKPICK );
         int b_quality = b->get_quality( qual_LOCKPICK );
         // Sort by durability to spend most broken item
@@ -2070,8 +2138,8 @@ void iexamine::locked_object_pickable( Character &you, const tripoint_bub_ms &ex
         return a_quality > b_quality;
     } );
 
-    for( item *it : picklocks ) {
-        int required_moves = lockpick_activity_actor::lockpicking_moves( item_location{you, it}, you );
+    for( item_location it : picklocks ) {
+        int required_moves = lockpick_activity_actor::lockpicking_moves( it, you );
         time_duration required_time = time_duration::from_turns( required_moves / you.get_speed() );
         const std::string time_string = colorize( to_string( required_time, true ), c_light_gray );
         std::string query = string_format( _( "Pick the lock of %1$s using your %2$s?" ),
@@ -2085,9 +2153,9 @@ void iexamine::locked_object_pickable( Character &you, const tripoint_bub_ms &ex
         const use_function *iuse_fn = it->type->get_use( "PICK_LOCK" );
         you.add_msg_if_player( _( "You attempt to pick the lock of %1$s using your %2$s…" ),
                                target_name, it->tname() );
-        const ret_val<void> can_use = iuse_fn->can_call( you, *it, examp );
+        const ret_val<void> can_use = iuse_fn->can_call( you, it, examp );
         if( can_use.success() ) {
-            iuse_fn->call( &you, *it, examp );
+            iuse_fn->call( &you, it, examp );
             return;
         } else {
             you.add_msg_if_player( m_bad, can_use.str() );
@@ -2363,34 +2431,9 @@ void iexamine_helper::handle_harvest( Character &you, const itype_id &itemid, bo
     if( harvest.has_temperature() ) {
         harvest.set_item_temperature( get_weather().get_temperature( you.pos_bub() ) );
     }
-    // Only auto-eat when the NPC is actively seeking food or water
-    // (self-care need execution). Generic harvest jobs (farming zones,
-    // player-assigned tasks) should collect, not consume.
-    bool npc_self_care = false;
-    if( you.is_npc() ) {
-        const npc &n = dynamic_cast<const npc &>( you );
-        const std::string &goal = n.get_committed_goal();
-        npc_self_care = ( goal == "eat_food" || goal == "drink_water" );
-    }
-    if( npc_self_care && harvest.is_food() &&
-        ( you.get_hunger() > 0 || you.has_calorie_deficit() ) &&
-        you.will_eat( harvest ).success() ) {
-        const time_duration consume_time = you.get_consume_time( harvest );
-        trinary result = you.consume( harvest );
-        if( result != trinary::NONE ) {
-            you.mod_moves( -to_moves<int>( consume_time ) );
-        }
-        if( result == trinary::SOME ) {
-            // Partial consumption: stash or drop the remainder.
-            if( !force_drop && you.can_pickVolume( harvest, true ) &&
-                you.can_pickWeight( harvest, true ) ) {
-                you.i_add( harvest );
-            } else {
-                get_map().add_item_or_charges( you.pos_bub(), harvest );
-            }
-        }
-    } else if( !force_drop && you.can_pickVolume( harvest, true ) &&
-               you.can_pickWeight( harvest, false ) ) {
+    // harvest is kept; NPC eats it later like any carried food
+    if( !force_drop && you.can_pickVolume( harvest, true ) &&
+        you.can_pickWeight( harvest, false ) ) {
         you.i_add( harvest );
         you.add_msg_if_player( _( "You harvest: %s." ), harvest.tname() );
         you.add_msg_if_npc( _( "<npcname> harvests: %s." ), harvest.tname() );
@@ -2568,7 +2611,7 @@ void iexamine::harvest_furn_nectar( Character &you, const tripoint_bub_ms &examp
     if( !auto_forage && !query_pick( you, examp ) ) {
         return;
     }
-    you.assign_activity( harvest_activity_actor( examp, auto_forage ) );
+    you.assign_activity( harvest_activity_actor( get_map().get_abs( examp ), auto_forage ) );
 }
 
 void iexamine::harvest_furn( Character &you, const tripoint_bub_ms &examp )
@@ -2578,7 +2621,7 @@ void iexamine::harvest_furn( Character &you, const tripoint_bub_ms &examp )
     if( !auto_forage && !query_pick( you, examp ) ) {
         return;
     }
-    you.assign_activity( harvest_activity_actor( examp, auto_forage ) );
+    you.assign_activity( harvest_activity_actor( get_map().get_abs( examp ), auto_forage ) );
 }
 
 void iexamine::harvest_ter_nectar( Character &you, const tripoint_bub_ms &examp )
@@ -2590,7 +2633,7 @@ void iexamine::harvest_ter_nectar( Character &you, const tripoint_bub_ms &examp 
     if( !auto_forage && !query_pick( you, examp ) ) {
         return;
     }
-    you.assign_activity( harvest_activity_actor( examp, auto_forage ) );
+    you.assign_activity( harvest_activity_actor( get_map().get_abs( examp ), auto_forage ) );
 }
 
 void iexamine::harvest_ter( Character &you, const tripoint_bub_ms &examp )
@@ -2601,7 +2644,7 @@ void iexamine::harvest_ter( Character &you, const tripoint_bub_ms &examp )
     if( !auto_forage && !query_pick( you, examp ) ) {
         return;
     }
-    you.assign_activity( harvest_activity_actor( examp, auto_forage ) );
+    you.assign_activity( harvest_activity_actor( get_map().get_abs( examp ), auto_forage ) );
 }
 
 /**
@@ -3001,18 +3044,26 @@ void iexamine::aggie_plant( Character &you, const tripoint_bub_ms &examp )
     }
 }
 
-static void add_firestarter( item *it, std::multimap<int, item *> &firestarters, Character &you,
-                             const tripoint_bub_ms &examp )
+static VisitResponse add_firestarter( item_location it,
+                                      std::multimap<int, item_location> &firestarters,
+                                      Character &you, const tripoint_bub_ms &examp )
 {
+    if( !it->has_flag( flag_FIRESTARTER ) || !it->has_flag( flag_FIRE ) ) {
+        return VisitResponse::NEXT;
+    }
+
     const use_function *usef = it->type->get_use( "firestarter" );
     if( usef != nullptr && usef->get_actor_ptr() != nullptr ) {
-        const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
-        if( actor->can_use( you, *it, &get_map(), examp ).success() ) {
-            firestarters.insert( std::pair<int, item *>( actor->moves_cost_fast, it ) );
-        }
+        return VisitResponse::NEXT;
     }
-}
 
+    const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
+    if( actor->can_use( you, it, &get_map(), examp ).success() ) {
+        firestarters.emplace( actor->moves_cost_fast, it );
+    }
+
+    return VisitResponse::NEXT;
+}
 
 static void pick_firestarter_and_fire( Character &you, const tripoint_bub_ms &examp,
                                        firestarter_actor::start_type st )
@@ -3027,16 +3078,12 @@ static void pick_firestarter_and_fire( Character &you, const tripoint_bub_ms &ex
         return;
     }
 
-    // Determine the fire starter to use.
-    auto is_firestarter = []( const item & it ) {
-        return it.has_flag( flag_FIRESTARTER ) || it.has_flag( flag_FIRE );
-    };
 
-    std::multimap<int, item *> firestarters;
+    std::multimap<int, item_location> firestarters;
 
-    for( item *it : you.items_with( is_firestarter ) ) {
-        add_firestarter( it, firestarters, you, examp );
-    }
+    you.visit_items( [&firestarters, &you, &examp]( const item_location & node ) {
+        return add_firestarter( node, firestarters, you, examp );
+    } );
 
     const bool has_bionic_firestarter = you.has_bionic( bio_lighter ) &&
                                         you.enough_power_for( bio_lighter );
@@ -3053,13 +3100,14 @@ static void pick_firestarter_and_fire( Character &you, const tripoint_bub_ms &ex
     // Try to start the smoking rack/kiln.
     if( !use_cbm ) {
         for( auto &firestarter : firestarters ) {
-            item *it = firestarter.second;
+            item_location it = firestarter.second;
             const use_function *usef = it->type->get_use( "firestarter" );
             const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
-            you.add_msg_if_player( _( "You attempt to start a fire with your %s…" ), it->tname() );
-            const ret_val<void> can_use = actor->can_use( you, *it, &get_map(), examp );
+            you.add_msg_if_player( _( "You attempt to start a fire with your %s…" ),
+                                   it->tname() );
+            const ret_val<void> can_use = actor->can_use( you, it, &get_map(), examp );
             if( can_use.success() ) {
-                const int charges = actor->use( &you, *it, &get_map(), examp ).value_or( 0 );
+                const int charges = actor->use( &you, it, &get_map(), examp ).value_or( 0 );
                 you.use_charges( it->typeId(), charges );
                 return;
             } else {
@@ -3588,28 +3636,39 @@ void iexamine::fireplace( Character &you, const tripoint_bub_ms &examp )
     const bool already_on_fire = here.has_nearby_fire( examp, 0 );
     const bool furn_is_deployed = !here.furn( examp ).obj().deployed_item.is_empty();
 
-    auto is_firestarter = []( const item & it ) {
-        return it.has_flag( flag_FIRESTARTER ) || it.has_flag( flag_FIRE );
-    };
     auto is_firequencher = []( const item & it ) {
         return it.damage_melee( damage_bash );
     };
 
-    std::multimap<int, item *> firestarters;
+
+    std::multimap<int, item_location> firestarters;
+    // TODO: this doesn't work and needs fixing
     std::vector<item *> firequenchers = you.items_with( is_firequencher );
 
-    for( item *it : you.items_with( is_firestarter ) ) {
-        add_firestarter( it, firestarters, you, examp );
-    }
+    you.visit_items( [&firestarters, &you, &examp]( const item_location & node ) {
+        return add_firestarter( node, firestarters, you, examp );
+    } );
 
     for( const tripoint_bub_ms &pos : closest_points_first( you.pos_bub(), PICKUP_RANGE ) ) {
         if( pos == examp ) {
             // stuff in the fireplace can't light or quench itself
             continue;
         }
-        for( item_location &it : here.items_with( pos, is_firestarter ) ) {
-            add_firestarter( &*it, firestarters, you, examp );
+
+        const std::optional<vpart_reference> ovp = here.veh_at( pos ).cargo();
+        if( ovp.has_value() ) {
+            vehicle_cursor veh_cursor( ovp->vehicle(), ovp->part_index() );
+            veh_cursor.visit_items( [&firestarters, &you, &examp]( const item_location & node ) {
+                return add_firestarter( node, firestarters, you, examp );
+            } );
         }
+
+        map_cursor m_cursor( examp );
+        m_cursor.visit_items( [&firestarters, &you, &examp]( const item_location & node ) {
+            return add_firestarter( node, firestarters, you, examp );
+        } );
+
+
         // anything is fine, so only check if we got nothing yet
         if( firequenchers.empty() ) {
             for( item_location &it : here.items_with( pos, is_firequencher ) ) {
@@ -3651,13 +3710,13 @@ void iexamine::fireplace( Character &you, const tripoint_bub_ms &examp )
             return;
         case 1: {
             for( auto &firestarter : firestarters ) {
-                item *it = firestarter.second;
+                item_location it = firestarter.second;
                 const use_function *usef = it->type->get_use( "firestarter" );
                 const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
                 you.add_msg_if_player( _( "You attempt to start a fire with your %s…" ), it->tname() );
-                const ret_val<void> can_use = actor->can_use( you, *it, &get_map(), examp );
+                const ret_val<void> can_use = actor->can_use( you, it, &get_map(), examp );
                 if( can_use.success() ) {
-                    const int charges = actor->use( &you, *it, &get_map(), examp ).value_or( 0 );
+                    const int charges = actor->use( &you, it, &get_map(), examp ).value_or( 0 );
                     you.use_charges( it->typeId(), charges );
                     return;
                 } else {
@@ -4522,7 +4581,7 @@ void iexamine::tree_hickory( Character &you, const tripoint_bub_ms &examp )
         return;
     }
 
-    you.assign_activity( harvest_activity_actor( examp, auto_forage ) );
+    you.assign_activity( harvest_activity_actor( get_map().get_abs( examp ), auto_forage ) );
 }
 
 static item_location maple_tree_sap_container()
@@ -7424,7 +7483,7 @@ void iexamine::workbench_internal( Character &you, const tripoint_bub_ms &examp,
             std::vector<std::string> item_names;
             for( item_location &it : crafts ) {
                 if( it ) {
-                    item_names.emplace_back( it.get_item()->tname() );
+                    item_names.emplace_back( it->get_craft_listing_name( you ) );
                 }
             }
             uilist amenu2( _( "Which craft or disassembly to work on?" ), item_names );

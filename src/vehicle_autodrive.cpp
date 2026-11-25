@@ -1225,7 +1225,8 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
                         iter->second = next_node;
                     }
                 }
-            } else if( known_nodes.size() < static_cast<std::size_t>( max_search_count ) ) {
+            } else if( max_search_count > 0 &&
+                       known_nodes.size() < static_cast<std::size_t>( max_search_count ) ) {
                 known_nodes[next_addr] = next_node;
                 open_set.push( compute_node_score( next_addr, next_node ) );
             } else {

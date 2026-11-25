@@ -19,7 +19,7 @@ OVERLAYS = {
         "folder": "Arcana_StrangeAeons", "id": "Arcana",
         "revision": "080d8e9e454d2179bc98eb07de075f74e58bcbd1",
         "file": "translations/arcana_vi_overlay.b64",
-        "sha256": "c90dede89fb5b31852256e3b57828d235e908ff70ecea633fceab7046c060d37",
+        "sha256": "a2fedcba612d63fd78fbb91b99d9121ff36e6e4dcf5ee9c550b33c4740bd3ac9",
         "max_bytes": 1_500_000, "max_files": 339,
         "source_blobs": "translations/arcana_upstream_blob_shas.json",
         "expected_strings": 6794,
@@ -78,8 +78,16 @@ def target_for_pointer(obj, pointer):
     return parent, key
 
 
+# Effect messages are [display text, engine message type] pairs.
+# Their second member is not a translatable string.
+def is_effect_message_type_pointer(pointer):
+    return re.search(r"/(?:decay_messages|apply_message)/\d+/1$", pointer) is not None
+
+
 def allowed_arcana_pointer(name, pointer):
     """Prevent accidentally translating IDs, map layouts or mod logic."""
+    if is_effect_message_type_pointer(pointer):
+        return False
     raw_parts = pointer.lstrip("/").split("/")
     parts = [x.replace("~1", "/").replace("~0", "~") for x in raw_parts]
     labels = [x for x in parts if not x.isdigit()]
@@ -136,6 +144,7 @@ def apply(kind, data_mods, dry_run=False):
         original_blobs = pin["files"]
     prepared = []
     strings = 0
+    skipped_types = 0
     for name, changes in sorted(load_overlay(kind).items()):
         relative = Path(name)
         if (not name.endswith(".json") or relative.is_absolute()
@@ -158,19 +167,38 @@ def apply(kind, data_mods, dry_run=False):
             seen_pointers.add(pointer)
             if not isinstance(translated, str) or len(translated) > 8192:
                 raise ValueError("Invalid localized text: " + pointer)
-            if kind == "arcana" and not allowed_arcana_pointer(name, pointer):
-                raise ValueError("Arcana overlay attempted to modify a technical field: " + name + pointer)
             parent, key = target_for_pointer(obj, pointer)
             old = parent[key]
             if not isinstance(old, str):
                 raise ValueError("Non-string original: " + name + pointer)
-            if Counter(TOKEN.findall(old)) != Counter(TOKEN.findall(translated)):
+            # Older translation inputs may include bad/good/neutral/mixed
+            # in a tuple or effect rating. Keep the exact pinned source
+            # value, not a guessed Vietnamese-to-English mapping.
+            if is_effect_message_type_pointer(pointer) or (
+                    isinstance(parent, dict) and key == "rating"
+                    and parent.get("type") == "effect_type"):
+                if old not in {"good", "neutral", "bad", "mixed"}:
+                    raise ValueError("Invalid upstream effect message type: " + name + pointer)
+                skipped_types += 1
+                continue
+            if kind == "arcana" and not allowed_arcana_pointer(name, pointer):
+                raise ValueError("Arcana overlay attempted to modify a technical field: " + name + pointer)
+            old_tokens = TOKEN.findall(old)
+            new_tokens = TOKEN.findall(translated)
+            if Counter(old_tokens) != Counter(new_tokens):
                 raise ValueError("Broken placeholder: " + name + pointer)
+            old_unnumbered = [t for t in old_tokens if t.startswith("%") and "$" not in t]
+            new_unnumbered = [t for t in new_tokens if t.startswith("%") and "$" not in t]
+            if old_unnumbered != new_unnumbered:
+                raise ValueError("Reordered unnumbered placeholder: " + name + pointer)
             parent[key] = translated
             strings += 1
         prepared.append((path, json.dumps(obj, ensure_ascii=False, indent=2) + "\n"))
-    if info.get("expected_strings") is not None and strings != info["expected_strings"]:
+    if (info.get("expected_strings") is not None
+            and strings + skipped_types != info["expected_strings"]):
         raise ValueError("Incorrect number of Arcana translation entries")
+    if skipped_types:
+        print(f"{kind}: preserved {skipped_types} original effect message types")
     if not dry_run:
         for path, data in prepared:
             temporary = path.with_name(path.name + ".vi-tmp")

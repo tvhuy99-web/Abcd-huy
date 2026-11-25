@@ -57,6 +57,9 @@ trajectory mode_reach( avatar &you, item_location weapon );
 /** Unarmed reach attacking */
 trajectory mode_unarmed_reach( avatar &you );
 
+/** Accessibility-only directional selection using the native reach target list. */
+trajectory mode_accessible_melee( avatar &you, int direction );
+
 /** Manually firing vehicle turret */
 trajectory mode_turret_manual( avatar &you, turret_data &turret );
 

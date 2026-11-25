@@ -69,6 +69,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         void detail();
         void readCurrent();
         void stopSpeech();
+        /** Allow direct touch pass-through for native child widgets (e.g. EditText IME). */
+        default boolean shouldPassTouchToChild(MotionEvent event) { return false; }
         /** Called once before dispatching a recognized user action. */
         default void onUserAction() { }
     }
@@ -537,13 +539,24 @@ public final class ReaderGestureSurface extends LinearLayout {
         oneFingerPath.add(new float[] { x, y });
     }
 
+    private boolean nativeChildTouch;
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        if (listener.usesTouchExploration()) {
-            cancelGesture();
-            return super.dispatchTouchEvent(event);
-        }
         int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            nativeChildTouch = listener.shouldPassTouchToChild(event);
+        }
+        if (listener.usesTouchExploration() || nativeChildTouch) {
+            if (action == MotionEvent.ACTION_DOWN) {
+                cancelGesture();
+            }
+            boolean handled = super.dispatchTouchEvent(event);
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                nativeChildTouch = false;
+            }
+            return handled;
+        }
         if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() >= 2) {
             // Disallow parent view interception for the rest of this sequence.
             // A separate Activity-level hook also protects the outer SDL root.

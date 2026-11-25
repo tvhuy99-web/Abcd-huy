@@ -79,7 +79,9 @@ class ReaderRegressionFixes(unittest.TestCase):
         self.assertIn('get_option<bool>( "AUTO_FEATURES" )', self.input)
         self.assertIn('_( "Currently on" )', self.input)
         self.assertIn('_( "Currently off" )', self.input)
-        self.assertIn('This is not an on/off setting.', self.input)
+        self.assertIn('node.value = _( "One attack, not an on/off setting" );', self.input)
+        self.assertIn("even when unarmed. With no target, you may wait one turn", self.input)
+        self.assertIn('This is not a toggle.', self.input)
         self.assertNotIn('node.id == "toggle_auto_pickup"', self.world)
 
     def test_spoken_markup_removed_centrally_without_mutating_edit_data(self):

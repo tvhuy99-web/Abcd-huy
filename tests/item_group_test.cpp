@@ -24,6 +24,28 @@ static const itype_id itype_rock( "rock" );
 static const itype_id itype_test_balloon( "test_balloon" );
 static const itype_id itype_test_rock( "test_rock" );
 
+TEST_CASE( "legacy_item_group_extensions_inherit_existing_subtype", "[item_group]" )
+{
+    const itype_id pipe( "test_pipe" );
+    const item_group_id collection( "test_legacy_extend_collection" );
+    const item_group_id distribution( "test_legacy_extend_distribution" );
+
+    const item_group::ItemList collected = item_group::items_from( collection );
+    REQUIRE( collected.size() == 2 );
+    CHECK( std::any_of( collected.begin(), collected.end(), []( const item &it ) {
+        return it.typeId() == itype_test_rock;
+    } ) );
+    CHECK( std::any_of( collected.begin(), collected.end(), [&pipe]( const item &it ) {
+        return it.typeId() == pipe;
+    } ) );
+
+    for( int i = 0; i < 20; ++i ) {
+        const item_group::ItemList picked = item_group::items_from( distribution );
+        REQUIRE( picked.size() == 1 );
+        CHECK( ( picked.front().typeId() == itype_test_rock || picked.front().typeId() == pipe ) );
+    }
+}
+
 TEST_CASE( "truncate_spawn_when_items_dont_fit", "[item_group]" )
 {
     // This item group is a 10L container with three 4L objects.  We should

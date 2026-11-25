@@ -1,4 +1,4 @@
-"""Combat swipe regression: native CDDA movement/bump behavior, not a custom guard."""
+"""Directional combat must reuse native attack mechanics, not movement."""
 import unittest
 from pathlib import Path
 
@@ -17,25 +17,21 @@ class NativeBumpCombatGestures(unittest.TestCase):
         cls.android = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         cls.vietnamese = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
-    def test_melee_direction_is_native_movement_in_all_eight_directions(self):
+    def test_combat_swipe_dispatches_only_native_attack_action(self):
         native = self.handler.split(
             'action.rfind( "A11Y_INTERNAL_COMBAT_ATTACK_", 0 ) == 0', 1
-        )[1].split('A11Y_INTERNAL_COMBAT_WEAPON_NEXT', 1)[0]
-        order = (
-            "ACTION_MOVE_FORTH", "ACTION_MOVE_FORTH_RIGHT",
-            "ACTION_MOVE_RIGHT", "ACTION_MOVE_BACK_RIGHT",
-            "ACTION_MOVE_BACK", "ACTION_MOVE_BACK_LEFT",
-            "ACTION_MOVE_LEFT", "ACTION_MOVE_FORTH_LEFT",
-        )
-        for name in order:
-            self.assertIn(name, native)
-        offsets = [native.index(s) for s in order]
-        self.assertEqual(offsets, sorted(offsets))
-        self.assertIn("act = step_actions[dir];", native)
+        )[1].split('A11Y_INTERNAL_VEHICLE_BEGIN', 1)[0]
         self.assertIn("act = ACTION_FIRE;", native)
         self.assertIn("combat_attack_direction = dir;", native)
-        self.assertIn("!held->gun_current_mode().melee()", native)
+        self.assertNotIn("ACTION_MOVE_", native)
         self.assertNotIn("ACTION_AUTOATTACK", native)
+        self.assertNotIn("step_actions", native)
+        fire = self.handler.split("static void fire()", 1)[1].split(
+            "if( a11y::enabled() && combat_attack_direction < 0 )", 1)[0]
+        self.assertIn("mode_accessible_melee( you, combat_attack_direction )", fire)
+        self.assertIn("you.melee_attack( *target, true );", fire)
+        self.assertIn("you.reach_attack( traj.back() );", fire)
+        self.assertNotIn("avatar_action::move(", fire)
 
     def test_native_autoattack_is_not_overridden_by_hostile_only_melee(self):
         body = self.handler.split("case ACTION_AUTOATTACK:", 1)[1].split("default:", 1)[0]
@@ -66,18 +62,18 @@ class NativeBumpCombatGestures(unittest.TestCase):
         self.assertIn("if( g->walk_move( dest_loc, via_ramp ) )", native)
 
     def test_reader_describes_actual_gun_or_melee_behavior(self):
-        self.assertIn('_( "Move or attack %s" )', self.world)
+        self.assertIn('_( "Attack %s" )', self.world)
         self.assertIn('_( "Fire %s" )', self.world)
         self.assertIn('!combat_held->gun_current_mode().melee()', self.world)
-        self.assertNotIn("One attack in this direction. Never moves the player.", self.world)
+        self.assertIn("Never walk.", self.world)
         self.assertIn('"reader:combat:attack:" + std::to_string( i )', self.world)
         self.assertIn('requestCombatCommand("reader:combat:attack:" + direction)', self.android)
         for direction in range(8):
             self.assertIn(f"direction = {direction};", self.android)
         for sentence in (
-            "Move or attack %s",
+            "Attack %s",
             "Fire %s",
-            "Use normal movement: attack or interact if occupied, otherwise walk.",
+            "Attack the nearest valid target in this direction within the current weapon range. Never walk.",
         ):
             self.assertIn('msgid "' + sentence + '"', self.vietnamese)
         self.assertNotIn('msgid "No visible hostile creature in that direction.', self.vietnamese)

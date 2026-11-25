@@ -1,16 +1,32 @@
 #include "wound.h"
 
+#include <algorithm>
+#include <limits>
+#include <map>
 #include <memory>
 #include <set>
 
 #include "bodypart.h"
+#include "character.h"
+#include "damage.h"
 #include "debug.h"
 #include "flexbuffer_json.h"
 #include "generic_factory.h"
 #include "json.h"
+#include "magic_enchantment.h"
+#include "messages.h"
+#include "options.h"
+#include "pimpl.h"
 #include "rng.h"
 
 enum class bp_type;
+
+static const efftype_id effect_narcosis( "narcosis" );
+
+static const json_character_flag json_flag_PAIN_IMMUNE( "PAIN_IMMUNE" );
+
+static const vitamin_id vitamin_blood( "blood" );
+static const vitamin_id vitamin_redcells( "redcells" );
 
 void wound_type::load( const JsonObject &jo, const std::string_view & )
 {
@@ -21,24 +37,39 @@ void wound_type::load( const JsonObject &jo, const std::string_view & )
     optional( jo, was_loaded, "healing_time", healing_time_,
               std::make_pair( calendar::INDEFINITELY_LONG_DURATION, calendar::INDEFINITELY_LONG_DURATION ) );
 
-    mandatory( jo, was_loaded, "damage_types", damage_types );
-    mandatory( jo, was_loaded, "damage_required", damage_required );
+    optional( jo, was_loaded, "damage_types", damage_types );
+    optional( jo, was_loaded, "damage_required", damage_required );
     optional( jo, was_loaded, "weight", weight, 1 );
     optional( jo, was_loaded, "limb_scores", limb_scores );
     optional( jo, was_loaded, "limit", limit, 0 );
+    optional( jo, was_loaded, "severity", severity, wound_severity::MINOR );
 
+    optional( jo, was_loaded, "mod_values", mod_values );
+    optional( jo, was_loaded, "periodic_message", periodic_message );
     optional( jo, was_loaded, "wound_progression", wound_progression );
     optional( jo, was_loaded, "progress_timer", progress_timer );
+    optional( jo, was_loaded, "whitelist_flags", whitelist_flags );
+    optional( jo, was_loaded, "blacklist_flag", blacklist_flags );
     optional( jo, was_loaded, "whitelist_bp_with_flag", whitelist_bp_with_flag );
     optional( jo, was_loaded, "whitelist_body_part_types", whitelist_body_part_types );
     optional( jo, was_loaded, "blacklist_bp_with_flag", blacklist_bp_with_flag );
     optional( jo, was_loaded, "blacklist_body_part_types", blacklist_body_part_types );
 }
 
-wound::wound( wound_type_id wd ) :
+wound::wound( wound_type_id wd, const Character *who, bodypart_str_id bp,
+              dealt_damage_instance &ddi ):
     type( wd ),
     healing_time( wd->evaluate_healing_time() ),
-    pain( wd->evaluate_pain() ),
+    pain( wd->evaluate_pain( who, bp ) ),
+    hp_damage( ddi.total_damage() ),
+    wound_progress_timer( wd->evaluate_progress_timer() )
+{}
+
+wound::wound( wound_type_id wd, const Character *who, bodypart_str_id bp, int hp_damage ):
+    type( wd ),
+    healing_time( wd->evaluate_healing_time() ),
+    pain( wd->evaluate_pain( who, bp ) ),
+    hp_damage( hp_damage ),
     wound_progress_timer( wd->evaluate_progress_timer() )
 {}
 
@@ -46,8 +77,6 @@ namespace
 {
 generic_factory<wound_type> wound_type_factory( "wound" );
 
-// we'll store requirement_ids here and wait for requirements to load in, then we can actualize them
-std::multimap<wound_fix_id, std::pair<std::string, int>> reqs_temp_storage;
 } // namespace
 
 void wound_type::load_wounds( const JsonObject &jo, const std::string &src )
@@ -96,7 +125,7 @@ void wound_type::finalize_all()
 
 void wound_type::finalize()
 {
-
+    _is_bleeding_wound = assign_bleeding_wound();
 }
 
 namespace
@@ -136,7 +165,6 @@ bool string_id<wound_fix>::is_valid() const
 void wound_fix::reset()
 {
     wound_fix_factory.reset();
-    reqs_temp_storage.clear();
 }
 
 void wound_fix::check_consistency()
@@ -146,9 +174,9 @@ void wound_fix::check_consistency()
 
 void wound_fix::check() const
 {
-    for( const auto &[skill_id, lvl] : skills ) {
-        if( !skill_id.is_valid() ) {
-            debugmsg( "wound_fix %s requires unknown skill '%s'", id.str(), skill_id.str() );
+    for( const wound_skill &sk : skills ) {
+        if( !sk.skill.is_valid() ) {
+            debugmsg( "wound_fix %s requires unknown skill '%s'", id.str(), sk.skill.str() );
         }
     }
     for( const wound_type_id &wd_id : wounds_removed ) {
@@ -177,35 +205,81 @@ void wound_fix::finalize_all()
     wound_fix_factory.finalize();
 }
 
+namespace io
+{
+template<>
+std::string enum_to_string<wound_mod_value_type>( wound_mod_value_type data )
+{
+    switch( data ) {
+            // *INDENT-OFF*
+        case wound_mod_value_type::PAIN: return "PAIN";
+        case wound_mod_value_type::BLEED: return "BLEED";
+        case wound_mod_value_type::VITAMIN: return "VITAMIN";
+
+            // *INDENT-ON*
+        case wound_mod_value_type::LAST:
+            break;
+    }
+    cata_fatal( "Invalid wound_mod_value_type" );
+}
+
+template<>
+std::string enum_to_string<wound_severity>( wound_severity data )
+{
+    switch( data ) {
+        // *INDENT-OFF*
+    case wound_severity::MINOR: return "MINOR";
+    case wound_severity::MAJOR: return "MAJOR";
+    case wound_severity::CRITICAL: return "CRITICAL";
+
+        // *INDENT-ON*
+        case wound_severity::LAST:
+            break;
+    }
+    cata_fatal( "Invalid wound_severity" );
+}
+
+} // namespace io
+
 void wound_fix::finalize()
 {
-    const auto range = reqs_temp_storage.equal_range( id );
-    for( auto it = range.first; it != range.second; ++it ) {
-        const requirement_id req_id( it->second.first );
-        const int amount = it->second.second;
+    for( const std::pair<requirement_id, int> &p : pending_requirements ) {
+        const requirement_id req_id = p.first;
+        const int amount = p.second;
         if( !req_id.is_valid() ) {
             debugmsg( "wound_fix '%s' has invalid requirement_id '%s'", id.str(), req_id.str() );
             continue;
         }
         *requirements = *requirements + ( *req_id ) * amount;
     }
+    pending_requirements.clear();
     requirements->consolidate();
+    requirement_data::finalize();
+
     for( const wound_type_id &fid : wounds_removed ) {
         const_cast<wound_type &>( *fid ).fixes.emplace( id );
     }
-    requirement_data::finalize();
 }
 
 void wound_limb_score::deserialize( const JsonObject &jo )
 {
     mandatory( jo, false, "score", score );
     optional( jo, false, "value", value, 0.f );
+    optional( jo, false, "mod", mod, 0.f );
 }
 
 void wound_progress::deserialize( const JsonObject &jo )
 {
     mandatory( jo, false, "id", id );
     optional( jo, false, "chance", chance, numeric_bound_reader<int> {0, 100} );
+}
+
+void wound_skill::deserialize( const JsonObject &jo )
+{
+    mandatory( jo, false, "skill", skill );
+    mandatory( jo, false, "level", level );
+    optional( jo, false, "time_save", time_save, 1.f );
+    optional( jo, false, "is_mandatory", is_mandatory, true );
 }
 
 void wound_proficiency::deserialize( const JsonObject &jo )
@@ -220,6 +294,22 @@ void wound_type_progress_timer::deserialize( const JsonObject &jo )
     mandatory( jo, false, "id", id );
     mandatory( jo, false, "time", time );
     optional( jo, false, "message", message );
+}
+
+void wound_mod_values::deserialize( const JsonObject &jo )
+{
+    mandatory( jo, false, "type", type );
+    mandatory( jo, false, "rate", rate );
+    optional( jo, false, "vitamin_id", vitamin );
+    optional( jo, false, "amount", amount );
+    optional( jo, false, "cap_min", cap_min, INT_MIN );
+    optional( jo, false, "cap_max", cap_max, INT_MAX );
+}
+
+void wound_periodic_message::deserialize( const JsonObject &jo )
+{
+    mandatory( jo, false, "message", message );
+    mandatory( jo, false, "rate", rate );
 }
 
 void wound_fix::load( const JsonObject &jo, const std::string_view & )
@@ -243,19 +333,20 @@ void wound_fix::load( const JsonObject &jo, const std::string_view & )
     }
 
     if( jo.has_array( "requirements" ) ) {
+        pending_requirements.clear();
         for( const JsonValue &jv : jo.get_array( "requirements" ) ) {
             if( jv.test_array() ) {
                 // array of 2 elements filled with [requirement_id, count]
                 const JsonArray &req = static_cast<JsonArray>( jv );
-                const std::string req_id = req.get_string( 0 );
+                const requirement_id req_id( req.get_string( 0 ) );
                 const int req_amount = req.get_int( 1 );
-                reqs_temp_storage.emplace( id, std::make_pair( req_id, req_amount ) );
+                pending_requirements.emplace_back( req_id, req_amount );
             } else if( jv.test_object() ) {
                 // defining single requirement inline
                 const JsonObject &req = static_cast<JsonObject>( jv );
                 const requirement_id req_id( "wound_fix_" + id.str() + "_inline_req" );
                 requirement_data::load_requirement( req, req_id );
-                reqs_temp_storage.emplace( id, std::make_pair( req_id.str(), 1 ) );
+                pending_requirements.emplace_back( req_id, 1 );
             } else {
                 debugmsg( "wound_fix '%s' has has invalid requirement element", id.str() );
             }
@@ -268,21 +359,51 @@ const requirement_data &wound_fix::get_requirements() const
     return *requirements;
 }
 
+// Determine whether a character has the knowledge to perform this treatment.
+// Item/tool requirements are checked when the treatment is actually selected.
+std::pair<bool, float> wound_fix::doable_by( const Character &c ) const
+{
+    bool doable = true;
+    float time_multiplier = 1.0f;
+
+    for( const wound_skill &req : skills ) {
+        const bool met = c.get_greater_skill_or_knowledge_level( req.skill ) >= req.level;
+        if( req.is_mandatory && !met ) {
+            doable = false;
+        } else if( met ) {
+            time_multiplier *= req.time_save;
+        }
+    }
+    for( const wound_proficiency &req : proficiencies ) {
+        const bool met = c.has_proficiency( req.prof );
+        if( req.is_mandatory && !met ) {
+            doable = false;
+        } else if( met ) {
+            time_multiplier *= req.time_save;
+        }
+    }
+    return { doable, time_multiplier };
+}
+
 bool wound_type::allowed_on_bodypart( bodypart_str_id bp_id ) const
 {
 
     // doesn't have bp type we want
+    bool is_whitelisted = false;
     for( const bp_type &bp_type : whitelist_body_part_types ) {
-        if( !bp_id->has_type( bp_type ) ) {
-            return false;
-        }
+        is_whitelisted = is_whitelisted || bp_id->has_type( bp_type );
+    }
+    if( !is_whitelisted && !whitelist_body_part_types.empty() ) {
+        return false;
     }
 
     // has no flag we want
+    is_whitelisted = false;
     for( const json_character_flag &bp_flag : whitelist_bp_with_flag ) {
-        if( !bp_id->has_flag( bp_flag ) ) {
-            return false;
-        }
+        is_whitelisted = is_whitelisted || bp_id->has_flag( bp_flag );
+    }
+    if( !is_whitelisted && !whitelist_bp_with_flag.empty() ) {
+        return false;
     }
 
     // has type we do not want
@@ -302,9 +423,44 @@ bool wound_type::allowed_on_bodypart( bodypart_str_id bp_id ) const
     return true;
 }
 
-int wound_type::evaluate_pain() const
+bool wound_type::assign_bleeding_wound() const
 {
-    return rng( pain_.first, pain_.second );
+    bool uses_blood_vitamins = false;
+    bool drips_blood = false;
+    for( const wound_mod_values &mv : mod_values ) {
+        if( mv.vitamin.has_value() ) {
+            const vitamin_id vit = *mv.vitamin;
+            if( vit == vitamin_blood || vit == vitamin_redcells ) {
+                uses_blood_vitamins = true;
+            }
+        }
+
+        if( mv.type == wound_mod_value_type::BLEED ) {
+            drips_blood = true;
+        }
+    }
+
+    return uses_blood_vitamins && drips_blood;
+}
+
+bool wound_type::is_bleeding_wound() const
+{
+    return _is_bleeding_wound;
+}
+
+int wound_type::evaluate_pain( const Character *who, bodypart_str_id bp ) const
+{
+    float ret = static_cast<float>( rng( pain_.first, pain_.second ) );
+
+    if( who != nullptr ) {
+        ret *= who->enchantment_cache->get_value_multiply( enchant_vals::mod::PAIN );
+    }
+
+    if( bp != bodypart_str_id::NULL_ID() ) {
+        ret *= bp->pain_mod;
+    }
+
+    return ret;
 }
 
 time_duration wound_type::evaluate_healing_time() const
@@ -337,6 +493,16 @@ std::vector<wound_limb_score> wound_type::get_limb_scores() const
     return limb_scores;
 }
 
+std::vector<wound_mod_values> wound_type::get_modify_values() const
+{
+    return mod_values;
+}
+
+std::optional<wound_periodic_message> wound_type::get_periodic_message() const
+{
+    return periodic_message;
+}
+
 std::string wound_type::get_name() const
 {
     return name_.translated();
@@ -347,6 +513,66 @@ std::string wound_type::get_description() const
     return description_.translated();
 }
 
+bool wound_type::can_be_applied( const Character *who, const bp_wounds &pt_wd,
+                                 const bodypart_id &bp, const dealt_damage_instance &d ) const
+{
+
+    if( x_in_y( 1.0f - get_option<float>( "WOUND_CHANCE" ), 1.0f ) ) {
+        return false;
+    }
+
+    bool damage_instance_match = false;
+
+    for( const std::pair<const damage_type_id, int> &d : d.dealt_dams ) {
+        const bool damage_within_limits = d.second >= pt_wd.damage_required.first &&
+                                          d.second <= pt_wd.damage_required.second;
+
+        bool damage_type_matches = std::find( pt_wd.damage_type.begin(),
+                                              pt_wd.damage_type.end(), d.first ) != pt_wd.damage_type.end();
+
+        if( damage_within_limits && damage_type_matches ) {
+            damage_instance_match = true;
+            break;
+        }
+    }
+
+    if( !damage_instance_match ) {
+        add_msg_debug( debugmode::DF_WOUNDS,
+                       "%s: trying to apply wound %s, but mismatches damage amount or damage type, wound is not applied",
+                       who->name, id.str() );
+        return false;
+    }
+
+    const bool iwwlfb = who->get_part( bp )->is_within_wound_limit_for_bp( pt_wd.id );
+
+    if( !iwwlfb ) {
+        add_msg_debug( debugmode::DF_WOUNDS,
+                       "%s: trying to apply wound %s to bodypart %s, but hits the wound limit, wound is not applied",
+                       who->name, id.str(), bp.id().str() );
+        return false;
+    }
+
+    for( const json_character_flag &fl_wl : whitelist_flags ) {
+        if( !who->has_flag( fl_wl ) ) {
+            add_msg_debug( debugmode::DF_WOUNDS,
+                           "%s: wound %s require flag %s character do not have, wound is not applied",
+                           who->name, id.str(), fl_wl.str() );
+            return false;
+        }
+    }
+
+    for( const json_character_flag &fl_bl : blacklist_flags ) {
+        if( who->has_flag( fl_bl ) ) {
+            add_msg_debug( debugmode::DF_WOUNDS,
+                           "%s: wound %s blacklists characters with flag %s, wound is not applied",
+                           who->name, id.str(), fl_bl.str() );
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void wound::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
@@ -355,6 +581,7 @@ void wound::serialize( JsonOut &jsout ) const
     jsout.member( "healing_progress", healing_progress );
     jsout.member( "wound_progress_timer", wound_progress_timer );
     jsout.member( "pain", pain );
+    jsout.member( "hp_damage", hp_damage );
     jsout.end_object();
 }
 
@@ -364,17 +591,34 @@ void wound::deserialize( const JsonObject &jsin )
     jsin.read( "healing_time", healing_time );
     jsin.read( "healing_progress", healing_progress );
     jsin.read( "wound_progress_timer", wound_progress_timer );
+    jsin.read( "hp_damage", hp_damage );
     jsin.read( "pain", pain );
 }
 
 float wound::healing_percentage() const
 {
-    return healing_progress / healing_time;
+    return healing_progress / to_seconds<float>( healing_time );
 }
 
-int wound::get_pain() const
+void wound::mod_pain( const int mod )
 {
-    return pain * ( 1 - healing_percentage() );
+    pain += mod;
+}
+
+int wound::get_pain( const Character *who ) const
+{
+    float ret = pain * ( 1.f - healing_percentage() );
+
+    if( who->has_flag( json_flag_PAIN_IMMUNE ) || who->has_effect( effect_narcosis ) ) {
+        return 0;
+    }
+
+    return ret;
+}
+
+int wound::get_pain_raw() const
+{
+    return pain;
 }
 
 time_duration wound::get_healing_time() const
@@ -382,20 +626,62 @@ time_duration wound::get_healing_time() const
     return healing_time;
 }
 
-time_duration wound::get_healing_progress() const
+float wound::get_healing_progress() const
 {
     return healing_progress;
 }
 
-wound_update_ret wound::update_wound( const time_duration time_passed )
+int wound::get_hp_damage() const
 {
-    healing_progress += time_passed;
+    return hp_damage * ( 1.f - healing_percentage() );
+}
 
-    if( wound_progress_timer && wound_progress_timer->second <= healing_progress ) {
+wound_update_ret wound::update_wound( const Character *who, const time_duration time_passed )
+{
+    if( healing_time == calendar::INDEFINITELY_LONG_DURATION && !wound_progress_timer ) {
+        return wound_update_ret::DO_NOTHING;
+    }
+
+    const float time = to_seconds<float>( time_passed );
+
+    healing_progress += time * get_wound_healing_modifier( who );
+
+    // Some saves have uninitialized healing_progress, so it can be all sorts of bananas values
+    // < 0 won't ever heal, and anything that doesn't fit in time_duration (int) causes UB when
+    // doing the conversion
+    // Feel free to remove after 0.K
+    if( healing_progress < 0 ||
+        healing_progress >= static_cast<float>( std::numeric_limits<int>::max() ) ) {
+        debugmsg( "Wound '%s' has invalid healing progress?", type->id.str() );
+        return wound_update_ret::REMOVE;
+    }
+
+    const time_duration heal_progress = time_duration::from_seconds( healing_progress );
+
+    if( wound_progress_timer && wound_progress_timer->second <= heal_progress ) {
         return wound_update_ret::ADVANCE;
-    } else if( healing_progress >= healing_time ) {
+    } else if( heal_progress >= healing_time ) {
         return wound_update_ret::REMOVE;
     }
 
     return wound_update_ret::DO_NOTHING;
+}
+
+bool wound::treatable_by( const Character &c ) const
+{
+    return std::any_of( type->fixes.begin(), type->fixes.end(), [&c]( const wound_fix_id & fix_id ) {
+        return fix_id->doable_by( c ).first;
+    } );
+}
+
+float wound::get_wound_healing_modifier( const Character *who ) const
+{
+    float mod = 1.f;
+
+    // -200 health is 0.5x to healing, +200 is 1.5x
+    mod = mod + std::clamp( who->get_lifestyle() / 400.f, -0.5f, 0.5f );
+
+    mod = who->enchantment_cache->modify_value( enchant_vals::mod::REGEN_WOUND, mod );
+
+    return std::max( 0.0f, mod );
 }

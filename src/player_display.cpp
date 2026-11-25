@@ -21,6 +21,7 @@
 #include "a11y_runtime.h"
 #include "bionics.h"
 #include "bodygraph.h"
+#include "body_status_ui.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -943,8 +944,6 @@ static void draw_skills_info( const catacurses::window &w_info, const Character 
         if( level.knowledgeLevel() == 1 && level.level() == 0 ) {
             level_gap = 150.0f;
         }
-        float learning_bonus = 100.0f * std::max( ( 1.0f + you.get_int() / 40.0f ) - 0.1f *
-                               level.exercise() / level.knowledgeExperience(), 1.0f );
         if( level.isRusty() ) {
             info_text = string_format( _( "%s\n\nPractical level: %d (%d%%) " ), info_text,
                                        level.level(), level.exercise() );
@@ -952,6 +951,13 @@ static void draw_skills_info( const catacurses::window &w_info, const Character 
                 info_text = string_format( _( "%s| Learning bonus: %.0f%%" ), info_text,
                                            level_gap );
             } else {
+                // Both XP totals can round down to 0% while the skill is rusty.
+                const int knowledge_xp = level.knowledgeExperience( true );
+                float learning_bonus = 100.0f;
+                if( knowledge_xp > 0 ) {
+                    learning_bonus *= std::max( 1.0f + you.get_int() / 40.0f -
+                                                0.1f * level.exercise( true ) / knowledge_xp, 1.0f );
+                }
                 info_text = string_format( _( "%s| Learning bonus: %.0f%%" ), info_text,
                                            learning_bonus );
             }
@@ -1406,7 +1412,8 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
                 break;
             case player_display_tab::stats:
                 if( header_clicked ) {
-                    display_bodygraph( you );
+                    body_status_ui body_ui( you );
+                    body_ui.display();
                 }
 
                 invalidate_tab( curtab );
@@ -1434,7 +1441,8 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
     } else if( action == "morale" ) {
         you.disp_morale( );
     } else if( action == "VIEW_BODYSTAT" ) {
-        display_bodygraph( you );
+        body_status_ui body_ui( you );
+        body_ui.display();
     } else if( customize_character && action == "SWITCH_GENDER" ) {
         on_customize_character( you );
     } else if( action == "SCROLL_INFOBOX_UP" ) {
@@ -1808,8 +1816,6 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         if( level.knowledgeLevel() == 1 && level.level() == 0 ) {
             level_gap = 150.0f;
         }
-        float learning_bonus = 100.0f * std::max( ( 1.0f + you.get_int() / 40.0f ) - 0.1f *
-                               level.exercise() / level.knowledgeExperience(), 1.0f );
         if( level.isRusty() ) {
             info_text = string_format( _( "%s\n\nPractical level: %d (%d%%) " ), info_text,
                                        level.level(), level.exercise() );
@@ -1817,6 +1823,13 @@ a11y::semantic_snapshot player_display_reader_snapshot(
                 info_text = string_format( _( "%s| Learning bonus: %.0f%%" ), info_text,
                                            level_gap );
             } else {
+                // Both XP totals can round down to 0% while the skill is rusty.
+                const int knowledge_xp = level.knowledgeExperience( true );
+                float learning_bonus = 100.0f;
+                if( knowledge_xp > 0 ) {
+                    learning_bonus *= std::max( 1.0f + you.get_int() / 40.0f -
+                                                0.1f * level.exercise( true ) / knowledge_xp, 1.0f );
+                }
                 info_text = string_format( _( "%s| Learning bonus: %.0f%%" ), info_text,
                                            learning_bonus );
             }

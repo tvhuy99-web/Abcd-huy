@@ -71,5 +71,51 @@ class VietnameseModOverlaysTest(unittest.TestCase):
                              source)
 
 
+    def test_effect_message_types_are_not_translatable(self):
+        accept = overlays.allowed_arcana_pointer
+        for field in ("decay_messages", "apply_message"):
+            self.assertTrue(accept("effects/effects.json", f"/14/{field}/0/0"))
+            self.assertFalse(accept("effects/effects.json", f"/14/{field}/0/1"))
+            self.assertTrue(overlays.is_effect_message_type_pointer(f"/14/{field}/0/1"))
+            self.assertFalse(overlays.is_effect_message_type_pointer(f"/14/{field}/0/0"))
+
+    def test_effect_overlay_preserves_original_types_for_all_mods(self):
+        for kind, info in overlays.OVERLAYS.items():
+            with self.subTest(mod=kind), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder) / info["folder"]
+                root.mkdir()
+                (root / "modinfo.json").write_text(json.dumps([
+                    {"type": "MOD_INFO", "id": info["id"]}]), encoding="utf-8")
+                path = root / "effects.json"
+                source = [{"type": "effect_type", "id": "triffid_garland_buff",
+                           "decay_messages": [["Fading.", "bad"]],
+                           "apply_message": [["Restored.", "good"],
+                                             ["Still active.", "neutral"],
+                                             ["Changed.", "mixed"]]},
+                          {"type": "effect_type", "id": "other",
+                           "apply_message": "Restored.", "rating": "good"}]
+                path.write_text(json.dumps(source), encoding="utf-8")
+                manifest = {"effects.json": [
+                    ["/0/decay_messages/0/0", "Hiệu ứng đang phai nhạt."],
+                    ["/0/decay_messages/0/1", "xấu"],
+                    ["/0/apply_message/0/1", "tốt"],
+                    ["/0/apply_message/1/1", "trung tính"],
+                    ["/0/apply_message/2/1", "hỗn hợp"],
+                    ["/1/rating", "tốt"],
+                ]}
+                # The real Arcana source is byte-pinned; use a fixture pin
+                # substitute only in this isolated unit test.
+                fixture_info = {**info, "source_blobs": None, "expected_strings": 6}
+                with patch.dict(overlays.OVERLAYS, {kind: fixture_info}), \
+                        patch.object(overlays, "load_overlay", return_value=manifest):
+                    self.assertEqual(overlays.apply(kind, folder, dry_run=True), (1, 1))
+                    self.assertEqual(overlays.apply(kind, folder), (1, 1))
+                result = json.loads(path.read_text(encoding="utf-8"))
+                self.assertEqual(result[0]["decay_messages"],
+                                 [["Hiệu ứng đang phai nhạt.", "bad"]])
+                self.assertEqual(result[0]["apply_message"], source[0]["apply_message"])
+                self.assertEqual(result[1]["rating"], "good")
+
+
 if __name__ == "__main__":
     unittest.main()

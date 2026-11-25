@@ -755,10 +755,7 @@ void Character::update_bodytemp()
             //~ %s is bodypart
             add_msg_if_player( m_warning, _( "You feel your %s getting very cold." ),
                                body_part_name( bp ) );
-        } else if( temp_before > BODYTEMP_COLD && temp_after < BODYTEMP_COLD ) {
-            //~ %s is bodypart
-            add_msg_if_player( m_warning, _( "You feel your %s getting chilly." ),
-                               body_part_name( bp ) );
+
         } else if( temp_before < BODYTEMP_SCORCHING && temp_after > BODYTEMP_SCORCHING ) {
             //~ %s is bodypart
             add_msg_if_player( m_bad, _( "You feel your %s getting red hot from the heat!" ),
@@ -767,10 +764,7 @@ void Character::update_bodytemp()
             //~ %s is bodypart
             add_msg_if_player( m_warning, _( "You feel your %s getting very hot." ),
                                body_part_name( bp ) );
-        } else if( temp_before < BODYTEMP_HOT && temp_after > BODYTEMP_HOT ) {
-            //~ %s is bodypart
-            add_msg_if_player( m_warning, _( "You feel your %s getting warm." ),
-                               body_part_name( bp ) );
+
         }
 
         // Note: Numbers are based off of BODYTEMP at the top of weather.h
@@ -1176,7 +1170,7 @@ bodypart_id Character::body_window( const std::string &menu_header,
 
         std::string msg;
         std::string desc;
-        bool bleeding = has_effect( effect_bleed, bp.id() );
+        bool bleeding = has_effect( effect_bleed, bp.id() ) || has_bleeding_wound( bp.id() );
         bool bitten = has_effect( effect_bite, bp.id() );
         bool infected = has_effect( effect_infected, bp.id() );
         bool bandaged = has_effect( effect_bandaged, bp.id() );
@@ -1237,17 +1231,21 @@ bodypart_id Character::body_window( const std::string &menu_header,
 
         // BLEEDING block
         if( bleeding ) {
-            const int bleeding_intensity = get_effect_int( effect_bleed, bp );
-            desc += string_format( _( "Bleeding: %s" ),
-                                   colorize( get_effect( effect_bleed, bp ).get_speed_name(),
-                                             colorize_bleeding_intensity( bleeding_intensity ) ) );
-            if( bleed > 0 ) {
-                int percent = static_cast<int>( bleed * 100 / bleeding_intensity );
-                percent = std::min( percent, 100 );
-                desc += " -> " + colorize( string_format( _( "%d %% improvement" ), percent ), c_green );
-                treatment_rank += 70 + bleeding_intensity;
+            if( has_effect( effect_bleed, bp.id() ) ) {
+                const int bleeding_intensity = get_effect_int( effect_bleed, bp );
+                desc += string_format( _( "Bleeding: %s" ),
+                                       colorize( get_effect( effect_bleed, bp ).get_speed_name(),
+                                                 colorize_bleeding_intensity( bleeding_intensity ) ) );
+                if( bleed > 0 ) {
+                    int percent = static_cast<int>( bleed * 100 / bleeding_intensity );
+                    percent = std::min( percent, 100 );
+                    desc += " -> " + colorize( string_format( _( "%d %% improvement" ), percent ), c_green );
+                    treatment_rank += 70 + bleeding_intensity;
+                }
+                desc += "\n";
+            } else {
+                desc += _( "Bleeding wound.  Fix from the wounds menu.\n" );
             }
-            desc += "\n";
         }
 
         // BANDAGE block

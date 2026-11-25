@@ -5,7 +5,7 @@
     <string name="installTitle">Đang cài đặt dữ liệu trò chơi…</string>
     <string name="upgradeTitle">Đang nâng cấp dữ liệu trò chơi…</string>
     <string name="helpTitle">Trợ giúp và điều khiển</string>
-    <string name="helpMessage">Vuốt để di chuyển; nhấn giữ để dùng cần điều khiển ảo. Chạm để chọn mục hoặc chờ một lượt; nhấn giữ để chờ nhiều lượt. Chạm hai lần để quay lại trong menu. Chụm hai ngón để thu phóng. Nút Quay lại bật/tắt bàn phím ảo; giữ nút để bật/tắt các phím tắt.</string>
+    <string name="helpMessage">Vuốt để di chuyển; nhấn giữ để dùng cần điều khiển ảo. Chạm để chọn mục hoặc chờ một lượt; nhấn giữ để chờ nhiều lượt. Chạm hai lần để quay lại trong menu. Chụm hai ngón để thu phóng. Nút Quay lại bật hoặc tắt bàn phím ảo; giữ nút để bật hoặc tắt các phím tắt.</string>
     <string name="accessibilityServicesTitle">Cảnh báo về dịch vụ trợ năng</string>
     <string name="accessibilityServicesMessage">Dịch vụ trợ năng có thể chiếm cử chỉ game. Hãy giữ TalkBack khi thiết lập giọng. Lời đọc trong game vẫn đang được phát triển. Bạn có thể tiếp tục chơi hoặc mở cài đặt trợ năng và giọng đọc: \n%1$s</string>
     <string name="ignoreFalsePostives">Đánh dấu là cảnh báo nhầm</string>
@@ -39,8 +39,8 @@
     <string name="a11ySettingsUnavailable">Android không mở được cài đặt. Bạn có thể quay lại màn hình khởi động hoặc mở cài đặt từ điện thoại.</string>
 
     <!-- Dedicated TTS configuration; all values are saved together. -->
-    <string name="a11yTtsSettingsTitle">Cài đặt TTS</string>
-    <string name="a11yTtsEnable">Trình đọc TTS</string>
+    <string name="a11yTtsSettingsTitle">Cài đặt giọng đọc</string>
+    <string name="a11yTtsEnable">Trình đọc giọng nói</string>
     <string name="a11yTtsEngine">Bộ máy đọc</string>
     <string name="a11yTtsLanguage">Ngôn ngữ đọc</string>
     <string name="a11yTtsVoice">Giọng đọc</string>
@@ -91,10 +91,6 @@
     <string name="a11yHubMoveWest">Đi Tây</string>
     <string name="a11yHubMoveNorthwest">Đi Tây Bắc</string>
     <string name="a11yHubInteraction">Tương tác với môi trường</string>
-    <!-- Short inventory selection outcomes, not additional controls. -->
-    <string name="a11yInventoryMarked">Đã chọn.</string>
-    <string name="a11yInventoryUnmarked">Đã bỏ chọn.</string>
-    <string name="a11yInventoryMarkedQuantity">Đã chọn %1$s trên %2$d.</string>
     <string name="a11yHubInventory">Túi đồ và vật phẩm</string>
     <string name="a11yHubHealth">Ăn uống, nghỉ ngơi và y tế</string>
     <string name="a11yHubEquipment">Trang bị và sửa chữa</string>
@@ -103,18 +99,6 @@
     <string name="a11yHubCharacter">Nhân vật và năng lực</string>
     <string name="a11yHubMissions">Nhiệm vụ và quan hệ</string>
     <string name="a11yHubVehicles">Phương tiện và hành trình</string>
-    <string name="a11yRadarTitle">Rađa tự động</string>
-    <string name="a11yRadarManage">Quản lý rađa</string>
-    <string name="a11yRadarOn">Bật</string>
-    <string name="a11yRadarOff">Tắt</string>
-    <string name="a11yRadarItems">Thông báo vật phẩm</string>
-    <string name="a11yRadarMonsters">Thông báo quái vật</string>
-    <string name="a11yRadarPlaces">Thông báo địa điểm</string>
-    <string name="a11yRadarNpcs">Thông báo NPC</string>
-    <string name="a11yRadarDoors">Thông báo cửa và cầu thang</string>
-    <string name="a11yRadarHazards">Thông báo nguy hiểm</string>
-    <string name="a11yRadarVehicles">Thông báo phương tiện</string>
-    <string name="a11yRadarLandmarks">Thông báo điểm mốc</string>
     <string name="a11yHubAutomation">Quản lý khu vực và tự động hóa</string>
     <string name="a11yHubReader">Thông tin, trình đọc và trợ giúp</string>
     <string name="a11yHubSystem">Hệ thống và bản lưu</string>
@@ -123,7 +107,7 @@
     <string name="a11yHubNearbyNoActions">Không có hành động phù hợp ở đây.</string>
     <string name="a11yHubEmpty">Không có mục khả dụng</string>
     <string name="a11yHubNoMessages">Không có thông báo gần đây</string>
-    <string name="a11yHubTts">Cài đặt TTS</string>
+    <string name="a11yHubTts">Cài đặt giọng đọc</string>
     <string name="a11yHubNoMatches">Tìm kiếm không trả về lệnh phù hợp</string>
 
     <!-- Configurable world shortcuts. -->
@@ -206,8 +190,8 @@
     <string name="a11yContextBack">Hủy hoặc quay lại</string>
     <string name="a11yContextConfirmUnavailable">Màn hình này không có lệnh xác nhận</string>
     <string name="a11yNativeInputRangeError">Giá trị phải từ %1$s đến %2$s.</string>
-    <string name="a11yNativeInputInstructions">Nhập bằng bàn phím Android. Chọn OK để lưu hoặc Hủy để bỏ qua. Bạn có thể tự bật hoặc tắt TalkBack.</string>
-    <string name="a11yCombatOn">Chiến đấu: một ngón bắn súng hoặc đánh; ô trống có thể bước. Hai ngón đi. Gấp khúc đánh chéo. Trái-phải nạp đạn; phải-trái đọc vũ khí.</string>
+    <string name="a11yNativeInputInstructions">Nhập bằng bàn phím Android. Chọn Đồng ý để lưu hoặc Hủy để bỏ qua. Bạn có thể tự bật hoặc tắt TalkBack.</string>
+    <string name="a11yCombatOn">Chiến đấu: một ngón đánh, bắn trong tầm vũ khí, không bước. Hai ngón đi. Gấp khúc đánh chéo. Trái-phải nạp đạn; phải-trái đọc vũ khí.</string>
     <string name="a11yCombatOff">Đã bật chế độ bản đồ. Đã khôi phục các cử chỉ gốc.</string>
     <string name="a11yCombatUnavailable">Không thể thực hiện lệnh chiến đấu lúc này. Nhân vật không di chuyển.</string>
     <string name="a11yCombatNoEnemies">Không có kẻ địch nào nhìn thấy ở gần.</string>
@@ -253,14 +237,14 @@
     <string name="a11yGuideScanRight">Quét 30 ô bên phải xe</string>
     <string name="a11yGuideVehicleMenu">Mở menu điều khiển xe gốc</string>
     <string name="a11yGuideChangeMode">Chuyển chế độ bản đồ, chiến đấu và lái xe</string>
-    <string name="a11yGuideAttackNorth">Đánh hoặc bước về phía Bắc</string>
-    <string name="a11yGuideAttackSouth">Đánh hoặc bước về phía Nam</string>
-    <string name="a11yGuideAttackWest">Đánh hoặc bước về phía Tây</string>
-    <string name="a11yGuideAttackEast">Đánh hoặc bước về phía Đông</string>
-    <string name="a11yGuideAttackNorthwest">Đánh hoặc bước về phía Tây Bắc</string>
-    <string name="a11yGuideAttackNortheast">Đánh hoặc bước về phía Đông Bắc</string>
-    <string name="a11yGuideAttackSouthwest">Đánh hoặc bước về phía Tây Nam</string>
-    <string name="a11yGuideAttackSoutheast">Đánh hoặc bước về phía Đông Nam</string>
+    <string name="a11yGuideAttackNorth">Tấn công về phía Bắc</string>
+    <string name="a11yGuideAttackSouth">Tấn công về phía Nam</string>
+    <string name="a11yGuideAttackWest">Tấn công về phía Tây</string>
+    <string name="a11yGuideAttackEast">Tấn công về phía Đông</string>
+    <string name="a11yGuideAttackNorthwest">Tấn công về phía Tây Bắc</string>
+    <string name="a11yGuideAttackNortheast">Tấn công về phía Đông Bắc</string>
+    <string name="a11yGuideAttackSouthwest">Tấn công về phía Tây Nam</string>
+    <string name="a11yGuideAttackSoutheast">Tấn công về phía Đông Nam</string>
     <string name="a11yGuideReload">Nạp súng đang cầm</string>
     <string name="a11yGuideWeaponDetails">Đọc vũ khí đang cầm</string>
     <string name="a11yGuideNextWeapon">Chuyển tới vũ khí kế tiếp hoặc tay không</string>
@@ -317,6 +301,25 @@
     <string name="a11yGuideAutoReadHeading">Đọc hướng đầu xe; bộ tự lái tự chọn hướng đi</string>
     <string name="a11yGuideAutoPause">Tạm dừng hành trình và phanh xe</string>
     <string name="a11yGuideAutoMapCancel">Hủy hành trình tự lái và chuyển về Bản đồ</string>
+    <!-- Reader-owned automatic proximity radar and selectable categories. -->
+    <string name="a11ySurveyTitle">Khảo sát địa điểm chi tiết</string>
+    <string name="a11ySurveyContinue">Tiếp tục</string>
+    <string name="a11yRadarTitle">Rađa tự động</string>
+    <string name="a11yRadarManage">Quản lý rađa</string>
+    <string name="a11yRadarOn">Bật</string>
+    <string name="a11yRadarOff">Tắt</string>
+    <string name="a11yRadarItems">Thông báo vật phẩm</string>
+    <string name="a11yRadarMonsters">Thông báo quái vật</string>
+    <string name="a11yRadarPlaces">Thông báo địa điểm</string>
+    <string name="a11yRadarNpcs">Thông báo NPC</string>
+    <string name="a11yRadarDoors">Thông báo cửa và cầu thang</string>
+    <string name="a11yRadarHazards">Thông báo nguy hiểm</string>
+    <string name="a11yRadarVehicles">Thông báo phương tiện</string>
+    <string name="a11yRadarLandmarks">Thông báo điểm mốc</string>
+    <!-- Accessibility resource labels reconciled from fork master. -->
+    <string name="a11yInventoryMarked">Đã chọn.</string>
+    <string name="a11yInventoryUnmarked">Đã bỏ chọn.</string>
+    <string name="a11yInventoryMarkedQuantity">Đã chọn %1$s trên %2$d.</string>
     <string name="a11yManualModTitle">Nhập mod thủ công</string>
     <string name="a11yManualModChooseZip">Chọn tệp ZIP chứa mod</string>
     <string name="a11yManualModChooseExport">Chọn nơi xuất mod</string>
@@ -337,9 +340,9 @@
     <string name="a11yManualModGestureHelp">Vuốt trái hoặc phải để chuyển nút đang chọn. Chạm hai lần để kích hoạt. Nhấn giữ để mở menu ngữ cảnh. Mục Hướng dẫn cử chỉ luôn có sẵn. Thao tác Quay lại bằng hai ngón để trở về trò chơi.</string>
     <string name="a11ySoundpackChoose">Chọn bộ âm thanh</string>
     <string name="a11ySoundpackCurrent">Bộ âm thanh đang chọn: %1$s</string>
-    <string name="a11ySoundpackImport">Nhập bộ âm thanh từ ZIP</string>
+    <string name="a11ySoundpackImport">Nhập bộ âm thanh từ tệp nén</string>
     <string name="a11ySoundpackExport">Xuất bộ âm thanh đang chọn</string>
-    <string name="a11ySoundpackReady">Chọn bộ âm thanh hoặc nhập ZIP. Nút Xuất sẽ tự động xuất gói đang chọn.</string>
+    <string name="a11ySoundpackReady">Chọn bộ âm thanh hoặc nhập tệp nén. Nút Xuất sẽ tự động xuất gói đang chọn.</string>
     <string name="a11ySoundpackNone">Không sử dụng bộ âm thanh</string>
     <string name="a11ySoundpackUnknown">Chưa chọn</string>
     <string name="a11ySoundpackActive">đang chọn</string>
@@ -350,7 +353,7 @@
     <string name="a11ySoundpackImported">Đã nhập bộ âm thanh %1$s. Chọn trong danh sách để áp dụng.</string>
     <string name="a11ySoundpackExported">Đã xuất bộ âm thanh đang chọn: %1$s.</string>
     <string name="a11yManagedSoundpackFailed">Thao tác với bộ âm thanh thất bại: %1$s</string>
-    <string name="a11ySoundpackWorking">Đang xử lý ZIP âm thanh. Không thay đổi âm thanh đang dùng và giọng đọc.</string>
+    <string name="a11ySoundpackWorking">Đang xử lý tệp nén âm thanh. Không thay đổi âm thanh đang dùng và giọng đọc.</string>
     <string name="a11ySoundpackCancelled">Đã hủy chọn tệp. Không có thay đổi nào.</string>
     <string name="a11ySoundpackPickerUnavailable">Không tìm thấy trình chọn tệp Android.</string>
     <string name="a11ySoundpackGestures">Vuốt trái hoặc phải để chọn điều khiển. Chạm hai lần để kích hoạt. Nhấn giữ để mở menu ngữ cảnh có Hướng dẫn cử chỉ. Quay lại bằng hai ngón để thoát màn hình. Trong danh sách âm thanh, chạm hai lần sẽ áp dụng và tự quay lại cài đặt.</string>

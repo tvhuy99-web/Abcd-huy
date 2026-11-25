@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -9,7 +10,9 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_catch.h"
+#include "cata_scope_helpers.h"
 #include "character.h"
+#include "clzones.h"
 #include "coordinates.h"
 #include "creature_tracker.h"
 #include "game.h"
@@ -33,6 +36,8 @@
 #include "units.h"
 
 static const ammotype ammo_battery( "battery" );
+
+static const furn_str_id furn_f_firering( "f_firering" );
 
 static const itype_id itype_acidchitin_harness_dog( "acidchitin_harness_dog" );
 static const itype_id itype_backpack_hiking( "backpack_hiking" );
@@ -88,6 +93,10 @@ static const proficiency_id proficiency_prof_trapsetting( "prof_trapsetting" );
 
 static const skill_id skill_traps( "traps" );
 
+static const trap_str_id tr_firewood_source( "tr_firewood_source" );
+
+static const zone_type_id zone_type_SOURCE_FIREWOOD( "SOURCE_FIREWOOD" );
+
 static monster *find_adjacent_monster( const tripoint_bub_ms &pos )
 {
     tripoint_bub_ms target = pos;
@@ -120,7 +129,7 @@ TEST_CASE( "manhack", "[iuse_actor][manhack]" )
     monster *new_manhack = find_adjacent_monster( player_character.pos_bub() );
     REQUIRE( new_manhack == nullptr );
 
-    player_character.invoke_item( &*test_item );
+    player_character.invoke_item( test_item );
 
     REQUIRE( !player_character.has_item_with( []( const item & it ) {
         return it.typeId() == itype_bot_manhack;
@@ -158,7 +167,8 @@ TEST_CASE( "tool_transform_when_activated", "[iuse][tool][transform]" )
             const use_function *use = flashlight.type->get_use( "transform" );
             REQUIRE( use != nullptr );
             const iuse_transform *actor = dynamic_cast<const iuse_transform *>( use->get_actor_ptr() );
-            actor->use( dummy, flashlight, &get_map(), dummy->pos_bub() );
+            item_location loc_flashlight( *dummy, &flashlight );
+            actor->use( dummy, loc_flashlight, &get_map(), dummy->pos_bub() );
 
             THEN( "it becomes active" ) {
                 CHECK( flashlight.active );
@@ -191,6 +201,7 @@ TEST_CASE( "transform_blocked_when_result_too_long_for_parent_pocket",
         REQUIRE( vest_iter.has_value() );
         item &worn_vest = **vest_iter;
         item &stashed_baton = worn_vest.only_item();
+        item_location loc_stashed_baton( dummy, &stashed_baton );
         REQUIRE( dummy.has_item( stashed_baton ) );
 
         const use_function *use = stashed_baton.type->get_use( "transform" );
@@ -199,8 +210,9 @@ TEST_CASE( "transform_blocked_when_result_too_long_for_parent_pocket",
                                       ( use->get_actor_ptr() );
         REQUIRE( actor != nullptr );
 
+
         WHEN( "checking if the transform can be invoked" ) {
-            ret_val<void> can = actor->can_use( dummy, stashed_baton, &get_map(),
+            ret_val<void> can = actor->can_use( dummy, loc_stashed_baton, &get_map(),
                                                 dummy.pos_bub() );
             THEN( "the transform is rejected" ) {
                 CHECK_FALSE( can.success() );
@@ -208,7 +220,7 @@ TEST_CASE( "transform_blocked_when_result_too_long_for_parent_pocket",
         }
 
         WHEN( "the player tries to invoke the transform" ) {
-            dummy.invoke_item( &stashed_baton );
+            dummy.invoke_item( loc_stashed_baton );
             THEN( "the baton is not transformed" ) {
                 CHECK( stashed_baton.typeId() == itype_test_transform_baton );
                 CHECK( worn_vest.only_item().typeId() == itype_test_transform_baton );
@@ -223,6 +235,7 @@ TEST_CASE( "transform_blocked_when_result_too_long_for_parent_pocket",
         REQUIRE( bag_iter.has_value() );
         item &worn_bag = **bag_iter;
         item &stashed_baton = worn_bag.only_item();
+        item_location loc_stashed_baton( dummy, &stashed_baton );
         REQUIRE( dummy.has_item( stashed_baton ) );
 
         const use_function *use = stashed_baton.type->get_use( "transform" );
@@ -232,7 +245,7 @@ TEST_CASE( "transform_blocked_when_result_too_long_for_parent_pocket",
         REQUIRE( actor != nullptr );
 
         WHEN( "checking if the transform can be invoked" ) {
-            ret_val<void> can = actor->can_use( dummy, stashed_baton, &get_map(),
+            ret_val<void> can = actor->can_use( dummy, loc_stashed_baton, &get_map(),
                                                 dummy.pos_bub() );
             THEN( "the transform is allowed" ) {
                 CHECK( can.success() );
@@ -440,5 +453,42 @@ TEST_CASE( "place_trap_move_cost_scales_with_skill_and_proficiencies", "[iuse_ac
                 CHECK( place_trap_actor_of( itype_caltrops ).unburied_data.move_cost( dummy ) == 86 );
             }
         }
+    }
+}
+
+// tests answer every query_yn with no: query_popup::query_once returns "ERROR" in test_mode
+TEST_CASE( "firestarter_asks_before_burning_a_firewood_source", "[iuse_actor][fire]" )
+{
+    clear_map_without_vision();
+    clear_avatar();
+    avatar &u = get_avatar();
+    map &here = get_map();
+    tripoint_bub_ms ring = u.pos_bub() + point::east;
+    here.furn_set( ring, furn_f_firering );
+
+    SECTION( "a plain fire ring is lit without a question" ) {
+        CHECK_FALSE( firestarter_actor::is_firewood_source( here, ring ) );
+        CHECK( firestarter_actor::prep_firestarter_use( u, &here, ring ) ==
+               firestarter_actor::start_type::FIRE );
+    }
+    SECTION( "firewood source trap asks first, no keeps it unlit" ) {
+        here.trap_set( ring, tr_firewood_source );
+        CHECK( firestarter_actor::is_firewood_source( here, ring ) );
+        CHECK( firestarter_actor::prep_firestarter_use( u, &here, ring ) ==
+               firestarter_actor::start_type::NONE );
+    }
+    SECTION( "firewood source zone asks first, no keeps it unlit" ) {
+        zone_manager &mgr = zone_manager::get_manager();
+        on_out_of_scope clear_zones( [&mgr]() {
+            mgr.clear();
+            mgr.cache_data();
+        } );
+        const tripoint_abs_ms ring_abs = here.get_abs( ring );
+        mgr.add( "test_firewood", zone_type_SOURCE_FIREWOOD, your_fac, false, true, ring_abs,
+                 ring_abs );
+        mgr.cache_data();
+        CHECK( firestarter_actor::is_firewood_source( here, ring ) );
+        CHECK( firestarter_actor::prep_firestarter_use( u, &here, ring ) ==
+               firestarter_actor::start_type::NONE );
     }
 }

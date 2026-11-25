@@ -14,7 +14,7 @@ class QuietWorld(unittest.TestCase):
                       world)
         self.assertIn("here.value = current_tile.terrain;", world)
         self.assertIn('boolean newlyNoteworthy = worldView', ctrl)
-        self.assertIn('if (newlyNoteworthy) { feedback(nextTile.value); }', ctrl)
+        self.assertIn('if (newlyNoteworthy && !placeSurveyOpen) { feedback(nextTile.value); }', ctrl)
         self.assertNotIn("R.string.a11yEnteredWorld", ctrl)
         self.assertIn("String previous = focus;", ctrl)
 

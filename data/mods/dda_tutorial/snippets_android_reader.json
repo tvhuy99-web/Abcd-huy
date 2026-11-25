@@ -2,11 +2,11 @@
   {
     "type": "snippet",
     "category": "tutorial_messages",
-    "//": "Vietnamese Android reader tutorial. Keep the desktop lesson snippets unchanged.",
+    "//": "Vietnamese Android reader tutorial.  Keep the desktop lesson snippets unchanged.",
     "text": [
       {
         "id": "ANDROID_READER_LESSON_INTRO",
-        "text": "Chào mừng tới phần hướng dẫn trên Android. Mỗi bài học sẽ nêu thao tác và nhiệm vụ tiếp theo. Ở màn hình thế giới, chạm ba lần bằng hai ngón để mở Menu tổng hợp. Trong menu, vuốt một ngón sang trái hoặc phải để duyệt, chạm hai lần để chọn; vuốt hai ngón lên để xác nhận và xuống để quay lại. Vuốt hai ngón xuống để đóng hộp thoại này. Nhiệm vụ: khám phá lối đi về phía đông."
+        "text": "Chào mừng tới phần hướng dẫn trên Android.  Mỗi bài học sẽ nêu thao tác và nhiệm vụ tiếp theo.  Ở màn hình thế giới, chạm ba lần bằng hai ngón để mở Menu tổng hợp. Trong menu, vuốt một ngón sang trái hoặc phải để duyệt, chạm hai lần để chọn; vuốt hai ngón lên để xác nhận và xuống để quay lại. Vuốt hai ngón xuống để đóng hộp thoại này. Nhiệm vụ: khám phá lối đi về phía đông."
       },
       {
         "id": "ANDROID_READER_LESSON_MOVE",
@@ -62,7 +62,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_WORE_ARMOR",
-        "text": "Quần áo vừa mặc giúp chống sát thương đập, cắt và đạn. Mỗi món bảo vệ những loại sát thương khác nhau. Hãy chú ý chọn đồ bảo hộ phù hợp."
+        "text": "Quần áo vừa mặc giúp chống sát thương đập, cắt và đạn. Mỗi món bảo vệ những loại sát thương khác nhau.  Hãy chú ý chọn đồ bảo hộ phù hợp."
       },
       {
         "id": "ANDROID_READER_LESSON_WORE_STORAGE",
@@ -74,11 +74,11 @@
       },
       {
         "id": "ANDROID_READER_LESSON_WEAPON_INFO",
-        "text": "Bài học: Xem thông số vũ khí. Mở Menu tổng hợp, vào Túi đồ và vật phẩm rồi chọn xem vật phẩm đang mang theo. Duyệt đến vũ khí và yêu cầu đọc chi tiết. Nghe sát thương đập hoặc cắt, độ chính xác và tốc độ ra đòn. Vũ khí nặng có thể đánh chậm; vũ khí có tầm với có thể đánh xa hơn một ô."
+        "text": "Bài học: Xem thông số vũ khí. Mở Menu tổng hợp, vào Túi đồ và vật phẩm rồi chọn xem vật phẩm đang mang theo.  Duyệt đến vũ khí và yêu cầu đọc chi tiết. Nghe sát thương đập hoặc cắt, độ chính xác và tốc độ ra đòn. Vũ khí nặng có thể đánh chậm; vũ khí có tầm với có thể đánh xa hơn một ô."
       },
       {
         "id": "ANDROID_READER_LESSON_HIT_MONSTER",
-        "text": "Bài học: Đánh trúng. Hãy quét để biết hướng và khoảng cách của mục tiêu. Với tay không hay vũ khí cận chiến thường, bạn cần đứng sát mục tiêu. Trong chế độ chiến đấu, vuốt một ngón về hướng mục tiêu để đánh; nếu ô trống nhân vật có thể bước. Vuốt hai ngón để chủ động đi lại. Chạm ba lần bằng ba ngón để đổi chế độ bản đồ và chiến đấu."
+        "text": "Bài học: Đánh trúng. Hãy quét để biết hướng và khoảng cách của mục tiêu. Với tay không hay vũ khí cận chiến thường, bạn cần đứng sát mục tiêu; vũ khí có tầm với đánh được từ xa hơn. Trong chế độ chiến đấu, vuốt một ngón về hướng mục tiêu để đánh theo tầm vũ khí; nhân vật không bước tới dù không có mục tiêu. Vuốt hai ngón để chủ động đi lại. Chạm ba lần bằng ba ngón để đổi chế độ bản đồ và chiến đấu."
       },
       {
         "id": "ANDROID_READER_LESSON_PAIN",
@@ -90,7 +90,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_TOOK_PAINKILLER",
-        "text": "Bạn vừa dùng thuốc giảm đau. Thuốc cần thời gian mới có tác dụng; đừng uống thêm chỉ vì chưa thấy đỡ ngay. Thuốc mạnh có thể gây choáng hoặc gây nghiện."
+        "text": "Bạn vừa dùng thuốc giảm đau. Thuốc cần thời gian mới có tác dụng; đừng uống thêm chỉ vì chưa thấy đỡ ngay.  Thuốc mạnh có thể gây choáng hoặc gây nghiện."
       },
       {
         "id": "ANDROID_READER_LESSON_TOOK_CIG",
@@ -98,7 +98,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_DRANK_WATER",
-        "text": "Bạn vừa uống nước và giảm khát. Chai rỗng có thể giữ lại để lấy nước lần sau. Nếu không muốn giữ, mở Menu tổng hợp, chọn Tìm lệnh, tìm Thả rồi chọn chai."
+        "text": "Bạn vừa uống nước và giảm khát. Chai rỗng có thể giữ lại để lấy nước lần sau.  Nếu không muốn giữ, mở Menu tổng hợp, chọn Tìm lệnh, tìm Thả rồi chọn chai."
       },
       {
         "id": "ANDROID_READER_LESSON_ACT_GRENADE",
@@ -110,7 +110,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_GUN_FIRE",
-        "text": "Bài học: Bắn súng. Mở Menu tổng hợp, vào Chiến đấu, vũ khí và phép thuật rồi chọn Bắn súng hoặc tấn công tầm xa. Khi có màn chọn súng, chọn khẩu súng phù hợp và nghe số đạn. Trong màn ngắm, tìm bia tập, nghe tên mục tiêu rồi xác nhận bắn. Lệnh Đổi chế độ bắn hoặc đánh của súng chỉ chọn chế độ. Nhiệm vụ: bắn vào bia tập rồi đi sang tây."
+        "text": "Bài học: Bắn súng. Cầm súng đã nạp đạn, quét ở chế độ bản đồ để xác định bia tập. Bật chế độ chiến đấu, vuốt một ngón theo hướng bia trong tầm bắn. Hoặc mở Menu tổng hợp, nhóm Chiến đấu, chọn Bắn súng hoặc tấn công tầm xa để ngắm thủ công. Lệnh Đổi chế độ bắn hoặc đánh của súng chỉ chọn chế độ. Nhiệm vụ: bắn vào bia tập rồi đi sang tây."
       },
       {
         "id": "ANDROID_READER_LESSON_RECOIL",
@@ -126,7 +126,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_DARK",
-        "text": "Dưới này tối, nhưng bạn có đèn pin. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Sử dụng, chọn Đèn pin rồi xác nhận để bật sáng."
+        "text": "Dưới này tối, nhưng bạn có đèn pin.  Mở Menu tổng hợp, chọn Tìm lệnh, tìm Sử dụng, chọn Đèn pin rồi xác nhận để bật sáng."
       },
       {
         "id": "ANDROID_READER_LESSON_PICKUP_WATER",
@@ -142,7 +142,7 @@
       },
       {
         "id": "ANDROID_READER_LESSON_HOLSTERS_ACTIVATE",
-        "text": "Bạn có thể cất giáo thép vào dây đeo giáo để rảnh tay. Mở Menu tổng hợp, chọn Tìm lệnh, tìm Sử dụng, chọn dây đeo giáo, chọn giáo thép rồi xác nhận. Sau đó tiếp tục đi theo hành lang."
+        "text": "Bạn có thể cất giáo thép vào dây đeo giáo để rảnh tay.  Mở Menu tổng hợp, chọn Tìm lệnh, tìm Sử dụng, chọn dây đeo giáo, chọn giáo thép rồi xác nhận. Sau đó tiếp tục đi theo hành lang."
       },
       {
         "id": "ANDROID_READER_LESSON_LOOK",
@@ -154,11 +154,11 @@
       },
       {
         "id": "ANDROID_READER_LESSON_MONSTER_SIGHTED",
-        "text": "Bài học: Đánh cận chiến. Có hình nộm trong khu vực, chưa chắc đã đứng sát bạn. Vuốt hai ngón để quét và nghe hướng, khoảng cách của nó. Tiến tới ô liền kề. Chạm ba lần bằng ba ngón để bật chế độ chiến đấu, rồi vuốt một ngón theo hướng hình nộm để đánh. Nếu ô trống, nhân vật có thể bước. Khi chế độ an toàn chặn lệnh, vào Menu tổng hợp, nhóm Chiến đấu, để kiểm tra và điều chỉnh. Nhiệm vụ: đánh hình nộm rồi tới cửa phía sau."
+        "text": "Bài học: Đánh cận chiến. Có hình nộm trong khu vực, chưa chắc đã đứng sát bạn. Ở chế độ bản đồ, vuốt hai ngón để quét và nghe hướng, khoảng cách của nó. Chạm ba lần bằng ba ngón để bật chế độ chiến đấu. Vuốt hai ngón để tiến vào tầm vũ khí, rồi vuốt một ngón theo hướng hình nộm để đánh. Nhân vật không bước khi tấn công. Khi chế độ an toàn chặn lệnh, vào Menu tổng hợp, nhóm Chiến đấu, để kiểm tra và điều chỉnh. Nhiệm vụ: đánh hình nộm rồi tới cửa phía sau."
       },
       {
         "id": "ANDROID_READER_LESSON_REACH_ATTACK",
-        "text": "Bài học: Đánh có tầm với. Hình nộm ở sau quầy. Giáo thép có thể đánh từ khoảng cách hai ô, không cần đứng sát mục tiêu. Hãy cầm giáo, quét để xác định hình nộm, rồi mở Menu tổng hợp, nhóm Chiến đấu, chọn Bắn súng hoặc tấn công tầm xa. Trong màn chọn mục tiêu, chọn hình nộm rồi xác nhận. Nhiệm vụ: đánh trúng hình nộm qua quầy và đi vào hành lang phía nam."
+        "text": "Bài học: Đánh có tầm với. Hình nộm ở sau quầy. Giáo thép có thể đánh từ khoảng cách hai ô, không cần đứng sát mục tiêu. Hãy cầm giáo, quét ở chế độ bản đồ để xác định hình nộm, bật chế độ chiến đấu rồi vuốt một ngón theo hướng hình nộm khi nó nằm trong tầm giáo. Không cần bước tới sát. Nhiệm vụ: đánh trúng hình nộm qua quầy và đi vào hành lang phía nam."
       },
       {
         "id": "ANDROID_READER_LESSON_HOLSTERS_WEAR",
@@ -170,15 +170,15 @@
       },
       {
         "id": "ANDROID_READER_LESSON_INVENTORY",
-        "text": "Bài học: Túi đồ và ngăn chứa. Vật phẩm phải vừa ngăn của quần áo, ba lô hoặc vật chứa khác; mang theo quá nhiều cũng gây nặng và vướng. Mở Menu tổng hợp, vào Túi đồ và vật phẩm, chọn Xem vật phẩm đang mang theo. Duyệt đến quần áo rồi mở phần chi tiết để nghe các ngăn chứa. Nhiệm vụ: tìm ba lô trên giá phía tây và mặc ba lô để tăng chỗ chứa."
+        "text": "Bài học: Túi đồ và ngăn chứa. Vật phẩm phải vừa ngăn của quần áo, ba lô hoặc vật chứa khác; mang theo quá nhiều cũng gây nặng và vướng. Mở Menu tổng hợp, vào Túi đồ và vật phẩm, chọn Xem vật phẩm đang mang theo.  Duyệt đến quần áo rồi mở phần chi tiết để nghe các ngăn chứa. Nhiệm vụ: tìm ba lô trên giá phía tây và mặc ba lô để tăng chỗ chứa."
       },
       {
         "id": "ANDROID_READER_LESSON_FLASHLIGHT",
-        "text": "Bài học: Đèn pin. Trên giá có đèn pin và pin. Mở Menu tổng hợp, chọn Trang bị và sửa chữa, tìm Chọn vật phẩm để nạp, rồi chọn đèn pin và loại pin phù hợp. Kiểm tra thông báo sau khi nạp. Để bật đèn, dùng lệnh Sử dụng hoặc kích hoạt vật phẩm. Nhiệm vụ: mang đèn pin đã nạp theo và đi tới cầu thang."
+        "text": "Bài học: Đèn pin.  Trên giá có đèn pin và pin.  Mở Menu tổng hợp, chọn Trang bị và sửa chữa, tìm Chọn vật phẩm để nạp, rồi chọn đèn pin và loại pin phù hợp. Kiểm tra thông báo sau khi nạp. Để bật đèn, dùng lệnh Sử dụng hoặc kích hoạt vật phẩm. Nhiệm vụ: mang đèn pin đã nạp theo và đi tới cầu thang."
       },
       {
         "id": "ANDROID_READER_LESSON_INTERACT",
-        "text": "Bài học: Tương tác với môi trường. Gần đây có máy cấp nước. Trước hết, lấy chai nhựa trên giá. Bạn có thể vuốt hai ngón để quét tìm máy cấp nước hoặc vào Menu tổng hợp, mục Quan sát và bản đồ. Khi đứng gần máy, mở Menu tổng hợp, chọn Tương tác với môi trường, rồi chọn chức năng kiểm tra. Nhiệm vụ: tìm máy cấp nước và mang chai tới đó."
+        "text": "Bài học: Tương tác với môi trường. Gần đây có máy cấp nước. Trước hết, lấy chai nhựa trên giá. Bạn có thể vuốt hai ngón để quét tìm máy cấp nước hoặc vào Menu tổng hợp, mục Quan sát và bản đồ. Khi đứng gần máy, mở Menu tổng hợp, chọn Tương tác với môi trường, rồi chọn chức năng kiểm tra.  Nhiệm vụ: tìm máy cấp nước và mang chai tới đó."
       },
       {
         "id": "ANDROID_READER_LESSON_REMOTE_USE",

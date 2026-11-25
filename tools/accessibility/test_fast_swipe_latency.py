@@ -129,8 +129,10 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertIn("for( int x = 0; x < SEEX; x++ )", actualize)
         # The normal scene rebuild must remain; this is not a stale-vision
         # shortcut and does not remove cache invalidation on a map shift.
-        self.assertIn("void map::build_map_cache(", code)
-        self.assertIn("void map::invalidate_map_cache(", code)
+        # Upstream moved these methods from map.cpp into map_cache.cpp.
+        cache_code = (SRC / "map_cache.cpp").read_text(encoding="utf-8")
+        self.assertIn("void map::build_map_cache(", cache_code)
+        self.assertIn("void map::invalidate_map_cache(", cache_code)
 
     def test_slow_walk_profiler_is_gated_and_reports_map_shift_phases(self):
         game = (SRC / "game.cpp").read_text(encoding="utf-8")

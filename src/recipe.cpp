@@ -1622,6 +1622,17 @@ std::vector<item> recipe::create_result( bool set_components, bool is_food,
         newit.inherit_flags( *used, *this );
     }
 
+    // Inherit faults during crafting. set_fault ignores faults the result cannot have.
+    if( used ) {
+        for( auto &pair : *used ) {
+            for( item &it : pair.second ) {
+                for( fault_id some_fault : it.faults ) {
+                    newit.set_fault( some_fault );
+                }
+            }
+        }
+    }
+
     for( const flag_id &flag : flags_to_delete ) {
         newit.unset_flag( flag );
     }

@@ -685,6 +685,22 @@ check is your torso is 37 centigrade
 { "u_has_part_temp": 5000, "bodypart": "torso" }
 ```
 
+### `u_has_body_part`, `npc_has_body_part`
+- type: string or [variable object](#variable-object)
+- return true if alpha or beta talker has the specified body part 
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+#### Examples
+check is you have a torso
+```jsonc
+{ "u_has_body_part": "torso" }
+```
+
 ### `u_has_item`, `npc_has_item`, `u_has_items`, `npc_has_items`
 - type: string or [variable object](#variable-object)
 - return true if item or items are presented in your or NPC inventory;
@@ -883,6 +899,96 @@ checks do you have aikido stance active
 checks are you hot or cold
 ```jsonc
 { "u_has_any_effect": [ "hot", "cold" ], "bodypart": "torso" }
+```
+
+### `u_has_any_wound`, `npc_has_any_wound`
+- type: string, [variable object](#variable-object) or array
+- return true if alpha or beta talker has any of the wound listed
+- `bodypart` can be used to check if wound is presented on specific body part
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+#### Examples
+
+```jsonc
+{ "u_has_any_wound": [ "bruise_bad", "bone_broken" ], "bodypart": "torso" }
+```
+
+### `u_is_bleeding`, `npc_is_bleeding`
+- type: string or object
+- return true if alpha or beta talker's has any bleeding wound
+- `severity` can be used to specify the severity of such bleeding
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+#### Examples
+
+```jsonc
+"u_is_bleeding"
+```
+
+```jsonc
+{ "u_is_bleeding": "MAJOR" }
+```
+
+### `u_bodypart_is_bleeding`, `npc_bodypart_is_bleeding`
+- type: string or [variable object](#variable-object)
+- return true if alpha or beta talker's specific bodypart has any bleeding wound
+- `severity` can be used to specify the severity of such bleeding
+- `check_sublimbs` optional: checks all other limbs that have this limb as the `main_limb`. False by default
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+#### Examples
+
+```jsonc
+{ "u_bodypart_is_bleeding": "torso", "severity": "MAJOR" }
+```
+
+### `u_bodypart_is_wounded`, `npc_bodypart_is_wounded`
+- type: string or [variable object](#variable-object)
+- return true if alpha or beta talker's specific bodypart has any wound at all
+- `check_sublimbs` optional: checks all other limbs that have this limb as the `main_limb`. False by default
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+#### Examples
+Returns true if the the `arm_r` or `hand_r` is wounded, since `hand_r` is a sub limb of `arm_r`
+```jsonc
+{ "u_bodypart_is_wounded": "arm_r", "check_sublimbs": true }
+```
+
+### `u_bodypart_is_wounded_and_fixable`, `npc_bodypart_is_wounded_and_fixable`
+- type: string or [variable object](#variable-object)
+- return true if alpha or beta talker's specific bodypart has any wound that has possible wound fixes. It does not check if any of the fixes are actually performable. Designed for the sidebar to use to display that there are wounds that can be treated
+- `check_sublimbs` optional: checks all other limbs that have this limb as the `main_limb`. False by default
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+#### Examples
+
+```jsonc
+{ "u_bodypart_is_wounded_and_fixable": { "context_val": "widget" } }
 ```
 
 ### `u_has_proficiency`, `npc_has_proficiency`
@@ -1170,6 +1276,26 @@ You can't see
 You can hear
 ```jsonc
 { "not": "u_is_deaf" }
+```
+
+### `u_is_swimming`, `npc_is_swimming`
+- type: simple string
+- return true if alpha or beta talker is currently swimming 
+
+#### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --------- | ---- | ------- | --- | ---- |
+| ✔️ | ❌ | ✔️ | ❌ | ❌ | ❌ |
+
+#### Examples
+
+```jsonc
+"u_is_swimming"
+```
+=
+```jsonc
+{ "not": "u_is_swimming" }
 ```
 
 ### `u_is_alive`, `npc_is_alive`
@@ -3253,7 +3379,10 @@ Adds a specific wound on specific bodypart
 | Syntax | Optionality | Value  | Info |
 | --- | --- | --- | --- |
 | "u_add_wound", "npc_add_wound" | **mandatory** | string or [variable object](#variable-object) | id of a bodypart where the wound should be added |
-| "wound_id" | optional | string or [variable object](#variable-object) | id of a wound that will be applied |
+| "wound_id" | **mandatory** | string or [variable object](#variable-object) | id of a wound that will be applied |
+| "damage_amount" | optional | int or [variable object](#variable-object) | how much max HP this wound should reserve from bodypart; default 0 |
+| "damage_type" | optional | int or [variable object](#variable-object) | if used, this wound would be treated as if it was applied by this damage type; used only if may_worsen is true |
+| "may_worsen" | optional | bool | If true, appied wound may try to worsen the existing wound character has, if conditions for worsening will be met. This would require damage_type. If false, applies new wound no matter what. Default false |
 
 ##### Valid talkers:
 
@@ -3302,6 +3431,38 @@ Removes all scratch and deep_scratch wounds from bodypart alpha talker picks fro
       { "u_pick_bodypart": { "context_val": "bp" } },
       { "u_remove_wound": { "context_val": "bp" }, "wound_id": [ "scratch", "deep_scratch" ] },
       { "u_message": "Removed scratch and deep_scratch wounds from <context_val:bp>" }
+    ]
+  }
+```
+
+#### `u_remove_all_wounds`, `npc_remove_all_wounds`
+
+Removes all wounds from a specific bodypart
+
+| Syntax | Optionality | Value  | Info |
+| --- | --- | --- | --- |
+| "u_remove_all_wounds", "npc_remove_all_wounds" | **mandatory** | string or [variable object](#variable-object) | id of a bodypart where the wounds should be removed |
+
+##### Valid talkers:
+
+| Avatar | NPC | Monster | Furniture | Item | Vehicle |
+| ------ | --- | ---- | ------- | --- | ---- |
+| ✔️ | ✔️ | ❌ | ❌ | ❌ | ❌ |
+
+##### Examples
+
+Removes all wounds from all body parts
+```jsonc
+  {
+    "type": "effect_on_condition",
+    "id": "EOC_REMOVE_ALL_WOUNDS",
+    "effect": [      
+      {
+        "foreach": "ids",
+        "var": { "context_val": "id" },
+        "target": "bodypart",
+        "effect": [ { "if": { "u_has_body_part": { "context_val": "id" } }, "then": { "u_remove_all_wounds": { "context_val": "id" } } } ]
+      }
     ]
   }
 ```

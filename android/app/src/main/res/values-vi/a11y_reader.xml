@@ -61,8 +61,8 @@
     <string name="a11yBackupHeading">Sao lưu: xuất bản lưu và thiết lập ra tệp bạn chọn. Khôi phục: chỉ thay dữ liệu sau khi kiểm tra tệp và bạn xác nhận. Hãy khôi phục ở màn hình khởi động, trước khi vào game, để game đang chạy không ghi đè lên dữ liệu vừa khôi phục.</string>
     <string name="a11yBackupExport">Xuất bản sao lưu các bản lưu và thiết lập</string>
     <string name="a11yBackupImport">Nhập bản sao lưu để khôi phục bản lưu và thiết lập</string>
-    <string name="a11yBackupExportGuidance">Xuất sao lưu, bước 1/2. Chưa xuất gì cả. Chọn Tiếp tục để mở trình chọn tệp Android; giọng đọc game sẽ dừng trong trình chọn. Chọn thư mục và tên tệp. Nếu trùng tên, tệp cũ tại nơi đó sẽ bị ghi đè. Hoàn tất hoặc hủy sẽ quay lại màn hình này và báo kết quả. Xuất sao lưu không thay đổi bản lưu hiện tại.</string>
-    <string name="a11yBackupImportGuidance">Khôi phục, bước 1/2. Chưa khôi phục gì cả. Chọn Tiếp tục để mở trình chọn tệp Android; giọng đọc game sẽ dừng trong trình chọn. Chọn bản sao lưu. Khi quay lại, game chỉ kiểm tra tệp và dung lượng trống. Dữ liệu hiện có chưa bị thay thế cho đến khi bạn chọn Xác nhận khôi phục.</string>
+    <string name="a11yBackupExportGuidance">Xuất sao lưu, bước 1 trên 2. Chưa xuất gì cả. Chọn Tiếp tục để mở trình chọn tệp Android; giọng đọc game sẽ dừng trong trình chọn. Chọn thư mục và tên tệp. Nếu trùng tên, tệp cũ tại nơi đó sẽ bị ghi đè. Hoàn tất hoặc hủy sẽ quay lại màn hình này và báo kết quả. Xuất sao lưu không thay đổi bản lưu hiện tại.</string>
+    <string name="a11yBackupImportGuidance">Khôi phục, bước 1 trên 2. Chưa khôi phục gì cả. Chọn Tiếp tục để mở trình chọn tệp Android; giọng đọc game sẽ dừng trong trình chọn. Chọn bản sao lưu. Khi quay lại, game chỉ kiểm tra tệp và dung lượng trống. Dữ liệu hiện có chưa bị thay thế cho đến khi bạn chọn Xác nhận khôi phục.</string>
     <string name="a11yBackupOpenPickerExport">Tiếp tục: mở trình chọn tệp để lưu bản sao lưu</string>
     <string name="a11yBackupOpenPickerImport">Tiếp tục: mở trình chọn tệp để chọn tệp sao lưu</string>
     <string name="a11yBackupPickerUnavailable">Trình chọn tệp của Android không khả dụng. Chưa có gì thay đổi; các bản lưu và thiết lập hiện tại của bạn vẫn nguyên vẹn.</string>
@@ -94,10 +94,10 @@
     <string name="a11yLoadingStatus">%1$s</string>
     <string name="a11ySoundpackHeading">Bộ âm thanh trò chơi Otopack (tùy chọn)</string>
     <string name="a11ySoundpackStarting">Đang tải Otopack từ GitHub. Dung lượng tải khá lớn. Bạn có thể chọn chơi tạm không có bộ âm thanh bất cứ lúc nào.</string>
-    <string name="a11ySoundpackMobileData">Otopack có hơn 500 MB dữ liệu âm thanh. Kết nối di động có thể bị tính phí. Tải bằng mạng di động ngay, hay chơi trước mà không tải?</string>
+    <string name="a11ySoundpackMobileData">Otopack có hơn 500 megabyte dữ liệu âm thanh. Kết nối di động có thể bị tính phí. Tải bằng mạng di động ngay, hay chơi trước mà không tải?</string>
     <string name="a11ySoundpackDownloadMobile">Tải bằng dữ liệu di động</string>
-    <string name="a11ySoundpackPlayWithout">Chơi tạm không có soundpack</string>
-    <string name="a11ySoundpackProgress">Đang cài Otopack: đã ghi %1$d MB, %2$d tệp. Vui lòng chờ. Bạn có thể chơi tạm không có bộ âm thanh.</string>
+    <string name="a11ySoundpackPlayWithout">Chơi tạm không có bộ âm thanh</string>
+    <string name="a11ySoundpackProgress">Đang cài Otopack: đã ghi %1$d megabyte, %2$d tệp. Vui lòng chờ. Bạn có thể chơi tạm không có bộ âm thanh.</string>
     <string name="a11ySoundpackComplete">Đã cài xong bộ âm thanh Otopack. Đang mở trò chơi.</string>
     <string name="a11ySoundpackStorageUnavailable">Không thể truy cập thư mục dữ liệu trò chơi.</string>
     <string name="a11ySoundpackFailed">Chưa cài được Otopack: %1$s. Bạn có thể thử tải lại hoặc chơi mà không có bộ âm thanh. Dữ liệu lưu game không thay đổi.</string>

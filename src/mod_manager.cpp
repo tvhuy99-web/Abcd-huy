@@ -9,6 +9,8 @@
 #include <queue>
 #include <stdexcept>
 
+#include <char8_t-remediation/char8_t-remediation.h>
+
 #include "cata_utility.h"
 #include "debug.h"
 #include "dependency_tree.h"
@@ -213,6 +215,24 @@ void mod_manager::refresh_mod_list()
     tree->init( mod_dependency_map );
 }
 
+bool mod_manager::has_dev_recommended_mods( const WORLD *world )
+{
+    const auto iter = mod_map.find( MOD_INFORMATION_dev_default );
+    if( iter == mod_map.end() ) {
+        debugmsg( "Did we finally remove all default mods?" );
+        return true;
+    }
+    const MOD_INFORMATION &dev_mods = iter->second;
+    std::vector<mod_id> recommended( dev_mods.dependencies.begin(), dev_mods.dependencies.end() );
+    const t_mod_list &actives = world->active_mod_order;
+    for( mod_id recommended_mod : recommended ) {
+        if( std::find( actives.begin(), actives.end(), recommended_mod ) == actives.end() ) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool mod_manager::set_default_mods( const mod_id &ident )
 {
     // can't use string_id::is_valid as the global mod_manger instance does not exist yet
@@ -358,7 +378,8 @@ bool mod_manager::copy_mod_contents( const t_mod_list &mods_to_copy,
 
         cata_path mod_base_path = mod.path;
 
-        if( input_files.empty() && mod.path.get_relative_path().filename().u8string() == MOD_SEARCH_FILE ) {
+        if( input_files.empty() &&
+            from_u8string( mod.path.get_relative_path().filename().u8string() ) == MOD_SEARCH_FILE ) {
             // Self contained mod, all data is inside the modinfo.json file
             input_files.push_back( mod.path );
             mod_base_path = mod.path.parent_path();
@@ -446,6 +467,14 @@ void mod_manager::load_mods_list( WORLD *world ) const
     if( world == nullptr ) {
         return;
     }
+    if( world->world_name == "TUTORIAL" ) {
+        // Legacy tutorial worlds were saved before the menu replaced the
+        // default mod list. Restore the built-in dependencies in memory
+        // before any map, monster or trap is deserialized. Never rewrite
+        // the on-disk save merely because the player opens the load menu.
+        world->active_mod_order = { mod_id( "dda" ), mod_id( "dda_tutorial" ) };
+        return;
+    }
     std::vector<mod_id> &amo = world->active_mod_order;
     amo.clear();
     read_from_file_optional_json( get_mods_list_file( world ), [&]( const JsonArray & jsin ) {
@@ -462,6 +491,17 @@ void mod_manager::load_mods_list( WORLD *world ) const
 void mod_manager::check_mods_list( WORLD *world ) const
 {
     if( world == nullptr ) {
+        return;
+    }
+    if( world->world_name == "TUTORIAL" ) {
+        // No valid tutorial can be loaded without these definitions.
+        // Do not offer to remove its required pack and corrupt the world.
+        for( const mod_id &required : { mod_id( "dda" ), mod_id( "dda_tutorial" ) } ) {
+            if( !required.is_valid() ) {
+                throw std::runtime_error( "Required tutorial mod missing: " + required.str() );
+            }
+        }
+        world->active_mod_order = { mod_id( "dda" ), mod_id( "dda_tutorial" ) };
         return;
     }
     std::vector<mod_id> &amo = world->active_mod_order;

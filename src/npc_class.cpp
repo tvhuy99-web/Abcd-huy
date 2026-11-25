@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -236,6 +235,10 @@ void npc_class::load( const JsonObject &jo, std::string_view )
     mandatory( jo, was_loaded, "name", name );
     mandatory( jo, was_loaded, "job_description", job_description );
 
+    if( jo.has_string( "bye_message_override" ) ) {
+        bye_message_override = jo.get_string( "bye_message_override" );
+    }
+
     optional( jo, was_loaded, "common", common, true );
     if( common ) {
         optional( jo, was_loaded, "common_spawn_weight", common_spawn_weight, 1.0 );
@@ -279,7 +282,6 @@ void npc_class::load( const JsonObject &jo, std::string_view )
     optional( jo, was_loaded, "worn_override", worn_override );
     optional( jo, was_loaded, "carry_override", carry_override );
     optional( jo, was_loaded, "weapon_override", weapon_override );
-    optional( jo, was_loaded, "bye_message_override", bye_message_override );
 
     if( jo.has_member( "traits" ) ) {
         traits = trait_group::load_trait_group( jo.get_member( "traits" ), "collection" );

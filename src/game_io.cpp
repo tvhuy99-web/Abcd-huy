@@ -131,6 +131,9 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
 
     // deduplicated list of mods to check
     std::set<mod_id> check( opts.begin(), opts.end() );
+    bool load_ok = true;
+    // Validation is explicitly requested; never inherit a fast-load skip.
+    get_options().get_option( "SKIP_VERIFICATION" ).setValue( "false" );
 
     // if no specific mods specified check all non-obsolete mods
     if( check.empty() ) {
@@ -154,6 +157,7 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
             DynamicDataLoader::get_instance().finalize_loaded_data();
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data from json: " << err.what() << std::endl;
+            load_ok = false;
         }
 
         std::string world_name = world_generator->active_world->world_name;
@@ -188,18 +192,25 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
         try {
             load_core_data();
 
-            // Load any dependencies and de-duplicate them
-            std::vector<mod_id> dep_vector = tree.get_dependencies_of_X_as_strings( mod.ident );
-            std::set<mod_id> dep_set( dep_vector.begin(), dep_vector.end() );
-            for( const auto &dep : dep_set ) {
-                load_data_from_dir( dep->path, dep->ident.str() );
-            }
-
-            // Load mod itself
-            load_data_from_dir( mod.path, mod.ident.str() );
-            DynamicDataLoader::get_instance().finalize_loaded_data();
+            // Match gameplay: dependencies must precede their dependants,
+            // and mod_interactions are loaded only for active mod IDs.
+            std::set<mod_id> seen;
+            std::vector<mod_id> &packs = test_world->active_mod_order;
+            const std::function<void( const mod_id & )> append_dependencies =
+            [&]( const mod_id & id ) {
+                if( !seen.insert( id ).second ) {
+                    return;
+                }
+                for( const mod_id &dependency : id->dependencies ) {
+                    append_dependencies( dependency );
+                }
+                packs.push_back( id );
+            };
+            append_dependencies( mod.ident );
+            load_world_modfiles();
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data: " << err.what() << std::endl;
+            load_ok = false;
         }
 
         std::string world_name = world_generator->active_world->world_name;
@@ -208,7 +219,7 @@ bool game::check_mod_data( const std::vector<mod_id> &opts )
         MAPBUFFER.clear();
         overmap_buffer.clear();
     }
-    return true;
+    return load_ok;
 }
 
 bool game::is_core_data_loaded() const
@@ -817,6 +828,11 @@ bool game::save()
             world_generator->last_character_name = u.name;
             world_generator->save_last_world_info();
             world_generator->active_world->add_save( save_t::from_save_id( u.get_save_id() ) );
+            // Persist the repaired legacy tutorial mod list only after a
+            // successful explicit game save, not during a load attempt.
+            if( gametype() == special_game_type::TUTORIAL ) {
+                world_generator->get_mod_manager().save_mods_list( world_generator->active_world );
+            }
             write_to_file( PATH_INFO::world_base_save_path() / ( base64_encode(
             u.get_save_id() ) + ".pt" ), [&total_time_played]( std::ostream & fout ) {
                 fout.imbue( std::locale::classic() );

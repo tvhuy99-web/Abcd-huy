@@ -160,5 +160,137 @@ class OutcomeMessagesReachSpeechAndHistory(unittest.TestCase):
                       " Messages::recent_messages( const size_t count )", messages)
 
 
+class UpstreamMealAndWoundCompatibility(unittest.TestCase):
+    """Keep the upstream API fixes and NPC meal behavior during merges."""
+
+    def test_medical_skill_lists_use_wound_skill_in_both_places(self):
+        source = (SRC / "medical_ui.cpp").read_text("utf-8")
+        self.assertIn("for( const wound_skill &req : fix_id->skills )",
+                      source)
+        self.assertIn("fix.skills.end(), [&]( const wound_skill &sk )",
+                      source)
+        self.assertIn("sk.is_mandatory ? c_red : c_light_gray",
+                      source)
+        self.assertNotIn("const std::pair<skill_id, int> &sk", source)
+        self.assertIn("a11y::append_requirements(", source)
+
+    def test_consumption_uses_actual_eater_not_avatar(self):
+        source = (SRC / "activity_actor.cpp").read_text("utf-8")
+        start = source.split("void consume_activity_actor::start(", 1)[1]
+        start = start.split("void consume_activity_actor::finish(", 1)[0]
+        finish = source.split("void consume_activity_actor::finish(", 1)[1]
+        finish = finish.split("void consume_activity_actor::canceled(", 1)[0]
+        self.assertIn("guy.will_eat( it, guy.is_avatar() )", start)
+        self.assertIn("who.consume( consume_loc, /*force=*/true )", finish)
+        self.assertIn("who.consume( consume_item, /*force=*/true )", finish)
+        self.assertIn("who.is_avatar() && reprompt_consume_menu", finish)
+
+    def test_camp_meal_is_serializable_and_charged_only_when_eaten(self):
+        actor = (SRC / "activity_actor.cpp").read_text("utf-8")
+        header = (SRC / "activity_actor_definitions.h").read_text("utf-8")
+        npc = (SRC / "npcmove.cpp").read_text("utf-8")
+        self.assertIn("class camp_meal_activity_actor", header)
+        self.assertIn("void camp_meal_activity_actor::finish(", actor)
+        self.assertIn("camp_food_supply( -portion )", actor)
+        self.assertIn("who.get_consume_time( camp_meal_of( *bcp, meal_kcals ) )", actor)
+        self.assertIn("static item camp_meal_of( const basecamp &camp, const int kcal )", actor)
+        self.assertIn("return camp.make_fake_food( portion );", actor)
+        self.assertIn("const faction_id owner_id = bcp->get_owner();", actor)
+        self.assertIn("if( !owner_id.is_valid() )", actor)
+        self.assertIn("who.as_npc()->intake_fits( npc::need_goal_id::eat_food )", actor)
+        self.assertIn("who.as_npc()->refuse_camp_meal();", actor)
+        self.assertIn("owner->consumes_food", actor)
+        self.assertIn("if( portion <= 0 )", actor)
+        self.assertIn("camp_meal::personal", actor)
+        self.assertIn('data.read( "meal_kcals", actor.meal_kcals )', actor)
+        self.assertIn(
+            "{ ACT_CAMP_MEAL, &camp_meal_activity_actor::deserialize }", actor)
+        self.assertIn("return id == ACT_CONSUME || id == ACT_CAMP_MEAL;", npc)
+
+
+class UpstreamNativeLinkageContracts(unittest.TestCase):
+    """Catch missing out-of-line definitions before the full native linker."""
+
+    def test_followers_can_query_avatar_relocation(self):
+        source = (SRC / "avatar.cpp").read_text("utf-8")
+        self.assertIn("void avatar::on_move( const tripoint_abs_ms &old_pos )", source)
+        self.assertIn("time_duration avatar::time_since_relocated() const", source)
+        self.assertIn("relocation_anchor = now_pos;", source)
+
+    def test_character_creator_virtual_input_handler_is_defined(self):
+        source = (SRC / "newcharacter.cpp").read_text("utf-8")
+        self.assertIn(
+            "void character_creator_ui::setup_input_context( input_context &cc_ictxt )",
+            source)
+        self.assertIn("setup_input_context( cc_ictxt, false );", source)
+
+    def test_npc_food_helpers_have_out_of_line_definitions(self):
+        source = (SRC / "consumption.cpp").read_text("utf-8")
+        self.assertIn("bool Character::can_stomach(", source)
+        self.assertIn("bool Character::wants_to_consume_now(", source)
+        self.assertIn("stomach.would_be_engorged_with(", source)
+        self.assertIn("will_eat( food ).success()", source)
+
+    def test_treatment_and_fault_helpers_are_linkable(self):
+        wounds = (SRC / "wound.cpp").read_text("utf-8")
+        faults = (SRC / "fault.cpp").read_text("utf-8")
+        self.assertIn("std::pair<bool, float> wound_fix::doable_by(", wounds)
+        self.assertIn("req.is_mandatory && !met", wounds)
+        self.assertIn("double fault::attack_cost_modifier() const", faults)
+        self.assertIn("return attack_cost_modifier_;", faults)
+
+    def test_activity_reason_and_bodygraph_helpers_exist(self):
+        actors = (SRC / "activity_actor.cpp").read_text("utf-8")
+        bodygraph = (SRC / "bodygraph.cpp").read_text("utf-8")
+        self.assertIn("enum_to_string<do_activity_reason>(", actors)
+        self.assertIn("do_activity_reason::REFUSES_THIS_WORK", actors)
+        self.assertIn("bool bodygraph_part::has_bodypart(", bodygraph)
+        self.assertIn("for( sub_bodypart_id bpid : sub_bodyparts )", bodygraph)
+
+
+class BodyStatusNativeLinkageContracts(unittest.TestCase):
+    """Keep the integrated status and armor UI linkable without losing a11y."""
+
+    def test_bodygraph_and_status_tabs_provide_real_data(self):
+        cpp = (SRC / "body_status_ui.cpp").read_text("utf-8") + "\n" + (SRC / "bodygraph.cpp").read_text("utf-8")
+        self.assertIn("void body_status_uistate::prepare_partlist()", cpp)
+        self.assertIn("void body_status_uistate::prepare_infolist()", cpp)
+        self.assertIn("displayed_graph_id->parts", cpp)
+        self.assertIn("worn.prepare_bodymap_info( info, bp, sub_parts", cpp)
+        self.assertIn("void body_status_ui_impl::draw_graph_imgui(", cpp)
+        self.assertIn("prepare_bodygraph_text(", cpp)
+        self.assertIn("void body_status_ui_impl::draw_info_imgui(", cpp)
+
+    def test_armor_reordering_stays_on_real_item_list(self):
+        outfit = (SRC / "character_attire.cpp").read_text("utf-8")
+        self.assertIn("outfit::filter_by_bodypart(", outfit)
+        self.assertIn("outfit::items_cover_opposite_bp(", outfit)
+        self.assertIn("void outfit::splice(", outfit)
+        self.assertIn("worn.splice( to, worn, pos );", outfit)
+        self.assertIn("void outfit::sort()", outfit)
+        self.assertIn("void outfit::assign_invlets(", outfit)
+        self.assertIn("add_invlet_to_new_item( garment );", outfit)
+
+    def test_clothing_descriptions_have_details_instead_of_linker_stubs(self):
+        outfit = (SRC / "character_attire.cpp").read_text("utf-8")
+        for method in (
+            "clothing_layer(", "clothing_flags_description(",
+            "clothing_properties(", "clothing_protection(",
+        ):
+            self.assertIn(method, outfit)
+        self.assertIn("get_avg_encumber( who )", outfit)
+        self.assertIn("worn_item.get_env_resist()", outfit)
+
+    def test_medical_status_integration_preserves_reader_screen(self):
+        cpp = (SRC / "body_status_ui.cpp").read_text("utf-8")
+        medical = (SRC / "medical_ui.cpp").read_text("utf-8")
+        self.assertIn("medical_ui::get_modified_limb_name(", cpp)
+        self.assertIn("medical_ui::draw_limbs_details(", cpp)
+        self.assertIn("medical_ui::draw_limbs_details(", cpp)
+        self.assertIn("medical_ui::summary_tab(", cpp)
+        self.assertIn("bool Character::disp_medical()", medical)
+        self.assertIn("a11y::semantic_snapshot accessible_medical_ui::reader_snapshot()", medical)
+
+
 if __name__ == "__main__":
     unittest.main()

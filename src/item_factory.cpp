@@ -1899,10 +1899,10 @@ class iuse_function_wrapper : public iuse_actor
             : iuse_actor( type ), cpp_function( f ) { }
 
         ~iuse_function_wrapper() override = default;
-        std::optional<int> use( Character *p, item &it, map */*here*/,
+        std::optional<int> use( Character *p, item_location &it, map */*here*/,
                                 const tripoint_bub_ms &pos ) const override {
             // TODO: Change cpp_function to be map aware.
-            return cpp_function( p, &it, pos );
+            return cpp_function( p, it, pos );
         }
         std::unique_ptr<iuse_actor> clone() const override {
             return std::make_unique<iuse_function_wrapper>( *this );
@@ -3257,7 +3257,11 @@ void islot_ammo::deserialize( const JsonObject &jo )
     optional( jo, was_loaded, "recovery_chance", recovery_chance, not_negative );
     optional( jo, was_loaded, "count", def_charges, positive, 1 );
     optional( jo, was_loaded, "loudness", loudness, not_negative, -1 );
-    optional( jo, was_loaded, "effects", ammo_effects, auto_flags_reader<ammo_effect_str_id> {} );
+    // A mod may inherit an ordinary item and give it its first AMMO
+    // slot. Extending that slot's empty effect set is well-defined; the
+    // other fields, especially mandatory ammo_type, still need initialization.
+    optional( jo, was_loaded || jo.has_string( "copy-from" ), "effects", ammo_effects,
+              auto_flags_reader<ammo_effect_str_id> {} );
     optional( jo, was_loaded, "critical_multiplier", critical_multiplier, positive_float, 2.0f );
     optional( jo, was_loaded, "show_stats", force_stat_display, false );
 }
@@ -4901,7 +4905,7 @@ static Item_group *make_group_or_throw(
     } else if( ig->type != t ) {
         throw std::runtime_error(
             "item group \"" + group_id.str() + "\" already defined with type \"" +
-            to_string( ig->type ) + "\"" );
+            to_string( ig->type ) + "\"; requested type \"" + to_string( t ) + "\"" );
     }
     return ig;
 }
@@ -5149,6 +5153,7 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
     if( context.empty() ) {
         context = group_id.str();
     }
+    std::string effective_subtype = subtype;
     // Check if the copy-from target exists BEFORE we get a reference to it!
     // std::map's [] operator inserts a reference if one isn't found!
     const bool already_exists = m_template_groups.find( group_id ) != m_template_groups.end();
@@ -5166,16 +5171,31 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
         if( !already_exists ) {
             debugmsg( "%1$s was unable to find item group %2$s to copy-from during loading.  Context: %3$s",
                       group_id.str(), target_grp_str, context );
+        } else if( subtype == "old" && !jsobj.has_member( "subtype" ) ) {
+            // Legacy mods extend named groups without specifying a subtype.
+            // Inherit the existing group type instead of defaulting to a
+            // distribution when upstream has converted it to a collection.
+            // The modern readers also accept legacy [item, probability] pairs.
+            if( const auto *existing = dynamic_cast<const Item_group *>( isd.get() ) ) {
+                effective_subtype = to_string( existing->type );
+            }
         }
     } else {
         isd.reset();
     }
 
     Item_group::Type type = Item_group::G_COLLECTION;
-    if( subtype == "old" || subtype == "distribution" ) {
+    if( effective_subtype == "old" || effective_subtype == "distribution" ) {
         type = Item_group::G_DISTRIBUTION;
-    } else if( subtype != "collection" ) {
+    } else if( effective_subtype != "collection" ) {
         jsobj.throw_error_at( "subtype", "unknown item group type" );
+    }
+    if( const auto *existing = dynamic_cast<const Item_group *>( isd.get() ) ) {
+        if( existing->type != type ) {
+            jsobj.throw_error_at( "subtype", "item group \"" + group_id.str() +
+                                  "\" already defined with type \"" + to_string( existing->type ) +
+                                  "\"; requested type \"" + to_string( type ) + "\"" );
+        }
     }
     Item_group *ig = make_group_or_throw( group_id, isd, type, jsobj.get_int( "ammo", 0 ),
                                           jsobj.get_int( "magazine", 0 ), context );
@@ -5184,9 +5204,9 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
     // Otherwise, read from the object into the fresh itemgroup
     // And don't read if it has copy-from because it will not handle that correctly.
     if( jsobj.has_member( "extend" ) ) {
-        load_item_group_data( jsobj.get_object( "extend" ), ig, subtype );
+        load_item_group_data( jsobj.get_object( "extend" ), ig, effective_subtype );
     } else if( !jsobj.has_member( "copy-from" ) ) {
-        load_item_group_data( jsobj, ig, subtype );
+        load_item_group_data( jsobj, ig, effective_subtype );
     }
 
     if( jsobj.has_string( "container-item" ) ) {

@@ -58,6 +58,7 @@
 #include "item_location.h"
 #include "item_pocket.h"
 #include "item_stack.h"
+#include "item_tname.h"
 #include "itype.h"
 #include "lightmap.h"
 #include "line.h"
@@ -780,10 +781,9 @@ creature_size Character::get_size() const
     return size_class;
 }
 
-std::string Character::disp_name( bool possessive, bool capitalize_first ) const
+std::string Character::disp_name( bool capitalize_first ) const
 {
-    return is_avatar() ? as_avatar()->display_name( possessive,
-            capitalize_first ) : as_npc()->display_name( possessive );
+    return is_avatar() ? as_avatar()->display_name( capitalize_first ) : as_npc()->display_name();
 }
 
 std::string Character::disp_profession() const
@@ -804,7 +804,7 @@ std::string Character::disp_profession() const
 
 std::string Character::name_and_maybe_activity() const
 {
-    return disp_name( false, true );
+    return disp_name( true );
 }
 
 std::string Character::skin_name() const
@@ -1845,7 +1845,7 @@ void Character::on_try_dodge()
         const float dodge_skill_modifier = ( 20.0f - get_skill_level( skill_dodge ) ) / 20.0f;
         burn_energy_legs( - std::floor( static_cast<float>( base_burn_rate ) * 6.0f *
                                         dodge_skill_modifier ) );
-        set_activity_level( EXTRA_EXERCISE );
+        set_activity_level( COMBAT_EXERCISE );
     }
 }
 
@@ -3482,8 +3482,9 @@ float Character::instantaneous_activity_level() const
 
 int Character::activity_level_index() const
 {
-    // Activity levels are 1, 2, 4, 6, 8, 10
-    // So we can easily cut them in half and round down for an index
+    // Activity levels are 1, 2, 4, 6, 8, 10, 1000
+    // So we can (mostly) easily cut them in half and round down for an index
+    // ...This function is only called for EOCs, maybe we should just return the activity level directly instead of this.
     return std::floor( instantaneous_activity_level() / 2 );
 }
 
@@ -3865,14 +3866,20 @@ bool Character::sees_with_specials( const Creature &critter ) const
     return false;
 }
 
+// how much liquid a pour moves into the container, given its own room for it
+static int pour_amount( const item_location &container, const item &liquid, const int room )
+{
+    return container->all_pockets_rigid() ? room :
+           std::min( room, container.max_charges_by_parent_recursive( liquid ).value() );
+}
+
 bool Character::pour_into( item_location &container, item &liquid, bool ignore_settings,
                            bool silent )
 {
     rem_cap_return err = rem_cap_return::SUCCESS;
     int max_remaining_capacity = container->get_remaining_capacity_for_liquid( liquid, *this, &err );
     // amount of liquid that can be inserted
-    int amount = container->all_pockets_rigid() ? max_remaining_capacity :
-                 std::min( max_remaining_capacity, container.max_charges_by_parent_recursive( liquid ).value() );
+    int amount = pour_amount( container, liquid, max_remaining_capacity );
 
     const bool desired_liquid_is_in = container.has_item_with( [&liquid]( const item & it ) {
         return it.typeId() == liquid.typeId();
@@ -3926,9 +3933,28 @@ bool Character::pour_into( item_location &container, item &liquid, bool ignore_s
         add_msg_if_player( _( "There's some left over!" ) );
     }
 
-    get_avatar().invalidate_weight_carried_cache();
+    invalidate_weight_carried_cache();
+    if( Character *carrier = container.carrier() ) {
+        carrier->invalidate_weight_carried_cache();
+    }
 
     return true;
+}
+
+item_location Character::carried_container_for( const item &liquid, const item *avoid ) const
+{
+    item_location found;
+    visit_carried( [&]( const item_location & container ) {
+        if( container.get_item() == avoid || container.get_item() == &liquid ||
+            !container->is_watertight_container() || container->has_item( liquid ) ||
+            pour_amount( container, liquid,
+                         container->get_remaining_capacity_for_liquid( liquid, *this ) ) <= 0 ) {
+            return VisitResponse::NEXT;
+        }
+        found = container;
+        return VisitResponse::ABORT;
+    } );
+    return found;
 }
 
 bool Character::pour_into( const vpart_reference &vp, item &liquid ) const
@@ -4241,7 +4267,13 @@ void Character::mend_item( item_location &&obj, bool interactive )
 
     if( mending_options.empty() ) {
         if( interactive ) {
-            add_msg( m_info, _( "The %s doesn't have any faults to mend." ), obj->tname() );
+            if( obj->faults.empty() ) {
+                add_msg( m_info, _( "The %s doesn't have any faults to mend." ), obj->tname( 1,
+                         tname::item_identity_name ) );
+            } else {
+                add_msg( m_info, _( "The %s faults cannot be mended." ), obj->tname( 1,
+                         tname::item_identity_name ) );
+            }
             if( obj->damage() > obj->degradation() ) {
                 const std::set<itype_id> &rep = obj->repaired_with();
                 if( rep.empty() ) {
@@ -4478,23 +4510,23 @@ void Character::burn_energy_all( int mod )
     }
 }
 
-bool Character::invoke_item( item *used )
+bool Character::invoke_item( item_location &used )
 {
     return invoke_item( used, pos_bub() );
 }
 
-bool Character::invoke_item( item *, const tripoint_bub_ms &, int )
+bool Character::invoke_item( item_location &, const tripoint_bub_ms &, int )
 {
     return false;
 }
 
-bool Character::invoke_item( item *used, const std::string &method )
+bool Character::invoke_item( item_location &used, const std::string &method )
 {
     return invoke_item( used, method, pos_bub() );
 }
 
-bool Character::invoke_item( item *used, const std::string &method, const tripoint_bub_ms &pt,
-                             int pre_obtain_moves )
+bool Character::invoke_item( item_location &used, const std::string &method,
+                             const tripoint_bub_ms &pt, int pre_obtain_moves )
 {
     if( method.empty() ) {
         return invoke_item( used, pt, pre_obtain_moves );
@@ -4544,7 +4576,7 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
         return false;
     }
 
-    std::optional<int> charges_used = actually_used->type->invoke( this, *actually_used,
+    std::optional<int> charges_used = actually_used->type->invoke( this, used,
                                       pt, method );
     if( !charges_used.has_value() ) {
         set_moves( pre_obtain_moves );
@@ -4560,7 +4592,7 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
     actually_used->activation_consume( charges_used.value(), pt, this );
 
     if( actually_used->has_flag( flag_SINGLE_USE ) || actually_used->is_bionic() ) {
-        i_rem( actually_used );
+        used.remove_item();
         return true;
     }
 
@@ -5360,6 +5392,12 @@ void Character::assign_activity( const player_activity &act )
     }
 }
 
+bool Character::activity_limits_rendering() const
+{
+    // NOTE WELL! Sleeping is not in itself an activity! So we must check for the effect.
+    return ( activity && activity.render_blocked() ) || has_effect( effect_sleep );
+}
+
 bool Character::has_activity( const activity_id &type ) const
 {
     return activity.id() == type;
@@ -5409,6 +5447,10 @@ void Character::cancel_activity()
     }
     sfx::end_activity_sounds(); // kill activity sounds when canceled
     activity = player_activity();
+    if( npc *guy = as_npc() ) {
+        // nothing reads stale task mission or attitude
+        guy->end_cancelled_task();
+    }
 }
 
 void Character::resume_backlog_activity()
@@ -5426,6 +5468,14 @@ void Character::resume_backlog_activity()
 void Character::process_activity()
 {
     while( get_moves() > 0 && activity ) {
+        activity.do_turn( *this );
+    }
+}
+
+void Character::process_activity_until_invalid()
+{
+    while( activity ) {
+        set_moves( 100 );
         activity.do_turn( *this );
     }
 }
@@ -5880,16 +5930,16 @@ void Character::use_fire( const int quantity )
         return;
     }
 
-    const item firestarter = find_firestarter_with_charges( quantity );
-    if( firestarter.is_null() ) {
+    const item_location firestarter = find_firestarter_with_charges( quantity );
+    if( !firestarter.valid() ) {
         return;
     }
-    if( firestarter.type->has_flag( flag_USES_BIONIC_POWER ) ) {
+    if( firestarter->type->has_flag( flag_USES_BIONIC_POWER ) ) {
         mod_power_level( -quantity * 5_kJ );
         return;
     }
-    if( firestarter.ammo_sufficient( this, quantity ) ) {
-        use_charges( firestarter.typeId(), quantity );
+    if( firestarter->ammo_sufficient( this, quantity ) ) {
+        use_charges( firestarter->typeId(), quantity );
         return;
     }
 }
@@ -7090,6 +7140,29 @@ void Character::stagger()
     }
 }
 
+int Character::sleep_readiness()
+{
+    int sleepy = get_comfort_at( pos_bub() ).comfort;
+    if( has_addiction( addiction_sleeping_pill ) ) {
+        sleepy -= 4;
+    }
+    sleepy = enchantment_cache->modify_value( enchant_vals::mod::SLEEPY, sleepy );
+    if( get_sleepiness() < sleepiness_levels::TIRED + 1 ) {
+        sleepy -= int( ( sleepiness_levels::TIRED + 1 - get_sleepiness() ) / 4 );
+    } else {
+        sleepy += int( ( get_sleepiness() - sleepiness_levels::TIRED + 1 ) / 16 );
+    }
+    const int current_stim = get_stim();
+    if( current_stim > 0 || !has_trait( trait_INSOMNIA ) ) {
+        sleepy -= 2 * current_stim;
+    } else {
+        // Make it harder for insomniac to get around the trait
+        sleepy -= current_stim;
+    }
+
+    return sleepy;
+}
+
 bool Character::can_sleep()
 {
 
@@ -7113,26 +7186,7 @@ bool Character::can_sleep()
     }
     last_sleep_check = now;
 
-    int sleepy = get_comfort_at( pos_bub() ).comfort;
-    if( has_addiction( addiction_sleeping_pill ) ) {
-        sleepy -= 4;
-    }
-    sleepy = enchantment_cache->modify_value( enchant_vals::mod::SLEEPY, sleepy );
-    if( get_sleepiness() < sleepiness_levels::TIRED + 1 ) {
-        sleepy -= int( ( sleepiness_levels::TIRED + 1 - get_sleepiness() ) / 4 );
-    } else {
-        sleepy += int( ( get_sleepiness() - sleepiness_levels::TIRED + 1 ) / 16 );
-    }
-    const int current_stim = get_stim();
-    if( current_stim > 0 || !has_trait( trait_INSOMNIA ) ) {
-        sleepy -= 2 * current_stim;
-    } else {
-        // Make it harder for insomniac to get around the trait
-        sleepy -= current_stim;
-    }
-
-    sleepy += rng( -8, 8 );
-    bool result = sleepy > 0;
+    const bool result = sleep_readiness() + rng( -8, 8 ) > 0;
 
     if( has_active_bionic( bio_soporific ) ) {
         if( bio_soporific_powered_at_last_sleep_check && !has_power() ) {
@@ -8090,15 +8144,7 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
 
 void Character::use_wielded()
 {
-    use( -1 );
-}
-
-void Character::use( int inventory_position )
-{
-    item &used = i_at( inventory_position );
-    item_location loc = item_location( *this, &used );
-
-    use( loc );
+    use( get_wielded_item() );
 }
 
 void Character::use( item_location loc, int pre_obtain_moves, std::string const &method )
@@ -8129,10 +8175,10 @@ void Character::use( item_location loc, int pre_obtain_moves, std::string const 
             set_moves( pre_obtain_moves );
             return;
         }
-        invoke_item( &used, method, loc.pos_bub( here ), pre_obtain_moves );
+        invoke_item( loc, method, loc.pos_bub( here ), pre_obtain_moves );
 
     } else if( used.type->can_use( "PETFOOD" ) ) { // NOLINT(bugprone-branch-clone)
-        invoke_item( &used, method, loc.pos_bub( here ), pre_obtain_moves );
+        invoke_item( loc, method, loc.pos_bub( here ), pre_obtain_moves );
 
     } else if( !used.is_craft() && ( used.is_medication() || ( !used.type->has_use() &&
                                      used.is_food() ) ) ) {
@@ -8165,7 +8211,7 @@ void Character::use( item_location loc, int pre_obtain_moves, std::string const 
             }
         }
     } else if( used.type->has_use() ) {
-        invoke_item( &used, method, loc.pos_bub( here ), pre_obtain_moves );
+        invoke_item( loc, method, loc.pos_bub( here ), pre_obtain_moves );
     } else if( used.has_flag( flag_SPLINT ) ) {
         ret_val<void> need_splint = can_wear( *loc );
         if( need_splint.success() ) {
@@ -8175,7 +8221,7 @@ void Character::use( item_location loc, int pre_obtain_moves, std::string const 
             add_msg( m_info, need_splint.str() );
         }
     } else if( used.is_relic() ) {
-        invoke_item( &used, method, loc.pos_bub( here ), pre_obtain_moves );
+        invoke_item( loc, method, loc.pos_bub( here ), pre_obtain_moves );
     } else {
         if( !is_armed() ) {
             add_msg( m_info, _( "You are not wielding anything you could use." ) );
