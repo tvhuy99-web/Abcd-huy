@@ -41,6 +41,7 @@
 #include "game_ui.h"
 #include "input_popup.h"
 #include "item.h"
+#include "item_category.h"
 #include "item_contents.h"
 #include "item_location.h"
 #include "item_search.h"
@@ -1247,6 +1248,12 @@ void surroundings_menu::execute_accessible()
     // ranking creatures over items, doors, or other useful objects.
     constexpr int scan_half_width = 20;
     enum class nearby_kind { unclassified, creature, environment, item };
+    enum class nearby_category {
+        all, creatures, hostile, animals, npcs, other_creatures,
+        environment, vehicles, passages, furniture, hazards, terrain,
+        items, clothing, armor, food, medicine, weapons, guns_ammo,
+        tools, books, parts, chemicals_fuel, containers, seeds, other_items
+    };
     struct nearby_row {
         nearby_kind kind;
         std::string label;
@@ -1254,18 +1261,74 @@ void surroundings_menu::execute_accessible()
         tripoint_rel_ms relative;
         int distance;
         int stop_distance;
+        std::set<nearby_category> subcategories;
     };
+    // Use the stable item-category IDs from JSON, not translated item names.
+    // Unknown or mod-defined categories still appear under Other items.
+    const auto item_category_for = []( const item_category &category ) {
+        const std::string id = category.get_id().str();
+        if( id == "clothing" ) {
+            return nearby_category::clothing;
+        }
+        if( id == "armor" || id == "exosuit" ) {
+            return nearby_category::armor;
+        }
+        if( id == "food" ) {
+            return nearby_category::food;
+        }
+        if( id == "drugs" || id == "mutagen" ) {
+            return nearby_category::medicine;
+        }
+        if( id == "weapons" ) {
+            return nearby_category::weapons;
+        }
+        if( id == "guns" || id == "magazines" || id == "ammo" || id == "mods" ) {
+            return nearby_category::guns_ammo;
+        }
+        if( id == "tools" || id == "tool_magazine" ) {
+            return nearby_category::tools;
+        }
+        if( id == "books" || id == "manuals" || id == "ma_manuals" || id == "maps" ||
+            id == "e_files" || id == "software" ) {
+            return nearby_category::books;
+        }
+        if( id == "veh_parts" || id == "spare_parts" || id == "bionics" ) {
+            return nearby_category::parts;
+        }
+        if( id == "chems" || id == "fuel" ) {
+            return nearby_category::chemicals_fuel;
+        }
+        if( id == "container" ) {
+            return nearby_category::containers;
+        }
+        if( id == "seeds" ) {
+            return nearby_category::seeds;
+        }
+        return nearby_category::other_items;
+    };
+    const auto is_passage = []( const map_data_common_t &type ) {
+        return type.has_flag( ter_furn_flag::TFLAG_DOOR ) ||
+               type.has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+               type.has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+               type.has_flag( ter_furn_flag::TFLAG_LADDER ) ||
+               type.has_flag( ter_furn_flag::TFLAG_ELEVATOR ) ||
+               type.has_flag( ter_furn_flag::TFLAG_RAMP_UP ) ||
+               type.has_flag( ter_furn_flag::TFLAG_RAMP_DOWN ) ||
+               type.has_flag( ter_furn_flag::TFLAG_TRANSLOCATOR );
+    };
+    static const mon_flag_id animal_flag( "ANIMAL" );
     std::vector<nearby_row> nearby;
     const tripoint_bub_ms origin = you.pos_bub();
     map &here = get_map();
     std::set<const vehicle *> seen_vehicles;
     const bool has_special_vision = !you.enchantment_cache->special_vision_vector.empty();
     const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
-                              int stop_distance, nearby_kind kind ) {
+                              int stop_distance, nearby_kind kind,
+                              std::set<nearby_category> subcategories = {} ) {
         if( !name.empty() ) {
             nearby.push_back( { kind, name, origin + relative, relative,
                                 std::max( std::abs( relative.x() ), std::abs( relative.y() ) ),
-                                stop_distance } );
+                                stop_distance, std::move( subcategories ) } );
         }
     };
 
@@ -1295,38 +1358,84 @@ void surroundings_menu::execute_accessible()
                     add_row( remove_color_tags( heard_marker ), relative, 1,
                              nearby_kind::unclassified );
                 }
-                for( const std::string &creature : tile.creatures ) {
-                    add_row( creature, relative, 1, nearby_kind::creature );
+                for( const std::string &creature_name : tile.creatures ) {
+                    const Creature *creature = get_creature_tracker().creature_at( position, true );
+                    std::set<nearby_category> categories;
+                    if( creature != nullptr && creature->is_npc() ) {
+                        categories.insert( nearby_category::npcs );
+                    } else if( creature != nullptr ) {
+                        if( creature->attitude_to( you ) == Creature::Attitude::HOSTILE ) {
+                            categories.insert( nearby_category::hostile );
+                        }
+                        if( creature->is_monster() && creature->has_flag( animal_flag ) ) {
+                            categories.insert( nearby_category::animals );
+                        }
+                    }
+                    if( categories.empty() ) {
+                        categories.insert( nearby_category::other_creatures );
+                    }
+                    add_row( creature_name, relative, 1, nearby_kind::creature, std::move( categories ) );
                 }
-                for( const std::string &item_name : tile.items ) {
-                    add_row( item_name, relative, 0, nearby_kind::item );
+                // Match the scanner's name/count grouping exactly. Keep the union
+                // of category IDs for same-name stacks so All and Items never
+                // duplicate a row, and existing read-detail labels remain valid.
+                struct item_group {
+                    int count = 0;
+                    std::set<nearby_category> categories;
+                };
+                std::map<std::string, item_group> groups;
+                if( !tile.items.empty() ) {
+                    for( const item &obj : here.i_at( position ) ) {
+                        const std::string name = a11y::spoken_item_name( obj );
+                        if( name.empty() ) {
+                            continue;
+                        }
+                        item_group &group = groups[name];
+                        ++group.count;
+                        const nearby_category category = item_category_for( obj.get_category_shallow() );
+                        group.categories.insert( category );
+                        // A bottle of water or a can of food belongs in both
+                        // Containers and its actual contents category.
+                        if( category == nearby_category::containers ) {
+                            group.categories.insert( item_category_for( obj.get_category_of_contents() ) );
+                        }
+                    }
+                }
+                for( auto &entry : groups ) {
+                    const std::string label = entry.second.count == 1 ? entry.first :
+                                              string_format( _( "%1$s [%2$d]" ), entry.first, entry.second.count );
+                    add_row( label, relative, 0, nearby_kind::item, std::move( entry.second.categories ) );
                 }
                 for( const std::string &hazard : tile.traps ) {
-                    add_row( hazard, relative, 1, nearby_kind::environment );
+                    add_row( hazard, relative, 1, nearby_kind::environment, { nearby_category::hazards } );
                 }
                 // Only dangerous active fields are useful in a flat
                 // surrounding list; ordinary blood and residue stay out.
                 for( const auto &entry : here.field_at( position ) ) {
                     if( entry.second.is_field_alive() && entry.second.is_dangerous() ) {
                         add_row( remove_color_tags( entry.second.name() ), relative, 1,
-                                 nearby_kind::environment );
+                                 nearby_kind::environment, { nearby_category::hazards } );
                     }
                 }
                 const optional_vpart_position part = here.veh_at( position );
                 if( part && !tile.vehicle.empty() &&
                     seen_vehicles.insert( &part->vehicle() ).second ) {
-                    add_row( tile.vehicle, relative, 1, nearby_kind::environment );
+                    add_row( tile.vehicle, relative, 1, nearby_kind::environment,
+                             { nearby_category::vehicles } );
                 }
                 const ter_t &terrain = *here.ter( position );
                 if( noteworthy_nearby_feature( terrain, position ) ) {
                     add_row( tile.terrain, relative, tile.impassable ? 1 : 0,
-                             nearby_kind::environment );
+                             nearby_kind::environment,
+                             { is_passage( terrain ) ? nearby_category::passages : nearby_category::terrain } );
                 }
                 // Ordinary furniture is still a meaningful object. A locker
                 // must not vanish simply because it has no special flags.
                 if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
                     add_row( tile.furniture, relative, tile.impassable ? 1 : 0,
-                             nearby_kind::environment );
+                             nearby_kind::environment,
+                             { is_passage( *here.furn( position ) ) ? nearby_category::passages :
+                               nearby_category::furniture } );
                 }
             }
         }
@@ -1338,32 +1447,73 @@ void surroundings_menu::execute_accessible()
         return lhs.distance < rhs.distance;
     } );
     constexpr std::size_t page_size = 80;
-    // 0 All, 1 creatures/NPCs, 2 places/environment, 3 items.
-    // The original nearby list is immutable and remains nearest-first;
-    // switching a category only changes its filtered index, never a route.
-    int selected_category = 0;
+    // Build immutable, nearest-first index lists once. Keep the original
+    // broad categories as shortcuts and skip empty subcategories. All is
+    // always available, including when the scan finds nothing.
+    using category_entry = std::pair<nearby_category, std::string>;
+    const std::vector<category_entry> category_order = {
+        { nearby_category::all, _( "All" ) },
+        { nearby_category::creatures, _( "Creatures and NPCs" ) },
+        { nearby_category::hostile, _( "Hostile creatures" ) },
+        { nearby_category::animals, _( "Animals" ) },
+        { nearby_category::npcs, _( "NPCs" ) },
+        { nearby_category::other_creatures, _( "Other creatures" ) },
+        { nearby_category::environment, _( "Places and environment" ) },
+        { nearby_category::vehicles, _( "Vehicles" ) },
+        { nearby_category::passages, _( "Doors and passages" ) },
+        { nearby_category::furniture, _( "Furniture" ) },
+        { nearby_category::hazards, _( "Traps and hazards" ) },
+        { nearby_category::terrain, _( "Special terrain" ) },
+        { nearby_category::items, _( "Items" ) },
+        { nearby_category::clothing, _( "Clothing" ) },
+        { nearby_category::armor, _( "Armor" ) },
+        { nearby_category::food, _( "Food and drinks" ) },
+        { nearby_category::medicine, _( "Medicine" ) },
+        { nearby_category::weapons, _( "Weapons" ) },
+        { nearby_category::guns_ammo, _( "Guns and ammunition" ) },
+        { nearby_category::tools, _( "Tools" ) },
+        { nearby_category::books, _( "Books and documents" ) },
+        { nearby_category::parts, _( "Parts and components" ) },
+        { nearby_category::chemicals_fuel, _( "Chemicals and fuel" ) },
+        { nearby_category::containers, _( "Containers" ) },
+        { nearby_category::seeds, _( "Seeds" ) },
+        { nearby_category::other_items, _( "Other items" ) }
+    };
+    std::map<nearby_category, std::vector<std::size_t>> category_indices;
+    for( std::size_t i = 0; i < nearby.size(); ++i ) {
+        const nearby_row &row = nearby[i];
+        category_indices[nearby_category::all].push_back( i );
+        switch( row.kind ) {
+            case nearby_kind::creature:
+                category_indices[nearby_category::creatures].push_back( i );
+                break;
+            case nearby_kind::environment:
+                category_indices[nearby_category::environment].push_back( i );
+                break;
+            case nearby_kind::item:
+                category_indices[nearby_category::items].push_back( i );
+                break;
+            case nearby_kind::unclassified:
+                break;
+        }
+        for( const nearby_category category : row.subcategories ) {
+            category_indices[category].push_back( i );
+        }
+    }
+    std::vector<category_entry> active_categories;
+    for( const category_entry &entry : category_order ) {
+        if( !category_indices[entry.first].empty() || entry.first == nearby_category::all ) {
+            active_categories.push_back( entry );
+        }
+    }
+    std::size_t selected_category = 0;
     std::size_t page = 0;
     bool focus_last_on_page = false;
-    const auto filtered_indices = [&]() {
-        std::vector<std::size_t> result;
-        for( std::size_t i = 0; i < nearby.size(); ++i ) {
-            const nearby_kind kind = nearby[i].kind;
-            if( selected_category == 0 ||
-                ( selected_category == 1 && kind == nearby_kind::creature ) ||
-                ( selected_category == 2 && kind == nearby_kind::environment ) ||
-                ( selected_category == 3 && kind == nearby_kind::item ) ) {
-                result.push_back( i );
-            }
-        }
-        return result;
+    const auto filtered_indices = [&]() -> const std::vector<std::size_t> & {
+        return category_indices.at( active_categories[selected_category].first );
     };
-    const auto category_label = [&]() {
-        switch( selected_category ) {
-            case 1: return std::string( _( "Creatures and NPCs" ) );
-            case 2: return std::string( _( "Places and environment" ) );
-            case 3: return std::string( _( "Items" ) );
-            default: return std::string( _( "All" ) );
-        }
+    const auto category_label = [&]() -> const std::string & {
+        return active_categories[selected_category].second;
     };
     const auto relative_words = []( const tripoint_rel_ms &relative ) {
         if( relative == tripoint_rel_ms() ) {
@@ -1418,13 +1568,14 @@ void surroundings_menu::execute_accessible()
         }
         if( intent.node == "nearby:filter:next" ||
             intent.node == "nearby:filter:previous" ) {
+            const std::size_t count = active_categories.size();
             selected_category = ( selected_category +
-                                  ( intent.node == "nearby:filter:next" ? 1 : 3 ) ) % 4;
+                                  ( intent.node == "nearby:filter:next" ? 1 : count - 1 ) ) % count;
             page = 0;
             focus_last_on_page = false;
             return std::string( "TIMEOUT" );
         }
-        const std::vector<std::size_t> filtered = filtered_indices();
+        const std::vector<std::size_t> &filtered = filtered_indices();
         // When there are multiple pages, left/right navigation wraps
         // across the *entire* filtered list, not inside the last page.
         const std::size_t page_count = ( filtered.size() + page_size - 1 ) / page_size;
@@ -1529,7 +1680,7 @@ void surroundings_menu::execute_accessible()
     } );
 
     while( true ) {
-        const std::vector<std::size_t> filtered = filtered_indices();
+        const std::vector<std::size_t> &filtered = filtered_indices();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Nearby" );
         snapshot.summary = filtered.empty() ?
