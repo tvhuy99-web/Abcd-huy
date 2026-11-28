@@ -61,8 +61,8 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("if( !route )", self.menu)
         self.assertIn("if( route->empty() )", self.menu)
         self.assertIn("tile.impassable ? 1 : 0", self.menu)
-        self.assertIn("for( const std::string &creature : tile.creatures )", self.menu)
-        self.assertIn("for( const std::string &item_name : tile.items )", self.menu)
+        self.assertIn("for( const std::string &creature_name : tile.creatures )", self.menu)
+        self.assertIn("for( const item &obj : here.i_at( position ) )", self.menu)
         self.assertIn("if( a11y::enabled() )", self.menu)
         self.assertIn("execute_accessible();", self.menu)
 

@@ -1,4 +1,4 @@
-"""Four-category gesture filters for Android surroundings exploration.
+"""Native-category gesture filters for Android surroundings exploration.
 
 These guards protect the native route-to-target action while introducing
 categorical browsing without a separate filter button.
@@ -22,12 +22,14 @@ class NearbyCategoryGestures(unittest.TestCase):
         cls.reader = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         cls.vi = VI.read_text(encoding="utf-8")
 
-    def test_four_categories_with_uncategorized_still_in_all(self):
+    def test_native_categories_with_uncategorized_still_in_all(self):
         for token in ('nearby_kind { unclassified, creature, environment, item }',
-                      'selected_category == 0',
-                      'selected_category == 1 && kind == nearby_kind::creature',
-                      'selected_category == 2 && kind == nearby_kind::environment',
-                      'selected_category == 3 && kind == nearby_kind::item'):
+                      'category_indices[nearby_category::all].push_back( i )',
+                      'category_indices[nearby_category::creatures].push_back( i )',
+                      'category_indices[nearby_category::environment].push_back( i )',
+                      'category_indices[nearby_category::items].push_back( i )',
+                      'entry.first == nearby_category::all',
+                      '!indices.empty()'):
             self.assertIn(token, self.native)
         self.assertIn('nearby_kind::unclassified', self.native)
         self.assertIn('nearby_kind::creature', self.native)
@@ -35,8 +37,23 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('nearby_kind::environment', self.native)
         self.assertIn('sounds::sound_at( position )', self.native)
         self.assertIn('observed.special_perceptions', self.native)
-        self.assertIn('const std::string &creature : tile.creatures', self.native)
-        self.assertIn('const std::string &item_name : tile.items', self.native)
+        self.assertIn('const std::string &creature_name : tile.creatures', self.native)
+        self.assertIn('for( const item &obj : here.i_at( position ) )', self.native)
+
+    def test_item_categories_follow_inventory_and_have_vietnamese_labels(self):
+        import json
+
+        self.assertIn('group.categories.insert( &obj.get_category_of_contents() );', self.native)
+        self.assertNotIn('item_category_for', self.native)
+        self.assertNotIn('get_category_shallow()', self.native)
+        self.assertIn('return *lhs < *rhs;', self.native)
+        self.assertIn('category.name_header()', self.native)
+        self.assertIn('pgettext( "nearby item category", id.c_str() )', self.native)
+        for category in json.loads((ROOT / "data/json/item_category.json").read_text("utf-8")):
+            self.assertIn('msgctxt "nearby item category"\nmsgid "' + category["id"] + '"',
+                          self.vi)
+        self.assertIn('msgctxt "corpse ownership qualifier"\nmsgid "%1$s of a %2$s"\n'
+                      'msgstr "%1$s của %2$s"', self.vi)
 
     def test_vertical_swipes_switch_categories_only_in_surroundings(self):
         self.assertIn('default boolean handleSurroundingsSwipe(int horizontal, int vertical)', self.surface)
@@ -46,7 +63,8 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('vertical < 0', self.reader)
         self.assertIn('"nearby:filter:next" : "nearby:filter:previous"', self.reader)
         self.assertIn('selected_category +', self.native)
-        self.assertIn(') % 4', self.native)
+        self.assertIn(') % count', self.native)
+        self.assertIn('const std::size_t count = active_categories.size();', self.native)
         self.assertIn('page = 0;', self.native)
 
     def test_left_right_focus_near_to_far_and_browse_pages(self):
@@ -95,8 +113,8 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('nearby:target:', self.native)
         self.assertIn('const nearby_row &target = nearby[row_index];', self.native)
         self.assertIn('tile.impassable ? 1 : 0', self.native)
-        self.assertIn('add_row( creature, relative, 1, nearby_kind::creature )', self.native)
-        self.assertIn('add_row( item_name, relative, 0, nearby_kind::item )', self.native)
+        self.assertIn('add_row( creature_name, relative, 1, nearby_kind::creature,', self.native)
+        self.assertIn('add_row( label, relative, 0, nearby_kind::item,', self.native)
 
 
 if __name__ == "__main__":

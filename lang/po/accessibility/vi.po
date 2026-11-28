@@ -8040,3 +8040,183 @@ msgstr "Chọn một ô phương tiện và chạm hai lần để chọn bộ p
 msgid "Vehicle tile %d"
 msgstr "Ô phương tiện %d"
 
+msgctxt "nearby category"
+msgid "Hostile creatures"
+msgstr "Sinh vật thù địch"
+
+msgctxt "nearby category"
+msgid "Animals"
+msgstr "Động vật"
+
+msgctxt "nearby category"
+msgid "NPCs"
+msgstr "Nhân vật NPC"
+
+msgctxt "nearby category"
+msgid "Other creatures"
+msgstr "Sinh vật khác"
+
+msgctxt "nearby category"
+msgid "Doors and passages"
+msgstr "Cửa và lối đi"
+
+msgctxt "nearby category"
+msgid "Traps and hazards"
+msgstr "Bẫy và mối nguy hiểm"
+
+msgctxt "nearby category"
+msgid "Special terrain"
+msgstr "Địa hình đặc biệt"
+
+msgctxt "nearby category"
+msgid "Uncategorized items"
+msgstr "Vật phẩm chưa phân loại"
+
+msgctxt "nearby item category"
+msgid "e_files"
+msgstr "Tệp điện tử"
+
+msgctxt "nearby item category"
+msgid "software"
+msgstr "Phần mềm"
+
+msgctxt "nearby item category"
+msgid "guns"
+msgstr "Súng"
+
+msgctxt "nearby item category"
+msgid "magazines"
+msgstr "Băng đạn"
+
+msgctxt "nearby item category"
+msgid "ammo"
+msgstr "Đạn dược"
+
+msgctxt "nearby item category"
+msgid "weapons"
+msgstr "Vũ khí"
+
+msgctxt "nearby item category"
+msgid "tools"
+msgstr "Dụng cụ"
+
+msgctxt "nearby item category"
+msgid "clothing"
+msgstr "Trang phục"
+
+msgctxt "nearby item category"
+msgid "food"
+msgstr "Thức ăn và đồ uống"
+
+msgctxt "nearby item category"
+msgid "drugs"
+msgstr "Thuốc men"
+
+msgctxt "nearby item category"
+msgid "manuals"
+msgstr "Sách hướng dẫn"
+
+msgctxt "nearby item category"
+msgid "books"
+msgstr "Sách"
+
+msgctxt "nearby item category"
+msgid "maps"
+msgstr "Bản đồ"
+
+msgctxt "nearby item category"
+msgid "mods"
+msgstr "Phụ kiện cải tiến"
+
+msgctxt "nearby item category"
+msgid "mutagen"
+msgstr "Chất gây đột biến"
+
+msgctxt "nearby item category"
+msgid "bionics"
+msgstr "Bộ phận cấy ghép"
+
+msgctxt "nearby item category"
+msgid "currency"
+msgstr "Tiền tệ"
+
+msgctxt "nearby item category"
+msgid "veh_parts"
+msgstr "Phụ tùng phương tiện"
+
+msgctxt "nearby item category"
+msgid "other"
+msgstr "Vật phẩm khác"
+
+msgctxt "nearby item category"
+msgid "fuel"
+msgstr "Nhiên liệu"
+
+msgctxt "nearby item category"
+msgid "seeds"
+msgstr "Hạt giống"
+
+msgctxt "nearby item category"
+msgid "ma_manuals"
+msgstr "Sách võ thuật"
+
+msgctxt "nearby item category"
+msgid "traps"
+msgstr "Bẫy"
+
+msgctxt "nearby item category"
+msgid "chems"
+msgstr "Hóa chất"
+
+msgctxt "nearby item category"
+msgid "spare_parts"
+msgstr "Linh kiện"
+
+msgctxt "nearby item category"
+msgid "container"
+msgstr "Vật chứa"
+
+msgctxt "nearby item category"
+msgid "artifacts"
+msgstr "Cổ vật"
+
+msgctxt "nearby item category"
+msgid "keys"
+msgstr "Chìa khóa"
+
+msgctxt "nearby item category"
+msgid "corpses"
+msgstr "Thi thể"
+
+msgctxt "nearby item category"
+msgid "tool_magazine"
+msgstr "Bộ tiếp liệu dụng cụ"
+
+msgctxt "nearby item category"
+msgid "armor"
+msgstr "Áo giáp"
+
+msgctxt "nearby item category"
+msgid "exosuit"
+msgstr "Bộ giáp trợ lực"
+
+msgctxt "nearby item category"
+msgid "ITEMS_WORN"
+msgstr "Vật phẩm đang mặc"
+
+msgctxt "nearby item category"
+msgid "INTEGRATED"
+msgstr "Trang bị tích hợp"
+
+msgctxt "nearby item category"
+msgid "BIONIC_FUEL_SOURCE"
+msgstr "Nguồn nhiên liệu cấy ghép"
+
+msgctxt "nearby item category"
+msgid "WEAPON_HELD"
+msgstr "Vũ khí đang cầm"
+
+#, c-format
+msgctxt "corpse ownership qualifier"
+msgid "%1$s of a %2$s"
+msgstr "%1$s của %2$s"

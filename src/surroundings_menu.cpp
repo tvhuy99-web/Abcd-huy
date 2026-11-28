@@ -59,6 +59,7 @@
 #include "string_formatter.h"
 #include "text.h"
 #include "translation.h"
+#include "translations.h"
 #include "type_id.h"
 #include "uistate.h"
 #include "ui_extended_description.h"
@@ -1251,8 +1252,7 @@ void surroundings_menu::execute_accessible()
     enum class nearby_category {
         all, creatures, hostile, animals, npcs, other_creatures,
         environment, vehicles, passages, furniture, hazards, terrain,
-        items, clothing, armor, food, medicine, weapons, guns_ammo,
-        tools, books, parts, chemicals_fuel, containers, seeds, other_items
+        items
     };
     struct nearby_row {
         nearby_kind kind;
@@ -1262,49 +1262,7 @@ void surroundings_menu::execute_accessible()
         int distance;
         int stop_distance;
         std::set<nearby_category> subcategories;
-    };
-    // Use the stable item-category IDs from JSON, not translated item names.
-    // Unknown or mod-defined categories still appear under Other items.
-    const auto item_category_for = []( const item_category &category ) {
-        const std::string id = category.get_id().str();
-        if( id == "clothing" ) {
-            return nearby_category::clothing;
-        }
-        if( id == "armor" || id == "exosuit" ) {
-            return nearby_category::armor;
-        }
-        if( id == "food" ) {
-            return nearby_category::food;
-        }
-        if( id == "drugs" || id == "mutagen" ) {
-            return nearby_category::medicine;
-        }
-        if( id == "weapons" ) {
-            return nearby_category::weapons;
-        }
-        if( id == "guns" || id == "magazines" || id == "ammo" || id == "mods" ) {
-            return nearby_category::guns_ammo;
-        }
-        if( id == "tools" || id == "tool_magazine" ) {
-            return nearby_category::tools;
-        }
-        if( id == "books" || id == "manuals" || id == "ma_manuals" || id == "maps" ||
-            id == "e_files" || id == "software" ) {
-            return nearby_category::books;
-        }
-        if( id == "veh_parts" || id == "spare_parts" || id == "bionics" ) {
-            return nearby_category::parts;
-        }
-        if( id == "chems" || id == "fuel" ) {
-            return nearby_category::chemicals_fuel;
-        }
-        if( id == "container" ) {
-            return nearby_category::containers;
-        }
-        if( id == "seeds" ) {
-            return nearby_category::seeds;
-        }
-        return nearby_category::other_items;
+        std::set<const item_category *> item_categories;
     };
     const auto is_passage = []( const map_data_common_t &type ) {
         return type.has_flag( ter_furn_flag::TFLAG_DOOR ) ||
@@ -1324,11 +1282,13 @@ void surroundings_menu::execute_accessible()
     const bool has_special_vision = !you.enchantment_cache->special_vision_vector.empty();
     const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
                               int stop_distance, nearby_kind kind,
-                              std::set<nearby_category> subcategories = {} ) {
+                              std::set<nearby_category> subcategories = {},
+                              std::set<const item_category *> item_categories = {} ) {
         if( !name.empty() ) {
             nearby.push_back( { kind, name, origin + relative, relative,
                                 std::max( std::abs( relative.x() ), std::abs( relative.y() ) ),
-                                stop_distance, std::move( subcategories ) } );
+                                stop_distance, std::move( subcategories ),
+                                std::move( item_categories ) } );
         }
     };
 
@@ -1381,7 +1341,7 @@ void surroundings_menu::execute_accessible()
                 // duplicate a row, and existing read-detail labels remain valid.
                 struct item_group {
                     int count = 0;
-                    std::set<nearby_category> categories;
+                    std::set<const item_category *> categories;
                 };
                 std::map<std::string, item_group> groups;
                 if( !tile.items.empty() ) {
@@ -1392,19 +1352,15 @@ void surroundings_menu::execute_accessible()
                         }
                         item_group &group = groups[name];
                         ++group.count;
-                        const nearby_category category = item_category_for( obj.get_category_shallow() );
-                        group.categories.insert( category );
-                        // A bottle of water or a can of food belongs in both
-                        // Containers and its actual contents category.
-                        if( category == nearby_category::containers ) {
-                            group.categories.insert( item_category_for( obj.get_category_of_contents() ) );
-                        }
+                        // Exactly the same effective category as the inventory UI.
+                        group.categories.insert( &obj.get_category_of_contents() );
                     }
                 }
                 for( auto &entry : groups ) {
                     const std::string label = entry.second.count == 1 ? entry.first :
                                               string_format( _( "%1$s [%2$d]" ), entry.first, entry.second.count );
-                    add_row( label, relative, 0, nearby_kind::item, std::move( entry.second.categories ) );
+                    add_row( label, relative, 0, nearby_kind::item, {},
+                             std::move( entry.second.categories ) );
                 }
                 for( const std::string &hazard : tile.traps ) {
                     add_row( hazard, relative, 1, nearby_kind::environment, { nearby_category::hazards } );
@@ -1454,32 +1410,25 @@ void surroundings_menu::execute_accessible()
     const std::vector<category_entry> category_order = {
         { nearby_category::all, _( "All" ) },
         { nearby_category::creatures, _( "Creatures and NPCs" ) },
-        { nearby_category::hostile, _( "Hostile creatures" ) },
-        { nearby_category::animals, _( "Animals" ) },
-        { nearby_category::npcs, _( "NPCs" ) },
-        { nearby_category::other_creatures, _( "Other creatures" ) },
+        { nearby_category::hostile, pgettext( "nearby category", "Hostile creatures" ) },
+        { nearby_category::animals, pgettext( "nearby category", "Animals" ) },
+        { nearby_category::npcs, pgettext( "nearby category", "NPCs" ) },
+        { nearby_category::other_creatures, pgettext( "nearby category", "Other creatures" ) },
         { nearby_category::environment, _( "Places and environment" ) },
         { nearby_category::vehicles, _( "Vehicles" ) },
-        { nearby_category::passages, _( "Doors and passages" ) },
+        { nearby_category::passages, pgettext( "nearby category", "Doors and passages" ) },
         { nearby_category::furniture, _( "Furniture" ) },
-        { nearby_category::hazards, _( "Traps and hazards" ) },
-        { nearby_category::terrain, _( "Special terrain" ) },
-        { nearby_category::items, _( "Items" ) },
-        { nearby_category::clothing, _( "Clothing" ) },
-        { nearby_category::armor, _( "Armor" ) },
-        { nearby_category::food, _( "Food and drinks" ) },
-        { nearby_category::medicine, _( "Medicine" ) },
-        { nearby_category::weapons, _( "Weapons" ) },
-        { nearby_category::guns_ammo, _( "Guns and ammunition" ) },
-        { nearby_category::tools, _( "Tools" ) },
-        { nearby_category::books, _( "Books and documents" ) },
-        { nearby_category::parts, _( "Parts and components" ) },
-        { nearby_category::chemicals_fuel, _( "Chemicals and fuel" ) },
-        { nearby_category::containers, _( "Containers" ) },
-        { nearby_category::seeds, _( "Seeds" ) },
-        { nearby_category::other_items, _( "Other items" ) }
+        { nearby_category::hazards, pgettext( "nearby category", "Traps and hazards" ) },
+        { nearby_category::terrain, pgettext( "nearby category", "Special terrain" ) },
+        { nearby_category::items, _( "Items" ) }
     };
     std::map<nearby_category, std::vector<std::size_t>> category_indices;
+    // item_category::operator< uses the native inventory category sort order.
+    const auto category_less = []( const item_category *lhs, const item_category *rhs ) {
+        return *lhs < *rhs;
+    };
+    std::map<const item_category *, std::vector<std::size_t>, decltype( category_less )>
+    item_indices( category_less );
     for( std::size_t i = 0; i < nearby.size(); ++i ) {
         const nearby_row &row = nearby[i];
         category_indices[nearby_category::all].push_back( i );
@@ -1499,21 +1448,44 @@ void surroundings_menu::execute_accessible()
         for( const nearby_category category : row.subcategories ) {
             category_indices[category].push_back( i );
         }
-    }
-    std::vector<category_entry> active_categories;
-    for( const category_entry &entry : category_order ) {
-        if( !category_indices[entry.first].empty() || entry.first == nearby_category::all ) {
-            active_categories.push_back( entry );
+        for( const item_category *category : row.item_categories ) {
+            item_indices[category].push_back( i );
         }
+    }
+    struct active_category {
+        std::string label;
+        const std::vector<std::size_t> *indices;
+    };
+    std::vector<active_category> active_categories;
+    for( const category_entry &entry : category_order ) {
+        const std::vector<std::size_t> &indices = category_indices[entry.first];
+        if( !indices.empty() || entry.first == nearby_category::all ) {
+            active_categories.push_back( { entry.second, &indices } );
+        }
+    }
+    for( const auto &entry : item_indices ) {
+        const item_category &category = *entry.first;
+        // The accessibility overlay can supply a clear localized header by
+        // native ID without changing classification or other languages.
+        // Unknown/mod categories use the game's own translated header.
+        const std::string id = category.get_id().str();
+        std::string label = pgettext( "nearby item category", id.c_str() );
+        if( label == id ) {
+            label = category.name_header();
+        }
+        if( label.empty() ) {
+            label = pgettext( "nearby category", "Uncategorized items" );
+        }
+        active_categories.push_back( { std::move( label ), &entry.second } );
     }
     std::size_t selected_category = 0;
     std::size_t page = 0;
     bool focus_last_on_page = false;
     const auto filtered_indices = [&]() -> const std::vector<std::size_t> & {
-        return category_indices.at( active_categories[selected_category].first );
+        return *active_categories[selected_category].indices;
     };
     const auto category_label = [&]() -> const std::string & {
-        return active_categories[selected_category].second;
+        return active_categories[selected_category].label;
     };
     const auto relative_words = []( const tripoint_rel_ms &relative ) {
         if( relative == tripoint_rel_ms() ) {
